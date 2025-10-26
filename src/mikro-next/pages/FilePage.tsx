@@ -27,14 +27,6 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       actions={<MikroFile.Actions object={data.file.id} />}
       object={data.file.id}
       title={data.file.name}
-      sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <MikroFile.Komments object={data.file.id} />,
-            Provenance: <ProvenanceSidebar items={data?.file.provenanceEntries} />,
-          }}
-        />
-      }
       pageActions={
         <DownloadButton
           url={resolve(data.file.store.presignedUrl)}
@@ -47,7 +39,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       }
     >
       {/* Enhanced File Header */}
-      <Card className="mb-6 border-none shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+      <div className="mb-6 border-none shadow-sm ">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -61,8 +53,6 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                   </MikroFile.DetailLink>
                 </CardTitle>
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <UserIcon className="h-4 w-4" />
-                  <span>@ {data.file.organization.slug}</span>
                 </div>
               </div>
             </div>
@@ -71,23 +61,15 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FolderIcon className="h-4 w-4" />
-            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs">
-              {data?.file?.store.bucket}/{data?.file?.store.key}
-            </code>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
       <Separator className="my-6" />
 
       {/* Enhanced Image Grid */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <ImageIcon className="h-5 w-5 text-blue-600" />
-          <h2 className="text-xl font-semibold">Converted Images</h2>
+          <ImageIcon className="h-5 w-5 text-gray-600" />
+          <h2 className="text-xl font-semibold">Derived Images</h2>
           {data?.file?.views?.length > 0 && (
             <Badge variant="outline" className="ml-2">
               {data.file.views.length} {data.file.views.length === 1 ? 'image' : 'images'}
@@ -115,7 +97,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                   {/* Content overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform  transition-transform duration-300 truncate">
                     <MikroImage.DetailLink
                       className="font-semibold text-lg block hover:text-blue-300 transition-colors line-clamp-2"
                       object={view.image.id}
@@ -124,7 +106,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                     </MikroImage.DetailLink>
 
                     {view.seriesIdentifier && (
-                      <Badge className="mt-2 bg-blue-600/90 hover:bg-blue-600 text-white border-0">
+                      <Badge variant={"outline"}>
                         Series: {view.seriesIdentifier}
                       </Badge>
                     )}

@@ -12,12 +12,12 @@ interface Props {
 const TheCard = ({ view, mates }: Props) => {
   return (
     <MikroLightpathView.Smart object={view?.id} mates={mates}>
-      <ViewCard view={view} className="h-20 flex flex-row p-3">
+      <ViewCard view={view} className="h-20 flex flex-row p-3 overflow-hidden">
         <MikroLightpathView.DetailLink object={view?.id} className="flex flex-row">
           <span className="font-light mr-2 my-auto">
             {view.cMax}
           </span>
-          <div className="font-light mr-2 my-auto">
+          <div className="font-light mr-2 my-auto ">
             {view.graph && <LightPathListView graph={view.graph} />}
           </div>
         </MikroLightpathView.DetailLink>

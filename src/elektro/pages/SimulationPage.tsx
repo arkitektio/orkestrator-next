@@ -43,17 +43,7 @@ export default asDetailQueryRoute(
             <ElektroSimulation.ObjectButton object={data.simulation.id} />
           </div>
         }
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroSimulation.Komments object={data.simulation.id} />
-              ),
-            }}
-          />
-        }
       >
-        <div className="flex h-full w-full flex flex-col gap-2">
           <div className="flex-initial grid grid-cols-12 gap-2">
             <div className="col-span-11 h-32 p-3">
               <div>
@@ -64,33 +54,17 @@ export default asDetailQueryRoute(
                   Duration: {data.simulation.duration} ms dt:{" "}
                   {data.simulation.dt} s/ms
                 </p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShow(!show)}
-                    >
-                      <span className="text-xs">
-                        {!show ? "Show Model" : "Hide"}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[500px] h-[500px]">
-                    <NeuronSimulationVisualizer simulation={data.simulation} />
-                  </PopoverContent>
-                </Popover>
               </div>
             </div>
           </div>
-          <div className="flex-grow w-full gap-2 flex">
+          <div className="flex-grow w-full overflow-scroll">
             <SimulationRender
               simulation={data.simulation}
               hidden={hidden}
               hiddenStimuli={hiddenStimuli}
             />
           </div>
-          <div className="flex-initial flex flex-row gap-2 mb-6">
+          <div className="flex-initial flex flex-row gap-2">
             {data.simulation.recordings.map((view, index) => (
               <Card
                 className={cn(
@@ -158,7 +132,6 @@ export default asDetailQueryRoute(
               </Card>
             ))}
           </div>
-        </div>
       </ElektroSimulation.ModelPage>
     );
   },

@@ -47,4 +47,14 @@ fragment InformedStructure on Structure {
     id
     name
   }
+  metrics {
+    id
+    category {
+      label
+    }
+    value
+    createdBy
+    createdThrough
+    createdApp
+  }
 }

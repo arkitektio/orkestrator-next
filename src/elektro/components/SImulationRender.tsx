@@ -307,14 +307,13 @@ export const SimulationRender = (props: {
   }
 
   return (
-    <div className="flex flex-col w-full max-h-[70vh] my-auto relative">
+    <div className="flex flex-col  relative">
       <ChartContainer config={chartConfig} className="flex-grow">
         {/* Chart 1: Recordings */}
         <LineChart
           data={filteredValues}
-          height={300}
           margin={{ left: 10, right: 10 }}
-          className="relative"
+
           syncId="simulation-chart"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -390,7 +389,7 @@ export const SimulationRender = (props: {
           />
         </LineChart>
       </ChartContainer>
-      <ChartContainer config={chartConfig} className="flex-initial h-48">
+      <ChartContainer config={chartConfig} className="h-12 flex-initial ">
         {/* Chart 2: Stimuli (e.g. current injections) */}
         <LineChart
           data={filteredValues}

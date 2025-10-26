@@ -6,6 +6,9 @@ import { PodDisplay } from "@/kabinet/displays/PodDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
 import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
 import { AnalogSignalChannelDisplay } from "@/elektro/displays/AnalogSignalChannelDisplay";
+import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
+import { BlockDisplay } from "@/elektro/displays/BlockDisplay";
+import { NeuronModelDisplay } from "@/elektro/displays/NeuronModelDisplay";
 
 // Import your display components here
 // Example:
@@ -24,4 +27,7 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@kraph/entitycategory": EntityCategoryDisplay,
     "@kraph/metric": MetricDisplay,
     "@kabinet/pod": PodDisplay,
+    "@elektro/simulation": SimulationDisplay,
+    "@elektro/block": BlockDisplay,
+    "@elektro/neuronmodel": NeuronModelDisplay,
   });

@@ -36,6 +36,7 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
             <DisplayWidget
               identifier={data.category.identifier}
               object={data.object}
+              link
             />
           ) : (
             <>

@@ -5,4 +5,5 @@ export const displayRegistry = new DisplayRegistry();
 
 displayRegistry.registerDisplayComponent("@mikro-next/image", ImageDisplay);
 displayRegistry.registerDisplayComponent("@mikro-next/file", ImageDisplay);
+displayRegistry.registerDisplayComponent("@elektro/simulation", SimulationDisplay);
 

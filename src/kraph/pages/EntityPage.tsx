@@ -110,9 +110,10 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           {data.entity.pinned && <>Pinned</>}
         </div>
       </KraphEntity.Drop>
-      <div className="p-2">Measured by</div>
-
-      <div className="flex flex-row gap-2 p-6 w-full">
+      {data.entity.measuredBy.length > 0 && (
+        <>
+        <div className="p-2">Measured by</div>
+         <div className="flex flex-row gap-2 p-6 w-full">
         {data.entity.measuredBy.map((measurement) => (
           <KraphMeasurement.Smart
             object={measurement.id}
@@ -133,10 +134,13 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </KraphMeasurement.Smart>
         ))}
       </div>
+      </>
+      )}
 
-      <div className="p-6">Subjectable to</div>
-
-      <div className="flex flex-row gap-2 p-6">
+      {data.entity.subjectableTo.length > 0 && (
+        <>
+        <div className="p-2">Subjectable to</div>
+         <div className="flex flex-row gap-2 p-6">
         {data.entity.subjectableTo.map((protocol) => (
           <Card
             key={`${protocol.role}`}
@@ -144,11 +148,11 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           >
             <FormSheet
               trigger={
-                <div variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   {" "}
                   Subject as <pre>{protocol.role}</pre> in{" "}
                   {protocol.category.label}
-                </div>
+                </Button>
               }
             >
               <LoadingCreateProtocolEventForm
@@ -159,7 +163,11 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </Card>
         ))}
       </div>
+      </>
+      )}
 
+     
+      {data.entity.subjectedTo.length > 0 && <>
       <div className="p-2">Subjected to</div>
 
       <div className="flex flex-row gap-2 p-6">
@@ -202,8 +210,12 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </Card>
         ))}
       </div>
+      </>}  
 
-      <div className="p-6">Targeted by</div>
+      {data.entity.targetedBy.length > 0 && (
+        <>
+        <div className="p-6">Targeted by</div>
+     
 
       <div className="flex flex-row gap-2 p-6">
         {data.entity.targetedBy.map((targeted) => (
@@ -242,8 +254,8 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </Card>
         ))}
       </div>
-
-      <NodeQueriesPlanner entity={data.entity} />
+      </>
+      )}
 
       <div className="flex flex-col p-6 h-full">
         {data.entity.bestView ? (

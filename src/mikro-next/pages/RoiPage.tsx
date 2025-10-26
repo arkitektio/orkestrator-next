@@ -22,14 +22,6 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
     <MikroROI.ModelPage
       title={data?.roi?.id}
       object={data?.roi?.id}
-      sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <MikroROI.Komments object={data?.roi?.id} />,
-            Provenance: <ProvenanceSidebar items={data?.roi.history} />,
-          }}
-        />
-      }
       pageActions={
         <>
           <MikroROI.ObjectButton object={data?.roi?.id} />
@@ -74,8 +66,6 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
               <div className="text-md mt-2 ">
                 <Timestamp date={data?.roi?.createdAt} />
               </div>
-              <div className="font-light my-2 ">Knowledge </div>
-              <MikroROI.TinyKnowledge object={data?.roi?.id} />
               <div className="font-light mt-2 ">Created by</div>
               <div className="text-md mt-2 ">
                 {data?.roi?.creator?.sub && (

@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useViewerState } from "../ViewerStateProvider";
 import { useMySelect } from "@/providers/selection/SelectionContext";
-import { t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
+import { e, t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
 
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
@@ -221,6 +221,7 @@ export const ROIPolygon = (props: {
       <>
         <mesh
           ref={meshRef}
+          position={[0, 0, 0.1]}
           onClick={onClick}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
@@ -253,6 +254,7 @@ export const ROIPolygon = (props: {
       <>
         <mesh
           ref={meshRef}
+          position={[0, 0, 0.1]}
           onClick={onClick}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
@@ -281,7 +283,7 @@ export const ROIPolygon = (props: {
   }
 
   if (roi.kind == RoiKind.Line) {
-    const linePoints = vertices.map(([x, y]) => new THREE.Vector3(x, y, 0));
+    const linePoints = vertices.map(([x, y]) => new THREE.Vector2(x, y));
 
     return (
       <>
@@ -313,7 +315,7 @@ export const ROIPolygon = (props: {
       <>
         <mesh
           ref={meshRef}
-          position={[point[0], point[1], 0]}
+          position={[point[0], point[1], 0.1]}
           onClick={onClick}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
@@ -334,7 +336,7 @@ export const ROIPolygon = (props: {
           />
         </mesh>
         {/* Outer ring for better visibility */}
-        <mesh position={[point[0], point[1], 0.1]}>
+        <mesh position={[point[0], point[1], 0.2]}>
           <ringGeometry args={[hovered ? 8 : 5, hovered ? 10 : 7, 8]} />
           <meshBasicMaterial
             color={color}
@@ -353,6 +355,7 @@ export const ROIPolygon = (props: {
       <>
         <mesh
           ref={meshRef}
+          position={[0, 0, 0.1]}
           onClick={onClick}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
@@ -381,7 +384,7 @@ export const ROIPolygon = (props: {
   }
 
   if (roi.kind == RoiKind.Path) {
-    const pathPoints = vertices.map(([x, y]) => new THREE.Vector3(x, y, 0));
+    const pathPoints = vertices.map(([x, y]) => new THREE.Vector2(x, y));
 
     return (
       <>
@@ -390,6 +393,7 @@ export const ROIPolygon = (props: {
           color={color}
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
+          onPointerUp={(e) => e.stopPropagation()}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
             e.stopPropagation();
@@ -412,6 +416,7 @@ export const ROIPolygon = (props: {
     <>
       <mesh
         ref={meshRef}
+        position={[0, 0, 0.1]}
         onClick={onClick}
         onContextMenu={onRightClick}
         onPointerOver={(e) => {

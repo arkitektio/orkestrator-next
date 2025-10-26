@@ -2,21 +2,34 @@ import { Card } from "@/components/ui/card";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import * as THREE from "three";
 
+import { notEmpty } from "@/lib/utils";
 import {
   DimSelectorKind,
   ListRgbContextFragment,
   ListRoiFragment,
-  RgbContextFragment,
   RgbImageFragment,
   RgbViewFragment,
   useActiveImageViewsQuery,
-  ViewKind,
+  ViewKind
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { Suspense } from "react";
+import AcquisitionViewCard from "../cards/AcquisitionViewCard";
+import ChannelViewCard from "../cards/ChannelViewCard";
+import DerivedViewCard from "../cards/DerivedViewCard";
+import FileViewCard from "../cards/FileViewCard";
+import HistogramViewCard from "../cards/HistogramViewCard";
+import InstanceMaskViewCard from "../cards/InstanceMaskViewCard";
+import LabelViewCard from "../cards/LabelViewCard";
+import LightpathViewCard from "../cards/LightpathViewCard";
+import MaskViewCard from "../cards/MaskViewCard";
+import OpticsViewCard from "../cards/OpticsViewCard";
+import ROIViewCard from "../cards/ROIViewCard";
+import TransformationViewCard from "../cards/TransformationViewCard";
+import WellPositionViewCard from "../cards/WellPositionViewCard";
 import { AutoZoomCamera } from "./cameras/AutoZoomCamera";
-import { ChunkBitmapTexture, CameraFieldOfViewDebug } from "./final/ChunkMesh";
+import { CameraFieldOfViewDebug, ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
@@ -25,24 +38,7 @@ import { PanelContent } from "./panels";
 import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
 import { RoiDrawerCanvas } from "./RoiDrawer";
-import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
-import HistogramViewCard from "../cards/HistogramViewCard";
-import DerivedViewCard from "../cards/DerivedViewCard";
-import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import TransformationViewCard from "../cards/TransformationViewCard";
-import LightpathViewCard from "../cards/LightpathViewCard";
-import LabelViewCard from "../cards/LabelViewCard";
-import InstanceMaskViewCard from "../cards/InstanceMaskViewCard";
-import MaskViewCard from "../cards/MaskViewCard";
-import OpticsViewCard from "../cards/OpticsViewCard";
-import ChannelViewCard from "../cards/ChannelViewCard";
-import RGBViewCard from "../cards/RGBViewCard";
-import AcquisitionViewCard from "../cards/AcquisitionViewCard";
-import WellPositionViewCard from "../cards/WellPositionViewCard";
-import ROIViewCard from "../cards/ROIViewCard";
-import FileViewCard from "../cards/FileViewCard";
-import { notEmpty } from "@/lib/utils";
-import { View } from "lucide-react";
+import { useViewerState, ViewerStateProvider } from "./ViewerStateProvider";
 
 // Grid overlay component with milestone positions
 const GridOverlay = ({
@@ -206,9 +202,6 @@ export const ActiveImageViews = (props: {
           )}
           {view.__typename == "MaskView" && (
             <MaskViewCard item={view} key={"label-" + view.id} />
-          )}
-          {view.__typename == "OpticsView" && (
-            <OpticsViewCard view={view} key={"optics-" + view.id} />
           )}
           {view.__typename == "ChannelView" && (
             <ChannelViewCard view={view} key={"channel-" + view.id} />

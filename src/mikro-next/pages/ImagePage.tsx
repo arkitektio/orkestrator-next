@@ -113,16 +113,6 @@ export default asDetailQueryRoute(
       <MikroImage.ModelPage
         title={data?.image?.name}
         object={data?.image?.id}
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <MikroImage.Komments object={data?.image?.id} />,
-              Provenance: (
-                <ProvenanceSidebar items={data?.image.provenanceEntries} />
-              ),
-            }}
-          />
-        }
         pageActions={
           <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image?.id} />
@@ -253,8 +243,6 @@ export default asDetailQueryRoute(
                       <UserInfo sub={data?.image?.creator?.sub} />
                     )}
                   </div>
-                  <div className="font-light my-2 ">Knowledge </div>
-                  <MikroImage.TinyKnowledge object={data?.image?.id} />
 
                   <div className="flex-row flex gap-2 mt-2"></div>
 

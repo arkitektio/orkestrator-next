@@ -35,3 +35,16 @@ export const ClientAvatar = (props: { clientId: string }) => {
     </Tooltip>
   );
 };
+
+
+
+export const JustClientName = (props: { clientId: string }) => {
+  const { data } = useClientQuery({
+    variables: {
+      clientId: props.clientId,
+    },
+  });
+
+
+  return <>{data?.client.release.app.identifier}:{data?.client.release.version}</>;
+}

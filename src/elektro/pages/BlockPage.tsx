@@ -17,13 +17,6 @@ export default asDetailQueryRoute(useDetailBlockQuery, ({ data }) => {
           <ElektroBlock.ObjectButton object={data.block.id} />
         </div>
       }
-      sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <ElektroBlock.Komments object={data.block.id} />,
-          }}
-        />
-      }
     >
       <div className="flex h-full w-full flex-col gap-6 p-6">
         {/* Header Section */}

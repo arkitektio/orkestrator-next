@@ -112,152 +112,152 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       </KraphEntity.Drop>
       {data.entity.measuredBy.length > 0 && (
         <>
-        <div className="p-2">Measured by</div>
-         <div className="flex flex-row gap-2 p-6 w-full">
-        {data.entity.measuredBy.map((measurement) => (
-          <KraphMeasurement.Smart
-            object={measurement.id}
-            key={`${measurement.id}`}
-            className="w-96"
+          <div className="p-2">Measured by</div>
+          <div className="flex flex-row gap-2 p-6 w-full">
+            {data.entity.measuredBy.map((measurement) => (
+              <KraphMeasurement.Smart
+                object={measurement.id}
+                key={`${measurement.id}`}
+                className="w-96"
 
-          >
-            <Card className="p-2 flex flex-col flex-1 w-96">
-              {measurement.source.__typename == "Structure" && (
-                <DisplayWidget
-                  identifier={measurement.source.identifier}
-                  object={measurement.source.object}
-                  link={true}
-                />
-              )}
-              <pre>{measurement.category.label}</pre>
-            </Card>
-          </KraphMeasurement.Smart>
-        ))}
-      </div>
-      </>
+              >
+                <Card className="p-2 flex flex-col flex-1 w-96">
+                  {measurement.source.__typename == "Structure" && (
+                    <DisplayWidget
+                      identifier={measurement.source.identifier}
+                      object={measurement.source.object}
+                      link={true}
+                    />
+                  )}
+                  <pre>{measurement.category.label}</pre>
+                </Card>
+              </KraphMeasurement.Smart>
+            ))}
+          </div>
+        </>
       )}
 
       {data.entity.subjectableTo.length > 0 && (
         <>
-        <div className="p-2">Subjectable to</div>
-         <div className="flex flex-row gap-2 p-6">
-        {data.entity.subjectableTo.map((protocol) => (
-          <Card
-            key={`${protocol.role}`}
-            className="p-2 flex-col gap-2 flex w-96"
-          >
-            <FormSheet
-              trigger={
-                <Button variant="outline" size="sm">
-                  {" "}
-                  Subject as <pre>{protocol.role}</pre> in{" "}
-                  {protocol.category.label}
-                </Button>
-              }
-            >
-              <LoadingCreateProtocolEventForm
-                rolemap={{ [protocol.role]: data.entity.id }}
-                id={protocol.category.id}
-              />
-            </FormSheet>
-          </Card>
-        ))}
-      </div>
-      </>
+          <div className="p-2">Subjectable to</div>
+          <div className="flex flex-row gap-2 p-6">
+            {data.entity.subjectableTo.map((protocol) => (
+              <Card
+                key={`${protocol.role}`}
+                className="p-2 flex-col gap-2 flex w-96"
+              >
+                <FormSheet
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      {" "}
+                      Subject as <pre>{protocol.role}</pre> in{" "}
+                      {protocol.category.label}
+                    </Button>
+                  }
+                >
+                  <LoadingCreateProtocolEventForm
+                    rolemap={{ [protocol.role]: data.entity.id }}
+                    id={protocol.category.id}
+                  />
+                </FormSheet>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
-     
-      {data.entity.subjectedTo.length > 0 && <>
-      <div className="p-2">Subjected to</div>
 
-      <div className="flex flex-row gap-2 p-6">
-        {data.entity.subjectedTo.map((subjected) => (
-          <Card
-            key={`${subjected.id}`}
-            className="p-2 flex-row gap-2 flex w-96"
-          >
-            <div className="my-auto border border-1 rounded  px-2 py-1">
-              {subjected.role}
-            </div>
-            {subjected.target.__typename == "ProtocolEvent" && (
-              <div className="flex flex-col">
-                <KraphProtocolEvent.DetailLink
-                  object={subjected.target.id}
-                  className={"text-xl font-bold"}
-                >
-                  {subjected.target.category.label}
-                </KraphProtocolEvent.DetailLink>
-                <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                  {subjected.target.validFrom && (
-                    <Timestamp date={subjected.target.validFrom} relative />
-                  )}
-                  {subjected.target.validTo && subjected.target.validFrom && (
-                    <div>
-                      (~
-                      {calculateDuration(
-                        subjected.target.validFrom,
-                        subjected.target.validTo,
-                      )}
-                      )
-                    </div>
-                  )}
-                  {!subjected.target.validTo && !subjected.target.validFrom && (
-                    <div>No validity</div>
-                  )}
-                </div>
+      {data.entity.subjectedTo.length > 0 && <>
+        <div className="p-2">Subjected to</div>
+
+        <div className="flex flex-row gap-2 p-6">
+          {data.entity.subjectedTo.map((subjected) => (
+            <Card
+              key={`${subjected.id}`}
+              className="p-2 flex-row gap-2 flex w-96"
+            >
+              <div className="my-auto border border-1 rounded  px-2 py-1">
+                {subjected.role}
               </div>
-            )}
-          </Card>
-        ))}
-      </div>
-      </>}  
+              {subjected.target.__typename == "ProtocolEvent" && (
+                <div className="flex flex-col">
+                  <KraphProtocolEvent.DetailLink
+                    object={subjected.target.id}
+                    className={"text-xl font-bold"}
+                  >
+                    {subjected.target.category.label}
+                  </KraphProtocolEvent.DetailLink>
+                  <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                    {subjected.target.validFrom && (
+                      <Timestamp date={subjected.target.validFrom} relative />
+                    )}
+                    {subjected.target.validTo && subjected.target.validFrom && (
+                      <div>
+                        (~
+                        {calculateDuration(
+                          subjected.target.validFrom,
+                          subjected.target.validTo,
+                        )}
+                        )
+                      </div>
+                    )}
+                    {!subjected.target.validTo && !subjected.target.validFrom && (
+                      <div>No validity</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      </>}
 
       {data.entity.targetedBy.length > 0 && (
         <>
-        <div className="p-6">Targeted by</div>
-     
+          <div className="p-6">Targeted by</div>
 
-      <div className="flex flex-row gap-2 p-6">
-        {data.entity.targetedBy.map((targeted) => (
-          <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
-            <div className="my-auto border border-1 rounded  px-2 py-1">
-              {targeted.role}
-            </div>
-            {targeted.source.__typename == "ProtocolEvent" && (
-              <div className="flex flex-col">
-                <KraphProtocolEvent.DetailLink
-                  object={targeted.source.id}
-                  className={"text-xl font-bold"}
-                >
-                  {targeted.source.category.label}
-                </KraphProtocolEvent.DetailLink>
-                <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                  {targeted.source.validFrom && (
-                    <Timestamp date={targeted.source.validFrom} relative />
-                  )}
-                  {targeted.source.validTo && targeted.source.validFrom && (
-                    <div>
-                      (~
-                      {calculateDuration(
-                        targeted.source.validFrom,
-                        targeted.source.validTo,
-                      )}
-                      )
-                    </div>
-                  )}
-                  {!targeted.source.validTo && !targeted.source.validFrom && (
-                    <div>No validity</div>
-                  )}
+
+          <div className="flex flex-row gap-2 p-6">
+            {data.entity.targetedBy.map((targeted) => (
+              <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
+                <div className="my-auto border border-1 rounded  px-2 py-1">
+                  {targeted.role}
                 </div>
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
-      </>
+                {targeted.source.__typename == "ProtocolEvent" && (
+                  <div className="flex flex-col">
+                    <KraphProtocolEvent.DetailLink
+                      object={targeted.source.id}
+                      className={"text-xl font-bold"}
+                    >
+                      {targeted.source.category.label}
+                    </KraphProtocolEvent.DetailLink>
+                    <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                      {targeted.source.validFrom && (
+                        <Timestamp date={targeted.source.validFrom} relative />
+                      )}
+                      {targeted.source.validTo && targeted.source.validFrom && (
+                        <div>
+                          (~
+                          {calculateDuration(
+                            targeted.source.validFrom,
+                            targeted.source.validTo,
+                          )}
+                          )
+                        </div>
+                      )}
+                      {!targeted.source.validTo && !targeted.source.validFrom && (
+                        <div>No validity</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
-      <div className="flex flex-col p-6 h-full">
+      <div className="flex flex-col h-full">
         {data.entity.bestView ? (
           <SelectiveNodeViewRenderer view={data.entity.bestView} />
         ) : (

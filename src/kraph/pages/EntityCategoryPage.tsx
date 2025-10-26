@@ -141,9 +141,6 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-        <div className="flex flex-col p-6 h-full">
-          <StructureQueriesPlanner category={data.entityCategory} />
-        </div>
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

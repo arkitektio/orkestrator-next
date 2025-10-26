@@ -22,13 +22,6 @@ export default asDetailQueryRoute(
             <ElektroNeuronModel.ObjectButton object={data.neuronModel.id} />
           </div>
         }
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <ElektroNeuronModel.Komments object={data.neuronModel.id} />,
-            }}
-          />
-        }
       >
         <div className="h-full w-full grid grid-cols-12 grid-reverse gap-4 pointers-events-none">
 

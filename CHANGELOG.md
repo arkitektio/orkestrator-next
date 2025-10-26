@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/arkitektio/orkestrator-next/compare/v1.8.0...v1.8.1) (2025-10-26)
+
+
+### Bug Fixes
+
+* structure widget ([e935330](https://github.com/arkitektio/orkestrator-next/commit/e9353306e73aabdf0f4e5aa34b14dcd1d72ae6e9))
+
 # [1.8.0](https://github.com/arkitektio/orkestrator-next/compare/v1.7.3...v1.8.0) (2025-10-26)
 
 

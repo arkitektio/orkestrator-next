@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/arkitektio/orkestrator-next/compare/v1.7.3...v1.8.0) (2025-10-26)
+
+
+### Features
+
+* more structures and displays for the knowledge graph ([ef66e48](https://github.com/arkitektio/orkestrator-next/commit/ef66e48890edaedce1e971928abd3477158b21af))
+
 ## [1.7.3](https://github.com/arkitektio/orkestrator-next/compare/v1.7.2...v1.7.3) (2025-10-26)
 
 

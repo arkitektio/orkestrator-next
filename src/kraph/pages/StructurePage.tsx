@@ -13,9 +13,13 @@ import { useGetStructureQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateStructureNodeQueryForm from "../forms/CreateStructureNodeQueryForm";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
+import { useDisplayComponent } from "@/app/display";
+import { DisplayWidget } from "@/command/Menu";
 
 export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
+
+  const Widget = useDisplayComponent(data.structure.identifier || "");
 
   return (
     <KraphStructure.ModelPage
@@ -57,15 +61,10 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
           </p>
         </div>
         <Card className="flex flex-row gap-2 p-4">
-          <DelegatingStructureWidget
-            port={{
-              key: "structure",
-              nullable: true,
-              kind: PortKind.Structure,
-              __typename: "Port",
-              identifier: data.structure.identifier,
-            }}
-            value={data.structure.object}
+          <DisplayWidget
+            identifier={data.structure.identifier}  
+            object={data.structure.object}
+            link
           />
         </Card>
       </KraphStructure.Drop>

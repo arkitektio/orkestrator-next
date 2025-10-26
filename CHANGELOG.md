@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/arkitektio/orkestrator-next/compare/v1.7.2...v1.7.3) (2025-10-26)
+
+
+### Bug Fixes
+
+* args not defined ([213e3e9](https://github.com/arkitektio/orkestrator-next/commit/213e3e9c5d7b92cd3bcd860502efe0c8ff469665))
+
 ## [1.7.2](https://github.com/arkitektio/orkestrator-next/compare/v1.7.1...v1.7.2) (2025-10-09)
 
 

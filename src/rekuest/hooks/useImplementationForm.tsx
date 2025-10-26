@@ -34,7 +34,10 @@ export const useImplementationForm = (props: {
   }, [hash, props.overwrites]);
 
   const myResolver = useCallback(() => {
-    const argsSchema = buildZodSchema(props.implementation?.action.args || []);
+    let argsSchema = buildZodSchema(props.implementation?.action.args || [])
+    if (props.implementation?.action.args.length === 0) {
+      argsSchema = argsSchema.optional();
+    }
 
     const zodSchema = Zod.object({
       args: argsSchema,
@@ -55,7 +58,7 @@ export const useImplementationForm = (props: {
         (data) => {
 
           onSubmit({
-            args: submittedDataToRekuestFormat(data.args, props.implementation?.action.args || []),
+            args: submittedDataToRekuestFormat(data.args || {}, props.implementation?.action.args || []),
             dependencies: data.dependencies,
           });
         },

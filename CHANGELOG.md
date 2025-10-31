@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/arkitektio/orkestrator-next/compare/v1.9.0...v1.10.0) (2025-10-31)
+
+
+### Features
+
+* the builder pattern first iteration ([f14e9c7](https://github.com/arkitektio/orkestrator-next/commit/f14e9c71222b4d80de436ffea64f8dcc7865c5f5))
+
 # [1.9.0](https://github.com/arkitektio/orkestrator-next/compare/v1.8.1...v1.9.0) (2025-10-26)
 
 

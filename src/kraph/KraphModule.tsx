@@ -43,7 +43,8 @@ import RelationPage from "./pages/RelationPage";
 import StructureRelationPage from "./pages/StructureRelationPage";
 import GraphQueryDesignerPage from "./pages/designer/GraphQueryDesignerPage";
 import NodeQueryDesignerPage from "./pages/designer/NodeQueryDesignerPage";
-interface Props {}
+import BuilderPage from "./pages/graph/BuilderPage";
+interface Props { }
 
 export const KraphModule: React.FC<Props> = (props) => {
   return (
@@ -67,6 +68,7 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="structures/:id" element={<StructurePage />} />
           <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
+          <Route path="graphs/:id/builder" element={<BuilderPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
           <Route

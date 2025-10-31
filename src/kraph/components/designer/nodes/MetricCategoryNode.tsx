@@ -7,6 +7,8 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { MetricNode } from "../types";
+import { PathMarker } from "../components/PathMarker";
+import { NodeQueryControls } from "../components/NodeQueryControls";
 
 export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
   const resolve = useResolve();
@@ -52,7 +54,9 @@ export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
             </div>
             <div className="flex flex-row gap-2">{data.metricKind}</div>
           </div>
+          <NodeQueryControls nodeId={id} nodeType="Metric" />
         </Card>
+        <PathMarker nodeId={id} />
       </div>
     </>
   );

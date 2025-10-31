@@ -7,6 +7,9 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { GenericNode } from "../types";
+import { PathMarker } from "../components/PathMarker";
+import { NodeQueryControls } from "../components/NodeQueryControls";
+
 export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
   const resolve = useResolve();
 
@@ -47,6 +50,8 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
             ))}
           </div>
         </div>
+        <PathMarker nodeId={id} />
+        <NodeQueryControls nodeId={id} nodeType="Entity" />
       </KraphEntityCategory.Smart>
     </>
   );

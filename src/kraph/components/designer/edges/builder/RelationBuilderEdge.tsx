@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-import { KraphRelationCategory } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -8,9 +6,9 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { useIsEdgePossible } from "../OntologyGraphProvider";
-import { RelationEdge } from "../types";
-import { getEdgeParams } from "../utils";
+import { RelationEdge } from "../../types";
+import { getEdgeParams } from "../../utils";
+import { PathEdgePresentation, useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -45,7 +43,7 @@ export default ({
 }: EdgeProps<RelationEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
-  const isPossible = useIsEdgePossible(id);
+  const strokeStyle = useEdgeStrokeStyle(id);
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -86,37 +84,21 @@ export default ({
         path={path}
         markerEnd={markerEnd}
         label={data?.label}
-        style={{
-          opacity: isPossible ? 1 : 0.3,
-          stroke: isPossible ? undefined : '#666',
-          strokeWidth: isPossible ? 2 : 1
-        }}
+        style={strokeStyle}
       />
       <EdgeLabelRenderer>
-        <Card
-          style={{
-            position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
-            opacity: isPossible ? 1 : 0.3,
-            pointerEvents: isPossible ? 'all' : 'none',
-          }}
-          className="p-1 text-xs group nodrag nopan transition-opacity"
+        <PathEdgePresentation
+          id={id}
+          transform={`translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`}
         >
-          <KraphRelationCategory.Smart
-            object={data?.id || "0"}
-            className="w-20"
-          >
+          <div className="w-20">
             {data?.id && (
-              <KraphRelationCategory.DetailLink
-                object={data?.id}
-                style={{ pointerEvents: isPossible ? "all" : "none" }}
-                className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-              >
+              <div className="font-bold">
                 {data?.label}
-              </KraphRelationCategory.DetailLink>
+              </div>
             )}
-          </KraphRelationCategory.Smart>
-        </Card>
+          </div>
+        </PathEdgePresentation>
       </EdgeLabelRenderer>
     </>
   );

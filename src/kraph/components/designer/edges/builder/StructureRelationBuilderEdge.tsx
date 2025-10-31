@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { KraphRelationCategory } from "@/linkers";
+import { KraphStructureRelationCategory } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -8,9 +8,9 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { useIsEdgePossible } from "../OntologyGraphProvider";
-import { RelationEdge } from "../types";
-import { getEdgeParams } from "../utils";
+import { MeasurementEdge } from "../../types";
+import { getEdgeParams } from "../../utils";
+import { useIsEdgePossible, useEdgePaths } from "../../OntologyGraphProvider";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -26,11 +26,11 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+export const TEdge = ({
   id,
   data,
   source,
@@ -42,10 +42,12 @@ export default ({
   sourcePosition,
   targetPosition,
   markerEnd,
-}: EdgeProps<RelationEdge>) => {
+}: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
   const isPossible = useIsEdgePossible(id);
+  const edgePaths = useEdgePaths(id);
+  const pathColor = edgePaths.length > 0 ? edgePaths[0].color : undefined;
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -86,38 +88,55 @@ export default ({
         path={path}
         markerEnd={markerEnd}
         label={data?.label}
+        color="#ff00ff"
         style={{
-          opacity: isPossible ? 1 : 0.3,
-          stroke: isPossible ? undefined : '#666',
-          strokeWidth: isPossible ? 2 : 1
+          opacity: isPossible ? 1 : 0.15,
+          stroke: pathColor || (isPossible ? 'rgb(59, 130, 246)' : 'rgb(100, 100, 100)'),
+          strokeWidth: pathColor ? 4 : isPossible ? 3 : 1,
+          filter: pathColor
+            ? `drop-shadow(0 0 8px ${pathColor}) drop-shadow(0 0 16px ${pathColor})`
+            : isPossible
+              ? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.6))'
+              : 'none',
+          transition: 'all 0.3s ease'
         }}
       />
       <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
-            opacity: isPossible ? 1 : 0.3,
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY}px) `,
+            opacity: isPossible ? 1 : 0.2,
             pointerEvents: isPossible ? 'all' : 'none',
+            boxShadow: pathColor
+              ? `0 0 12px 2px ${pathColor}`
+              : isPossible
+                ? '0 0 8px 1px rgba(59, 130, 246, 0.4)'
+                : '0 0 5px 1px rgba(100, 100, 100, 0.2)',
+            borderColor: pathColor || (isPossible ? 'rgba(59, 130, 246, 0.5)' : 'rgba(100, 100, 100, 0.3)'),
+            borderWidth: pathColor ? '2px' : '1px',
+            filter: !isPossible && !pathColor ? 'grayscale(0.8)' : 'none'
           }}
-          className="p-1 text-xs group nodrag nopan transition-opacity"
+          className="p-3 text-xs group z-10 nodrag nopan transition-all duration-300"
         >
-          <KraphRelationCategory.Smart
+          <KraphStructureRelationCategory.Smart
             object={data?.id || "0"}
             className="w-20"
           >
             {data?.id && (
-              <KraphRelationCategory.DetailLink
+              <KraphStructureRelationCategory.DetailLink
                 object={data?.id}
                 style={{ pointerEvents: isPossible ? "all" : "none" }}
                 className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 {data?.label}
-              </KraphRelationCategory.DetailLink>
+              </KraphStructureRelationCategory.DetailLink>
             )}
-          </KraphRelationCategory.Smart>
+          </KraphStructureRelationCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>
   );
 };
+
+export default TEdge;

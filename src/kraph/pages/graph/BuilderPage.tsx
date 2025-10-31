@@ -8,12 +8,13 @@ import {
   useGetGraphQuery,
   useMaterializeGraphMutation,
   useUpdateGraphMutation,
-} from "../api/graphql";
+} from "../../api/graphql";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import OntologyGraph from "../components/designer/OntologyGraph";
-import { UpdateGraphForm } from "../forms/UpdateGraphForm";
+import OntologyGraph from "../../components/designer/OntologyGraph";
+import { UpdateGraphForm } from "../../forms/UpdateGraphForm";
+import QueryBuilderGraph from "@/kraph/components/designer/QueryBuilderGraph";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({
@@ -52,14 +53,6 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
-          <KraphGraph.DetailLink
-            object={data.graph.id}
-            subroute="builder"
-          >
-            <Button variant="outline" size="sm">
-              Builder
-            </Button>
-          </KraphGraph.DetailLink>
           <Button
             onClick={() => {
               pin();
@@ -90,41 +83,16 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         />
       }
     >
-      <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">
-        <div className="col-span-5">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.graph.name}
-          </h1>
-          <p className="mt-3 text-xl text-muted-foreground">
-            {data.graph.description}{" "}
-            {data.graph.ageName && `· ${data.graph.ageName}`}
-          </p>
-        </div>
-        <div className="col-span-7 flex justify-end"></div>
-      </div>
-      <OntologyGraph graph={data.graph} />
-      {data.graph.graphQueries.length > 0 && (
-        <>
-          <h2 className="mt-4 text-xl f">Popular Queries</h2>
+      <div className="grid grid-cols-12 gap-4 mb-4 h-full w-full">
+        <div className="col-span-12 md:col-span-12">
 
-          <div className="mt-1 flex flex-row gap-2">
-            {data.graph.graphQueries.map((x) => (
-              <>
-                <Card className=" p-3">
-                  <KraphGraphQuery.DetailLink
-                    object={x.id}
-                    className="scroll-m-20 text-xl font-semibold tracking-tight"
-                  >
-                    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                      {x.name}
-                    </h3>
-                  </KraphGraphQuery.DetailLink>
-                </Card>
-              </>
-            ))}
-          </div>
-        </>
-      )}
+          <QueryBuilderGraph graph={data.graph} />
+        </div>
+
+
+
+
+      </div>
     </KraphGraph.ModelPage>
   );
 });

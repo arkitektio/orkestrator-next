@@ -19,7 +19,7 @@ import {
   StructureCategoryInput
 } from "@/kraph/api/graphql";
 
-export type GenericNode = Node<ListEntityCategoryFragment, "genericcategory">;
+export type GenericNode = Node<ListEntityCategoryFragment, "entitycategory">;
 export type ReagentNode = Node<ListReagentCategoryFragment, "reagentcategory">;
 export type MetricNode = Node<ListMetricCategoryFragment, "metriccategory">;
 export type ProtocolEventNode = Node<

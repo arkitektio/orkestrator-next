@@ -10,6 +10,7 @@ import {
 } from "@xyflow/react";
 import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
+import { useIsEdgePossible } from "../OntologyGraphProvider";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -25,9 +26,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export const TEdge = ({
@@ -45,6 +45,7 @@ export const TEdge = ({
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
+  const isPossible = useIsEdgePossible(id);
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -67,9 +68,8 @@ export const TEdge = ({
   if (source == target) {
     const radiusX = 100;
     const radiusY = 100;
-    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
-      targetX + 5
-    } ${targetY}`;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 5
+      } ${targetY}`;
 
     centerX = sourceX - radiusX * 2;
     centerY = (sourceY + targetY) / 2;
@@ -87,14 +87,21 @@ export const TEdge = ({
         markerEnd={markerEnd}
         label={data?.label}
         color="#ff00ff"
+        style={{
+          opacity: isPossible ? 1 : 0.3,
+          stroke: isPossible ? undefined : '#666',
+          strokeWidth: isPossible ? 2 : 1
+        }}
       />
       <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY}px) `,
+            opacity: isPossible ? 1 : 0.3,
+            pointerEvents: isPossible ? 'all' : 'none',
           }}
-          className="p-3 text-xs group z-10 nodrag nopan"
+          className="p-3 text-xs group z-10 nodrag nopan transition-opacity"
         >
           <KraphStructureRelationCategory.Smart
             object={data?.id || "0"}
@@ -103,8 +110,8 @@ export const TEdge = ({
             {data?.id && (
               <KraphStructureRelationCategory.DetailLink
                 object={data?.id}
-                style={{ pointerEvents: "all" }}
-                className={"font-bold cursor-pointer "}
+                style={{ pointerEvents: isPossible ? "all" : "none" }}
+                className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 {data?.label}
               </KraphStructureRelationCategory.DetailLink>

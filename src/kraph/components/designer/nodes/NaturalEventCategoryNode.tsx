@@ -9,6 +9,7 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { NaturalEventNode } from "../types";
+import { PathMarker } from "../components/PathMarker";
 
 export default memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
   const resolve = useResolve();
@@ -53,6 +54,7 @@ export default memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
               ))}
             </div>
           </div>
+          <PathMarker nodeId={id} />
         </Card>
       </div>
     </>

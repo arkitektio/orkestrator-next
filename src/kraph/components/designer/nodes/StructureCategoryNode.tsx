@@ -7,6 +7,7 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { StructureNode } from "../types";
+import { NodeQueryControls } from "../components/NodeQueryControls";
 
 export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
   const resolve = useResolve();
@@ -51,6 +52,7 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
             ))}
           </div>
         </div>
+        <NodeQueryControls nodeId={id} nodeType="Structure" />
       </KraphStructureCategory.Smart>
     </>
   );

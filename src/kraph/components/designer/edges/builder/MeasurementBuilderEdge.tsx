@@ -7,15 +7,15 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { MeasurementEdge } from "../types";
-import { getEdgeParams } from "../utils";
+import { MeasurementEdge } from "../../types";
+import { getEdgeParams } from "../../utils";
 import { KraphMeasurementCategory } from "@/linkers";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useIsEdgePossible } from "../OntologyGraphProvider";
+import { useIsEdgePossible, useEdgePaths } from "../../OntologyGraphProvider";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -51,6 +51,8 @@ export default ({
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
   const isPossible = useIsEdgePossible(id);
+  const edgePaths = useEdgePaths(id);
+  const pathColor = edgePaths.length > 0 ? edgePaths[0].color : undefined;
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -97,9 +99,15 @@ export default ({
         label={data?.label}
         color="#ff00ff"
         style={{
-          opacity: isPossible ? 1 : 0.3,
-          stroke: isPossible ? undefined : '#666',
-          strokeWidth: isPossible ? 2 : 1
+          opacity: isPossible ? 1 : 0.15,
+          stroke: pathColor || (isPossible ? 'rgb(59, 130, 246)' : 'rgb(100, 100, 100)'),
+          strokeWidth: pathColor ? 4 : isPossible ? 3 : 1,
+          filter: pathColor
+            ? `drop-shadow(0 0 8px ${pathColor}) drop-shadow(0 0 16px ${pathColor})`
+            : isPossible
+              ? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.6))'
+              : 'none',
+          transition: 'all 0.3s ease'
         }}
       />
       <EdgeLabelRenderer>
@@ -107,25 +115,30 @@ export default ({
           style={{
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX + offset}px,${centerY + offset}px)`,
-            opacity: isPossible ? 1 : 0.3,
+            opacity: isPossible ? 1 : 0.2,
             pointerEvents: isPossible ? 'all' : 'none',
+            boxShadow: pathColor
+              ? `0 0 12px 2px ${pathColor}`
+              : isPossible
+                ? '0 0 8px 1px rgba(59, 130, 246, 0.4)'
+                : '0 0 5px 1px rgba(100, 100, 100, 0.2)',
+            borderColor: pathColor || (isPossible ? 'rgba(59, 130, 246, 0.5)' : 'rgba(100, 100, 100, 0.3)'),
+            borderWidth: pathColor ? '2px' : '1px',
+            filter: !isPossible && !pathColor ? 'grayscale(0.8)' : 'none'
           }}
-          className="p-3 text-xs group nodrag nopan transition-opacity"
+          className="p-3 text-xs group nodrag nopan transition-all duration-300"
         >
-          <KraphMeasurementCategory.Smart
-            object={data?.id || "0"}
+          <div
             className="w-16 overflow-hidden items-center justify-center flex"
           >
             <Tooltip>
               <TooltipTrigger asChild>
                 {data?.id && (
-                  <KraphMeasurementCategory.DetailLink
-                    object={data?.id}
-                    style={{ pointerEvents: isPossible ? "all" : "none" }}
+                  <div
                     className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                   >
                     {data?.label}
-                  </KraphMeasurementCategory.DetailLink>
+                  </div>
                 )}
               </TooltipTrigger>
               <TooltipContent>
@@ -134,7 +147,7 @@ export default ({
                 </span>
               </TooltipContent>
             </Tooltip>
-          </KraphMeasurementCategory.Smart>
+          </div>
         </Card>
       </EdgeLabelRenderer>
     </>

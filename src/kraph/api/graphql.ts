@@ -852,6 +852,7 @@ export type GraphQueryFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<GraphQueryFilter>;
   OR?: InputMaybe<GraphQueryFilter>;
+  graph?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;

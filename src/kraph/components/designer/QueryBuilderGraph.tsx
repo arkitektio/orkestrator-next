@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import {
   GraphFragment,
@@ -18,7 +21,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useState, useMemo } from "react";
-import { Filter, Plus, X } from "lucide-react";
+import { Filter, Plus, X, ExternalLink } from "lucide-react";
 import "./index.css";
 import { OntologyGraphProvider, Path, PATH_COLORS, WhereCondition, ReturnColumn, NodeWhereClause } from "./OntologyGraphProvider";
 import {
@@ -29,6 +32,7 @@ import { BUILDER_EDGE_TYPES, BUILDER_NODE_TYPES, discoLayout, forceLayout, hashG
 import { enrichPath, generateUnifiedCypherQueryWithColumns, generateGraphQueryInput } from "./cypherGenerator";
 import { CypherQueryDisplay } from "./components/CypherQueryDisplay";
 import { ReturnColumnBuilder } from "./components/ReturnColumnBuilder";
+import { KraphGraphQuery } from "@/linkers";
 
 // Node property configurations
 const NODE_PROPERTIES: Record<string, Array<{ name: string; type: 'string' | 'number' | 'boolean' }>> = {
@@ -210,9 +214,16 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   // WHERE clause builder state - track which node is being edited inline
   const [editingWhereNode, setEditingWhereNode] = useState<{ pathIndex: number; nodeId: string } | null>(null);
 
+  // Node occurrence selection state - when starting a new path from a node that appears multiple times
+  const [nodeOccurrenceSelection, setNodeOccurrenceSelection] = useState<{
+    nodeId: string;
+    occurrences: Array<{ pathIndex: number; nodePosition: number }>;
+  } | null>(null);
+
   // RETURN columns state
   const [returnColumns, setReturnColumns] = useState<ReturnColumn[]>([]);
   const [returnBuilderOpen, setReturnBuilderOpen] = useState(false);
+  const [useDistinct, setUseDistinct] = useState(true); // DISTINCT enabled by default
 
   // WHERE clauses state - now global for all nodes
   const [whereClauses, setWhereClauses] = useState<NodeWhereClause[]>([]);
@@ -446,12 +457,38 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     // If no active path, start a new one
     if (!activePath) {
       const color = PATH_COLORS[nextColorIndex % PATH_COLORS.length];
+
+      // Check if this node appears in multiple places in existing paths
+      const occurrences: Array<{ pathIndex: number; nodePosition: number }> = [];
+      paths.forEach((path, pathIndex) => {
+        path.nodes.forEach((nodeId, nodePosition) => {
+          if (nodeId === node.id) {
+            occurrences.push({ pathIndex, nodePosition });
+          }
+        });
+      });
+
+      // If node appears multiple times, show selection dialog
+      if (occurrences.length > 1) {
+        setNodeOccurrenceSelection({
+          nodeId: node.id,
+          occurrences,
+        });
+        return;
+      }
+
+      // If node appears once or not at all, proceed normally
+      const startsFromPath = occurrences.length === 1 ? occurrences[0].pathIndex : undefined;
+      const startsFromNodePosition = occurrences.length === 1 ? occurrences[0].nodePosition : undefined;
+
       setActivePath({
         nodes: [node.id],
         relations: [],
         optional: false,
         title: `Path ${paths.length + 1}`,
         color,
+        startsFromPath,
+        startsFromNodePosition,
       });
       return;
     }
@@ -485,10 +522,72 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     setActivePath(newPath);
   };
 
+  // Helper function to convert a string to snake_case and clean it for use as a variable name
+  const toSnakeCase = (str: string): string => {
+    return str
+      .trim()
+      // Replace spaces, hyphens, and other non-alphanumeric chars with underscores
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      // Insert underscore before uppercase letters (for camelCase)
+      .replace(/([a-z])([A-Z])/g, '$1_$2')
+      // Convert to lowercase
+      .toLowerCase()
+      // Remove leading/trailing underscores
+      .replace(/^_+|_+$/g, '')
+      // Replace multiple consecutive underscores with single underscore
+      .replace(/_+/g, '_')
+      // Ensure it starts with a letter (prefix with 'col_' if it starts with a number)
+      .replace(/^([0-9])/, 'col_$1');
+  };
+
   const finishPath = () => {
     if (activePath && activePath.nodes.length > 0) {
       setPaths([...paths, activePath]);
       setNextColorIndex(nextColorIndex + 1);
+
+      // Automatically add return columns for all metric nodes in the path
+      const newReturnColumns: ReturnColumn[] = [];
+      activePath.nodes.forEach((nodeId) => {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (node && node.type === "metriccategory") {
+          // Get the metric label for nice column naming, convert to snake_case
+          const metricLabel = node.data.label || "metric";
+          const cleanedLabel = toSnakeCase(metricLabel);
+
+          // Check if columns don't already exist for this node
+          const hasValueColumn = returnColumns.some(
+            (col) => col.nodeId === nodeId && col.property === "value"
+          );
+          const hasIdColumn = returnColumns.some(
+            (col) => col.nodeId === nodeId && col.property === "id"
+          );
+
+          // Add value column if not exists, with snake_case metric label as alias
+          if (!hasValueColumn) {
+            newReturnColumns.push({
+              nodeId,
+              property: "value",
+              alias: cleanedLabel,
+            });
+          }
+
+          // Add id column if not exists (with idfor property set), with snake_case metric_id as alias
+          if (!hasIdColumn) {
+            newReturnColumns.push({
+              nodeId,
+              property: "id",
+              alias: `${cleanedLabel}_id`,
+              idfor: [nodeId], // Set idfor to mark this as the identifier for this node
+            });
+          }
+        }
+      });
+
+      // Add the new return columns
+      if (newReturnColumns.length > 0) {
+        setReturnColumns([...returnColumns, ...newReturnColumns]);
+      }
+
       setActivePath(null);
     }
   };
@@ -503,6 +602,23 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     }
   };
 
+  const selectNodeOccurrence = (pathIndex: number, nodePosition: number) => {
+    if (!nodeOccurrenceSelection) return;
+
+    const color = PATH_COLORS[nextColorIndex % PATH_COLORS.length];
+    setActivePath({
+      nodes: [nodeOccurrenceSelection.nodeId],
+      relations: [],
+      optional: false,
+      title: `Path ${paths.length + 1}`,
+      color,
+      startsFromPath: pathIndex,
+      startsFromNodePosition: nodePosition,
+    });
+
+    setNodeOccurrenceSelection(null);
+  };
+
   const clearAllPaths = () => {
     setPaths([]);
     setActivePath(null);
@@ -515,6 +631,35 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   // Delete a specific path
   const deletePath = (pathIndex: number) => {
     const updatedPaths = paths.filter((_, index) => index !== pathIndex);
+    setPaths(updatedPaths);
+
+    // Clean up WHERE clauses and return columns that reference deleted nodes
+    cleanupOrphanedReferences(updatedPaths);
+  };
+
+  // Truncate a path from a specific node index (delete node and everything after it)
+  const truncatePathFromNode = (pathIndex: number, nodeIndex: number) => {
+    const updatedPaths = [...paths];
+    const path = updatedPaths[pathIndex];
+
+    if (!path || nodeIndex >= path.nodes.length) return;
+
+    // Truncate nodes array from nodeIndex onwards
+    path.nodes = path.nodes.slice(0, nodeIndex);
+
+    // Truncate relations array (should have one less element than nodes)
+    path.relations = path.relations.slice(0, Math.max(0, nodeIndex - 1));
+
+    // Truncate relationDirections if it exists
+    if (path.relationDirections) {
+      path.relationDirections = path.relationDirections.slice(0, Math.max(0, nodeIndex - 1));
+    }
+
+    // If path becomes empty, remove it entirely
+    if (path.nodes.length === 0) {
+      updatedPaths.splice(pathIndex, 1);
+    }
+
     setPaths(updatedPaths);
 
     // Clean up WHERE clauses and return columns that reference deleted nodes
@@ -602,8 +747,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     }
 
     const enrichedPaths = paths.map((path) => enrichPath(path, nodes, edges));
-    return generateUnifiedCypherQueryWithColumns(enrichedPaths, nodes, returnColumns, whereClauses);
-  }, [paths, nodes, edges, returnColumns, whereClauses]);
+    return generateUnifiedCypherQueryWithColumns(enrichedPaths, nodes, returnColumns, whereClauses, useDistinct);
+  }, [paths, nodes, edges, returnColumns, whereClauses, useDistinct]);
 
   // Generate GraphQueryInput
   const graphQueryInput = useMemo(() => {
@@ -773,7 +918,19 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
           {/* Display Query Results */}
           {executedGraphQuery && (
             <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full border-green-500">
-              <div className="font-semibold text-sm text-green-600">Query Results</div>
+              <div className="flex items-center justify-between">
+                <div className="font-semibold text-sm text-green-600">Query Results</div>
+                <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open Detail View
+                  </Button>
+                </KraphGraphQuery.DetailLink>
+              </div>
               <div className="w-full h-96 overflow-auto">
                 <SelectiveGraphQueryRenderer
                   graphQuery={executedGraphQuery}
@@ -809,7 +966,7 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
                 {/* Display nodes with WHERE buttons */}
                 <div className="flex flex-col gap-1 mt-2">
-                  {path.nodes.map((nodeId) => {
+                  {path.nodes.map((nodeId, nodeIndex) => {
                     const node = nodes.find((n) => n.id === nodeId);
                     if (!node) return null;
 
@@ -822,18 +979,30 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                     const isEditing = editingWhereNode?.pathIndex === pathIndex && editingWhereNode?.nodeId === nodeId;
 
                     return (
-                      <div key={nodeId} className="space-y-2">
+                      <div key={`${nodeId}-${nodeIndex}`} className="space-y-2">
                         <div className="flex items-center justify-between gap-2 text-xs">
                           <span className="flex-1 truncate">{nodeLabel}</span>
-                          <Button
-                            size="sm"
-                            variant={hasFilters ? "default" : "outline"}
-                            className="h-6 px-2 text-xs"
-                            onClick={() => toggleWhereEditor(pathIndex, nodeId)}
-                          >
-                            <Filter className="h-3 w-3 mr-1" />
-                            {hasFilters ? `${nodeWhereClause.conditions.length}` : "WHERE"}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant={hasFilters ? "default" : "outline"}
+                              className="h-6 px-2 text-xs"
+                              onClick={() => toggleWhereEditor(pathIndex, nodeId)}
+                            >
+                              <Filter className="h-3 w-3 mr-1" />
+                              {hasFilters ? `${nodeWhereClause.conditions.length}` : "WHERE"}
+                            </Button>
+                            {/* Delete button - truncate path from this node onwards */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                              onClick={() => truncatePathFromNode(pathIndex, nodeIndex)}
+                              title="Delete this node and everything after it"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
 
                         {/* Inline WHERE clause editor */}
@@ -856,23 +1025,38 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
           {/* Action buttons */}
           {paths.length > 0 && (
-            <div className="flex flex-row gap-2 w-full">
-              <Button
-                onClick={() => setReturnBuilderOpen(true)}
-                variant={"outline"}
-                className="flex-1"
-              >
-                Add Return ({returnColumns.length})
-              </Button>
-              <Button
-                onClick={runQuery}
-                variant={"default"}
-                className="flex-1"
-                disabled={isRunning || !graphQueryInput}
-              >
-                {isRunning ? "Running..." : "Run Query"}
-              </Button>
-            </div>
+            <>
+              <div className="flex items-center space-x-2 w-full p-2 bg-background/50 rounded border">
+                <Checkbox
+                  id="use-distinct"
+                  checked={useDistinct}
+                  onCheckedChange={(checked) => setUseDistinct(checked as boolean)}
+                />
+                <Label
+                  htmlFor="use-distinct"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Use DISTINCT in RETURN clause
+                </Label>
+              </div>
+              <div className="flex flex-row gap-2 w-full">
+                <Button
+                  onClick={() => setReturnBuilderOpen(true)}
+                  variant={"outline"}
+                  className="flex-1"
+                >
+                  Add Return ({returnColumns.length})
+                </Button>
+                <Button
+                  onClick={runQuery}
+                  variant={"default"}
+                  className="flex-1"
+                  disabled={isRunning || !graphQueryInput}
+                >
+                  {isRunning ? "Running..." : "Run Query"}
+                </Button>
+              </div>
+            </>
           )}
 
           {/* Display active path */}
@@ -933,6 +1117,45 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
           />
         );
       })()}
+
+      {/* Node Occurrence Selection Dialog */}
+      <Dialog open={nodeOccurrenceSelection !== null} onOpenChange={(open) => !open && setNodeOccurrenceSelection(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Node Occurrence</DialogTitle>
+            <DialogDescription>
+              This node appears multiple times in existing paths. Select which occurrence you want to start the new path from to reuse its variable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 mt-4">
+            {nodeOccurrenceSelection?.occurrences.map((occ, index) => {
+              const path = paths[occ.pathIndex];
+              const node = nodes.find(n => n.id === nodeOccurrenceSelection.nodeId);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const nodeLabel = node ? ((node.data as any)?.ageName || (node.data as any)?.label || (node.data as any)?.identifier || nodeOccurrenceSelection.nodeId) : nodeOccurrenceSelection.nodeId;
+
+              return (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="justify-start h-auto p-3"
+                  onClick={() => selectNodeOccurrence(occ.pathIndex, occ.nodePosition)}
+                >
+                  <div className="flex flex-col items-start gap-1 w-full">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: path.color }}></div>
+                      <span className="font-semibold">{path.title || `Path ${occ.pathIndex + 1}`}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Position {occ.nodePosition + 1} of {path.nodes.length} - {nodeLabel}
+                    </div>
+                  </div>
+                </Button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </OntologyGraphProvider>
   );
 };

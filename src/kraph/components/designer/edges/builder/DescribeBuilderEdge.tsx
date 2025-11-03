@@ -9,6 +9,7 @@ import {
 import { DescribeEdge } from "../../types";
 import { getEdgeParams } from "../../utils";
 import { Card } from "@/components/ui/card";
+import { useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -77,6 +78,9 @@ export default ({
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
+
+  const strokeStyle = useEdgeStrokeStyle(id);
+
   return (
     <>
       <BaseEdge
@@ -84,6 +88,7 @@ export default ({
         markerEnd={markerEnd}
         label={data?.label}
         color="#ff00ff"
+        style={strokeStyle}
       />
       <EdgeLabelRenderer>
         <Card

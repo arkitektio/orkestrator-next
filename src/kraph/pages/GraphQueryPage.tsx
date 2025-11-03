@@ -5,12 +5,17 @@ import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
 import {
   useGetGraphQueryQuery,
   usePinGraphQueryMutation,
+  ViewKind,
 } from "../api/graphql";
 
 import { Card } from "@/components/ui/card";
 import { CypherEditor } from "../components/cypher/CypherEditor";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import { CypherSidebar } from "../components/sidebars/CypherSidebar";
+import { FormDialog } from "@/components/dialog/FormDialog";
+import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
+import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
+import { Plus } from "lucide-react";
 
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -93,6 +98,48 @@ export default asDetailQueryRoute(
         </div>
 
         <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
+
+        {/* Scatter Plots Section - Only show for Table views */}
+        {data.graphQuery.kind === ViewKind.Table &&
+          data.graphQuery.render.__typename === "Table" && (() => {
+            const tableRender = data.graphQuery.render;
+            if (tableRender.__typename !== "Table") return null;
+
+            return (
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Visualizations</h2>
+                  <FormDialog
+                    trigger={
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Plot
+                      </Button>
+                    }
+                  >
+                    <CreateScatterPlotForm graphQuery={data.graphQuery} />
+                  </FormDialog>
+                </div>
+
+                {/* Display existing scatter plots */}
+                {data.graphQuery.scatterPlots.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {data.graphQuery.scatterPlots.map((plot) => (
+                      <ScatterPlot
+                        key={plot.id}
+                        scatterPlot={plot}
+                        table={tableRender}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-8 text-center text-muted-foreground">
+                    No scatter plots yet. Create one to visualize your data.
+                  </Card>
+                )}
+              </div>
+            );
+          })()}
       </KraphGraphQuery.ModelPage>
     );
   },

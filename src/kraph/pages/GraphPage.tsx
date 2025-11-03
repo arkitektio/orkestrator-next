@@ -60,6 +60,14 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
               Builder
             </Button>
           </KraphGraph.DetailLink>
+          <KraphGraph.DetailLink
+            object={data.graph.id}
+            subroute="queries"
+          >
+            <Button variant="outline" size="sm">
+              Queries
+            </Button>
+          </KraphGraph.DetailLink>
           <Button
             onClick={() => {
               pin();

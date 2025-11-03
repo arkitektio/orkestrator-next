@@ -1,9 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { KraphGraph, KraphGraphQuery } from "@/linkers";
+import { KraphGraph } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useNavigate } from "react-router-dom";
 import {
   useGetGraphQuery,
   useMaterializeGraphMutation,
@@ -11,10 +10,8 @@ import {
 } from "../../api/graphql";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import OntologyGraph from "../../components/designer/OntologyGraph";
-import { UpdateGraphForm } from "../../forms/UpdateGraphForm";
 import QueryBuilderGraph from "@/kraph/components/designer/QueryBuilderGraph";
+import { UpdateGraphForm } from "../../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({

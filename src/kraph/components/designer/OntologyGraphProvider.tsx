@@ -19,6 +19,7 @@ export type ReturnColumn = {
   property: string; // The property to return (e.g., "label", "id", "metricKind")
   alias?: string; // Optional alias for the column
   cypherExpression?: string; // Optional custom Cypher expression (e.g., "count(n)")
+  idfor?: string[]; // Array of node IDs this column serves as an identifier for
 };
 
 export type Path = {
@@ -29,6 +30,8 @@ export type Path = {
   relationDirections?: boolean[]; // true = forward (-->), false = reverse (<--)
   color?: string; // Unique color for this path
   whereClauses?: NodeWhereClause[]; // WHERE conditions for specific nodes
+  startsFromPath?: number; // Index of the path this path starts from (for variable reuse)
+  startsFromNodePosition?: number; // Position in the source path where this path starts
 };
 
 export type OntologyGraphContextType = {

@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/arkitektio/orkestrator-next/compare/v1.10.0...v1.11.0) (2025-11-03)
+
+
+### Features
+
+* more kraph builder ([bc3f039](https://github.com/arkitektio/orkestrator-next/commit/bc3f039266529efd3aa07c4860b9e2b736e750fb))
+
 # [1.10.0](https://github.com/arkitektio/orkestrator-next/compare/v1.9.0...v1.10.0) (2025-10-31)
 
 

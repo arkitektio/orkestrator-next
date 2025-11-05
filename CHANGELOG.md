@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/arkitektio/orkestrator-next/compare/v1.11.0...v1.12.0) (2025-11-05)
+
+
+### Features
+
+* implement scatter plot ([b13b070](https://github.com/arkitektio/orkestrator-next/commit/b13b0704307f725eeb9425de45e1906d585db702))
+
 # [1.11.0](https://github.com/arkitektio/orkestrator-next/compare/v1.10.0...v1.11.0) (2025-11-03)
 
 

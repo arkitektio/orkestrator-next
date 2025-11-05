@@ -1,0 +1,24 @@
+query GetScatterPlot($id: ID!) {
+  scatterPlot(id: $id) {
+    ...ScatterPlot
+  }
+}
+
+query SearchScatterPlots($search: String, $values: [ID!]) {
+  options: scatterPlots(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}
+
+query ListScatterPlots(
+  $filters: ScatterPlotFilter
+  $pagination: OffsetPaginationInput
+) {
+  scatterPlots(filters: $filters, pagination: $pagination) {
+    ...ListScatterPlot
+  }
+}

@@ -4,6 +4,16 @@ fragment ScatterPlot on ScatterPlot {
   description
   xColumn
   yColumn
+  query {
+    id
+    name
+    render {
+      ...Path
+      ...Pairs
+      ...Table
+      ...NodeList
+    }
+  }
 }
 
 fragment ListScatterPlot on ScatterPlot {

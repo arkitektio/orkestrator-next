@@ -6,7 +6,7 @@ import { ContainerGrid } from "./ContainerGrid";
 
 export type ListRenderProps<T> = {
   title?: React.ReactNode;
-
+  error?: Error | null;
   loading?: boolean;
   fitLength?: number;
   loader?: React.ReactNode;
@@ -22,6 +22,7 @@ export type ListRenderProps<T> = {
 export const ListRender = <T extends any>({
   title,
   loading,
+  error,
   array,
   actions,
   children,
@@ -86,6 +87,7 @@ export const ListRender = <T extends any>({
         </>
       )}
       {loading && loader}
+      {error && <div>Error: {error.message}</div>}
     </>
   );
 };

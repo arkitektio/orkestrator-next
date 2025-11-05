@@ -1,7 +1,6 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import GraphQueryList from "@/kraph/components/lists/GraphQueryList";
-import ScatterPlotList from "@/kraph/components/lists/ScatterPlotList";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -15,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout
-      title="Graph Queries"
+      title="Graph Scatter Plots"
 
     >
       <div className="p-6">
@@ -33,9 +32,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </div>
 
         <GraphQueryList pagination={{ limit: 30 }} filters={{ graph: id }} />
-
-        <Card className="my-6 w-full h-0.5 bg-border/50" />
-        <ScatterPlotList pagination={{ limit: 30 }} filters={{ graph: id }} />
       </div>
     </PageLayout>
   );

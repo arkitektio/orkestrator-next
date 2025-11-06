@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/arkitektio/orkestrator-next/compare/v1.13.0...v1.14.0) (2025-11-06)
+
+
+### Features
+
+* add delete action ([217fd4a](https://github.com/arkitektio/orkestrator-next/commit/217fd4af84fa2aad9ec62d783d681da0155cf33e))
+
 # [1.13.0](https://github.com/arkitektio/orkestrator-next/compare/v1.12.0...v1.13.0) (2025-11-06)
 
 

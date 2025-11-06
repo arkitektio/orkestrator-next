@@ -5,6 +5,9 @@ fragment ScatterPlot on ScatterPlot {
   xColumn
   yColumn
   idColumn
+  colorColumn
+  sizeColumn
+  shapeColumn
   query {
     id
     name

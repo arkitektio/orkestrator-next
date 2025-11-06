@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
+import ScatterPlotList from "../components/lists/ScatterPlotList";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({
@@ -52,18 +53,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
-          <KraphGraph.DetailLink
-            object={data.graph.id}
-            subroute="builder"
-          >
+          <KraphGraph.DetailLink object={data.graph.id} subroute="builder">
             <Button variant="outline" size="sm">
               Builder
             </Button>
           </KraphGraph.DetailLink>
-          <KraphGraph.DetailLink
-            object={data.graph.id}
-            subroute="queries"
-          >
+          <KraphGraph.DetailLink object={data.graph.id} subroute="queries">
             <Button variant="outline" size="sm">
               Queries
             </Button>
@@ -94,6 +89,11 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         <MultiSidebar
           map={{
             Comments: <KraphGraph.Komments object={data.graph.id} />,
+            Plots: (
+              <>
+                <ScatterPlotList filters={{ graph: data.graph.id }} />
+              </>
+            ),
           }}
         />
       }

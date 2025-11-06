@@ -4,6 +4,7 @@ import {
   DeleteEdgeDocument,
   DeleteEntityCategoryDocument,
   DeleteGraphDocument,
+  DeleteGraphQueryDocument,
   DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
   DeleteNodeDocument,
@@ -120,9 +121,16 @@ export const KRAPH_ACTIONS = {
     typename: "Node",
     mutation: DeleteNodeDocument,
   }),
+  "delete-graph-query": buildDeleteAction({
+    title: "Delete Graph Query",
+    identifier: "@kraph/graphquery",
+    description: "Delete the Graph Query",
+    service: "kraph",
+    typename: "GraphQuery",
+    mutation: DeleteGraphQueryDocument,
+  }),
+
   // Custom Actions
-
-
 
   "create-protocol-event-category": {
     title: "Create Protocol Event Category",

@@ -15,3 +15,7 @@ mutation PinGraphQuery($input: PinGraphQueryInput!) {
     ...GraphQuery
   }
 }
+
+mutation DeleteGraphQuery($id: ID!) {
+  deleteGraphQuery(input: { id: $id })
+}

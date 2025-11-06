@@ -25,7 +25,10 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import { ListPageLayout, ListPageLayoutProps } from "@/components/layout/ListPageLayout";
+import {
+  ListPageLayout,
+  ListPageLayoutProps,
+} from "@/components/layout/ListPageLayout";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -98,6 +101,10 @@ export const linkBuilder = (to: string) => (object: string | undefined) => {
   return `/${to}/${object}`;
 };
 
+export const listLinkBuilder = (to: string) => () => {
+  return `/${to}/`;
+};
+
 export const buildSmartModel = (
   identifier: Identifier,
 ): React.FC<CreatedSmartSmartProps> => {
@@ -151,7 +158,7 @@ const buildTinyKnowledge = (model: Identifier) => {
 };
 
 export type SmartModelPage = Omit<ModelPageLayoutProps, "identifier">;
-export type SmartListPageProps = Omit<ListPageLayoutProps, "identifier">
+export type SmartListPageProps = Omit<ListPageLayoutProps, "identifier">;
 
 const buildModelPage = (model: Identifier) => {
   return ({ ...props }: SmartModelPage) => {
@@ -171,7 +178,7 @@ const buildListPage = (model: Identifier) => {
       </ListPageLayout>
     );
   };
-}
+};
 
 const buildUseNodesQuery = (model: Identifier) => {
   return usePrimaryActionsQuery({
@@ -232,6 +239,7 @@ export const buildSmart = (
     DetailLink: buildModelLink(to),
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
+    listlinkBuilder: listLinkBuilder(to),
     Smart: buildSmartModel(model),
     Drop: buildDropModel(model),
     Actions: buildSelfActions(model),

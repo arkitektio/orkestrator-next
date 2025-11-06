@@ -1,6 +1,17 @@
 import { MyEdge, MyNode } from "./types";
-import { Path, WhereCondition, ReturnColumn, NodeWhereClause } from "./OntologyGraphProvider";
-import { ColumnInput, ColumnKind, MetricKind, ViewKind, GraphQueryInput } from "@/kraph/api/graphql";
+import {
+  Path,
+  WhereCondition,
+  ReturnColumn,
+  NodeWhereClause,
+} from "./OntologyGraphProvider";
+import {
+  ColumnInput,
+  ColumnKind,
+  MetricKind,
+  ViewKind,
+  GraphQueryInput,
+} from "@/kraph/api/graphql";
 
 export interface EnrichedPath {
   path: Path;
@@ -24,7 +35,7 @@ export interface NodeMapping {
 export function enrichPath(
   path: Path,
   allNodes: MyNode[],
-  allEdges: MyEdge[]
+  allEdges: MyEdge[],
 ): EnrichedPath {
   const nodeDetails = path.nodes
     .map((nodeId) => allNodes.find((n) => n.id === nodeId))
@@ -54,7 +65,7 @@ function getRelationshipVariable(index: number, relationType: string): string {
  * Generates a Cypher label from node type
  */
 function getNodeLabel(node: MyNode): string {
-  return node.data.ageName
+  return node.data.ageName;
 }
 
 /**
@@ -93,7 +104,7 @@ function getRelationshipType(edge: MyEdge): string {
  */
 function buildNodeMapping(
   enrichedPaths: EnrichedPath[],
-  allNodes: MyNode[]
+  allNodes: MyNode[],
 ): Map<string, NodeMapping> {
   const nodeMap = new Map<string, NodeMapping>();
   const nodeTypeCounters = new Map<string, number>();
@@ -112,9 +123,11 @@ function buildNodeMapping(
           // Check if this is the first node and the path starts from another path
           // If so, reuse the variable from the source path
           let variable: string;
-          if (positionInPath === 0 &&
-              ep.path.startsFromPath !== undefined &&
-              ep.path.startsFromNodePosition !== undefined) {
+          if (
+            positionInPath === 0 &&
+            ep.path.startsFromPath !== undefined &&
+            ep.path.startsFromNodePosition !== undefined
+          ) {
             // Reuse the variable from the source path node
             const sourceKey = `${ep.path.startsFromPath}:${nodeId}:${ep.path.startsFromNodePosition}`;
             const sourceMapping = nodeMap.get(sourceKey);
@@ -135,7 +148,11 @@ function buildNodeMapping(
 
           const nodeLabel = getNodeLabel(node);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const nodeName = (node.data as any).ageName || (node.data as any).label || (node.data as any).identifier || node.id;
+          const nodeName =
+            (node.data as any).ageName ||
+            (node.data as any).label ||
+            (node.data as any).identifier ||
+            node.id;
 
           nodeMap.set(occurrenceKey, {
             nodeId,
@@ -171,7 +188,7 @@ function formatWhereValue(value: string | number | boolean | string[]): string {
  */
 function generateWhereConditions(
   variable: string,
-  conditions: WhereCondition[]
+  conditions: WhereCondition[],
 ): string[] {
   return conditions.map((cond) => {
     const { property, operator, value } = cond;
@@ -206,7 +223,7 @@ function generateUnifiedPathMatchClause(
   enrichedPath: EnrichedPath,
   nodeMap: Map<string, NodeMapping>,
   relCounterStart: number,
-  pathIndex: number
+  pathIndex: number,
 ): { matchClause: string; relCount: number } {
   const { edgeDetails, path } = enrichedPath;
 
@@ -224,7 +241,7 @@ function generateUnifiedPathMatchClause(
     const occurrenceKey = `${pathIndex}:${nodeId}:${i}`;
     const mapping = nodeMap.get(occurrenceKey);
 
-    if (!mapping) continue;    // Add node pattern with variable only (no properties in MATCH)
+    if (!mapping) continue; // Add node pattern with variable only (no properties in MATCH)
     parts.push(`(${mapping.variable}:${mapping.label})`);
 
     // Add relationship pattern if there's a next node
@@ -242,7 +259,8 @@ function generateUnifiedPathMatchClause(
         // Fallback: determine direction based on source/target
         const sourceNodeId = path.nodes[i];
         const targetNodeId = path.nodes[i + 1];
-        isForward = edge.source === sourceNodeId && edge.target === targetNodeId;
+        isForward =
+          edge.source === sourceNodeId && edge.target === targetNodeId;
       }
 
       if (isForward) {
@@ -265,7 +283,7 @@ function generateUnifiedPathMatchClause(
  */
 export function generateUnifiedCypherQuery(
   enrichedPaths: EnrichedPath[],
-  allNodes: MyNode[]
+  allNodes: MyNode[],
 ): string {
   if (enrichedPaths.length === 0) {
     return "// No paths defined yet\n// Click nodes and relationships to build a path";
@@ -280,13 +298,15 @@ export function generateUnifiedCypherQuery(
   let relCounter = 0;
   enrichedPaths.forEach((ep, pathIndex) => {
     if (pathIndex > 0) lines.push("");
-    lines.push(`// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`);
+    lines.push(
+      `// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`,
+    );
 
     const { matchClause, relCount } = generateUnifiedPathMatchClause(
       ep,
       nodeMap,
       relCounter,
-      pathIndex
+      pathIndex,
     );
     relCounter = relCount;
 
@@ -306,7 +326,7 @@ export function generateUnifiedCypherQuery(
         if (mapping && whereClause.conditions.length > 0) {
           const conditions = generateWhereConditions(
             mapping.variable,
-            whereClause.conditions
+            whereClause.conditions,
           );
           allWhereConditions.push(...conditions);
         }
@@ -341,7 +361,7 @@ export function generateUnifiedCypherQueryWithColumns(
   allNodes: MyNode[],
   returnColumns: ReturnColumn[],
   globalWhereClauses?: NodeWhereClause[],
-  useDistinct?: boolean
+  useDistinct?: boolean,
 ): string {
   if (enrichedPaths.length === 0) {
     return "// No paths defined yet\n// Click nodes and relationships to build a path";
@@ -356,13 +376,15 @@ export function generateUnifiedCypherQueryWithColumns(
   let relCounter = 0;
   enrichedPaths.forEach((ep, pathIndex) => {
     if (pathIndex > 0) lines.push("");
-    lines.push(`// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`);
+    lines.push(
+      `// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`,
+    );
 
     const { matchClause, relCount } = generateUnifiedPathMatchClause(
       ep,
       nodeMap,
       relCounter,
-      pathIndex
+      pathIndex,
     );
     relCounter = relCount;
 
@@ -379,15 +401,15 @@ export function generateUnifiedCypherQueryWithColumns(
     globalWhereClauses.forEach((whereClause) => {
       // Find all occurrences of this nodeId in the node map
       const matchingMappings = Array.from(nodeMap.values()).filter(
-        mapping => mapping.nodeId === whereClause.nodeId
+        (mapping) => mapping.nodeId === whereClause.nodeId,
       );
 
       // Apply WHERE clause to all occurrences of this node
-      matchingMappings.forEach(mapping => {
+      matchingMappings.forEach((mapping) => {
         if (whereClause.conditions.length > 0) {
           const conditions = generateWhereConditions(
             mapping.variable,
-            whereClause.conditions
+            whereClause.conditions,
           );
           allWhereConditions.push(...conditions);
         }
@@ -400,15 +422,15 @@ export function generateUnifiedCypherQueryWithColumns(
         ep.path.whereClauses.forEach((whereClause) => {
           // Find all occurrences of this nodeId in the node map
           const matchingMappings = Array.from(nodeMap.values()).filter(
-            mapping => mapping.nodeId === whereClause.nodeId
+            (mapping) => mapping.nodeId === whereClause.nodeId,
           );
 
           // Apply WHERE clause to all occurrences of this node
-          matchingMappings.forEach(mapping => {
+          matchingMappings.forEach((mapping) => {
             if (whereClause.conditions.length > 0) {
               const conditions = generateWhereConditions(
                 mapping.variable,
-                whereClause.conditions
+                whereClause.conditions,
               );
               allWhereConditions.push(...conditions);
             }
@@ -435,29 +457,38 @@ export function generateUnifiedCypherQueryWithColumns(
     returnColumns.forEach((col) => {
       // Find all occurrences of this nodeId in the node map
       const matchingMappings = Array.from(nodeMap.values()).filter(
-        mapping => mapping.nodeId === col.nodeId
+        (mapping) => mapping.nodeId === col.nodeId,
       );
 
       // Generate return for each occurrence
-      matchingMappings.forEach((mapping, occurrenceIndex) => {
+      matchingMappings.forEach((mapping) => {
         if (col.cypherExpression) {
           // Custom Cypher expression - replace any node reference with the specific variable
-          const expression = col.cypherExpression.replace(/\$node/g, mapping.variable);
-          const alias = matchingMappings.length > 1
-            ? `${col.alias || col.property}_${occurrenceIndex}`
-            : col.alias;
-          const part = alias
-            ? `${expression} AS ${alias}`
-            : expression;
+          const expression = col.cypherExpression.replace(
+            /\$node/g,
+            mapping.variable,
+          );
+          // Use variable name when multiple occurrences, otherwise use alias
+          const alias =
+            matchingMappings.length > 1
+              ? `${mapping.variable}_${col.property}`
+              : col.alias;
+          const part = alias ? `${expression} AS ${alias}` : expression;
           returnParts.push(part);
         } else {
           // Node property
-          const alias = matchingMappings.length > 1
-            ? `${col.alias || col.property}_${occurrenceIndex}`
-            : col.alias;
+          // Use variable name when multiple occurrences, otherwise use alias
+          const alias =
+            matchingMappings.length > 1
+              ? `${mapping.variable}_${col.property}`
+              : col.alias;
+          const propertyExpression =
+            col.property === "id"
+              ? `id(${mapping.variable})`
+              : `${mapping.variable}.${col.property}`;
           const part = alias
-            ? `${mapping.variable}.${col.property} AS ${alias}`
-            : `${mapping.variable}.${col.property}`;
+            ? `${propertyExpression} AS ${alias}`
+            : propertyExpression;
           returnParts.push(part);
         }
       });
@@ -487,14 +518,14 @@ export function generateGraphQueryInput(
   graphId: string,
   name: string,
   description?: string,
-  globalWhereClauses?: NodeWhereClause[]
+  globalWhereClauses?: NodeWhereClause[],
 ): GraphQueryInput {
   // Generate the Cypher query
   const query = generateUnifiedCypherQueryWithColumns(
     enrichedPaths,
     allNodes,
     returnColumns,
-    globalWhereClauses
+    globalWhereClauses,
   );
 
   // Build node mapping for column generation
@@ -506,7 +537,7 @@ export function generateGraphQueryInput(
   returnColumns.forEach((col) => {
     // Find all occurrences of this nodeId
     const matchingMappings = Array.from(nodeMap.values()).filter(
-      mapping => mapping.nodeId === col.nodeId
+      (mapping) => mapping.nodeId === col.nodeId,
     );
     const node = allNodes.find((n) => n.id === col.nodeId);
 
@@ -520,7 +551,7 @@ export function generateGraphQueryInput(
     }
 
     // Generate a column for each occurrence
-    matchingMappings.forEach((mapping, occurrenceIndex) => {
+    matchingMappings.forEach((mapping) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nodeData = node.data as any;
 
@@ -544,20 +575,22 @@ export function generateGraphQueryInput(
         valueKind = nodeData.metricKind as MetricKind;
       }
 
-      // Generate unique names when there are multiple occurrences
-      const name = matchingMappings.length > 1
-        ? `${col.alias || `${mapping.variable}_${col.property}`}_${occurrenceIndex}`
-        : col.alias || `${mapping.variable}_${col.property}`;
+      // Use variable name when multiple occurrences, otherwise use alias or variable_property
+      const name =
+        matchingMappings.length > 1
+          ? `${mapping.variable}_${col.property}`
+          : col.alias || `${mapping.variable}_${col.property}`;
 
-      const label = matchingMappings.length > 1
-        ? `${col.alias || col.property} ${occurrenceIndex + 1}`
-        : col.alias || col.property;
+      const label =
+        matchingMappings.length > 1
+          ? `${mapping.variable}.${col.property}`
+          : col.alias || col.property;
 
       columns.push({
         name,
         kind: columnKind,
         label,
-        description: `${col.property} from ${mapping.name} (occurrence ${occurrenceIndex + 1})`,
+        description: `${col.property} from ${mapping.name} (${mapping.variable})`,
         valueKind,
         idfor,
         searchable: col.property === "label" || col.property === "identifier",
@@ -586,7 +619,7 @@ export function generateGraphQueryInput(
  * Now calls the unified version
  */
 export function generateCypherQueryWithComments(
-  enrichedPaths: EnrichedPath[]
+  enrichedPaths: EnrichedPath[],
 ): string {
   // Extract all unique nodes from paths
   const allNodeIds = new Set<string>();
@@ -596,7 +629,7 @@ export function generateCypherQueryWithComments(
 
   const allNodes = enrichedPaths.flatMap((ep) => ep.nodeDetails);
   const uniqueNodes = Array.from(
-    new Map(allNodes.map((node) => [node.id, node])).values()
+    new Map(allNodes.map((node) => [node.id, node])).values(),
   );
 
   return generateUnifiedCypherQuery(enrichedPaths, uniqueNodes);

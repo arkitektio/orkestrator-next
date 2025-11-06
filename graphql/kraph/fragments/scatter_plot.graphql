@@ -4,6 +4,7 @@ fragment ScatterPlot on ScatterPlot {
   description
   xColumn
   yColumn
+  idColumn
   query {
     id
     name
@@ -12,6 +13,10 @@ fragment ScatterPlot on ScatterPlot {
       ...Pairs
       ...Table
       ...NodeList
+    }
+    graph {
+      id
+      ageName
     }
   }
 }

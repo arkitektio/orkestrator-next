@@ -31,8 +31,9 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
-    } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
+    centerY + offset
+  } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -50,7 +51,6 @@ export default ({
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
-  const isPossible = useIsEdgePossible(id);
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -96,19 +96,12 @@ export default ({
         markerEnd={markerEnd}
         label={data?.label}
         color="#ff00ff"
-        style={{
-          opacity: isPossible ? 1 : 0.3,
-          stroke: isPossible ? undefined : '#666',
-          strokeWidth: isPossible ? 2 : 1
-        }}
       />
       <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX + offset}px,${centerY + offset}px)`,
-            opacity: isPossible ? 1 : 0.3,
-            pointerEvents: isPossible ? 'all' : 'none',
           }}
           className="p-3 text-xs group nodrag nopan transition-opacity"
         >
@@ -119,11 +112,7 @@ export default ({
             <Tooltip>
               <TooltipTrigger asChild>
                 {data?.id && (
-                  <KraphMeasurementCategory.DetailLink
-                    object={data?.id}
-                    style={{ pointerEvents: isPossible ? "all" : "none" }}
-                    className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                  >
+                  <KraphMeasurementCategory.DetailLink object={data?.id}>
                     {data?.label}
                   </KraphMeasurementCategory.DetailLink>
                 )}

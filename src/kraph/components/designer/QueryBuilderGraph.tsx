@@ -1,14 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import {
   GraphFragment,
   useCreateGraphQueryMutation,
-  GraphQueryFragment
+  GraphQueryFragment,
 } from "@/kraph/api/graphql";
 import { KraphGraph } from "@/linkers";
 import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
@@ -16,26 +28,49 @@ import {
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
-  useNodesState
+  useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useState, useMemo } from "react";
 import { Filter, Plus, X, ExternalLink } from "lucide-react";
 import "./index.css";
-import { OntologyGraphProvider, Path, PATH_COLORS, WhereCondition, ReturnColumn, NodeWhereClause } from "./OntologyGraphProvider";
 import {
-  MyEdge,
-  MyNode
-} from "./types";
-import { BUILDER_EDGE_TYPES, BUILDER_NODE_TYPES, discoLayout, forceLayout, hashGraph, layeredLayout, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
-import { enrichPath, generateUnifiedCypherQueryWithColumns, generateGraphQueryInput } from "./cypherGenerator";
+  OntologyGraphProvider,
+  Path,
+  PATH_COLORS,
+  WhereCondition,
+  ReturnColumn,
+  NodeWhereClause,
+} from "./OntologyGraphProvider";
+import { MyEdge, MyNode } from "./types";
+import {
+  BUILDER_EDGE_TYPES,
+  BUILDER_NODE_TYPES,
+  discoLayout,
+  forceLayout,
+  hashGraph,
+  layeredLayout,
+  ontologyToEdges,
+  ontologyToNodes,
+  radialLayout,
+  stressLayout,
+  treeLayout,
+} from "./utils";
+import {
+  enrichPath,
+  generateUnifiedCypherQueryWithColumns,
+  generateGraphQueryInput,
+} from "./cypherGenerator";
 import { CypherQueryDisplay } from "./components/CypherQueryDisplay";
 import { ReturnColumnBuilder } from "./components/ReturnColumnBuilder";
 import { KraphGraphQuery } from "@/linkers";
 
 // Node property configurations
-const NODE_PROPERTIES: Record<string, Array<{ name: string; type: 'string' | 'number' | 'boolean' }>> = {
+const NODE_PROPERTIES: Record<
+  string,
+  Array<{ name: string; type: "string" | "number" | "boolean" }>
+> = {
   Entity: [
     { name: "label", type: "string" },
     { name: "ageName", type: "string" },
@@ -73,7 +108,9 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
   onCancel,
 }) => {
   const [conditions, setConditions] = useState<WhereCondition[]>(
-    initialConditions.length > 0 ? initialConditions : [{ property: "", operator: "=", value: "" }]
+    initialConditions.length > 0
+      ? initialConditions
+      : [{ property: "", operator: "=", value: "" }],
   );
 
   const nodeType = nodeLabel.split(" (")[0] || "default";
@@ -87,7 +124,11 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
     setConditions(conditions.filter((_, i) => i !== index));
   };
 
-  const updateCondition = (index: number, field: keyof WhereCondition, value: string) => {
+  const updateCondition = (
+    index: number,
+    field: keyof WhereCondition,
+    value: string,
+  ) => {
     const updated = [...conditions];
     updated[index] = { ...updated[index], [field]: value };
     setConditions(updated);
@@ -109,7 +150,9 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
 
   return (
     <div className="border rounded-lg p-3 bg-muted/50 space-y-2">
-      <div className="text-xs font-semibold mb-2">WHERE Filters for {nodeLabel}</div>
+      <div className="text-xs font-semibold mb-2">
+        WHERE Filters for {nodeLabel}
+      </div>
 
       {conditions.map((condition, index) => (
         <div key={index} className="flex items-center gap-2">
@@ -189,7 +232,7 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
             onClick={() => {
               // Filter out empty conditions
               const validConditions = conditions.filter(
-                (c) => c.property && c.operator && c.value
+                (c) => c.property && c.operator && c.value,
               );
               onSave(validConditions);
             }}
@@ -202,17 +245,16 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
   );
 };
 
-
-
-
 export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
-
   const [paths, setPaths] = useState<Path[]>([]); // All completed paths
   const [activePath, setActivePath] = useState<Path | null>(null); // Current path being built
   const [nextColorIndex, setNextColorIndex] = useState(0);
 
   // WHERE clause builder state - track which node is being edited inline
-  const [editingWhereNode, setEditingWhereNode] = useState<{ pathIndex: number; nodeId: string } | null>(null);
+  const [editingWhereNode, setEditingWhereNode] = useState<{
+    pathIndex: number;
+    nodeId: string;
+  } | null>(null);
 
   // Node occurrence selection state - when starting a new path from a node that appears multiple times
   const [nodeOccurrenceSelection, setNodeOccurrenceSelection] = useState<{
@@ -229,7 +271,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   const [whereClauses, setWhereClauses] = useState<NodeWhereClause[]>([]);
 
   // Query execution state
-  const [executedGraphQuery, setExecutedGraphQuery] = useState<GraphQueryFragment | null>(null);
+  const [executedGraphQuery, setExecutedGraphQuery] =
+    useState<GraphQueryFragment | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [createGraphQuery] = useCreateGraphQueryMutation();
 
@@ -246,15 +289,18 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   );
 
   // Calculate possible nodes and edges based on current path
-  const [possibleNodes, possibleEdges] = React.useMemo((): [string[], string[]] => {
+  const [possibleNodes, possibleEdges] = React.useMemo((): [
+    string[],
+    string[],
+  ] => {
     // If no active path, allow starting from any node that's in an existing path or any node if no paths exist
     if (!activePath || activePath.nodes.length === 0) {
       if (paths.length === 0) {
         // First path - can start from any node
-        return [nodes.map(n => n.id), []];
+        return [nodes.map((n) => n.id), []];
       } else {
         // Subsequent paths - can only start from nodes in existing paths
-        const existingPathNodes = new Set(paths.flatMap(p => p.nodes));
+        const existingPathNodes = new Set(paths.flatMap((p) => p.nodes));
         return [Array.from(existingPathNodes), []];
       }
     }
@@ -266,22 +312,26 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     if (activePath.nodes.length === activePath.relations.length + 1) {
       // Just clicked a node, now need to click an edge connected to that node
       // Edges can be traversed in either direction (bidirectional)
-      const connectedEdges = edges.filter(e =>
-        e.source === lastNodeId || e.target === lastNodeId
+      const connectedEdges = edges.filter(
+        (e) => e.source === lastNodeId || e.target === lastNodeId,
       );
-      const possibleEdgeIds = connectedEdges.map(e => e.id);
+      const possibleEdgeIds = connectedEdges.map((e) => e.id);
       return [[], possibleEdgeIds];
     }
 
     // If we have equal nodes and relations, we just selected an edge
     // Now we need to click the other node of the last relation (whichever end we didn't come from)
     if (activePath.nodes.length === activePath.relations.length) {
-      const lastRelationId = activePath.relations[activePath.relations.length - 1];
-      const lastEdge = edges.find(e => e.id === lastRelationId);
+      const lastRelationId =
+        activePath.relations[activePath.relations.length - 1];
+      const lastEdge = edges.find((e) => e.id === lastRelationId);
       if (lastEdge) {
         // Find which end of the edge to go to (the one we didn't come from)
         const previousNodeId = activePath.nodes[activePath.nodes.length - 1];
-        const nextNodeId = lastEdge.source === previousNodeId ? lastEdge.target : lastEdge.source;
+        const nextNodeId =
+          lastEdge.source === previousNodeId
+            ? lastEdge.target
+            : lastEdge.source;
         return [[nextNodeId], []];
       }
     }
@@ -326,9 +376,6 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       setEdges(ontologyToEdges(graph));
     }
   }, [reactFlowInstance, hashGraph(graph)]);
-
-
-
 
   const layout = (layout: { [key: string]: string }) => {
     const elk = new ELK();
@@ -447,7 +494,6 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       });
   };
 
-
   const onNodeClick = (_event: React.MouseEvent, node: MyNode) => {
     // Only allow clicking nodes that are in the possibleNodes list
     if (!possibleNodes.includes(node.id)) {
@@ -459,7 +505,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       const color = PATH_COLORS[nextColorIndex % PATH_COLORS.length];
 
       // Check if this node appears in multiple places in existing paths
-      const occurrences: Array<{ pathIndex: number; nodePosition: number }> = [];
+      const occurrences: Array<{ pathIndex: number; nodePosition: number }> =
+        [];
       paths.forEach((path, pathIndex) => {
         path.nodes.forEach((nodeId, nodePosition) => {
           if (nodeId === node.id) {
@@ -478,8 +525,10 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       }
 
       // If node appears once or not at all, proceed normally
-      const startsFromPath = occurrences.length === 1 ? occurrences[0].pathIndex : undefined;
-      const startsFromNodePosition = occurrences.length === 1 ? occurrences[0].nodePosition : undefined;
+      const startsFromPath =
+        occurrences.length === 1 ? occurrences[0].pathIndex : undefined;
+      const startsFromNodePosition =
+        occurrences.length === 1 ? occurrences[0].nodePosition : undefined;
 
       setActivePath({
         nodes: [node.id],
@@ -524,20 +573,22 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
   // Helper function to convert a string to snake_case and clean it for use as a variable name
   const toSnakeCase = (str: string): string => {
-    return str
-      .trim()
-      // Replace spaces, hyphens, and other non-alphanumeric chars with underscores
-      .replace(/[^a-zA-Z0-9]+/g, '_')
-      // Insert underscore before uppercase letters (for camelCase)
-      .replace(/([a-z])([A-Z])/g, '$1_$2')
-      // Convert to lowercase
-      .toLowerCase()
-      // Remove leading/trailing underscores
-      .replace(/^_+|_+$/g, '')
-      // Replace multiple consecutive underscores with single underscore
-      .replace(/_+/g, '_')
-      // Ensure it starts with a letter (prefix with 'col_' if it starts with a number)
-      .replace(/^([0-9])/, 'col_$1');
+    return (
+      str
+        .trim()
+        // Replace spaces, hyphens, and other non-alphanumeric chars with underscores
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        // Insert underscore before uppercase letters (for camelCase)
+        .replace(/([a-z])([A-Z])/g, "$1_$2")
+        // Convert to lowercase
+        .toLowerCase()
+        // Remove leading/trailing underscores
+        .replace(/^_+|_+$/g, "")
+        // Replace multiple consecutive underscores with single underscore
+        .replace(/_+/g, "_")
+        // Ensure it starts with a letter (prefix with 'col_' if it starts with a number)
+        .replace(/^([0-9])/, "col_$1")
+    );
   };
 
   const finishPath = () => {
@@ -547,22 +598,32 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
       // Automatically add return columns for all metric nodes in the path
       const newReturnColumns: ReturnColumn[] = [];
-      activePath.nodes.forEach((nodeId) => {
+      // Get unique node IDs from the path to avoid duplicate column generation
+      const uniqueNodeIds = Array.from(new Set(activePath.nodes));
+
+      uniqueNodeIds.forEach((nodeId) => {
         const node = nodes.find((n) => n.id === nodeId);
-        if (node && node.type === "metriccategory") {
-          // Get the metric label for nice column naming, convert to snake_case
-          const metricLabel = node.data.label || "metric";
-          const cleanedLabel = toSnakeCase(metricLabel);
+        if (!node) {
+          return;
+        }
 
-          // Check if columns don't already exist for this node
+        // Prepare a clean alias base from the node label/identifier
+        const rawLabel =
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((node.data as any)?.label as string | undefined) ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((node.data as any)?.ageName as string | undefined) ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((node.data as any)?.identifier as string | undefined) ||
+          node.id;
+        const cleanedLabel = toSnakeCase(rawLabel);
+
+        // Always add metric values for metric nodes to keep measurements accessible
+        if (node.type === "metriccategory") {
           const hasValueColumn = returnColumns.some(
-            (col) => col.nodeId === nodeId && col.property === "value"
-          );
-          const hasIdColumn = returnColumns.some(
-            (col) => col.nodeId === nodeId && col.property === "id"
+            (col) => col.nodeId === nodeId && col.property === "value",
           );
 
-          // Add value column if not exists, with snake_case metric label as alias
           if (!hasValueColumn) {
             newReturnColumns.push({
               nodeId,
@@ -570,14 +631,23 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
               alias: cleanedLabel,
             });
           }
+          // Skip generating metric IDs – handled for structures/entities below
+        }
 
-          // Add id column if not exists (with idfor property set), with snake_case metric_id as alias
+        if (
+          node.type === "structurecategory" ||
+          node.type === "entitycategory"
+        ) {
+          const hasIdColumn = returnColumns.some(
+            (col) => col.nodeId === nodeId && col.property === "id",
+          );
+
           if (!hasIdColumn) {
             newReturnColumns.push({
               nodeId,
               property: "id",
               alias: `${cleanedLabel}_id`,
-              idfor: [nodeId], // Set idfor to mark this as the identifier for this node
+              idfor: [nodeId],
             });
           }
         }
@@ -588,16 +658,6 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
         setReturnColumns([...returnColumns, ...newReturnColumns]);
       }
 
-      setActivePath(null);
-    }
-  };
-
-  const startNewPath = () => {
-    if (activePath) {
-      // Finish current path first
-      finishPath();
-    } else {
-      // Just reset to allow starting a new path
       setActivePath(null);
     }
   };
@@ -652,7 +712,10 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
     // Truncate relationDirections if it exists
     if (path.relationDirections) {
-      path.relationDirections = path.relationDirections.slice(0, Math.max(0, nodeIndex - 1));
+      path.relationDirections = path.relationDirections.slice(
+        0,
+        Math.max(0, nodeIndex - 1),
+      );
     }
 
     // If path becomes empty, remove it entirely
@@ -675,13 +738,11 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     });
 
     // Filter WHERE clauses to only keep those referencing valid nodes
-    setWhereClauses((prev) =>
-      prev.filter((wc) => validNodeIds.has(wc.nodeId))
-    );
+    setWhereClauses((prev) => prev.filter((wc) => validNodeIds.has(wc.nodeId)));
 
     // Filter return columns to only keep those referencing valid nodes
     setReturnColumns((prev) =>
-      prev.filter((col) => validNodeIds.has(col.nodeId))
+      prev.filter((col) => validNodeIds.has(col.nodeId)),
     );
   };
 
@@ -693,8 +754,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     try {
       const result = await createGraphQuery({
         variables: {
-          input: graphQueryInput
-        }
+          input: graphQueryInput,
+        },
       });
 
       if (result.data?.createGraphQuery) {
@@ -709,7 +770,10 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
   // Toggle WHERE clause editor for a specific node in a path
   const toggleWhereEditor = (pathIndex: number, nodeId: string) => {
-    if (editingWhereNode?.pathIndex === pathIndex && editingWhereNode?.nodeId === nodeId) {
+    if (
+      editingWhereNode?.pathIndex === pathIndex &&
+      editingWhereNode?.nodeId === nodeId
+    ) {
       setEditingWhereNode(null);
     } else {
       setEditingWhereNode({ pathIndex, nodeId });
@@ -717,7 +781,11 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   };
 
   // Save WHERE conditions for a node
-  const saveWhereConditions = (pathIndex: number, nodeId: string, conditions: WhereCondition[]) => {
+  const saveWhereConditions = (
+    pathIndex: number,
+    nodeId: string,
+    conditions: WhereCondition[],
+  ) => {
     const updatedPaths = [...paths];
     const path = updatedPaths[pathIndex];
 
@@ -747,7 +815,13 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     }
 
     const enrichedPaths = paths.map((path) => enrichPath(path, nodes, edges));
-    return generateUnifiedCypherQueryWithColumns(enrichedPaths, nodes, returnColumns, whereClauses, useDistinct);
+    return generateUnifiedCypherQueryWithColumns(
+      enrichedPaths,
+      nodes,
+      returnColumns,
+      whereClauses,
+      useDistinct,
+    );
   }, [paths, nodes, edges, returnColumns, whereClauses, useDistinct]);
 
   // Generate GraphQueryInput
@@ -762,14 +836,14 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       graph.id,
       "Query Builder Result",
       "Generated from Query Builder",
-      whereClauses
+      whereClauses,
     );
   }, [paths, nodes, edges, returnColumns, graph.id, whereClauses]);
 
   // WHERE clause management functions
   const setWhereClause = (nodeId: string, conditions: WhereCondition[]) => {
-    setWhereClauses(prev => {
-      const filtered = prev.filter(wc => wc.nodeId !== nodeId);
+    setWhereClauses((prev) => {
+      const filtered = prev.filter((wc) => wc.nodeId !== nodeId);
       if (conditions.length > 0) {
         return [...filtered, { nodeId, conditions }];
       }
@@ -778,15 +852,15 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   };
 
   const getWhereClause = (nodeId: string): NodeWhereClause | undefined => {
-    return whereClauses.find(wc => wc.nodeId === nodeId);
+    return whereClauses.find((wc) => wc.nodeId === nodeId);
   };
 
   // Return column management functions
   const addReturnColumn = (column: ReturnColumn) => {
-    setReturnColumns(prev => {
+    setReturnColumns((prev) => {
       // Check if column already exists
       const exists = prev.some(
-        c => c.nodeId === column.nodeId && c.property === column.property
+        (c) => c.nodeId === column.nodeId && c.property === column.property,
       );
       if (exists) return prev;
       return [...prev, column];
@@ -794,13 +868,13 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
   };
 
   const removeReturnColumn = (nodeId: string, property: string) => {
-    setReturnColumns(prev =>
-      prev.filter(c => !(c.nodeId === nodeId && c.property === property))
+    setReturnColumns((prev) =>
+      prev.filter((c) => !(c.nodeId === nodeId && c.property === property)),
     );
   };
 
   const getNodeReturnColumns = (nodeId: string): ReturnColumn[] => {
-    return returnColumns.filter(c => c.nodeId === nodeId);
+    return returnColumns.filter((c) => c.nodeId === nodeId);
   };
 
   // Combine all paths (completed + active)
@@ -812,8 +886,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       markedPaths={allPaths}
       possibleNodes={possibleNodes}
       possibleEdges={possibleEdges}
-      addStagingEdge={() => { }}
-      addStagingNode={() => { }}
+      addStagingEdge={() => {}}
+      addStagingNode={() => {}}
       whereClauses={whereClauses}
       setWhereClause={setWhereClause}
       getWhereClause={getWhereClause}
@@ -898,7 +972,12 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                 {returnColumns.map((col, index) => {
                   const node = nodes.find((n) => n.id === col.nodeId);
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const nodeLabel = node ? ((node.data as any)?.ageName || (node.data as any)?.label || (node.data as any)?.identifier || col.nodeId) : col.nodeId;
+                  const nodeLabel = node
+                    ? (node.data as any)?.ageName ||
+                      (node.data as any)?.label ||
+                      (node.data as any)?.identifier ||
+                      col.nodeId
+                    : col.nodeId;
                   return (
                     <div key={index} className="text-xs text-muted-foreground">
                       {col.alias || `${nodeLabel}.${col.property}`}
@@ -910,22 +989,17 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
           )}
 
           {/* Display Cypher Query */}
-          {paths.length > 0 && (
-            <CypherQueryDisplay query={cypherQuery} />
-          )}
-
+          {paths.length > 0 && <CypherQueryDisplay query={cypherQuery} />}
 
           {/* Display Query Results */}
           {executedGraphQuery && (
             <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full border-green-500">
               <div className="flex items-center justify-between">
-                <div className="font-semibold text-sm text-green-600">Query Results</div>
+                <div className="font-semibold text-sm text-green-600">
+                  Query Results
+                </div>
                 <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 gap-1"
-                  >
+                  <Button size="sm" variant="outline" className="h-7 gap-1">
                     <ExternalLink className="h-3 w-3" />
                     Open Detail View
                   </Button>
@@ -945,10 +1019,17 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
             const pathWhereClauses = path.whereClauses || [];
 
             return (
-              <div key={pathIndex} className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full" style={{ borderColor: path.color }}>
+              <div
+                key={pathIndex}
+                className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full"
+                style={{ borderColor: path.color }}
+              >
                 <div className="font-semibold flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: path.color }}></div>
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: path.color }}
+                    ></div>
                     {path.title || `Path ${pathIndex + 1}`}
                   </div>
                   <Button
@@ -961,7 +1042,9 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                   </Button>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {path.nodes.length} node{path.nodes.length !== 1 ? 's' : ''}, {path.relations.length} relation{path.relations.length !== 1 ? 's' : ''}
+                  {path.nodes.length} node{path.nodes.length !== 1 ? "s" : ""},{" "}
+                  {path.relations.length} relation
+                  {path.relations.length !== 1 ? "s" : ""}
                 </div>
 
                 {/* Display nodes with WHERE buttons */}
@@ -972,11 +1055,20 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const nodeData = node.data as any;
-                    const nodeLabel = nodeData?.ageName || nodeData?.label || nodeData?.identifier || nodeId;
-                    const nodeWhereClause = pathWhereClauses.find((wc) => wc.nodeId === nodeId);
-                    const hasFilters = nodeWhereClause && nodeWhereClause.conditions.length > 0;
+                    const nodeLabel =
+                      nodeData?.ageName ||
+                      nodeData?.label ||
+                      nodeData?.identifier ||
+                      nodeId;
+                    const nodeWhereClause = pathWhereClauses.find(
+                      (wc) => wc.nodeId === nodeId,
+                    );
+                    const hasFilters =
+                      nodeWhereClause && nodeWhereClause.conditions.length > 0;
 
-                    const isEditing = editingWhereNode?.pathIndex === pathIndex && editingWhereNode?.nodeId === nodeId;
+                    const isEditing =
+                      editingWhereNode?.pathIndex === pathIndex &&
+                      editingWhereNode?.nodeId === nodeId;
 
                     return (
                       <div key={`${nodeId}-${nodeIndex}`} className="space-y-2">
@@ -987,17 +1079,23 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                               size="sm"
                               variant={hasFilters ? "default" : "outline"}
                               className="h-6 px-2 text-xs"
-                              onClick={() => toggleWhereEditor(pathIndex, nodeId)}
+                              onClick={() =>
+                                toggleWhereEditor(pathIndex, nodeId)
+                              }
                             >
                               <Filter className="h-3 w-3 mr-1" />
-                              {hasFilters ? `${nodeWhereClause.conditions.length}` : "WHERE"}
+                              {hasFilters
+                                ? `${nodeWhereClause.conditions.length}`
+                                : "WHERE"}
                             </Button>
                             {/* Delete button - truncate path from this node onwards */}
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                              onClick={() => truncatePathFromNode(pathIndex, nodeIndex)}
+                              onClick={() =>
+                                truncatePathFromNode(pathIndex, nodeIndex)
+                              }
                               title="Delete this node and everything after it"
                             >
                               <X className="h-3 w-3" />
@@ -1010,8 +1108,12 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                           <InlineWhereEditor
                             nodeId={nodeId}
                             nodeLabel={nodeLabel}
-                            initialConditions={nodeWhereClause?.conditions || []}
-                            onSave={(conditions) => saveWhereConditions(pathIndex, nodeId, conditions)}
+                            initialConditions={
+                              nodeWhereClause?.conditions || []
+                            }
+                            onSave={(conditions) =>
+                              saveWhereConditions(pathIndex, nodeId, conditions)
+                            }
                             onCancel={() => setEditingWhereNode(null)}
                           />
                         )}
@@ -1030,7 +1132,9 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                 <Checkbox
                   id="use-distinct"
                   checked={useDistinct}
-                  onCheckedChange={(checked) => setUseDistinct(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setUseDistinct(checked as boolean)
+                  }
                 />
                 <Label
                   htmlFor="use-distinct"
@@ -1061,13 +1165,22 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
           {/* Display active path */}
           {activePath && activePath.nodes.length > 0 && (
-            <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full" style={{ borderColor: activePath.color }}>
+            <div
+              className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full"
+              style={{ borderColor: activePath.color }}
+            >
               <div className="font-semibold flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: activePath.color }}></div>
-                {activePath.title || 'Current Path'} (Building...)
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: activePath.color }}
+                ></div>
+                {activePath.title || "Current Path"} (Building...)
               </div>
               <div className="text-sm">
-                {activePath.nodes.length} node{activePath.nodes.length !== 1 ? 's' : ''}, {activePath.relations.length} relation{activePath.relations.length !== 1 ? 's' : ''}
+                {activePath.nodes.length} node
+                {activePath.nodes.length !== 1 ? "s" : ""},{" "}
+                {activePath.relations.length} relation
+                {activePath.relations.length !== 1 ? "s" : ""}
               </div>
               <div className="text-xs text-muted-foreground">
                 {activePath.nodes.length === activePath.relations.length + 1
@@ -1093,61 +1206,80 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
         </div>
       </div>
 
-
-
       {/* Return Column Builder Dialog */}
-      {returnBuilderOpen && (() => {
-        // Get all unique nodes from all paths
-        const allNodeIds = new Set<string>();
-        paths.forEach((path) => {
-          path.nodes.forEach((nodeId) => allNodeIds.add(nodeId));
-        });
-        const availableNodes = nodes.filter((n) => allNodeIds.has(n.id));
+      {returnBuilderOpen &&
+        (() => {
+          // Get all unique nodes from all paths
+          const allNodeIds = new Set<string>();
+          paths.forEach((path) => {
+            path.nodes.forEach((nodeId) => allNodeIds.add(nodeId));
+          });
+          const availableNodes = nodes.filter((n) => allNodeIds.has(n.id));
 
-        return (
-          <ReturnColumnBuilder
-            nodes={availableNodes}
-            existingColumns={returnColumns}
-            isOpen={returnBuilderOpen}
-            onClose={() => setReturnBuilderOpen(false)}
-            onSave={(columns) => {
-              setReturnColumns(columns);
-              setReturnBuilderOpen(false);
-            }}
-          />
-        );
-      })()}
+          return (
+            <ReturnColumnBuilder
+              nodes={availableNodes}
+              existingColumns={returnColumns}
+              isOpen={returnBuilderOpen}
+              onClose={() => setReturnBuilderOpen(false)}
+              onSave={(columns) => {
+                setReturnColumns(columns);
+                setReturnBuilderOpen(false);
+              }}
+            />
+          );
+        })()}
 
       {/* Node Occurrence Selection Dialog */}
-      <Dialog open={nodeOccurrenceSelection !== null} onOpenChange={(open) => !open && setNodeOccurrenceSelection(null)}>
+      <Dialog
+        open={nodeOccurrenceSelection !== null}
+        onOpenChange={(open) => !open && setNodeOccurrenceSelection(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Select Node Occurrence</DialogTitle>
             <DialogDescription>
-              This node appears multiple times in existing paths. Select which occurrence you want to start the new path from to reuse its variable.
+              This node appears multiple times in existing paths. Select which
+              occurrence you want to start the new path from to reuse its
+              variable.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-4">
             {nodeOccurrenceSelection?.occurrences.map((occ, index) => {
               const path = paths[occ.pathIndex];
-              const node = nodes.find(n => n.id === nodeOccurrenceSelection.nodeId);
+              const node = nodes.find(
+                (n) => n.id === nodeOccurrenceSelection.nodeId,
+              );
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const nodeLabel = node ? ((node.data as any)?.ageName || (node.data as any)?.label || (node.data as any)?.identifier || nodeOccurrenceSelection.nodeId) : nodeOccurrenceSelection.nodeId;
+              const nodeLabel = node
+                ? (node.data as any)?.ageName ||
+                  (node.data as any)?.label ||
+                  (node.data as any)?.identifier ||
+                  nodeOccurrenceSelection.nodeId
+                : nodeOccurrenceSelection.nodeId;
 
               return (
                 <Button
                   key={index}
                   variant="outline"
                   className="justify-start h-auto p-3"
-                  onClick={() => selectNodeOccurrence(occ.pathIndex, occ.nodePosition)}
+                  onClick={() =>
+                    selectNodeOccurrence(occ.pathIndex, occ.nodePosition)
+                  }
                 >
                   <div className="flex flex-col items-start gap-1 w-full">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: path.color }}></div>
-                      <span className="font-semibold">{path.title || `Path ${occ.pathIndex + 1}`}</span>
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: path.color }}
+                      ></div>
+                      <span className="font-semibold">
+                        {path.title || `Path ${occ.pathIndex + 1}`}
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Position {occ.nodePosition + 1} of {path.nodes.length} - {nodeLabel}
+                      Position {occ.nodePosition + 1} of {path.nodes.length} -{" "}
+                      {nodeLabel}
                     </div>
                   </div>
                 </Button>

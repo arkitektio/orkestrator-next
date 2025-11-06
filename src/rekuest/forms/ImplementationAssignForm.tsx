@@ -7,7 +7,11 @@ import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
-import { ListDependencyFragment, PostmanAssignationFragment, useImplementationOptionsLazyQuery } from "../api/graphql";
+import {
+  ListDependencyFragment,
+  PostmanAssignationFragment,
+  useImplementationOptionsLazyQuery,
+} from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
@@ -20,25 +24,34 @@ export type ImplementationAssignFormProps = {
   hidden?: { [key: string]: any };
 };
 
-
-export const DependencyWidget = ({ dependency }: { dependency: ListDependencyFragment }) => {
-
+export const DependencyWidget = ({
+  dependency,
+}: {
+  dependency: ListDependencyFragment;
+}) => {
   const [search] = useImplementationOptionsLazyQuery({
     variables: { dependency: dependency.id },
   });
 
-
   return (
-    <div className="p-2 border border-1 border-gray-200 rounded-md bg-muted overflow-hidden" >
-      <GraphQLSearchField name={`dependencies.${dependency.key}`} searchQuery={search} label={dependency.key} description={dependency.description || ""} />
-    </div >
+    <div className="p-2 border border-1 border-gray-200 rounded-md bg-muted">
+      <GraphQLSearchField
+        name={`dependencies.${dependency.key}`}
+        searchQuery={search}
+        label={dependency.key}
+        description={dependency.description || ""}
+      />
+    </div>
   );
-}
+};
 
-export const ImplementationAssignForm = (props: ImplementationAssignFormProps) => {
-  const { assign, latestAssignation, cancel, implementation, error } = useImplementationAction({
-    id: props.id,
-  });
+export const ImplementationAssignForm = (
+  props: ImplementationAssignFormProps,
+) => {
+  const { assign, latestAssignation, implementation, error } =
+    useImplementationAction({
+      id: props.id,
+    });
 
   const description = useActionDescription({
     description: implementation?.action.description || "",
@@ -50,10 +63,10 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
     reValidateMode: "onChange",
   });
 
-
-
-
-  const onSubmit = async (data: { args: Record<string, unknown>, dependencies: Record<string, string> }) => {
+  const onSubmit = async (data: {
+    args: Record<string, unknown>;
+    dependencies: Record<string, string>;
+  }) => {
     console.log("Submitting");
     console.log(data);
     try {
@@ -79,18 +92,19 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
     }
   };
 
-
-
   const { registry } = useWidgetRegistry();
 
-  if (error) { return <p className="text-red-500">{error.message}</p> }
-
+  if (error) {
+    return <p className="text-red-500">{error.message}</p>;
+  }
 
   return (
     <>
       <h1 className="text-lg font-semibold mb-1">
         {implementation?.action.name}
-        <p className="text-muted-foreground text-xs">@ {implementation?.interface}</p>
+        <p className="text-muted-foreground text-xs">
+          @ {implementation?.interface}
+        </p>
       </h1>
 
       <p className="text-mutated">{description}</p>
@@ -105,17 +119,19 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
             hidden={props.hidden}
           />
           <div className="space-y-2 grid grid-cols-3 gap-2">
-            {implementation?.dependencies.map(dep => (
+            {implementation?.dependencies.map((dep) => (
               <DependencyWidget dependency={dep} key={dep.id} />
             ))}
           </div>
 
           <DialogFooter>
-            <Button type="submit" className={cn(form.formState.isSubmitting && "bg-red-200")}>
+            <Button
+              type="submit"
+              className={cn(form.formState.isSubmitting && "bg-red-200")}
+            >
               {" "}
               Submit{" "}
             </Button>
-
           </DialogFooter>
         </form>
       </Form>

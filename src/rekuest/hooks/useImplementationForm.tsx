@@ -17,8 +17,6 @@ export const portHash = (port: Port[]) => {
     .join("-");
 };
 
-
-
 export const useImplementationForm = (props: {
   implementation?: DetailImplementationFragment;
   overwrites?: { [key: string]: unknown };
@@ -30,14 +28,16 @@ export const useImplementationForm = (props: {
   const hash = portHash(props.implementation?.action.args || []);
 
   const defaultValues = useCallback(async () => {
-    return portToDefaults(props.implementation?.action.args || [], props.overwrites || {});
+    return {
+      args: portToDefaults(
+        props.implementation?.action.args || [],
+        props.overwrites || {},
+      ),
+    };
   }, [hash, props.overwrites]);
 
   const myResolver = useCallback(() => {
-    let argsSchema = buildZodSchema(props.implementation?.action.args || [])
-    if (props.implementation?.action.args.length === 0) {
-      argsSchema = argsSchema.optional();
-    }
+    const argsSchema = buildZodSchema(props.implementation?.action.args || []);
 
     const zodSchema = Zod.object({
       args: argsSchema,
@@ -56,9 +56,11 @@ export const useImplementationForm = (props: {
     (onSubmit: any) => {
       return handleSubmit(
         (data) => {
-
           onSubmit({
-            args: submittedDataToRekuestFormat(data.args || {}, props.implementation?.action.args || []),
+            args: submittedDataToRekuestFormat(
+              data.args || {},
+              props.implementation?.action.args || [],
+            ),
             dependencies: data.dependencies,
           });
         },
@@ -72,8 +74,13 @@ export const useImplementationForm = (props: {
 
   useEffect(() => {
     if (props.doNotAutoReset) return;
-    form.reset(portToDefaults(props.implementation?.action.args || [], props.overwrites || {}));
+    form.reset(
+      portToDefaults(
+        props.implementation?.action.args || [],
+        props.overwrites || {},
+      ),
+    );
   }, [hash]);
 
-  return { ...form, handleSubmit: overWrittenHandleSubmit, };
+  return { ...form, handleSubmit: overWrittenHandleSubmit };
 };

@@ -1,13 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphGraphQuery } from "@/linkers";
 import {
-  GraphQueryFilter,
   OffsetPaginationInput,
   ScatterPlotFilter,
-  useListGraphQueriesQuery,
   useListScatterPlotsQuery
 } from "../../api/graphql";
-import GraphQueryCard from "../cards/GraphQueryCard";
 import ScatterPlotCard from "../cards/ScatterPlotCard";
 
 export type Props = {

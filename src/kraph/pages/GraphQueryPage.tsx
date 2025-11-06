@@ -16,6 +16,7 @@ import { FormDialog } from "@/components/dialog/FormDialog";
 import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
 import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
 import { Plus } from "lucide-react";
+import GraphQueryList from "../components/lists/GraphQueryList";
 
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -59,10 +60,19 @@ export default asDetailQueryRoute(
 
             <KraphGraphQuery.DetailLink
               object={data.graphQuery.id}
+              subroute="builder"
+            >
+              <Button variant="outline" size="sm">
+                Builder
+              </Button>
+            </KraphGraphQuery.DetailLink>
+
+            <KraphGraphQuery.DetailLink
+              object={data.graphQuery.id}
               subroute="designer"
             >
               <Button variant="outline" size="sm">
-                Edit Query
+                Designer
               </Button>
             </KraphGraphQuery.DetailLink>
             <KraphGraphQuery.ObjectButton object={data.graphQuery.id} />
@@ -92,9 +102,6 @@ export default asDetailQueryRoute(
               {data.graphQuery.description || "No Description"}
             </p>
           </div>
-          <Card className="p-6 h-96 col-span-7">
-            <CypherEditor cypher={data.graphQuery.query} />
-          </Card>
         </div>
 
         <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />

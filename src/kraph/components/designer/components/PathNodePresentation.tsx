@@ -1,16 +1,20 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ReactNode } from "react";
-import { useIsNodePossible, useNodePaths } from "../OntologyGraphProvider";
+import { ReactNode, useState } from "react";
+import { Filter, CornerDownRight } from "lucide-react";
+import { useIsNodePossible, useNodePaths, useNodeOccurrences, useOntologyGraph } from "../OntologyGraphProvider";
+import { WhereClauseDialog } from "./WhereClauseDialog";
+import { ReturnDialog } from "./ReturnDialog";
 
 interface PathNodePresentationProps {
-    id: string;
-    label: string;
-    tags?: Array<{ value: string }>;
-    className?: string;
-    children?: ReactNode;
-    /** Show multi-path indicator */
-    showPathCount?: boolean;
+  id: string;
+  label: string;
+  tags?: Array<{ value: string }>;
+  className?: string;
+  children?: ReactNode;
+  /** Show multi-path indicator */
+  showPathCount?: boolean;
 }
 
 /**
@@ -18,63 +22,261 @@ interface PathNodePresentationProps {
  * Handles coloring, styling, and visual feedback based on path membership and selectability.
  */
 export const PathNodePresentation = ({
-    id,
-    label,
-    tags = [],
-    className = "",
-    children,
-    showPathCount = true,
+  id,
+  label,
+  tags = [],
+  className = "",
+  children,
+  showPathCount = true,
 }: PathNodePresentationProps) => {
-    const isPossible = useIsNodePossible(id);
-    const nodePaths = useNodePaths(id);
-    const isInPath = nodePaths.length > 0;
+  const isPossible = useIsNodePossible(id);
+  const nodePaths = useNodePaths(id);
+  const nodeOccurrences = useNodeOccurrences(id);
+  const isInPath = nodePaths.length > 0;
 
-    // Use the first path's color if node is in any path
-    const pathColor = isInPath ? nodePaths[0].color : undefined;
+  const {
+    getPathWhereConditions,
+    setPathWhereConditions,
+    getNodeProperties,
+    markedPaths,
+    getNodeReturnColumns,
+    addReturnColumn,
+    removeReturnColumn,
+  } = useOntologyGraph();
 
-    // Border color: path color > gray (no blue default)
-    const borderColor = pathColor || 'rgba(100, 100, 100, 0.3)';
+  const [whereDialogState, setWhereDialogState] = useState<{
+    open: boolean;
+    pathIndex: number;
+    pathColor?: string;
+  } | null>(null);
 
-    // Create semi-transparent version of path color for glow effects
-    const glowColor = pathColor
-        ? pathColor.replace('rgb', 'rgba').replace(')', ', 0.6)')
-        : undefined;
+  const [returnDialogState, setReturnDialogState] = useState<{
+    open: boolean;
+    nodeId: string;
+    nodeLabel: string;
+    pathIndex: number;
+    pathColor?: string;
+  } | null>(null);
 
-    return (
-        <Card
-            className={`h-full w-full relative group transition-all duration-300 flex items-center justify-center p-3 ${className}`}
-            style={{
-                opacity: isPossible ? 1 : 0.2,
-                pointerEvents: isPossible ? 'auto' : 'none',
-                boxShadow: isInPath && glowColor
-                    ? `0 0 20px 4px ${glowColor}, 0 0 40px 8px ${glowColor.replace('0.6', '0.3')}, inset 0 0 20px 2px ${glowColor.replace('0.6', '0.2')}`
-                    : isPossible
-                        ? '0 0 10px 2px rgba(59, 130, 246, 0.5)'
-                        : '0 0 5px 1px rgba(100, 100, 100, 0.2)',
-                border: `3px solid ${borderColor}`,
-                filter: !isPossible && !isInPath ? 'grayscale(0.8)' : 'none',
-                backgroundColor: 'hsl(var(--card))'
-            }}
-        >
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-                {children || <div className="font-semibold">{label}</div>}
+  // Create border image for multiple paths with radial gradient
+  const borderImage = nodePaths.length > 1
+    ? `conic-gradient(${nodePaths.map((path, idx) => {
+      const step = 100 / nodePaths.length;
+      const start = idx * step;
+      const end = (idx + 1) * step;
+      return `${path.color} ${start}%, ${path.color} ${end}%`;
+    }).join(', ')})`
+    : undefined;
 
-                {tags.length > 0 && (
-                    <div className="flex flex-row gap-1 flex-wrap justify-center">
-                        {tags.map((tag) => (
-                            <Badge key={tag.value} variant="outline" className="text-xs">
-                                {tag.value}
-                            </Badge>
-                        ))}
-                    </div>
-                )}
+  // Use the first path's color if node is in a single path
+  const pathColor = isInPath && nodePaths.length === 1 ? nodePaths[0].color : undefined;
 
-                {showPathCount && nodePaths.length > 1 && (
-                    <div className="text-xs text-muted-foreground">
-                        In {nodePaths.length} paths
-                    </div>
-                )}
+  // Border color: path color for single path, transparent for multiple (using border-image instead)
+  const borderColor = nodePaths.length > 1 ? 'transparent' : (pathColor || 'rgba(100, 100, 100, 0.3)');
+
+  // Create lighter glow effect
+  const glowColor = pathColor
+    ? pathColor.replace('rgb', 'rgba').replace(')', ', 0.3)')
+    : undefined;
+
+  const nodeProperties = getNodeProperties?.(id) || [];
+
+  const openWhereDialog = (pathIndex: number, pathColor?: string) => {
+    setWhereDialogState({ open: true, pathIndex, pathColor });
+  };
+
+  const handleSaveWhereConditions = (conditions: import("../OntologyGraphProvider").WhereCondition[]) => {
+    if (whereDialogState) {
+      setPathWhereConditions?.(whereDialogState.pathIndex, id, conditions);
+    }
+  };
+
+  const openReturnDialog = (pathIndex: number, pathColor?: string) => {
+    setReturnDialogState({
+      open: true,
+      nodeId: id,
+      nodeLabel: label,
+      pathIndex,
+      pathColor,
+    });
+  };
+
+  const handleSaveReturnColumns = (columns: import("../OntologyGraphProvider").ReturnColumn[]) => {
+    // Remove existing columns for this node
+    const existingColumns = getNodeReturnColumns?.(id) || [];
+    existingColumns.forEach((col) => {
+      removeReturnColumn?.(id, col.property);
+    });
+
+    // Add new columns
+    columns.forEach((col) => {
+      addReturnColumn?.(col);
+    });
+  };
+
+  return (
+    <>
+      <Card
+        className={`h-full w-full relative group transition-all duration-300 flex items-center justify-center p-3 ${className}`}
+        style={{
+          opacity: isPossible || isInPath ? 1 : 0.2,
+          pointerEvents: 'auto', // Always allow pointer events so WHERE buttons are clickable
+          boxShadow: isInPath && glowColor
+            ? `0 0 8px 2px ${glowColor}`
+            : isPossible
+              ? '0 0 6px 1px rgba(59, 130, 246, 0.4)'
+              : '0 0 3px 1px rgba(100, 100, 100, 0.2)',
+          border: `3px solid ${borderColor}`,
+          borderImage: borderImage ? `${borderImage} 1` : undefined,
+          borderRadius: borderImage ? '0.5rem' : undefined, // Match Card's rounded-lg
+          filter: !isPossible && !isInPath ? 'grayscale(0.8)' : 'none',
+          backgroundColor: 'hsl(var(--card))'
+        }}
+      >
+        {/* Path index badges on the node */}
+        {isInPath && nodeOccurrences.length > 0 && (
+          <div className="absolute -top-2 -right-2 flex flex-row gap-1">
+            {nodeOccurrences.map((occurrence) => {
+              const path = markedPaths?.[occurrence.pathIndex];
+              return (
+                <Badge
+                  key={`badge-${occurrence.pathIndex}-${occurrence.nodePosition}`}
+                  className="h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full border-2 border-background"
+                  style={{
+                    backgroundColor: path?.color,
+                    color: "white",
+                  }}
+                >
+                  {occurrence.nodePosition + 1}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center justify-center gap-2 text-center w-full">
+          {children || <div className="font-semibold">{label}</div>}
+
+          {tags.length > 0 && (
+            <div className="flex flex-row gap-1 flex-wrap justify-center">
+              {tags.map((tag) => (
+                <Badge key={tag.value} variant="outline" className="text-xs">
+                  {tag.value}
+                </Badge>
+              ))}
             </div>
-        </Card>
-    );
+          )}
+
+          {showPathCount && nodePaths.length > 1 && (
+            <div className="text-xs text-muted-foreground">
+              In {nodePaths.length} paths
+            </div>
+          )}
+
+          {/* WHERE and RETURN buttons for each occurrence */}
+          {isInPath && nodeOccurrences.length > 0 && (
+            <div className="flex flex-col gap-1 justify-center mt-2">
+              {/* WHERE buttons row */}
+              <div className="flex flex-row gap-1 justify-center">
+                {nodeOccurrences.map((occurrence) => {
+                  const path = markedPaths?.[occurrence.pathIndex];
+                  const hasConditions =
+                    (getPathWhereConditions?.(occurrence.pathIndex, id)?.length ||
+                      0) > 0;
+
+                  return (
+                    <Button
+                      key={`where-${occurrence.pathIndex}-${occurrence.nodePosition}`}
+                      size="icon"
+                      variant={hasConditions ? "default" : "outline"}
+                      className="h-5 w-5"
+                      style={{
+                        borderColor: path?.color,
+                        ...(hasConditions && path?.color
+                          ? {
+                            backgroundColor: path.color,
+                            color: "white",
+                          }
+                          : {}),
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhereDialog(occurrence.pathIndex, path?.color);
+                      }}
+                      title={`WHERE filters for path ${occurrence.pathIndex + 1}${hasConditions ? ` (${getPathWhereConditions?.(occurrence.pathIndex, id)?.length} conditions)` : ""}`}
+                    >
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {/* RETURN buttons row - one per occurrence */}
+              <div className="flex flex-row gap-1 justify-center">
+                {nodeOccurrences.map((occurrence) => {
+                  const path = markedPaths?.[occurrence.pathIndex];
+                  const hasReturnColumns =
+                    (getNodeReturnColumns?.(id)?.length || 0) > 0;
+
+                  return (
+                    <Button
+                      key={`return-${occurrence.pathIndex}-${occurrence.nodePosition}`}
+                      size="icon"
+                      variant={hasReturnColumns ? "default" : "outline"}
+                      className="h-5 w-5"
+                      style={{
+                        borderColor: path?.color,
+                        ...(hasReturnColumns && path?.color
+                          ? {
+                            backgroundColor: path.color,
+                            color: "white",
+                          }
+                          : {}),
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openReturnDialog(occurrence.pathIndex, path?.color);
+                      }}
+                      title={`Return columns for path ${occurrence.pathIndex + 1}${hasReturnColumns ? ` (${getNodeReturnColumns?.(id)?.length})` : ""}`}
+                    >
+                      <CornerDownRight className="h-3 w-3" />
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* WHERE clause dialog */}
+      {whereDialogState && (
+        <WhereClauseDialog
+          open={whereDialogState.open}
+          onOpenChange={(open) => !open && setWhereDialogState(null)}
+          nodeLabel={label}
+          pathColor={whereDialogState.pathColor}
+          initialConditions={getPathWhereConditions?.(whereDialogState.pathIndex, id) || []}
+          nodeProperties={nodeProperties}
+          onSave={handleSaveWhereConditions}
+        />
+      )}
+
+      {/* RETURN columns dialog */}
+      {returnDialogState && (
+        <ReturnDialog
+          open={returnDialogState.open}
+          onOpenChange={(open) => {
+            if (!open) setReturnDialogState(null);
+          }}
+          nodeId={returnDialogState.nodeId}
+          nodeLabel={returnDialogState.nodeLabel}
+          availableProperties={nodeProperties}
+          initialColumns={getNodeReturnColumns?.(id) || []}
+          onSave={handleSaveReturnColumns}
+          pathColor={returnDialogState.pathColor}
+        />
+      )}
+    </>
+  );
 };

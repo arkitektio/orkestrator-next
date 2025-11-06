@@ -34,6 +34,11 @@ export type Path = {
   startsFromNodePosition?: number; // Position in the source path where this path starts
 };
 
+export type NodeOccurrence = {
+  pathIndex: number;
+  nodePosition: number;
+};
+
 export type OntologyGraphContextType = {
   graph: GraphFragment;
   markedPaths?: Path[];
@@ -41,15 +46,20 @@ export type OntologyGraphContextType = {
   possibleEdges?: string[];
   addStagingEdge: (params: StagingEdgeParams) => void;
   addStagingNode: (params: StagingNodeParams) => void;
-  // WHERE clause management
+  // WHERE clause management (global)
   whereClauses?: NodeWhereClause[];
   setWhereClause?: (nodeId: string, conditions: WhereCondition[]) => void;
   getWhereClause?: (nodeId: string) => NodeWhereClause | undefined;
+  // WHERE clause management (per path occurrence)
+  setPathWhereConditions?: (pathIndex: number, nodeId: string, conditions: WhereCondition[]) => void;
+  getPathWhereConditions?: (pathIndex: number, nodeId: string) => WhereCondition[];
   // Return columns management
   returnColumns?: ReturnColumn[];
   addReturnColumn?: (column: ReturnColumn) => void;
   removeReturnColumn?: (nodeId: string, property: string) => void;
   getNodeReturnColumns?: (nodeId: string) => ReturnColumn[];
+  // Node properties
+  getNodeProperties?: (nodeId: string) => Array<{ name: string; type: "string" | "number" | "boolean" }>;
 };
 
 // Predefined color palette for paths
@@ -114,6 +124,22 @@ export const useIsEdgeInPath = (edgeId: string) => {
 export const useNodePaths = (nodeId: string): Path[] => {
   const { markedPaths } = useOntologyGraph();
   return markedPaths?.filter((path) => path.nodes.includes(nodeId)) || [];
+}
+
+// Get all occurrences of a node across paths (with path index and position)
+export const useNodeOccurrences = (nodeId: string): NodeOccurrence[] => {
+  const { markedPaths } = useOntologyGraph();
+  const occurrences: NodeOccurrence[] = [];
+
+  markedPaths?.forEach((path, pathIndex) => {
+    path.nodes.forEach((nId, nodePosition) => {
+      if (nId === nodeId) {
+        occurrences.push({ pathIndex, nodePosition });
+      }
+    });
+  });
+
+  return occurrences;
 }
 
 // Get the path(s) that contain a specific edge

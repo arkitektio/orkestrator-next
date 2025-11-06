@@ -17,6 +17,7 @@ import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryR
 import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
+import GraphQueryList from "../components/lists/GraphQueryList";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -71,6 +72,9 @@ export default asDetailQueryRoute(
               Comments: (
                 <KraphEntityCategory.Komments object={data.entityCategory.id} />
               ),
+              Queries: <>
+                <GraphQueryList filters={{ relevantFor: data.entityCategory.id }} />
+              </>
             }}
           />
         }

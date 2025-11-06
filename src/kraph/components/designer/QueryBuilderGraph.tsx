@@ -20,6 +20,7 @@ import {
 import {
   GraphFragment,
   useCreateGraphQueryMutation,
+  useUpdateGraphQueryMutation,
   GraphQueryFragment,
 } from "@/kraph/api/graphql";
 import { KraphGraph } from "@/linkers";
@@ -245,8 +246,52 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
   );
 };
 
-export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
-  const [paths, setPaths] = useState<Path[]>([]); // All completed paths
+// Helper to extract paths from description or return empty array
+const extractPathsFromDescription = (description?: string | null): Path[] => {
+  if (!description) return [];
+
+  const pathMarker = "PATHS_JSON:";
+  const pathIndex = description.indexOf(pathMarker);
+  if (pathIndex === -1) return [];
+
+  try {
+    const jsonStart = pathIndex + pathMarker.length;
+    const jsonString = description.substring(jsonStart);
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.error("Failed to parse paths from description", e);
+    return [];
+  }
+};
+
+// Helper to embed paths in description
+const embedPathsInDescription = (
+  originalDescription: string | undefined | null,
+  paths: Path[]
+): string => {
+  const pathMarker = "PATHS_JSON:";
+  const baseDescription = originalDescription || "";
+
+  // Remove any existing paths data
+  const pathIndex = baseDescription.indexOf(pathMarker);
+  const cleanDescription = pathIndex === -1
+    ? baseDescription
+    : baseDescription.substring(0, pathIndex).trim();
+
+  // Add new paths data
+  return `${cleanDescription}\n\n${pathMarker}${JSON.stringify(paths)}`;
+};
+
+export const QueryBuilderGraph = ({
+  graph,
+  graphQuery,
+}: {
+  graph: GraphFragment;
+  graphQuery?: GraphQueryFragment;
+}) => {
+  const [paths, setPaths] = useState<Path[]>(() =>
+    graphQuery ? extractPathsFromDescription(graphQuery.description) : []
+  );
   const [activePath, setActivePath] = useState<Path | null>(null); // Current path being built
   const [nextColorIndex, setNextColorIndex] = useState(0);
 
@@ -272,9 +317,10 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
   // Query execution state
   const [executedGraphQuery, setExecutedGraphQuery] =
-    useState<GraphQueryFragment | null>(null);
+    useState<GraphQueryFragment | null>(graphQuery || null);
   const [isRunning, setIsRunning] = useState(false);
   const [createGraphQuery] = useCreateGraphQueryMutation();
+  const [updateGraphQuery] = useUpdateGraphQueryMutation();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -293,8 +339,13 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     string[],
     string[],
   ] => {
-    // If no active path, allow starting from any node that's in an existing path or any node if no paths exist
-    if (!activePath || activePath.nodes.length === 0) {
+    // If no active path, no nodes are selectable (must click "New Path" button first)
+    if (!activePath) {
+      return [[], []];
+    }
+
+    // If active path exists but has no nodes yet, allow selecting any node to start
+    if (activePath.nodes.length === 0) {
       if (paths.length === 0) {
         // First path - can start from any node
         return [nodes.map((n) => n.id), []];
@@ -500,45 +551,8 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       return;
     }
 
-    // If no active path, start a new one
+    // Only add to active path if one exists (no longer auto-start paths)
     if (!activePath) {
-      const color = PATH_COLORS[nextColorIndex % PATH_COLORS.length];
-
-      // Check if this node appears in multiple places in existing paths
-      const occurrences: Array<{ pathIndex: number; nodePosition: number }> =
-        [];
-      paths.forEach((path, pathIndex) => {
-        path.nodes.forEach((nodeId, nodePosition) => {
-          if (nodeId === node.id) {
-            occurrences.push({ pathIndex, nodePosition });
-          }
-        });
-      });
-
-      // If node appears multiple times, show selection dialog
-      if (occurrences.length > 1) {
-        setNodeOccurrenceSelection({
-          nodeId: node.id,
-          occurrences,
-        });
-        return;
-      }
-
-      // If node appears once or not at all, proceed normally
-      const startsFromPath =
-        occurrences.length === 1 ? occurrences[0].pathIndex : undefined;
-      const startsFromNodePosition =
-        occurrences.length === 1 ? occurrences[0].nodePosition : undefined;
-
-      setActivePath({
-        nodes: [node.id],
-        relations: [],
-        optional: false,
-        title: `Path ${paths.length + 1}`,
-        color,
-        startsFromPath,
-        startsFromNodePosition,
-      });
       return;
     }
 
@@ -569,6 +583,45 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       relationDirections: [...(activePath.relationDirections || []), isForward],
     };
     setActivePath(newPath);
+  };
+
+  // Function to start a new path - user must click this before selecting nodes
+  const startNewPath = (nodeId?: string) => {
+    const color = PATH_COLORS[nextColorIndex % PATH_COLORS.length];
+
+    if (nodeId) {
+      // Starting from a specific node (e.g., from node occurrence selection)
+      const occurrences: Array<{ pathIndex: number; nodePosition: number }> = [];
+      paths.forEach((path, pathIndex) => {
+        path.nodes.forEach((nId, nodePosition) => {
+          if (nId === nodeId) {
+            occurrences.push({ pathIndex, nodePosition });
+          }
+        });
+      });
+
+      const startsFromPath = occurrences.length === 1 ? occurrences[0].pathIndex : undefined;
+      const startsFromNodePosition = occurrences.length === 1 ? occurrences[0].nodePosition : undefined;
+
+      setActivePath({
+        nodes: [nodeId],
+        relations: [],
+        optional: false,
+        title: `Path ${paths.length + 1}`,
+        color,
+        startsFromPath,
+        startsFromNodePosition,
+      });
+    } else {
+      // Starting a new empty path - user will select first node
+      setActivePath({
+        nodes: [],
+        relations: [],
+        optional: false,
+        title: `Path ${paths.length + 1}`,
+        color,
+      });
+    }
   };
 
   // Helper function to convert a string to snake_case and clean it for use as a variable name
@@ -752,14 +805,45 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
     setIsRunning(true);
     try {
-      const result = await createGraphQuery({
-        variables: {
-          input: graphQueryInput,
-        },
-      });
+      if (graphQuery) {
+        // Update existing graph query
+        const descriptionWithPaths = embedPathsInDescription(
+          graphQuery.description,
+          paths
+        );
 
-      if (result.data?.createGraphQuery) {
-        setExecutedGraphQuery(result.data.createGraphQuery);
+        const result = await updateGraphQuery({
+          variables: {
+            input: {
+              id: graphQuery.id,
+              ...graphQueryInput,
+              description: descriptionWithPaths,
+            },
+          },
+        });
+
+        if (result.data?.updateGraphQuery) {
+          setExecutedGraphQuery(result.data.updateGraphQuery);
+        }
+      } else {
+        // Create new graph query
+        const descriptionWithPaths = embedPathsInDescription(
+          graphQueryInput.description,
+          paths
+        );
+
+        const result = await createGraphQuery({
+          variables: {
+            input: {
+              ...graphQueryInput,
+              description: descriptionWithPaths,
+            },
+          },
+        });
+
+        if (result.data?.createGraphQuery) {
+          setExecutedGraphQuery(result.data.createGraphQuery);
+        }
       }
     } catch (error) {
       console.error("Failed to run query:", error);
@@ -855,6 +939,63 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
     return whereClauses.find((wc) => wc.nodeId === nodeId);
   };
 
+  // Path-based WHERE clause management functions
+  const setPathWhereConditions = (
+    pathIndex: number,
+    nodeId: string,
+    conditions: WhereCondition[]
+  ) => {
+    setPaths((prevPaths) => {
+      const updatedPaths = [...prevPaths];
+      const path = updatedPaths[pathIndex];
+
+      if (!path) return prevPaths;
+
+      // Initialize whereClauses if not present
+      if (!path.whereClauses) {
+        path.whereClauses = [];
+      }
+
+      // Remove existing WHERE clause for this node
+      path.whereClauses = path.whereClauses.filter((wc) => wc.nodeId !== nodeId);
+
+      // Add new WHERE clause if there are conditions
+      if (conditions.length > 0) {
+        path.whereClauses.push({ nodeId, conditions });
+      }
+
+      return updatedPaths;
+    });
+  };
+
+  const getPathWhereConditions = (pathIndex: number, nodeId: string): WhereCondition[] => {
+    const path = paths[pathIndex];
+    if (!path || !path.whereClauses) return [];
+
+    const whereClause = path.whereClauses.find((wc) => wc.nodeId === nodeId);
+    return whereClause?.conditions || [];
+  };
+
+  // Get node properties for WHERE clause editor
+  const getNodeProperties = (nodeId: string): Array<{ name: string; type: "string" | "number" | "boolean" }> => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return NODE_PROPERTIES.default;
+
+    // Determine node type from the node data
+    const nodeType = node.type;
+
+    // Map node types to property configurations
+    if (nodeType === 'structurecategory') {
+      return NODE_PROPERTIES.Structure;
+    } else if (nodeType === 'entitycategory') {
+      return NODE_PROPERTIES.Entity;
+    } else if (nodeType === 'metriccategory') {
+      return NODE_PROPERTIES.Metric;
+    }
+
+    return NODE_PROPERTIES.default;
+  };
+
   // Return column management functions
   const addReturnColumn = (column: ReturnColumn) => {
     setReturnColumns((prev) => {
@@ -886,87 +1027,110 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
       markedPaths={allPaths}
       possibleNodes={possibleNodes}
       possibleEdges={possibleEdges}
-      addStagingEdge={() => {}}
-      addStagingNode={() => {}}
+      addStagingEdge={() => { }}
+      addStagingNode={() => { }}
       whereClauses={whereClauses}
       setWhereClause={setWhereClause}
       getWhereClause={getWhereClause}
+      setPathWhereConditions={setPathWhereConditions}
+      getPathWhereConditions={getPathWhereConditions}
       returnColumns={returnColumns}
       addReturnColumn={addReturnColumn}
       removeReturnColumn={removeReturnColumn}
       getNodeReturnColumns={getNodeReturnColumns}
+      getNodeProperties={getNodeProperties}
     >
-      <div
-        ref={reactFlowWrapper}
-        style={{ width: "100%", height: "100%" }}
-        className="relative"
-      >
-        <ReactFlow<MyNode, MyEdge>
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          nodeTypes={BUILDER_NODE_TYPES}
-          edgeTypes={BUILDER_EDGE_TYPES}
-          onInit={(r) => setReactFlowInstance(r)}
-          fitView
-          proOptions={{ hideAttribution: true }}
-        />
-        <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row">
-          <Button onClick={() => layout(stressLayout)} variant={"outline"}>
-            Stress
-          </Button>
-          <Button onClick={() => layout(forceLayout)} variant={"outline"}>
-            Force
-          </Button>
-          <Button onClick={() => layout(discoLayout)} variant={"outline"}>
-            Disco
-          </Button>
-          <Button onClick={() => layout(treeLayout)} variant={"outline"}>
-            Tree
-          </Button>
-          <Button onClick={() => layout(layeredLayout)} variant={"outline"}>
-            Layered
-          </Button>
-          <Button
-            onClick={() => {
-              const rootNode = nodes.at(0)?.id;
-              if (rootNode) {
-                nodelayout(radialLayout, rootNode);
-              }
-            }}
-            variant={"outline"}
+      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+        {/* Left side: Graph Builder */}
+        <div className="col-span-8 relative">
+          <div
+            ref={reactFlowWrapper}
+            style={{ width: "100%", height: "100%" }}
+            className="relative border rounded-lg"
           >
-            Circle
-          </Button>
+            <ReactFlow<MyNode, MyEdge>
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodeClick={onNodeClick}
+              onEdgeClick={onEdgeClick}
+              nodeTypes={BUILDER_NODE_TYPES}
+              edgeTypes={BUILDER_EDGE_TYPES}
+              onInit={(r) => setReactFlowInstance(r)}
+              fitView
+              proOptions={{ hideAttribution: true }}
+            />
+            <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row flex-wrap">
+              <Button onClick={() => layout(stressLayout)} variant={"outline"} size="sm">
+                Stress
+              </Button>
+              <Button onClick={() => layout(forceLayout)} variant={"outline"} size="sm">
+                Force
+              </Button>
+              <Button onClick={() => layout(discoLayout)} variant={"outline"} size="sm">
+                Disco
+              </Button>
+              <Button onClick={() => layout(treeLayout)} variant={"outline"} size="sm">
+                Tree
+              </Button>
+              <Button onClick={() => layout(layeredLayout)} variant={"outline"} size="sm">
+                Layered
+              </Button>
+              <Button
+                onClick={() => {
+                  const rootNode = nodes.at(0)?.id;
+                  if (rootNode) {
+                    nodelayout(radialLayout, rootNode);
+                  }
+                }}
+                variant={"outline"}
+                size="sm"
+              >
+                Circle
+              </Button>
 
-          <KraphGraph.DetailLink
-            object={graph.id}
-            subroute={"reagentcategories"}
-            className="text-sm"
-          >
-            Reagent Categories
-          </KraphGraph.DetailLink>
+              <KraphGraph.DetailLink
+                object={graph.id}
+                subroute={"reagentcategories"}
+                className="text-sm"
+              >
+                Reagent Categories
+              </KraphGraph.DetailLink>
+            </div>
+          </div>
         </div>
-        <div className="absolute top-0 right-0 p-3 gap-2 flex flex-col items-end max-w-lg">
+
+        {/* Right side: Controls and Results */}
+        <div className="col-span-4 flex flex-col gap-3 overflow-y-auto">
+          {/* Path Controls */}
           <div className="flex flex-row gap-2">
+            {!activePath && (
+              <Button onClick={() => startNewPath()} variant={"default"} className="flex-1">
+                <Plus className="h-4 w-4 mr-2" />
+                New Path
+              </Button>
+            )}
             {activePath && (
-              <Button onClick={finishPath} variant={"default"}>
+              <Button onClick={finishPath} variant={"default"} className="flex-1">
                 Finish Path
               </Button>
             )}
-            {paths.length > 0 && (
-              <Button onClick={clearAllPaths} variant={"destructive"}>
+            {activePath && (
+              <Button onClick={() => setActivePath(null)} variant={"outline"} className="flex-1">
+                Cancel
+              </Button>
+            )}
+            {paths.length > 0 && !activePath && (
+              <Button onClick={clearAllPaths} variant={"destructive"} className="flex-1">
                 Clear All
               </Button>
             )}
           </div>
 
-          {/* Display Return Columns */}
-          {returnColumns.length > 0 && (
-            <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full">
+          {/* Display Return Columns - hide when building a path */}
+          {returnColumns.length > 0 && !activePath && (
+            <div className="bg-card p-3 rounded border flex flex-col gap-2">
               <div className="font-semibold text-sm">Return Columns</div>
               <div className="flex flex-col gap-1">
                 {returnColumns.map((col, index) => {
@@ -974,9 +1138,9 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const nodeLabel = node
                     ? (node.data as any)?.ageName ||
-                      (node.data as any)?.label ||
-                      (node.data as any)?.identifier ||
-                      col.nodeId
+                    (node.data as any)?.label ||
+                    (node.data as any)?.identifier ||
+                    col.nodeId
                     : col.nodeId;
                   return (
                     <div key={index} className="text-xs text-muted-foreground">
@@ -988,12 +1152,12 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
             </div>
           )}
 
-          {/* Display Cypher Query */}
-          {paths.length > 0 && <CypherQueryDisplay query={cypherQuery} />}
+          {/* Display Cypher Query - hide when building a path */}
+          {paths.length > 0 && !activePath && <CypherQueryDisplay query={cypherQuery} />}
 
           {/* Display Query Results */}
           {executedGraphQuery && (
-            <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full border-green-500">
+            <div className="bg-card p-3 rounded border flex flex-col gap-2 border-green-500">
               <div className="flex items-center justify-between">
                 <div className="font-semibold text-sm text-green-600">
                   Query Results
@@ -1001,11 +1165,11 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                 <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
                   <Button size="sm" variant="outline" className="h-7 gap-1">
                     <ExternalLink className="h-3 w-3" />
-                    Open Detail View
+                    Open
                   </Button>
                 </KraphGraphQuery.DetailLink>
               </div>
-              <div className="w-full h-96 overflow-auto">
+              <div className="w-full overflow-auto" style={{ maxHeight: "400px" }}>
                 <SelectiveGraphQueryRenderer
                   graphQuery={executedGraphQuery}
                   options={{ minimal: true }}
@@ -1014,14 +1178,14 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
             </div>
           )}
 
-          {/* Display all completed paths */}
-          {paths.map((path, pathIndex) => {
+          {/* Display all completed paths - hide when building a new path */}
+          {!activePath && paths.map((path, pathIndex) => {
             const pathWhereClauses = path.whereClauses || [];
 
             return (
               <div
                 key={pathIndex}
-                className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full"
+                className="bg-card p-3 rounded border flex flex-col gap-2"
                 style={{ borderColor: path.color }}
               >
                 <div className="font-semibold flex items-center justify-between gap-2">
@@ -1125,10 +1289,10 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
             );
           })}
 
-          {/* Action buttons */}
-          {paths.length > 0 && (
+          {/* Action buttons - hide when building a path */}
+          {paths.length > 0 && !activePath && (
             <>
-              <div className="flex items-center space-x-2 w-full p-2 bg-background/50 rounded border">
+              <div className="flex items-center space-x-2 p-2 bg-card rounded border">
                 <Checkbox
                   id="use-distinct"
                   checked={useDistinct}
@@ -1143,7 +1307,7 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
                   Use DISTINCT in RETURN clause
                 </Label>
               </div>
-              <div className="flex flex-row gap-2 w-full">
+              <div className="flex flex-row gap-2">
                 <Button
                   onClick={() => setReturnBuilderOpen(true)}
                   variant={"outline"}
@@ -1166,7 +1330,7 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
           {/* Display active path */}
           {activePath && activePath.nodes.length > 0 && (
             <div
-              className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full"
+              className="bg-card p-3 rounded border flex flex-col gap-2"
               style={{ borderColor: activePath.color }}
             >
               <div className="font-semibold flex items-center gap-2">
@@ -1194,7 +1358,7 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
 
           {/* Instructions when no active path */}
           {!activePath && (
-            <div className="bg-background/90 p-3 rounded border flex flex-col gap-2 w-full">
+            <div className="bg-card p-3 rounded border flex flex-col gap-2">
               <div className="font-semibold">Start New Path</div>
               <div className="text-xs text-muted-foreground">
                 {paths.length === 0
@@ -1253,9 +1417,9 @@ export const QueryBuilderGraph = ({ graph }: { graph: GraphFragment }) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const nodeLabel = node
                 ? (node.data as any)?.ageName ||
-                  (node.data as any)?.label ||
-                  (node.data as any)?.identifier ||
-                  nodeOccurrenceSelection.nodeId
+                (node.data as any)?.label ||
+                (node.data as any)?.identifier ||
+                nodeOccurrenceSelection.nodeId
                 : nodeOccurrenceSelection.nodeId;
 
               return (

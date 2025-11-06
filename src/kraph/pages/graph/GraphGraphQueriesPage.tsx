@@ -35,7 +35,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         <GraphQueryList pagination={{ limit: 30 }} filters={{ graph: id }} />
 
         <Card className="my-6 w-full h-0.5 bg-border/50" />
-        <ScatterPlotList pagination={{ limit: 30 }} filters={{ graph: id }} />
       </div>
     </PageLayout>
   );

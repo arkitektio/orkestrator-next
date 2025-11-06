@@ -80,9 +80,9 @@ function getRelationshipType(edge: MyEdge): string {
     case "structure_relation":
       return "STRUCTURE_RELATION";
     case "reagentrole":
-      return "PARTICIPATES";
+      return edge.data?.role || "PARTICIPATES";
     case "entityrole":
-      return "PARTICIPATES";
+      return edge.data?.role || "PARTICIPATES";
     case "describe":
       return "DESCRIBES";
     default:

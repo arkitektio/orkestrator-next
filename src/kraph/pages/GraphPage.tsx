@@ -8,15 +8,31 @@ import {
   useGetGraphQuery,
   useMaterializeGraphMutation,
   useUpdateGraphMutation,
+  useCreateGraphQueryMutation,
+  ViewKind,
 } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
+import { useState } from "react";
+import { Plus } from "lucide-react";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
+  const navigate = useNavigate();
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -24,6 +40,40 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [materialize] = useMaterializeGraphMutation({
     refetchQueries: ["GetGraph"],
   });
+
+  const [createGraphQuery] = useCreateGraphQueryMutation({
+    refetchQueries: ["GetGraph", "GetGraphQuery"],
+  });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [queryName, setQueryName] = useState("");
+
+  const handleCreateQuery = async () => {
+    if (!queryName.trim()) return;
+
+    try {
+      const result = await createGraphQuery({
+        variables: {
+          input: {
+            name: queryName,
+            description: "New query created from builder",
+            graph: data.graph.id,
+            query: "MATCH (n) RETURN n LIMIT 25",
+            kind: ViewKind.NodeList,
+          },
+        },
+      });
+
+      if (result.data?.createGraphQuery) {
+        setDialogOpen(false);
+        setQueryName("");
+        // Navigate to the builder page for the newly created query
+        navigate(`/kraph/graphqueries/${result.data.createGraphQuery.id}/builder`);
+      }
+    } catch (error) {
+      console.error("Failed to create graph query:", error);
+    }
+  };
 
   const pin = async () => {
     await update({
@@ -43,6 +93,46 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Query
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Graph Query</DialogTitle>
+                <DialogDescription>
+                  Enter a name for your new query. You&apos;ll be taken to the builder to design it.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Query Name</Label>
+                  <Input
+                    id="name"
+                    value={queryName}
+                    onChange={(e) => setQueryName(e.target.value)}
+                    placeholder="e.g., Sample Analysis Query"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleCreateQuery();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateQuery} disabled={!queryName.trim()}>
+                  Create & Open Builder
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <FormSheet
             trigger={
               <Button variant="outline">
@@ -53,11 +143,6 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
-          <KraphGraph.DetailLink object={data.graph.id} subroute="builder">
-            <Button variant="outline" size="sm">
-              Builder
-            </Button>
-          </KraphGraph.DetailLink>
           <KraphGraph.DetailLink object={data.graph.id} subroute="queries">
             <Button variant="outline" size="sm">
               Queries

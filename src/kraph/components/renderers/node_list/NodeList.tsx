@@ -190,9 +190,9 @@ export const NodeListRender = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
@@ -234,28 +234,6 @@ export const NodeListRender = (props: {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              table.previousPage();
-            }}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              table.nextPage();
-            }}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
       </div>
     </div>
   );
@@ -293,9 +271,9 @@ export const RenderGraphQueryNodeList = (props: {
   const order: GraphQueryOrder | undefined =
     sorting.length > 0
       ? {
-          field: sorting[0].id,
-          direction: sorting[0].desc ? "DESC" : "ASC",
-        }
+        field: sorting[0].id,
+        direction: sorting[0].desc ? "DESC" : "ASC",
+      }
       : undefined;
 
   const { data, loading, error } = useRenderGraphQueryQuery({
@@ -405,9 +383,9 @@ export const RenderGraphQueryNodeList = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

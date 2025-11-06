@@ -1,55 +1,53 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { KraphGraph } from "@/linkers";
-import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import { KraphGraphQuery } from "@/linkers";
 import {
+  useGetGraphQueryQuery,
+  useUpdateGraphQueryMutation,
   useGetGraphQuery,
-  useMaterializeGraphMutation,
-  useUpdateGraphMutation,
 } from "../../api/graphql";
 
 import { Button } from "@/components/ui/button";
 import QueryBuilderGraph from "@/kraph/components/designer/QueryBuilderGraph";
-import { UpdateGraphForm } from "../../forms/UpdateGraphForm";
 
-export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const [update] = useUpdateGraphMutation({
-    refetchQueries: ["GetGraph"],
+export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => {
+  const [update] = useUpdateGraphQueryMutation({
+    refetchQueries: ["GetGraphQuery"],
   });
 
-  const [materialize] = useMaterializeGraphMutation({
-    refetchQueries: ["GetGraph"],
+  const { data: graphData } = useGetGraphQuery({
+    variables: {
+      id: data.graphQuery.graph.id,
+    },
   });
 
   const pin = async () => {
     await update({
       variables: {
         input: {
-          id: data.graph.id,
-          pin: !data.graph.pinned,
+          id: data.graphQuery.id,
+          name: data.graphQuery.name,
+          query: data.graphQuery.query,
+          kind: data.graphQuery.kind,
+          graph: data.graphQuery.graph.id,
+          pin: !data.graphQuery.pinned,
         },
       },
     });
     await refetch();
   };
 
+  if (!graphData?.graph) {
+    return <div>Loading graph data...</div>;
+  }
+
   return (
-    <KraphGraph.ModelPage
-      object={data.graph.id}
-      title={data.graph.name}
+    <KraphGraphQuery.ModelPage
+      object={data.graphQuery.id}
+      title={data.graphQuery.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet
-            trigger={
-              <Button variant="outline">
-                <HobbyKnifeIcon />
-              </Button>
-            }
-          >
-            {data?.graph && <UpdateGraphForm graph={data?.graph} />}
-          </FormSheet>
-          <KraphGraph.ObjectButton object={data.graph.id} />
+          <KraphGraphQuery.ObjectButton object={data.graphQuery.id} />
           <Button
             onClick={() => {
               pin();
@@ -57,39 +55,26 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             className="w-full"
             variant="outline"
           >
-            {data.graph.pinned ? "Unpin" : "Pin"}
-          </Button>
-          <Button
-            onClick={() => {
-              materialize({
-                variables: { input: { id: data.graph.id } },
-              });
-            }}
-            className="w-full"
-            variant="outline"
-          >
-            Materialize
+            {data.graphQuery.pinned ? "Unpin" : "Pin"}
           </Button>
         </div>
       }
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KraphGraph.Komments object={data.graph.id} />,
+            Comments: <KraphGraphQuery.Komments object={data.graphQuery.id} />,
           }}
         />
       }
     >
       <div className="grid grid-cols-12 gap-4 mb-4 h-full w-full">
         <div className="col-span-12 md:col-span-12">
-
-          <QueryBuilderGraph graph={data.graph} />
+          <QueryBuilderGraph
+            graph={graphData.graph}
+            graphQuery={data.graphQuery}
+          />
         </div>
-
-
-
-
       </div>
-    </KraphGraph.ModelPage>
+    </KraphGraphQuery.ModelPage>
   );
 });

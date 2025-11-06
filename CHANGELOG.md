@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/arkitektio/orkestrator-next/compare/v1.14.0...v1.14.1) (2025-11-06)
+
+
+### Bug Fixes
+
+* add more path related features ([ace2c29](https://github.com/arkitektio/orkestrator-next/commit/ace2c2982ce31492fe5372707a6559b8ef58e437))
+
 # [1.14.0](https://github.com/arkitektio/orkestrator-next/compare/v1.13.0...v1.14.0) (2025-11-06)
 
 

@@ -19,11 +19,19 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { WhereCondition } from "../OntologyGraphProvider";
 
+// Helper to convert RGB array to CSS rgb() string
+const rgbToCSS = (rgb: number[]): string => {
+    const r = Math.round(rgb[0] * 255);
+    const g = Math.round(rgb[1] * 255);
+    const b = Math.round(rgb[2] * 255);
+    return `rgb(${r}, ${g}, ${b})`;
+};
+
 interface WhereClauseDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     nodeLabel: string;
-    pathColor?: string;
+    pathColor?: number[];
     initialConditions: WhereCondition[];
     nodeProperties: Array<{ name: string; type: "string" | "number" | "boolean" }>;
     onSave: (conditions: WhereCondition[]) => void;
@@ -93,7 +101,7 @@ export const WhereClauseDialog = ({
                         {pathColor && (
                             <div
                                 className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: pathColor }}
+                                style={{ backgroundColor: rgbToCSS(pathColor) }}
                             />
                         )}
                         WHERE Filters for {nodeLabel}

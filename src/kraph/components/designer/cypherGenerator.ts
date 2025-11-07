@@ -11,6 +11,10 @@ import {
   MetricKind,
   ViewKind,
   GraphQueryInput,
+  MatchPathInput,
+  WhereClauseInput,
+  WhereOperator,
+  ReturnInput,
 } from "@/kraph/api/graphql";
 
 export interface EnrichedPath {
@@ -453,6 +457,7 @@ export function generateUnifiedCypherQueryWithColumns(
   if (returnColumns.length > 0) {
     lines.push("// Return selected columns");
     const returnParts: string[] = [];
+    const seenVariableProperties = new Set<string>(); // Track variable+property to avoid duplicates
 
     returnColumns.forEach((col) => {
       // Find all occurrences of this nodeId in the node map
@@ -460,8 +465,16 @@ export function generateUnifiedCypherQueryWithColumns(
         (mapping) => mapping.nodeId === col.nodeId,
       );
 
-      // Generate return for each occurrence
+      // Generate return for each occurrence, but avoid duplicates
       matchingMappings.forEach((mapping) => {
+        const variablePropertyKey = `${mapping.variable}:${col.property}`;
+
+        // Skip if we've already added this variable+property combination
+        if (seenVariableProperties.has(variablePropertyKey)) {
+          return;
+        }
+        seenVariableProperties.add(variablePropertyKey);
+
         if (col.cypherExpression) {
           // Custom Cypher expression - replace any node reference with the specific variable
           const expression = col.cypherExpression.replace(
@@ -506,6 +519,126 @@ export function generateUnifiedCypherQueryWithColumns(
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Maps WHERE operator string to WhereOperator enum
+ */
+function mapWhereOperator(operator: string): WhereOperator {
+  switch (operator) {
+    case "=":
+      return WhereOperator.Equals;
+    case "!=":
+      return WhereOperator.NotEquals;
+    case ">":
+      return WhereOperator.GreaterThan;
+    case "<":
+      return WhereOperator.LessThan;
+    case ">=":
+      return WhereOperator.GreaterThanOrEqual;
+    case "<=":
+      return WhereOperator.LessThanOrEqual;
+    case "CONTAINS":
+      return WhereOperator.Contains;
+    case "STARTS WITH":
+      return WhereOperator.StartsWith;
+    case "ENDS WITH":
+      return WhereOperator.EndsWith;
+    default:
+      return WhereOperator.Equals;
+  }
+}
+
+/**
+ * Generates MatchPathInput array from paths
+ */
+function generateMatchPathInputs(
+  enrichedPaths: EnrichedPath[],
+): MatchPathInput[] {
+  return enrichedPaths.map((ep) => {
+    const { path } = ep;
+
+    // Build the full path by interleaving nodes and relations
+    const fullPath: string[] = [];
+    for (let i = 0; i < path.nodes.length; i++) {
+      fullPath.push(path.nodes[i]);
+      if (i < path.relations.length) {
+        fullPath.push(path.relations[i]);
+      }
+    }
+
+    return {
+      relations: fullPath,
+      nodes: path.nodes,
+      relationDirections: path.relationDirections || [],
+      optional: path.optional || false,
+      title: path.title,
+      color: path.color, // Already in RGB format
+    };
+  });
+}
+
+/**
+ * Generates WhereClauseInput array from where clauses
+ */
+function generateWhereClauseInputs(
+  globalWhereClauses: NodeWhereClause[] | undefined,
+  enrichedPaths: EnrichedPath[],
+): WhereClauseInput[] {
+  const whereInputs: WhereClauseInput[] = [];
+  const nodeMap = buildNodeMapping(enrichedPaths, [] as MyNode[]);
+
+  // Use global WHERE clauses if provided
+  if (globalWhereClauses && globalWhereClauses.length > 0) {
+    globalWhereClauses.forEach((whereClause) => {
+      whereClause.conditions.forEach((condition) => {
+        // Find first occurrence of this node
+        const mapping = Array.from(nodeMap.values()).find(
+          (m) => m.nodeId === whereClause.nodeId,
+        );
+
+        if (mapping) {
+          whereInputs.push({
+            path: whereClause.nodeId,
+            node: whereClause.nodeId,
+            property: condition.property,
+            operator: mapWhereOperator(condition.operator),
+            value: String(condition.value),
+          });
+        }
+      });
+    });
+  } else {
+    // Fallback to path-specific WHERE clauses
+    enrichedPaths.forEach((ep) => {
+      if (ep.path.whereClauses && ep.path.whereClauses.length > 0) {
+        ep.path.whereClauses.forEach((whereClause) => {
+          whereClause.conditions.forEach((condition) => {
+            whereInputs.push({
+              path: whereClause.nodeId,
+              node: whereClause.nodeId,
+              property: condition.property,
+              operator: mapWhereOperator(condition.operator),
+              value: String(condition.value),
+            });
+          });
+        });
+      }
+    });
+  }
+
+  return whereInputs;
+}
+
+/**
+ * Generates ReturnInput array from return columns
+ */
+function generateReturnInputs(returnColumns: ReturnColumn[]): ReturnInput[] {
+  return returnColumns.map((col) => ({
+    path: col.nodeId,
+    node: col.nodeId,
+    property: col.property,
+  }));
 }
 
 /**
@@ -604,6 +737,11 @@ export function generateGraphQueryInput(
     kind = ViewKind.NodeList;
   }
 
+  // Generate matches, wheres, and returns
+  const matches = generateMatchPathInputs(enrichedPaths);
+  const wheres = generateWhereClauseInputs(globalWhereClauses, enrichedPaths);
+  const returns = generateReturnInputs(returnColumns);
+
   return {
     graph: graphId,
     name,
@@ -611,6 +749,9 @@ export function generateGraphQueryInput(
     query,
     kind,
     columns: columns.length > 0 ? columns : undefined,
+    matches: matches.length > 0 ? matches : undefined,
+    wheres: wheres.length > 0 ? wheres : undefined,
+    returns: returns.length > 0 ? returns : undefined,
   };
 }
 

@@ -22,6 +22,7 @@ import {
   useCreateGraphQueryMutation,
   useUpdateGraphQueryMutation,
   GraphQueryFragment,
+  RenderGraphQueryDocument,
 } from "@/kraph/api/graphql";
 import { KraphGraph } from "@/linkers";
 import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
@@ -246,40 +247,107 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
   );
 };
 
-// Helper to extract paths from description or return empty array
-const extractPathsFromDescription = (description?: string | null): Path[] => {
-  if (!description) return [];
-
-  const pathMarker = "PATHS_JSON:";
-  const pathIndex = description.indexOf(pathMarker);
-  if (pathIndex === -1) return [];
-
-  try {
-    const jsonStart = pathIndex + pathMarker.length;
-    const jsonString = description.substring(jsonStart);
-    return JSON.parse(jsonString);
-  } catch (e) {
-    console.error("Failed to parse paths from description", e);
+// Helper to convert GraphQL types to internal Path format
+const convertGraphQLToPath = (
+  graphQuery: GraphQueryFragment
+): Path[] => {
+  if (!graphQuery.matches || graphQuery.matches.length === 0) {
     return [];
+  }
+
+  return graphQuery.matches.map((match) => {
+    return {
+      nodes: match.nodes,
+      relations: match.relations,
+      relationDirections: match.relationDirections || undefined,
+      optional: match.optional || false,
+      title: match.title || undefined,
+      color: match.color || undefined, // Already in RGB format
+    };
+  });
+};
+
+// Helper to convert WhereOperator enum to internal operator string
+const mapWhereOperatorToString = (operator: string): string => {
+  switch (operator) {
+    case "EQUALS":
+      return "=";
+    case "NOT_EQUALS":
+      return "!=";
+    case "GREATER_THAN":
+      return ">";
+    case "LESS_THAN":
+      return "<";
+    case "GREATER_THAN_OR_EQUAL":
+      return ">=";
+    case "LESS_THAN_OR_EQUAL":
+      return "<=";
+    case "CONTAINS":
+      return "CONTAINS";
+    case "STARTS_WITH":
+      return "STARTS WITH";
+    case "ENDS_WITH":
+      return "ENDS WITH";
+    default:
+      return "=";
   }
 };
 
-// Helper to embed paths in description
-const embedPathsInDescription = (
-  originalDescription: string | undefined | null,
-  paths: Path[]
-): string => {
-  const pathMarker = "PATHS_JSON:";
-  const baseDescription = originalDescription || "";
+// Helper to deserialize WHERE clauses from GraphQL
+const deserializeWhereClauses = (
+  graphQuery: GraphQueryFragment
+): NodeWhereClause[] => {
+  if (!graphQuery.wheres || graphQuery.wheres.length === 0) {
+    return [];
+  }
 
-  // Remove any existing paths data
-  const pathIndex = baseDescription.indexOf(pathMarker);
-  const cleanDescription = pathIndex === -1
-    ? baseDescription
-    : baseDescription.substring(0, pathIndex).trim();
+  // Group WHERE clauses by nodeId
+  const clausesByNode = new Map<string, WhereCondition[]>();
 
-  // Add new paths data
-  return `${cleanDescription}\n\n${pathMarker}${JSON.stringify(paths)}`;
+  graphQuery.wheres.forEach((where) => {
+    const nodeId = where.node || where.path; // Use node if available, fallback to path
+    if (!nodeId) return;
+
+    const condition: WhereCondition = {
+      property: where.property,
+      operator: mapWhereOperatorToString(where.operator) as WhereCondition["operator"],
+      value: where.value,
+    };
+
+    if (!clausesByNode.has(nodeId)) {
+      clausesByNode.set(nodeId, []);
+    }
+    clausesByNode.get(nodeId)!.push(condition);
+  });
+
+  // Convert map to array of NodeWhereClause
+  return Array.from(clausesByNode.entries()).map(([nodeId, conditions]) => ({
+    nodeId,
+    conditions,
+  }));
+};
+
+// Helper to deserialize RETURN columns from GraphQL
+const deserializeReturnColumns = (
+  graphQuery: GraphQueryFragment
+): ReturnColumn[] => {
+  if (!graphQuery.returns || graphQuery.returns.length === 0) {
+    return [];
+  }
+
+  return graphQuery.returns.map((ret) => ({
+    nodeId: ret.node || ret.path, // Use node if available, fallback to path
+    property: ret.property || "id",
+    alias: undefined, // Alias is not stored in GraphQL, will be generated
+  }));
+};
+
+// Helper to convert RGB array to CSS rgb() string for display
+const rgbToCSS = (rgb: number[]): string => {
+  const r = Math.round(rgb[0] * 255);
+  const g = Math.round(rgb[1] * 255);
+  const b = Math.round(rgb[2] * 255);
+  return `rgb(${r}, ${g}, ${b})`;
 };
 
 export const QueryBuilderGraph = ({
@@ -290,7 +358,7 @@ export const QueryBuilderGraph = ({
   graphQuery?: GraphQueryFragment;
 }) => {
   const [paths, setPaths] = useState<Path[]>(() =>
-    graphQuery ? extractPathsFromDescription(graphQuery.description) : []
+    graphQuery ? convertGraphQLToPath(graphQuery) : []
   );
   const [activePath, setActivePath] = useState<Path | null>(null); // Current path being built
   const [nextColorIndex, setNextColorIndex] = useState(0);
@@ -308,19 +376,25 @@ export const QueryBuilderGraph = ({
   } | null>(null);
 
   // RETURN columns state
-  const [returnColumns, setReturnColumns] = useState<ReturnColumn[]>([]);
+  const [returnColumns, setReturnColumns] = useState<ReturnColumn[]>(() =>
+    graphQuery ? deserializeReturnColumns(graphQuery) : []
+  );
   const [returnBuilderOpen, setReturnBuilderOpen] = useState(false);
   const [useDistinct, setUseDistinct] = useState(true); // DISTINCT enabled by default
 
   // WHERE clauses state - now global for all nodes
-  const [whereClauses, setWhereClauses] = useState<NodeWhereClause[]>([]);
+  const [whereClauses, setWhereClauses] = useState<NodeWhereClause[]>(() =>
+    graphQuery ? deserializeWhereClauses(graphQuery) : []
+  );
 
   // Query execution state
   const [executedGraphQuery, setExecutedGraphQuery] =
     useState<GraphQueryFragment | null>(graphQuery || null);
   const [isRunning, setIsRunning] = useState(false);
   const [createGraphQuery] = useCreateGraphQueryMutation();
-  const [updateGraphQuery] = useUpdateGraphQueryMutation();
+  const [updateGraphQuery] = useUpdateGraphQueryMutation({
+    refetchQueries: [{ query: RenderGraphQueryDocument, variables: { id: graphQuery?.id } }],
+  });
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -554,6 +628,42 @@ export const QueryBuilderGraph = ({
     // Only add to active path if one exists (no longer auto-start paths)
     if (!activePath) {
       return;
+    }
+
+    // If this is the first node being added to the path, check for occurrences
+    if (activePath.nodes.length === 0) {
+      // Find all occurrences of this node in existing paths
+      const occurrences: Array<{ pathIndex: number; nodePosition: number }> = [];
+      paths.forEach((path, pathIndex) => {
+        path.nodes.forEach((nId, nodePosition) => {
+          if (nId === node.id) {
+            occurrences.push({ pathIndex, nodePosition });
+          }
+        });
+      });
+
+      // If the node appears more than once, show selection dialog
+      if (occurrences.length > 1) {
+        setNodeOccurrenceSelection({
+          nodeId: node.id,
+          occurrences,
+        });
+        return;
+      }
+
+      // If the node appears exactly once, use the same variable reference
+      if (occurrences.length === 1) {
+        const newPath = {
+          ...activePath,
+          nodes: [node.id],
+          startsFromPath: occurrences[0].pathIndex,
+          startsFromNodePosition: occurrences[0].nodePosition,
+        };
+        setActivePath(newPath);
+        return;
+      }
+
+      // If the node doesn't appear in any path, just add it normally
     }
 
     // Add the node to the active path
@@ -807,17 +917,11 @@ export const QueryBuilderGraph = ({
     try {
       if (graphQuery) {
         // Update existing graph query
-        const descriptionWithPaths = embedPathsInDescription(
-          graphQuery.description,
-          paths
-        );
-
         const result = await updateGraphQuery({
           variables: {
             input: {
               id: graphQuery.id,
               ...graphQueryInput,
-              description: descriptionWithPaths,
             },
           },
         });
@@ -827,17 +931,9 @@ export const QueryBuilderGraph = ({
         }
       } else {
         // Create new graph query
-        const descriptionWithPaths = embedPathsInDescription(
-          graphQueryInput.description,
-          paths
-        );
-
         const result = await createGraphQuery({
           variables: {
-            input: {
-              ...graphQueryInput,
-              description: descriptionWithPaths,
-            },
+            input: graphQueryInput,
           },
         });
 
@@ -1040,330 +1136,281 @@ export const QueryBuilderGraph = ({
       getNodeReturnColumns={getNodeReturnColumns}
       getNodeProperties={getNodeProperties}
     >
-      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
-        {/* Left side: Graph Builder */}
-        <div className="col-span-8 relative">
-          <div
-            ref={reactFlowWrapper}
-            style={{ width: "100%", height: "100%" }}
-            className="relative border rounded-lg"
-          >
-            <ReactFlow<MyNode, MyEdge>
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodeClick={onNodeClick}
-              onEdgeClick={onEdgeClick}
-              nodeTypes={BUILDER_NODE_TYPES}
-              edgeTypes={BUILDER_EDGE_TYPES}
-              onInit={(r) => setReactFlowInstance(r)}
-              fitView
-              proOptions={{ hideAttribution: true }}
-            />
-            <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row flex-wrap">
-              <Button onClick={() => layout(stressLayout)} variant={"outline"} size="sm">
-                Stress
-              </Button>
-              <Button onClick={() => layout(forceLayout)} variant={"outline"} size="sm">
-                Force
-              </Button>
-              <Button onClick={() => layout(discoLayout)} variant={"outline"} size="sm">
-                Disco
-              </Button>
-              <Button onClick={() => layout(treeLayout)} variant={"outline"} size="sm">
-                Tree
-              </Button>
-              <Button onClick={() => layout(layeredLayout)} variant={"outline"} size="sm">
-                Layered
-              </Button>
-              <Button
-                onClick={() => {
-                  const rootNode = nodes.at(0)?.id;
-                  if (rootNode) {
-                    nodelayout(radialLayout, rootNode);
-                  }
-                }}
-                variant={"outline"}
-                size="sm"
-              >
-                Circle
-              </Button>
+      <div className="relative h-[calc(100vh-12rem)]">
+        {/* Full-width Graph Canvas */}
+        <div
+          ref={reactFlowWrapper}
+          style={{ width: "100%", height: "100%" }}
+          className="relative border rounded-lg"
+        >
+          <ReactFlow<MyNode, MyEdge>
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
+            nodeTypes={BUILDER_NODE_TYPES}
+            edgeTypes={BUILDER_EDGE_TYPES}
+            onInit={(r) => setReactFlowInstance(r)}
+            fitView
+            proOptions={{ hideAttribution: true }}
+          />
 
-              <KraphGraph.DetailLink
-                object={graph.id}
-                subroute={"reagentcategories"}
-                className="text-sm"
-              >
-                Reagent Categories
-              </KraphGraph.DetailLink>
-            </div>
-          </div>
-        </div>
-
-        {/* Right side: Controls and Results */}
-        <div className="col-span-4 flex flex-col gap-3 overflow-y-auto">
-          {/* Path Controls */}
-          <div className="flex flex-row gap-2">
-            {!activePath && (
-              <Button onClick={() => startNewPath()} variant={"default"} className="flex-1">
-                <Plus className="h-4 w-4 mr-2" />
-                New Path
-              </Button>
-            )}
-            {activePath && (
-              <Button onClick={finishPath} variant={"default"} className="flex-1">
-                Finish Path
-              </Button>
-            )}
-            {activePath && (
-              <Button onClick={() => setActivePath(null)} variant={"outline"} className="flex-1">
-                Cancel
-              </Button>
-            )}
-            {paths.length > 0 && !activePath && (
-              <Button onClick={clearAllPaths} variant={"destructive"} className="flex-1">
-                Clear All
-              </Button>
-            )}
-          </div>
-
-          {/* Display Return Columns - hide when building a path */}
-          {returnColumns.length > 0 && !activePath && (
-            <div className="bg-card p-3 rounded border flex flex-col gap-2">
-              <div className="font-semibold text-sm">Return Columns</div>
-              <div className="flex flex-col gap-1">
-                {returnColumns.map((col, index) => {
-                  const node = nodes.find((n) => n.id === col.nodeId);
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const nodeLabel = node
-                    ? (node.data as any)?.ageName ||
-                    (node.data as any)?.label ||
-                    (node.data as any)?.identifier ||
-                    col.nodeId
-                    : col.nodeId;
-                  return (
-                    <div key={index} className="text-xs text-muted-foreground">
-                      {col.alias || `${nodeLabel}.${col.property}`}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Display Cypher Query - hide when building a path */}
-          {paths.length > 0 && !activePath && <CypherQueryDisplay query={cypherQuery} />}
-
-          {/* Display Query Results */}
-          {executedGraphQuery && (
-            <div className="bg-card p-3 rounded border flex flex-col gap-2 border-green-500">
-              <div className="flex items-center justify-between">
-                <div className="font-semibold text-sm text-green-600">
-                  Query Results
-                </div>
-                <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
-                  <Button size="sm" variant="outline" className="h-7 gap-1">
-                    <ExternalLink className="h-3 w-3" />
-                    Open
-                  </Button>
-                </KraphGraphQuery.DetailLink>
-              </div>
-              <div className="w-full overflow-auto" style={{ maxHeight: "400px" }}>
-                <SelectiveGraphQueryRenderer
-                  graphQuery={executedGraphQuery}
-                  options={{ minimal: true }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Display all completed paths - hide when building a new path */}
-          {!activePath && paths.map((path, pathIndex) => {
-            const pathWhereClauses = path.whereClauses || [];
-
-            return (
-              <div
-                key={pathIndex}
-                className="bg-card p-3 rounded border flex flex-col gap-2"
-                style={{ borderColor: path.color }}
-              >
-                <div className="font-semibold flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: path.color }}
-                    ></div>
-                    {path.title || `Path ${pathIndex + 1}`}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                    onClick={() => deletePath(pathIndex)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {path.nodes.length} node{path.nodes.length !== 1 ? "s" : ""},{" "}
-                  {path.relations.length} relation
-                  {path.relations.length !== 1 ? "s" : ""}
-                </div>
-
-                {/* Display nodes with WHERE buttons */}
-                <div className="flex flex-col gap-1 mt-2">
-                  {path.nodes.map((nodeId, nodeIndex) => {
-                    const node = nodes.find((n) => n.id === nodeId);
-                    if (!node) return null;
-
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const nodeData = node.data as any;
-                    const nodeLabel =
-                      nodeData?.ageName ||
-                      nodeData?.label ||
-                      nodeData?.identifier ||
-                      nodeId;
-                    const nodeWhereClause = pathWhereClauses.find(
-                      (wc) => wc.nodeId === nodeId,
-                    );
-                    const hasFilters =
-                      nodeWhereClause && nodeWhereClause.conditions.length > 0;
-
-                    const isEditing =
-                      editingWhereNode?.pathIndex === pathIndex &&
-                      editingWhereNode?.nodeId === nodeId;
-
-                    return (
-                      <div key={`${nodeId}-${nodeIndex}`} className="space-y-2">
-                        <div className="flex items-center justify-between gap-2 text-xs">
-                          <span className="flex-1 truncate">{nodeLabel}</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant={hasFilters ? "default" : "outline"}
-                              className="h-6 px-2 text-xs"
-                              onClick={() =>
-                                toggleWhereEditor(pathIndex, nodeId)
-                              }
-                            >
-                              <Filter className="h-3 w-3 mr-1" />
-                              {hasFilters
-                                ? `${nodeWhereClause.conditions.length}`
-                                : "WHERE"}
-                            </Button>
-                            {/* Delete button - truncate path from this node onwards */}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                              onClick={() =>
-                                truncatePathFromNode(pathIndex, nodeIndex)
-                              }
-                              title="Delete this node and everything after it"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Inline WHERE clause editor */}
-                        {isEditing && (
-                          <InlineWhereEditor
-                            nodeId={nodeId}
-                            nodeLabel={nodeLabel}
-                            initialConditions={
-                              nodeWhereClause?.conditions || []
-                            }
-                            onSave={(conditions) =>
-                              saveWhereConditions(pathIndex, nodeId, conditions)
-                            }
-                            onCancel={() => setEditingWhereNode(null)}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Action buttons - hide when building a path */}
-          {paths.length > 0 && !activePath && (
-            <>
-              <div className="flex items-center space-x-2 p-2 bg-card rounded border">
-                <Checkbox
-                  id="use-distinct"
-                  checked={useDistinct}
-                  onCheckedChange={(checked) =>
-                    setUseDistinct(checked as boolean)
-                  }
-                />
-                <Label
-                  htmlFor="use-distinct"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Use DISTINCT in RETURN clause
-                </Label>
-              </div>
-              <div className="flex flex-row gap-2">
-                <Button
-                  onClick={() => setReturnBuilderOpen(true)}
-                  variant={"outline"}
-                  className="flex-1"
-                >
-                  Add Return ({returnColumns.length})
-                </Button>
-                <Button
-                  onClick={runQuery}
-                  variant={"default"}
-                  className="flex-1"
-                  disabled={isRunning || !graphQueryInput}
-                >
-                  {isRunning ? "Running..." : "Run Query"}
-                </Button>
-              </div>
-            </>
-          )}
-
-          {/* Display active path */}
-          {activePath && activePath.nodes.length > 0 && (
-            <div
-              className="bg-card p-3 rounded border flex flex-col gap-2"
-              style={{ borderColor: activePath.color }}
+          {/* Layout buttons overlay */}
+          <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row flex-wrap">
+            <Button onClick={() => layout(stressLayout)} variant={"outline"} size="sm">
+              Stress
+            </Button>
+            <Button onClick={() => layout(forceLayout)} variant={"outline"} size="sm">
+              Force
+            </Button>
+            <Button onClick={() => layout(discoLayout)} variant={"outline"} size="sm">
+              Disco
+            </Button>
+            <Button onClick={() => layout(treeLayout)} variant={"outline"} size="sm">
+              Tree
+            </Button>
+            <Button onClick={() => layout(layeredLayout)} variant={"outline"} size="sm">
+              Layered
+            </Button>
+            <Button
+              onClick={() => {
+                const rootNode = nodes.at(0)?.id;
+                if (rootNode) {
+                  nodelayout(radialLayout, rootNode);
+                }
+              }}
+              variant={"outline"}
+              size="sm"
             >
-              <div className="font-semibold flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: activePath.color }}
-                ></div>
-                {activePath.title || "Current Path"} (Building...)
-              </div>
-              <div className="text-sm">
-                {activePath.nodes.length} node
-                {activePath.nodes.length !== 1 ? "s" : ""},{" "}
-                {activePath.relations.length} relation
-                {activePath.relations.length !== 1 ? "s" : ""}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {activePath.nodes.length === activePath.relations.length + 1
-                  ? "Click on a highlighted relation to continue"
-                  : activePath.nodes.length === activePath.relations.length
-                    ? "Click on the highlighted node to continue"
-                    : "Click on a node to start the path"}
-              </div>
-            </div>
-          )}
+              Circle
+            </Button>
+          </div>
 
-          {/* Instructions when no active path */}
-          {!activePath && (
-            <div className="bg-card p-3 rounded border flex flex-col gap-2">
-              <div className="font-semibold">Start New Path</div>
-              <div className="text-xs text-muted-foreground">
-                {paths.length === 0
-                  ? "Click any node to start your first path"
-                  : "Click a node from an existing path to start a new path"}
+          {/* Left sidebar overlay - Query Builder Controls */}
+          <div className="absolute top-3 left-3 w-80 max-h-[calc(100%-1.5rem)] flex flex-col gap-3 overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 rounded-lg border shadow-lg p-4">
+            {/* Path Controls */}
+            <div className="flex flex-row gap-2">
+              {!activePath && (
+                <Button onClick={() => startNewPath()} variant={"default"} className="flex-1">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Path
+                </Button>
+              )}
+              {activePath && (
+                <Button onClick={finishPath} variant={"default"} className="flex-1">
+                  Finish Path
+                </Button>
+              )}
+              {activePath && (
+                <Button onClick={() => setActivePath(null)} variant={"outline"} className="flex-1">
+                  Cancel
+                </Button>
+              )}
+              {paths.length > 0 && !activePath && (
+                <Button onClick={clearAllPaths} variant={"destructive"} className="flex-1">
+                  Clear All
+                </Button>
+              )}
+            </div>
+
+            {/* Display Cypher Query - hide when building a path */}
+            {paths.length > 0 && !activePath && <CypherQueryDisplay query={cypherQuery} />}
+
+            {/* Display all completed paths - hide when building a new path */}
+            {!activePath && paths.map((path, pathIndex) => {
+              const pathWhereClauses = path.whereClauses || [];
+
+              return (
+                <div
+                  key={pathIndex}
+                  className="bg-card p-3 rounded border flex flex-col gap-2"
+                  style={{ borderColor: path.color ? rgbToCSS(path.color) : undefined }}
+                >
+                  <div className="font-semibold flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: path.color ? rgbToCSS(path.color) : undefined }}
+                      ></div>
+                      {path.title || `Path ${pathIndex + 1}`}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      onClick={() => deletePath(pathIndex)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {path.nodes.length} node{path.nodes.length !== 1 ? "s" : ""},{" "}
+                    {path.relations.length} relation
+                    {path.relations.length !== 1 ? "s" : ""}
+                  </div>
+
+                  {/* Display nodes with WHERE buttons */}
+                  <div className="flex flex-col gap-1 mt-2">
+                    {path.nodes.map((nodeId, nodeIndex) => {
+                      const node = nodes.find((n) => n.id === nodeId);
+                      if (!node) return null;
+
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const nodeData = node.data as any;
+                      const nodeLabel =
+                        nodeData?.ageName ||
+                        nodeData?.label ||
+                        nodeData?.identifier ||
+                        nodeId;
+                      const nodeWhereClause = pathWhereClauses.find(
+                        (wc) => wc.nodeId === nodeId,
+                      );
+                      const hasFilters =
+                        nodeWhereClause && nodeWhereClause.conditions.length > 0;
+
+                      const isEditing =
+                        editingWhereNode?.pathIndex === pathIndex &&
+                        editingWhereNode?.nodeId === nodeId;
+
+                      return (
+                        <div key={`${nodeId}-${nodeIndex}`} className="space-y-2">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="flex-1 truncate">{nodeLabel}</span>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant={hasFilters ? "default" : "outline"}
+                                className="h-6 px-2 text-xs"
+                                onClick={() =>
+                                  toggleWhereEditor(pathIndex, nodeId)
+                                }
+                              >
+                                <Filter className="h-3 w-3 mr-1" />
+                                {hasFilters
+                                  ? `${nodeWhereClause.conditions.length}`
+                                  : "WHERE"}
+                              </Button>
+                              {/* Delete button - truncate path from this node onwards */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                onClick={() =>
+                                  truncatePathFromNode(pathIndex, nodeIndex)
+                                }
+                                title="Delete this node and everything after it"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Inline WHERE clause editor */}
+                          {isEditing && (
+                            <InlineWhereEditor
+                              nodeId={nodeId}
+                              nodeLabel={nodeLabel}
+                              initialConditions={
+                                nodeWhereClause?.conditions || []
+                              }
+                              onSave={(conditions) =>
+                                saveWhereConditions(pathIndex, nodeId, conditions)
+                              }
+                              onCancel={() => setEditingWhereNode(null)}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Action buttons - hide when building a path */}
+            {paths.length > 0 && !activePath && (
+              <>
+                <div className="flex items-center space-x-2 p-2 bg-card rounded border">
+                  <Checkbox
+                    id="use-distinct"
+                    checked={useDistinct}
+                    onCheckedChange={(checked) =>
+                      setUseDistinct(checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor="use-distinct"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Use DISTINCT in RETURN clause
+                  </Label>
+                </div>
+                <div className="flex flex-row gap-2">
+                  <Button
+                    onClick={runQuery}
+                    variant={"default"}
+                    className="flex-1"
+                    disabled={isRunning || !graphQueryInput}
+                  >
+                    {isRunning ? "Running..." : "Run Query"}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Display active path */}
+            {activePath && activePath.nodes.length > 0 && (
+              <div
+                className="bg-card p-3 rounded border flex flex-col gap-2"
+                style={{ borderColor: activePath.color ? rgbToCSS(activePath.color) : undefined }}
+              >
+                <div className="font-semibold flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: activePath.color ? rgbToCSS(activePath.color) : undefined }}
+                  ></div>
+                  {activePath.title || "Current Path"} (Building...)
+                </div>
+                <div className="text-sm">
+                  {activePath.nodes.length} node
+                  {activePath.nodes.length !== 1 ? "s" : ""},{" "}
+                  {activePath.relations.length} relation
+                  {activePath.relations.length !== 1 ? "s" : ""}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {activePath.nodes.length === activePath.relations.length + 1
+                    ? "Click on a highlighted relation to continue"
+                    : activePath.nodes.length === activePath.relations.length
+                      ? "Click on the highlighted node to continue"
+                      : "Click on a node to start the path"}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right sidebar overlay - Query Results */}
+          {executedGraphQuery && (
+            <div className="absolute top-3 right-3 w-96 max-h-[calc(100%-1.5rem)] flex flex-col gap-3 overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 rounded-lg border shadow-lg p-4">
+              <div className="bg-card p-3 rounded border flex flex-col gap-2 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-sm text-green-600">
+                    Query Results
+                  </div>
+                  <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
+                    <Button size="sm" variant="outline" className="h-7 gap-1">
+                      <ExternalLink className="h-3 w-3" />
+                      Open
+                    </Button>
+                  </KraphGraphQuery.DetailLink>
+                </div>
+                <div className="w-full overflow-auto" style={{ maxHeight: "600px" }}>
+                  <SelectiveGraphQueryRenderer
+                    graphQuery={executedGraphQuery}
+                    options={{ minimal: true }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -1435,7 +1482,7 @@ export const QueryBuilderGraph = ({
                     <div className="flex items-center gap-2">
                       <div
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: path.color }}
+                        style={{ backgroundColor: path.color ? rgbToCSS(path.color) : undefined }}
                       ></div>
                       <span className="font-semibold">
                         {path.title || `Path ${occ.pathIndex + 1}`}

@@ -227,9 +227,9 @@ export const serviceMap: ServiceBuilderMap = {
 // Check if running in tauri
 export const Arkitekt = window.electron
   ? buildArkitekt({
-      manifest,
-      serviceBuilderMap: serviceMap,
-    })
+    manifest,
+    serviceBuilderMap: serviceMap,
+  })
   : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 
 export const Guard = {

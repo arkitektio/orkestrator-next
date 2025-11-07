@@ -20,6 +20,14 @@ import { Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ReturnColumn } from "../OntologyGraphProvider";
 
+// Helper to convert RGB array to CSS rgb() string
+const rgbToCSS = (rgb: number[]): string => {
+    const r = Math.round(rgb[0] * 255);
+    const g = Math.round(rgb[1] * 255);
+    const b = Math.round(rgb[2] * 255);
+    return `rgb(${r}, ${g}, ${b})`;
+};
+
 interface ReturnDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -28,7 +36,7 @@ interface ReturnDialogProps {
     availableProperties: Array<{ name: string; type: string }>;
     initialColumns: ReturnColumn[];
     onSave: (columns: ReturnColumn[]) => void;
-    pathColor?: string;
+    pathColor?: number[];
 }
 
 export const ReturnDialog = ({
@@ -86,7 +94,7 @@ export const ReturnDialog = ({
                         {pathColor && (
                             <div
                                 className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: pathColor }}
+                                style={{ backgroundColor: rgbToCSS(pathColor) }}
                             />
                         )}
                     </DialogTitle>

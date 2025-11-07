@@ -9,6 +9,7 @@ import { AnalogSignalChannelDisplay } from "@/elektro/displays/AnalogSignalChann
 import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
 import { BlockDisplay } from "@/elektro/displays/BlockDisplay";
 import { NeuronModelDisplay } from "@/elektro/displays/NeuronModelDisplay";
+import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
 
 // Import your display components here
 // Example:
@@ -29,5 +30,6 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@kabinet/pod": PodDisplay,
     "@elektro/simulation": SimulationDisplay,
     "@elektro/block": BlockDisplay,
+    "@lovekit/solo_broadcast": SoloBroadcastDisplay,
     "@elektro/neuronmodel": NeuronModelDisplay,
   });

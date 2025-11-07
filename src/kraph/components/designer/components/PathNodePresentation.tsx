@@ -17,6 +17,14 @@ interface PathNodePresentationProps {
   showPathCount?: boolean;
 }
 
+// Helper to convert RGB array to CSS rgb() string
+const rgbToCSS = (rgb: number[]): string => {
+  const r = Math.round(rgb[0] * 255);
+  const g = Math.round(rgb[1] * 255);
+  const b = Math.round(rgb[2] * 255);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
 /**
  * Shared presentation component for path builder nodes.
  * Handles coloring, styling, and visual feedback based on path membership and selectability.
@@ -47,7 +55,7 @@ export const PathNodePresentation = ({
   const [whereDialogState, setWhereDialogState] = useState<{
     open: boolean;
     pathIndex: number;
-    pathColor?: string;
+    pathColor?: number[];
   } | null>(null);
 
   const [returnDialogState, setReturnDialogState] = useState<{
@@ -55,7 +63,7 @@ export const PathNodePresentation = ({
     nodeId: string;
     nodeLabel: string;
     pathIndex: number;
-    pathColor?: string;
+    pathColor?: number[];
   } | null>(null);
 
   // Create border image for multiple paths with radial gradient
@@ -64,7 +72,8 @@ export const PathNodePresentation = ({
       const step = 100 / nodePaths.length;
       const start = idx * step;
       const end = (idx + 1) * step;
-      return `${path.color} ${start}%, ${path.color} ${end}%`;
+      const colorCSS = path.color ? rgbToCSS(path.color) : 'rgb(100, 100, 100)';
+      return `${colorCSS} ${start}%, ${colorCSS} ${end}%`;
     }).join(', ')})`
     : undefined;
 
@@ -72,16 +81,16 @@ export const PathNodePresentation = ({
   const pathColor = isInPath && nodePaths.length === 1 ? nodePaths[0].color : undefined;
 
   // Border color: path color for single path, transparent for multiple (using border-image instead)
-  const borderColor = nodePaths.length > 1 ? 'transparent' : (pathColor || 'rgba(100, 100, 100, 0.3)');
+  const borderColorCSS = nodePaths.length > 1 ? 'transparent' : (pathColor ? rgbToCSS(pathColor) : 'rgba(100, 100, 100, 0.3)');
 
   // Create lighter glow effect
   const glowColor = pathColor
-    ? pathColor.replace('rgb', 'rgba').replace(')', ', 0.3)')
+    ? rgbToCSS(pathColor).replace('rgb', 'rgba').replace(')', ', 0.3)')
     : undefined;
 
   const nodeProperties = getNodeProperties?.(id) || [];
 
-  const openWhereDialog = (pathIndex: number, pathColor?: string) => {
+  const openWhereDialog = (pathIndex: number, pathColor?: number[]) => {
     setWhereDialogState({ open: true, pathIndex, pathColor });
   };
 
@@ -91,7 +100,7 @@ export const PathNodePresentation = ({
     }
   };
 
-  const openReturnDialog = (pathIndex: number, pathColor?: string) => {
+  const openReturnDialog = (pathIndex: number, pathColor?: number[]) => {
     setReturnDialogState({
       open: true,
       nodeId: id,
@@ -126,7 +135,7 @@ export const PathNodePresentation = ({
             : isPossible
               ? '0 0 6px 1px rgba(59, 130, 246, 0.4)'
               : '0 0 3px 1px rgba(100, 100, 100, 0.2)',
-          border: `3px solid ${borderColor}`,
+          border: `3px solid ${borderColorCSS}`,
           borderImage: borderImage ? `${borderImage} 1` : undefined,
           borderRadius: borderImage ? '0.5rem' : undefined, // Match Card's rounded-lg
           filter: !isPossible && !isInPath ? 'grayscale(0.8)' : 'none',
@@ -143,7 +152,7 @@ export const PathNodePresentation = ({
                   key={`badge-${occurrence.pathIndex}-${occurrence.nodePosition}`}
                   className="h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full border-2 border-background"
                   style={{
-                    backgroundColor: path?.color,
+                    backgroundColor: path?.color ? rgbToCSS(path.color) : undefined,
                     color: "white",
                   }}
                 >
@@ -191,10 +200,10 @@ export const PathNodePresentation = ({
                       variant={hasConditions ? "default" : "outline"}
                       className="h-5 w-5"
                       style={{
-                        borderColor: path?.color,
+                        borderColor: path?.color ? rgbToCSS(path.color) : undefined,
                         ...(hasConditions && path?.color
                           ? {
-                            backgroundColor: path.color,
+                            backgroundColor: rgbToCSS(path.color),
                             color: "white",
                           }
                           : {}),
@@ -225,10 +234,10 @@ export const PathNodePresentation = ({
                       variant={hasReturnColumns ? "default" : "outline"}
                       className="h-5 w-5"
                       style={{
-                        borderColor: path?.color,
+                        borderColor: path?.color ? rgbToCSS(path.color) : undefined,
                         ...(hasReturnColumns && path?.color
                           ? {
-                            backgroundColor: path.color,
+                            backgroundColor: rgbToCSS(path.color),
                             color: "white",
                           }
                           : {}),

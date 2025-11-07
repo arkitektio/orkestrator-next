@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -11,6 +10,7 @@ import {
   ReagentRoleEdge
 } from "../../types";
 import { getEdgeParams } from "../../utils";
+import { PathEdgePresentation, useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -45,6 +45,7 @@ export default ({
 }: EdgeProps<ReagentRoleEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
+  const strokeStyle = useEdgeStrokeStyle(id);
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(
@@ -81,18 +82,23 @@ export default ({
 
   return (
     <>
-      <BaseEdge path={path} markerEnd={markerEnd} label={data?.role} />
+      <BaseEdge 
+        path={path} 
+        markerEnd={markerEnd} 
+        label={data?.role}
+        style={strokeStyle}
+      />
       <EdgeLabelRenderer>
-        <Card
-          style={{
-            position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
-          }}
-          className="p-1 text-xs group flex-row flex gap-2 ring-2 ring-blue ring-blue-200 nodrag nopan"
+        <PathEdgePresentation
+          id={id}
+          transform={`translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`}
+          className="ring-2 ring-blue ring-blue-200"
         >
-          <div className="text-slate-300">as</div>{" "}
-          <div className="text-xs">{data?.role}</div>
-        </Card>
+          <div className="flex flex-row gap-2">
+            <div className="text-slate-300">as</div>{" "}
+            <div className="text-xs">{data?.role}</div>
+          </div>
+        </PathEdgePresentation>
       </EdgeLabelRenderer>
     </>
   );

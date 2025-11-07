@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, Copy } from "lucide-react";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Check, ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { useState } from "react";
 
 interface CypherQueryDisplayProps {
@@ -13,6 +18,7 @@ export const CypherQueryDisplay = ({
     title = "Generated Cypher Query",
 }: CypherQueryDisplayProps) => {
     const [copied, setCopied] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(query);
@@ -22,32 +28,43 @@ export const CypherQueryDisplay = ({
 
     return (
         <Card className="w-full">
-            <div className="p-3 border-b flex items-center justify-between">
-                <div className="font-semibold text-sm">{title}</div>
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopy}
-                    className="h-8 px-2"
-                >
-                    {copied ? (
-                        <>
-                            <Check className="h-4 w-4 mr-1" />
-                            Copied
-                        </>
-                    ) : (
-                        <>
-                            <Copy className="h-4 w-4 mr-1" />
-                            Copy
-                        </>
-                    )}
-                </Button>
-            </div>
-            <div className="p-3">
-                <pre className="text-xs font-mono bg-muted p-3 rounded overflow-x-auto max-h-96 overflow-y-auto">
-                    {query}
-                </pre>
-            </div>
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <div className="p-3 border-b flex items-center justify-between">
+                    <CollapsibleTrigger className="flex items-center gap-2 hover:opacity-80">
+                        {isOpen ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4" />
+                        )}
+                        <div className="font-semibold text-sm">{title}</div>
+                    </CollapsibleTrigger>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCopy}
+                        className="h-8 px-2"
+                    >
+                        {copied ? (
+                            <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Copied
+                            </>
+                        ) : (
+                            <>
+                                <Copy className="h-4 w-4 mr-1" />
+                                Copy
+                            </>
+                        )}
+                    </Button>
+                </div>
+                <CollapsibleContent>
+                    <div className="p-3">
+                        <pre className="text-xs font-mono bg-muted p-3 rounded overflow-x-auto max-h-96 overflow-y-auto select-text">
+                            {query}
+                        </pre>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
         </Card>
     );
 };

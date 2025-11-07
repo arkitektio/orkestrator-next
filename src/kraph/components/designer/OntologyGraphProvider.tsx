@@ -28,7 +28,7 @@ export type Path = {
   nodes: string[];
   relations: string[];
   relationDirections?: boolean[]; // true = forward (-->), false = reverse (<--)
-  color?: string; // Unique color for this path
+  color?: number[]; // RGB color array [r, g, b] with values 0-1
   whereClauses?: NodeWhereClause[]; // WHERE conditions for specific nodes
   startsFromPath?: number; // Index of the path this path starts from (for variable reuse)
   startsFromNodePosition?: number; // Position in the source path where this path starts
@@ -62,16 +62,16 @@ export type OntologyGraphContextType = {
   getNodeProperties?: (nodeId: string) => Array<{ name: string; type: "string" | "number" | "boolean" }>;
 };
 
-// Predefined color palette for paths
-export const PATH_COLORS = [
-  'rgb(34, 197, 94)',   // Green
-  'rgb(59, 130, 246)',  // Blue
-  'rgb(236, 72, 153)',  // Pink
-  'rgb(234, 179, 8)',   // Yellow
-  'rgb(168, 85, 247)',  // Purple
-  'rgb(239, 68, 68)',   // Red
-  'rgb(20, 184, 166)',  // Teal
-  'rgb(249, 115, 22)',  // Orange
+// Predefined color palette for paths (RGB arrays with values 0-1)
+export const PATH_COLORS: number[][] = [
+  [34 / 255, 197 / 255, 94 / 255],   // Green
+  [59 / 255, 130 / 255, 246 / 255],  // Blue
+  [236 / 255, 72 / 255, 153 / 255],  // Pink
+  [234 / 255, 179 / 255, 8 / 255],   // Yellow
+  [168 / 255, 85 / 255, 247 / 255],  // Purple
+  [239 / 255, 68 / 255, 68 / 255],   // Red
+  [20 / 255, 184 / 255, 166 / 255],  // Teal
+  [249 / 255, 115 / 255, 22 / 255],  // Orange
 ];
 
 export const OntoloGraphContext = React.createContext<OntologyGraphContextType>(

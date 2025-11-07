@@ -1,3 +1,25 @@
+fragment MatchPath on MatchPath {
+  nodes
+  relations
+  relationDirections
+  title
+  color
+  optional
+}
+fragment ReturnStatement on ReturnStatement {
+  path
+  property
+  node
+}
+
+fragment WhereClause on WhereClause {
+  path
+  node
+  property
+  operator
+  value
+}
+
 fragment GraphQuery on GraphQuery {
   id
   query
@@ -13,6 +35,15 @@ fragment GraphQuery on GraphQuery {
   kind
   scatterPlots(pagination: { limit: 1 }) {
     ...ListScatterPlot
+  }
+  wheres {
+    ...WhereClause
+  }
+  matches {
+    ...MatchPath
+  }
+  returns {
+    ...ReturnStatement
   }
   render {
     ...Path

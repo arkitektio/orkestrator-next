@@ -17,6 +17,14 @@ import {
 } from "@/components/ui/tooltip";
 import { useIsEdgePossible, useEdgePaths } from "../../OntologyGraphProvider";
 
+// Helper to convert RGB array to CSS rgb() string
+const rgbToCSS = (rgb: number[]): string => {
+  const r = Math.round(rgb[0] * 255);
+  const g = Math.round(rgb[1] * 255);
+  const b = Math.round(rgb[2] * 255);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
 export type GetSpecialPathParams = {
   sourceX: number;
   sourceY: number;
@@ -52,7 +60,8 @@ export default ({
   const targetNode = useInternalNode(target);
   const isPossible = useIsEdgePossible(id);
   const edgePaths = useEdgePaths(id);
-  const pathColor = edgePaths.length > 0 ? edgePaths[0].color : undefined;
+  const pathColorRaw = edgePaths.length > 0 && edgePaths[0].color ? edgePaths[0].color : undefined;
+  const pathColor = pathColorRaw ? rgbToCSS(pathColorRaw) : undefined;
 
   const theEdges = useStore((s: ReactFlowState) => {
     const edgeExists = s.edges.filter(

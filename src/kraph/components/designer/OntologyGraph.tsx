@@ -55,7 +55,7 @@ import {
 } from "./types";
 import { KraphGraph } from "@/linkers";
 import { toPng } from "html-to-image";
-import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
+import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, nodeToNodeInput, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();

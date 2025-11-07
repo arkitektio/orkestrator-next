@@ -17,6 +17,7 @@ import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
 import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
 import { Plus } from "lucide-react";
 import GraphQueryList from "../components/lists/GraphQueryList";
+import ScatterPlotCard from "../components/cards/ScatterPlotCard";
 
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -66,6 +67,16 @@ export default asDetailQueryRoute(
                 Builder
               </Button>
             </KraphGraphQuery.DetailLink>
+            <FormDialog
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Plot
+                </Button>
+              }
+            >
+              <CreateScatterPlotForm graphQuery={data.graphQuery} />
+            </FormDialog>
 
             <KraphGraphQuery.DetailLink
               object={data.graphQuery.id}
@@ -83,6 +94,25 @@ export default asDetailQueryRoute(
             map={{
               Comments: <KraphGraphView.Komments object={data.graphQuery.id} />,
               Cypher: <CypherSidebar cypher={data.graphQuery.query || ""} />,
+              Plots: <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Visualizations</h2>
+
+                </div>
+
+                {/* Display existing scatter plots */}
+                {data.graphQuery.scatterPlots.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {data.graphQuery.scatterPlots.map((plot) => (
+                      <ScatterPlotCard key={plot.id} item={plot} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-8 text-center text-muted-foreground">
+                    No scatter plots yet. Create one to visualize your data.
+                  </Card>
+                )}
+              </div>,
             }}
           />
         }
@@ -106,47 +136,7 @@ export default asDetailQueryRoute(
 
         <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
 
-        {/* Scatter Plots Section - Only show for Table views */}
-        {data.graphQuery.kind === ViewKind.Table &&
-          data.graphQuery.render.__typename === "Table" && (() => {
-            const tableRender = data.graphQuery.render;
-            if (tableRender.__typename !== "Table") return null;
 
-            return (
-              <div className="px-6 py-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Visualizations</h2>
-                  <FormDialog
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Plot
-                      </Button>
-                    }
-                  >
-                    <CreateScatterPlotForm graphQuery={data.graphQuery} />
-                  </FormDialog>
-                </div>
-
-                {/* Display existing scatter plots */}
-                {data.graphQuery.scatterPlots.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {data.graphQuery.scatterPlots.map((plot) => (
-                      <ScatterPlot
-                        key={plot.id}
-                        scatterPlot={plot}
-                        table={tableRender}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="p-8 text-center text-muted-foreground">
-                    No scatter plots yet. Create one to visualize your data.
-                  </Card>
-                )}
-              </div>
-            );
-          })()}
       </KraphGraphQuery.ModelPage>
     );
   },

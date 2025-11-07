@@ -2,6 +2,14 @@ import { Card } from "@/components/ui/card";
 import { ReactNode } from "react";
 import { useIsEdgePossible, useEdgePaths } from "../OntologyGraphProvider";
 
+// Helper to convert RGB array to CSS rgb() string
+const rgbToCSS = (rgb: number[]): string => {
+  const r = Math.round(rgb[0] * 255);
+  const g = Math.round(rgb[1] * 255);
+  const b = Math.round(rgb[2] * 255);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
 interface PathEdgePresentationProps {
     id: string;
     children: ReactNode;
@@ -26,7 +34,8 @@ export const PathEdgePresentation = ({
     const isInPath = edgePaths.length > 0;
 
     // Use the first path's color if edge is in any path
-    const pathColor = isInPath ? edgePaths[0].color : undefined;
+    const pathColorRaw = isInPath && edgePaths[0].color ? edgePaths[0].color : undefined;
+    const pathColor = pathColorRaw ? rgbToCSS(pathColorRaw) : undefined;
 
     // Border color: path color > gray (no blue default)
     const borderColor = pathColor || 'rgba(100, 100, 100, 0.3)';
@@ -61,7 +70,8 @@ export const PathEdgePresentation = ({
 export const useEdgeStrokeStyle = (edgeId: string) => {
     const isPossible = useIsEdgePossible(edgeId);
     const edgePaths = useEdgePaths(edgeId);
-    const pathColor = edgePaths.length > 0 ? edgePaths[0].color : undefined;
+    const pathColorRaw = edgePaths.length > 0 && edgePaths[0].color ? edgePaths[0].color : undefined;
+    const pathColor = pathColorRaw ? rgbToCSS(pathColorRaw) : undefined;
 
     return {
         opacity: isPossible ? 1 : 0.15,

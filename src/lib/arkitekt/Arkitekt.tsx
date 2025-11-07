@@ -204,6 +204,8 @@ export const serviceMap: ServiceBuilderMap = {
     key: "livekit",
     service: "io.livekit.livekit",
     optional: true,
+    omitchallenge: true,
+    forceinsecure: true,
     builder: async ({ alias, token }) => {
       return {
         client: createLivekitClient({

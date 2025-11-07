@@ -51,6 +51,8 @@ export type ServiceDefinition<T extends any = any> = {
   builder: ServiceBuilder<T>;
   key: string;
   service: string;
+  omitchallenge?: boolean;
+  forceinsecure?: boolean;
   optional: boolean;
 };
 
@@ -171,11 +173,28 @@ export const buildContext = async ({
           throw new Error(`No instance found for service ${key}`);
         }
 
-        const alias = await resolveWorkingAlias({
-          instance: serviceInstance,
-          timeout: 1000,
-          controller,
-        });
+        let alias: Alias;
+
+        if (definition.omitchallenge) {
+          alias = serviceInstance.aliases[0];
+
+
+
+        } else {
+          // Perform challenge if needed
+          // (Challenge logic would go here)
+          alias = await resolveWorkingAlias({
+            instance: serviceInstance,
+            timeout: 1000,
+            controller,
+          });
+        }
+
+        if (definition.forceinsecure) {
+          alias.ssl = false;
+        }
+
+
 
         const client = await definition.builder({
           manifest,
@@ -446,13 +465,13 @@ export type ArkitektBuilderOptions = {
 
 export const buildArkitektProvider =
   (options: ArkitektBuilderOptions) =>
-  ({ children }: { children: ReactNode }) => {
-    return (
-      <ArkitektProvider
-        manifest={options.manifest}
-        serviceBuilderMap={options.serviceBuilderMap}
-      >
-        {children}
-      </ArkitektProvider>
-    );
-  };
+    ({ children }: { children: ReactNode }) => {
+      return (
+        <ArkitektProvider
+          manifest={options.manifest}
+          serviceBuilderMap={options.serviceBuilderMap}
+        >
+          {children}
+        </ArkitektProvider>
+      );
+    };

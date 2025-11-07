@@ -84,9 +84,9 @@ export default ({
 
   return (
     <>
-      <BaseEdge 
-        path={path} 
-        markerEnd={markerEnd} 
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
         label={data?.role}
         style={strokeStyle}
       />

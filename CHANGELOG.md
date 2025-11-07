@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/arkitektio/orkestrator-next/compare/v1.14.1...v1.15.0) (2025-11-07)
+
+
+### Features
+
+* add reagent builder edges ([c4f61e4](https://github.com/arkitektio/orkestrator-next/commit/c4f61e4148ca0983ff9e473b7c432cf54c793847))
+
 ## [1.14.1](https://github.com/arkitektio/orkestrator-next/compare/v1.14.0...v1.14.1) (2025-11-06)
 
 

@@ -2,7 +2,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
 import { DroppableNavLink } from "@/components/ui/link";
-import { RekuestAgent } from "@/linkers";
+import { RekuestAgent, RekuestDashboard } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   Ordering,
   useAgentsQuery,
   useGlobalSearchQuery,
+  useListDashboardsQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
 
@@ -34,6 +35,14 @@ export const NavigationPane = () => {
     variables: {
       filters: {
         pinned: true,
+      },
+    },
+  });
+
+  const { data: allDashboards } = useListDashboardsQuery({
+    variables: {
+      pagination: {
+        limit: 10,
       },
     },
   });
@@ -101,7 +110,7 @@ export const NavigationPane = () => {
             Shortcuts
           </DroppableNavLink>
         </div>
-        {JSON.stringify(error)}
+
         {pinnedAgents?.agents && pinnedAgents.agents.length > 0 && (
           <>
             <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
@@ -156,8 +165,30 @@ export const NavigationPane = () => {
             </RekuestAgent.Smart>
           ))}
         </div>
-      </nav>
-    </div>
+        {allDashboards?.dashboards && allDashboards.dashboards.length > 0 && (
+          <>
+            <div className="text-muted-foreground text-xs font-semibold uppercase my-4">
+              My Dashboards
+            </div>
+            <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+              {allDashboards.dashboards.map((dashboard, index) => (
+                <RekuestDashboard.Smart object={dashboard.id} key={index}>
+                  <RekuestDashboard.DetailLink
+                    object={dashboard.id}
+                    key={index}
+                    className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+                  >
+                    <CardStackIcon className="h-4 w-4" />
+                    {dashboard.name}
+                    <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
+                  </RekuestDashboard.DetailLink>
+                </RekuestDashboard.Smart>
+              ))}
+            </div>
+          </>
+        )}
+      </nav >
+    </div >
   );
 };
 

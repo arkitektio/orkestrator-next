@@ -129,7 +129,6 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
 
         event.api.fromJSON(layout);
       } catch (err) {
-        alert("Failed to parse layout: " + err);
         data.dashboard.materializedBloks?.forEach((b) =>
           addMaterializedBlok(b, event.api),
         );
@@ -233,9 +232,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
 
 
   const onSave = () => {
-    if (api) {
-      alert(JSON.stringify(api.toJSON()));
-    }
+
   };
 
   const onDidDrop = (event: DockviewDidDropEvent) => {

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/carousel";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestAgent, RekuestImplementation } from "@/linkers";
+import { ClientAvatar } from "@/lok-next/components/ClientAvatar";
 import { AgentFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
@@ -73,7 +74,7 @@ export default (props: { agent: AgentFragment }) => {
                 <div className="p-1">
                   <Card>
                     <CardContent className="flex aspect-square max-h-[200px] p-6 ">
-                      <div className="w-full h-full">{item.action.name}</div>
+                      <ClientAvatar clientId={props.agent.registry.client.clientId} />
                     </CardContent>
                   </Card>
                 </div>

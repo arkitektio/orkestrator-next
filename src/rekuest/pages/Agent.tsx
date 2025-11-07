@@ -22,6 +22,8 @@ import { ImplementationActionButton } from "../buttons/ImplementationActionButto
 import ImplementationCard from "../components/cards/ImplementationCard";
 import AgentCarousel from "../components/carousels/AgentCarousel";
 import { StateDisplay } from "../components/State";
+import Timestamp from "react-timestamp";
+import { ClientAvatar, ClientImage } from "@/lok-next/components/ClientAvatar";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -181,6 +183,21 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: <RekuestAgent.Komments object={data?.agent?.id} />,
+              States: <>
+                {/* States Section */}
+                {data.agent.states.length > 0 && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      Agent States
+                    </h3>
+                    <div className="space-y-3">
+                      {data.agent.states.map((state) => (
+                        <StateDisplay key={state.id} stateId={state.id} label={true} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             }}
           />
         }
@@ -196,29 +213,73 @@ export default asDetailQueryRoute(
           </div>
         }
       >
-        <AgentCarousel agent={data.agent} />
+        <div className="space-y-12">
+          {/* Hero Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            <div className="lg:col-span-8 space-y-8">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "w-3 h-3 rounded-full",
+                      data.agent.connected
+                        ? "bg-green-500 animate-pulse shadow-lg shadow-green-500/50"
+                        : "bg-red-500 shadow-lg shadow-red-500/50"
+                    )}
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {data.agent.connected ? "Connected" : "Disconnected"}
+                  </span>
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">
+                    Last seen <Timestamp date={data.agent.lastSeen} relative />
+                  </span>
+                </div>
 
-        <div className="p-6 mt-2">
-          {data.agent.extensions.map((extension) => (
-            <Badge key={extension} className="mr-2">
-              {extension}
-            </Badge>
-          ))}
-        </div>
+                <RekuestAgent.DetailLink object={data.agent.id}>
+                  <h1 className="scroll-m-20 text-5xl font-bold tracking-tight lg:text-6xl hover:text-primary transition-colors cursor-pointer">
+                    {data.agent.name}
+                  </h1>
+                </RekuestAgent.DetailLink>
 
-        <div className="p-6 mt-2">
-          {data.agent.states.map((state) => (
-            <>
-              <StateDisplay stateId={state.id} label={true} />
-            </>
-          ))}
+                {data.agent.extensions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {data.agent.extensions.map((extension) => (
+                      <Badge key={extension} variant="outline" className="text-xs font-mono">
+                        {extension}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
-          <ListRender
-            array={data.agent.implementations}
-            title={<p className="text-xs ml-2 mb-2">Registered Actions</p>}
-          >
-            {(item) => <ImplementationCard item={item} />}
-          </ListRender>
+            <div className="lg:col-span-4 flex items-start">
+              <div className="w-full max-w-sm">
+                <ClientImage
+                  clientId={data.agent.registry.client.clientId}
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Implementations Section */}
+          <div className="space-y-6 pt-8 border-t">
+            <ListRender
+              array={data.agent.implementations}
+              title={
+                <div className="flex items-baseline gap-3 mb-6">
+                  <h2 className="text-2xl font-bold">Registered Actions</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {data.agent.implementations.length} {data.agent.implementations.length === 1 ? 'action' : 'actions'}
+                  </span>
+                </div>
+              }
+            >
+              {(item) => <ImplementationCard item={item} />}
+            </ListRender>
+          </div>
         </div>
       </RekuestAgent.ModelPage>
     );

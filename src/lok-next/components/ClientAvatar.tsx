@@ -37,6 +37,25 @@ export const ClientAvatar = (props: { clientId: string }) => {
 };
 
 
+export const ClientImage = (props: { clientId: string, className?: string }) => {
+  const { data } = useClientQuery({
+    variables: {
+      clientId: props.clientId,
+    },
+  });
+
+  const resolve = useResolve();
+
+  return (
+    <img
+      className={props.className}
+      src={resolve(data?.client.logo?.presignedUrl)}
+      alt={data?.client.name}
+    />
+  );
+};
+
+
 
 export const JustClientName = (props: { clientId: string }) => {
   const { data } = useClientQuery({

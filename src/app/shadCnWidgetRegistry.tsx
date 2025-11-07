@@ -22,6 +22,8 @@ import { EnumReturnWidget } from "@/components/widgets/returns/fallbacks/EnumRet
 import { FloatReturnWidget } from "@/components/widgets/returns/fallbacks/FloatReturnWidget";
 import { IntReturnWidget } from "@/components/widgets/returns/fallbacks/IntReturnWidget";
 import { ListReturnWidget } from "@/components/widgets/returns/fallbacks/ListReturnWidget";
+import { ModelReturnWidget } from "@/components/widgets/returns/fallbacks/ModelReturnWidget";
+import { StringReturnWidget } from "@/components/widgets/returns/fallbacks/StringReturnWidget";
 import { UnionReturnWidget } from "@/components/widgets/returns/fallbacks/UnionReturnWidget";
 import { PortFragment, PortKind } from "@/rekuest/api/graphql";
 import { WidgetRegistry } from "@/rekuest/widgets/Registry";
@@ -118,6 +120,16 @@ const floatReturn = registry.registerReturnWidgetFallback(
   PortKind.Float,
   FloatReturnWidget,
 );
+const stringReturn = registry.registerReturnWidgetFallback(
+  PortKind.String,
+  StringReturnWidget,
+);
+const modelReturn = registry.registerReturnWidgetFallback(
+  PortKind.Model,
+  ModelReturnWidget,
+);
+
+
 const listReturn = registry.registerReturnWidgetFallback(
   PortKind.List,
   ListReturnWidget,

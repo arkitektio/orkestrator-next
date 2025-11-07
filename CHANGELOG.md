@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/arkitektio/orkestrator-next/compare/v1.15.0...v1.16.0) (2025-11-07)
+
+
+### Features
+
+* insecureness ([0330bc2](https://github.com/arkitektio/orkestrator-next/commit/0330bc28f9cb4b0ac6152df69657b835c07f8a27))
+
 # [1.15.0](https://github.com/arkitektio/orkestrator-next/compare/v1.14.1...v1.15.0) (2025-11-07)
 
 

@@ -21,7 +21,8 @@ import UsersPage from "./pages/UsersPage";
 import StandardPane from "./panes/StandardPane";
 import RedeemTokensPage from "./pages/RedeemTokensPage";
 import RedeemTokenPage from "./pages/RedeemTokenPage";
-interface Props {}
+import RecordPage from "./pages/RecordPage";
+interface Props { }
 
 export const LokNextModule: React.FC<Props> = (props) => {
   return (
@@ -29,6 +30,7 @@ export const LokNextModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="me" element={<MePage />} />
+          <Route path="record" element={<RecordPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="users/:id" element={<UserPage />} />
           <Route path="apps" element={<AppsPage />} />

@@ -312,7 +312,7 @@ export const KraphProtocolStepTemplate = buildSmart(
 );
 
 export const OmeroArkProject = buildSmart(
-  "@omero-ark/project",
+  "@omeroark/project",
   "omero_ark/projects",
 );
 
@@ -323,11 +323,11 @@ export const PortDefinition = buildSmart(
 );
 
 export const OmeroArkDataset = buildSmart(
-  "@omero-ark/dataset",
+  "@omeroark/dataset",
   "omero_ark/datasets",
 );
 
-export const OmeroArkImage = buildSmart("@omero-ark/image", "omero_ark/images");
+export const OmeroArkImage = buildSmart("@omeroark/image", "omero_ark/images");
 
 export const MikroHistory = buildSmart("@mikro/history", "mikro/history");
 

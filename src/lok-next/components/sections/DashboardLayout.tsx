@@ -5,6 +5,7 @@ import { Username } from "../Me";
 import { LatestMentionsSection } from "./LatestMentionsSection";
 import { RecentAppsSection } from "./RecentAppsSection";
 import { UserOrganizationsSection } from "./UserOrganizationsSection";
+import { Link } from "@/components/ui/link";
 
 export const DashboardLayout = () => {
   const { data: userData } = useMeQuery();

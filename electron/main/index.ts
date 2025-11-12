@@ -170,6 +170,7 @@ function createWindow(): BrowserWindow {
       preload: fileURLToPath(new URL("../preload/index.mjs", import.meta.url)),
       sandbox: false,
       nodeIntegrationInWorker: false,
+      contextIsolation: true,
     },
   });
 
@@ -290,6 +291,7 @@ function openSecondaryWindow(path: string): void {
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
       sandbox: false,
+      contextIsolation: true,
     },
   });
 
@@ -425,6 +427,17 @@ app.whenReady().then(() => {
 
   setupAutoUpdater();
 
+  // Set up permission handler for clipboard access
+  import("electron").then(({ session }) => {
+    session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+      // Allow clipboard permissions
+      if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+        return true;
+      }
+      return true; // Allow other permissions by default
+    });
+  });
+
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
@@ -534,6 +547,17 @@ app.whenReady().then(() => {
         { role: "quit" },
       ],
     },
+    {
+        label: "Edit",
+        submenu: [
+            { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+            { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+            { type: "separator" },
+            { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+            { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+            { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+            { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+        ]},
     {
       label: "View",
       submenu: [

@@ -4,6 +4,7 @@ import { DashboardLayout } from "../components/sections/DashboardLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { Link } from "@/components/ui/link";
 
 export type IRepresentationScreenProps = Record<string, never>;
 
@@ -13,8 +14,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       <MultiSidebar map={{
         Statistics: <HomePageStatisticsSidebar />,
         Help: <HelpSidebar />
-      }} />
-    }>
+      }}></MultiSidebar>
+
+    } pageActions={<>
+      <Link to="/lok/record">Record
+
+      </Link></>}>
       <DashboardLayout />
     </PageLayout>
   );

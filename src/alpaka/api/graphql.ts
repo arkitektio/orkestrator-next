@@ -113,6 +113,10 @@ export type CreateRoomInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type DeleteProviderInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteRoomInput = {
   id: Scalars['ID']['input'];
 };
@@ -236,6 +240,7 @@ export type Mutation = {
   createProvider: Provider;
   createRoom: Room;
   deleteCollection: Scalars['ID']['output'];
+  deleteProvider: Scalars['ID']['output'];
   deleteRoom: Scalars['ID']['output'];
   ensureCollection: ChromaCollection;
   pull: OllamaPullResult;
@@ -270,6 +275,11 @@ export type MutationCreateRoomArgs = {
 
 export type MutationDeleteCollectionArgs = {
   input: AddDocumentsToCollectionInput;
+};
+
+
+export type MutationDeleteProviderArgs = {
+  input: DeleteProviderInput;
 };
 
 
@@ -727,6 +737,13 @@ export type CreateProviderMutationVariables = Exact<{
 
 
 export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> } };
+
+export type DeleteProviderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: string };
 
 export type PullMutationVariables = Exact<{
   input: PullInput;
@@ -1222,6 +1239,37 @@ export function useCreateProviderMutation(baseOptions?: ApolloReactHooks.Mutatio
 export type CreateProviderMutationHookResult = ReturnType<typeof useCreateProviderMutation>;
 export type CreateProviderMutationResult = Apollo.MutationResult<CreateProviderMutation>;
 export type CreateProviderMutationOptions = Apollo.BaseMutationOptions<CreateProviderMutation, CreateProviderMutationVariables>;
+export const DeleteProviderDocument = gql`
+    mutation DeleteProvider($id: ID!) {
+  deleteProvider(input: {id: $id})
+}
+    `;
+export type DeleteProviderMutationFn = Apollo.MutationFunction<DeleteProviderMutation, DeleteProviderMutationVariables>;
+
+/**
+ * __useDeleteProviderMutation__
+ *
+ * To run a mutation, you first call `useDeleteProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteProviderMutation, { data, loading, error }] = useDeleteProviderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteProviderMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteProviderMutation, DeleteProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteProviderMutation, DeleteProviderMutationVariables>(DeleteProviderDocument, options);
+      }
+export type DeleteProviderMutationHookResult = ReturnType<typeof useDeleteProviderMutation>;
+export type DeleteProviderMutationResult = Apollo.MutationResult<DeleteProviderMutation>;
+export type DeleteProviderMutationOptions = Apollo.BaseMutationOptions<DeleteProviderMutation, DeleteProviderMutationVariables>;
 export const PullDocument = gql`
     mutation Pull($input: PullInput!) {
   pull(input: $input) {

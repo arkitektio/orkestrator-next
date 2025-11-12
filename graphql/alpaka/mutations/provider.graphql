@@ -3,3 +3,7 @@ mutation CreateProvider($input: ProviderInput!) {
     ...Provider
   }
 }
+
+mutation DeleteProvider($id: ID!) {
+  deleteProvider(input: { id: $id })
+}

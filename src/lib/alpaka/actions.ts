@@ -1,9 +1,10 @@
-import { Action } from "@/actions/action-registry";
-import { buildDeleteAction } from "@/actions/builders/deleteAction";
-import { DeleteRoomDocument } from "@/alpaka/api/graphql";
 
-export const ALPAKA_ACTIONS: Action[] = [
-  buildDeleteAction({
+import { DeleteProviderDocument, DeleteRoomDocument } from "@/alpaka/api/graphql";
+import { buildDeleteAction } from "../localactions/builders/deleteAction";
+import { Action } from "../localactions/LocalActionProvider";
+
+export const ALPAKA_ACTIONS: Record<string, Action> = {
+  "alpaka-delete-room": buildDeleteAction({
     title: "Delete Room",
     identifier: "@alpaka/room",
     description: "Delete the Graph",
@@ -11,4 +12,12 @@ export const ALPAKA_ACTIONS: Action[] = [
     typename: "Room",
     mutation: DeleteRoomDocument,
   }),
-];
+  "alpaka-delete-provider": buildDeleteAction({
+    title: "Delete Provider",
+    identifier: "@alpaka/provider",
+    description: "Delete the Provider",
+    service: "alpaka",
+    typename: "Provider",
+    mutation: DeleteProviderDocument,
+  }),
+}

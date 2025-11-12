@@ -4,18 +4,31 @@ import { AlpakaCollection, AlpakaLLMModel } from "@/linkers";
 import {
   useGetLlmModelQuery
 } from "../api/graphql";
+import { useDialog } from "@/app/dialog";
+import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
 
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
   useGetLlmModelQuery,
   ({ data, subscribeToMore }) => {
+    const { openDialog } = useDialog();
+
     return (
       <AlpakaLLMModel.ModelPage
         title={data?.llmModel?.modelId}
         object={data.llmModel.id}
         pageActions={
           <div className="flex flex-row gap-2">
+            <Button
+              onClick={() => openDialog("chat", { model: data.llmModel.id })}
+              variant="outline"
+              size="sm"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Chat
+            </Button>
             <AlpakaLLMModel.ObjectButton object={data.llmModel.id} />
           </div>
         }

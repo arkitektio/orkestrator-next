@@ -1,4 +1,5 @@
 import { KRAPH_ACTIONS } from "@/kraph/actions";
+import { ALPAKA_ACTIONS } from "@/lib/alpaka/actions";
 import { ELEKTRO_ACTIONS } from "@/lib/elektro/actions";
 import { KABINET_ACTIONS } from "@/lib/kabinet/actions";
 import {
@@ -68,6 +69,7 @@ export const { LocalActionProvider, useAction, useMatchingActions, registry } =
     ...KABINET_ACTIONS,
     ...REKUEST_ACTIONS,
     ...ELEKTRO_ACTIONS,
+    ...ALPAKA_ACTIONS,
     popout: PopOutAction,
     navigate: NavigateAction,
   } as const);

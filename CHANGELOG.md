@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/arkitektio/orkestrator-next/compare/v1.16.0...v1.16.1) (2025-11-07)
+
+
+### Bug Fixes
+
+* fix states diesplay ([1dbd373](https://github.com/arkitektio/orkestrator-next/commit/1dbd373e28ae27ef6347561338c6fb7e0e2bd4bd))
+
 # [1.16.0](https://github.com/arkitektio/orkestrator-next/compare/v1.15.0...v1.16.0) (2025-11-07)
 
 

@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/arkitektio/orkestrator-next/compare/v1.16.1...v1.17.0) (2025-11-12)
+
+
+### Features
+
+* add chat option for alpaka ([b586069](https://github.com/arkitektio/orkestrator-next/commit/b586069dfd9d982af3eb65fe8c87ba31b74414c1))
+
 ## [1.16.1](https://github.com/arkitektio/orkestrator-next/compare/v1.16.0...v1.16.1) (2025-11-07)
 
 

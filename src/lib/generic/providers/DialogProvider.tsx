@@ -187,7 +187,7 @@ export function createDialogProvider<
           )}
         </Sheet>
 
-        {!Component && children}
+        {children}
       </DialogContext.Provider>
     );
   };

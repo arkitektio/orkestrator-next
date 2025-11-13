@@ -107,17 +107,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 <DisplayProvider>
                   <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
                     <SmartProvider>
-                      <Guard.Rekuest fallback={<></>}>
-                        {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                        <AssignationUpdater />
-                        <AgentUpdater />
-                        {/* We register the Shadn powered widgets to the widget registry. */}
-                        <RekuestNextWard />
-                        <Toaster />
-                      </Guard.Rekuest>
                       <DialogProvider>
                         <SelectionProvider>
-
+                          <Guard.Rekuest fallback={<></>}>
+                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                            <AssignationUpdater />
+                            <AgentUpdater />
+                            {/* We register the Shadn powered widgets to the widget registry. */}
+                            <RekuestNextWard />
+                            <Toaster />
+                          </Guard.Rekuest>
                           <Guard.Kabinet fallback={<></>}>
                             <KabinetWard key="kabinet" />
                           </Guard.Kabinet>

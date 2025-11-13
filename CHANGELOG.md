@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/arkitektio/orkestrator-next/compare/v1.17.1...v1.18.0) (2025-11-13)
+
+
+### Features
+
+* add compute nude display + better implementation assign form ([99f3921](https://github.com/arkitektio/orkestrator-next/commit/99f3921c0feea4ce79111453c92fdcb896a7a05b))
+
 ## [1.17.1](https://github.com/arkitektio/orkestrator-next/compare/v1.17.0...v1.17.1) (2025-11-13)
 
 

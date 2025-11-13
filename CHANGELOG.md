@@ -1,3 +1,10 @@
+## [1.20.3](https://github.com/arkitektio/orkestrator-next/compare/v1.20.2...v1.20.3) (2025-11-13)
+
+
+### Bug Fixes
+
+* some omero ark options ([1fedee5](https://github.com/arkitektio/orkestrator-next/commit/1fedee561f7de85d95def94edb4ff9764583c04a))
+
 ## [1.20.2](https://github.com/arkitektio/orkestrator-next/compare/v1.20.1...v1.20.2) (2025-11-13)
 
 

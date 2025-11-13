@@ -19,6 +19,10 @@ fragment DetailClient on Client {
   mappings {
     ...ListServiceInstanceMapping
   }
+  node {
+    id
+    name
+  }
 }
 
 fragment ListClient on Client {

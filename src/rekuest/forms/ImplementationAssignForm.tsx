@@ -60,6 +60,7 @@ export const ImplementationAssignForm = (
   const form = useImplementationForm({
     implementation: implementation,
     overwrites: { ...latestAssignation?.args, ...props.args },
+    presetDependencies: latestAssignation?.dependencies,
     reValidateMode: "onChange",
   });
 

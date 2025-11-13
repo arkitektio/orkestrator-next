@@ -1,0 +1,5 @@
+mutation UpdateComputeNode($input: UpdateComputeNodeInput!) {
+  updateComputeNode(input: $input) {
+    ...DetailComputeNode
+  }
+}

@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokClient, LokComputeNode } from "@/linkers";
+import { LokClient } from "@/linkers";
 import { useDetailClientQuery } from "../api/graphql";
 import CompositionGraph from "../components/graphs/CompositionGraph";
 
@@ -24,9 +24,6 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
             </div>
           </div>
         </div>
-        {data.client.node && (
-          <LokComputeNode.DetailLink object={data.client.node.id}>{data.client.node.name}</LokComputeNode.DetailLink>
-        )}
         <div className="col-span-2">
           <div className="p-1">
             <div>

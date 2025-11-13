@@ -21,6 +21,7 @@ fragment PostmanAssignation on Assignation {
       name
     }
   }
+  dependencies
   implementation {
     id
     interface

@@ -18,6 +18,8 @@ import ServicePage from "./pages/ServicePage";
 import ServicesPage from "./pages/ServicesPage";
 import UserPage from "./pages/UserPage";
 import UsersPage from "./pages/UsersPage";
+import ComputeNodePage from "./pages/ComputeNodePage";
+import ComputeNodesPage from "./pages/ComputeNodesPage";
 import StandardPane from "./panes/StandardPane";
 import RedeemTokensPage from "./pages/RedeemTokensPage";
 import RedeemTokenPage from "./pages/RedeemTokenPage";
@@ -34,6 +36,8 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="users" element={<UsersPage />} />
           <Route path="users/:id" element={<UserPage />} />
           <Route path="apps" element={<AppsPage />} />
+          <Route path="computenodes/:id" element={<ComputeNodePage />} />
+          <Route path="computenodes" element={<ComputeNodesPage />} />
           <Route path="apps/:id" element={<AppPage />} />
           <Route path="releases/:id" element={<ReleasePage />} />
           <Route path="clients/:id" element={<ClientPage />} />

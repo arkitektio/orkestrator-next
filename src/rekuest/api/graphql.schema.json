@@ -991,6 +991,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "allowInactive",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "true",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "argMatches",
             "description": null,
             "type": {
@@ -2908,7 +2920,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"a8faec35-168e-4450-86c3-31499cdac822\"",
+            "defaultValue": "\"8186907e-816e-4b41-9b93-803477aa5584\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3382,6 +3394,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "DateTime",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "dependencies",
+            "description": "The used dependencies for this assignemnet",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "AnyDefault",
                 "ofType": null
               }
             },
@@ -16726,7 +16754,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"e06162c0-9459-451b-9e30-36b4d162ad13\"",
+            "defaultValue": "\"96030044-3baa-4589-b2b7-82ab829cb7fb\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

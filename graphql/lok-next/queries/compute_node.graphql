@@ -1,0 +1,14 @@
+query ListComputeNode(
+  $pagination: OffsetPaginationInput
+  $filters: ComputeNodeFilter
+) {
+  computeNodes(pagination: $pagination, filters: $filters) {
+    ...ListComputeNode
+  }
+}
+
+query GetComputeNode($id: ID!) {
+  computeNode(id: $id) {
+    ...DetailComputeNode
+  }
+}

@@ -20,6 +20,7 @@ export const portHash = (port: Port[]) => {
 export const useImplementationForm = (props: {
   implementation?: DetailImplementationFragment;
   overwrites?: { [key: string]: unknown };
+  presetDependencies?: { [key: string]: string };
   doNotAutoReset?: boolean;
   additionalSchema?: Zod.ZodObject<unknown>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
@@ -33,8 +34,9 @@ export const useImplementationForm = (props: {
         props.implementation?.action.args || [],
         props.overwrites || {},
       ),
+      dependencies: props.presetDependencies || {},
     };
-  }, [hash, props.overwrites]);
+  }, [hash, props.overwrites, props.presetDependencies]);
 
   const myResolver = useCallback(() => {
     const argsSchema = buildZodSchema(props.implementation?.action.args || []);
@@ -74,13 +76,14 @@ export const useImplementationForm = (props: {
 
   useEffect(() => {
     if (props.doNotAutoReset) return;
-    form.reset(
-      portToDefaults(
+    form.reset({
+      args: portToDefaults(
         props.implementation?.action.args || [],
         props.overwrites || {},
       ),
-    );
-  }, [hash]);
+      dependencies: props.presetDependencies || {},
+    });
+  }, [hash, props.overwrites, props.presetDependencies]);
 
   return { ...form, handleSubmit: overWrittenHandleSubmit };
 };

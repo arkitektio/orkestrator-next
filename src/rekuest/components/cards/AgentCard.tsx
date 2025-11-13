@@ -1,6 +1,7 @@
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
+import { AgentPill } from "@/lok-next/components/AgentPill";
 import { ClientAvatar } from "@/lok-next/components/ClientAvatar";
 import { UserAvatarUsername } from "@/lok-next/components/UserAvatar";
 import { MateFinder } from "@/mates/types";
@@ -32,8 +33,7 @@ const TheCard = ({ item, mates }: Props) => {
           </CardTitle>
         </CardHeader>
         <CardFooter>
-          <UserAvatarUsername sub={item.registry.user.sub} />
-          <ClientAvatar clientId={item.registry.client.clientId} />
+          <AgentPill clientId={item.registry.client.clientId} />
         </CardFooter>
       </Card>
     </RekuestAgent.Smart>

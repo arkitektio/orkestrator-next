@@ -16,7 +16,7 @@ import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (
@@ -89,6 +89,13 @@ export const NavigationPane = (props: {}) => {
         >
           <CubeIcon className="h-4 w-4" />
           Redeem Tokens
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/lok/computenodes"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Compute Nodes
         </DroppableNavLink>
       </SubTree>
     </Tree>

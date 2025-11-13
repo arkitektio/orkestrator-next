@@ -83,7 +83,7 @@ export const useImplementationForm = (props: {
       ),
       dependencies: props.presetDependencies || {},
     });
-  }, [hash, props.overwrites, props.presetDependencies]);
+  }, [hash]);
 
   return { ...form, handleSubmit: overWrittenHandleSubmit };
 };

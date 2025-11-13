@@ -93,6 +93,8 @@ export const ImplementationAssignForm = (
     }
   };
 
+  const dependencies = form.watch("dependencies");
+
   const { registry } = useWidgetRegistry();
 
   if (error) {

@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/arkitektio/orkestrator-next/compare/v1.20.0...v1.20.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* fix sidepanes ([20af93d](https://github.com/arkitektio/orkestrator-next/commit/20af93d3c3de214927276c06dc5e488abfe419ac))
+
 # [1.20.0](https://github.com/arkitektio/orkestrator-next/compare/v1.19.1...v1.20.0) (2025-11-13)
 
 

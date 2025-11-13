@@ -10,6 +10,9 @@ import { OmeroArkProject } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import { DeleteMeButton } from "../ConnectedGuard";
 import { CommandMenu } from "@/command/Menu";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { HelpSidebar } from "@/components/sidebars/help";
 
 
 
@@ -43,7 +46,13 @@ const Page = () => {
       >
         <CreateProjectForm />
       </FormDialogAction>
-    </>}>
+
+    </>} sidebars={
+      <MultiSidebar map={{
+        Statistics: <HomePageStatisticsSidebar />,
+        Help: <HelpSidebar />
+      }} />
+    }>
       <CommandMenu />
       <ProjectList />
     </PageLayout>

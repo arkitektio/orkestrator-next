@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
@@ -17,7 +18,7 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
   )}/api/thumbnails/${id}`;
 };
 
-const Card = ({ image, mates }: Props) => {
+const TCard = ({ image, mates }: Props) => {
   const token = Arkitekt.useToken();
   const omeroArk = Arkitekt.useService("omero_ark");
 
@@ -48,13 +49,8 @@ const Card = ({ image, mates }: Props) => {
   return (
     <OmeroArkImage.Smart
       object={image?.id}
-      dropClassName={({ isOver, canDrop, isDragging }) =>
-        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-40 rounded rounded-xl  hover:bg-back-800 transition-all ease-in-out duration-200 group ${isOver && !isDragging && "border-primary-200 border"
-        } ${isDragging && "ring-primary-200 ring"} `
-      }
-      mates={mates}
     >
-      <div
+      <Card
         className="px-2 py-2 h-40 w-full top-0 left-0 bg-opacity-20 bg-black  rounded rounded-xl"
         ref={ref}
       >
@@ -68,9 +64,9 @@ const Card = ({ image, mates }: Props) => {
           {image?.name}
         </OmeroArkImage.DetailLink>
         {image.description}
-      </div>
+      </Card>
     </OmeroArkImage.Smart>
   );
 };
 
-export default Card;
+export default TCard;

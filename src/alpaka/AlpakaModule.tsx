@@ -16,7 +16,7 @@ interface Props { }
 
 export const AlpakaModule: React.FC<Props> = (props) => {
   return (
-    <Guard.Lok fallback={<>Loading</>}>
+    <Guard.Alpaka fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="rooms/:id" element={<RoomPage />} />
@@ -30,7 +30,7 @@ export const AlpakaModule: React.FC<Props> = (props) => {
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>
-    </Guard.Lok>
+    </Guard.Alpaka>
   );
 };
 

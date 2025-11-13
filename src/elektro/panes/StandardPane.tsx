@@ -14,8 +14,10 @@ import {
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { useDebounce } from "@/hooks/use-debounce";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (
@@ -85,43 +87,52 @@ const variables = {
   },
 };
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
 
-  const [currentVariables, setCurrentVariables] =
-    React.useState<GlobalSearchQueryVariables>(variables);
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
 
-  const onFilterChanged = (e: GlobalSearchQueryVariables) => {
-    refetch(e);
-    setCurrentVariables(e);
+  const debouncedSearch = useDebounce(search, 300);
+
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <GlobalSearchFilter
-            onFilterChanged={onFilterChanged}
-            defaultValue={{ search: "", noRooms: false }}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.traces}>
-              {(item, i) => <TraceCard item={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <>
+          <ListRender array={data?.traces}>
+            {(item, i) => <TraceCard item={item} key={i} />}
+          </ListRender>
+        </>
+      )}
+    </SidebarLayout>
   );
 };
+
+
 
 export default Pane;

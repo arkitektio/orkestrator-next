@@ -59,14 +59,16 @@ export const NavigationPane = () => (
   </div>
 );
 
+
+
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState("");
-  const [noImages, setNoImages] = React.useState(false);
+
   const debouncedSearch = useDebounce(search, 300);
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    noImages,
+    noImages: false,
     pagination: {
       limit: 10,
     },
@@ -76,38 +78,17 @@ const Pane: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     refetch(variables);
-  }, [debouncedSearch, noImages]);
+  }, [debouncedSearch]);
 
   const searchBar = (
     <div className="w-full flex flex-row">
-      <Popover>
-        <PopoverAnchor asChild>
-          <div className="h-full w-full relative flex flex-row">
-            <FancyInput
-              placeholder="Search..."
-              type="string"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-grow h-full bg-background text-foreground w-full"
-            />
-            <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-              <ArrowDown />
-            </PopoverTrigger>
-          </div>
-        </PopoverAnchor>
-        <PopoverContent>
-          <div className="flex flex-col gap-2">
-            <Toggle
-              label="No Images"
-              name="noImages"
-              checked={noImages}
-              onCheckedChange={setNoImages}
-            >
-              Exclude Images
-            </Toggle>
-          </div>
-        </PopoverContent>
-      </Popover>
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
     </div>
   );
 
@@ -119,12 +100,6 @@ const Pane: React.FunctionComponent = () => {
         <div className="h-full">
           <ListRender array={data?.images}>
             {(item, i) => <ImageCard image={item} key={i} />}
-          </ListRender>
-          <ListRender array={data?.files}>
-            {(item, i) => <FileCard file={item} key={i} />}
-          </ListRender>
-          <ListRender array={data?.datasets}>
-            {(item, i) => <DatasetCard dataset={item} key={i} />}
           </ListRender>
         </div>
       )}

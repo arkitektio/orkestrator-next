@@ -15,6 +15,8 @@ import {
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { useDebounce } from "@/hooks/use-debounce";
+import { FancyInput } from "@/components/ui/fancy-input";
 
 interface IDataSidebarProps { }
 
@@ -111,46 +113,58 @@ const variables = {
   },
 };
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
 
-  const [currentVariables, setCurrentVariables] =
-    React.useState<GlobalSearchQueryVariables>(variables);
 
-  const onFilterChanged = (e: GlobalSearchQueryVariables) => {
-    refetch(e);
-    setCurrentVariables(e);
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    noGroups: false,
+    noUsers: false,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <GlobalSearchFilter
-            onFilterChanged={(e) => refetch(e)}
-            defaultValue={{ search: "", noGroups: false, noUsers: false }}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.users}>
-              {(item, i) => <UserCard item={item} key={i} />}
-            </ListRender>
-            <ListRender array={data?.groups}>
-              {(item, i) => <GroupCard item={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <>
+          <ListRender array={data?.users}>
+            {(item, i) => <UserCard item={item} key={i} />}
+          </ListRender>
+          <ListRender array={data?.groups}>
+            {(item, i) => <GroupCard item={item} key={i} />}
+          </ListRender>
+        </>
+      )}
+    </SidebarLayout>
   );
 };
 
+
 export default Pane;
+

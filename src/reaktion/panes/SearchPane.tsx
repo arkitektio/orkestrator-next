@@ -20,6 +20,8 @@ import {
 import WorkspaceCard from "../components/cards/WorkspaceCard";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
+import { useDebounce } from "@/hooks/use-debounce";
+import { FancyInput } from "@/components/ui/fancy-input";
 
 interface IDataSidebarProps { }
 
@@ -96,50 +98,53 @@ export const NavigationPane = (props: {}) => {
   );
 };
 
-const variables: GlobalSearchQueryVariables = {
-  search: "",
-  pagination: {
-    limit: 20,
-  },
-};
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
 
-  const [currentVariables, setCurrentVariables] =
-    React.useState<NodeSearchQueryVariables>(variables);
 
-  const onFilterChanged = (e: NodeSearchQueryVariables) => {
-    setCurrentVariables(e);
-    refetch(e);
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <NodeSearchFilter
-            onFilterChanged={onFilterChanged}
-            defaultValue={variables}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.workspaces}>
-              {(item, i) => <WorkspaceCard workspace={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <div className="h-full">
+          <ListRender array={data?.workspaces}>
+            {(item, i) => <WorkspaceCard workspace={item} key={i} />}
+          </ListRender>
+        </div>
+      )}
+    </SidebarLayout>
   );
 };
+
 
 export default Pane;

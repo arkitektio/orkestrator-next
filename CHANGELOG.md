@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/arkitektio/orkestrator-next/compare/v1.18.1...v1.19.0) (2025-11-13)
+
+
+### Features
+
+* fix the dialog is outise of toeaster error ([948932a](https://github.com/arkitektio/orkestrator-next/commit/948932a667e1ad11474ff73a684ba2c47d1a1501))
+
 ## [1.18.1](https://github.com/arkitektio/orkestrator-next/compare/v1.18.0...v1.18.1) (2025-11-13)
 
 

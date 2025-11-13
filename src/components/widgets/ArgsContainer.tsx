@@ -58,19 +58,29 @@ export const ArgsContainer = ({
     return argGroups;
   }, [ports, hash]);
 
-  let len = 1;
+  const glen = groups?.length || 0;
 
-  let lg_size = len < 2 ? len : 2;
-  let xl_size = len < 3 ? len : 3;
-  let xxl_size = len < 4 ? len : 4;
-  let xxxl_size = len < 5 ? len : 5;
-  let xxxxl_size = len < 6 ? len : 6;
+  const glg_size = glen < 2 ? glen : 2;
+  const gxl_size = glen < 3 ? glen : 3;
+  const gxxl_size = glen < 4 ? glen : 4;
+  const gxxxl_size = glen < 5 ? glen : 5;
+  const gxxxxl_size = glen < 6 ? glen : 6;
+
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5 `}
+      className={`grid @lg:grid-cols-${glg_size} @xl:grid-cols-${gxl_size} @2xl:grid-cols-${gxxl_size}  @3xl:grid-cols-${gxxxl_size}   @5xl:grid-cols-${gxxxxl_size} gap-5`}
     >
       {filledGroups.map((group, index) => {
+        const len = group.filledPorts.length;
+
+        const lg_size = len < 2 ? len : 2;
+        const xl_size = len < 3 ? len : 3;
+        const xxl_size = len < 4 ? len : 4;
+        const xxxl_size = len < 5 ? len : 5;
+        const xxxxl_size = len < 6 ? len : 6;
+
+
         return (
           <Collapsible key={index} className="@container" defaultOpen={true}>
             {group.key != "default" && (
@@ -84,28 +94,32 @@ export const ArgsContainer = ({
               </div>
             )}
             <CollapsibleContent>
-              {group.filledPorts.map((port, index) => {
-                const Widget = registry.getInputWidgetForPort(port);
-                if (hidden && hidden[port.key]) return null;
+              <div className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5`}>
 
-                return (
-                  <EffectWrapper
-                    key={index}
-                    effects={port.effects || []}
-                    port={port}
-                    registry={registry}
-                  >
-                    <Widget
+
+                {group.filledPorts.map((port, index) => {
+                  const Widget = registry.getInputWidgetForPort(port);
+                  if (hidden && hidden[port.key]) return null;
+
+                  return (
+                    <EffectWrapper
                       key={index}
+                      effects={port.effects || []}
                       port={port}
-                      bound={bound}
-                      widget={port.assignWidget}
-                      options={options}
-                      path={[...path, port.key]}
-                    />
-                  </EffectWrapper>
-                );
-              })}
+                      registry={registry}
+                    >
+                      <Widget
+                        key={index}
+                        port={port}
+                        bound={bound}
+                        widget={port.assignWidget}
+                        options={options}
+                        path={[...path, port.key]}
+                      />
+                    </EffectWrapper>
+                  );
+                })}
+              </div>
             </CollapsibleContent>
           </Collapsible>
         );

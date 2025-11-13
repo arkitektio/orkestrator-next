@@ -1,3 +1,10 @@
+## [1.20.2](https://github.com/arkitektio/orkestrator-next/compare/v1.20.1...v1.20.2) (2025-11-13)
+
+
+### Bug Fixes
+
+* a few little things ([d6caf4a](https://github.com/arkitektio/orkestrator-next/commit/d6caf4a255bceadb1c73de41a4f017f5d7f218e1))
+
 ## [1.20.1](https://github.com/arkitektio/orkestrator-next/compare/v1.20.0...v1.20.1) (2025-11-13)
 
 

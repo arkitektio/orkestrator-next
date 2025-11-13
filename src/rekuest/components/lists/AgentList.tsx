@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestAction } from "@/linkers";
+import { RekuestAgent } from "@/linkers";
 import {
   AgentFilter,
   OffsetPaginationInput,
@@ -21,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.agents}
       title={
-        <RekuestAction.ListLink className="flex-0">Agents</RekuestAction.ListLink>
+        <RekuestAgent.ListLink className="flex-0">Agents</RekuestAgent.ListLink>
       }
       refetch={refetch}
     >

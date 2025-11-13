@@ -15,7 +15,7 @@ import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
-import { ChatBubbleIcon, DashIcon, HomeIcon } from "@radix-ui/react-icons";
+import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Bug,
@@ -103,6 +103,14 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
     }
   };
 
+  const reload = () => {
+    if (window.api) {
+      window.api.reloadWindow();
+    } else {
+      window.location.reload();
+    }
+  }
+
   return (
     <>
       <div className="flex-initial h-12 w-12 justify-center items-center flex cursor-pointer " onClick={onClick}>
@@ -188,7 +196,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
       </div>
 
-      <div className="flex-initial h-12 w-12 items-center flex justify-center items-center">
+      <div className="flex-initial h-12 w-12 items-center flex flex-col justify-center items-center">
         <DropdownMenu>
           <DropdownMenuTrigger className="text-foreground h-12 w-12">
             <Guard.Lok fallback={<div className="h-12 w-12"></div>}>
@@ -241,6 +249,8 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Button variant="ghost" className="h-20 w-20" onClick={reload}><ReloadIcon /></Button>
       </div>
     </>
   );

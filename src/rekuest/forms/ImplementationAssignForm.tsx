@@ -34,7 +34,7 @@ export const DependencyWidget = ({
   });
 
   return (
-    <div className="p-2 border border-1 border-gray-200 rounded-md bg-muted">
+    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md">
       <GraphQLSearchField
         name={`dependencies.${dependency.key}`}
         searchQuery={search}

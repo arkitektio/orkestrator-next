@@ -9,3 +9,13 @@ query DetailAssignation($id: ID!) {
     ...DetailAssignation
   }
 }
+
+query ListAssignations(
+  $filter: AssignationFilter
+  $order: AssignationOrder
+  $pagination: OffsetPaginationInput
+) {
+  tasks(filters: $filter, pagination: $pagination, order: $order) {
+    ...ListAsssignation
+  }
+}

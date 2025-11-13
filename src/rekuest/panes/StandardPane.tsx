@@ -75,6 +75,20 @@ export const NavigationPane = () => {
             Actions
           </DroppableNavLink>
           <DroppableNavLink
+            to="/rekuest/assignations"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Tasks
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest/implementations"
+            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+          >
+            <FunctionSquare className="h-4 w-4" />
+            Implementations
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/rekuest/toolboxes"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

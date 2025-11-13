@@ -27,8 +27,11 @@ import StructurePage from "./pages/StructurePage";
 import InterfacePage from "./pages/InterfacePage";
 import InterfacesPage from "./pages/InterfacesPage";
 import StructuresPage from "./pages/StructuresPage";
+import AssignationLogPage from "./pages/assignation/AssignationLogPage";
+import AssignationsPage from "./pages/AssignationsPage";
+import ImplementationsPage from "./pages/ImplementationsPage";
 
-interface Props {}
+interface Props { }
 /**
  *
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
@@ -61,9 +64,12 @@ const Module: React.FC<Props> = () => {
           <Route path="bloks/:id" element={<Blok />} />
           <Route path="bloks" element={<Bloks />} />
           <Route path="dependencies/:id" element={<Dependency />} />
+          <Route path="implementations" element={<ImplementationsPage />} />
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<Agent />} />
+          <Route path="assignations" element={<AssignationsPage />} />
           <Route path="assignations/:id" element={<Assignation />} />
+          <Route path="assignations/:id/log" element={<AssignationLogPage />} />
         </Routes>
       </ModuleLayout>
     </Guard.Rekuest>

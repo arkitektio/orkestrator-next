@@ -69,3 +69,20 @@ fragment AssignationChangeEvent on AssignationChangeEvent {
     ...AssignationEvent
   }
 }
+
+fragment ListAsssignation on Assignation {
+  id
+  reference
+  latestEventKind
+  isDone
+  action {
+    id
+    name
+  }
+  implementation {
+    id
+    interface
+    extension
+  }
+  createdAt
+}

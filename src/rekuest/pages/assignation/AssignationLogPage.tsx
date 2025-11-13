@@ -11,7 +11,6 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
@@ -27,8 +26,8 @@ import {
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
-import { useAction } from "../hooks/useAction";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { useAction } from "../../hooks/useAction";
+import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -225,18 +224,6 @@ export default asDetailQueryRoute(
         object={data.assignation.id}
         pageActions={
           <div className="flex gap-2">
-            <RekuestAssignation.DetailLink
-              object={data?.assignation?.id || ""}
-              subroute="log"
-              className="font-semibold"
-            >
-              <Button
-                variant={"outline"}
-                size={"sm"}
-              >
-                Logs
-              </Button>
-            </RekuestAssignation.DetailLink>
             <Button
               variant={"outline"}
               size={"sm"}
@@ -284,30 +271,12 @@ export default asDetailQueryRoute(
           />
         }
       >
-        <div className="flex h-full w-full relative">
-          {data?.assignation?.implementation?.extension === "reaktion" ? (
-            <>
-              <Tabs className="flex-grow flex flex-col " defaultValue="flow">
-                <TabsList className="h-8 flex-initial">
-                  <TabsTrigger value="flow">Flow</TabsTrigger>
-                  <TabsTrigger value="logs">Logs</TabsTrigger>
-                </TabsList>
+        <pre className="rounded rounded-md p-3 bg-gray-900 border border-gray-800 text-sm mb-4 overflow-x-auto">
+          {data.assignation.events.map((event) => (
+            <div key={event.id}>[<Timestamp date={event.createdAt} />] {event.kind}[{event.level}]: {event.message} {event.returns && JSON.stringify(event.returns)}</div>
+          ))}
+        </pre>
 
-                <TabsContent value="flow" className="flex-grow">
-                  <AssignationFlow
-                    id={data?.assignation?.implementation?.interface}
-                    assignation={data.assignation}
-                  />
-                </TabsContent>
-                <TabsContent value="logs" className="h-full w-full">
-                  <AssignationTimeLine assignation={data?.assignation} />
-                </TabsContent>
-              </Tabs>
-            </>
-          ) : (
-            <DefaultRenderer assignation={data?.assignation} />
-          )}
-        </div>
       </RekuestAssignation.ModelPage>
     );
   },

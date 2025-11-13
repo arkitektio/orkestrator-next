@@ -4,26 +4,56 @@ query Implementation($id: ID!) {
   }
 }
 
-query Implementations($filters: ImplementationFilter, $pagination: OffsetPaginationInput) {
-  implementations(filters: $filters, pagination: $pagination) {
+query Implementations(
+  $filters: ImplementationFilter
+  $pagination: OffsetPaginationInput
+  $order: ImplementationOrder
+) {
+  implementations(filters: $filters, pagination: $pagination, order: $order) {
     ...DetailImplementation
+  }
+}
+query ListImplementations(
+  $filters: ImplementationFilter
+  $pagination: OffsetPaginationInput
+  $order: ImplementationOrder
+) {
+  implementations(filters: $filters, pagination: $pagination, order: $order) {
+    ...ListImplementation
   }
 }
 
 query ImplementationOptions($search: String, $values: [ID!], $dependency: ID) {
-  options: implementations(filters: { resolvableFor: $dependency , search: $search, ids: $values}, pagination: { limit: 50 }) {
-    value: id,
+  options: implementations(
+    filters: { resolvableFor: $dependency, search: $search, ids: $values }
+    pagination: { limit: 50 }
+  ) {
+    value: id
     label: name
   }
 }
 
-query ImplementationAt($agent: ID!, $extension: String, $interface: String, $demand: ActionDemandInput) {
-  implementationAt(agent: $agent, extension: $extension, interface: $interface, demand: $demand) {
+query ImplementationAt(
+  $agent: ID!
+  $extension: String
+  $interface: String
+  $demand: ActionDemandInput
+) {
+  implementationAt(
+    agent: $agent
+    extension: $extension
+    interface: $interface
+    demand: $demand
+  ) {
     ...DetailImplementation
   }
 }
 
-query MyImplementationAt($instanceId: String!, $interface: String, $actionId: ID) {
+query MyImplementationAt(
+  $instanceId: String!
+  $interface: String
+  $actionId: ID
+) {
   myImplementationAt(
     instanceId: $instanceId
     interface: $interface

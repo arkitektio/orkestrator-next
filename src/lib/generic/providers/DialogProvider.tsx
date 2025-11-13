@@ -81,9 +81,9 @@ export function createDialogProvider<
     ) => void;
     closeDialog: () => void;
   }>({
-    openDialog: () => {},
-    openSheet: () => {},
-    closeDialog: () => {},
+    openDialog: () => { },
+    openSheet: () => { },
+    closeDialog: () => { },
   });
 
   const useDialog = () => useContext(DialogContext);
@@ -145,7 +145,11 @@ export function createDialogProvider<
           modal={true}
         >
           {Component && (
-            <DialogContent className={modalState.className}>
+            <DialogContent className={cn(
+              "text-foreground",
+              "w-full max-w-5xl max-h-[90vh]", // Default sizes
+              modalState.className,
+            )}>
               <Guard.Rekuest>
                 <Component {...modalState.props} />
               </Guard.Rekuest>
@@ -164,15 +168,15 @@ export function createDialogProvider<
                 "text-foreground",
                 // Reset default width/height classes when custom dimensions are provided
                 modalState.className &&
-                  (modalState.className.includes("w-") ||
-                    modalState.className.includes("!w-") ||
-                    modalState.className.includes("max-w-")) &&
-                  "!w-auto !max-w-none",
+                (modalState.className.includes("w-") ||
+                  modalState.className.includes("!w-") ||
+                  modalState.className.includes("max-w-")) &&
+                "!w-auto !max-w-none",
                 modalState.className &&
-                  (modalState.className.includes("h-") ||
-                    modalState.className.includes("!h-") ||
-                    modalState.className.includes("max-h-")) &&
-                  "!h-auto !max-h-none",
+                (modalState.className.includes("h-") ||
+                  modalState.className.includes("!h-") ||
+                  modalState.className.includes("max-h-")) &&
+                "!h-auto !max-h-[90vh]",
                 modalState.className,
               )}
             >
@@ -183,7 +187,7 @@ export function createDialogProvider<
           )}
         </Sheet>
 
-        {!Component && children}
+        {children}
       </DialogContext.Provider>
     );
   };

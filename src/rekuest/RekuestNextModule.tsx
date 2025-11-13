@@ -11,6 +11,7 @@ import Bloks from "./pages/Bloks";
 import Dashboard from "./pages/Dashboard";
 import Dashboards from "./pages/Dashboards";
 import Dependency from "./pages/Dependency";
+import AgentsPage from "./pages/AgentsPage";
 import Home from "./pages/Home";
 import Implementation from "./pages/Implementation";
 import MemoryShelve from "./pages/MemoryShelve";
@@ -31,19 +32,19 @@ import AssignationLogPage from "./pages/assignation/AssignationLogPage";
 import AssignationsPage from "./pages/AssignationsPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
 
-interface Props { }
 /**
  *
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
  * It provides the routes for the rekuest module.
  */
-const Module: React.FC<Props> = () => {
+const Module: React.FC = () => {
   return (
     <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
       <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="actions/:id" element={<Action />} />
+          <Route path="agents" element={<AgentsPage />} />
           <Route path="reservations/:id" element={<Reservation />} />
           <Route path="shortcuts/:id" element={<Shortcut />} />
           <Route path="shortcuts" element={<Shortcuts />} />

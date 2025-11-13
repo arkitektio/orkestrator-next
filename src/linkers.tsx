@@ -446,6 +446,7 @@ export const LokRedeemToken = buildSmart(
 );
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
+export const LokComputeNode = buildSmart("@lok/computenode", "lok/computenodes");
 export const LokApp = buildSmart("@lok/app", "lok/apps");
 export const LokRelease = buildSmart("@lok/release", "lok/releases");
 export const LokService = buildSmart("@lok/service", "lok/services");

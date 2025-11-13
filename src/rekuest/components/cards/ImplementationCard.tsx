@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
@@ -63,11 +64,7 @@ const TheCard = ({ item, mates }: Props) => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row gap-2">
-            <ImplementationActionButton id={item.id}>
-              <Button variant="outline" size="sm">
-                Assign
-              </Button>
-            </ImplementationActionButton>
+            <DialogButton name={"implementationassign"} size="sm" dialogProps={{ id: item.id }} variant={"outline"}>Assign </DialogButton>
           </div>
         </CardContent>
       </Card>

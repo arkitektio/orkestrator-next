@@ -1,0 +1,14 @@
+fragment DetailComputeNode on ComputeNode {
+  id
+  name
+  nodeId
+  clients {
+    ...ListClient
+  }
+}
+
+fragment ListComputeNode on ComputeNode {
+  id
+  name
+  nodeId
+}

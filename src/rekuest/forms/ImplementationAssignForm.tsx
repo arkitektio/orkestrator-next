@@ -34,7 +34,7 @@ export const DependencyWidget = ({
   });
 
   return (
-    <div className="p-2 border border-1 border-gray-200 rounded-md bg-muted">
+    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md">
       <GraphQLSearchField
         name={`dependencies.${dependency.key}`}
         searchQuery={search}
@@ -60,6 +60,7 @@ export const ImplementationAssignForm = (
   const form = useImplementationForm({
     implementation: implementation,
     overwrites: { ...latestAssignation?.args, ...props.args },
+    presetDependencies: latestAssignation?.dependencies,
     reValidateMode: "onChange",
   });
 
@@ -92,6 +93,8 @@ export const ImplementationAssignForm = (
     }
   };
 
+  const dependencies = form.watch("dependencies");
+
   const { registry } = useWidgetRegistry();
 
   if (error) {
@@ -99,17 +102,17 @@ export const ImplementationAssignForm = (
   }
 
   return (
-    <>
-      <h1 className="text-lg font-semibold mb-1">
+    <div className="flex flex-col w-full h-full mx-auto p-6">
+      <h1 className="text-lg font-semibold mb-1 flex-initial ">
         {implementation?.action.name}
         <p className="text-muted-foreground text-xs">
           @ {implementation?.interface}
         </p>
       </h1>
 
-      <p className="text-mutated">{description}</p>
+      <p className="text-muted-foreground flex-initial my-2">{description}</p>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow my-4 ">
           <ArgsContainer
             registry={registry}
             ports={implementation?.action.args || []}
@@ -127,7 +130,7 @@ export const ImplementationAssignForm = (
           <DialogFooter>
             <Button
               type="submit"
-              className={cn(form.formState.isSubmitting && "bg-red-200")}
+              className={cn("flex-initial", form.formState.isSubmitting && "bg-red-200")}
             >
               {" "}
               Submit{" "}
@@ -135,6 +138,6 @@ export const ImplementationAssignForm = (
           </DialogFooter>
         </form>
       </Form>
-    </>
+    </div>
   );
 };

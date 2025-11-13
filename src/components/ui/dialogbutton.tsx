@@ -12,16 +12,18 @@ export const DialogButton = <T extends keyof DialogType>({
   className,
   children,
   dialogProps,
+  options,
   ...props
 }: {
   name: T;
   className?: string;
   dialogProps: ExtractProps<DialogType[T]>;
+  options?: { className?: string };
 } & ButtonProps) => {
   const { openDialog } = useDialog();
 
   const onClick = useCallback(async () => {
-    openDialog(name, dialogProps);
+    openDialog(name, dialogProps, options || {});
   }, []);
 
   return (

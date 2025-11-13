@@ -1,3 +1,38 @@
+## [1.19.1](https://github.com/arkitektio/orkestrator-next/compare/v1.19.0...v1.19.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* really fix it ([369804f](https://github.com/arkitektio/orkestrator-next/commit/369804f205b27161257a9ee880923c23088d1f5c))
+
+# [1.19.0](https://github.com/arkitektio/orkestrator-next/compare/v1.18.1...v1.19.0) (2025-11-13)
+
+
+### Features
+
+* fix the dialog is outise of toeaster error ([948932a](https://github.com/arkitektio/orkestrator-next/commit/948932a667e1ad11474ff73a684ba2c47d1a1501))
+
+## [1.18.1](https://github.com/arkitektio/orkestrator-next/compare/v1.18.0...v1.18.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* cache ([bab754f](https://github.com/arkitektio/orkestrator-next/commit/bab754f8a901011e155124160da6eb922ae9a20a))
+
+# [1.18.0](https://github.com/arkitektio/orkestrator-next/compare/v1.17.1...v1.18.0) (2025-11-13)
+
+
+### Features
+
+* add compute nude display + better implementation assign form ([99f3921](https://github.com/arkitektio/orkestrator-next/commit/99f3921c0feea4ce79111453c92fdcb896a7a05b))
+
+## [1.17.1](https://github.com/arkitektio/orkestrator-next/compare/v1.17.0...v1.17.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* artemiys whatsapp bugs + reload button ([ccc07e2](https://github.com/arkitektio/orkestrator-next/commit/ccc07e25aa095f1893b1ca5f17515e18ab429206))
+
 # [1.17.0](https://github.com/arkitektio/orkestrator-next/compare/v1.16.1...v1.17.0) (2025-11-12)
 
 

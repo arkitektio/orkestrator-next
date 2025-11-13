@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/arkitektio/orkestrator-next/compare/v1.17.0...v1.17.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* artemiys whatsapp bugs + reload button ([ccc07e2](https://github.com/arkitektio/orkestrator-next/commit/ccc07e25aa095f1893b1ca5f17515e18ab429206))
+
 # [1.17.0](https://github.com/arkitektio/orkestrator-next/compare/v1.16.1...v1.17.0) (2025-11-12)
 
 

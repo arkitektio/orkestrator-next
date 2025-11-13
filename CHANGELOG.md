@@ -1,3 +1,15 @@
+# [1.20.0](https://github.com/arkitektio/orkestrator-next/compare/v1.19.1...v1.20.0) (2025-11-13)
+
+
+### Bug Fixes
+
+* fix weird schema ([f46758d](https://github.com/arkitektio/orkestrator-next/commit/f46758d307e59a370f170af703453998a9d444aa))
+
+
+### Features
+
+* tasks list and implementation list as well as logs ([94f707b](https://github.com/arkitektio/orkestrator-next/commit/94f707ba81cae42d070cf0877f1063a5fa2dd6a6))
+
 ## [1.19.1](https://github.com/arkitektio/orkestrator-next/compare/v1.19.0...v1.19.1) (2025-11-13)
 
 

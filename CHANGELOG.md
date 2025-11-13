@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/arkitektio/orkestrator-next/compare/v1.19.0...v1.19.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* really fix it ([369804f](https://github.com/arkitektio/orkestrator-next/commit/369804f205b27161257a9ee880923c23088d1f5c))
+
 # [1.19.0](https://github.com/arkitektio/orkestrator-next/compare/v1.18.1...v1.19.0) (2025-11-13)
 
 

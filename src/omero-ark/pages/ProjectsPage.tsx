@@ -3,13 +3,14 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import ProjectList from "../components/lists/ProjectList";
+import { OmeroArkProject } from "@/linkers";
 
 
 
 const Page = () => {
 
   return (
-    <PageLayout
+    <OmeroArkProject.ListPage
       title="Projects"
       pageActions={
         <>
@@ -27,7 +28,7 @@ const Page = () => {
         />
         <ProjectList pagination={{ limit: 30 }} filters={{ parentless: true }} />
       </div>
-    </PageLayout>
+    </OmeroArkProject.ListPage>
   );
 };
 

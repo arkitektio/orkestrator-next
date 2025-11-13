@@ -3,13 +3,14 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import DatasetList from "../components/lists/DatasetList";
+import { OmeroArkDataset } from "@/linkers";
 
 
 
 const Page = () => {
 
   return (
-    <PageLayout
+    <OmeroArkDataset.ListPage
       title="Datasets"
       pageActions={
         <>
@@ -27,7 +28,7 @@ const Page = () => {
         />
         <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
       </div>
-    </PageLayout>
+    </OmeroArkDataset.ListPage>
   );
 };
 

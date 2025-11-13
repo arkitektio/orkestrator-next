@@ -13,7 +13,6 @@ export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
       object={data.computeNode.id}
       actions={<LokComputeNode.Actions object={data?.computeNode?.id} />}
       title={data?.computeNode?.name || "Untitled Compute Node"}
-      sidebars={<LokComputeNode.Komments object={data?.computeNode?.id} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

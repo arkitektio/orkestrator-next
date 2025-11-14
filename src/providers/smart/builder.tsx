@@ -226,6 +226,7 @@ export const buildSmart = (
   to: string,
   options?: {
     searchFunction?: SearchFunction;
+    describeQuery?: string;
   },
 ) => {
   smartRegistry.register({

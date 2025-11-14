@@ -3,6 +3,7 @@ import ShadowRealm from "shadowrealm-api";
 import { z } from "zod"; // Add new import
 import { PortKind } from "../api/graphql";
 import { LabellablePort, PortablePort } from "./types";
+import { ApolloClient, gql, NormalizedCache } from "@apollo/client";
 
 export const pathToName = (path: string[]): string => {
   return path.join(".");
@@ -149,6 +150,34 @@ export const portToZod = (port: LabellablePort): any => {
 
   return baseType;
 };
+
+
+export const buildDescribeFunction = (client: ApolloClient<NormalizedCache>) => {
+  const document = gql(`
+      query Describe($identifier: String!, $id: ID!) {
+        describe(identifier: $identifier, id: $id) {
+          key
+          value
+        }
+      }
+  `);
+
+  return async (options: { identifier: string; id: string }) => {
+
+
+    const result = await client.query({
+      query: document,
+      variables: {
+        identifier: options.identifier,
+        id: options.id,
+      },
+    });
+
+    return result.data.describe as { key: string; value: string }[];
+  }
+}
+
+
 
 export type ValidatorFunction = (
   v: any,

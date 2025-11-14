@@ -19,3 +19,13 @@ query ListAssignations(
     ...ListAsssignation
   }
 }
+
+query ListAssignationsDetails(
+  $filter: AssignationFilter
+  $order: AssignationOrder
+  $pagination: OffsetPaginationInput
+) {
+  tasks(filters: $filter, pagination: $pagination, order: $order) {
+    ...PostmanAssignation
+  }
+}

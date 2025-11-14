@@ -81,6 +81,10 @@ export interface Ward {
     query: string;
     variables: any;
   }) => Promise<({ label: string; value: any } | null | undefined)[]>;
+  describe?: (options: {
+    identifier: string;
+    id: string;
+  }) => Promise<{ key: string, value: string }[]>;
 }
 
 export type LabellablePort = {
@@ -97,6 +101,15 @@ export type PortablePort = LabellablePort & {
   default?: any | null | undefined;
   validators?: PortFragment["validators"];
 };
+
+
+
+
+
+
+
+
+
 
 export interface WidgetRegistryType {
   registerWard: (ward_key: string, ward: Ward) => () => void;

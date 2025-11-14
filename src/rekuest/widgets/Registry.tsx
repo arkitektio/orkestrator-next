@@ -15,6 +15,9 @@ export const fakeWard = (key: string): Ward => ({
   search: async () => {
     throw new Error("No ward set for " + key);
   },
+  describe: async () => {
+    return {};
+  }
 });
 
 export class WardRegistry {

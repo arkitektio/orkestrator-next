@@ -2944,7 +2944,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"1470ef31-eed2-4872-9d76-f79a17cb059d\"",
+            "defaultValue": "\"30b747e9-2e66-467b-bda3-e7a76bb9f871\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3310,6 +3310,18 @@
                 "name": "Action",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "agent",
+            "description": "Agent responsible for this assignation.",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Agent",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4078,6 +4090,18 @@
             "deprecationReason": null
           },
           {
+            "name": "clientId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -4116,6 +4140,26 @@
               "kind": "INPUT_OBJECT",
               "name": "ReservationFilter",
               "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "state",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "ENUM",
+                  "name": "AssignationEventKind",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -17007,7 +17051,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"4395a773-f46b-4195-a2fc-1ddc17373630\"",
+            "defaultValue": "\"d8b6e053-a0d6-4538-9324-7ccdc3677528\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -19249,8 +19293,32 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "describeQuery",
+            "description": "Get the query to describe the schema of this structure.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "description",
             "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "getQuery",
+            "description": "Get the query to retrieve data for this structure.",
             "args": [],
             "type": {
               "kind": "SCALAR",

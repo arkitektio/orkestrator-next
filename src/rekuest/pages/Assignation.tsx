@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { DialogButton } from "@/components/ui/dialogbutton";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -272,6 +273,12 @@ export default asDetailQueryRoute(
                 Interrupt
               </Button>
             )}
+
+            <DialogButton name="reportbug" variant="outline" size="sm"
+              dialogProps={{ assignationId: data?.assignation.id }}
+            >
+              Report Bug
+            </DialogButton>
           </div>
         }
         sidebars={

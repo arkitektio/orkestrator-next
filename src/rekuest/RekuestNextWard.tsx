@@ -2,6 +2,7 @@ import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";
+import { buildDescribeFunction } from "./widgets/utils";
 
 export const RekuestNextWard: React.FC<{
   fallback?: React.ReactNode;
@@ -26,6 +27,7 @@ export const RekuestNextWard: React.FC<{
 
       registry?.registerWard("rekuest", {
         search: runFunc,
+        describe: buildDescribeFunction(client),
       });
 
       console.log("regivstered", {

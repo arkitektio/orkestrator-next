@@ -75,6 +75,8 @@ export type AppFilter = {
 export type Client = {
   __typename?: 'Client';
   id: Scalars['ID']['output'];
+  /** The issue url of the client. This is the url where users can report issues and get more information about the client. */
+  issueUrl?: Maybe<Scalars['String']['output']>;
   /** The configuration of the client. This is the configuration that will be sent to the client. It should never contain sensitive information. */
   kind: ClientKind;
   /** The logo of the release. This should be a url to a logo that can be used to represent the release. */
@@ -99,7 +101,7 @@ export type Client = {
   user?: Maybe<User>;
 };
 
-/** Client(id, name, release, oauth2_client, kind, user, organization, redirect_uris, public, token, node, tenant, created_at, requirements_hash, logo) */
+/** Client(id, name, release, oauth2_client, kind, user, organization, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, logo) */
 export type ClientFilter = {
   AND?: InputMaybe<ClientFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -298,7 +300,6 @@ export type DevelopmentClientInput = {
   composition?: InputMaybe<Scalars['ID']['input']>;
   layers?: InputMaybe<Array<Scalars['String']['input']>>;
   manifest: ManifestInput;
-  requirements?: Array<Requirement>;
 };
 
 export type DjangoModelType = {
@@ -439,6 +440,9 @@ export type LinkingRequestInput = {
 export type ManifestInput = {
   identifier: Scalars['String']['input'];
   logo?: InputMaybe<Scalars['String']['input']>;
+  nodeId?: InputMaybe<Scalars['String']['input']>;
+  publicSources?: InputMaybe<Array<PublicSourceInput>>;
+  requirements?: Array<Requirement>;
   scopes?: Array<Scalars['String']['input']>;
   version: Scalars['String']['input'];
 };
@@ -784,6 +788,16 @@ export type Profile = {
   /** The name of the user */
   name?: Maybe<Scalars['String']['output']>;
 };
+
+export type PublicSourceInput = {
+  kind: PublicSourceKind;
+  url: Scalars['String']['input'];
+};
+
+export enum PublicSourceKind {
+  Github = 'GITHUB',
+  Website = 'WEBSITE'
+}
 
 export type Query = {
   __typename?: 'Query';
@@ -1597,7 +1611,7 @@ export type DetailAppFragment = { __typename?: 'App', id: string, identifier: an
 
 export type ListAppFragment = { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type DetailClientFragment = { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null };
+export type DetailClientFragment = { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, issueUrl?: string | null, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null };
 
 export type ListClientFragment = { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } };
 
@@ -1865,7 +1879,7 @@ export type DetailClientQueryVariables = Exact<{
 }>;
 
 
-export type DetailClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null } };
+export type DetailClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, issueUrl?: string | null, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null } };
 
 export type MyManagedClientsQueryVariables = Exact<{
   kind: ClientKind;
@@ -1879,7 +1893,7 @@ export type ClientQueryVariables = Exact<{
 }>;
 
 
-export type ClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null } };
+export type ClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, issueUrl?: string | null, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null } };
 
 export type CommentsForQueryVariables = Exact<{
   object: Scalars['ID']['input'];
@@ -2298,6 +2312,7 @@ export const DetailClientFragmentDoc = gql`
     id
     name
   }
+  issueUrl
 }
     ${ListReleaseFragmentDoc}
 ${ListServiceInstanceMappingFragmentDoc}`;

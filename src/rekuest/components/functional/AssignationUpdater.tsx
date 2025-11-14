@@ -20,6 +20,7 @@ import {
   WatchAssignationsSubscription,
 } from "../../api/graphql";
 import { RekuestAssignation } from "@/linkers";
+import { DialogButton } from "@/components/ui/dialogbutton";
 
 export const registeredCallbacks = new Map<
   string,
@@ -79,6 +80,11 @@ export const AssignationToaster = (props: { id: string }) => {
       onMouseLeave={() => setHovered(false)}
     >
       {ass.error && <Alert className="bg-red-800">{ass.error}</Alert>}
+      {ass.error && ass.assignationId && <DialogButton name="reportbug" variant="outline" size="sm"
+        dialogProps={{ assignationId: ass.assignationId }}
+      >
+        Report Bug
+      </DialogButton>}
       {ass.yield && ass.actionId && (
         <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
       )}

@@ -35,6 +35,15 @@ fragment DetailAssignation on Assignation {
   children {
     ...PostmanAssignation
   }
+  implementation {
+    agent {
+      registry {
+        client {
+          clientId
+        }
+      }
+    }
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {

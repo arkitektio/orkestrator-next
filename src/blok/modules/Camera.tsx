@@ -13,6 +13,7 @@ export const CameraModule = module({
         broadcast: structure("@lovekit/solo_broadcast"),
       },
     }),
+
   },
   actions: {},
 });

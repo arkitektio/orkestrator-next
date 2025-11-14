@@ -23,6 +23,7 @@ fragment DetailClient on Client {
     id
     name
   }
+  issueUrl
 }
 
 fragment ListClient on Client {

@@ -1,4 +1,6 @@
+import { build } from "@/hooks/use-metaapp";
 import { useMikro } from "@/lib/arkitekt/Arkitekt";
+import { buildDescribeFunction } from "@/rekuest/widgets/utils";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";
@@ -26,6 +28,7 @@ export const MikroNextWard: React.FC<{
 
       registry?.registerWard("mikro", {
         search: runFunc,
+        describe: buildDescribeFunction(client),
       });
     }
   }, [client, registry]);

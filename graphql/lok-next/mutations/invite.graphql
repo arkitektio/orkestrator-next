@@ -1,0 +1,5 @@
+mutation CreateInvite($input: CreateInviteInput!) {
+  createInvite(input: $input) {
+    ...Invite
+  }
+}

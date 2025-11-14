@@ -440,6 +440,7 @@ export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@lok/user", "lok/users");
+export const LokOrganization = buildSmart("@lok/organization", "lok/organizations");
 export const LokRedeemToken = buildSmart(
   "@lok/redeemtoken",
   "lok/redeemtokens",

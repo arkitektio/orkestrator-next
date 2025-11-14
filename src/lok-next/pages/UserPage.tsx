@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { DragZone } from "@/components/upload/drag";
 import { useLokUpload } from "@/datalayer/hooks/useLokUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokUser } from "@/linkers";
+import { LokOrganization, LokUser } from "@/linkers";
 import { useRef } from "react";
 import { useUpdateUserProfileMutation, useUserQuery } from "../api/graphql";
 
@@ -48,14 +48,8 @@ const Page = asDetailQueryRoute(useUserQuery, ({ data }) => {
   return (
     <LokUser.ModelPage
       object={data.user.id}
-      actions={<LokUser.Actions object={data.user.id} />}
       pageActions={<LokUser.ObjectButton object={data.user.id} />}
       title={data?.user?.username}
-      sidebars={
-        <MultiSidebar map={{
-          "Komments": <LokUser.Komments object={data.user.id} />,
-        }} />
-      }
     >
       {/* Profile Hero Section */}
       <div className="relative mb-10">
@@ -156,19 +150,6 @@ const Page = asDetailQueryRoute(useUserQuery, ({ data }) => {
           </CardContent>
         </Card>
 
-        {(data.user.groups?.length || 0) > 0 && (
-          <Card>
-            <CardHeader className="pb-1">
-              <CardTitle>Groups</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm leading-relaxed">
-              <p className="text-muted-foreground">
-                This user belongs to {data.user.groups.length} group{data.user.groups.length > 1 ? 's' : ''}.
-              </p>
-              <p>{data.user.groups.map(g => g.name).join(', ')}</p>
-            </CardContent>
-          </Card>
-        )}
 
         {(data.user.memberships?.length || 0) > 0 && (
           <Card>
@@ -178,7 +159,9 @@ const Page = asDetailQueryRoute(useUserQuery, ({ data }) => {
             <CardContent className="space-y-4 text-sm">
               {data.user.memberships?.map(m => (
                 <div key={m.id} className="space-y-1">
-                  <p className="font-medium">{m.organization.name} <span className="text-muted-foreground font-normal">({m.organization.slug})</span></p>
+                  <LokOrganization.DetailLink object={m.organization.id}>
+                    <p className="font-medium">{m.organization.name} <span className="text-muted-foreground font-normal">({m.organization.slug})</span></p>
+                  </LokOrganization.DetailLink>
                   {m.roles?.length ? (
                     <p className="text-muted-foreground">Roles: {m.roles.map(r => r.identifier).join(', ')}</p>
                   ) : (

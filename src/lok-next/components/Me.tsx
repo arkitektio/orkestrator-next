@@ -25,7 +25,7 @@ export const Username = () => {
 
   return (
     <>
-      {data?.mycontext.user?.username} @ {data?.mycontext.organization.slug}
+      {data?.mycontext.user?.username}
     </>
   );
 };

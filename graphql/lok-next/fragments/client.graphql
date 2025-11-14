@@ -24,6 +24,10 @@ fragment DetailClient on Client {
     name
   }
   issueUrl
+  publicSources {
+    kind
+    url
+  }
 }
 
 fragment ListClient on Client {
@@ -31,6 +35,13 @@ fragment ListClient on Client {
   user {
     id
     username
+  }
+  logo {
+    presignedUrl
+  }
+  node {
+    id
+    name
   }
   name
   kind

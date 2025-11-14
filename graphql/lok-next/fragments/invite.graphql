@@ -1,0 +1,45 @@
+fragment ListInvite on Invite {
+  id
+  token
+  createdBy {
+    id
+    username
+  }
+  createdFor {
+    ...ListOrganization
+  }
+  status
+  createdAt
+  expiresAt
+}
+
+fragment Invite on Invite {
+  id
+  token
+  createdBy {
+    id
+    username
+    profile {
+      id
+      avatar {
+        presignedUrl
+      }
+    }
+  }
+  createdFor {
+    ...Organization
+  }
+  acceptedBy {
+    id
+    username
+    profile {
+      id
+      avatar {
+        presignedUrl
+      }
+    }
+  }
+  status
+  createdAt
+  expiresAt
+}

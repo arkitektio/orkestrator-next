@@ -13,9 +13,8 @@ export default asDetailQueryRoute(useDetailAppQuery, ({ data }) => {
   return (
     <LokApp.ModelPage
       object={data.app.id}
-      actions={<LokApp.Actions object={data?.app?.id} />}
+      pageActions={<LokApp.Actions object={data?.app?.id} />}
       title={data?.app?.identifier}
-      sidebars={<LokApp.Komments object={data?.app?.id} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

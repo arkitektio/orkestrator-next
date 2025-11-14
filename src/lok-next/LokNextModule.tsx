@@ -5,7 +5,6 @@ import { Route, Routes } from "react-router";
 import AppPage from "./pages/AppPage";
 import AppsPage from "./pages/AppsPage";
 import ClientPage from "./pages/ClientPage";
-import GroupPage from "./pages/GroupPage";
 import GroupsPage from "./pages/GroupsPage";
 import HomePage from "./pages/HomePage";
 import InstancesPage from "./pages/InstancesPage";
@@ -24,6 +23,8 @@ import StandardPane from "./panes/StandardPane";
 import RedeemTokensPage from "./pages/RedeemTokensPage";
 import RedeemTokenPage from "./pages/RedeemTokenPage";
 import RecordPage from "./pages/RecordPage";
+import OrganizationPage from "./pages/OrganizationPage";
+import OrganizationsPage from "./pages/OrganizationsPage";
 interface Props { }
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -46,7 +47,9 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="organizations" element={<GroupsPage />} />
           <Route path="layers" element={<LayersPage />} />
           <Route path="layers/:id" element={<LayerPage />} />
-          <Route path="groups/:id" element={<GroupPage />} />
+          <Route path="organizations/:id" element={<OrganizationPage />} />
+          <Route path="organizations" element={<OrganizationsPage />} />
+
           <Route path="services/:id" element={<ServicePage />} />
           <Route path="redeemtokens" element={<RedeemTokensPage />} />
           <Route path="redeemtokens/:id" element={<RedeemTokenPage />} />

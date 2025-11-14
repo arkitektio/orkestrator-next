@@ -13,22 +13,14 @@ export const DashboardLayout = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <Card className="bg-gradient-to-r from-primary/10 to-secondary/10">
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            Welcome back{userData?.me?.firstName ? `, ${userData.me.firstName}` : ''}!
-          </CardTitle>
-          <CardDescription className="text-base">
-            Here&apos;s what&apos;s been happening in your Lok workspace
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground">Logged in as:</span>
-            <Username />
-          </div>
-        </CardContent>
-      </Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">
+          Welcome back, <Username />!
+        </CardTitle>
+        <CardDescription className="text-base">
+          Here&apos;s what&apos;s been happening in your Lok workspace
+        </CardDescription>
+      </CardHeader>
 
       {/* Latest Mentions - Top Priority */}
       <LatestMentionsSection />

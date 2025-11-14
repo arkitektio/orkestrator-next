@@ -15,7 +15,7 @@ const TheCard = ({ item, mates }: Props) => {
 
   return (
     <LokApp.Smart object={item?.id} mates={mates}>
-      <Card className="p-3">
+      <Card className="p-3 truncate">
         <LokApp.DetailLink object={item.id} className="">
           {item.identifier}
           <br />

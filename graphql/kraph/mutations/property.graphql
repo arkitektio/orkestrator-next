@@ -1,0 +1,11 @@
+mutation SetNodeProperty($input: SetNodePropertyInput!) {
+  setNodeProperty(input: $input) {
+    ... on Entity {
+      id
+      __typename
+      label
+      id
+      properties
+    }
+  }
+}

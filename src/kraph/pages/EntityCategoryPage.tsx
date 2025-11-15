@@ -14,7 +14,6 @@ import {
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
 import GraphQueryList from "../components/lists/GraphQueryList";

@@ -137,6 +137,8 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         </>
       )}
 
+      {JSON.stringify(data.entity.properties)}
+
       {data.entity.subjectableTo.length > 0 && (
         <>
           <div className="p-2">Subjectable to</div>

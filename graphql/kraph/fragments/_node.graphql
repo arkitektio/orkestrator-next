@@ -37,4 +37,5 @@ fragment PathNode on Node {
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
+  ...PathEditEvent
 }

@@ -1,5 +1,7 @@
 import {
   PathDescriptionFragment,
+  PathEditedFragment,
+  PathEditEventFragment,
   PathEntityFragment,
   PathMeasurementFragment,
   PathMetricFragment,
@@ -19,6 +21,7 @@ export type ReagentNode = Node<PathReagentFragment, "Reagent">;
 export type StructureNode = Node<PathStructureFragment, "Structure">;
 export type MetricNode = Node<PathMetricFragment, "Metric">;
 export type NaturalEventNode = Node<PathNaturalEventFragment, "NaturalEvent">;
+export type EditEventNode = Node<PathEditEventFragment, "EditEvent">;
 export type ProtocolEventNode = Node<
   PathProtocolEventFragment,
   "ProtocolEvent"
@@ -27,6 +30,7 @@ export type ProtocolEventNode = Node<
 export type MeasurementEdge = Edge<PathMeasurementFragment, "Measurement">;
 export type RelationEdge = Edge<PathRelationFragment, "Relation">;
 export type DescribeEdge = Edge<PathDescriptionFragment, "Description">;
+export type EditedEdge = Edge<PathEditedFragment, "Edited">;
 export type ParticipantEdge = Edge<PathParticipantFragment, "Participant">;
 export type StructureRelationEdge = Edge<StructureRelationFragment, "StructureRelation">;
 
@@ -36,7 +40,8 @@ export type PathNode =
   | StructureNode
   | NaturalEventNode
   | MetricNode
-  | ProtocolEventNode;
+  | ProtocolEventNode
+  | EditEventNode
 
 export type PathEdgeData = PathEdge["data"];
 export type PathNodeData = PathNode["data"];
@@ -46,4 +51,5 @@ export type PathEdge =
   | RelationEdge
   | ParticipantEdge
   | DescribeEdge
+  | EditedEdge
   | StructureRelationEdge

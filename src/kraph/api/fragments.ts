@@ -24,6 +24,7 @@
     ],
     "Edge": [
       "Description",
+      "Edited",
       "Measurement",
       "Participant",
       "Relation",
@@ -35,6 +36,7 @@
       "StructureRelationCategory"
     ],
     "Node": [
+      "EditEvent",
       "Entity",
       "Metric",
       "NaturalEvent",

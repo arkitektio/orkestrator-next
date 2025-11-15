@@ -1,0 +1,18 @@
+fragment EditEvent on EditEvent {
+  ...BaseNode
+  id
+  label
+}
+
+fragment ListEditEvent on EditEvent {
+  id
+}
+
+fragment PathEditEvent on EditEvent {
+  ...ListEditEvent
+}
+
+fragment PathEdited on Edited {
+  leftId
+  rightId
+}

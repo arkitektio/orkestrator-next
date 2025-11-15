@@ -37,6 +37,7 @@ RETURN n`,
       name: "Default View for " + props.category.label,
       kind: ViewKind.NodeList,
       graph: props.category.graph.id,
+      nodeCategory: props.category.id,
       columns: [
         {
           name: "id",

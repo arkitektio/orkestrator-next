@@ -1,7 +1,7 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { AlpakaRoom } from "@/linkers";
+import { AlpakaRoom, LokOrganization } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import RoomList from "../components/lists/RoomList";
@@ -10,7 +10,7 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <AlpakaRoom.ListPage
       title="Rooms"
       pageActions={
         <>
@@ -30,7 +30,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <RoomList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </AlpakaRoom.ListPage>
   );
 };
 

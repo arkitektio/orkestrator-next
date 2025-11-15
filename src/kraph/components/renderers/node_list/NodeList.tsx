@@ -22,6 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -37,15 +40,233 @@ import {
   GraphQueryFilters,
   GraphQueryPagination,
   GraphQueryOrder,
+  useSetNodePropertyMutation,
+  MetricKind,
+  VariableDefinitionFragment,
+  PropertyDefinitionFragment,
 } from "@/kraph/api/graphql";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
 import { KraphNode } from "@/linkers";
+import Timestamp from "react-timestamp";
 
 export type FormValues = {
   metrics?: string[];
   kinds?: string[];
   search?: string | null;
 };
+
+
+const EditableCell = ({
+  value,
+  nodeId,
+  propertyDefinition,
+}: {
+  value: any;
+  nodeId: string;
+  propertyDefinition: PropertyDefinitionFragment;
+}) => {
+
+  const [setNodeProperty] = useSetNodePropertyMutation();
+
+  const [editingValue, setEditingValue] = React.useState(value);
+  const [isEditing, setIsEditing] = React.useState(false);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (editingValue !== value) {
+      setNodeProperty({
+        variables: {
+          input: {
+            entity: nodeId,
+            variable: propertyDefinition.key,
+            value: String(editingValue),
+          },
+        },
+      });
+    }
+  }
+
+  const handleBooleanChange = (checked: boolean) => {
+    setEditingValue(checked);
+    setNodeProperty({
+      variables: {
+        input: {
+          entity: nodeId,
+          variable: propertyDefinition.key,
+          value: String(checked),
+        },
+      },
+    });
+  }
+
+  const renderEditWidget = () => {
+    const kind = propertyDefinition.valueKind;
+    const options = propertyDefinition.options;
+
+    if (options && options.length > 0) {
+      return (
+        <select
+          value={editingValue || ""}
+          onChange={(e) => {
+            const selectedValue = e.target.value;
+            setEditingValue(selectedValue);
+            setIsEditing(false);
+            setNodeProperty({
+              variables: {
+                input: {
+                  entity: nodeId,
+                  variable: propertyDefinition.key,
+                  value: String(selectedValue),
+                },
+              },
+            });
+          }}
+          onBlur={handleBlur}
+          autoFocus
+          className="h-8 bg-background border border-input rounded-md px-2"
+        >
+          <option value="" disabled>
+            Select an option
+          </option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    switch (kind) {
+      case MetricKind.Boolean:
+        return (
+          <div className="flex items-center justify-center p-2">
+            <Switch
+              checked={editingValue}
+              onCheckedChange={handleBooleanChange}
+            />
+          </div>
+        );
+
+      case MetricKind.Int:
+        return (
+          <Input
+            type="number"
+            step="1"
+            value={editingValue || ""}
+            onChange={(e) => setEditingValue(parseInt(e.target.value) || 0)}
+            onBlur={handleBlur}
+            autoFocus
+            className="h-8"
+          />
+        );
+
+      case MetricKind.Float:
+        return (
+          <Input
+            type="number"
+            step="any"
+            value={editingValue || ""}
+            onChange={(e) => setEditingValue(parseFloat(e.target.value) || 0)}
+            onBlur={handleBlur}
+            autoFocus
+            className="h-8"
+          />
+        );
+
+      case MetricKind.Datetime:
+        return (
+          <Input
+            type="datetime-local"
+            value={editingValue || ""}
+            onChange={(e) => setEditingValue(e.target.value)}
+            onBlur={handleBlur}
+            autoFocus
+            className="h-8"
+          />
+        );
+
+      case MetricKind.String:
+      case MetricKind.Category:
+      default:
+        return (
+          <Input
+            value={editingValue || ""}
+            onChange={(e) => setEditingValue(e.target.value)}
+            onBlur={handleBlur}
+            autoFocus
+            className="h-8"
+          />
+        );
+    }
+  };
+
+  const formatDisplayValue = (val: any, kind: MetricKind) => {
+    if (val === null || val === undefined) {
+      return <span className="text-muted-foreground italic">None</span>;
+    }
+
+    switch (kind) {
+      case MetricKind.Boolean:
+        return (
+          <Badge variant={val ? "default" : "secondary"}>
+            {val ? "True" : "False"}
+          </Badge>
+        );
+
+      case MetricKind.Int:
+      case MetricKind.Float:
+        return (
+          <span className="font-mono text-sm">
+            {typeof val === "number" ? val.toLocaleString() : val}
+          </span>
+        );
+
+      case MetricKind.Datetime:
+        return (
+          <Timestamp date={date} autoUpdate relative />
+        );
+
+      case MetricKind.Category:
+        return (
+          <Badge variant="outline">
+            {String(val)}
+          </Badge>
+        );
+
+      case MetricKind.String:
+      default:
+        return <span className="text-sm">{String(val)}</span>;
+    }
+  };
+
+  const renderDisplayValue = () => {
+    const kind = propertyDefinition.valueKind;
+
+    if (kind === MetricKind.Boolean) {
+      return (
+        <div className="flex items-center justify-center">
+          <Switch
+            checked={value}
+            onCheckedChange={handleBooleanChange}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded min-h-[32px] flex items-center"
+        onClick={() => setIsEditing(true)}
+      >
+        {formatDisplayValue(value, kind)}
+      </div>
+    );
+  };
+
+  return isEditing ? renderEditWidget() : renderDisplayValue();
+};
+
 
 const calculateColumns = (
   list: NodeListFragment | undefined,
@@ -54,7 +275,8 @@ const calculateColumns = (
     return [];
   }
 
-  return [
+
+  const defaults = [
     {
       id: "id",
       accessorKey: "id",
@@ -98,6 +320,31 @@ const calculateColumns = (
       enableGlobalFilter: true,
     },
   ];
+
+  list.category.propertyDefinitions?.forEach((variable) => {
+    defaults.push({
+      id: variable.key,
+      accessorFn: (x) =>
+        x.__typename === "Entity"
+          ? x.properties
+            ? (x.properties as Record<string, any>)[variable.key]
+            : undefined
+          : undefined,
+      header: () => <div className="text-center">{variable.key}</div>,
+      cell: ({ row }) => {
+        const value = row.getValue(variable.key) as string;
+        const id = row.getValue("id") as string;
+        return <EditableCell value={value} nodeId={id} propertyDefinition={variable} />;
+      },
+      enableSorting: true,
+      enableGlobalFilter: true,
+    });
+  });
+
+
+
+
+  return defaults;
 };
 
 const calculateRows = (list: NodeListFragment | undefined) => {

@@ -65,11 +65,11 @@ export const NavigationPane = (props: {}) => {
           Apps
         </DroppableNavLink>
         <DroppableNavLink
-          to="/lok/rooms"
+          to="/lok/organizations"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
-          Rooms
+          Organizations
         </DroppableNavLink>
         <DroppableNavLink
           to="/lok/services"

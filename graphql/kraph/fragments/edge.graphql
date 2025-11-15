@@ -38,10 +38,15 @@ fragment StructureRelation on StructureRelation {
   }
 }
 
+fragment Edited on Edited {
+  ...BaseEdge
+}
+
 fragment Edge on Edge {
   ...BaseEdge
   ...Measurement
   ...Relation
+  ...Edited
   ...Participant
   ...StructureRelation
 }

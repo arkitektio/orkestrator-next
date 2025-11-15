@@ -1,0 +1,13 @@
+fragment PropertyDefinition on PropertyDefinition {
+  key
+  valueKind
+  default
+  optional
+  description
+  label
+  options {
+    label
+    value
+    description
+  }
+}

@@ -44,12 +44,10 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="clients/:id" element={<ClientPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="instances" element={<InstancesPage />} />
-          <Route path="organizations" element={<GroupsPage />} />
           <Route path="layers" element={<LayersPage />} />
           <Route path="layers/:id" element={<LayerPage />} />
           <Route path="organizations/:id" element={<OrganizationPage />} />
           <Route path="organizations" element={<OrganizationsPage />} />
-
           <Route path="services/:id" element={<ServicePage />} />
           <Route path="redeemtokens" element={<RedeemTokensPage />} />
           <Route path="redeemtokens/:id" element={<RedeemTokenPage />} />

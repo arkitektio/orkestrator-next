@@ -33,6 +33,9 @@ import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
+import EditedEdge from "./edges/EditedEdge";
+import { Edit } from "lucide-react";
+import EditEventNode from "./nodes/EditEventNode";
 
 export type Props = {
   path: PathFragment;
@@ -47,6 +50,7 @@ const pathNodeTypes = {
   Structure: StructureNode,
   Reagent: ReagentNode,
   Metric: MetricNode,
+  EditEvent: EditEventNode,
   __THIS__: ThisNode,
 };
 
@@ -56,6 +60,7 @@ const pathEdgeTypes = {
   Relation: RelationEdge,
   StructureRelation: StructureRelationEdge,
   Description: DescribeEdge,
+  Edited: EditedEdge,
 };
 
 export type BaseContextual = {

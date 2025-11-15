@@ -137,7 +137,17 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         </>
       )}
 
-      {JSON.stringify(data.entity.properties)}
+      <Card className="p-6 max-w-lg">
+        {data.entity.propertyList.map((property) => (
+          <div key={property.key} className="flex flex-row gap-2 group">
+            <div className="font-bold">{property.key}:</div>
+            <div>{property.value}</div>
+            <Button variant="outline" size="sm" className="group-hover:block opacity-0 group-hover:opacity-100">
+              Find Similar
+            </Button>
+          </div>
+        ))}
+      </Card>
 
       {data.entity.subjectableTo.length > 0 && (
         <>

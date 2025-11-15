@@ -24,7 +24,10 @@ fragment Entity on Entity {
       label
     }
   }
-  properties
+  propertyList {
+    key
+    value
+  }
 
   measuredBy {
     id

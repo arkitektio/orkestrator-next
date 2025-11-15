@@ -8,6 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
@@ -24,6 +30,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  RefreshCw,
+  Settings,
+  Trash2,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -96,6 +105,16 @@ export const storeProbe = (probe: DiscoveryProbe) => {
   }
 };
 
+export const removeProbe = (baseUrl: string) => {
+  try {
+    const stored = getStoredProbes();
+    const filtered = stored.filter((p) => p.base_url !== baseUrl);
+    localStorage.setItem("discoveryProbes", JSON.stringify(filtered));
+  } catch (error) {
+    console.error("Error removing probe:", error);
+  }
+};
+
 // Discover endpoint from probe
 export const discoverFromProbe = async (
   probe: DiscoveryProbe,
@@ -162,10 +181,12 @@ export const discoverBeaconProbes = async (): Promise<DiscoveryProbe[]> => {
 export const ProbeCard = ({
   probeResult,
   onConnect,
+  onRemove,
   className = "",
 }: {
   probeResult: ProbeResult;
   onConnect: (endpoint: FaktsEndpoint) => void;
+  onRemove?: (baseUrl: string) => void;
   className?: string;
 }) => {
   const getStatusIcon = () => {
@@ -217,24 +238,54 @@ export const ProbeCard = ({
     }
   };
 
+  const canRemove = probeResult.probe.source === "stored" && onRemove;
+
   return (
     <Card
-      onClick={handleClick}
-      className={`cursor-pointer transition-all duration-200 ${
-        isDisabled
-          ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-accent hover:shadow-md"
-      } ${className}`}
+      className={`transition-all duration-200 ${isDisabled ? "opacity-50" : ""
+        } ${className}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 flex-1 ${!isDisabled ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed"
+              }`}
+            onClick={handleClick}
+          >
             {getStatusIcon()}
             <CardTitle className="text-lg font-bold">
               {probeResult.probe.name}
             </CardTitle>
           </div>
-          {getStatusBadge()}
+          <div className="flex items-center gap-2">
+            {getStatusBadge()}
+            {canRemove && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(probeResult.probe.base_url);
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove Endpoint
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
         <CardDescription className="text-gray-500">
           {probeResult.probe.description || "No description"}
@@ -275,6 +326,7 @@ export const PreconfiguredEndpointsWidget = () => {
   const connect = Arkitekt.useConnect();
   const [probeResults, setProbeResults] = React.useState<ProbeResult[]>([]);
   const [isDiscovering, setIsDiscovering] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   // Load and probe all sources
   React.useEffect(() => {
@@ -319,7 +371,7 @@ export const PreconfiguredEndpointsWidget = () => {
     };
 
     discoverEndpoints();
-  }, []);
+  }, [refreshKey]);
 
   const handleConnect = async (endpoint: FaktsEndpoint) => {
     try {
@@ -342,6 +394,15 @@ export const PreconfiguredEndpointsWidget = () => {
     }
   };
 
+  const handleRemove = (baseUrl: string) => {
+    removeProbe(baseUrl);
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleRetry = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   const discoveredResults = probeResults.filter(
     (result) => result.status === "discovered",
   );
@@ -353,38 +414,55 @@ export const PreconfiguredEndpointsWidget = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4">
-      {/* Show checking status */}
-      {isDiscovering && checkingResults.length > 0 && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Discovering endpoints...
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        {isDiscovering && checkingResults.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Discovering endpoints...
+          </div>
+        )}
+        <div className="ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetry}
+            disabled={isDiscovering}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isDiscovering ? 'animate-spin' : ''}`} />
+            Retry All
+          </Button>
         </div>
-      )}
+      </div>
 
-      {discoveredResults.map((result) => (
-        <ProbeCard
-          key={result.probe.base_url}
-          probeResult={result}
-          onConnect={handleConnect}
-        />
-      ))}
-      {checkingResults.map((result) => (
-        <ProbeCard
-          key={result.probe.base_url}
-          probeResult={result}
-          onConnect={handleConnect}
-        />
-      ))}
+      <div className="grid grid-cols-1 gap-4">
+        {discoveredResults.map((result) => (
+          <ProbeCard
+            key={result.probe.base_url}
+            probeResult={result}
+            onConnect={handleConnect}
+            onRemove={handleRemove}
+          />
+        ))}
+        {checkingResults.map((result) => (
+          <ProbeCard
+            key={result.probe.base_url}
+            probeResult={result}
+            onConnect={handleConnect}
+            onRemove={handleRemove}
+          />
+        ))}
 
-      {unreachableResults.map((result) => (
-        <ProbeCard
-          key={result.probe.base_url}
-          probeResult={result}
-          onConnect={handleConnect}
-          className="grayscale"
-        />
-      ))}
+        {unreachableResults.map((result) => (
+          <ProbeCard
+            key={result.probe.base_url}
+            probeResult={result}
+            onConnect={handleConnect}
+            onRemove={handleRemove}
+            className="grayscale"
+          />
+        ))}
+      </div>
     </div>
   );
 };

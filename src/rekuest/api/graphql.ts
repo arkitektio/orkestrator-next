@@ -419,6 +419,7 @@ export type AssignInput = {
   agent?: InputMaybe<Scalars['ID']['input']>;
   args: Scalars['Args']['input'];
   cached?: Scalars['Boolean']['input'];
+  capture?: Scalars['Boolean']['input'];
   dependencies?: InputMaybe<Scalars['Args']['input']>;
   ephemeral?: Scalars['Boolean']['input'];
   hooks?: InputMaybe<Array<HookInput>>;
@@ -476,6 +477,8 @@ export type Assignation = {
   arg?: Maybe<Scalars['Args']['output']>;
   /** Arguments used in the assignation. */
   args: Scalars['AnyDefault']['output'];
+  /** Indicates if the assignation is being captured for logging or debugging. */
+  capture: Scalars['Boolean']['output'];
   /** Child assignations spawned from this one. */
   children: Array<Assignation>;
   /** Creation timestamp. */

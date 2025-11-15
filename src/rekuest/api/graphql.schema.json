@@ -2809,6 +2809,22 @@
             "deprecationReason": null
           },
           {
+            "name": "capture",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "dependencies",
             "description": null,
             "type": {
@@ -2944,7 +2960,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"30b747e9-2e66-467b-bda3-e7a76bb9f871\"",
+            "defaultValue": "\"98daadb0-ce57-42f9-ab29-1aa45a09b6fe\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3365,6 +3381,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "AnyDefault",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "capture",
+            "description": "Indicates if the assignation is being captured for logging or debugging.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               }
             },
@@ -17051,7 +17083,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"d8b6e053-a0d6-4538-9324-7ccdc3677528\"",
+            "defaultValue": "\"01772dda-5fe2-4789-b135-143300b1103b\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

@@ -11,10 +11,17 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
+import { ChevronDown } from "lucide-react";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
   AssignationEventFragment,
@@ -183,11 +190,13 @@ export const useReassign = ({
   });
   const navigate = useNavigate();
 
-  const reassign = async () => {
-    let x = await assign({
+  const reassign = async (options?: { capture: boolean }) => {
+    const x = await assign({
       args: assignation.args,
       implementation: assignation?.implementation.id || "",
+      dependencies: assignation.dependencies,
       hooks: [],
+      capture: options?.capture || false,
     });
 
     navigate(RekuestAssignation.linkBuilder(x.id));
@@ -238,15 +247,38 @@ export default asDetailQueryRoute(
                 Logs
               </Button>
             </RekuestAssignation.DetailLink>
-            <Button
-              variant={"outline"}
-              size={"sm"}
-              onClick={() => {
-                reassign();
-              }}
-            >
-              Rerun
-            </Button>
+            <div className="flex">
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() => {
+                  reassign();
+                }}
+                className="rounded-r-none"
+              >
+                Rerun
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    size={"sm"}
+                    className="rounded-l-none border-l-0 px-2"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      reassign({ capture: true });
+                    }}
+                  >
+                    Rerun with Capture
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             {isCancalable(data.assignation) && (
               <Button
                 onClick={() =>

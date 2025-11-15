@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/arkitektio/orkestrator-next/compare/v1.22.0...v1.23.0) (2025-11-15)
+
+
+### Features
+
+* add reload ([85d9c78](https://github.com/arkitektio/orkestrator-next/commit/85d9c78b9ee3b578202c7eac3e6d652e2b13b9cb))
+
 # [1.22.0](https://github.com/arkitektio/orkestrator-next/compare/v1.21.0...v1.22.0) (2025-11-14)
 
 

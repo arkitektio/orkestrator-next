@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/arkitektio/orkestrator-next/compare/v1.23.0...v1.24.0) (2025-11-15)
+
+
+### Features
+
+* edit events are now part ([aa84a41](https://github.com/arkitektio/orkestrator-next/commit/aa84a416f765c2cb2c5e09ca60a6179c447c81f2))
+
 # [1.23.0](https://github.com/arkitektio/orkestrator-next/compare/v1.22.0...v1.23.0) (2025-11-15)
 
 

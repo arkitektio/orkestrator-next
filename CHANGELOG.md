@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/arkitektio/orkestrator-next/compare/v1.26.0...v1.27.0) (2025-11-16)
+
+
+### Features
+
+* minor ui updates + csv export ([1fbb823](https://github.com/arkitektio/orkestrator-next/commit/1fbb82330bb9990faeb49940a8506850f2863447))
+
 # [1.26.0](https://github.com/arkitektio/orkestrator-next/compare/v1.25.0...v1.26.0) (2025-11-16)
 
 

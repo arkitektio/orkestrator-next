@@ -44,7 +44,7 @@ export const DynamicYieldDisplay = (props: {
   }
 
   return (
-    <div>
+    <div className="h-32 w-32 overflow-auto border p-2">
       <ReturnsContainer
         ports={data.action.returns}
         values={props.values}

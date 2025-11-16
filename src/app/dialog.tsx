@@ -1,4 +1,6 @@
 import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
+import { AddPropertyDefinitionDialog } from "@/dialogs/AddPropertyDefinition";
+import { CreateEntityWithPropertiesDialog } from "@/dialogs/CreateEntityWithProperties";
 import { ChatDialog } from "@/dialogs/ChatDialog";
 import { CreateNewMeasurement } from "@/dialogs/CreateNewMeasurement";
 import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
@@ -25,6 +27,8 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   createshortcut: CreateShortcutDialog,
   notifyusers: NotifyDialog,
   addusertoorganization: AddUserToOrganizationDialog,
+  addpropertydefinition: AddPropertyDefinitionDialog,
+  createentitywithproperties: CreateEntityWithPropertiesDialog,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,
   createentity: CreateEntityForm,
   createpprotocoleventfrominsandouts: CreateProtocolEventFromInsAndOuts,

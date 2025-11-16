@@ -22,3 +22,28 @@ query ListEntityCategory(
     ...ListEntityCategory
   }
 }
+
+query EntityNodes(
+  $category: ID!
+  $filters: CategoryNodesFilter
+  $pagination: GraphQueryPagination
+  $order: CategoryNodesOrder
+) {
+  entityNodes(
+    id: $category
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
+    __typename
+    id
+    label
+    properties
+  }
+}
+
+query EntityCategoryStats($id: ID!) {
+  entityCategoryStats(id: $id) {
+    count
+  }
+}

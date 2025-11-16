@@ -19,7 +19,7 @@ export const RoiDisplay = (props: DisplayWidgetProps) => {
   }
   const context = data?.roi.image.rgbContexts.at(0);
   return (
-    <div className="w-96 h-96">
+    <div className="w-full h-full">
       {context && (
         <FinalRender
           context={context}

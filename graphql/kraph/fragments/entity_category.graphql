@@ -8,9 +8,6 @@ fragment EntityCategory on EntityCategory {
   store {
     presignedUrl
   }
-  bestQuery {
-    ...GraphQuery
-  }
   latest {
     ...Entity
   }

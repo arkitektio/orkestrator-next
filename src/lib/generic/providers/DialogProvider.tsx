@@ -53,6 +53,7 @@ type ModalState = {
   type: "dialog" | "sheet";
   className?: string;
   side?: "top" | "bottom" | "left" | "right";
+  size?: "small" | "medium" | "large";
 };
 
 // --- 2. Factory Function ---
@@ -77,6 +78,7 @@ export function createDialogProvider<
       options?: {
         className?: string;
         side?: "top" | "bottom" | "left" | "right";
+        size?: "small" | "medium" | "large";
       },
     ) => void;
     closeDialog: () => void;
@@ -118,6 +120,7 @@ export function createDialogProvider<
         options?: {
           className?: string;
           side?: "top" | "bottom" | "left" | "right";
+          size?: "small" | "medium" | "large";
         },
       ) => {
         setModalState({
@@ -126,6 +129,7 @@ export function createDialogProvider<
           type: "sheet",
           className: options?.className,
           side: options?.side || "right",
+          size: options?.size,
         });
       },
       [],
@@ -178,6 +182,9 @@ export function createDialogProvider<
                   modalState.className.includes("max-h-")) &&
                 "!h-auto !max-h-[90vh]",
                 modalState.className,
+                modalState.size === "small" && "!max-w-sm w-[20vw]",
+                modalState.size === "medium" && "!max-w-md w-[30vw]",
+                modalState.size === "large" && "!max-w-lg w-[60vw]",
               )}
             >
               <Guard.Rekuest>

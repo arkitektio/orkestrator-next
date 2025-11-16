@@ -48,6 +48,8 @@ import {
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
 import { KraphNode } from "@/linkers";
 import Timestamp from "react-timestamp";
+import { Calendar } from "@/components/ui/calendar";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 export type FormValues = {
   metrics?: string[];
@@ -176,14 +178,7 @@ const EditableCell = ({
 
       case MetricKind.Datetime:
         return (
-          <Input
-            type="datetime-local"
-            value={editingValue || ""}
-            onChange={(e) => setEditingValue(e.target.value)}
-            onBlur={handleBlur}
-            autoFocus
-            className="h-8"
-          />
+          <DateTimePicker value={editingValue} onChange={setEditingValue} />
         );
 
       case MetricKind.String:
@@ -224,7 +219,7 @@ const EditableCell = ({
 
       case MetricKind.Datetime:
         return (
-          <Timestamp date={date} autoUpdate relative />
+          <Timestamp date={value} autoUpdate relative />
         );
 
       case MetricKind.Category:

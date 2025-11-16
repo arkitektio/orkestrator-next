@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ import { Card } from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { DisplayWidget } from "@/command/Menu";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
+import { FancyInput } from "@/components/ui/fancy-input";
 
 
 export type FormValues = {
@@ -711,6 +712,73 @@ export const EntityList = (props: {
   const columns = calculateColumns(props.category);
   const rows = calculateRows(data?.entityNodes || []);
 
+  const exportToCSV = () => {
+    if (!rows || rows.length === 0) {
+      return;
+    }
+
+    // Get all column headers
+    const headers = columns
+      .filter((col) => col.id !== "select") // Exclude select column
+      .map((col) => col.id || "");
+
+    // Build CSV header row
+    const csvHeaders = headers.join(",");
+
+    // Build CSV data rows
+    const csvRows = rows.map((row) => {
+      return headers
+        .map((header) => {
+          let value = "";
+
+          if (header === "id") {
+            value = row.id;
+          } else if (header === "label") {
+            value = row.__typename === "Entity" ? row.label : "";
+          } else {
+            // Property value
+            const propValue =
+              row.__typename === "Entity" && row.properties
+                ? (row.properties as Record<string, any>)[header]
+                : undefined;
+
+            // Format the value
+            if (propValue === null || propValue === undefined) {
+              value = "";
+            } else if (typeof propValue === "object") {
+              value = JSON.stringify(propValue);
+            } else {
+              value = String(propValue);
+            }
+          }
+
+          // Escape quotes and wrap in quotes if contains comma, quote, or newline
+          if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+            value = `"${value.replace(/"/g, '""')}"`;
+          }
+
+          return value;
+        })
+        .join(",");
+    });
+
+    // Combine header and rows
+    const csv = [csvHeaders, ...csvRows].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${props.category.label || "entities"}_export_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const addFilter = () => {
     if (newFilterKey && newFilterValue) {
       setPropertyMatches([...propertyMatches, {
@@ -844,15 +912,15 @@ export const EntityList = (props: {
       {!props.options?.minimal && (
         <div className="py-4 bg-slate-900 px-3 rounded-md rounded-top flex-initial">
           <div className="flex items-center gap-2 justify-between">
-            <div className="flex items-center gap-2">
-              <Input
+            <div className="flex items-center gap-2 flex-initial max-w-lg w-lg">
+              <FancyInput
                 placeholder="Search entities..."
                 value={searchInput}
                 onChange={(e) => {
                   setSearchInput(e.target.value);
                   debouncedSetSearch(e.target.value);
                 }}
-                className="max-w-sm"
+                className="bg-black"
               />
 
             </div>
@@ -1104,6 +1172,16 @@ export const EntityList = (props: {
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+                disabled={!rows || rows.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
               </Button>
             </div>
           </div>

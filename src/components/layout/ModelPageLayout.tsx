@@ -5,6 +5,7 @@ import { PageLayout, PageVariant } from "./PageLayout";
 import { MultiSidebar } from "./MultiSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import { ExportSidebar } from "../sidebars/export";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -37,7 +38,9 @@ export const ModelPageLayout = ({
         sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
           "Comments": <Komments identifier={identifier} object={object} />,
           "Knowledge": <KnowledgeSidebar identifier={identifier} object={object} />,
-        } } sidebarKey="DetailModel" />}
+
+
+        }} sidebarKey="DetailModel" />}
         actions={actions}
         variant={variant}
         pageActions={pageActions}
@@ -45,6 +48,6 @@ export const ModelPageLayout = ({
         <CommandMenu objects={objects} />
         {children}
       </PageLayout>
-    </div>
+    </div >
   );
 };

@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/arkitektio/orkestrator-next/compare/v1.27.0...v1.28.0) (2025-11-20)
+
+
+### Features
+
+* more kraph and alpaka features ([465c6ff](https://github.com/arkitektio/orkestrator-next/commit/465c6ffaba123f02e7e2fd9e47a77203594224ea))
+
 # [1.27.0](https://github.com/arkitektio/orkestrator-next/compare/v1.26.0...v1.27.0) (2025-11-16)
 
 

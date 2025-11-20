@@ -4,6 +4,12 @@ query GetEntityCategory($id: ID!) {
   }
 }
 
+query GetEntityCategoryByGraphAndLabel($graph: ID!, $label: String!) {
+  entityCategory(graph: $graph, label: $label) {
+    ...EntityCategory
+  }
+}
+
 query SearchEntityCategory($search: String, $values: [ID!]) {
   options: entityCategories(
     filters: { search: $search, ids: $values }

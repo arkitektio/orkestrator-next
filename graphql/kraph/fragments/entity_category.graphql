@@ -12,9 +12,6 @@ fragment EntityCategory on EntityCategory {
     ...Entity
   }
   pinned
-  propertyDefinitions {
-    ...PropertyDefinition
-  }
 }
 
 fragment ListEntityCategory on EntityCategory {

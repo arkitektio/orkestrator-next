@@ -15,17 +15,17 @@ import {
 import { ChevronDown, Download } from "lucide-react";
 import * as React from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -35,31 +35,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  NodeListFragment,
-  useRenderGraphQueryQuery,
-  GraphQueryFilters,
-  GraphQueryPagination,
-  GraphQueryOrder,
-  useSetNodePropertyMutation,
-  MetricKind,
-  PropertyDefinitionFragment,
-  useEntityNodesQuery,
-  EntityCategoryFragment,
-  EntityNodesQuery,
-  CategoryNodesFilter,
-  PropertyMatch,
-  WhereOperator,
-  PropertyOrder,
-  OrderDirection,
-  CategoryNodesOrder,
-  useGetEntityQuery,
-} from "@/kraph/api/graphql";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
-import { KraphEntity, KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
-import Timestamp from "react-timestamp";
-import { X, Plus, Filter, Info, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { useDialog } from "@/app/dialog";
+import { DisplayWidget } from "@/command/Menu";
+import { Card } from "@/components/ui/card";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { FancyInput } from "@/components/ui/fancy-input";
 import {
   Select,
   SelectContent,
@@ -73,11 +53,29 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { DisplayWidget } from "@/command/Menu";
+import {
+  CategoryNodesFilter,
+  CategoryNodesOrder,
+  EntityCategoryFragment,
+  EntityNodesQuery,
+  MetricKind,
+  NodeCategoryFilter,
+  NodeCategoryFragment,
+  NodeListFragment,
+  OrderDirection,
+  PropertyDefinitionFragment,
+  PropertyMatch,
+  PropertyOrder,
+  WhereOperator,
+  useEntityNodesQuery,
+  useGetEntityQuery,
+  useSetNodePropertyMutation
+} from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
-import { FancyInput } from "@/components/ui/fancy-input";
+import { KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
+import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Plus, RefreshCw, X } from "lucide-react";
+import Timestamp from "react-timestamp";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
 
 
 export type FormValues = {
@@ -324,7 +322,7 @@ const EditableCell = ({
 
 
 const calculateColumns = (
-  category: EntityCategoryFragment,
+  category: NodeCategoryFragment,
 ): ColumnDef<NodeListFragment["nodes"][0]>[] => {
   if (!category) {
     return [];
@@ -643,7 +641,7 @@ export const EntityRow = ({
 };
 
 export const EntityList = (props: {
-  category: EntityCategoryFragment;
+  category: NodeCategoryFragment;
   options?: ViewOptions;
 }) => {
   const { openDialog } = useDialog();
@@ -689,7 +687,7 @@ export const EntityList = (props: {
     ? { propertyOrder: propertyOrders }
     : undefined;
 
-  const { data, loading, refetch } = useEntityNodesQuery({
+  const { data, loading, refetch, error } = useEntityNodesQuery({
     variables: {
       category: props.category.id,
       filters,
@@ -909,6 +907,11 @@ export const EntityList = (props: {
 
   return (
     <div className="w-full h-full bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400  border  rounded-xl flex flex-col overflow-hidden">
+      {error && (
+        <div className="p-4 bg-red-600 text-white">
+          Error loading entities: {error.message}
+        </div>
+      )}
       {!props.options?.minimal && (
         <div className="py-4 bg-slate-900 px-3 rounded-md rounded-top flex-initial">
           <div className="flex items-center gap-2 justify-between">

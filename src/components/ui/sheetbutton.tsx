@@ -7,7 +7,7 @@ type DialogType = typeof registry;
 type ExtractProps<T> =
   T extends React.ComponentType<infer P> ? Omit<P, "onClose"> : never;
 
-export const DialogButton = <T extends keyof DialogType>({
+export const SheetButton = <T extends keyof DialogType>({
   name,
   className,
   children,
@@ -18,12 +18,12 @@ export const DialogButton = <T extends keyof DialogType>({
   name: T;
   className?: string;
   dialogProps: ExtractProps<DialogType[T]>;
-  options?: { className?: string };
+  options?: { className?: string, size?: "small" | "medium" | "large" };
 } & ButtonProps) => {
-  const { openDialog } = useDialog<T>();
+  const { openSheet } = useDialog<T>();
 
   const onClick = useCallback(async () => {
-    openDialog(name, dialogProps, options || {});
+    openSheet(name, dialogProps, options || {});
   }, []);
 
   return (

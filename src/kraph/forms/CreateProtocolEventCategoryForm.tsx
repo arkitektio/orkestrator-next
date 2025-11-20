@@ -1,5 +1,6 @@
 import { ChoicesField } from "@/components/fields/ChoicesField";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { StringField } from "@/components/fields/StringField";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
 import { Editor } from "@/components/plate-ui/editor";
@@ -8,24 +9,36 @@ import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons
 import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
 import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
 import { TooltipProvider } from "@/components/plate-ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { editor } from "@/plate/plugins";
 import { Plate, usePlateEditor } from "@udecode/plate-common/react";
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { useDialog } from "@/app/dialog";
 import {
   CreateProtocolEventCategoryMutationVariables,
   MetricKind,
   useCreateProtocolEventCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchReagentCategoryLazyQuery,
-  useSearchTagsLazyQuery
+  useSearchTagsLazyQuery,
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { useDialog } from "@/app/dialog";
 
 const initialValue = [
   {
@@ -35,13 +48,12 @@ const initialValue = [
   },
 ];
 
-export const TForm = (props: { graph?: string }) => {
+export const TForm = (props: { graph: string }) => {
   const [create] = useCreateProtocolEventCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 
-  const dialog = useDialog()
-
+  const dialog = useDialog();
 
   const plateEditor = usePlateEditor({
     ...editor,
@@ -54,7 +66,6 @@ export const TForm = (props: { graph?: string }) => {
         input: { ...data, plateChildren: plateEditor.children },
       },
     }).then(() => dialog.closeDialog());
-
   };
 
   const myform = useForm<CreateProtocolEventCategoryMutationVariables["input"]>(
@@ -67,7 +78,7 @@ export const TForm = (props: { graph?: string }) => {
         targetEntityRoles: [],
         sourceReagentRoles: [],
         targetReagentRoles: [],
-        variableDefinitions: []
+        variableDefinitions: [],
       },
     },
   );
@@ -111,369 +122,416 @@ export const TForm = (props: { graph?: string }) => {
 
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
-  const [searchReagentCategory] = useSearchReagentCategoryLazyQuery()
+  const [searchReagentCategory] = useSearchReagentCategoryLazyQuery();
 
   const sourceArray = useFieldArray({
-    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
-    name: "sourceEntityRoles", // unique name for your Field Array
+    control: myform.control,
+    name: "sourceEntityRoles",
   });
 
   const targetArray = useFieldArray({
-    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
-    name: "targetEntityRoles", // unique name for your Field Array
+    control: myform.control,
+    name: "targetEntityRoles",
   });
 
   const targetReagentArray = useFieldArray({
-    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
-    name: "targetReagentRoles", // unique name for your Field Array
+    control: myform.control,
+    name: "targetReagentRoles",
   });
 
   const sourceReagentArray = useFieldArray({
-    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
-    name: "sourceReagentRoles", // unique name for your Field Array
+    control: myform.control,
+    name: "sourceReagentRoles",
   });
 
   const variableDefinitionsArray = useFieldArray({
-    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
-    name: "variableDefinitions", // unique name for your Field Array
+    control: myform.control,
+    name: "variableDefinitions",
   });
 
   return (
-    <>
-      <Form {...myform}>
-        <form
-          onSubmit={myform.handleSubmit(onUpdate)}
-          className="flex flex-col gap-4 p-6 min-w-[90vw] min-h-[90vh]"
-        >
-          <StringField
-            name={`label`}
-            label="Label"
-            description="Which label for the protocol"
-          />
-          <StringField
-            name={`description`}
-            label="Description"
-            description="Which description for the protocol"
-          />
-          <div className="flex grow flex-col ">
-            <RoleProvider roles={roles}>
-              <TooltipProvider>
-                <Plate editor={plateEditor}>
-                  <FixedToolbar>
-                    <FixedToolbarButtons />
-                    <Button type="submit" variant={"outline"}>
-                      Save
-                    </Button>
-                  </FixedToolbar>
+    <Form {...myform}>
+      <form
+        onSubmit={myform.handleSubmit(onUpdate)}
+        className="flex flex-col h-full w-full overflow-hidden"
+      >
+        <div className="flex gap-4 p-4 border-b items-end">
+          <div className="flex-1 grid grid-cols-2 gap-4">
+            <StringField
+              name={`label`}
+              label="Label"
+              description="Which label for the protocol"
+            />
+            <StringField
+              name={`description`}
+              label="Description"
+              description="Which description for the protocol"
+            />
+          </div>
+          <Button type="submit" variant={"default"}>
+            Save
+          </Button>
+        </div>
 
-
-
-                  <div className="grid grid-cols-12  w-full h-full flex-grow flex rounded-lg">
-                    <div className="col-span-10 h-full flex">
-                      <Editor className="rounded-xs border-0 mt-0 ring-0 h-full " />
+        <div className="flex-1 overflow-hidden">
+          <RoleProvider roles={roles}>
+            <TooltipProvider>
+              <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel defaultSize={60} minSize={30}>
+                  <Plate editor={plateEditor}>
+                    <div className="flex flex-col h-full">
+                      <FixedToolbar>
+                        <FixedToolbarButtons />
+                      </FixedToolbar>
+                      <div className="flex-1 overflow-y-auto p-4" id="scroll-container">
+                        <Editor className="min-h-full" />
+                      </div>
+                      <FloatingToolbar>
+                        <FloatingToolbarButtons />
+                      </FloatingToolbar>
+                      <CommentsPopover />
                     </div>
-                    <div className="col-span-2  flex-col bg-background p-3">
-                      <div className="flex flex-col p-2">
-                        <div className="text-xs mb-2 items-center w-full flex justify-center">
-                          Ins
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          {sourceArray.fields.map((item, index) => (
-                            <Card
-                              key={item.id}
-                              className="p-3  gap-2 flex-col flex group"
-                            >
-                              <StringField
-                                name={`sourceEntityRoles.${index}.role`}
-                                label="Role"
-                                description="Which role does the entity play?"
-                              />
-                              <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                                <GraphQLListSearchField
-                                  name={`sourceEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                  label="Tag Filters"
-                                  searchQuery={searchTags}
-                                  description="Filters for the entity's tags."
-                                />
-                                <GraphQLListSearchField
-                                  name={`sourceEntityRoles.${index}.categoryDefinition.categoryFilters`}
-                                  label="Category Filters"
-                                  searchQuery={searchEntityCategory}
-                                  description="Filters for the entity's categories."
-                                />
-                                <StringField
-                                  name={`sourceEntityRoles.${index}.label`}
-                                  label="Label"
-                                  description="Which role does the entity play?"
-                                />
-                                <StringField
-                                  name={`sourceEntityRoles.${index}.description`}
-                                  label="Description"
-                                  description="What describes this role the best"
-                                />
-                                <GraphQLSearchField
-                                  name={`sourceEntityRoles.${index}.createCategory`}
-                                  label="Create Category"
-                                  searchQuery={searchEntityCategory}
-                                  description="If the user is selecting create Category, which category should be used"
-                                />
-
+                  </Plate>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={40} minSize={30}>
+                  <Tabs defaultValue="entities" className="h-full flex flex-col">
+                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 px-2">
+                      <TabsTrigger
+                        value="entities"
+                        className="data-[state=active]:bg-muted"
+                      >
+                        Entities
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="reagents"
+                        className="data-[state=active]:bg-muted"
+                      >
+                        Reagents
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="variables"
+                        className="data-[state=active]:bg-muted"
+                      >
+                        Variables
+                      </TabsTrigger>
+                    </TabsList>
+                    <ScrollArea className="flex-1">
+                      <div className="p-4">
+                        <TabsContent value="entities" className="mt-0">
+                          <Accordion
+                            type="multiple"
+                            defaultValue={["source", "target"]}
+                          >
+                            <AccordionItem value="source">
+                              <AccordionTrigger>Source Entities</AccordionTrigger>
+                              <AccordionContent className="flex flex-col gap-2">
+                                {sourceArray.fields.map((item, index) => (
+                                  <Card key={item.id} className="p-3">
+                                    <div className="flex flex-col gap-2">
+                                      <StringField
+                                        name={`sourceEntityRoles.${index}.role`}
+                                        label="Role"
+                                        description="Role name"
+                                      />
+                                      <Accordion type="single" collapsible>
+                                        <AccordionItem value="details" className="border-none">
+                                          <AccordionTrigger className="py-2 text-xs">
+                                            Details
+                                          </AccordionTrigger>
+                                          <AccordionContent className="flex flex-col gap-2 pt-2">
+                                            <StringField
+                                              name={`sourceEntityRoles.${index}.label`}
+                                              label="Label"
+                                            />
+                                            <StringField
+                                              name={`sourceEntityRoles.${index}.description`}
+                                              label="Description"
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`sourceEntityRoles.${index}.categoryDefinition.tagFilters`}
+                                              label="Tag Filters"
+                                              searchQuery={searchTags}
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`sourceEntityRoles.${index}.categoryDefinition.categoryFilters`}
+                                              label="Category Filters"
+                                              searchQuery={searchEntityCategory}
+                                            />
+                                            <GraphQLSearchField
+                                              name={`sourceEntityRoles.${index}.createCategory`}
+                                              label="Create Category"
+                                              searchQuery={searchEntityCategory}
+                                              description="Category to use when creating"
+                                            />
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      </Accordion>
+                                      <Button
+                                        type="button"
+                                        onClick={() => sourceArray.remove(index)}
+                                        variant="destructive"
+                                        size="sm"
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  </Card>
+                                ))}
                                 <Button
                                   type="button"
-                                  onClick={() => targetArray.remove(index)}
-                                  variant={"destructive"}
+                                  onClick={() =>
+                                    sourceArray.append({
+                                      role: "new_source",
+                                      categoryDefinition: {
+                                        tagFilters: [],
+                                        categoryFilters: [],
+                                      },
+                                    })
+                                  }
+                                  variant="outline"
+                                  size="sm"
                                 >
-                                  Delete
+                                  Add Source Entity
                                 </Button>
-                              </div>
-                            </Card>
-                          ))}
-                          <Button
-                            className="h-full max-w-xs"
-                            type="button"
-                            onClick={() =>
-                              sourceArray.append({
-                                role: "new",
-                                categoryDefinition: {
-                                  tagFilters: [],
-                                  categoryFilters: [],
-                                },
-                              })
-                            }
-                            variant={"outline"}
-                          >
-                            Add Source Entity
-                          </Button>
-                        </div>
-                      </div>
+                              </AccordionContent>
+                            </AccordionItem>
 
-                      <div className="flex flex-col">
-                        <div className="text-xs mb-2 items-center w-full flex justify-center">
-                          Targets
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          {targetArray.fields.map((item, index) => (
-                            <Card
-                              key={item.id}
-                              className="p-3 max-w-lg gap-2 flex-col flex group"
-                            >
-                              <StringField
-                                name={`targetEntityRoles.${index}.role`}
-                                label="Role"
-                                description="Which role does the entity play?"
-                              />
-                              <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                                <GraphQLListSearchField
-                                  name={`targetEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                  label="Tag Filters"
-                                  searchQuery={searchTags}
-                                  description="Filters for the entity's tags."
-                                />
-                                <GraphQLListSearchField
-                                  name={`targetEntityRoles.${index}.categoryDefinition.categoryFilters`}
-                                  label="Category Filters"
-                                  searchQuery={searchEntityCategory}
-                                  description="Filters for the entity's categories."
-                                />
-                                <StringField
-                                  name={`targetEntityRoles.${index}.label`}
-                                  label="Label"
-                                  description="Which role does the entity play?"
-                                />
-                                <StringField
-                                  name={`targetEntityRoles.${index}.description`}
-                                  label="Description"
-                                  description="What describes this role the best"
-                                />
-                                <GraphQLSearchField
-                                  name={`targetEntityRoles.${index}.createCategory`}
-                                  label="Create Category"
-                                  searchQuery={searchEntityCategory}
-                                  description="If the user is selecting create Category, which category should be used"
-                                />
-
+                            <AccordionItem value="target">
+                              <AccordionTrigger>Target Entities</AccordionTrigger>
+                              <AccordionContent className="flex flex-col gap-2">
+                                {targetArray.fields.map((item, index) => (
+                                  <Card key={item.id} className="p-3">
+                                    <div className="flex flex-col gap-2">
+                                      <StringField
+                                        name={`targetEntityRoles.${index}.role`}
+                                        label="Role"
+                                        description="Role name"
+                                      />
+                                      <Accordion type="single" collapsible>
+                                        <AccordionItem value="details" className="border-none">
+                                          <AccordionTrigger className="py-2 text-xs">
+                                            Details
+                                          </AccordionTrigger>
+                                          <AccordionContent className="flex flex-col gap-2 pt-2">
+                                            <StringField
+                                              name={`targetEntityRoles.${index}.label`}
+                                              label="Label"
+                                            />
+                                            <StringField
+                                              name={`targetEntityRoles.${index}.description`}
+                                              label="Description"
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`targetEntityRoles.${index}.categoryDefinition.tagFilters`}
+                                              label="Tag Filters"
+                                              searchQuery={searchTags}
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`targetEntityRoles.${index}.categoryDefinition.categoryFilters`}
+                                              label="Category Filters"
+                                              searchQuery={searchEntityCategory}
+                                            />
+                                            <GraphQLSearchField
+                                              name={`targetEntityRoles.${index}.createCategory`}
+                                              label="Create Category"
+                                              searchQuery={searchEntityCategory}
+                                              description="Category to use when creating"
+                                            />
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      </Accordion>
+                                      <Button
+                                        type="button"
+                                        onClick={() => targetArray.remove(index)}
+                                        variant="destructive"
+                                        size="sm"
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  </Card>
+                                ))}
                                 <Button
                                   type="button"
-                                  onClick={() => targetArray.remove(index)}
-                                  variant={"destructive"}
+                                  onClick={() =>
+                                    targetArray.append({
+                                      role: "new_target",
+                                      categoryDefinition: {
+                                        tagFilters: [],
+                                        categoryFilters: [],
+                                      },
+                                    })
+                                  }
+                                  variant="outline"
+                                  size="sm"
                                 >
-                                  Delete
+                                  Add Target Entity
                                 </Button>
-                              </div>
-                            </Card>
-                          ))}
-                          <Button
-                            className="h-full max-w-xs"
-                            type="button"
-                            onClick={() =>
-                              targetArray.append({
-                                role: "new",
-                                categoryDefinition: {
-                                  tagFilters: [],
-                                  categoryFilters: [],
-                                },
-                              })
-                            }
-                            variant={"ghost"}
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="text-xs mb-2 items-center w-full flex justify-center">
-                          Target Reagents
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          {targetReagentArray.fields.map((item, index) => (
-                            <Card
-                              key={item.id}
-                              className="p-3 max-w-lg gap-2 flex-col flex group"
-                            >
-                              <StringField
-                                name={`targetReagentRoles.${index}.role`}
-                                label="Role"
-                                description="Which role does the entity play?"
-                              />
-                              <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                                <GraphQLListSearchField
-                                  name={`targetReagentRoles.${index}.categoryDefinition.tagFilters`}
-                                  label="Tag Filters"
-                                  searchQuery={searchTags}
-                                  description="Filters for the entity's tags."
-                                />
-                                <GraphQLListSearchField
-                                  name={`targetReagentRoles.${index}.categoryDefinition.categoryFilters`}
-                                  label="Category Filters"
-                                  searchQuery={searchReagentCategory}
-                                  description="Filters for the entity's categories."
-                                />
-                                <StringField
-                                  name={`targetReagentRoles.${index}.label`}
-                                  label="Label"
-                                  description="Which role does the entity play?"
-                                />
-                                <StringField
-                                  name={`targetReagentRoles.${index}.description`}
-                                  label="Description"
-                                  description="What describes this role the best"
-                                />
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </TabsContent>
 
+                        <TabsContent value="reagents" className="mt-0">
+                          <Accordion
+                            type="multiple"
+                            defaultValue={["source", "target"]}
+                          >
+                            <AccordionItem value="source">
+                              <AccordionTrigger>Source Reagents</AccordionTrigger>
+                              <AccordionContent className="flex flex-col gap-2">
+                                {sourceReagentArray.fields.map((item, index) => (
+                                  <Card key={item.id} className="p-3">
+                                    <div className="flex flex-col gap-2">
+                                      <StringField
+                                        name={`sourceReagentRoles.${index}.role`}
+                                        label="Role"
+                                        description="Role name"
+                                      />
+                                      <Accordion type="single" collapsible>
+                                        <AccordionItem value="details" className="border-none">
+                                          <AccordionTrigger className="py-2 text-xs">
+                                            Details
+                                          </AccordionTrigger>
+                                          <AccordionContent className="flex flex-col gap-2 pt-2">
+                                            <StringField
+                                              name={`sourceReagentRoles.${index}.label`}
+                                              label="Label"
+                                            />
+                                            <StringField
+                                              name={`sourceReagentRoles.${index}.description`}
+                                              label="Description"
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`sourceReagentRoles.${index}.categoryDefinition.tagFilters`}
+                                              label="Tag Filters"
+                                              searchQuery={searchTags}
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`sourceReagentRoles.${index}.categoryDefinition.categoryFilters`}
+                                              label="Category Filters"
+                                              searchQuery={searchReagentCategory}
+                                            />
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      </Accordion>
+                                      <Button
+                                        type="button"
+                                        onClick={() =>
+                                          sourceReagentArray.remove(index)
+                                        }
+                                        variant="destructive"
+                                        size="sm"
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  </Card>
+                                ))}
                                 <Button
                                   type="button"
-                                  onClick={() => targetArray.remove(index)}
-                                  variant={"destructive"}
+                                  onClick={() =>
+                                    sourceReagentArray.append({
+                                      role: "new_source_reagent",
+                                      categoryDefinition: {
+                                        tagFilters: [],
+                                        categoryFilters: [],
+                                      },
+                                    })
+                                  }
+                                  variant="outline"
+                                  size="sm"
                                 >
-                                  Delete
+                                  Add Source Reagent
                                 </Button>
-                              </div>
-                            </Card>
-                          ))}
-                          <Button
-                            className="h-full max-w-xs"
-                            type="button"
-                            onClick={() =>
-                              targetArray.append({
-                                role: "new",
-                                categoryDefinition: {
-                                  tagFilters: [],
-                                  categoryFilters: [],
-                                },
-                              })
-                            }
-                            variant={"ghost"}
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="text-xs mb-2 items-center w-full flex justify-center">
-                          Source Reagents
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          {sourceReagentArray.fields.map((item, index) => (
-                            <Card
-                              key={item.id}
-                              className="p-3 max-w-lg gap-2 flex-col flex group"
-                            >
-                              <StringField
-                                name={`sourceReagentRoles.${index}.role`}
-                                label="Role"
-                                description="Which role does the entity play?"
-                              />
-                              <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                                <GraphQLListSearchField
-                                  name={`sourceReagentRoles.${index}.categoryDefinition.tagFilters`}
-                                  label="Tag Filters"
-                                  searchQuery={searchTags}
-                                  description="Filters for the entity's tags."
-                                />
-                                <GraphQLListSearchField
-                                  name={`sourceReagentRoles.${index}.categoryDefinition.categoryFilters`}
-                                  label="Category Filters"
-                                  searchQuery={searchReagentCategory}
-                                  description="Filters for the entity's categories."
-                                />
-                                <StringField
-                                  name={`sourceReagentRoles.${index}.label`}
-                                  label="Label"
-                                  description="Which role does the entity play?"
-                                />
-                                <StringField
-                                  name={`sourceReagentRoles.${index}.description`}
-                                  label="Description"
-                                  description="What describes this role the best"
-                                />
+                              </AccordionContent>
+                            </AccordionItem>
 
+                            <AccordionItem value="target">
+                              <AccordionTrigger>Target Reagents</AccordionTrigger>
+                              <AccordionContent className="flex flex-col gap-2">
+                                {targetReagentArray.fields.map((item, index) => (
+                                  <Card key={item.id} className="p-3">
+                                    <div className="flex flex-col gap-2">
+                                      <StringField
+                                        name={`targetReagentRoles.${index}.role`}
+                                        label="Role"
+                                        description="Role name"
+                                      />
+                                      <Accordion type="single" collapsible>
+                                        <AccordionItem value="details" className="border-none">
+                                          <AccordionTrigger className="py-2 text-xs">
+                                            Details
+                                          </AccordionTrigger>
+                                          <AccordionContent className="flex flex-col gap-2 pt-2">
+                                            <StringField
+                                              name={`targetReagentRoles.${index}.label`}
+                                              label="Label"
+                                            />
+                                            <StringField
+                                              name={`targetReagentRoles.${index}.description`}
+                                              label="Description"
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`targetReagentRoles.${index}.categoryDefinition.tagFilters`}
+                                              label="Tag Filters"
+                                              searchQuery={searchTags}
+                                            />
+                                            <GraphQLListSearchField
+                                              name={`targetReagentRoles.${index}.categoryDefinition.categoryFilters`}
+                                              label="Category Filters"
+                                              searchQuery={searchReagentCategory}
+                                            />
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      </Accordion>
+                                      <Button
+                                        type="button"
+                                        onClick={() =>
+                                          targetReagentArray.remove(index)
+                                        }
+                                        variant="destructive"
+                                        size="sm"
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  </Card>
+                                ))}
                                 <Button
                                   type="button"
-                                  onClick={() => targetArray.remove(index)}
-                                  variant={"destructive"}
+                                  onClick={() =>
+                                    targetReagentArray.append({
+                                      role: "new_target_reagent",
+                                      categoryDefinition: {
+                                        tagFilters: [],
+                                        categoryFilters: [],
+                                      },
+                                    })
+                                  }
+                                  variant="outline"
+                                  size="sm"
                                 >
-                                  Delete
+                                  Add Target Reagent
                                 </Button>
-                              </div>
-                            </Card>
-                          ))}
-                          <Button
-                            className="h-full max-w-xs"
-                            type="button"
-                            onClick={() =>
-                              sourceReagentArray.append({
-                                role: "new",
-                                categoryDefinition: {
-                                  tagFilters: [],
-                                  categoryFilters: [],
-                                },
-                              })
-                            }
-                            variant={"ghost"}
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="text-xs mb-2 items-center w-full flex justify-center">
-                          Variable Definitions
-                        </div>
-                        <div className="flex flex-col gap-4">
-                          {variableDefinitionsArray.fields.map(
-                            (item, index) => (
-                              <Card
-                                key={item.id}
-                                className="p-3 max-w-lg gap-2 flex-col flex group"
-                              >
-                                <StringField
-                                  name={`variableDefinitions.${index}.param`}
-                                  label="Role"
-                                  description="Which role does the entity play?"
-                                />
-                                <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </TabsContent>
+
+                        <TabsContent value="variables" className="mt-0">
+                          <div className="flex flex-col gap-2">
+                            {variableDefinitionsArray.fields.map((item, index) => (
+                              <Card key={item.id} className="p-3">
+                                <div className="flex flex-col gap-2">
+                                  <StringField
+                                    name={`variableDefinitions.${index}.param`}
+                                    label="Parameter Name"
+                                  />
                                   <ChoicesField
                                     name={`variableDefinitions.${index}.valueKind`}
-                                    label="Tag Filters"
+                                    label="Type"
                                     options={[
                                       {
                                         label: "String",
@@ -488,65 +546,64 @@ export const TForm = (props: { graph?: string }) => {
                                         value: MetricKind.Float,
                                       },
                                     ]}
-                                    description="Filters for the entity's tags."
                                   />
-                                  <StringField
-                                    name={`variableDefinitions.${index}.description`}
-                                    label="Description"
-                                    description="Which role does the entity play?"
-                                  />
-                                  <StringField
-                                    name={`variableDefinitions.${index}.label`}
-                                    label="Label"
-                                    description="Which role does the entity play?"
-                                  />
-
+                                  <Accordion type="single" collapsible>
+                                    <AccordionItem value="details" className="border-none">
+                                      <AccordionTrigger className="py-2 text-xs">
+                                        Details
+                                      </AccordionTrigger>
+                                      <AccordionContent className="flex flex-col gap-2 pt-2">
+                                        <StringField
+                                          name={`variableDefinitions.${index}.label`}
+                                          label="Label"
+                                        />
+                                        <StringField
+                                          name={`variableDefinitions.${index}.description`}
+                                          label="Description"
+                                        />
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  </Accordion>
                                   <Button
                                     type="button"
                                     onClick={() =>
                                       variableDefinitionsArray.remove(index)
                                     }
-                                    variant={"destructive"}
+                                    variant="destructive"
+                                    size="sm"
                                   >
-                                    Delete
+                                    Remove
                                   </Button>
                                 </div>
                               </Card>
-                            ),
-                          )}
-                          <Button
-                            className="h-full max-w-xs"
-                            type="button"
-                            onClick={() =>
-                              variableDefinitionsArray.append({
-                                param: "new",
-                                valueKind: MetricKind.String,
-                                label: "",
-                                description: "",
-                              })
-                            }
-                            variant={"ghost"}
-                          >
-                            +
-                          </Button>
-                        </div>
+                            ))}
+                            <Button
+                              type="button"
+                              onClick={() =>
+                                variableDefinitionsArray.append({
+                                  param: "new_param",
+                                  valueKind: MetricKind.String,
+                                  label: "",
+                                  description: "",
+                                })
+                              }
+                              variant="outline"
+                              size="sm"
+                            >
+                              Add Variable
+                            </Button>
+                          </div>
+                        </TabsContent>
                       </div>
-                    </div>
-                  </div>
-                  <FloatingToolbar>
-                    <FloatingToolbarButtons />
-                  </FloatingToolbar>
-                  <CommentsPopover />
-                </Plate>
-              </TooltipProvider>
-            </RoleProvider>
-          </div>
-          <Button type="submit" variant={"outline"}>
-            Save
-          </Button>
-        </form>
-      </Form>
-    </>
+                    </ScrollArea>
+                  </Tabs>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </TooltipProvider>
+          </RoleProvider>
+        </div>
+      </form>
+    </Form>
   );
 };
 

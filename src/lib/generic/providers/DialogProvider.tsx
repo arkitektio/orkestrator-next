@@ -70,7 +70,10 @@ export function createDialogProvider<
     openDialog: <K extends DialogId>(
       id: K,
       props: DialogPropsMap[K],
-      options?: { className?: string },
+      options?: {
+        className?: string,
+        size?: "small" | "medium" | "large";
+      },
     ) => void;
     openSheet: <K extends DialogId>(
       id: K,

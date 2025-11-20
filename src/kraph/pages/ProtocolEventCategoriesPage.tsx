@@ -1,19 +1,14 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import { KraphProtocolEventCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import ProtocolEventCategoryList from "../components/lists/ProtocolEventCategoryList";
-import CreateProtocolEventCategoryForm from "../forms/CreateProtocolEventCategoryForm";
-import { FormSheetAction } from "@/components/ui/form-sheet-action";
-import { FormDialog } from "@/components/dialog/FormDialog";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
 
   return (
     <KraphProtocolEventCategory.ListPage
@@ -21,28 +16,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
-              variant={"outline"}
-              size={"sm"}
-              label="Create"
-              description="Create a new Protocol Category"
-              buttonChildren={
-                <>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create
-                </>
-              }
-              onSubmit={(item) => {
-                console.log(item);
-                navigate(
-                  KraphProtocolEventCategory.linkBuilder(
-                    item.createProtocolEventCategory.id,
-                  ),
-                );
-              }}
-            >
-              <CreateProtocolEventCategoryForm />
-            </FormDialogAction>
           </>
         </div>
       }

@@ -17,6 +17,7 @@ import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryR
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateReagentCategoryForm from "../forms/UpdateReagentCategoryForm";
 import { Badge } from "@/components/ui/badge";
+import EntityList from "../components/renderers/node_list/EntityList";
 
 export default asDetailQueryRoute(
   useGetReagentCategoryQuery,
@@ -123,24 +124,11 @@ export default asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        <div className="flex flex-col p-6 h-full">
-          {data.reagentCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.reagentCategory.bestQuery}
-            />
-          ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Graph Query yet for this category
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.reagentCategory} />
-              </FormDialog>
-            </div>
-          )}
+        <div className="flex-grow">
+
+          <EntityList
+            category={data.reagentCategory}
+          />
         </div>
       </KraphEntityCategory.ModelPage>
     );

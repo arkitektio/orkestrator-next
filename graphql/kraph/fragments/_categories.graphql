@@ -22,7 +22,11 @@ fragment BaseNodeCategory on NodeCategory {
   positionX
   positionY
   width
+  label
   height
+  propertyDefinitions {
+    ...PropertyDefinition
+  }
 }
 
 fragment BaseEdgeCategory on EdgeCategory {

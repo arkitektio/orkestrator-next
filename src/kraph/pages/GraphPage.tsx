@@ -29,7 +29,9 @@ import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, PlusIcon } from "lucide-react";
+import { DialogButton } from "@/components/ui/dialogbutton";
+import { SheetButton } from "@/components/ui/sheetbutton";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const navigate = useNavigate();
@@ -100,6 +102,24 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
                 New Query
               </Button>
             </DialogTrigger>
+
+            <DialogButton
+              variant={"outline"}
+              size={"sm"}
+              name="createprotocoleventcategory"
+              dialogProps={{
+                graph: data.graph.id
+              }}
+              options={{
+                size: "large"
+              }}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create Protocol
+            </DialogButton>
+
+
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Graph Query</DialogTitle>

@@ -2,6 +2,17 @@ fragment EditEvent on EditEvent {
   ...BaseNode
   id
   label
+  editor
+  timestamp
+  edited {
+    target {
+      label
+      ...PathNode
+    }
+    changeType
+    previousValue
+    newValue
+  }
 }
 
 fragment ListEditEvent on EditEvent {

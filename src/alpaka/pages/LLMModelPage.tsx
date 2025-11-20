@@ -29,6 +29,13 @@ export default asDetailQueryRoute(
               <MessageSquare className="mr-2 h-4 w-4" />
               Chat
             </Button>
+            <Button
+              onClick={() => openDialog("usemodelfor", { model: data.llmModel.id })}
+              variant="outline"
+              size="sm"
+            >
+              Use For...
+            </Button>
             <AlpakaLLMModel.ObjectButton object={data.llmModel.id} />
           </div>
         }
@@ -54,6 +61,18 @@ export default asDetailQueryRoute(
             {feature}
           </div>
         ))}
+
+        {data.llmModel.inputModalities && (
+          <div className="mt-4">
+            <strong>Input Modalities:</strong> {data.llmModel.inputModalities.join(", ")}
+          </div>
+        )}
+
+        {data.llmModel.outputModalities && (
+          <div className="mt-2">
+            <strong>Output Modalities:</strong> {data.llmModel.outputModalities.join(", ")}
+          </div>
+        )}
 
         {data.llmModel.embedderFor?.map((embedder) => (
           <AlpakaCollection.DetailLink

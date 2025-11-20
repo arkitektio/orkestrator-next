@@ -18,6 +18,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   DateTime: { input: any; output: any; }
   JSON: { input: any; output: any; }
+  UntypedParams: { input: any; output: any; }
 };
 
 export type AddDocumentsToCollectionInput = {
@@ -35,7 +36,7 @@ export type Agent = {
 /** A chat message input */
 export type ChatInput = {
   messages: Array<ChatMessageInput>;
-  model: Scalars['ID']['input'];
+  model?: InputMaybe<Scalars['ID']['input']>;
   temperature?: InputMaybe<Scalars['Float']['input']>;
   tools?: InputMaybe<Array<ToolInput>>;
 };
@@ -113,6 +114,14 @@ export type CreateRoomInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A default use for a model */
+export type DefaultUse = {
+  __typename?: 'DefaultUse';
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  model: LlmModel;
+};
+
 export type DeleteProviderInput = {
   id: Scalars['ID']['input'];
 };
@@ -175,6 +184,23 @@ export enum Granularity {
   Year = 'YEAR'
 }
 
+/** The image */
+export type ImageInput = {
+  description: Scalars['String']['input'];
+  model?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type ImageReponse = {
+  __typename?: 'ImageReponse';
+  image: Scalars['UntypedParams']['output'];
+};
+
+/** Modalities */
+export enum InputModality {
+  Image = 'IMAGE',
+  Text = 'TEXT'
+}
+
 /** A LLM model to chage with */
 export type LlmModel = {
   __typename?: 'LLMModel';
@@ -183,10 +209,14 @@ export type LlmModel = {
   /** The features supported by the model */
   features: Array<FeatureType>;
   id: Scalars['ID']['output'];
+  /** The input modalities */
+  inputModalities: Array<InputModality>;
   label: Scalars['String']['output'];
   /** The string to use for the LLM model */
   llmString: Scalars['String']['output'];
   modelId: Scalars['String']['output'];
+  /** The input modalities */
+  outputModalities: Array<InputModality>;
   provider: Provider;
 };
 
@@ -204,6 +234,8 @@ export type LlmModelFilter = {
   NOT?: InputMaybe<LlmModelFilter>;
   OR?: InputMaybe<LlmModelFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  inputModalities?: InputMaybe<Array<InputModality>>;
+  outputModalities?: InputMaybe<Array<InputModality>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -243,8 +275,10 @@ export type Mutation = {
   deleteProvider: Scalars['ID']['output'];
   deleteRoom: Scalars['ID']['output'];
   ensureCollection: ChromaCollection;
+  generateImage: ImageReponse;
   pull: OllamaPullResult;
   send: Message;
+  useModelFor: DefaultUse;
 };
 
 
@@ -293,6 +327,11 @@ export type MutationEnsureCollectionArgs = {
 };
 
 
+export type MutationGenerateImageArgs = {
+  input: ImageInput;
+};
+
+
 export type MutationPullArgs = {
   input: PullInput;
 };
@@ -300,6 +339,11 @@ export type MutationPullArgs = {
 
 export type MutationSendArgs = {
   input: SendMessageInput;
+};
+
+
+export type MutationUseModelForArgs = {
+  input: UseModelForInput;
 };
 
 export type OffsetPaginationInput = {
@@ -664,6 +708,12 @@ export type Usage = {
   totalTokens: Scalars['Int']['output'];
 };
 
+/** The input for using a model for a specific task */
+export type UseModelForInput = {
+  kind: Scalars['String']['input'];
+  model: Scalars['ID']['input'];
+};
+
 /** A reflection on the real User */
 export type User = {
   __typename?: 'User';
@@ -678,7 +728,7 @@ export type ListChromaCollectionFragment = { __typename?: 'ChromaCollection', id
 
 export type DocumentFragment = { __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null };
 
-export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
+export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
 
 export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string };
 
@@ -724,12 +774,26 @@ export type AddDocumentsToCollectionMutationVariables = Exact<{
 
 export type AddDocumentsToCollectionMutation = { __typename?: 'Mutation', addDocumentsToCollection: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null }> };
 
+export type GenerateImageMutationVariables = Exact<{
+  input: ImageInput;
+}>;
+
+
+export type GenerateImageMutation = { __typename?: 'Mutation', generateImage: { __typename?: 'ImageReponse', image: any } };
+
 export type SendMessageMutationVariables = Exact<{
   input: SendMessageInput;
 }>;
 
 
 export type SendMessageMutation = { __typename?: 'Mutation', send: { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } };
+
+export type UseModelForMutationVariables = Exact<{
+  input: UseModelForInput;
+}>;
+
+
+export type UseModelForMutation = { __typename?: 'Mutation', useModelFor: { __typename?: 'DefaultUse', model: { __typename?: 'LLMModel', id: string } } };
 
 export type CreateProviderMutationVariables = Exact<{
   input: ProviderInput;
@@ -809,7 +873,7 @@ export type GetLlmModelQueryVariables = Exact<{
 }>;
 
 
-export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
+export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
 
 export type SearchLlmModelsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -946,6 +1010,8 @@ export const LlmModelFragmentDoc = gql`
     id
     name
   }
+  inputModalities
+  outputModalities
 }
     ${ProviderFragmentDoc}`;
 export const ListLlmModelFragmentDoc = gql`
@@ -1173,6 +1239,39 @@ export function useAddDocumentsToCollectionMutation(baseOptions?: ApolloReactHoo
 export type AddDocumentsToCollectionMutationHookResult = ReturnType<typeof useAddDocumentsToCollectionMutation>;
 export type AddDocumentsToCollectionMutationResult = Apollo.MutationResult<AddDocumentsToCollectionMutation>;
 export type AddDocumentsToCollectionMutationOptions = Apollo.BaseMutationOptions<AddDocumentsToCollectionMutation, AddDocumentsToCollectionMutationVariables>;
+export const GenerateImageDocument = gql`
+    mutation GenerateImage($input: ImageInput!) {
+  generateImage(input: $input) {
+    image
+  }
+}
+    `;
+export type GenerateImageMutationFn = Apollo.MutationFunction<GenerateImageMutation, GenerateImageMutationVariables>;
+
+/**
+ * __useGenerateImageMutation__
+ *
+ * To run a mutation, you first call `useGenerateImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateImageMutation, { data, loading, error }] = useGenerateImageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGenerateImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<GenerateImageMutation, GenerateImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<GenerateImageMutation, GenerateImageMutationVariables>(GenerateImageDocument, options);
+      }
+export type GenerateImageMutationHookResult = ReturnType<typeof useGenerateImageMutation>;
+export type GenerateImageMutationResult = Apollo.MutationResult<GenerateImageMutation>;
+export type GenerateImageMutationOptions = Apollo.BaseMutationOptions<GenerateImageMutation, GenerateImageMutationVariables>;
 export const SendMessageDocument = gql`
     mutation SendMessage($input: SendMessageInput!) {
   send(input: $input) {
@@ -1206,6 +1305,41 @@ export function useSendMessageMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type SendMessageMutationHookResult = ReturnType<typeof useSendMessageMutation>;
 export type SendMessageMutationResult = Apollo.MutationResult<SendMessageMutation>;
 export type SendMessageMutationOptions = Apollo.BaseMutationOptions<SendMessageMutation, SendMessageMutationVariables>;
+export const UseModelForDocument = gql`
+    mutation UseModelFor($input: UseModelForInput!) {
+  useModelFor(input: $input) {
+    model {
+      id
+    }
+  }
+}
+    `;
+export type UseModelForMutationFn = Apollo.MutationFunction<UseModelForMutation, UseModelForMutationVariables>;
+
+/**
+ * __useUseModelForMutation__
+ *
+ * To run a mutation, you first call `useUseModelForMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUseModelForMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [useModelForMutation, { data, loading, error }] = useUseModelForMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUseModelForMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UseModelForMutation, UseModelForMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UseModelForMutation, UseModelForMutationVariables>(UseModelForDocument, options);
+      }
+export type UseModelForMutationHookResult = ReturnType<typeof useUseModelForMutation>;
+export type UseModelForMutationResult = Apollo.MutationResult<UseModelForMutation>;
+export type UseModelForMutationOptions = Apollo.BaseMutationOptions<UseModelForMutation, UseModelForMutationVariables>;
 export const CreateProviderDocument = gql`
     mutation CreateProvider($input: ProviderInput!) {
   createProvider(input: $input) {

@@ -1,0 +1,5 @@
+mutation GenerateImage($input: ImageInput!) {
+  generateImage(input: $input) {
+    image
+  }
+}

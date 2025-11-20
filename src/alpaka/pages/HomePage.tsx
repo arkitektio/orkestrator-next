@@ -4,7 +4,7 @@ import { AlpakaRoom } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useCreateRoomMutation } from "../api/graphql";
+import { InputModality, useCreateRoomMutation } from "../api/graphql";
 import RoomsCarousel from "../components/carousels/RoomsCarousel";
 import CollectionList from "../components/lists/CollectionList";
 import LLMModelList from "../components/lists/LLMModelList";

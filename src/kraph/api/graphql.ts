@@ -295,6 +295,10 @@ export type EditEvent = Node & {
   bestView?: Maybe<NodeQueryView>;
   /** The unique identifier of the entity within its graph */
   edges: Array<Edge>;
+  /** Protocol steps where this entity was the target */
+  edited: Array<Edited>;
+  /** Protocol steps where this entity was the target */
+  editor: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   externalId?: Maybe<Scalars['String']['output']>;
   /** The unique identifier of the entity within its graph */
@@ -308,8 +312,6 @@ export type EditEvent = Node & {
   leftEdges: Array<Edge>;
   /** The unique identifier of the entity within its graph */
   localId?: Maybe<Scalars['String']['output']>;
-  /** Protocol steps where this entity was the target */
-  param: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   pinned: Scalars['Boolean']['output'];
   /** The unique identifier of the entity within its graph */
@@ -325,6 +327,8 @@ export type EditEvent = Node & {
   rightEdges: Array<Edge>;
   /** The tags associated with this entity. Currently not implemented    */
   tags?: Maybe<Array<Tag>>;
+  /** Protocol steps where this entity was the target */
+  timestamp: Scalars['DateTime']['output'];
   views: Array<NodeQueryView>;
 };
 
@@ -347,17 +351,39 @@ export type EditEventPropertyArgs = {
   key: Scalars['String']['input'];
 };
 
+/** Filter for entity relations in the graph */
+export type EditEventFilter = {
+  /** Filter by graph ID */
+  graph?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of relation IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by relation kind */
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by linked expression ID */
+  linkedExpression?: InputMaybe<Scalars['ID']['input']>;
+  /** Property matches that should or should not hold true */
+  propertyMatches?: InputMaybe<Array<PropertyMatch>>;
+  /** Search relations by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 /**
  * A participant edge maps bioentitiy to an event (valid from is not necessary)
  *
  */
 export type Edited = Edge & {
   __typename?: 'Edited';
+  /** Protocol steps where this entity was the target */
+  changeType: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   id: Scalars['NodeID']['output'];
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** Protocol steps where this entity was the target */
+  newValue?: Maybe<Scalars['Any']['output']>;
+  /** Protocol steps where this entity was the target */
+  previousValue?: Maybe<Scalars['Any']['output']>;
   /** The unique identifier of the entity within its graph */
   reverseLabel: Scalars['String']['output'];
   right: Node;
@@ -2866,6 +2892,8 @@ export type Query = {
   edgeCategories: Array<EdgeCategory>;
   /** List of all relationships between entities */
   edges: Array<Edge>;
+  editEvent: EditEvent;
+  editEvents: Array<EditEvent>;
   entities: Array<Entity>;
   entity: Entity;
   /** List of all generic categories */
@@ -2972,6 +3000,17 @@ export type QueryEdgeCategoriesArgs = {
 
 export type QueryEdgesArgs = {
   filters?: InputMaybe<EntityRelationFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+export type QueryEditEventArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEditEventsArgs = {
+  filters?: InputMaybe<EditEventFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
 
@@ -4936,7 +4975,7 @@ type Edge_StructureRelation_Fragment = { __typename?: 'StructureRelation', id: a
 
 export type EdgeFragment = Edge_Description_Fragment | Edge_Edited_Fragment | Edge_Measurement_Fragment | Edge_Participant_Fragment | Edge_Relation_Fragment | Edge_StructureRelation_Fragment;
 
-export type EditEventFragment = { __typename?: 'EditEvent', id: any, label: string, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, description?: string | null, kind: ViewKind, graph: { __typename?: 'Graph', id: string, name: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Edited', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
+export type EditEventFragment = { __typename?: 'EditEvent', id: any, label: string, editor: string, timestamp: any, edited: Array<{ __typename?: 'Edited', changeType: string, previousValue?: any | null, newValue?: any | null, target: { __typename?: 'EditEvent', label: string, id: any } | { __typename?: 'Entity', label: string, id: any, externalId?: string | null, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', label: string, id: any, value: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', label: string, id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', label: string, id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', label: string, id: any, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', label: string, id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, description?: string | null, kind: ViewKind, graph: { __typename?: 'Graph', id: string, name: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Edited', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
 export type ListEditEventFragment = { __typename?: 'EditEvent', id: any };
 
@@ -5942,6 +5981,21 @@ export type SearchParticipantsQueryVariables = Exact<{
 
 
 export type SearchParticipantsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Participant', value: any, label: string }> };
+
+export type GetEditEventQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetEditEventQuery = { __typename?: 'Query', editEvent: { __typename?: 'EditEvent', id: any, label: string, editor: string, timestamp: any, edited: Array<{ __typename?: 'Edited', changeType: string, previousValue?: any | null, newValue?: any | null, target: { __typename?: 'EditEvent', label: string, id: any } | { __typename?: 'Entity', label: string, id: any, externalId?: string | null, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', label: string, id: any, value: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', label: string, id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', label: string, id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', label: string, id: any, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', label: string, id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, description?: string | null, kind: ViewKind, graph: { __typename?: 'Graph', id: string, name: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'EditEvent', id: any } | { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Edited', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'EditEvent', id: any, label: string } | { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
+
+export type SearchEditEventsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchEditEventsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EditEvent', value: any, label: string }> };
 
 export type GetProtocolEventQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7097,8 +7151,20 @@ export const EditEventFragmentDoc = gql`
   ...BaseNode
   id
   label
+  editor
+  timestamp
+  edited {
+    target {
+      label
+      ...PathNode
+    }
+    changeType
+    previousValue
+    newValue
+  }
 }
-    ${BaseNodeFragmentDoc}`;
+    ${BaseNodeFragmentDoc}
+${PathNodeFragmentDoc}`;
 export const PathEditedFragmentDoc = gql`
     fragment PathEdited on Edited {
   leftId
@@ -11550,6 +11616,81 @@ export function useSearchParticipantsLazyQuery(baseOptions?: ApolloReactHooks.La
 export type SearchParticipantsQueryHookResult = ReturnType<typeof useSearchParticipantsQuery>;
 export type SearchParticipantsLazyQueryHookResult = ReturnType<typeof useSearchParticipantsLazyQuery>;
 export type SearchParticipantsQueryResult = Apollo.QueryResult<SearchParticipantsQuery, SearchParticipantsQueryVariables>;
+export const GetEditEventDocument = gql`
+    query GetEditEvent($id: ID!) {
+  editEvent(id: $id) {
+    ...EditEvent
+  }
+}
+    ${EditEventFragmentDoc}`;
+
+/**
+ * __useGetEditEventQuery__
+ *
+ * To run a query within a React component, call `useGetEditEventQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEditEventQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEditEventQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEditEventQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEditEventQuery, GetEditEventQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetEditEventQuery, GetEditEventQueryVariables>(GetEditEventDocument, options);
+      }
+export function useGetEditEventLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEditEventQuery, GetEditEventQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetEditEventQuery, GetEditEventQueryVariables>(GetEditEventDocument, options);
+        }
+export type GetEditEventQueryHookResult = ReturnType<typeof useGetEditEventQuery>;
+export type GetEditEventLazyQueryHookResult = ReturnType<typeof useGetEditEventLazyQuery>;
+export type GetEditEventQueryResult = Apollo.QueryResult<GetEditEventQuery, GetEditEventQueryVariables>;
+export const SearchEditEventsDocument = gql`
+    query SearchEditEvents($search: String, $values: [ID!]) {
+  options: editEvents(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: label
+  }
+}
+    `;
+
+/**
+ * __useSearchEditEventsQuery__
+ *
+ * To run a query within a React component, call `useSearchEditEventsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchEditEventsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchEditEventsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchEditEventsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEditEventsQuery, SearchEditEventsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchEditEventsQuery, SearchEditEventsQueryVariables>(SearchEditEventsDocument, options);
+      }
+export function useSearchEditEventsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEditEventsQuery, SearchEditEventsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchEditEventsQuery, SearchEditEventsQueryVariables>(SearchEditEventsDocument, options);
+        }
+export type SearchEditEventsQueryHookResult = ReturnType<typeof useSearchEditEventsQuery>;
+export type SearchEditEventsLazyQueryHookResult = ReturnType<typeof useSearchEditEventsLazyQuery>;
+export type SearchEditEventsQueryResult = Apollo.QueryResult<SearchEditEventsQuery, SearchEditEventsQueryVariables>;
 export const GetProtocolEventDocument = gql`
     query GetProtocolEvent($id: ID!) {
   protocolEvent(id: $id) {

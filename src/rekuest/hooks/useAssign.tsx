@@ -1,12 +1,16 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
+  AssignationChangeEvent,
+  AssignationChangeEventFragment,
+  AssignationEventFragment,
   AssignInput,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
 } from "../api/graphql";
-
+import { v4 as uuidv4 } from "uuid";
+import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
   "instanceId"
@@ -63,3 +67,31 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     assign,
   };
 };
+
+
+export const useAssignWithCallback = <T extends any>({ onDone }: {
+  onDone?: (event: AssignationEventFragment) => void,
+
+}): useActionReturn<T> => {
+  const { assign } = useAssign();
+
+
+  const assignWithCallback = useCallback(
+    async (vars: ActionAssignVariables) => {
+      const reference = vars.reference || uuidv4();
+
+      registeredCallbacks.set(reference, (event: AssignationEventFragment) => {
+        onDone?.(event);
+      });
+
+      const assignation = await assign({ ...vars, reference });
+
+      return assignation;
+    },
+    [assign, onDone],
+  );
+
+  return {
+    assign: assignWithCallback,
+  };
+}

@@ -1,27 +1,27 @@
+import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphEntityCategory } from "@/linkers";
+import { Plus } from "lucide-react";
 import {
   EntityNodesDocument,
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
-import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
 import GraphQueryList from "../components/lists/GraphQueryList";
 import { EntityList } from "../components/renderers/node_list/EntityList";
+import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
-import { useDialog } from "@/app/dialog";
-import { Plus } from "lucide-react";
+import { DialogButton } from "@/components/ui/dialogbutton";
+import { ImageCreator } from "@/alpaka/components/ImageCreator";
+import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -112,12 +112,15 @@ export default asDetailQueryRoute(
             >
               <CreateGraphQueryForm category={data.entityCategory} />
             </FormDialog>
-            <FormSheet
-              trigger={<Button variant="outline">Edit</Button>}
-              onSubmit={() => refetch()}
+            <DialogButton
+              variant="outline"
+              className="w-full"
+              name="editentitycategory"
+              dialogProps={{ entityCategory: data.entityCategory }}
             >
-              <UpdateEntityCategoryForm entityCategory={data.entityCategory} />
-            </FormSheet>
+              Edit
+            </DialogButton>
+            <EnhanceButton identifier="@kraph/entitycategory" object={data.entityCategory.id} refetch={refetch} />
             <KraphEntityCategory.ObjectButton
               object={data.entityCategory.id}
               className="w-full"
@@ -148,12 +151,13 @@ export default asDetailQueryRoute(
             </div>
             <div className="w-full h-full flex-row relative">
               {data.entityCategory?.store?.presignedUrl && (
-                <Image
+                <img
                   src={resolve(data.entityCategory?.store.presignedUrl)}
                   style={{ filter: "brightness(0.7)" }}
                   className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
                 />
               )}
+
             </div>
 
             <DragZone uploadFile={uploadFile} createFile={createFile} />

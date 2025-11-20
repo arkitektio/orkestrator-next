@@ -717,6 +717,8 @@ const DateTimePicker = React.forwardRef<
     },
     ref,
   ) => {
+
+    const [current, setCurrent] = React.useState<Date | undefined>(value);
     const [month, setMonth] = React.useState<Date>(value ?? new Date());
     const buttonRef = useRef<HTMLButtonElement>(null);
     /**
@@ -726,14 +728,14 @@ const DateTimePicker = React.forwardRef<
     const handleSelect = (newDay: Date | undefined) => {
       if (!newDay) return;
       if (!value) {
-        onChange?.(newDay);
+        setCurrent(newDay);
         setMonth(newDay);
         return;
       }
       const diff = newDay.getTime() - value.getTime();
       const diffInDays = diff / (1000 * 60 * 60 * 24);
       const newDateFull = add(value, { days: Math.ceil(diffInDays) });
-      onChange?.(newDateFull);
+      setCurrent(newDateFull);
       setMonth(newDateFull);
     };
 
@@ -767,7 +769,7 @@ const DateTimePicker = React.forwardRef<
     }
 
     return (
-      <Popover>
+      <Popover onOpenChange={(open) => !open && onChange && onChange(current)}>
         <PopoverTrigger asChild disabled={disabled}>
           <Button
             variant="outline"
@@ -797,7 +799,7 @@ const DateTimePicker = React.forwardRef<
         <PopoverContent className="w-auto p-0">
           <Calendar
             mode="single"
-            selected={value}
+            selected={current}
             month={month}
             onSelect={(d) => handleSelect(d)}
             onMonthChange={handleSelect}
@@ -808,8 +810,8 @@ const DateTimePicker = React.forwardRef<
           {granularity !== "day" && (
             <div className="border-t border-border p-3">
               <TimePicker
-                onChange={onChange}
-                date={value}
+                onChange={setCurrent}
+                date={current}
                 hourCycle={hourCycle}
                 granularity={granularity}
               />

@@ -29,6 +29,7 @@ import {
   ListPageLayout,
   ListPageLayoutProps,
 } from "@/components/layout/ListPageLayout";
+import { EnhanceButton, EnhanceButtonProps } from "@/alpaka/components/EnhanceButton";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -207,6 +208,8 @@ export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & {
 };
 export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
 
+export type SmartEnhanceButtonProps = Omit<EnhanceButtonProps, "identifier">
+
 const buildObjectButton = (model: Identifier) => {
   return ({ object, ...props }: SmartObjectButtonProps) => {
     return (
@@ -214,6 +217,14 @@ const buildObjectButton = (model: Identifier) => {
     );
   };
 };
+
+const buildEnhanceButton = (model: Identifier) => {
+  return ({ ...props }: SmartEnhanceButtonProps) => {
+    return (
+      <EnhanceButton identifier={model} object={props.object} />
+    );
+  };
+}
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
@@ -246,6 +257,7 @@ export const buildSmart = (
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),
+    EnhanceButton: buildEnhanceButton(model),
     TinyKnowledge: buildTinyKnowledge(model),
     identifier: model,
     ModelPage: buildModelPage(model),

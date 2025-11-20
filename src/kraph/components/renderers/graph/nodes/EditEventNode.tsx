@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphProtocolEventCategory } from "@/linkers";
+import { KraphEditEvent, KraphProtocolEventCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
@@ -30,12 +30,12 @@ export default memo(({ data, id, selected }: NodeProps<EditEventNode>) => {
 
 
           <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
-            <KraphProtocolEventCategory.DetailLink
+            <KraphEditEvent.DetailLink
               object={data.id}
               className={"font-bold"}
             >
               {data.id}
-            </KraphProtocolEventCategory.DetailLink>
+            </KraphEditEvent.DetailLink>
           </div>
         </Card>
       </div>

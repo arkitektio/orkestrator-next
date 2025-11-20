@@ -1,0 +1,7 @@
+mutation UseModelFor($input: UseModelForInput!) {
+  useModelFor(input: $input) {
+    model {
+      id
+    }
+  }
+}

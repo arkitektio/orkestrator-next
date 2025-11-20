@@ -10,6 +10,8 @@ fragment LLMModel on LLMModel {
     id
     name
   }
+  inputModalities
+  outputModalities
 }
 
 fragment ListLLMModel on LLMModel {

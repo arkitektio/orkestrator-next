@@ -16,6 +16,8 @@ import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
+import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
+import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,
@@ -35,4 +37,6 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   chat: ChatDialog,
   reportbug: ReportBugDialog,
   reportclientbug: ReportClientBugDialog,
+  editentitycategory: UpdateEntityCategoryForm,
+  usemodelfor: UseModelForDialog
 });

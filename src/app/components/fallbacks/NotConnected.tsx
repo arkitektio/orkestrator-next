@@ -1,3 +1,4 @@
+import { DocuLink } from "@/components/docu-link";
 import { StringField } from "@/components/fields/StringField";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -422,17 +423,7 @@ export const PreconfiguredEndpointsWidget = () => {
             Discovering endpoints...
           </div>
         )}
-        <div className="ml-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            disabled={isDiscovering}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isDiscovering ? 'animate-spin' : ''}`} />
-            Retry All
-          </Button>
-        </div>
+
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -462,6 +453,17 @@ export const PreconfiguredEndpointsWidget = () => {
             className="grayscale"
           />
         ))}
+      </div>
+      <div className="w-full flex items-center justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRetry}
+          disabled={isDiscovering}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isDiscovering ? 'animate-spin' : ''}`} />
+          Retry All
+        </Button>
       </div>
     </div>
   );
@@ -542,9 +544,13 @@ export const NotConnected = () => {
             )}
           </div>
 
+          <div className="flex justify-center">
+            <DocuLink to="introduction/basics">What does this mean?</DocuLink>
+          </div>
+
           <div className="space-y-4 flex flex-col items-center">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
+              <h3 className="text-lg font-semibold text-foreground">
                 Available Endpoints
               </h3>
             </div>

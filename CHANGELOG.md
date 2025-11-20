@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/arkitektio/orkestrator-next/compare/v1.28.0...v1.28.1) (2025-11-20)
+
+
+### Bug Fixes
+
+* add more sheets ([9e22573](https://github.com/arkitektio/orkestrator-next/commit/9e22573728cac681e802a8beeecb90d8b3b252c7))
+
 # [1.28.0](https://github.com/arkitektio/orkestrator-next/compare/v1.27.0...v1.28.0) (2025-11-20)
 
 

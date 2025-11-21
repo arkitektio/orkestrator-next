@@ -1,11 +1,12 @@
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import { Progress } from "@/components/ui/progress";
 import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
-import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
+import { ReturnsContainer, WrappedReturnsContainer } from "@/rekuest/widgets/tailwind";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { AlertCircle, Bug, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -20,7 +21,8 @@ import {
   WatchAssignationsSubscription,
 } from "../../api/graphql";
 import { RekuestAssignation } from "@/linkers";
-import { DialogButton } from "@/components/ui/dialogbutton";
+import { cn } from "@/lib/utils";
+import Timestamp from "react-timestamp";
 
 export const registeredCallbacks = new Map<
   string,
@@ -44,8 +46,8 @@ export const DynamicYieldDisplay = (props: {
   }
 
   return (
-    <div className="h-32 w-32 overflow-auto border p-2">
-      <ReturnsContainer
+    <div className="w-full h-full overflow-hidden p-2 flex bg-muted/50 rounded-md border border-muted-foreground/10 flex-col gap-2 items-center justify-center">
+      <WrappedReturnsContainer
         ports={data.action.returns}
         values={props.values}
         registry={registry}
@@ -53,6 +55,23 @@ export const DynamicYieldDisplay = (props: {
       />
     </div>
   );
+};
+
+export const borderColorForAss = (ass: any) => {
+  if (ass.error) {
+    return "border-red-500";
+  }
+  if (ass.cancelled) {
+    return "border-orange-500";
+  }
+  if (ass.done) {
+    return "border-green-500";
+  }
+  if (ass.yield) {
+    return "border-blue-500";
+  }
+
+  return "border-muted-foreground/10";
 };
 
 export const AssignationToaster = (props: { id: string }) => {
@@ -75,73 +94,60 @@ export const AssignationToaster = (props: { id: string }) => {
 
   return (
     <div
-      className="h-full relative w-full overflow-hidden group p-2"
+      className={cn("relative w-full! !w-full  group flex flex-col gap-2 h-20")}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {ass.error && <Alert className="bg-red-800">{ass.error}</Alert>}
-      {ass.error && ass.assignationId && <DialogButton name="reportbug" variant="outline" size="sm"
-        dialogProps={{ assignationId: ass.assignationId }}
-      >
-        Report Bug
-      </DialogButton>}
-      {ass.yield && ass.actionId && (
-        <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
-      )}
-      {ass.cancelled && <Alert>{ass.message}</Alert>}
-      {ass.progress != undefined && <Progress value={ass.progress} />}
-      <p className="mt-2">{ass.message}</p>
-      {ass.done && "Done :)"}
-      {ass.event?.kind == AssignationEventKind.Queued && <>Enqueued...</>}
-      {ass.event?.kind == AssignationEventKind.Bound && <>Bound...</>}
-      {ass.event?.kind == AssignationEventKind.Cancelled && (
-        <>Successfully cancelled :)</>
-      )}
-
-      <div className="group-hover:opacity-100 opacity-0 bg-black p-1 rounded-full absolute bottom-0 right-0">
-        {!ass.done && !ass.error ? (
-          <Button
-            onClick={() =>
-              cancelAssign({ variables: { input: { assignation: props.id } } })
-            }
-            variant={"destructive"}
-            size={"sm"}
-            className="flex-1 rounded-l-full py-1"
-          >
-            {" "}
-            Cancel{" "}
-          </Button>
-        ) : (
-          <Button
-            variant={"destructive"}
-            size={"sm"}
-            onClick={() => {
-              toast.dismiss(props.id);
-            }}
-            className="flex-1 rounded-l-full py-1"
-            disabled={true}
-          >
-            {" "}
-            Accept{" "}
-          </Button>
-        )}
-        <RekuestAssignation.DetailLink object={props.id}>
-          Open
+      <div className={cn("absolute bottom-0 left-2 h-6  z-999 translate-y-[30%] border border-muted-foreground/10 bg-background rounded-md px-2 py-1", borderColorForAss(ass))}>
+        <RekuestAssignation.DetailLink object={ass.assignationId || ""}>
+          <div className="flex flex-row h-full w-full justify-center ">
+            {JSON.stringify(ass)}
+            {ass.event?.kind == AssignationEventKind.Progress && (
+              <Loader2 className="animate-spin h-4 w-4 text-muted-foreground flex-shrink-0 my-auto" />
+            )}
+            {ass.event?.kind == AssignationEventKind.Bound && (
+              <Loader2 className="animate-spin h-4 w-4 text-blue-500 flex-shrink-0 my-auto" />
+            )}
+            {ass.yield && !ass.done && (
+              <Loader2 className="animate-spin h-4 w-4 text-muted-foreground flex-shrink-0 my-auto" />
+            )}
+            {ass.done && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 my-auto" />}
+            {ass.cancelled && <XCircle className="h-4 w-4 text-orange-500 flex-shrink-0 my-auto" />}
+            {ass.error && <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 my-auto" />}
+            <div className="ml-2 text-xs my-auto">{ass.event?.kind}</div>
+            {ass.message && !ass.error && <div className="ml-2 font-light text-xs my-auto">{ass.message}</div>}
+            {ass.progress != undefined && ass.progress != 0 && (
+              <div className="ml-2 font-light text-xs my-auto">{ass.progress}</div>
+            )}
+          </div>
         </RekuestAssignation.DetailLink>
-        <Button
-          variant={"ghost"}
-          size={"sm"}
-          onClick={() => {
-            toast.dismiss(props.id);
-          }}
-          className="flex-1 rounded-r-full"
-        >
-          Hide
-        </Button>
+      </div>
+      <div className="h-full w-full flex flex-col items-center justify-center">
+        {ass.error && (
+          <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded w-full h-full">
+            {ass.error}
+          </div>
+        )}
+
+
+        {ass.yield && ass.actionId && (
+          <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
+        )}
+
+        {ass.message && !ass.yield && !ass.error && (
+          <div className="text-xs  bg-slate-500/10 p-2 rounded h-full w-full">
+            {ass.message}
+          </div>
+        )}
+
+
       </div>
     </div>
   );
 };
+
+
+export const cached_assignations_events = {}
 
 export const AssignationUpdater = (props: {}) => {
   const { settings } = useSettings();
@@ -179,11 +185,7 @@ export const AssignationUpdater = (props: {}) => {
                 );
 
                 if (!assignation) {
-                  console.error(
-                    "Assignation not found",
-                    event.assignation.id,
-                    data?.assignations,
-                  );
+                  cached_assignations[event.assignation.id] = event;
                 }
 
                 registeredCallbacks.get(event.assignation.reference)?.(event);
@@ -208,8 +210,25 @@ export const AssignationUpdater = (props: {}) => {
                 },
               },
               (data) => {
+                event = cached_assignations_events[create.id];
+
+                let new_create;
+                if (event) {
+                  new_create = {
+                    ...create,
+                    events: [event, ...create.events],
+                  };
+                }
+                else {
+                  new_create = create;
+                }
+
+
+
+
+
                 return {
-                  assignations: data?.assignations.concat([create]) || [create],
+                  assignations: data?.assignations.concat([new_create]) || [new_create],
                 };
               },
             );

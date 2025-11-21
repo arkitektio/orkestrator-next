@@ -15,6 +15,9 @@ fragment Entity on Entity {
     id
     label
     ageName
+    propertyDefinitions {
+      ...PropertyDefinition
+    }
   }
   label
   subjectableTo {
@@ -28,7 +31,6 @@ fragment Entity on Entity {
     key
     value
   }
-
   measuredBy {
     id
     category {
@@ -81,6 +83,16 @@ fragment Entity on Entity {
       id
       label
     }
+  }
+  editedIn {
+    id
+    event {
+      id
+      timestamp
+    }
+    changeType
+    previousValue
+    newValue
   }
 }
 

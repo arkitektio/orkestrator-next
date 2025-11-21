@@ -28,7 +28,7 @@ export type PageLayoutProps = {
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
-  variant?: PageVariant;
+  variant?: "black" | "default";
 };
 
 export const PageLayout = ({

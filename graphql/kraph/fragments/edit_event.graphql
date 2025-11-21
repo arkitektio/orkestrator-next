@@ -21,9 +21,14 @@ fragment ListEditEvent on EditEvent {
 
 fragment PathEditEvent on EditEvent {
   ...ListEditEvent
+  timestamp
+  editor
 }
 
 fragment PathEdited on Edited {
   leftId
   rightId
+  changeType
+  previousValue
+  newValue
 }

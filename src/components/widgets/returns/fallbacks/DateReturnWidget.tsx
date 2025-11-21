@@ -6,7 +6,7 @@ const DateReturnWidget: React.FC<ReturnWidgetProps> = ({
   widget,
   value,
 }) => {
-  return <div className="text-white">{value}</div>;
+  return <div className="text-white items-center flex justify-center h-full w-full">{value}</div>
 };
 
 export { DateReturnWidget };

@@ -10,6 +10,7 @@ import {
   KraphEntityCategory,
   KraphMeasurement,
   KraphProtocolEvent,
+  KraphStructure,
 } from "@/linkers";
 import {
   ActivityLogIcon,
@@ -25,12 +26,14 @@ import {
   Tag,
 } from "lucide-react";
 import Timestamp from "react-timestamp";
-import { useGetEntityQuery } from "../api/graphql";
+import { ChangeKind, useGetEntityQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 import { PropertyEditor } from "../components/PropertyEditor";
 import { PropertyRenderer } from "../components/PropertyRenderer";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
+import { UserAvatar } from "@/lok-next/components/UserAvatar";
+import { SmartLink } from "@/providers/smart/builder";
 
 export const calculateDuration = (start?: string, end?: string) => {
   if (!start) return null;
@@ -52,6 +55,19 @@ export const calculateDuration = (start?: string, end?: string) => {
   return durationStr.trim();
 };
 
+
+export const changeKindToLabel = (kind: ChangeKind) => {
+  switch (kind) {
+    case ChangeKind.Create:
+      return "Created";
+    case ChangeKind.Delete:
+      return "Deleted";
+    case ChangeKind.Update:
+      return "Updated";
+    default:
+      return "Changed";
+  }
+};
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
     <KraphEntity.ModelPage
@@ -219,7 +235,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                           className="w-full justify-start"
                         >
                           <ArrowRight className="mr-2 h-4 w-4" />
-                          Subject as {protocol.role}
+                          Subject as {protocol.role} in {protocol.category.label}
                         </Button>
                       }
                     >
@@ -244,8 +260,9 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                 </h3>
                 <div className="grid gap-4 pl-2">
                   {data.entity.measuredBy.map((measurement) => (
-                    <KraphMeasurement.Smart
-                      object={measurement.id}
+                    <SmartLink
+                      identifier={measurement.source.identifier}
+                      object={measurement.source.object || ""}
                       key={`${measurement.id}`}
                     >
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -263,7 +280,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                           View
                         </Button>
                       </div>
-                    </KraphMeasurement.Smart>
+                    </SmartLink>
                   ))}
                 </div>
               </div>
@@ -342,6 +359,12 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                                   relative
                                 />
                               )}
+                              {targeted.source.validTo && (
+                                <Timestamp
+                                  date={targeted.source.validTo}
+                                  relative
+                                />
+                              )}
                             </div>
                           </div>
                         )}
@@ -364,21 +387,27 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                   {data.entity.editedIn.map((edited) => (
                     <div key={edited.id} className="ml-4 relative">
                       <span className="absolute -left-[1.6rem] top-1 h-3 w-3 rounded-full bg-primary" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {edited.changeType}
-                        </span>
-                        <KraphEditEvent.DetailLink
-                          object={edited.event.id}
-                          className="text-xs text-muted-foreground hover:underline"
-                        >
-                          <Timestamp date={edited.event.timestamp} relative />
-                        </KraphEditEvent.DetailLink>
-                        {edited.previousValue && (
-                          <div className="mt-1 text-xs bg-muted p-2 rounded">
-                            Previous: {edited.previousValue}
-                          </div>
-                        )}
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="">
+                          {edited.event.editor?.sub && <UserAvatar sub={edited.event.editor.sub} />}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {changeKindToLabel(edited.changeKind)} {edited.propertyName}
+                          </span>
+
+                          <KraphEditEvent.DetailLink
+                            object={edited.event.id}
+                            className="text-xs text-muted-foreground hover:underline"
+                          >
+                            <Timestamp date={edited.event.timestamp} relative />
+                          </KraphEditEvent.DetailLink>
+                          {edited.previousValue && (
+                            <div className="mt-1 text-xs bg-muted p-2 rounded">
+                              Previous: {edited.previousValue}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

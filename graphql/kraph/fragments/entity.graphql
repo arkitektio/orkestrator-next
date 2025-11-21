@@ -89,8 +89,12 @@ fragment Entity on Entity {
     event {
       id
       timestamp
+      editor {
+        sub
+      }
     }
-    changeType
+    propertyName
+    changeKind
     previousValue
     newValue
   }

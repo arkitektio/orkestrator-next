@@ -316,26 +316,6 @@ const calculateColumns = (
     },
   ];
 
-  list.category.propertyDefinitions?.forEach((variable) => {
-    defaults.push({
-      id: variable.key,
-      accessorFn: (x) =>
-        x.__typename === "Entity"
-          ? x.properties
-            ? (x.properties as Record<string, any>)[variable.key]
-            : undefined
-          : undefined,
-      header: () => <div className="text-center">{variable.key}</div>,
-      cell: ({ row }) => {
-        const value = row.getValue(variable.key) as string;
-        const id = row.getValue("id") as string;
-        return <EditableCell value={value} nodeId={id} propertyDefinition={variable} />;
-      },
-      enableSorting: true,
-      enableGlobalFilter: true,
-    });
-  });
-
 
 
 

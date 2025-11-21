@@ -3,7 +3,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { MetricKind, PropertyDefinitionFragment, useSetNodePropertyMutation } from "@/kraph/api/graphql";
+import { GetEntityDocument, MetricKind, PropertyDefinitionFragment, useSetNodePropertyMutation } from "@/kraph/api/graphql";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +19,9 @@ export const PropertyEditor = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const [setNodeProperty, { loading }] = useSetNodePropertyMutation();
+  const [setNodeProperty, { loading }] = useSetNodePropertyMutation({
+    refetchQueries: [{ query: GetEntityDocument, variables: { id: entityId } }],
+  });
 
   const handleSave = async () => {
     try {

@@ -101,7 +101,7 @@ export const AssignationToaster = (props: { id: string }) => {
       <div className={cn("absolute bottom-0 left-2 h-6  z-999 translate-y-[30%] border border-muted-foreground/10 bg-background rounded-md px-2 py-1", borderColorForAss(ass))}>
         <RekuestAssignation.DetailLink object={ass.assignationId || ""}>
           <div className="flex flex-row h-full w-full justify-center ">
-            {JSON.stringify(ass)}
+
             {ass.event?.kind == AssignationEventKind.Progress && (
               <Loader2 className="animate-spin h-4 w-4 text-muted-foreground flex-shrink-0 my-auto" />
             )}

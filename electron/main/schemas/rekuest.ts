@@ -1,6 +1,5 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-import * as ApolloReactHooks from '@/lib/rekuest/hooks';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
+import gql from 'graphql-tag';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -8,7 +7,7 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: 
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-const defaultOptions = {} as const;
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: { input: string; output: string; }
@@ -3223,7 +3222,7 @@ export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: 
 
 export type AgentOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
 
 
@@ -3693,7 +3692,7 @@ export type DependencyQuery = { __typename?: 'Query', dependency: { __typename?:
 export type SearchMemoryDrawerQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   implementation?: InputMaybe<Scalars['ID']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
@@ -3717,7 +3716,7 @@ export type HomePageStatsQuery = { __typename?: 'Query', actionStats: { __typena
 
 export type HooksSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
 
 
@@ -3750,7 +3749,7 @@ export type ListImplementationsQuery = { __typename?: 'Query', implementations: 
 
 export type ImplementationOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   dependency?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
@@ -3817,7 +3816,7 @@ export type MemoryShelveQuery = { __typename?: 'Query', memoryShelve: { __typena
 
 export type ProtocolOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
 
 
@@ -5015,35 +5014,6 @@ export const AgentOptionsDocument = gql`
   }
 }
     `;
-
-/**
- * __useAgentOptionsQuery__
- *
- * To run a query within a React component, call `useAgentOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useAgentOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentOptionsQuery, AgentOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
-      }
-export function useAgentOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentOptionsQuery, AgentOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
-        }
-export type AgentOptionsQueryHookResult = ReturnType<typeof useAgentOptionsQuery>;
-export type AgentOptionsLazyQueryHookResult = ReturnType<typeof useAgentOptionsLazyQuery>;
-export type AgentOptionsQueryResult = Apollo.QueryResult<AgentOptionsQuery, AgentOptionsQueryVariables>;
 export const AcknowledgeDocument = gql`
     mutation Acknowledge($assignation: ID!) {
   ack(input: {assignation: $assignation}) {
@@ -5051,32 +5021,6 @@ export const AcknowledgeDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export type AcknowledgeMutationFn = Apollo.MutationFunction<AcknowledgeMutation, AcknowledgeMutationVariables>;
-
-/**
- * __useAcknowledgeMutation__
- *
- * To run a mutation, you first call `useAcknowledgeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAcknowledgeMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [acknowledgeMutation, { data, loading, error }] = useAcknowledgeMutation({
- *   variables: {
- *      assignation: // value for 'assignation'
- *   },
- * });
- */
-export function useAcknowledgeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AcknowledgeMutation, AcknowledgeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AcknowledgeMutation, AcknowledgeMutationVariables>(AcknowledgeDocument, options);
-      }
-export type AcknowledgeMutationHookResult = ReturnType<typeof useAcknowledgeMutation>;
-export type AcknowledgeMutationResult = Apollo.MutationResult<AcknowledgeMutation>;
-export type AcknowledgeMutationOptions = Apollo.BaseMutationOptions<AcknowledgeMutation, AcknowledgeMutationVariables>;
 export const PinAgentDocument = gql`
     mutation PinAgent($input: PinInput!) {
   pinAgent(input: $input) {
@@ -5084,63 +5028,11 @@ export const PinAgentDocument = gql`
   }
 }
     ${AgentFragmentDoc}`;
-export type PinAgentMutationFn = Apollo.MutationFunction<PinAgentMutation, PinAgentMutationVariables>;
-
-/**
- * __usePinAgentMutation__
- *
- * To run a mutation, you first call `usePinAgentMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `usePinAgentMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [pinAgentMutation, { data, loading, error }] = usePinAgentMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function usePinAgentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinAgentMutation, PinAgentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinAgentMutation, PinAgentMutationVariables>(PinAgentDocument, options);
-      }
-export type PinAgentMutationHookResult = ReturnType<typeof usePinAgentMutation>;
-export type PinAgentMutationResult = Apollo.MutationResult<PinAgentMutation>;
-export type PinAgentMutationOptions = Apollo.BaseMutationOptions<PinAgentMutation, PinAgentMutationVariables>;
 export const DeleteAgentDocument = gql`
     mutation DeleteAgent($id: ID!) {
   deleteAgent(input: {id: $id})
 }
     `;
-export type DeleteAgentMutationFn = Apollo.MutationFunction<DeleteAgentMutation, DeleteAgentMutationVariables>;
-
-/**
- * __useDeleteAgentMutation__
- *
- * To run a mutation, you first call `useDeleteAgentMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteAgentMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteAgentMutation, { data, loading, error }] = useDeleteAgentMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteAgentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteAgentMutation, DeleteAgentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteAgentMutation, DeleteAgentMutationVariables>(DeleteAgentDocument, options);
-      }
-export type DeleteAgentMutationHookResult = ReturnType<typeof useDeleteAgentMutation>;
-export type DeleteAgentMutationResult = Apollo.MutationResult<DeleteAgentMutation>;
-export type DeleteAgentMutationOptions = Apollo.BaseMutationOptions<DeleteAgentMutation, DeleteAgentMutationVariables>;
 export const EnsureAgentDocument = gql`
     mutation EnsureAgent($input: AgentInput!) {
   ensureAgent(input: $input) {
@@ -5148,32 +5040,6 @@ export const EnsureAgentDocument = gql`
   }
 }
     ${AgentFragmentDoc}`;
-export type EnsureAgentMutationFn = Apollo.MutationFunction<EnsureAgentMutation, EnsureAgentMutationVariables>;
-
-/**
- * __useEnsureAgentMutation__
- *
- * To run a mutation, you first call `useEnsureAgentMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useEnsureAgentMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [ensureAgentMutation, { data, loading, error }] = useEnsureAgentMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useEnsureAgentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureAgentMutation, EnsureAgentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureAgentMutation, EnsureAgentMutationVariables>(EnsureAgentDocument, options);
-      }
-export type EnsureAgentMutationHookResult = ReturnType<typeof useEnsureAgentMutation>;
-export type EnsureAgentMutationResult = Apollo.MutationResult<EnsureAgentMutation>;
-export type EnsureAgentMutationOptions = Apollo.BaseMutationOptions<EnsureAgentMutation, EnsureAgentMutationVariables>;
 export const AssignDocument = gql`
     mutation assign($input: AssignInput!) {
   assign(input: $input) {
@@ -5181,32 +5047,6 @@ export const AssignDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export type AssignMutationFn = Apollo.MutationFunction<AssignMutation, AssignMutationVariables>;
-
-/**
- * __useAssignMutation__
- *
- * To run a mutation, you first call `useAssignMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAssignMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [assignMutation, { data, loading, error }] = useAssignMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useAssignMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssignMutation, AssignMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AssignMutation, AssignMutationVariables>(AssignDocument, options);
-      }
-export type AssignMutationHookResult = ReturnType<typeof useAssignMutation>;
-export type AssignMutationResult = Apollo.MutationResult<AssignMutation>;
-export type AssignMutationOptions = Apollo.BaseMutationOptions<AssignMutation, AssignMutationVariables>;
 export const CancelDocument = gql`
     mutation cancel($input: CancelInput!) {
   cancel(input: $input) {
@@ -5214,32 +5054,6 @@ export const CancelDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export type CancelMutationFn = Apollo.MutationFunction<CancelMutation, CancelMutationVariables>;
-
-/**
- * __useCancelMutation__
- *
- * To run a mutation, you first call `useCancelMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCancelMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [cancelMutation, { data, loading, error }] = useCancelMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCancelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CancelMutation, CancelMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CancelMutation, CancelMutationVariables>(CancelDocument, options);
-      }
-export type CancelMutationHookResult = ReturnType<typeof useCancelMutation>;
-export type CancelMutationResult = Apollo.MutationResult<CancelMutation>;
-export type CancelMutationOptions = Apollo.BaseMutationOptions<CancelMutation, CancelMutationVariables>;
 export const InterruptDocument = gql`
     mutation interrupt($input: InterruptInput!) {
   interrupt(input: $input) {
@@ -5247,32 +5061,6 @@ export const InterruptDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export type InterruptMutationFn = Apollo.MutationFunction<InterruptMutation, InterruptMutationVariables>;
-
-/**
- * __useInterruptMutation__
- *
- * To run a mutation, you first call `useInterruptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useInterruptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [interruptMutation, { data, loading, error }] = useInterruptMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useInterruptMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<InterruptMutation, InterruptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<InterruptMutation, InterruptMutationVariables>(InterruptDocument, options);
-      }
-export type InterruptMutationHookResult = ReturnType<typeof useInterruptMutation>;
-export type InterruptMutationResult = Apollo.MutationResult<InterruptMutation>;
-export type InterruptMutationOptions = Apollo.BaseMutationOptions<InterruptMutation, InterruptMutationVariables>;
 export const CreateBlokDocument = gql`
     mutation CreateBlok($input: CreateBlokInput!) {
   createBlok(input: $input) {
@@ -5280,32 +5068,6 @@ export const CreateBlokDocument = gql`
   }
 }
     ${BlokFragmentDoc}`;
-export type CreateBlokMutationFn = Apollo.MutationFunction<CreateBlokMutation, CreateBlokMutationVariables>;
-
-/**
- * __useCreateBlokMutation__
- *
- * To run a mutation, you first call `useCreateBlokMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateBlokMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createBlokMutation, { data, loading, error }] = useCreateBlokMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateBlokMutation, CreateBlokMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateBlokMutation, CreateBlokMutationVariables>(CreateBlokDocument, options);
-      }
-export type CreateBlokMutationHookResult = ReturnType<typeof useCreateBlokMutation>;
-export type CreateBlokMutationResult = Apollo.MutationResult<CreateBlokMutation>;
-export type CreateBlokMutationOptions = Apollo.BaseMutationOptions<CreateBlokMutation, CreateBlokMutationVariables>;
 export const MaterializeBlokDocument = gql`
     mutation MaterializeBlok($input: MaterializeBlokInput!) {
   materializeBlok(input: $input) {
@@ -5313,32 +5075,6 @@ export const MaterializeBlokDocument = gql`
   }
 }
     ${MaterializedBlokFragmentDoc}`;
-export type MaterializeBlokMutationFn = Apollo.MutationFunction<MaterializeBlokMutation, MaterializeBlokMutationVariables>;
-
-/**
- * __useMaterializeBlokMutation__
- *
- * To run a mutation, you first call `useMaterializeBlokMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useMaterializeBlokMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [materializeBlokMutation, { data, loading, error }] = useMaterializeBlokMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useMaterializeBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<MaterializeBlokMutation, MaterializeBlokMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<MaterializeBlokMutation, MaterializeBlokMutationVariables>(MaterializeBlokDocument, options);
-      }
-export type MaterializeBlokMutationHookResult = ReturnType<typeof useMaterializeBlokMutation>;
-export type MaterializeBlokMutationResult = Apollo.MutationResult<MaterializeBlokMutation>;
-export type MaterializeBlokMutationOptions = Apollo.BaseMutationOptions<MaterializeBlokMutation, MaterializeBlokMutationVariables>;
 export const CreateDashboardDocument = gql`
     mutation CreateDashboard($input: CreateDashboardInput!) {
   createDashboard(input: $input) {
@@ -5347,62 +5083,11 @@ export const CreateDashboardDocument = gql`
   }
 }
     `;
-export type CreateDashboardMutationFn = Apollo.MutationFunction<CreateDashboardMutation, CreateDashboardMutationVariables>;
-
-/**
- * __useCreateDashboardMutation__
- *
- * To run a mutation, you first call `useCreateDashboardMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateDashboardMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createDashboardMutation, { data, loading, error }] = useCreateDashboardMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateDashboardMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDashboardMutation, CreateDashboardMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateDashboardMutation, CreateDashboardMutationVariables>(CreateDashboardDocument, options);
-      }
-export type CreateDashboardMutationHookResult = ReturnType<typeof useCreateDashboardMutation>;
-export type CreateDashboardMutationResult = Apollo.MutationResult<CreateDashboardMutation>;
-export type CreateDashboardMutationOptions = Apollo.BaseMutationOptions<CreateDashboardMutation, CreateDashboardMutationVariables>;
 export const ReinitDocument = gql`
     mutation Reinit {
   reinit(input: {})
 }
     `;
-export type ReinitMutationFn = Apollo.MutationFunction<ReinitMutation, ReinitMutationVariables>;
-
-/**
- * __useReinitMutation__
- *
- * To run a mutation, you first call `useReinitMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useReinitMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [reinitMutation, { data, loading, error }] = useReinitMutation({
- *   variables: {
- *   },
- * });
- */
-export function useReinitMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReinitMutation, ReinitMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReinitMutation, ReinitMutationVariables>(ReinitDocument, options);
-      }
-export type ReinitMutationHookResult = ReturnType<typeof useReinitMutation>;
-export type ReinitMutationResult = Apollo.MutationResult<ReinitMutation>;
-export type ReinitMutationOptions = Apollo.BaseMutationOptions<ReinitMutation, ReinitMutationVariables>;
 export const ReserveDocument = gql`
     mutation Reserve($instanceId: InstanceId!, $action: ID, $hash: ActionHash, $implementation: ID, $binds: BindsInput, $title: String) {
   reserve(
@@ -5412,37 +5097,6 @@ export const ReserveDocument = gql`
   }
 }
     ${PostmanReservationFragmentDoc}`;
-export type ReserveMutationFn = Apollo.MutationFunction<ReserveMutation, ReserveMutationVariables>;
-
-/**
- * __useReserveMutation__
- *
- * To run a mutation, you first call `useReserveMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useReserveMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [reserveMutation, { data, loading, error }] = useReserveMutation({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *      action: // value for 'action'
- *      hash: // value for 'hash'
- *      implementation: // value for 'implementation'
- *      binds: // value for 'binds'
- *      title: // value for 'title'
- *   },
- * });
- */
-export function useReserveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReserveMutation, ReserveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReserveMutation, ReserveMutationVariables>(ReserveDocument, options);
-      }
-export type ReserveMutationHookResult = ReturnType<typeof useReserveMutation>;
-export type ReserveMutationResult = Apollo.MutationResult<ReserveMutation>;
-export type ReserveMutationOptions = Apollo.BaseMutationOptions<ReserveMutation, ReserveMutationVariables>;
 export const CreateShortcutDocument = gql`
     mutation CreateShortcut($input: CreateShortcutInput!) {
   createShortcut(input: $input) {
@@ -5450,63 +5104,11 @@ export const CreateShortcutDocument = gql`
   }
 }
     ${ShortcutFragmentDoc}`;
-export type CreateShortcutMutationFn = Apollo.MutationFunction<CreateShortcutMutation, CreateShortcutMutationVariables>;
-
-/**
- * __useCreateShortcutMutation__
- *
- * To run a mutation, you first call `useCreateShortcutMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateShortcutMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createShortcutMutation, { data, loading, error }] = useCreateShortcutMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateShortcutMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateShortcutMutation, CreateShortcutMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateShortcutMutation, CreateShortcutMutationVariables>(CreateShortcutDocument, options);
-      }
-export type CreateShortcutMutationHookResult = ReturnType<typeof useCreateShortcutMutation>;
-export type CreateShortcutMutationResult = Apollo.MutationResult<CreateShortcutMutation>;
-export type CreateShortcutMutationOptions = Apollo.BaseMutationOptions<CreateShortcutMutation, CreateShortcutMutationVariables>;
 export const DeleteShortcutDocument = gql`
     mutation DeleteShortcut($id: ID!) {
   deleteShortcut(input: {id: $id})
 }
     `;
-export type DeleteShortcutMutationFn = Apollo.MutationFunction<DeleteShortcutMutation, DeleteShortcutMutationVariables>;
-
-/**
- * __useDeleteShortcutMutation__
- *
- * To run a mutation, you first call `useDeleteShortcutMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteShortcutMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteShortcutMutation, { data, loading, error }] = useDeleteShortcutMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteShortcutMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteShortcutMutation, DeleteShortcutMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteShortcutMutation, DeleteShortcutMutationVariables>(DeleteShortcutDocument, options);
-      }
-export type DeleteShortcutMutationHookResult = ReturnType<typeof useDeleteShortcutMutation>;
-export type DeleteShortcutMutationResult = Apollo.MutationResult<DeleteShortcutMutation>;
-export type DeleteShortcutMutationOptions = Apollo.BaseMutationOptions<DeleteShortcutMutation, DeleteShortcutMutationVariables>;
 export const CreateForeignImplementationDocument = gql`
     mutation CreateForeignImplementation($input: CreateForeignImplementationInput!) {
   createForeignImplementation(input: $input) {
@@ -5514,63 +5116,11 @@ export const CreateForeignImplementationDocument = gql`
   }
 }
     `;
-export type CreateForeignImplementationMutationFn = Apollo.MutationFunction<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>;
-
-/**
- * __useCreateForeignImplementationMutation__
- *
- * To run a mutation, you first call `useCreateForeignImplementationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateForeignImplementationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createForeignImplementationMutation, { data, loading, error }] = useCreateForeignImplementationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateForeignImplementationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>(CreateForeignImplementationDocument, options);
-      }
-export type CreateForeignImplementationMutationHookResult = ReturnType<typeof useCreateForeignImplementationMutation>;
-export type CreateForeignImplementationMutationResult = Apollo.MutationResult<CreateForeignImplementationMutation>;
-export type CreateForeignImplementationMutationOptions = Apollo.BaseMutationOptions<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>;
 export const DeleteImplementationDocument = gql`
     mutation DeleteImplementation($id: ID!) {
   deleteImplementation(input: {implementation: $id})
 }
     `;
-export type DeleteImplementationMutationFn = Apollo.MutationFunction<DeleteImplementationMutation, DeleteImplementationMutationVariables>;
-
-/**
- * __useDeleteImplementationMutation__
- *
- * To run a mutation, you first call `useDeleteImplementationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteImplementationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteImplementationMutation, { data, loading, error }] = useDeleteImplementationMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteImplementationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteImplementationMutation, DeleteImplementationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteImplementationMutation, DeleteImplementationMutationVariables>(DeleteImplementationDocument, options);
-      }
-export type DeleteImplementationMutationHookResult = ReturnType<typeof useDeleteImplementationMutation>;
-export type DeleteImplementationMutationResult = Apollo.MutationResult<DeleteImplementationMutation>;
-export type DeleteImplementationMutationOptions = Apollo.BaseMutationOptions<DeleteImplementationMutation, DeleteImplementationMutationVariables>;
 export const SetExtensionImplementationsDocument = gql`
     mutation SetExtensionImplementations($input: SetExtensionImplementationsInput!) {
   setExtensionImplementations(input: $input) {
@@ -5578,63 +5128,11 @@ export const SetExtensionImplementationsDocument = gql`
   }
 }
     `;
-export type SetExtensionImplementationsMutationFn = Apollo.MutationFunction<SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables>;
-
-/**
- * __useSetExtensionImplementationsMutation__
- *
- * To run a mutation, you first call `useSetExtensionImplementationsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSetExtensionImplementationsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [setExtensionImplementationsMutation, { data, loading, error }] = useSetExtensionImplementationsMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useSetExtensionImplementationsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables>(SetExtensionImplementationsDocument, options);
-      }
-export type SetExtensionImplementationsMutationHookResult = ReturnType<typeof useSetExtensionImplementationsMutation>;
-export type SetExtensionImplementationsMutationResult = Apollo.MutationResult<SetExtensionImplementationsMutation>;
-export type SetExtensionImplementationsMutationOptions = Apollo.BaseMutationOptions<SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables>;
 export const UnreserveDocument = gql`
     mutation Unreserve($reservation: ID!) {
   unreserve(input: {reservation: $reservation})
 }
     `;
-export type UnreserveMutationFn = Apollo.MutationFunction<UnreserveMutation, UnreserveMutationVariables>;
-
-/**
- * __useUnreserveMutation__
- *
- * To run a mutation, you first call `useUnreserveMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUnreserveMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [unreserveMutation, { data, loading, error }] = useUnreserveMutation({
- *   variables: {
- *      reservation: // value for 'reservation'
- *   },
- * });
- */
-export function useUnreserveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UnreserveMutation, UnreserveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UnreserveMutation, UnreserveMutationVariables>(UnreserveDocument, options);
-      }
-export type UnreserveMutationHookResult = ReturnType<typeof useUnreserveMutation>;
-export type UnreserveMutationResult = Apollo.MutationResult<UnreserveMutation>;
-export type UnreserveMutationOptions = Apollo.BaseMutationOptions<UnreserveMutation, UnreserveMutationVariables>;
 export const ConstantActionDocument = gql`
     query ConstantAction($id: ID!) {
   action(id: $id) {
@@ -5642,34 +5140,6 @@ export const ConstantActionDocument = gql`
   }
 }
     ${GraphNodeActionFragmentDoc}`;
-
-/**
- * __useConstantActionQuery__
- *
- * To run a query within a React component, call `useConstantActionQuery` and pass it any options that fit your needs.
- * When your component renders, `useConstantActionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useConstantActionQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useConstantActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ConstantActionQuery, ConstantActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
-      }
-export function useConstantActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ConstantActionQuery, ConstantActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
-        }
-export type ConstantActionQueryHookResult = ReturnType<typeof useConstantActionQuery>;
-export type ConstantActionLazyQueryHookResult = ReturnType<typeof useConstantActionLazyQuery>;
-export type ConstantActionQueryResult = Apollo.QueryResult<ConstantActionQuery, ConstantActionQueryVariables>;
 export const AssignActionDocument = gql`
     query AssignAction($reservation: ID, $implementation: ID, $id: ID, $hash: ActionHash) {
   action(
@@ -5690,37 +5160,6 @@ export const AssignActionDocument = gql`
   }
 }
     ${PortsFragmentDoc}`;
-
-/**
- * __useAssignActionQuery__
- *
- * To run a query within a React component, call `useAssignActionQuery` and pass it any options that fit your needs.
- * When your component renders, `useAssignActionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAssignActionQuery({
- *   variables: {
- *      reservation: // value for 'reservation'
- *      implementation: // value for 'implementation'
- *      id: // value for 'id'
- *      hash: // value for 'hash'
- *   },
- * });
- */
-export function useAssignActionQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AssignActionQuery, AssignActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
-      }
-export function useAssignActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AssignActionQuery, AssignActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
-        }
-export type AssignActionQueryHookResult = ReturnType<typeof useAssignActionQuery>;
-export type AssignActionLazyQueryHookResult = ReturnType<typeof useAssignActionLazyQuery>;
-export type AssignActionQueryResult = Apollo.QueryResult<AssignActionQuery, AssignActionQueryVariables>;
 export const ReturnActionDocument = gql`
     query ReturnAction($assignation: ID!) {
   action(assignation: $assignation) {
@@ -5730,34 +5169,6 @@ export const ReturnActionDocument = gql`
   }
 }
     ${PortsFragmentDoc}`;
-
-/**
- * __useReturnActionQuery__
- *
- * To run a query within a React component, call `useReturnActionQuery` and pass it any options that fit your needs.
- * When your component renders, `useReturnActionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useReturnActionQuery({
- *   variables: {
- *      assignation: // value for 'assignation'
- *   },
- * });
- */
-export function useReturnActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ReturnActionQuery, ReturnActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
-      }
-export function useReturnActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReturnActionQuery, ReturnActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
-        }
-export type ReturnActionQueryHookResult = ReturnType<typeof useReturnActionQuery>;
-export type ReturnActionLazyQueryHookResult = ReturnType<typeof useReturnActionLazyQuery>;
-export type ReturnActionQueryResult = Apollo.QueryResult<ReturnActionQuery, ReturnActionQueryVariables>;
 export const ActionByHashDocument = gql`
     query ActionByHash($hash: ActionHash!) {
   action(hash: $hash) {
@@ -5766,34 +5177,6 @@ export const ActionByHashDocument = gql`
   }
 }
     ${PortsFragmentDoc}`;
-
-/**
- * __useActionByHashQuery__
- *
- * To run a query within a React component, call `useActionByHashQuery` and pass it any options that fit your needs.
- * When your component renders, `useActionByHashQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useActionByHashQuery({
- *   variables: {
- *      hash: // value for 'hash'
- *   },
- * });
- */
-export function useActionByHashQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ActionByHashQuery, ActionByHashQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
-      }
-export function useActionByHashLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionByHashQuery, ActionByHashQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
-        }
-export type ActionByHashQueryHookResult = ReturnType<typeof useActionByHashQuery>;
-export type ActionByHashLazyQueryHookResult = ReturnType<typeof useActionByHashLazyQuery>;
-export type ActionByHashQueryResult = Apollo.QueryResult<ActionByHashQuery, ActionByHashQueryVariables>;
 export const AllActionsDocument = gql`
     query AllActions($pagination: OffsetPaginationInput, $filters: ActionFilter, $order: ActionOrder) {
   actions(order: $order, pagination: $pagination, filters: $filters) {
@@ -5801,36 +5184,6 @@ export const AllActionsDocument = gql`
   }
 }
     ${ListActionFragmentDoc}`;
-
-/**
- * __useAllActionsQuery__
- *
- * To run a query within a React component, call `useAllActionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAllActionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAllActionsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useAllActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllActionsQuery, AllActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
-      }
-export function useAllActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllActionsQuery, AllActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
-        }
-export type AllActionsQueryHookResult = ReturnType<typeof useAllActionsQuery>;
-export type AllActionsLazyQueryHookResult = ReturnType<typeof useAllActionsLazyQuery>;
-export type AllActionsQueryResult = Apollo.QueryResult<AllActionsQuery, AllActionsQueryVariables>;
 export const AllPrimaryActionsDocument = gql`
     query AllPrimaryActions($pagination: OffsetPaginationInput, $filters: ActionFilter, $order: ActionOrder) {
   actions(order: $order, pagination: $pagination, filters: $filters) {
@@ -5838,36 +5191,6 @@ export const AllPrimaryActionsDocument = gql`
   }
 }
     ${PrimaryActionFragmentDoc}`;
-
-/**
- * __useAllPrimaryActionsQuery__
- *
- * To run a query within a React component, call `useAllPrimaryActionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAllPrimaryActionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAllPrimaryActionsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useAllPrimaryActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
-      }
-export function useAllPrimaryActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
-        }
-export type AllPrimaryActionsQueryHookResult = ReturnType<typeof useAllPrimaryActionsQuery>;
-export type AllPrimaryActionsLazyQueryHookResult = ReturnType<typeof useAllPrimaryActionsLazyQuery>;
-export type AllPrimaryActionsQueryResult = Apollo.QueryResult<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>;
 export const ActionSearchDocument = gql`
     query ActionSearch($filters: ActionFilter, $pagination: OffsetPaginationInput) {
   actions: actions(filters: $filters, pagination: $pagination) {
@@ -5875,35 +5198,6 @@ export const ActionSearchDocument = gql`
   }
 }
     ${SearchActionFragmentDoc}`;
-
-/**
- * __useActionSearchQuery__
- *
- * To run a query within a React component, call `useActionSearchQuery` and pass it any options that fit your needs.
- * When your component renders, `useActionSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useActionSearchQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useActionSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ActionSearchQuery, ActionSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
-      }
-export function useActionSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionSearchQuery, ActionSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
-        }
-export type ActionSearchQueryHookResult = ReturnType<typeof useActionSearchQuery>;
-export type ActionSearchLazyQueryHookResult = ReturnType<typeof useActionSearchLazyQuery>;
-export type ActionSearchQueryResult = Apollo.QueryResult<ActionSearchQuery, ActionSearchQueryVariables>;
 export const DetailActionDocument = gql`
     query DetailAction($id: ID!) {
   action(id: $id) {
@@ -5911,34 +5205,6 @@ export const DetailActionDocument = gql`
   }
 }
     ${DetailActionFragmentDoc}`;
-
-/**
- * __useDetailActionQuery__
- *
- * To run a query within a React component, call `useDetailActionQuery` and pass it any options that fit your needs.
- * When your component renders, `useDetailActionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDetailActionQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDetailActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailActionQuery, DetailActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
-      }
-export function useDetailActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailActionQuery, DetailActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
-        }
-export type DetailActionQueryHookResult = ReturnType<typeof useDetailActionQuery>;
-export type DetailActionLazyQueryHookResult = ReturnType<typeof useDetailActionLazyQuery>;
-export type DetailActionQueryResult = Apollo.QueryResult<DetailActionQuery, DetailActionQueryVariables>;
 export const PrimaryActionsDocument = gql`
     query PrimaryActions($pagination: OffsetPaginationInput, $identifier: String, $order: ActionOrder, $search: String) {
   actions(
@@ -5950,37 +5216,6 @@ export const PrimaryActionsDocument = gql`
   }
 }
     ${PrimaryActionFragmentDoc}`;
-
-/**
- * __usePrimaryActionsQuery__
- *
- * To run a query within a React component, call `usePrimaryActionsQuery` and pass it any options that fit your needs.
- * When your component renders, `usePrimaryActionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = usePrimaryActionsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      identifier: // value for 'identifier'
- *      order: // value for 'order'
- *      search: // value for 'search'
- *   },
- * });
- */
-export function usePrimaryActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryActionsQuery, PrimaryActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
-      }
-export function usePrimaryActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryActionsQuery, PrimaryActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
-        }
-export type PrimaryActionsQueryHookResult = ReturnType<typeof usePrimaryActionsQuery>;
-export type PrimaryActionsLazyQueryHookResult = ReturnType<typeof usePrimaryActionsLazyQuery>;
-export type PrimaryActionsQueryResult = Apollo.QueryResult<PrimaryActionsQuery, PrimaryActionsQueryVariables>;
 export const PrimaryReturnActionsDocument = gql`
     query PrimaryReturnActions($pagination: OffsetPaginationInput, $identifier: String, $order: ActionOrder, $search: String) {
   actions(
@@ -5992,37 +5227,6 @@ export const PrimaryReturnActionsDocument = gql`
   }
 }
     ${PrimaryActionFragmentDoc}`;
-
-/**
- * __usePrimaryReturnActionsQuery__
- *
- * To run a query within a React component, call `usePrimaryReturnActionsQuery` and pass it any options that fit your needs.
- * When your component renders, `usePrimaryReturnActionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = usePrimaryReturnActionsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      identifier: // value for 'identifier'
- *      order: // value for 'order'
- *      search: // value for 'search'
- *   },
- * });
- */
-export function usePrimaryReturnActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
-      }
-export function usePrimaryReturnActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
-        }
-export type PrimaryReturnActionsQueryHookResult = ReturnType<typeof usePrimaryReturnActionsQuery>;
-export type PrimaryReturnActionsLazyQueryHookResult = ReturnType<typeof usePrimaryReturnActionsLazyQuery>;
-export type PrimaryReturnActionsQueryResult = Apollo.QueryResult<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>;
 export const AgentsDocument = gql`
     query Agents($pagination: OffsetPaginationInput, $filters: AgentFilter, $order: AgentOrder) {
   agents(order: $order, pagination: $pagination, filters: $filters) {
@@ -6030,36 +5234,6 @@ export const AgentsDocument = gql`
   }
 }
     ${ListAgentFragmentDoc}`;
-
-/**
- * __useAgentsQuery__
- *
- * To run a query within a React component, call `useAgentsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useAgentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentsQuery, AgentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
-      }
-export function useAgentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentsQuery, AgentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
-        }
-export type AgentsQueryHookResult = ReturnType<typeof useAgentsQuery>;
-export type AgentsLazyQueryHookResult = ReturnType<typeof useAgentsLazyQuery>;
-export type AgentsQueryResult = Apollo.QueryResult<AgentsQuery, AgentsQueryVariables>;
 export const AgentDocument = gql`
     query Agent($id: ID!) {
   agent(id: $id) {
@@ -6067,34 +5241,6 @@ export const AgentDocument = gql`
   }
 }
     ${AgentFragmentDoc}`;
-
-/**
- * __useAgentQuery__
- *
- * To run a query within a React component, call `useAgentQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useAgentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AgentQuery, AgentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
-      }
-export function useAgentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentQuery, AgentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
-        }
-export type AgentQueryHookResult = ReturnType<typeof useAgentQuery>;
-export type AgentLazyQueryHookResult = ReturnType<typeof useAgentLazyQuery>;
-export type AgentQueryResult = Apollo.QueryResult<AgentQuery, AgentQueryVariables>;
 export const AssignationsDocument = gql`
     query Assignations($instanceId: InstanceId!) {
   assignations(instanceId: $instanceId) {
@@ -6102,34 +5248,6 @@ export const AssignationsDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-
-/**
- * __useAssignationsQuery__
- *
- * To run a query within a React component, call `useAssignationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAssignationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAssignationsQuery({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *   },
- * });
- */
-export function useAssignationsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AssignationsQuery, AssignationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
-      }
-export function useAssignationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AssignationsQuery, AssignationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
-        }
-export type AssignationsQueryHookResult = ReturnType<typeof useAssignationsQuery>;
-export type AssignationsLazyQueryHookResult = ReturnType<typeof useAssignationsLazyQuery>;
-export type AssignationsQueryResult = Apollo.QueryResult<AssignationsQuery, AssignationsQueryVariables>;
 export const DetailAssignationDocument = gql`
     query DetailAssignation($id: ID!) {
   assignation(id: $id) {
@@ -6137,34 +5255,6 @@ export const DetailAssignationDocument = gql`
   }
 }
     ${DetailAssignationFragmentDoc}`;
-
-/**
- * __useDetailAssignationQuery__
- *
- * To run a query within a React component, call `useDetailAssignationQuery` and pass it any options that fit your needs.
- * When your component renders, `useDetailAssignationQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDetailAssignationQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDetailAssignationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAssignationQuery, DetailAssignationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
-      }
-export function useDetailAssignationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAssignationQuery, DetailAssignationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
-        }
-export type DetailAssignationQueryHookResult = ReturnType<typeof useDetailAssignationQuery>;
-export type DetailAssignationLazyQueryHookResult = ReturnType<typeof useDetailAssignationLazyQuery>;
-export type DetailAssignationQueryResult = Apollo.QueryResult<DetailAssignationQuery, DetailAssignationQueryVariables>;
 export const ListAssignationsDocument = gql`
     query ListAssignations($filter: AssignationFilter, $order: AssignationOrder, $pagination: OffsetPaginationInput) {
   tasks(filters: $filter, pagination: $pagination, order: $order) {
@@ -6172,36 +5262,6 @@ export const ListAssignationsDocument = gql`
   }
 }
     ${ListAsssignationFragmentDoc}`;
-
-/**
- * __useListAssignationsQuery__
- *
- * To run a query within a React component, call `useListAssignationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useListAssignationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListAssignationsQuery({
- *   variables: {
- *      filter: // value for 'filter'
- *      order: // value for 'order'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListAssignationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAssignationsQuery, ListAssignationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListAssignationsQuery, ListAssignationsQueryVariables>(ListAssignationsDocument, options);
-      }
-export function useListAssignationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAssignationsQuery, ListAssignationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListAssignationsQuery, ListAssignationsQueryVariables>(ListAssignationsDocument, options);
-        }
-export type ListAssignationsQueryHookResult = ReturnType<typeof useListAssignationsQuery>;
-export type ListAssignationsLazyQueryHookResult = ReturnType<typeof useListAssignationsLazyQuery>;
-export type ListAssignationsQueryResult = Apollo.QueryResult<ListAssignationsQuery, ListAssignationsQueryVariables>;
 export const ListAssignationsDetailsDocument = gql`
     query ListAssignationsDetails($filter: AssignationFilter, $order: AssignationOrder, $pagination: OffsetPaginationInput) {
   tasks(filters: $filter, pagination: $pagination, order: $order) {
@@ -6209,36 +5269,6 @@ export const ListAssignationsDetailsDocument = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-
-/**
- * __useListAssignationsDetailsQuery__
- *
- * To run a query within a React component, call `useListAssignationsDetailsQuery` and pass it any options that fit your needs.
- * When your component renders, `useListAssignationsDetailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListAssignationsDetailsQuery({
- *   variables: {
- *      filter: // value for 'filter'
- *      order: // value for 'order'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListAssignationsDetailsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAssignationsDetailsQuery, ListAssignationsDetailsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListAssignationsDetailsQuery, ListAssignationsDetailsQueryVariables>(ListAssignationsDetailsDocument, options);
-      }
-export function useListAssignationsDetailsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAssignationsDetailsQuery, ListAssignationsDetailsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListAssignationsDetailsQuery, ListAssignationsDetailsQueryVariables>(ListAssignationsDetailsDocument, options);
-        }
-export type ListAssignationsDetailsQueryHookResult = ReturnType<typeof useListAssignationsDetailsQuery>;
-export type ListAssignationsDetailsLazyQueryHookResult = ReturnType<typeof useListAssignationsDetailsLazyQuery>;
-export type ListAssignationsDetailsQueryResult = Apollo.QueryResult<ListAssignationsDetailsQuery, ListAssignationsDetailsQueryVariables>;
 export const GetBlokDocument = gql`
     query GetBlok($id: ID!) {
   blok(id: $id) {
@@ -6246,34 +5276,6 @@ export const GetBlokDocument = gql`
   }
 }
     ${BlokFragmentDoc}`;
-
-/**
- * __useGetBlokQuery__
- *
- * To run a query within a React component, call `useGetBlokQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetBlokQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetBlokQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetBlokQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetBlokQuery, GetBlokQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
-      }
-export function useGetBlokLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetBlokQuery, GetBlokQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
-        }
-export type GetBlokQueryHookResult = ReturnType<typeof useGetBlokQuery>;
-export type GetBlokLazyQueryHookResult = ReturnType<typeof useGetBlokLazyQuery>;
-export type GetBlokQueryResult = Apollo.QueryResult<GetBlokQuery, GetBlokQueryVariables>;
 export const ListBloksDocument = gql`
     query ListBloks {
   bloks {
@@ -6281,33 +5283,6 @@ export const ListBloksDocument = gql`
   }
 }
     ${ListBlokFragmentDoc}`;
-
-/**
- * __useListBloksQuery__
- *
- * To run a query within a React component, call `useListBloksQuery` and pass it any options that fit your needs.
- * When your component renders, `useListBloksQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListBloksQuery({
- *   variables: {
- *   },
- * });
- */
-export function useListBloksQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListBloksQuery, ListBloksQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
-      }
-export function useListBloksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListBloksQuery, ListBloksQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
-        }
-export type ListBloksQueryHookResult = ReturnType<typeof useListBloksQuery>;
-export type ListBloksLazyQueryHookResult = ReturnType<typeof useListBloksLazyQuery>;
-export type ListBloksQueryResult = Apollo.QueryResult<ListBloksQuery, ListBloksQueryVariables>;
 export const ClientsDocument = gql`
     query Clients($pagination: OffsetPaginationInput, $filters: ClientFilter, $order: ClientOrder) {
   clients(order: $order, pagination: $pagination, filters: $filters) {
@@ -6315,36 +5290,6 @@ export const ClientsDocument = gql`
   }
 }
     ${ListClientFragmentDoc}`;
-
-/**
- * __useClientsQuery__
- *
- * To run a query within a React component, call `useClientsQuery` and pass it any options that fit your needs.
- * When your component renders, `useClientsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useClientsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useClientsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
-      }
-export function useClientsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
-        }
-export type ClientsQueryHookResult = ReturnType<typeof useClientsQuery>;
-export type ClientsLazyQueryHookResult = ReturnType<typeof useClientsLazyQuery>;
-export type ClientsQueryResult = Apollo.QueryResult<ClientsQuery, ClientsQueryVariables>;
 export const GetDashboardDocument = gql`
     query GetDashboard($id: ID!) {
   dashboard(id: $id) {
@@ -6352,34 +5297,6 @@ export const GetDashboardDocument = gql`
   }
 }
     ${DashboardFragmentDoc}`;
-
-/**
- * __useGetDashboardQuery__
- *
- * To run a query within a React component, call `useGetDashboardQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetDashboardQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetDashboardQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetDashboardQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDashboardQuery, GetDashboardQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
-      }
-export function useGetDashboardLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDashboardQuery, GetDashboardQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
-        }
-export type GetDashboardQueryHookResult = ReturnType<typeof useGetDashboardQuery>;
-export type GetDashboardLazyQueryHookResult = ReturnType<typeof useGetDashboardLazyQuery>;
-export type GetDashboardQueryResult = Apollo.QueryResult<GetDashboardQuery, GetDashboardQueryVariables>;
 export const ListDashboardsDocument = gql`
     query ListDashboards {
   dashboards {
@@ -6387,33 +5304,6 @@ export const ListDashboardsDocument = gql`
   }
 }
     ${ListDashboardFragmentDoc}`;
-
-/**
- * __useListDashboardsQuery__
- *
- * To run a query within a React component, call `useListDashboardsQuery` and pass it any options that fit your needs.
- * When your component renders, `useListDashboardsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListDashboardsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useListDashboardsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListDashboardsQuery, ListDashboardsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
-      }
-export function useListDashboardsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListDashboardsQuery, ListDashboardsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
-        }
-export type ListDashboardsQueryHookResult = ReturnType<typeof useListDashboardsQuery>;
-export type ListDashboardsLazyQueryHookResult = ReturnType<typeof useListDashboardsLazyQuery>;
-export type ListDashboardsQueryResult = Apollo.QueryResult<ListDashboardsQuery, ListDashboardsQueryVariables>;
 export const DependencyDocument = gql`
     query Dependency($id: ID!) {
   dependency(id: $id) {
@@ -6421,34 +5311,6 @@ export const DependencyDocument = gql`
   }
 }
     ${DetailDependencyFragmentDoc}`;
-
-/**
- * __useDependencyQuery__
- *
- * To run a query within a React component, call `useDependencyQuery` and pass it any options that fit your needs.
- * When your component renders, `useDependencyQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDependencyQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDependencyQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DependencyQuery, DependencyQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
-      }
-export function useDependencyLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DependencyQuery, DependencyQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
-        }
-export type DependencyQueryHookResult = ReturnType<typeof useDependencyQuery>;
-export type DependencyLazyQueryHookResult = ReturnType<typeof useDependencyLazyQuery>;
-export type DependencyQueryResult = Apollo.QueryResult<DependencyQuery, DependencyQueryVariables>;
 export const SearchMemoryDrawerDocument = gql`
     query SearchMemoryDrawer($search: String, $implementation: ID, $values: [ID!], $identifier: String, $pagination: OffsetPaginationInput) {
   options: memoryDrawers(
@@ -6460,38 +5322,6 @@ export const SearchMemoryDrawerDocument = gql`
   }
 }
     `;
-
-/**
- * __useSearchMemoryDrawerQuery__
- *
- * To run a query within a React component, call `useSearchMemoryDrawerQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchMemoryDrawerQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchMemoryDrawerQuery({
- *   variables: {
- *      search: // value for 'search'
- *      implementation: // value for 'implementation'
- *      values: // value for 'values'
- *      identifier: // value for 'identifier'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useSearchMemoryDrawerQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
-      }
-export function useSearchMemoryDrawerLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
-        }
-export type SearchMemoryDrawerQueryHookResult = ReturnType<typeof useSearchMemoryDrawerQuery>;
-export type SearchMemoryDrawerLazyQueryHookResult = ReturnType<typeof useSearchMemoryDrawerLazyQuery>;
-export type SearchMemoryDrawerQueryResult = Apollo.QueryResult<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $noActions: Boolean!, $pagination: OffsetPaginationInput) {
   actions: actions(filters: {search: $search}, pagination: $pagination) @skip(if: $noActions) {
@@ -6499,36 +5329,6 @@ export const GlobalSearchDocument = gql`
   }
 }
     ${ListActionFragmentDoc}`;
-
-/**
- * __useGlobalSearchQuery__
- *
- * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
- * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGlobalSearchQuery({
- *   variables: {
- *      search: // value for 'search'
- *      noActions: // value for 'noActions'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const HomePageStatsDocument = gql`
     query HomePageStats {
   actionStats {
@@ -6539,33 +5339,6 @@ export const HomePageStatsDocument = gql`
   }
 }
     `;
-
-/**
- * __useHomePageStatsQuery__
- *
- * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
- * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHomePageStatsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
-      }
-export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
-        }
-export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
-export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
-export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const HooksSearchDocument = gql`
     query HooksSearch($search: String, $values: [ID!]) {
   options: actions(filters: {protocols: ["hook"], ids: $values, search: $search}) {
@@ -6575,35 +5348,6 @@ export const HooksSearchDocument = gql`
   }
 }
     `;
-
-/**
- * __useHooksSearchQuery__
- *
- * To run a query within a React component, call `useHooksSearchQuery` and pass it any options that fit your needs.
- * When your component renders, `useHooksSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHooksSearchQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useHooksSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HooksSearchQuery, HooksSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
-      }
-export function useHooksSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HooksSearchQuery, HooksSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
-        }
-export type HooksSearchQueryHookResult = ReturnType<typeof useHooksSearchQuery>;
-export type HooksSearchLazyQueryHookResult = ReturnType<typeof useHooksSearchLazyQuery>;
-export type HooksSearchQueryResult = Apollo.QueryResult<HooksSearchQuery, HooksSearchQueryVariables>;
 export const ImplementationDocument = gql`
     query Implementation($id: ID!) {
   implementation(id: $id) {
@@ -6611,34 +5355,6 @@ export const ImplementationDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useImplementationQuery__
- *
- * To run a query within a React component, call `useImplementationQuery` and pass it any options that fit your needs.
- * When your component renders, `useImplementationQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useImplementationQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useImplementationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ImplementationQuery, ImplementationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
-      }
-export function useImplementationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationQuery, ImplementationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
-        }
-export type ImplementationQueryHookResult = ReturnType<typeof useImplementationQuery>;
-export type ImplementationLazyQueryHookResult = ReturnType<typeof useImplementationLazyQuery>;
-export type ImplementationQueryResult = Apollo.QueryResult<ImplementationQuery, ImplementationQueryVariables>;
 export const ImplementationsDocument = gql`
     query Implementations($filters: ImplementationFilter, $pagination: OffsetPaginationInput, $order: ImplementationOrder) {
   implementations(filters: $filters, pagination: $pagination, order: $order) {
@@ -6646,36 +5362,6 @@ export const ImplementationsDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useImplementationsQuery__
- *
- * To run a query within a React component, call `useImplementationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useImplementationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useImplementationsQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useImplementationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImplementationsQuery, ImplementationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
-      }
-export function useImplementationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationsQuery, ImplementationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
-        }
-export type ImplementationsQueryHookResult = ReturnType<typeof useImplementationsQuery>;
-export type ImplementationsLazyQueryHookResult = ReturnType<typeof useImplementationsLazyQuery>;
-export type ImplementationsQueryResult = Apollo.QueryResult<ImplementationsQuery, ImplementationsQueryVariables>;
 export const ListImplementationsDocument = gql`
     query ListImplementations($filters: ImplementationFilter, $pagination: OffsetPaginationInput, $order: ImplementationOrder) {
   implementations(filters: $filters, pagination: $pagination, order: $order) {
@@ -6683,36 +5369,6 @@ export const ListImplementationsDocument = gql`
   }
 }
     ${ListImplementationFragmentDoc}`;
-
-/**
- * __useListImplementationsQuery__
- *
- * To run a query within a React component, call `useListImplementationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useListImplementationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListImplementationsQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useListImplementationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListImplementationsQuery, ListImplementationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListImplementationsQuery, ListImplementationsQueryVariables>(ListImplementationsDocument, options);
-      }
-export function useListImplementationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListImplementationsQuery, ListImplementationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListImplementationsQuery, ListImplementationsQueryVariables>(ListImplementationsDocument, options);
-        }
-export type ListImplementationsQueryHookResult = ReturnType<typeof useListImplementationsQuery>;
-export type ListImplementationsLazyQueryHookResult = ReturnType<typeof useListImplementationsLazyQuery>;
-export type ListImplementationsQueryResult = Apollo.QueryResult<ListImplementationsQuery, ListImplementationsQueryVariables>;
 export const ImplementationOptionsDocument = gql`
     query ImplementationOptions($search: String, $values: [ID!], $dependency: ID) {
   options: implementations(
@@ -6724,36 +5380,6 @@ export const ImplementationOptionsDocument = gql`
   }
 }
     `;
-
-/**
- * __useImplementationOptionsQuery__
- *
- * To run a query within a React component, call `useImplementationOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useImplementationOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useImplementationOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *      dependency: // value for 'dependency'
- *   },
- * });
- */
-export function useImplementationOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImplementationOptionsQuery, ImplementationOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationOptionsQuery, ImplementationOptionsQueryVariables>(ImplementationOptionsDocument, options);
-      }
-export function useImplementationOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationOptionsQuery, ImplementationOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationOptionsQuery, ImplementationOptionsQueryVariables>(ImplementationOptionsDocument, options);
-        }
-export type ImplementationOptionsQueryHookResult = ReturnType<typeof useImplementationOptionsQuery>;
-export type ImplementationOptionsLazyQueryHookResult = ReturnType<typeof useImplementationOptionsLazyQuery>;
-export type ImplementationOptionsQueryResult = Apollo.QueryResult<ImplementationOptionsQuery, ImplementationOptionsQueryVariables>;
 export const ImplementationAtDocument = gql`
     query ImplementationAt($agent: ID!, $extension: String, $interface: String, $demand: ActionDemandInput) {
   implementationAt(
@@ -6766,37 +5392,6 @@ export const ImplementationAtDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useImplementationAtQuery__
- *
- * To run a query within a React component, call `useImplementationAtQuery` and pass it any options that fit your needs.
- * When your component renders, `useImplementationAtQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useImplementationAtQuery({
- *   variables: {
- *      agent: // value for 'agent'
- *      extension: // value for 'extension'
- *      interface: // value for 'interface'
- *      demand: // value for 'demand'
- *   },
- * });
- */
-export function useImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ImplementationAtQuery, ImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
-      }
-export function useImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationAtQuery, ImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
-        }
-export type ImplementationAtQueryHookResult = ReturnType<typeof useImplementationAtQuery>;
-export type ImplementationAtLazyQueryHookResult = ReturnType<typeof useImplementationAtLazyQuery>;
-export type ImplementationAtQueryResult = Apollo.QueryResult<ImplementationAtQuery, ImplementationAtQueryVariables>;
 export const MyImplementationAtDocument = gql`
     query MyImplementationAt($instanceId: String!, $interface: String, $actionId: ID) {
   myImplementationAt(
@@ -6808,36 +5403,6 @@ export const MyImplementationAtDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useMyImplementationAtQuery__
- *
- * To run a query within a React component, call `useMyImplementationAtQuery` and pass it any options that fit your needs.
- * When your component renders, `useMyImplementationAtQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMyImplementationAtQuery({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *      interface: // value for 'interface'
- *      actionId: // value for 'actionId'
- *   },
- * });
- */
-export function useMyImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MyImplementationAtQuery, MyImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
-      }
-export function useMyImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MyImplementationAtQuery, MyImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
-        }
-export type MyImplementationAtQueryHookResult = ReturnType<typeof useMyImplementationAtQuery>;
-export type MyImplementationAtLazyQueryHookResult = ReturnType<typeof useMyImplementationAtLazyQuery>;
-export type MyImplementationAtQueryResult = Apollo.QueryResult<MyImplementationAtQuery, MyImplementationAtQueryVariables>;
 export const ActionImplementationAtDocument = gql`
     query ActionImplementationAt($agent: ID!, $actionHash: String!) {
   implementationAt(agent: $agent, actionHash: $actionHash) {
@@ -6845,35 +5410,6 @@ export const ActionImplementationAtDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useActionImplementationAtQuery__
- *
- * To run a query within a React component, call `useActionImplementationAtQuery` and pass it any options that fit your needs.
- * When your component renders, `useActionImplementationAtQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useActionImplementationAtQuery({
- *   variables: {
- *      agent: // value for 'agent'
- *      actionHash: // value for 'actionHash'
- *   },
- * });
- */
-export function useActionImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
-      }
-export function useActionImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
-        }
-export type ActionImplementationAtQueryHookResult = ReturnType<typeof useActionImplementationAtQuery>;
-export type ActionImplementationAtLazyQueryHookResult = ReturnType<typeof useActionImplementationAtLazyQuery>;
-export type ActionImplementationAtQueryResult = Apollo.QueryResult<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>;
 export const GetInterfaceDocument = gql`
     query GetInterface($id: ID!) {
   interface(id: $id) {
@@ -6881,34 +5417,6 @@ export const GetInterfaceDocument = gql`
   }
 }
     ${InterfaceFragmentDoc}`;
-
-/**
- * __useGetInterfaceQuery__
- *
- * To run a query within a React component, call `useGetInterfaceQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetInterfaceQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetInterfaceQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetInterfaceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetInterfaceQuery, GetInterfaceQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetInterfaceQuery, GetInterfaceQueryVariables>(GetInterfaceDocument, options);
-      }
-export function useGetInterfaceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetInterfaceQuery, GetInterfaceQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetInterfaceQuery, GetInterfaceQueryVariables>(GetInterfaceDocument, options);
-        }
-export type GetInterfaceQueryHookResult = ReturnType<typeof useGetInterfaceQuery>;
-export type GetInterfaceLazyQueryHookResult = ReturnType<typeof useGetInterfaceLazyQuery>;
-export type GetInterfaceQueryResult = Apollo.QueryResult<GetInterfaceQuery, GetInterfaceQueryVariables>;
 export const ListInterfacesDocument = gql`
     query ListInterfaces($filters: InterfaceFilter, $pagination: OffsetPaginationInput) {
   interfaces(filters: $filters, pagination: $pagination) {
@@ -6916,35 +5424,6 @@ export const ListInterfacesDocument = gql`
   }
 }
     ${ListInterfaceFragmentDoc}`;
-
-/**
- * __useListInterfacesQuery__
- *
- * To run a query within a React component, call `useListInterfacesQuery` and pass it any options that fit your needs.
- * When your component renders, `useListInterfacesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListInterfacesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListInterfacesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListInterfacesQuery, ListInterfacesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListInterfacesQuery, ListInterfacesQueryVariables>(ListInterfacesDocument, options);
-      }
-export function useListInterfacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListInterfacesQuery, ListInterfacesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListInterfacesQuery, ListInterfacesQueryVariables>(ListInterfacesDocument, options);
-        }
-export type ListInterfacesQueryHookResult = ReturnType<typeof useListInterfacesQuery>;
-export type ListInterfacesLazyQueryHookResult = ReturnType<typeof useListInterfacesLazyQuery>;
-export type ListInterfacesQueryResult = Apollo.QueryResult<ListInterfacesQuery, ListInterfacesQueryVariables>;
 export const MemoryShelvesDocument = gql`
     query MemoryShelves($pagination: OffsetPaginationInput, $filters: MemoryShelveFilter, $order: MemoryShelveOrder) {
   memoryShelves(order: $order, pagination: $pagination, filters: $filters) {
@@ -6952,36 +5431,6 @@ export const MemoryShelvesDocument = gql`
   }
 }
     ${ListMemoryShelveFragmentDoc}`;
-
-/**
- * __useMemoryShelvesQuery__
- *
- * To run a query within a React component, call `useMemoryShelvesQuery` and pass it any options that fit your needs.
- * When your component renders, `useMemoryShelvesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMemoryShelvesQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useMemoryShelvesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
-      }
-export function useMemoryShelvesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
-        }
-export type MemoryShelvesQueryHookResult = ReturnType<typeof useMemoryShelvesQuery>;
-export type MemoryShelvesLazyQueryHookResult = ReturnType<typeof useMemoryShelvesLazyQuery>;
-export type MemoryShelvesQueryResult = Apollo.QueryResult<MemoryShelvesQuery, MemoryShelvesQueryVariables>;
 export const MemoryShelveDocument = gql`
     query MemoryShelve($id: ID!) {
   memoryShelve(id: $id) {
@@ -6989,34 +5438,6 @@ export const MemoryShelveDocument = gql`
   }
 }
     ${MemoryShelveFragmentDoc}`;
-
-/**
- * __useMemoryShelveQuery__
- *
- * To run a query within a React component, call `useMemoryShelveQuery` and pass it any options that fit your needs.
- * When your component renders, `useMemoryShelveQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMemoryShelveQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useMemoryShelveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
-      }
-export function useMemoryShelveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
-        }
-export type MemoryShelveQueryHookResult = ReturnType<typeof useMemoryShelveQuery>;
-export type MemoryShelveLazyQueryHookResult = ReturnType<typeof useMemoryShelveLazyQuery>;
-export type MemoryShelveQueryResult = Apollo.QueryResult<MemoryShelveQuery, MemoryShelveQueryVariables>;
 export const ProtocolOptionsDocument = gql`
     query ProtocolOptions($search: String, $values: [ID!]) {
   options: protocols(
@@ -7028,35 +5449,6 @@ export const ProtocolOptionsDocument = gql`
   }
 }
     `;
-
-/**
- * __useProtocolOptionsQuery__
- *
- * To run a query within a React component, call `useProtocolOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useProtocolOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useProtocolOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useProtocolOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
-      }
-export function useProtocolOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
-        }
-export type ProtocolOptionsQueryHookResult = ReturnType<typeof useProtocolOptionsQuery>;
-export type ProtocolOptionsLazyQueryHookResult = ReturnType<typeof useProtocolOptionsLazyQuery>;
-export type ProtocolOptionsQueryResult = Apollo.QueryResult<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>;
 export const ReservationsDocument = gql`
     query Reservations($instanceId: InstanceId!) {
   reservations(instanceId: $instanceId) {
@@ -7064,34 +5456,6 @@ export const ReservationsDocument = gql`
   }
 }
     ${PostmanReservationFragmentDoc}`;
-
-/**
- * __useReservationsQuery__
- *
- * To run a query within a React component, call `useReservationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useReservationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useReservationsQuery({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *   },
- * });
- */
-export function useReservationsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ReservationsQuery, ReservationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
-      }
-export function useReservationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReservationsQuery, ReservationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
-        }
-export type ReservationsQueryHookResult = ReturnType<typeof useReservationsQuery>;
-export type ReservationsLazyQueryHookResult = ReturnType<typeof useReservationsLazyQuery>;
-export type ReservationsQueryResult = Apollo.QueryResult<ReservationsQuery, ReservationsQueryVariables>;
 export const DetailReservationDocument = gql`
     query DetailReservation($id: ID!) {
   reservation(id: $id) {
@@ -7099,34 +5463,6 @@ export const DetailReservationDocument = gql`
   }
 }
     ${DetailReservationFragmentDoc}`;
-
-/**
- * __useDetailReservationQuery__
- *
- * To run a query within a React component, call `useDetailReservationQuery` and pass it any options that fit your needs.
- * When your component renders, `useDetailReservationQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDetailReservationQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDetailReservationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailReservationQuery, DetailReservationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
-      }
-export function useDetailReservationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailReservationQuery, DetailReservationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
-        }
-export type DetailReservationQueryHookResult = ReturnType<typeof useDetailReservationQuery>;
-export type DetailReservationLazyQueryHookResult = ReturnType<typeof useDetailReservationLazyQuery>;
-export type DetailReservationQueryResult = Apollo.QueryResult<DetailReservationQuery, DetailReservationQueryVariables>;
 export const ShortcutsDocument = gql`
     query Shortcuts($pagination: OffsetPaginationInput, $filters: ShortcutFilter, $order: ShortcutOrder) {
   shortcuts(order: $order, pagination: $pagination, filters: $filters) {
@@ -7134,36 +5470,6 @@ export const ShortcutsDocument = gql`
   }
 }
     ${ListShortcutFragmentDoc}`;
-
-/**
- * __useShortcutsQuery__
- *
- * To run a query within a React component, call `useShortcutsQuery` and pass it any options that fit your needs.
- * When your component renders, `useShortcutsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useShortcutsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useShortcutsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ShortcutsQuery, ShortcutsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
-      }
-export function useShortcutsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ShortcutsQuery, ShortcutsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
-        }
-export type ShortcutsQueryHookResult = ReturnType<typeof useShortcutsQuery>;
-export type ShortcutsLazyQueryHookResult = ReturnType<typeof useShortcutsLazyQuery>;
-export type ShortcutsQueryResult = Apollo.QueryResult<ShortcutsQuery, ShortcutsQueryVariables>;
 export const ShortcutDocument = gql`
     query Shortcut($id: ID!) {
   shortcut(id: $id) {
@@ -7171,34 +5477,6 @@ export const ShortcutDocument = gql`
   }
 }
     ${ShortcutFragmentDoc}`;
-
-/**
- * __useShortcutQuery__
- *
- * To run a query within a React component, call `useShortcutQuery` and pass it any options that fit your needs.
- * When your component renders, `useShortcutQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useShortcutQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useShortcutQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ShortcutQuery, ShortcutQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
-      }
-export function useShortcutLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ShortcutQuery, ShortcutQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
-        }
-export type ShortcutQueryHookResult = ReturnType<typeof useShortcutQuery>;
-export type ShortcutLazyQueryHookResult = ReturnType<typeof useShortcutLazyQuery>;
-export type ShortcutQueryResult = Apollo.QueryResult<ShortcutQuery, ShortcutQueryVariables>;
 export const GetStateDocument = gql`
     query GetState($id: ID!) {
   state(id: $id) {
@@ -7206,34 +5484,6 @@ export const GetStateDocument = gql`
   }
 }
     ${StateFragmentDoc}`;
-
-/**
- * __useGetStateQuery__
- *
- * To run a query within a React component, call `useGetStateQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetStateQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetStateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
-      }
-export function useGetStateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
-        }
-export type GetStateQueryHookResult = ReturnType<typeof useGetStateQuery>;
-export type GetStateLazyQueryHookResult = ReturnType<typeof useGetStateLazyQuery>;
-export type GetStateQueryResult = Apollo.QueryResult<GetStateQuery, GetStateQueryVariables>;
 export const GetStateForDocument = gql`
     query GetStateFor($agent: ID!, $stateHash: String, $demand: SchemaDemandInput) {
   stateFor(agent: $agent, stateHash: $stateHash, demand: $demand) {
@@ -7241,36 +5491,6 @@ export const GetStateForDocument = gql`
   }
 }
     ${StateFragmentDoc}`;
-
-/**
- * __useGetStateForQuery__
- *
- * To run a query within a React component, call `useGetStateForQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetStateForQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetStateForQuery({
- *   variables: {
- *      agent: // value for 'agent'
- *      stateHash: // value for 'stateHash'
- *      demand: // value for 'demand'
- *   },
- * });
- */
-export function useGetStateForQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStateForQuery, GetStateForQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
-      }
-export function useGetStateForLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStateForQuery, GetStateForQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
-        }
-export type GetStateForQueryHookResult = ReturnType<typeof useGetStateForQuery>;
-export type GetStateForLazyQueryHookResult = ReturnType<typeof useGetStateForLazyQuery>;
-export type GetStateForQueryResult = Apollo.QueryResult<GetStateForQuery, GetStateForQueryVariables>;
 export const GetStructureDocument = gql`
     query GetStructure($id: ID!) {
   structure(id: $id) {
@@ -7278,34 +5498,6 @@ export const GetStructureDocument = gql`
   }
 }
     ${StructureFragmentDoc}`;
-
-/**
- * __useGetStructureQuery__
- *
- * To run a query within a React component, call `useGetStructureQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetStructureQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetStructureQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetStructureQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
-      }
-export function useGetStructureLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
-        }
-export type GetStructureQueryHookResult = ReturnType<typeof useGetStructureQuery>;
-export type GetStructureLazyQueryHookResult = ReturnType<typeof useGetStructureLazyQuery>;
-export type GetStructureQueryResult = Apollo.QueryResult<GetStructureQuery, GetStructureQueryVariables>;
 export const ListStructuresDocument = gql`
     query ListStructures($filters: StructureFilter, $pagination: OffsetPaginationInput) {
   structures(filters: $filters, pagination: $pagination) {
@@ -7313,35 +5505,6 @@ export const ListStructuresDocument = gql`
   }
 }
     ${ListStructureFragmentDoc}`;
-
-/**
- * __useListStructuresQuery__
- *
- * To run a query within a React component, call `useListStructuresQuery` and pass it any options that fit your needs.
- * When your component renders, `useListStructuresQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListStructuresQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListStructuresQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStructuresQuery, ListStructuresQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListStructuresQuery, ListStructuresQueryVariables>(ListStructuresDocument, options);
-      }
-export function useListStructuresLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStructuresQuery, ListStructuresQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListStructuresQuery, ListStructuresQueryVariables>(ListStructuresDocument, options);
-        }
-export type ListStructuresQueryHookResult = ReturnType<typeof useListStructuresQuery>;
-export type ListStructuresLazyQueryHookResult = ReturnType<typeof useListStructuresLazyQuery>;
-export type ListStructuresQueryResult = Apollo.QueryResult<ListStructuresQuery, ListStructuresQueryVariables>;
 export const GetStructurePackageDocument = gql`
     query GetStructurePackage($id: ID!) {
   structurePackage(id: $id) {
@@ -7349,34 +5512,6 @@ export const GetStructurePackageDocument = gql`
   }
 }
     ${StructurePackageFragmentDoc}`;
-
-/**
- * __useGetStructurePackageQuery__
- *
- * To run a query within a React component, call `useGetStructurePackageQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetStructurePackageQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetStructurePackageQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetStructurePackageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructurePackageQuery, GetStructurePackageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStructurePackageQuery, GetStructurePackageQueryVariables>(GetStructurePackageDocument, options);
-      }
-export function useGetStructurePackageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructurePackageQuery, GetStructurePackageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStructurePackageQuery, GetStructurePackageQueryVariables>(GetStructurePackageDocument, options);
-        }
-export type GetStructurePackageQueryHookResult = ReturnType<typeof useGetStructurePackageQuery>;
-export type GetStructurePackageLazyQueryHookResult = ReturnType<typeof useGetStructurePackageLazyQuery>;
-export type GetStructurePackageQueryResult = Apollo.QueryResult<GetStructurePackageQuery, GetStructurePackageQueryVariables>;
 export const ListStructurePackageDocument = gql`
     query ListStructurePackage($filters: StructurePackageFilter, $pagination: OffsetPaginationInput) {
   structurePackages(filters: $filters, pagination: $pagination) {
@@ -7384,35 +5519,6 @@ export const ListStructurePackageDocument = gql`
   }
 }
     ${ListStructurePackageFragmentDoc}`;
-
-/**
- * __useListStructurePackageQuery__
- *
- * To run a query within a React component, call `useListStructurePackageQuery` and pass it any options that fit your needs.
- * When your component renders, `useListStructurePackageQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListStructurePackageQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListStructurePackageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStructurePackageQuery, ListStructurePackageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListStructurePackageQuery, ListStructurePackageQueryVariables>(ListStructurePackageDocument, options);
-      }
-export function useListStructurePackageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStructurePackageQuery, ListStructurePackageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListStructurePackageQuery, ListStructurePackageQueryVariables>(ListStructurePackageDocument, options);
-        }
-export type ListStructurePackageQueryHookResult = ReturnType<typeof useListStructurePackageQuery>;
-export type ListStructurePackageLazyQueryHookResult = ReturnType<typeof useListStructurePackageLazyQuery>;
-export type ListStructurePackageQueryResult = Apollo.QueryResult<ListStructurePackageQuery, ListStructurePackageQueryVariables>;
 export const ToolboxesDocument = gql`
     query Toolboxes($pagination: OffsetPaginationInput, $filters: ToolboxFilter, $order: ToolboxOrder) {
   toolboxes(order: $order, pagination: $pagination, filters: $filters) {
@@ -7420,36 +5526,6 @@ export const ToolboxesDocument = gql`
   }
 }
     ${ListToolboxFragmentDoc}`;
-
-/**
- * __useToolboxesQuery__
- *
- * To run a query within a React component, call `useToolboxesQuery` and pass it any options that fit your needs.
- * When your component renders, `useToolboxesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useToolboxesQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useToolboxesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ToolboxesQuery, ToolboxesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
-      }
-export function useToolboxesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ToolboxesQuery, ToolboxesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
-        }
-export type ToolboxesQueryHookResult = ReturnType<typeof useToolboxesQuery>;
-export type ToolboxesLazyQueryHookResult = ReturnType<typeof useToolboxesLazyQuery>;
-export type ToolboxesQueryResult = Apollo.QueryResult<ToolboxesQuery, ToolboxesQueryVariables>;
 export const ToolboxDocument = gql`
     query Toolbox($id: ID!) {
   toolbox(id: $id) {
@@ -7457,34 +5533,6 @@ export const ToolboxDocument = gql`
   }
 }
     ${ToolboxFragmentDoc}`;
-
-/**
- * __useToolboxQuery__
- *
- * To run a query within a React component, call `useToolboxQuery` and pass it any options that fit your needs.
- * When your component renders, `useToolboxQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useToolboxQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useToolboxQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ToolboxQuery, ToolboxQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
-      }
-export function useToolboxLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ToolboxQuery, ToolboxQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
-        }
-export type ToolboxQueryHookResult = ReturnType<typeof useToolboxQuery>;
-export type ToolboxLazyQueryHookResult = ReturnType<typeof useToolboxLazyQuery>;
-export type ToolboxQueryResult = Apollo.QueryResult<ToolboxQuery, ToolboxQueryVariables>;
 export const WatchAgentsDocument = gql`
     subscription WatchAgents {
   agents {
@@ -7492,28 +5540,6 @@ export const WatchAgentsDocument = gql`
   }
 }
     ${AgentChangeEventFragmentDoc}`;
-
-/**
- * __useWatchAgentsSubscription__
- *
- * To run a query within a React component, call `useWatchAgentsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchAgentsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchAgentsSubscription({
- *   variables: {
- *   },
- * });
- */
-export function useWatchAgentsSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>(WatchAgentsDocument, options);
-      }
-export type WatchAgentsSubscriptionHookResult = ReturnType<typeof useWatchAgentsSubscription>;
-export type WatchAgentsSubscriptionResult = Apollo.SubscriptionResult<WatchAgentsSubscription>;
 export const WatchAssignationEventsDocument = gql`
     subscription WatchAssignationEvents($instanceId: InstanceId!) {
   assignationEvents(instanceId: $instanceId) {
@@ -7521,29 +5547,6 @@ export const WatchAssignationEventsDocument = gql`
   }
 }
     ${AssignationEventFragmentDoc}`;
-
-/**
- * __useWatchAssignationEventsSubscription__
- *
- * To run a query within a React component, call `useWatchAssignationEventsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchAssignationEventsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchAssignationEventsSubscription({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *   },
- * });
- */
-export function useWatchAssignationEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAssignationEventsSubscription, WatchAssignationEventsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAssignationEventsSubscription, WatchAssignationEventsSubscriptionVariables>(WatchAssignationEventsDocument, options);
-      }
-export type WatchAssignationEventsSubscriptionHookResult = ReturnType<typeof useWatchAssignationEventsSubscription>;
-export type WatchAssignationEventsSubscriptionResult = Apollo.SubscriptionResult<WatchAssignationEventsSubscription>;
 export const WatchAssignationsDocument = gql`
     subscription WatchAssignations($instanceId: InstanceId!) {
   assignations(instanceId: $instanceId) {
@@ -7551,29 +5554,6 @@ export const WatchAssignationsDocument = gql`
   }
 }
     ${AssignationChangeEventFragmentDoc}`;
-
-/**
- * __useWatchAssignationsSubscription__
- *
- * To run a query within a React component, call `useWatchAssignationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchAssignationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchAssignationsSubscription({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *   },
- * });
- */
-export function useWatchAssignationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAssignationsSubscription, WatchAssignationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAssignationsSubscription, WatchAssignationsSubscriptionVariables>(WatchAssignationsDocument, options);
-      }
-export type WatchAssignationsSubscriptionHookResult = ReturnType<typeof useWatchAssignationsSubscription>;
-export type WatchAssignationsSubscriptionResult = Apollo.SubscriptionResult<WatchAssignationsSubscription>;
 export const WatchReservationsDocument = gql`
     subscription WatchReservations($instanceId: InstanceId!) {
   reservations(instanceId: $instanceId) {
@@ -7581,29 +5561,6 @@ export const WatchReservationsDocument = gql`
   }
 }
     ${PostmanReservationFragmentDoc}`;
-
-/**
- * __useWatchReservationsSubscription__
- *
- * To run a query within a React component, call `useWatchReservationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchReservationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchReservationsSubscription({
- *   variables: {
- *      instanceId: // value for 'instanceId'
- *   },
- * });
- */
-export function useWatchReservationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchReservationsSubscription, WatchReservationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchReservationsSubscription, WatchReservationsSubscriptionVariables>(WatchReservationsDocument, options);
-      }
-export type WatchReservationsSubscriptionHookResult = ReturnType<typeof useWatchReservationsSubscription>;
-export type WatchReservationsSubscriptionResult = Apollo.SubscriptionResult<WatchReservationsSubscription>;
 export const WatchStateEventsDocument = gql`
     subscription WatchStateEvents($stateID: ID!) {
   stateUpdateEvents(stateId: $stateID) {
@@ -7611,29 +5568,6 @@ export const WatchStateEventsDocument = gql`
   }
 }
     ${StateEventFragmentDoc}`;
-
-/**
- * __useWatchStateEventsSubscription__
- *
- * To run a query within a React component, call `useWatchStateEventsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchStateEventsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchStateEventsSubscription({
- *   variables: {
- *      stateID: // value for 'stateID'
- *   },
- * });
- */
-export function useWatchStateEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>(WatchStateEventsDocument, options);
-      }
-export type WatchStateEventsSubscriptionHookResult = ReturnType<typeof useWatchStateEventsSubscription>;
-export type WatchStateEventsSubscriptionResult = Apollo.SubscriptionResult<WatchStateEventsSubscription>;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {
@@ -7641,29 +5575,6 @@ export const WatchImplementationDocument = gql`
   }
 }
     ${DetailImplementationFragmentDoc}`;
-
-/**
- * __useWatchImplementationSubscription__
- *
- * To run a query within a React component, call `useWatchImplementationSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchImplementationSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchImplementationSubscription({
- *   variables: {
- *      implementation: // value for 'implementation'
- *   },
- * });
- */
-export function useWatchImplementationSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchImplementationSubscription, WatchImplementationSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImplementationSubscription, WatchImplementationSubscriptionVariables>(WatchImplementationDocument, options);
-      }
-export type WatchImplementationSubscriptionHookResult = ReturnType<typeof useWatchImplementationSubscription>;
-export type WatchImplementationSubscriptionResult = Apollo.SubscriptionResult<WatchImplementationSubscription>;
 export const WatchImplementationsDocument = gql`
     subscription WatchImplementations($agent: ID!) {
   implementations(agent: $agent) {
@@ -7678,25 +5589,241 @@ export const WatchImplementationsDocument = gql`
 }
     ${ListImplementationFragmentDoc}`;
 
-/**
- * __useWatchImplementationsSubscription__
- *
- * To run a query within a React component, call `useWatchImplementationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchImplementationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchImplementationsSubscription({
- *   variables: {
- *      agent: // value for 'agent'
- *   },
- * });
- */
-export function useWatchImplementationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchImplementationsSubscription, WatchImplementationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImplementationsSubscription, WatchImplementationsSubscriptionVariables>(WatchImplementationsDocument, options);
-      }
-export type WatchImplementationsSubscriptionHookResult = ReturnType<typeof useWatchImplementationsSubscription>;
-export type WatchImplementationsSubscriptionResult = Apollo.SubscriptionResult<WatchImplementationsSubscription>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+
+
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
+
+export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
+  return {
+    AgentOptions(variables?: AgentOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AgentOptionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AgentOptionsQuery>({ document: AgentOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'AgentOptions', 'query', variables);
+    },
+    Acknowledge(variables: AcknowledgeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AcknowledgeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AcknowledgeMutation>({ document: AcknowledgeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Acknowledge', 'mutation', variables);
+    },
+    PinAgent(variables: PinAgentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinAgentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PinAgentMutation>({ document: PinAgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinAgent', 'mutation', variables);
+    },
+    DeleteAgent(variables: DeleteAgentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteAgentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteAgentMutation>({ document: DeleteAgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteAgent', 'mutation', variables);
+    },
+    EnsureAgent(variables: EnsureAgentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<EnsureAgentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<EnsureAgentMutation>({ document: EnsureAgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'EnsureAgent', 'mutation', variables);
+    },
+    assign(variables: AssignMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AssignMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssignMutation>({ document: AssignDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'assign', 'mutation', variables);
+    },
+    cancel(variables: CancelMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CancelMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CancelMutation>({ document: CancelDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'cancel', 'mutation', variables);
+    },
+    interrupt(variables: InterruptMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<InterruptMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InterruptMutation>({ document: InterruptDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'interrupt', 'mutation', variables);
+    },
+    CreateBlok(variables: CreateBlokMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateBlokMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateBlokMutation>({ document: CreateBlokDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateBlok', 'mutation', variables);
+    },
+    MaterializeBlok(variables: MaterializeBlokMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MaterializeBlokMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MaterializeBlokMutation>({ document: MaterializeBlokDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MaterializeBlok', 'mutation', variables);
+    },
+    CreateDashboard(variables: CreateDashboardMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDashboardMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateDashboardMutation>({ document: CreateDashboardDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDashboard', 'mutation', variables);
+    },
+    Reinit(variables?: ReinitMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReinitMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReinitMutation>({ document: ReinitDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Reinit', 'mutation', variables);
+    },
+    Reserve(variables: ReserveMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReserveMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReserveMutation>({ document: ReserveDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Reserve', 'mutation', variables);
+    },
+    CreateShortcut(variables: CreateShortcutMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateShortcutMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateShortcutMutation>({ document: CreateShortcutDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateShortcut', 'mutation', variables);
+    },
+    DeleteShortcut(variables: DeleteShortcutMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteShortcutMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteShortcutMutation>({ document: DeleteShortcutDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteShortcut', 'mutation', variables);
+    },
+    CreateForeignImplementation(variables: CreateForeignImplementationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateForeignImplementationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateForeignImplementationMutation>({ document: CreateForeignImplementationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateForeignImplementation', 'mutation', variables);
+    },
+    DeleteImplementation(variables: DeleteImplementationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteImplementationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImplementationMutation>({ document: DeleteImplementationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteImplementation', 'mutation', variables);
+    },
+    SetExtensionImplementations(variables: SetExtensionImplementationsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SetExtensionImplementationsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SetExtensionImplementationsMutation>({ document: SetExtensionImplementationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SetExtensionImplementations', 'mutation', variables);
+    },
+    Unreserve(variables: UnreserveMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UnreserveMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UnreserveMutation>({ document: UnreserveDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Unreserve', 'mutation', variables);
+    },
+    ConstantAction(variables: ConstantActionQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ConstantActionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ConstantActionQuery>({ document: ConstantActionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ConstantAction', 'query', variables);
+    },
+    AssignAction(variables?: AssignActionQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AssignActionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssignActionQuery>({ document: AssignActionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'AssignAction', 'query', variables);
+    },
+    ReturnAction(variables: ReturnActionQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReturnActionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReturnActionQuery>({ document: ReturnActionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReturnAction', 'query', variables);
+    },
+    ActionByHash(variables: ActionByHashQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ActionByHashQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ActionByHashQuery>({ document: ActionByHashDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ActionByHash', 'query', variables);
+    },
+    AllActions(variables?: AllActionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AllActionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AllActionsQuery>({ document: AllActionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'AllActions', 'query', variables);
+    },
+    AllPrimaryActions(variables?: AllPrimaryActionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AllPrimaryActionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AllPrimaryActionsQuery>({ document: AllPrimaryActionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'AllPrimaryActions', 'query', variables);
+    },
+    ActionSearch(variables?: ActionSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ActionSearchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ActionSearchQuery>({ document: ActionSearchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ActionSearch', 'query', variables);
+    },
+    DetailAction(variables: DetailActionQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DetailActionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DetailActionQuery>({ document: DetailActionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DetailAction', 'query', variables);
+    },
+    PrimaryActions(variables?: PrimaryActionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PrimaryActionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PrimaryActionsQuery>({ document: PrimaryActionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PrimaryActions', 'query', variables);
+    },
+    PrimaryReturnActions(variables?: PrimaryReturnActionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PrimaryReturnActionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PrimaryReturnActionsQuery>({ document: PrimaryReturnActionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PrimaryReturnActions', 'query', variables);
+    },
+    Agents(variables?: AgentsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AgentsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AgentsQuery>({ document: AgentsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Agents', 'query', variables);
+    },
+    Agent(variables: AgentQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AgentQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AgentQuery>({ document: AgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Agent', 'query', variables);
+    },
+    Assignations(variables: AssignationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AssignationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssignationsQuery>({ document: AssignationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Assignations', 'query', variables);
+    },
+    DetailAssignation(variables: DetailAssignationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DetailAssignationQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DetailAssignationQuery>({ document: DetailAssignationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DetailAssignation', 'query', variables);
+    },
+    ListAssignations(variables?: ListAssignationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListAssignationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListAssignationsQuery>({ document: ListAssignationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListAssignations', 'query', variables);
+    },
+    ListAssignationsDetails(variables?: ListAssignationsDetailsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListAssignationsDetailsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListAssignationsDetailsQuery>({ document: ListAssignationsDetailsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListAssignationsDetails', 'query', variables);
+    },
+    GetBlok(variables: GetBlokQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetBlokQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetBlokQuery>({ document: GetBlokDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetBlok', 'query', variables);
+    },
+    ListBloks(variables?: ListBloksQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListBloksQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListBloksQuery>({ document: ListBloksDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListBloks', 'query', variables);
+    },
+    Clients(variables?: ClientsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ClientsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ClientsQuery>({ document: ClientsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Clients', 'query', variables);
+    },
+    GetDashboard(variables: GetDashboardQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDashboardQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDashboardQuery>({ document: GetDashboardDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDashboard', 'query', variables);
+    },
+    ListDashboards(variables?: ListDashboardsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListDashboardsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListDashboardsQuery>({ document: ListDashboardsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListDashboards', 'query', variables);
+    },
+    Dependency(variables: DependencyQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DependencyQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DependencyQuery>({ document: DependencyDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Dependency', 'query', variables);
+    },
+    SearchMemoryDrawer(variables?: SearchMemoryDrawerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SearchMemoryDrawerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SearchMemoryDrawerQuery>({ document: SearchMemoryDrawerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SearchMemoryDrawer', 'query', variables);
+    },
+    GlobalSearch(variables: GlobalSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GlobalSearchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GlobalSearchQuery>({ document: GlobalSearchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GlobalSearch', 'query', variables);
+    },
+    HomePageStats(variables?: HomePageStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HomePageStatsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HomePageStatsQuery>({ document: HomePageStatsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HomePageStats', 'query', variables);
+    },
+    HooksSearch(variables?: HooksSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HooksSearchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<HooksSearchQuery>({ document: HooksSearchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HooksSearch', 'query', variables);
+    },
+    Implementation(variables: ImplementationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ImplementationQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImplementationQuery>({ document: ImplementationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Implementation', 'query', variables);
+    },
+    Implementations(variables?: ImplementationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ImplementationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImplementationsQuery>({ document: ImplementationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Implementations', 'query', variables);
+    },
+    ListImplementations(variables?: ListImplementationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListImplementationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListImplementationsQuery>({ document: ListImplementationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListImplementations', 'query', variables);
+    },
+    ImplementationOptions(variables?: ImplementationOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ImplementationOptionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImplementationOptionsQuery>({ document: ImplementationOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ImplementationOptions', 'query', variables);
+    },
+    ImplementationAt(variables: ImplementationAtQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ImplementationAtQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImplementationAtQuery>({ document: ImplementationAtDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ImplementationAt', 'query', variables);
+    },
+    MyImplementationAt(variables: MyImplementationAtQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MyImplementationAtQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MyImplementationAtQuery>({ document: MyImplementationAtDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MyImplementationAt', 'query', variables);
+    },
+    ActionImplementationAt(variables: ActionImplementationAtQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ActionImplementationAtQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ActionImplementationAtQuery>({ document: ActionImplementationAtDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ActionImplementationAt', 'query', variables);
+    },
+    GetInterface(variables: GetInterfaceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetInterfaceQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetInterfaceQuery>({ document: GetInterfaceDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetInterface', 'query', variables);
+    },
+    ListInterfaces(variables?: ListInterfacesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListInterfacesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListInterfacesQuery>({ document: ListInterfacesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListInterfaces', 'query', variables);
+    },
+    MemoryShelves(variables?: MemoryShelvesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MemoryShelvesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MemoryShelvesQuery>({ document: MemoryShelvesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MemoryShelves', 'query', variables);
+    },
+    MemoryShelve(variables: MemoryShelveQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MemoryShelveQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MemoryShelveQuery>({ document: MemoryShelveDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MemoryShelve', 'query', variables);
+    },
+    ProtocolOptions(variables?: ProtocolOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ProtocolOptionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProtocolOptionsQuery>({ document: ProtocolOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ProtocolOptions', 'query', variables);
+    },
+    Reservations(variables: ReservationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReservationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReservationsQuery>({ document: ReservationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Reservations', 'query', variables);
+    },
+    DetailReservation(variables: DetailReservationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DetailReservationQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DetailReservationQuery>({ document: DetailReservationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DetailReservation', 'query', variables);
+    },
+    Shortcuts(variables?: ShortcutsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ShortcutsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ShortcutsQuery>({ document: ShortcutsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Shortcuts', 'query', variables);
+    },
+    Shortcut(variables: ShortcutQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ShortcutQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ShortcutQuery>({ document: ShortcutDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Shortcut', 'query', variables);
+    },
+    GetState(variables: GetStateQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStateQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetStateQuery>({ document: GetStateDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetState', 'query', variables);
+    },
+    GetStateFor(variables: GetStateForQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStateForQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetStateForQuery>({ document: GetStateForDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStateFor', 'query', variables);
+    },
+    GetStructure(variables: GetStructureQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStructureQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetStructureQuery>({ document: GetStructureDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStructure', 'query', variables);
+    },
+    ListStructures(variables?: ListStructuresQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListStructuresQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListStructuresQuery>({ document: ListStructuresDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListStructures', 'query', variables);
+    },
+    GetStructurePackage(variables: GetStructurePackageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStructurePackageQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetStructurePackageQuery>({ document: GetStructurePackageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStructurePackage', 'query', variables);
+    },
+    ListStructurePackage(variables?: ListStructurePackageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListStructurePackageQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListStructurePackageQuery>({ document: ListStructurePackageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListStructurePackage', 'query', variables);
+    },
+    Toolboxes(variables?: ToolboxesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ToolboxesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ToolboxesQuery>({ document: ToolboxesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Toolboxes', 'query', variables);
+    },
+    Toolbox(variables: ToolboxQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ToolboxQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ToolboxQuery>({ document: ToolboxDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Toolbox', 'query', variables);
+    },
+    WatchAgents(variables?: WatchAgentsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchAgentsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchAgentsSubscription>({ document: WatchAgentsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchAgents', 'subscription', variables);
+    },
+    WatchAssignationEvents(variables: WatchAssignationEventsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchAssignationEventsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchAssignationEventsSubscription>({ document: WatchAssignationEventsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchAssignationEvents', 'subscription', variables);
+    },
+    WatchAssignations(variables: WatchAssignationsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchAssignationsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchAssignationsSubscription>({ document: WatchAssignationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchAssignations', 'subscription', variables);
+    },
+    WatchReservations(variables: WatchReservationsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchReservationsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchReservationsSubscription>({ document: WatchReservationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchReservations', 'subscription', variables);
+    },
+    WatchStateEvents(variables: WatchStateEventsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchStateEventsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchStateEventsSubscription>({ document: WatchStateEventsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchStateEvents', 'subscription', variables);
+    },
+    WatchImplementation(variables: WatchImplementationSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchImplementationSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchImplementationSubscription>({ document: WatchImplementationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchImplementation', 'subscription', variables);
+    },
+    WatchImplementations(variables: WatchImplementationsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchImplementationsSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchImplementationsSubscription>({ document: WatchImplementationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchImplementations', 'subscription', variables);
+    }
+  };
+}
+export type Sdk = ReturnType<typeof getSdk>;

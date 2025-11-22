@@ -24,6 +24,9 @@ fragment Agent on Agent {
   active
   connected
   lastSeen
+  assignations(pagination: { limit: 5 }) {
+    ...ListAsssignation
+  }
 }
 
 fragment ListAgent on Agent {

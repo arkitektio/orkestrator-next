@@ -1,12 +1,15 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
+import { Assign } from "../main/message";
 
 // Custom APIs for renderer
 const api = {
   startFakts: async (url: string) => {
-    // @ts-ignore (define in dts)
     return ipcRenderer.send("fakts-start", url);
   },
+  inspectElectronAgent: () =>
+    ipcRenderer.invoke("agent:inspect-electron-agent"),
+
   downloadFromUrl: (url: string) =>
     ipcRenderer.invoke("download-from-url", { url }),
   startDrag: (structure) => {
@@ -28,6 +31,13 @@ const api = {
     labels?: string[];
     template?: string;
   }) => ipcRenderer.invoke("arkitekt.reportIssue", opts),
+  openFilePicker: () => ipcRenderer.invoke("dialog:openFile"),
+  initAgent: (context: any) => ipcRenderer.invoke("agent:init", context),
+  executeElectron: (assignation: Assign) => ipcRenderer.invoke("agent:execute", assignation),
+  onAgentYield: (cb: (data: any) => void) => ipcRenderer.on("agent:yield", (_e, data) => {console.log(data); cb(data)}),
+  onAgentDone: (cb: (data: any) => void) => ipcRenderer.on("agent:done", (_e, data) => {console.log(data); cb(data)}),
+  onAgentError: (cb: (data: any) => void) => ipcRenderer.on("agent:error", (_e, data) =>{console.log(data); cb(data)}),
+  onAgentLog: (cb: (data: any) => void) => ipcRenderer.on("agent:log", (_e, data) =>{console.log(data); cb(data)}),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

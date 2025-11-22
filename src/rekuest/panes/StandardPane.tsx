@@ -15,6 +15,7 @@ import {
   useListDashboardsQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
+import { AgentController } from "@/app/agent/AgentController";
 
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({
@@ -48,8 +49,8 @@ export const NavigationPane = () => {
   });
 
   return (
-    <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
+    <div className="flex-1 flex-col h-full overflow-y-auto overflow-x-hidden">
+      <nav className="grid items-start px-1 text-sm font-medium lg:px-2 flex-grow p-3 ">
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
           Explore
         </div>
@@ -202,6 +203,7 @@ export const NavigationPane = () => {
           </>
         )}
       </nav >
+
     </div >
   );
 };
@@ -238,7 +240,7 @@ const Pane: React.FunctionComponent = () => {
   );
 
   return (
-    <SidebarLayout searchBar={searchBar}>
+    <SidebarLayout searchBar={searchBar} bottomBar={<AgentController />}>
       {search.trim() === "" ? (
         <NavigationPane />
       ) : (

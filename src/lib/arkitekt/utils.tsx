@@ -1,10 +1,38 @@
 import { anySignal } from "any-signal";
-
+import { AppContext } from "./provider";
+import { ApolloClient, NormalizedCache } from "@apollo/client";
 function mstimeout(ms: number) {
   return new Promise((resolve, reject) =>
     setTimeout(() => reject(Error(`Timeout after ${ms}`)), ms),
   );
 }
+
+
+export const selectService = (context: AppContext, name: string) => {
+  const client = context.connection?.clients[name];
+  if (!client) {
+    throw new Error(`Client ${name} not found`);
+  }
+  return client;
+}
+
+export const selectAlias = (context: AppContext, name: string): Alias => {
+  const client = context.connection?.clients[name];
+  if (!client) {
+    throw new Error(`Client ${name} not found`);
+  }
+  return client.alias;
+}
+
+
+export const selectApolloClient = (
+  context: AppContext,
+  name: string,
+): ApolloClient<NormalizedCache> => {
+  const client = selectService(context, name).client;
+  return client as ApolloClient<NormalizedCache>;
+}
+
 
 export async function awaitWithTimeout<T>(
   promise: Promise<T>,

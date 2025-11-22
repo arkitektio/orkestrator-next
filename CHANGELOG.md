@@ -392,7 +392,7 @@
 * lovekit is now again operational ([92cf3db](https://github.com/arkitektio/orkestrator-next/commit/92cf3dbe96caf363440aebda20c4c87721ff4e8b))
 * podpage ([8853abe](https://github.com/arkitektio/orkestrator-next/commit/8853abe50caeb9f9fefda26b6eb7134ea89bd2b6))
 * release ([7c335c6](https://github.com/arkitektio/orkestrator-next/commit/7c335c651ac2a5d37af547b43f606aa2e066b162))
-* remove unnecessary console logs from StreamWidget component ([9cc7778](https://github.com/arkitektio/orkestrator-next/commit/9cc7778ccb04536cab46bb474f75ae1e0121480a))
+* remove unnecessary
 * rlease thing here ([1b9b1f1](https://github.com/arkitektio/orkestrator-next/commit/1b9b1f112dfe4db78945cbf175b9f183a18f33a2))
 * slightly fix messed up Image Page ([4c8517f](https://github.com/arkitektio/orkestrator-next/commit/4c8517f35950faa023d6bc762e9fd077884697b2))
 * test if the release workflow triggers the event ([c88e02c](https://github.com/arkitektio/orkestrator-next/commit/c88e02c2cd9510f85b9cb9bd0bd79e2cbca611f7))
@@ -538,7 +538,7 @@
 * lovekit is now again operational ([92cf3db](https://github.com/arkitektio/orkestrator-next/commit/92cf3dbe96caf363440aebda20c4c87721ff4e8b))
 * podpage ([8853abe](https://github.com/arkitektio/orkestrator-next/commit/8853abe50caeb9f9fefda26b6eb7134ea89bd2b6))
 * release ([7c335c6](https://github.com/arkitektio/orkestrator-next/commit/7c335c651ac2a5d37af547b43f606aa2e066b162))
-* remove unnecessary console logs from StreamWidget component ([9cc7778](https://github.com/arkitektio/orkestrator-next/commit/9cc7778ccb04536cab46bb474f75ae1e0121480a))
+* remove unnecessary
 * rlease thing here ([1b9b1f1](https://github.com/arkitektio/orkestrator-next/commit/1b9b1f112dfe4db78945cbf175b9f183a18f33a2))
 * slightly fix messed up Image Page ([4c8517f](https://github.com/arkitektio/orkestrator-next/commit/4c8517f35950faa023d6bc762e9fd077884697b2))
 * try release? ([b0f2813](https://github.com/arkitektio/orkestrator-next/commit/b0f28137e9d477a3992a4dbd7effacfdfa2b5229))
@@ -666,7 +666,7 @@
 
 ### Bug Fixes
 
-* remove unnecessary console logs from StreamWidget component ([9cc7778](https://github.com/arkitektio/orkestrator-next/commit/9cc7778ccb04536cab46bb474f75ae1e0121480a))
+* remove unnecessary
 
 # [1.3.0](https://github.com/arkitektio/orkestrator-next/compare/v1.2.0...v1.3.0) (2025-09-22)
 

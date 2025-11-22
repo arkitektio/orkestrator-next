@@ -29,6 +29,7 @@ import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import { DisplayProvider } from "./display";
 import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
+import { Agent } from "./agent/Agent";
 
 function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
@@ -81,7 +82,7 @@ export const BackNavigationErrorCatcher = ({
     <ErrorBoundary
       fallbackRender={fallbackRender}
       onReset={() => {
-        console.log("Resetting error boundary");
+
         navigate(-1);
       }}
     >
@@ -113,6 +114,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
                             <AssignationUpdater />
                             <AgentUpdater />
+                            <Agent></Agent>
                             {/* We register the Shadn powered widgets to the widget registry. */}
                             <RekuestNextWard />
                             <Toaster />

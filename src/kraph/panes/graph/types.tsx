@@ -1,4 +1,4 @@
-import { Edge, Node } from "reactflow";
+import { Edge, Node } from "@xyflow/react";
 
 export type KnowledgeNode<T extends { [key: string]: any }> = Node<T>;
 export type KnowledgeEdge = Edge<{

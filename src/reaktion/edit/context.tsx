@@ -1,4 +1,4 @@
-import { FlowFragment, GlobalArgFragment } from "@/rekuest/api/graphql";
+import { FlowFragment, GlobalArgFragment } from "@/reaktion/api/graphql";
 import React, { useContext } from "react";
 import {
   ClickContextualParams,

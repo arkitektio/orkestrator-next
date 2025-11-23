@@ -7,7 +7,7 @@ import {
   getSmoothStepPath,
   useNodes,
   useStore,
-} from "reactflow";
+} from "@xyflow/react";
 import { FlowNode, VanillaEdgeProps } from "../../types";
 import { useEditRiver } from "../context";
 

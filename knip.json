@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "electron.vite.config.ts",
+    "src/main.ts",
+    "electron/preload/index.ts",
+    "electron/main/index.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx,js,jsx}"],
+  "ignoreDependencies": [
+    "electron",
+    "electron-builder"
+  ]
+}

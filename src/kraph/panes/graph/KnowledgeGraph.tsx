@@ -5,8 +5,8 @@ import ReactFlow, {
   EdgeTypes,
   NodeTypes,
   ReactFlowProps,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { KnowledgeEdge, KnowledgeNode } from "./types";
 
 type Props = {

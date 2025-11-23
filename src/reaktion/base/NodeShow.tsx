@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import React from "react";
-import { NodeResizeControl } from "reactflow";
+import { NodeResizeControl } from "@xyflow/react";
 import { useEditNodeErrors, useEditRiver } from "../edit/context";
 
 type NodeProps = {

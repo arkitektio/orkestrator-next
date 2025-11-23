@@ -6,7 +6,7 @@ import {
 import { PortFragment } from "@/rekuest/api/graphql";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import { useState } from "react";
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from "@xyflow/react";
 
 export const InStream: React.FC<{
   stream: PortFragment[];

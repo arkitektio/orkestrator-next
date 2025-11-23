@@ -6,7 +6,7 @@ import {
 import { DetailAssignationFragment } from "@/rekuest/api/graphql";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
-import { useNodesState } from "reactflow";
+import { useNodesState } from "@xyflow/react";
 import { Graph } from "../base/Graph";
 import { EdgeTypes, FlowNode, NodeTypes } from "../types";
 import { edges_to_flowedges, nodes_to_flownodes } from "../utils";

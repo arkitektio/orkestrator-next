@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { LokServiceInstance } from "@/linkers";
 import { ListServiceInstanceFragment } from "@/lok-next/api/graphql";
 import { memo } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
+import { Handle, NodeProps, Position } from "@xyflow/react";
 
 export default memo(
   ({ data, isConnectable }: NodeProps<ListServiceInstanceFragment>) => {

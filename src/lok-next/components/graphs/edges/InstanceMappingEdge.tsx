@@ -6,7 +6,7 @@ import {
   EdgeProps,
   getBezierPath,
   useStore
-} from "reactflow";
+} from "@xyflow/react";
 
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
 

@@ -7,8 +7,6 @@ import {
 import { MateFinder } from "../../../mates/types";
 import { InstanceMaskViewFragment } from "../../api/graphql";
 import React, { useEffect, useMemo, useState } from "react";
-import { getConn, getDB, getDuckDB } from "@/lib/duckdb";
-import * as duckdb from "@duckdb/duckdb-wasm";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface HistoryCardProps {
@@ -31,51 +29,6 @@ const TheCard = ({ item, mates }: HistoryCardProps) => {
   const [cols, setCols] = useState<string[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(!!url);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!url) return;
-      setLoading(true);
-      setErr(null);
-      try {
-        const db = await getDB();
-        const conn = await getConn();
-
-        // Try direct HTTP streaming first
-        let registered = false;
-
-        db.registerFileURL(
-          alias,
-          url,
-          (duckdb as any).DuckDBDataProtocol.HTTP,
-          /*directIO*/ true,
-        );
-
-        const result = await conn.query(`SELECT * FROM '${alias}' LIMIT 5`);
-        const table = result.toArray(); // array of row objects
-
-        if (!cancelled) {
-          setRows(table as Row[]);
-          const header =
-            table.length > 0
-              ? Object.keys(table[0] as Record<string, unknown>)
-              : [];
-          setCols(header);
-        }
-      } catch (e: any) {
-        if (!cancelled) setErr(e?.message ?? String(e));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      (async () => {
-        const db = await getDB();
-        await db.dropFile(alias);
-      })();
-    };
-  }, [url, alias]);
 
   return (
     <MikroInstanceMaskView.Smart object={item?.id} mates={mates} key={item.id}>

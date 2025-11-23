@@ -106,6 +106,9 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
       })
       .filter(notEmpty) || [];
 
+
+  console.log("flowedges", flowedges);
+
   return flowedges;
 };
 

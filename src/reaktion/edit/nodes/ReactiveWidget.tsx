@@ -27,7 +27,7 @@ import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
-import { useUpdateNodeInternals } from "reactflow";
+import { useUpdateNodeInternals } from "@xyflow/react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { useEditRiver } from "../context";
 

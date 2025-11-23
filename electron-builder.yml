@@ -34,6 +34,7 @@ mac:
   hardenedRuntime: true
   gatekeeperAssess: false
   extendInfo:
+    - NSAllowsArbitraryLoads: Application requests access to make insecure http requests.
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.

@@ -1,19 +1,18 @@
 name: Publish a Release
 on:
   release:
-    types: [published, prereleased]   # stable from main, prerelease from dev
+    types: [published, prereleased] # stable from main, prerelease from dev
 
 permissions: write-all
 
 env:
-  GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN
+  GH_TOKEN: ${{ github.token }} # electron-builder reads GH_TOKEN
   CSC_LINK: ${{ secrets.CSC_LINK }}
   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
   # Notarization (Auto-detected by electron-builder)
   APPLE_ID: ${{ secrets.APPLE_ID }}
   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }} # Map your secret to this specific var name
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   release:
@@ -66,4 +65,3 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn run build:win
-

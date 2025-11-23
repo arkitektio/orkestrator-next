@@ -1,3 +1,10 @@
+## [1.29.2](https://github.com/arkitektio/orkestrator-next/compare/v1.29.1...v1.29.2) (2025-11-23)
+
+
+### Bug Fixes
+
+* fix duplicate entitlements ([9013888](https://github.com/arkitektio/orkestrator-next/commit/901388869c457d5629b85a0c5592698ec838131c))
+
 ## [1.29.1](https://github.com/arkitektio/orkestrator-next/compare/v1.29.0...v1.29.1) (2025-11-23)
 
 

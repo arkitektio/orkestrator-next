@@ -1,3 +1,11 @@
+# [1.30.0](https://github.com/arkitektio/orkestrator-next/compare/v1.29.2...v1.30.0) (2025-11-23)
+
+
+### Features
+
+* decrease bundle size ([d3444c2](https://github.com/arkitektio/orkestrator-next/commit/d3444c2c371ac5b705bed26791a48050c27f03ad))
+* fix fragment shader to support discrete colormaps ([f861921](https://github.com/arkitektio/orkestrator-next/commit/f861921526f253b798cdfc02cd7851ac699169ae))
+
 ## [1.29.2](https://github.com/arkitektio/orkestrator-next/compare/v1.29.1...v1.29.2) (2025-11-23)
 
 

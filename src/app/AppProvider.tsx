@@ -91,6 +91,8 @@ export const BackNavigationErrorCatcher = ({
   );
 };
 
+import { UploadProvider } from "@/providers/upload/UploadProvider";
+
 // The AppProvider is the root component of the application.
 // It is responsible for providing all the context providers that are used in the application.
 // It wraps the Easy Provider, which allows for the configuration of an Easy App through Arkitekt,
@@ -98,58 +100,62 @@ export const BackNavigationErrorCatcher = ({
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
-      <DebugProvider>
-        <Router basename={baseName}>
-          <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-            {/* This is where we configure the application automatically based on facts */}
+      <UploadProvider>
+        <CommandProvider>
+          <DebugProvider>
+            <Router basename={baseName}>
+              <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+                {/* This is where we configure the application automatically based on facts */}
 
-            <Arkitekt.Provider>
-              <TooltipProvider>
-                <DisplayProvider>
-                  <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
-                    <SmartProvider>
-                      <DialogProvider>
-                        <SelectionProvider>
-                          <Guard.Rekuest fallback={<></>}>
-                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                            <AssignationUpdater />
-                            <AgentUpdater />
-                            <Agent></Agent>
-                            {/* We register the Shadn powered widgets to the widget registry. */}
-                            <RekuestNextWard />
-                            <Toaster />
-                          </Guard.Rekuest>
-                          <Guard.Kabinet fallback={<></>}>
-                            <KabinetWard key="kabinet" />
-                          </Guard.Kabinet>
-                          <Guard.Kraph fallback={<></>}>
-                            <KraphWard key="kraph" />
-                          </Guard.Kraph>
-                          <Guard.Alpaka fallback={<></>}>
-                            <AlpakaWard key="alpaka" />
-                          </Guard.Alpaka>
-                          <Guard.Elektro fallback={<></>}>
-                            <ElektroWard key="elektro" />
-                          </Guard.Elektro>
-                          <Guard.Mikro fallback={<></>}>
-                            <MikroNextWard key="mikro" />
-                          </Guard.Mikro>
-                          <Guard.Fluss fallback={<></>}>
-                            <FlussWard key="fluss" />
-                          </Guard.Fluss>
-                          <BackNavigationErrorCatcher>
-                            {children}
-                          </BackNavigationErrorCatcher>
-                        </SelectionProvider>
-                      </DialogProvider>
-                    </SmartProvider>
-                  </WidgetRegistryProvider>
-                </DisplayProvider>
-              </TooltipProvider>
-            </Arkitekt.Provider>
-          </ThemeProvider>
-        </Router>
-      </DebugProvider>
+                <Arkitekt.Provider>
+                  <TooltipProvider>
+                    <DisplayProvider>
+                      <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
+                        <SmartProvider>
+                          <DialogProvider>
+                            <SelectionProvider>
+                              <Guard.Rekuest fallback={<></>}>
+                                {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                                <AssignationUpdater />
+                                <AgentUpdater />
+                                <Agent></Agent>
+                                {/* We register the Shadn powered widgets to the widget registry. */}
+                                <RekuestNextWard />
+                                <Toaster />
+                              </Guard.Rekuest>
+                              <Guard.Kabinet fallback={<></>}>
+                                <KabinetWard key="kabinet" />
+                              </Guard.Kabinet>
+                              <Guard.Kraph fallback={<></>}>
+                                <KraphWard key="kraph" />
+                              </Guard.Kraph>
+                              <Guard.Alpaka fallback={<></>}>
+                                <AlpakaWard key="alpaka" />
+                              </Guard.Alpaka>
+                              <Guard.Elektro fallback={<></>}>
+                                <ElektroWard key="elektro" />
+                              </Guard.Elektro>
+                              <Guard.Mikro fallback={<></>}>
+                                <MikroNextWard key="mikro" />
+                              </Guard.Mikro>
+                              <Guard.Fluss fallback={<></>}>
+                                <FlussWard key="fluss" />
+                              </Guard.Fluss>
+                              <BackNavigationErrorCatcher>
+                                {children}
+                              </BackNavigationErrorCatcher>
+                            </SelectionProvider>
+                          </DialogProvider>
+                        </SmartProvider>
+                      </WidgetRegistryProvider>
+                    </DisplayProvider>
+                  </TooltipProvider>
+                </Arkitekt.Provider>
+              </ThemeProvider>
+            </Router>
+          </DebugProvider>
+        </CommandProvider>
+      </UploadProvider>
     </SettingsProvider>
   );
 };

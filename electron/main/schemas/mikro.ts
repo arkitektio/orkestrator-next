@@ -5707,6 +5707,7 @@ export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  order?: InputMaybe<FileOrder>;
 }>;
 
 
@@ -7348,8 +7349,8 @@ export const GetFileDocument = gql`
 }
     ${FileFragmentDoc}`;
 export const GetFilesDocument = gql`
-    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput) {
-  files(filters: $filters, pagination: $pagination) {
+    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $order: FileOrder) {
+  files(filters: $filters, pagination: $pagination, order: $order) {
     ...ListFile
   }
 }

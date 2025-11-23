@@ -1,14 +1,14 @@
 projects:
-  mikro_next:
-    schema: http://jhnnsrs-lab/mikro/graphql
-    documents: graphql/mikro-next/**/*.graphql
-
   fluss_next:
     schema: http://jhnnsrs-lab/fluss/graphql
     documents: graphql/fluss-next/**/*.graphql
   elektro:
     schema: http://jhnnsrs-lab/elektro/graphql
     documents: graphql/elektro/**/*.graphql
+
+  mikro_next:
+    schema: http://jhnnsrs-lab/mikro/graphql
+    documents: graphql/mikro-next/**/*.graphql
 
   kraph:
     schema: http://jhnnsrs-lab/kraph/graphql

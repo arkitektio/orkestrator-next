@@ -1,14 +1,11 @@
 appId: live.arkitekt.orkestrator.next
 productName: Orkestrator
 
-
 publish:
   provider: github
   owner: arkitektio
   repo: orkestrator-next
-  releaseType: release         # must be published (not draft) to update
-
-
+  releaseType: release # must be published (not draft) to update
 
 directories:
   buildResources: build
@@ -30,18 +27,21 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
-  target:                      # IMPORTANT: both dmg + zip for auto-update
+  target: # IMPORTANT: both dmg + zip for auto-update
     - dmg
     - zip
   entitlementsInherit: build/entitlements.mac.plist
+  hardenedRuntime: true
+  gatekeeperAssess: false
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
+  notarize: true
 dmg:
   artifactName: ${name}-${version}.${ext}
+  sign: false
 linux:
   target:
     - AppImage

@@ -1,5 +1,6 @@
 import { AppContext } from "@/lib/arkitekt/provider";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
+import { NO_RECONNECT_CODES } from "@/constants";
 import {
   Assign,
   CancelledEvent,
@@ -231,7 +232,7 @@ export class OrkestratorAgent {
       this.lastReason = event.reason;
       this.notify();
 
-      if (this.shouldReconnect) {
+      if (this.shouldReconnect && !NO_RECONNECT_CODES.includes(event.code)) {
         this.reconnectTimer = setTimeout(() => this.connect(), 3000);
       }
     };

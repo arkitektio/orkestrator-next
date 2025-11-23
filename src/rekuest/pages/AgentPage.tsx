@@ -136,6 +136,7 @@ export default asDetailQueryRoute(
 
     return (
       <RekuestAgent.ModelPage
+        variant="black"
         title={data.agent.name}
         object={data.agent.id}
         sidebars={

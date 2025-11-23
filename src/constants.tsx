@@ -74,3 +74,5 @@ export const KABINET_INSTALL_POD_HASH =
 
 export const KABINET_INSTALL_DEFINITION_HASH =
   "c73166761996596ea36f8bcccc4e09c6954e6134d22bfab6c117df62e8bcdaff";
+
+export const NO_RECONNECT_CODES = [4003];

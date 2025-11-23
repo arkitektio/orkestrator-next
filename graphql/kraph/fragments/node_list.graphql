@@ -1,9 +1,4 @@
 fragment NodeList on NodeList {
-  category {
-    propertyDefinitions {
-      ...PropertyDefinition
-    }
-  }
   nodes {
     __typename
     id

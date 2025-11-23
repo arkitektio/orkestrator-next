@@ -93,6 +93,63 @@ export const ReturnsContainer: OutputContainer = ({
   );
 };
 
+export const WrappedReturnsContainer: OutputContainer = ({
+  ports,
+  values,
+  registry,
+  showKeys = false,
+  className,
+}) => {
+  return (
+    <div className={cn("flex flex-row flex-wrap gap-2 w-full h-full", className)}>
+      {Object.keys(values).map((key, index) => {
+        const port = ports.find((p) => p.key === key);
+        if (!port) return <>No Port</>;
+
+        const Widget = registry.getReturnWidgetForPort(port);
+
+        return (
+          <div
+            key={key}
+            className="@container flex flex-col rounded rounded-md border-1 flex-1"
+          >
+            {showKeys && (
+              <label
+                className="flex-initial font-light text-slate-200 mb-2"
+                htmlFor={port.key}
+              >
+                {port.label || port.key}
+              </label>
+            )}
+            <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
+              <EffectWrapper
+                effects={port.effects || []}
+                port={port}
+                registry={registry}
+              >
+                <Widget
+                  key={index}
+                  port={port}
+                  widget={port.returnWidget}
+                  value={values[key]}
+                />
+              </EffectWrapper>
+            </div>
+            {port.description && (
+              <div
+                id={`${port.key}-help`}
+                className="text-xs mb-4 font-light flex-initial text-slate-400"
+              >
+                {port.description}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export type FilledGroup = PortGroup & {
   ports: Port[];
 };

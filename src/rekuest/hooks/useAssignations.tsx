@@ -1,5 +1,5 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   AssignationEventKind,
   PortKind,
@@ -35,7 +35,9 @@ export type FilterOptions = {
   assignedImplementation?: string;
   assignedAction?: string;
   allowDone?: boolean;
+  refetch?: boolean;
 };
+
 
 export const useFilteredAssignations = (options?: FilterOptions) => {
   const { data } = useAssignations();
@@ -111,6 +113,7 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
       options?.identifier,
       options?.object,
       options?.assignation,
+      options?.refetch,
     ],
   );
 
@@ -150,6 +153,7 @@ export const useLiveAssignation = (options: FilterOptions) => {
   const latestMessage = assignation?.events.find(
     (x) => x.message != undefined,
   )?.message;
+
 
   return {
     progress:

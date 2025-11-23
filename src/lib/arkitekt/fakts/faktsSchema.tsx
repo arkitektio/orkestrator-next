@@ -30,7 +30,7 @@ export const SelfFaktSchema = z.object({
 
 // ActiveFakts type
 export const ActiveFaktsSchema = z.object({
-  instances: z.record(InstanceSchema),
+  instances: z.record(z.string(), InstanceSchema),
   auth: AuthFaktSchema,
   self: SelfFaktSchema,
 });

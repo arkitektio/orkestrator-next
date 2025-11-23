@@ -47,6 +47,7 @@ import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
 import EditEventPage from "./pages/EditEventPage";
+import NotesPage from "./pages/NotesPage";
 interface Props { }
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -77,6 +78,7 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
           <Route path="graphqueries/:id/builder" element={<BuilderPage />} />
+          <Route path="notes" element={<NotesPage />} />
           <Route
             path="nodequeries/:id/node/:node"
             element={<NodeQueryPage />}

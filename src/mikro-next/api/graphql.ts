@@ -721,6 +721,13 @@ export type DerivedViewCongruentViewsArgs = {
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+export type Descriptor = {
+  __typename?: 'Descriptor';
+  description?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  value: Scalars['Any']['output'];
+};
+
 export type DesociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
@@ -3522,6 +3529,7 @@ export type Query = {
   continousScanViews: Array<ContinousScanView>;
   dataset: Dataset;
   datasets: Array<Dataset>;
+  describe: Array<Descriptor>;
   eras: Array<Era>;
   experiment: Experiment;
   experiments: Array<Experiment>;
@@ -3642,6 +3650,12 @@ export type QueryDatasetArgs = {
 export type QueryDatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDescribeArgs = {
+  id: Scalars['ID']['input'];
+  identifier: Scalars['String']['input'];
 };
 
 
@@ -5694,6 +5708,7 @@ export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  order?: InputMaybe<FileOrder>;
 }>;
 
 
@@ -8965,8 +8980,8 @@ export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
 export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
 export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
 export const GetFilesDocument = gql`
-    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput) {
-  files(filters: $filters, pagination: $pagination) {
+    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $order: FileOrder) {
+  files(filters: $filters, pagination: $pagination, order: $order) {
     ...ListFile
   }
 }
@@ -8986,6 +9001,7 @@ export const GetFilesDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
  *   },
  * });
  */

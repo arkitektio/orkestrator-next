@@ -1,12 +1,13 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEditEvent, KraphProtocolEventCategory } from "@/linkers";
+import { KraphEditEvent } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 
-import { EditEventNode, NaturalEventNode } from "../types";
+import { EditEventNode } from "../types";
+import Timestamp from "react-timestamp";
+import { UserAvatar } from "@/lok-next/components/UserAvatar";
 
 export default memo(({ data, id, selected }: NodeProps<EditEventNode>) => {
   const resolve = useResolve();
@@ -14,31 +15,27 @@ export default memo(({ data, id, selected }: NodeProps<EditEventNode>) => {
   return (
     <>
       <NodeResizer
-        color="#ff0071"
+        color="#64748b"
         isVisible={selected}
         minWidth={100}
         minHeight={30}
       />
       <Handles self={id} />
-      <div className="absolute top-1 left-1 right-1 bottom-1 z-10">
-        <Card
-          className="h-full w-full rounded-lg z-10  relative overflow-hidden group ring-4 ring-green ring-green-200"
-          style={{ zIndex: 10 }}
-        >
-          {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
-          {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
-
-
-          <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
-            <KraphEditEvent.DetailLink
-              object={data.id}
-              className={"font-bold"}
-            >
-              {data.id}
-            </KraphEditEvent.DetailLink>
-          </div>
-        </Card>
-      </div>
+      <Card
+        className={`h-full w-full rounded-md border-l-8 border-slate-500 bg-card !overflow-hidden shadow-sm transition-all ${selected ? "ring-2 ring-slate-500 shadow-lg" : ""
+          }`}
+        style={{ zIndex: 10 }}
+      >
+        <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
+          <KraphEditEvent.DetailLink
+            object={data.id}
+            className="font-bold text-sm text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
+          >
+            <Timestamp date={data.timestamp} relative />
+          </KraphEditEvent.DetailLink>
+          <UserAvatar sub={data.editor.sub} className="mt-2 w-8 h-8 rounded-full" />
+        </div>
+      </Card>
     </>
   );
 });

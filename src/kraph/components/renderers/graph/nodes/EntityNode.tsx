@@ -14,25 +14,27 @@ export default memo(({ data, id, selected }: NodeProps<EntityNode>) => {
     <>
       <Handles self={id} />
       <Card
-        className="h-full w-full rounded-full z-10  relative overflow-hidden group"
+        className={`h-full w-full rounded-xl border-4 border-emerald-500 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-4 ring-emerald-300 shadow-lg" : ""}`}
         style={{ zIndex: 10 }}
       >
-        {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
-        {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
-
         {data.category.store?.presignedUrl && (
           <Image
             src={resolve(data.category.store.presignedUrl)}
-            style={{ filter: "brightness(0.7)" }}
-            className="object-cover h-full w-full rounded rounded-lg"
+            style={{ filter: "brightness(0.5)" }}
+            className="object-cover h-full w-full"
           />
         )}
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col gap-2 bg-black/50 ">
-          <KraphEntity.DetailLink object={data.id}>
+        <div className="absolute inset-0 z-10 flex items-center justify-center flex-col gap-1 p-4 text-center">
+          <KraphEntity.DetailLink
+            object={data.id}
+            className="font-bold text-lg text-foreground hover:underline bg-background/90 px-3 py-1 rounded backdrop-blur-sm shadow-sm"
+          >
             {data.category.label}
           </KraphEntity.DetailLink>
           {data.externalId && (
-            <div className="flex flex-row gap-2">{data.externalId}</div>
+            <div className="text-sm font-medium text-muted-foreground bg-background/90 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
+              ID: {data.externalId}
+            </div>
           )}
         </div>
       </Card>

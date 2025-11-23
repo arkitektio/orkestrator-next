@@ -1851,6 +1851,67 @@
             "deprecationReason": null
           },
           {
+            "name": "assignations",
+            "description": "Assignations executed by this agent.",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AssignationFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AssignationOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Assignation",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "connected",
             "description": "Is the agent currently connected.",
             "args": [],
@@ -2953,6 +3014,18 @@
             "deprecationReason": null
           },
           {
+            "name": "policy",
+            "description": "The policy for the assignation. This defines how the assignation should be handled.",
+            "type": {
+              "kind": "ENUM",
+              "name": "AssignPolicy",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "reference",
             "description": null,
             "type": {
@@ -2960,7 +3033,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"98daadb0-ce57-42f9-ab29-1aa45a09b6fe\"",
+            "defaultValue": "\"382de6ab-898f-48cf-810b-bf5bf9d17b31\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -2991,6 +3064,42 @@
         ],
         "interfaces": null,
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "AssignPolicy",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "AUTOMATIC",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "FASTEST_RESPONSE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "LEAST_BUSY",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ROUND_ROBIN",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "possibleTypes": null
       },
       {
@@ -14288,6 +14397,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "matching",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ActionDependencyInput",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "reservation",
                 "description": null,
                 "type": {
@@ -17083,7 +17204,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"01772dda-5fe2-4789-b135-143300b1103b\"",
+            "defaultValue": "\"1d64d7f4-ab07-4075-8c76-1de9cb66728c\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

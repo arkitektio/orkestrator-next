@@ -121,6 +121,13 @@ export const NavigationPane = (props: {}) => {
             Metrics
           </DroppableNavLink>
           <DroppableNavLink
+            to="/kraph/notes"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <PiNumberCircleEight className="h-4 w-4" />
+            Notes
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/kraph/measurementcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

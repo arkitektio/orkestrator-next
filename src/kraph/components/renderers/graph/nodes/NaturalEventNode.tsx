@@ -14,7 +14,7 @@ export default memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
   return (
     <>
       <NodeResizer
-        color="#ff0071"
+        color="#f59e0b"
         isVisible={selected}
         minWidth={100}
         minHeight={30}
@@ -22,23 +22,21 @@ export default memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
       <Handles self={id} />
       <div className="absolute top-1 left-1 right-1 bottom-1 z-10">
         <Card
-          className="h-full w-full rounded-lg z-10  relative overflow-hidden group ring-4 ring-green ring-green-200"
+          className={`h-full w-full rounded-md border-l-8 border-amber-500 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-2 ring-amber-500 shadow-lg" : ""
+            }`}
           style={{ zIndex: 10 }}
         >
-          {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
-          {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
-
           {data.category.store?.presignedUrl && (
             <Image
               src={resolve(data.category.store.presignedUrl)}
-              style={{ filter: "brightness(0.7)" }}
-              className="object-cover h-full w-full rounded rounded-lg"
+              style={{ filter: "brightness(0.5)" }}
+              className="object-cover h-full w-full"
             />
           )}
-          <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
+          <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
             <KraphProtocolEventCategory.DetailLink
               object={data.id}
-              className={"font-bold"}
+              className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
             >
               {data.label}
             </KraphProtocolEventCategory.DetailLink>

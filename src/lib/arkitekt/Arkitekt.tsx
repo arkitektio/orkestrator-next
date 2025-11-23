@@ -34,6 +34,7 @@ export const electronRedirect = async (
   return await window.api.authenticate(url);
 };
 
+
 export const serviceMap: ServiceBuilderMap = {
   mikro: {
     key: "mikro",
@@ -47,6 +48,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: mikroResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -62,6 +64,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: rekuestResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -77,6 +80,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: lovekitResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -92,6 +96,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: flussResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -107,6 +112,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: lokResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -122,6 +128,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: kabinetResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -137,6 +144,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: omeroArkResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -152,6 +160,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: kraphResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -167,6 +176,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: alpakaResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -182,6 +192,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: dokumentsResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias,
       };
     },
   },
@@ -197,6 +208,7 @@ export const serviceMap: ServiceBuilderMap = {
           possibleTypes: elektroResult.possibleTypes,
           retrieveToken: () => token,
         }),
+        alias
       };
     },
   },
@@ -211,6 +223,7 @@ export const serviceMap: ServiceBuilderMap = {
         client: createLivekitClient({
           url: aliasToHttpPath(alias, ""),
         }),
+        alias
       };
     },
   },
@@ -221,7 +234,9 @@ export const serviceMap: ServiceBuilderMap = {
     builder: async ({ alias, token }) => {
       return {
         client: { url: aliasToHttpPath(alias, "") },
+        alias
       };
+
     },
   },
 };

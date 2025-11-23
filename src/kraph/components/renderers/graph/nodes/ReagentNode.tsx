@@ -13,29 +13,31 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
   return (
     <>
       <NodeResizer
-        color="#ff0071"
+        color="#06b6d4"
         isVisible={selected}
         minWidth={100}
         minHeight={30}
       />
       <Handles self={id} />
       <Card
-        className="h-full w-full rounded-full z-10  relative overflow-hidden group ring-4 ring-blue ring-blue-200"
+        className={`h-full w-full rounded-xl border-4 border-cyan-600 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-4 ring-cyan-300 shadow-lg" : ""}`}
         style={{ zIndex: 10 }}
       >
-        {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
-        {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
-
         {data.category.store?.presignedUrl && (
           <Image
             src={resolve(data.category.store.presignedUrl)}
-            style={{ filter: "brightness(0.7)" }}
-            className="object-cover h-full w-full rounded rounded-lg"
+            style={{ filter: "brightness(0.5)" }}
+            className="object-cover h-full w-full"
           />
         )}
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col gap-2 bg-black/50 truncate ">
-          {data.category.label}
-          <KraphReagentCategory.DetailLink object={data.id}>
+        <div className="absolute inset-0 z-10 flex items-center justify-center flex-col gap-1 p-4 text-center">
+          <div className="text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 bg-background/90 px-2 py-0.5 rounded-full backdrop-blur-sm mb-1 shadow-sm">
+            {data.category.label}
+          </div>
+          <KraphReagentCategory.DetailLink
+            object={data.id}
+            className="font-bold text-lg text-foreground hover:underline bg-background/90 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm"
+          >
             {data.label}
           </KraphReagentCategory.DetailLink>
         </div>

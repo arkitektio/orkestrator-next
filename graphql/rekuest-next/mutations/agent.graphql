@@ -7,3 +7,9 @@ mutation PinAgent($input: PinInput!) {
 mutation DeleteAgent($id: ID!) {
   deleteAgent(input: { id: $id })
 }
+
+mutation EnsureAgent($input: AgentInput!) {
+  ensureAgent(input: $input) {
+    ...Agent
+  }
+}

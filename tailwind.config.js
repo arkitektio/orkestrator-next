@@ -118,7 +118,8 @@ module.exports = {
     require("tailwindcss-animate"),
     require("@tailwindcss/container-queries"),
     addVariablesForColors,
-  ],
+    require("tailwind-scrollbar-hide"),
+],
 };
 
 function addVariablesForColors({ addBase, theme }) {

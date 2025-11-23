@@ -1,3 +1,20 @@
+# [1.29.0](https://github.com/arkitektio/orkestrator-next/compare/v1.28.1...v1.29.0) (2025-11-23)
+
+
+### Bug Fixes
+
+* fix publish all workflow ([ab07dba](https://github.com/arkitektio/orkestrator-next/commit/ab07dbadfa70a84db668efc4922140734014dc4c))
+
+
+### Features
+
+* add agent controller ([1863401](https://github.com/arkitektio/orkestrator-next/commit/18634016baabea8cb4a29f7f341297369692c6f6))
+* add code signing? ([12de849](https://github.com/arkitektio/orkestrator-next/commit/12de849027ffa9407f91ab394debd0b879d737a1))
+* add the agent controller ([d83a55b](https://github.com/arkitektio/orkestrator-next/commit/d83a55b8432466e89cb08a16ee87a7208c38c645))
+* massive depedency update ([6054c4a](https://github.com/arkitektio/orkestrator-next/commit/6054c4af57c7ad2d0a646812873d9bd3473a318c))
+* new agent page ([7d02f0a](https://github.com/arkitektio/orkestrator-next/commit/7d02f0a88dbc4eb4192f3b3117ee5bcdf78c8c20))
+* upload fixes ([ebe470d](https://github.com/arkitektio/orkestrator-next/commit/ebe470dca72b59a828555b136d5e404cc2ce00d1))
+
 ## [1.28.1](https://github.com/arkitektio/orkestrator-next/compare/v1.28.0...v1.28.1) (2025-11-20)
 
 

@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/arkitektio/orkestrator-next/compare/v1.29.0...v1.29.1) (2025-11-23)
+
+
+### Bug Fixes
+
+* fix http requests? ([a87a12a](https://github.com/arkitektio/orkestrator-next/commit/a87a12a521740e4d7dc87cb0218d906d839605a0))
+
 # [1.29.0](https://github.com/arkitektio/orkestrator-next/compare/v1.28.1...v1.29.0) (2025-11-23)
 
 

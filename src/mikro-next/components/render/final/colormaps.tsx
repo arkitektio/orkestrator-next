@@ -8,12 +8,32 @@ export const createColormapTexture = (colors: number[][]) => {
     data[i * 4] = Math.round(colors[i][0] * 255);
     data[i * 4 + 1] = Math.round(colors[i][1] * 255);
     data[i * 4 + 2] = Math.round(colors[i][2] * 255);
-    data[i * 4 + 3] = 255;
+    data[i * 4 + 3] =
+      colors[i].length > 3 ? Math.round(colors[i][3] * 255) : 255;
   }
 
   const texture = new THREE.DataTexture(data, size, 1, THREE.RGBAFormat);
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  return texture;
+};
+
+export const createDiscreteColormapTexture = (colors: number[][]) => {
+  const size = colors.length;
+  const data = new Uint8Array(size * 4);
+
+  for (let i = 0; i < size; i++) {
+    data[i * 4] = Math.round(colors[i][0] * 255);
+    data[i * 4 + 1] = Math.round(colors[i][1] * 255);
+    data[i * 4 + 2] = Math.round(colors[i][2] * 255);
+    data[i * 4 + 3] =
+      colors[i].length > 3 ? Math.round(colors[i][3] * 255) : 255;
+  }
+
+  const texture = new THREE.DataTexture(data, size, 1, THREE.RGBAFormat);
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
   texture.needsUpdate = true;
   return texture;
 };
@@ -323,10 +343,12 @@ export const turboColormap = createColormapTexture(
 );
 
 // Rainbow/HSV colormap
-export const rainbowColormap = createColormapTexture(
+export const rainbowColormap = createDiscreteColormapTexture(
   Array.from({ length: 256 }, (_, i) => {
-    const t = i / 255;
-    const hue = t * 360;
+    if (i === 0) return [0, 0, 0, 0]; // Transparent background for index 0
+
+    // Golden angle approximation
+    const hue = (i * 137.508) % 360;
 
     // Convert HSV to RGB (with S=1, V=1)
     const c = 1;
@@ -335,19 +357,31 @@ export const rainbowColormap = createColormapTexture(
 
     let r, g, b;
     if (hue >= 0 && hue < 60) {
-      r = c; g = x; b = 0;
+      r = c;
+      g = x;
+      b = 0;
     } else if (hue >= 60 && hue < 120) {
-      r = x; g = c; b = 0;
+      r = x;
+      g = c;
+      b = 0;
     } else if (hue >= 120 && hue < 180) {
-      r = 0; g = c; b = x;
+      r = 0;
+      g = c;
+      b = x;
     } else if (hue >= 180 && hue < 240) {
-      r = 0; g = x; b = c;
+      r = 0;
+      g = x;
+      b = c;
     } else if (hue >= 240 && hue < 300) {
-      r = x; g = 0; b = c;
+      r = x;
+      g = 0;
+      b = c;
     } else {
-      r = c; g = 0; b = x;
+      r = c;
+      g = 0;
+      b = x;
     }
 
-    return [r + m, g + m, b + m];
+    return [r + m, g + m, b + m, 1];
   }),
 );

@@ -12,7 +12,8 @@ export const settingsValidator = zod.object({
   experimentalViv: zod.boolean(),
   experimentalCache: zod.boolean(),
   defaultZoomLevel: zod.number().min(0.25).max(3.0),
-  startAgent: zod.boolean()
+  startAgent: zod.boolean(),
+  agentExpanded: zod.boolean().optional(),
 });
 
 export const defaultSettings: Settings = {
@@ -27,7 +28,8 @@ export const defaultSettings: Settings = {
   experimentalViv: false,
   experimentalCache: false,
   defaultZoomLevel: 0.8,
-  startAgent: true
+  startAgent: true,
+  agentExpanded: false,
 };
 
 export type Settings = zod.infer<typeof settingsValidator>;

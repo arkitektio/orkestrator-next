@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router";
 import Action from "./pages/Action";
 import Actions from "./pages/Actions";
 import AgentPage from "./pages/AgentPage";
-import Assignation from "./pages/Assignation";
+import AssignationPage from "./pages/AssignationPage";
 import Blok from "./pages/Blok";
 import Bloks from "./pages/Bloks";
 import Dashboard from "./pages/Dashboard";
@@ -69,7 +69,7 @@ const Module: React.FC = () => {
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<AgentPage />} />
           <Route path="assignations" element={<AssignationsPage />} />
-          <Route path="assignations/:id" element={<Assignation />} />
+          <Route path="assignations/:id" element={<AssignationPage />} />
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
         </Routes>
       </ModuleLayout>

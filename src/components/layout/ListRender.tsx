@@ -42,7 +42,7 @@ export const ListRender = <T extends any>({
 
   const childrenComponents = useMemo(
     () => array?.map(children),
-    [array?.at(0), offset],
+    [array, offset],
   );
 
   return (

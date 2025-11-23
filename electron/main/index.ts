@@ -201,6 +201,11 @@ function createWindow(): BrowserWindow {
     mainWindow?.webContents.setZoomFactor(1.0);
   });
 
+  mainWindow.webContents.on('devtools-opened', () => {
+    // This updates the position without closing/reopening the tools
+    mainWindow?.webContents.openDevTools({ mode: 'right' });
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {

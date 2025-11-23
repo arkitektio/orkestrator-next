@@ -1,16 +1,91 @@
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/providers/settings/SettingsContext"
+import { useAgent } from "./AgentProvider";
+import { AgentCodeDisplay } from "./AgentCodeDisplay";
+import { Badge } from "@/components/ui/badge";
+import { Activity, AlertCircle, Power, Wifi, WifiOff } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export const AgentController = (props) => {
+export const AgentController = (props: any) => {
   const { settings, setSettings } = useSettings();
+  const { assignments, errors, connected, lastCode, lastReason } = useAgent();
+
+  const toggleAgent = () => {
+    setSettings({ ...settings, startAgent: !settings.startAgent })
+  }
+
+  if (!settings.startAgent) {
+    return (
+      <div className="w-full bg-foreground/5 p-4 rounded-t-lg border-t border-border">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div className="text-xs text-muted-foreground text-center">
+            Enable the agent to allow this app to be controlled by other users.
+          </div>
+          <Button onClick={toggleAgent} variant="outline" size="sm" className="gap-2 w-full">
+            <Power className="h-4 w-4" />
+            Start Agent
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
 
-  return <div className="w-full flex flex-col items-center justify-center space-y-4 bg-foreground/5 p-4 rounded-t-lg border-t border-t-border border-t-gray-600">
-    {settings.startAgent && <div className="text-xs text-muted-foreground">This app can be controlled by other users.</div>}
-    <Button onClick={() => setSettings({ ...settings, startAgent: !settings.startAgent })} variant={"outline"} className="w-full flex flex-row items-center justify-center gap-2">
-      {!settings.startAgent ? <div className="h-4 w-4 rounded rounded-full bg-green-200"></div> : <div className="h-4 w-4 rounded rounded-full bg-red-200"></div>}
-      {settings.startAgent ? "Stop Agent" : "Start Agent"}
-    </Button>
-  </div>
+  return (
+    <div className="w-full bg-foreground/5 rounded-t-lg border-t border-border overflow-hidden">
+      <div className="p-3 border-b border-border/50 flex items-center justify-between bg-background/50">
+        <div className="text-sm font-medium flex items-center gap-2">
+          <Activity className="h-4 w-4 text-muted-foreground" />
+          Agent Status
+        </div>
+        <Badge variant={connected ? "default" : "destructive"} className="gap-1 h-5 px-2">
+          {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+          {connected ? "Online" : "Offline"}
+        </Badge>
+      </div>
 
+      <div className="p-4 space-y-4">
+        {!connected && lastCode && (
+          <Alert variant="destructive" className="py-2 text-xs [&>svg]:top-2.5 [&>svg]:left-3 pl-9">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Connection Error {lastCode && <span className="font-mono text-[10px] opacity-80">({lastCode})</span>}</AlertTitle>
+            <AlertDescription>
+              <AgentCodeDisplay code={lastCode} />
+              {lastReason && <div className="mt-1 text-[10px] opacity-80">{lastReason}</div>}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-background/50 p-2 rounded border border-border/50 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold">{assignments.length}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Assignments</span>
+          </div>
+          <div className="bg-background/50 p-2 rounded border border-border/50 flex flex-col items-center justify-center">
+            <span className={`text-2xl font-bold ${errors.length > 0 ? 'text-destructive' : ''}`}>{errors.length}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Errors</span>
+          </div>
+        </div>
+
+        {errors.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-destructive">Recent Errors</div>
+            <div className="text-xs text-muted-foreground space-y-1 max-h-[100px] overflow-y-auto bg-background/50 p-2 rounded border border-border/50">
+              {errors.map((e, i) => (
+                <div key={i} className="flex items-start gap-2 text-red-500 break-all">
+                  <span className="shrink-0">•</span>
+                  <span>{e}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Button onClick={toggleAgent} variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8">
+          <Power className="h-3 w-3" />
+          Stop Agent
+        </Button>
+      </div>
+    </div>
+  );
 };

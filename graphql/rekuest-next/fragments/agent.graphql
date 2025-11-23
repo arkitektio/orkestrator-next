@@ -18,6 +18,7 @@ fragment Agent on Agent {
       sub
     }
   }
+  blocked
   pinned
   extensions
   name
@@ -37,6 +38,7 @@ fragment ListAgent on Agent {
   name
   lastSeen
   pinned
+  blocked
   registry {
     client {
       clientId

@@ -1,7 +1,5 @@
-import { AppContext, useArkitekt } from "@/lib/arkitekt/provider";
+import { AppContext } from "@/lib/arkitekt/provider";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Assign,
   CancelledEvent,
@@ -14,12 +12,21 @@ import {
   ToAgentMessage,
   YieldEvent,
 } from "./message";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { aliasToWsPath } from "@/lib/arkitekt/alias/helpers";
 import { selectAlias, selectApolloClient } from "@/lib/arkitekt/utils";
-import { ActionKind, DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput, PortInput, PortKind, SetExtensionImplementationsDocument, SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables } from "@/rekuest/api/graphql";
+import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput, SetExtensionImplementationsDocument, SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables } from "@/rekuest/api/graphql";
 import { AgentFunction, AssignContext, InferDefinition } from "./types";
 import { globalRegistry } from "./registry";
+
+export type AgentState = {
+  assignments: Assign[];
+  errors: string[];
+  connected: boolean;
+  lastCode?: number;
+  lastReason?: string;
+}
+
+export type AgentListener = (state: AgentState) => void;
 
 export class OrkestratorAgent {
   instanceId: string;
@@ -35,6 +42,13 @@ export class OrkestratorAgent {
   token: string
   agentUrl: string;
   navigate: (path: string) => void;
+
+  assignments: Assign[] = [];
+  errors: string[] = [];
+  connected: boolean = false;
+  lastCode?: number;
+  lastReason?: string;
+  listeners: AgentListener[] = [];
 
   constructor(
     context: AppContext,
@@ -68,6 +82,29 @@ export class OrkestratorAgent {
     globalRegistry.entries.forEach((entry) => {
       this.register(entry.name, entry.func, entry.definition);
     });
+  }
+
+  public subscribe(listener: AgentListener) {
+    this.listeners.push(listener);
+    listener(this.getState());
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+
+  public notify() {
+    const state = this.getState();
+    this.listeners.forEach((l) => l(state));
+  }
+
+  public getState(): AgentState {
+    return {
+      assignments: this.assignments,
+      errors: this.errors,
+      connected: this.connected,
+      lastCode: this.lastCode,
+      lastReason: this.lastReason,
+    };
   }
 
   public register<const D extends DefinitionInput, R extends Record<string, unknown> = Record<string, unknown>>(
@@ -157,9 +194,16 @@ export class OrkestratorAgent {
 
     this.announce();
 
+    this.errors = [];
+    this.lastCode = undefined;
+    this.lastReason = undefined;
+    this.notify();
+
     this.ws = new WebSocket(this.agentUrl);
 
     this.ws.onopen = () => {
+      this.connected = true;
+      this.notify();
 
       this.send(
         Register.parse({
@@ -180,7 +224,12 @@ export class OrkestratorAgent {
       }
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
+      console.log("Agent connection closed", event);
+      this.connected = false;
+      this.lastCode = event.code;
+      this.lastReason = event.reason;
+      this.notify();
 
       if (this.shouldReconnect) {
         this.reconnectTimer = setTimeout(() => this.connect(), 3000);
@@ -189,6 +238,9 @@ export class OrkestratorAgent {
 
     this.ws.onerror = (e) => {
       console.error("Agent error", e);
+      this.errors.push("Websocket error");
+      this.connected = false;
+      this.notify();
     };
   }
 
@@ -196,6 +248,8 @@ export class OrkestratorAgent {
     this.shouldReconnect = false;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.ws?.close();
+    this.connected = false;
+    this.notify();
   }
 
   private send(message: FromAgentMessage) {
@@ -220,6 +274,8 @@ export class OrkestratorAgent {
         type: "CANCELLED",
         assignation: message.assignation,
       }));
+      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.notify();
     }
     else {
       this.send(ErrorEvent.parse({
@@ -268,6 +324,8 @@ export class OrkestratorAgent {
 
       const newController = new AbortController();
       this.cancelControllers.set(message.assignation, newController);
+      this.assignments.push(message);
+      this.notify();
 
 
       handler({
@@ -291,6 +349,8 @@ export class OrkestratorAgent {
               error,
             })
           );
+          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.notify();
         },
         return: (returns) => {
           this.send(
@@ -306,6 +366,8 @@ export class OrkestratorAgent {
               assignation: message.assignation,
             })
           );
+          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.notify();
         },
         controller: newController,
         navigate: this.navigate,
@@ -318,28 +380,11 @@ export class OrkestratorAgent {
           error: e.message || String(e),
         })
       );
+      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.notify();
     }
   }
 }
 
-export const Agent = () => {
-  const arkitekt = useArkitekt();
-  const navigate = useNavigate();
-  const { settings } = useSettings();
 
-  useEffect(() => {
-    if (!arkitekt.connection || !settings.startAgent) return;
-
-    const agent = new OrkestratorAgent(arkitekt, settings.instanceId, navigate);
-    agent.registerElectron()
-    agent.connect();
-
-    return () => {
-      agent.disconnect();
-    };
-
-  }, [arkitekt.connection, settings.startAgent, settings.instanceId]);
-
-  return <></>;
-};
 

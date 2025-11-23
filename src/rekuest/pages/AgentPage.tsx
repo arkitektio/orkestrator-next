@@ -9,6 +9,7 @@ import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
 import {
   AgentFragment,
   useAgentQuery,
+  useBounceMutation,
   usePinAgentMutation,
   WatchImplementationsDocument,
   WatchImplementationsSubscription,
@@ -23,6 +24,28 @@ import { ClientImage } from "@/lok-next/components/ClientAvatar";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();
+
+  return (
+    <div className="flex flex-row gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          pin({
+            variables: {
+              input: { id: props.agent.id, pin: !props.agent.pinned },
+            },
+          });
+        }}
+      >
+        {props.agent.pinned ? "Unpin" : "Pin"}
+      </Button>
+    </div>
+  );
+};
+
+export const BounceAgentButton = (props: { agent: AgentFragment }) => {
+  const [bounce] = useBounceMutation();
 
   return (
     <div className="flex flex-row gap-2">
@@ -146,6 +169,7 @@ export default asDetailQueryRoute(
                 Memory Shelve
               </Button>
             </RekuestMemoryShelve.DetailLink>}
+            <RekuestAgent.ObjectButton object={data.agent.id} />
           </div>
         }
       >
@@ -165,6 +189,7 @@ export default asDetailQueryRoute(
                   />
                   <span className="text-sm font-medium text-muted-foreground">
                     {data.agent.connected ? "Connected" : "Disconnected"}
+                    {data.agent.blocked ? " • Blocked" : ""}
                   </span>
                   <span className="text-sm text-muted-foreground">•</span>
                   <span className="text-sm text-muted-foreground">

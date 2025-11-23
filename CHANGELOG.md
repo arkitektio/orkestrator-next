@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/arkitektio/orkestrator-next/compare/v1.30.0...v1.31.0) (2025-11-23)
+
+
+### Features
+
+* remove duckdb to shrink ([d84862f](https://github.com/arkitektio/orkestrator-next/commit/d84862f47398a140ca1e509c54caf7606279e443))
+
 # [1.30.0](https://github.com/arkitektio/orkestrator-next/compare/v1.29.2...v1.30.0) (2025-11-23)
 
 

@@ -576,6 +576,7 @@ export const ChunkBitmapTexture = ({
             maxValue: { value: cLimMax },
             opacity: { value: opacity },
             gamma: { value: gamma },
+            useDiscrete: { value: view.colorMap === ColorMap.Rainbow ? 1.0 : 0.0 },
           }}
           vertexShader={`
         varying vec2 vUv;
@@ -591,15 +592,25 @@ export const ChunkBitmapTexture = ({
         uniform float maxValue;
         uniform float opacity;
         uniform float gamma;
+        uniform float useDiscrete;
         varying vec2 vUv;
 
         void main() {
           vec2 flippedUv = vec2(vUv.x, 1.0 - vUv.y);
           float value = texture2D(colorTexture, flippedUv).r;
-          float normalized = clamp((value - minValue) / (maxValue - minValue), 0.0, 0.999);
-          normalized = pow(normalized, gamma);
+
+          float normalized;
+          if (useDiscrete > 0.5) {
+            // Discrete mode: map value directly to index for segmentation masks
+            normalized = mod(value, 256.0) / 255.0;
+          } else {
+            // Continuous mode: normalize using contrast limits
+            normalized = clamp((value - minValue) / (maxValue - minValue), 0.0, 0.999);
+            normalized = pow(normalized, gamma);
+          }
+
           vec4 color = texture2D(colormapTexture, vec2(normalized, 0.5)).rgba;
-          gl_FragColor = vec4(color.rgb, color.a); // should render grayscale 0-1
+          gl_FragColor = vec4(color.rgb, color.a);
         }
         `}
         />

@@ -10,8 +10,10 @@ publish:
 directories:
   buildResources: build
 files:
+  - "!dist/*"
   - "!**/.vscode/*"
   - "!src/*"
+  - "!node_modules/*"
   - "!electron/*"
   - "!electron.vite.config.{js,ts,mjs,cjs}"
   - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"

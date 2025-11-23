@@ -30,7 +30,7 @@ mac:
   target: # IMPORTANT: both dmg + zip for auto-update
     - dmg
     - zip
-  entitlementsInherit: build/entitlements.mac.plist
+  entitlements: build/entitlements.mac.plist
   hardenedRuntime: true
   gatekeeperAssess: false
   extendInfo:

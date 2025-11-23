@@ -6,9 +6,15 @@
     <true/>
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
     <true/>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <!-- Hardened Runtime Requirements -->
+    <key>com.apple.security.cs.allow-jit</key>
     <true/>
-    <key>com.apple.security.cs.debugger</key>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- Network Access -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
     <true/>
   </dict>
 </plist>

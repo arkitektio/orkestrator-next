@@ -7,3 +7,33 @@ mutation PinAgent($input: PinInput!) {
 mutation DeleteAgent($id: ID!) {
   deleteAgent(input: { id: $id })
 }
+
+mutation EnsureAgent($input: AgentInput!) {
+  ensureAgent(input: $input) {
+    ...Agent
+  }
+}
+
+mutation Bounce($input: BounceInput!) {
+  bounce(input: $input) {
+    ...Agent
+  }
+}
+
+mutation Kick($input: KickInput!) {
+  kick(input: $input) {
+    ...Agent
+  }
+}
+
+mutation Block($input: BlockInput!) {
+  block(input: $input) {
+    ...Agent
+  }
+}
+
+mutation Unblock($input: UnblockInput!) {
+  unblock(input: $input) {
+    ...Agent
+  }
+}

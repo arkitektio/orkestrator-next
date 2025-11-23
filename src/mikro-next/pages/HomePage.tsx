@@ -9,7 +9,7 @@ import { CommandMenu } from "@/command/Menu";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageActionButton } from "@/components/ui/page-action-button";
 import { BarChart3, Database, Network, TrendingUp, Upload } from "lucide-react";
-import { useHomePageQuery } from "../api/graphql";
+import { Ordering, useHomePageQuery } from "../api/graphql";
 import { UploadDialog } from "../components/dialogs/UploadDialog";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
@@ -17,6 +17,7 @@ import ImageList from "../components/lists/ImageList";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
+import { useUpload } from "@/providers/upload/UploadProvider";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IRepresentationScreenProps { }
@@ -29,19 +30,24 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
       refetch();
     },
   });
+  const { startUpload } = useUpload();
 
   const handleFilesSelected = (files: File[]) => {
     files.forEach((file) => {
-      const abortController = new AbortController();
-      performDataLayerUpload(file, {
-        signal: abortController.signal,
-      })
-        .then((key) => {
-          return createFile(file, key);
-        })
-        .catch((e) => {
-          console.error("Upload error:", e);
-        });
+      startUpload(
+        file,
+        async (file, { onProgress, signal }) => {
+          return await performDataLayerUpload(file, {
+            signal,
+            onProgress,
+          });
+        },
+        async (file, key) => {
+          return await createFile(file, key);
+        }
+      ).catch((e) => {
+        console.error("Upload error:", e);
+      });
     });
   };
 
@@ -141,7 +147,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
               filters={{ parentless: true }}
             />
             <Separator className="my-4" />
-            <FileList pagination={{ limit: 30 }} />
+            <FileList pagination={{ limit: 30 }} order={{ createdAt: Ordering.Desc }} />
           </div>
         )}
       </UploadWrapper>

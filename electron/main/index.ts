@@ -17,12 +17,15 @@ import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 import Store from "electron-store";
 import { registerIssueIpc } from "./issue-reporter";
+import { AgentGateway } from "./gateway";
+
 
 const store = new Store();
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
+let electronAgent: AgentGateway | null = null;
 
 // Debounce helper function
 function debounce<T extends (...args: any[]) => void>(
@@ -118,7 +121,7 @@ ipcMain.handle("discover-beacons", async () => {
 ipcMain.handle("check-for-updates", async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
-    console.log("Manual update check result:", result);
+
     return { success: true, result };
   } catch (error) {
     console.error("Manual update check failed:", error);
@@ -139,7 +142,7 @@ function handleOrkestratorUrl(url: string) {
     const { host: modelIdentifier, pathname } = new URL(url);
     const id = pathname.replace(/^\/+/, ""); // strip leading slashes
     const fullPath = `${modelIdentifier}/${id}`;
-    console.log("Handling orkestrator URL:", fullPath);
+
 
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -174,6 +177,10 @@ function createWindow(): BrowserWindow {
     },
   });
 
+  if (!electronAgent) {
+    electronAgent = new AgentGateway(ipcMain);
+  }
+
   mainWindow.webContents.setZoomFactor(store.get("zoomFactor", 0.7));
 
 
@@ -194,6 +201,11 @@ function createWindow(): BrowserWindow {
     mainWindow?.webContents.setZoomFactor(1.0);
   });
 
+  mainWindow.webContents.on('devtools-opened', () => {
+    // This updates the position without closing/reopening the tools
+    mainWindow?.webContents.openDevTools({ mode: 'right' });
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
@@ -204,7 +216,7 @@ function createWindow(): BrowserWindow {
 
   // Add this right after creating the main window in createWindow function
   mainWindow.on("closed", () => {
-    console.log("Main window closed");
+
     mainWindow = null;
     app.quit();
   });
@@ -242,10 +254,10 @@ function createFaktsWindow(url: string): void {
   });
 
   const baseUrl = new URL(url);
-  console.log(baseUrl, baseUrl.origin);
+
 
   const baseRoot = baseUrl.pathname.split("/").slice(0, -2).join("/");
-  console.log(`${baseUrl.origin}${baseRoot}/success*`);
+
 
   const {
     session: { webRequest },
@@ -261,7 +273,7 @@ function createFaktsWindow(url: string): void {
   webRequest.onBeforeRequest(filter, async ({ url }, callback) => {
     const parsedUrl = new URL(url);
 
-    console.log("URL", parsedUrl);
+
 
     faktsWindows.close();
     callback({});
@@ -308,7 +320,7 @@ function openSecondaryWindow(path: string): void {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     let loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
-    console.log("Loading URL", loaded_url);
+
     secondaryWindow.loadURL(loaded_url);
   } else {
     secondaryWindow
@@ -324,7 +336,7 @@ function openSecondaryWindow(path: string): void {
 function createAuthWindow(url: string): void {
   // Create the browser window.
 
-  console.log("Creating auth window");
+
   const authWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -346,7 +358,7 @@ function createAuthWindow(url: string): void {
   redirect_url.searchParams.set("redirect_uri", callback);
   authWindow.loadURL(redirect_url.toString());
 
-  console.log("Loading auth window", redirect_url);
+
 
   const {
     session: { webRequest },
@@ -357,12 +369,12 @@ function createAuthWindow(url: string): void {
 
     const code = parsedUrl.searchParams.get("code");
     if (!code) {
-      console.log("Received no code in the response");
+
       mainWindow?.webContents.send("oauth-error", "No code in the response");
     }
     // Do the rest of the authorization flow with the code.
     else {
-      console.log("Received code", code);
+
       mainWindow?.webContents.send("oauth-response", code);
     }
 
@@ -407,7 +419,7 @@ if (!gotTheLock) {
 }
 
 app.on("window-all-closed", () => {
-  console.log("All windows closed");
+
   app.quit();
 });
 
@@ -448,7 +460,9 @@ app.whenReady().then(() => {
   mainWindow = createWindow();
 
   // IPC test
-  ipcMain.on("ping", () => console.log("pong"));
+  ipcMain.on("ping", () => {
+    console.log("ping received");
+  });
 
   // Reload handlers
   ipcMain.handle("reload-window", () => {
@@ -462,7 +476,6 @@ app.whenReady().then(() => {
     }
     return { success: false, error: "No window to reload" };
   });
-
   ipcMain.handle("force-reload-window", () => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
@@ -585,7 +598,13 @@ app.whenReady().then(() => {
     },
   ]);
   Menu.setApplicationMenu(menu);
-});
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+  ipcMain.handle("dialog:openFile", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({});
+    if (canceled) {
+      return;
+    } else {
+      return filePaths[0];
+    }
+  });
+});

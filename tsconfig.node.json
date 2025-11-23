@@ -1,8 +1,8 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "electron/main/**/*", "electron/preload/**/*"],
+  "include": ["electron.vite.config.*", "electron/main/**/*", "electron/preload/**/*", "src/rekuest/api/graphql.ts", "src/app/agent/message.tsx"],
   "compilerOptions": {
     "composite": true,
-    "types": ["electron-vite/node"]
+    "types": ["electron-vite/node"],
   }
 }

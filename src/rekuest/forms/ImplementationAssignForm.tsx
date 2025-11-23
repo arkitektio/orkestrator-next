@@ -80,7 +80,7 @@ export const ImplementationAssignForm = (
 
       props.onAssign?.(assignation);
     } catch (e) {
-      let message = (e as ApolloError).message;
+      const message = (e as ApolloError).message;
       if (props.onError) {
         props.onError?.(e);
       } else {

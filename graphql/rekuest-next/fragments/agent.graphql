@@ -18,12 +18,16 @@ fragment Agent on Agent {
       sub
     }
   }
+  blocked
   pinned
   extensions
   name
   active
   connected
   lastSeen
+  assignations(pagination: { limit: 5 }) {
+    ...ListAsssignation
+  }
 }
 
 fragment ListAgent on Agent {
@@ -34,6 +38,7 @@ fragment ListAgent on Agent {
   name
   lastSeen
   pinned
+  blocked
   registry {
     client {
       clientId

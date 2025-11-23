@@ -1,4 +1,6 @@
-mutation CreateForeignImplementation($input: CreateForeignImplementationInput!) {
+mutation CreateForeignImplementation(
+  $input: CreateForeignImplementationInput!
+) {
   createForeignImplementation(input: $input) {
     id
   }
@@ -6,4 +8,12 @@ mutation CreateForeignImplementation($input: CreateForeignImplementationInput!) 
 
 mutation DeleteImplementation($id: ID!) {
   deleteImplementation(input: { implementation: $id })
+}
+
+mutation SetExtensionImplementations(
+  $input: SetExtensionImplementationsInput!
+) {
+  setExtensionImplementations(input: $input) {
+    id
+  }
 }

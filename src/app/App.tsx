@@ -2,7 +2,6 @@ import AlpakaModule from "@/alpaka/AlpakaModule";
 import Hero from "@/app/pages/Hero";
 import BlokModule from "@/blok/BlokModule";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Toaster } from "@/components/ui/toaster";
 import DokumentsModule from "@/dokuments/DokumentsModule";
 import ElektroModule from "@/elektro/ElektroModule";
 import KabinetModule from "@/kabinet/KabinetModule";
@@ -45,7 +44,6 @@ function App() {
     <AppProvider>
       <AppLayout navigationBar={<PrivateNavigationBar />}>
         <BackNavigationErrorCatcher>
-          <Toaster />
           <Routes>
             <Route index element={protect(<Hero />)} />
             <Route path="mikro/*" element={protect(<MikroNextModule />)} />

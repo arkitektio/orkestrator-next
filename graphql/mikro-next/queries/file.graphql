@@ -4,8 +4,12 @@ query GetFile($id: ID!) {
   }
 }
 
-query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput) {
-  files(filters: $filters, pagination: $pagination) {
+query GetFiles(
+  $filters: FileFilter
+  $pagination: OffsetPaginationInput
+  $order: FileOrder
+) {
+  files(filters: $filters, pagination: $pagination, order: $order) {
     ...ListFile
   }
 }

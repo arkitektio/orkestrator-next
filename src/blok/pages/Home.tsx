@@ -171,7 +171,7 @@ export const Home = (props) => {
           },
         });
 
-        console.log("Created blok", x.data?.createBlok);
+
       }
     }
   };

@@ -8,85 +8,44 @@ import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
 import {
   AgentFragment,
-  ListImplementationFragment,
   useAgentQuery,
+  useBounceMutation,
   usePinAgentMutation,
   WatchImplementationsDocument,
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { ArrowRightIcon } from "@radix-ui/react-icons";
-import { BellIcon } from "lucide-react";
 import { useEffect } from "react";
-import { ImplementationActionButton } from "../buttons/ImplementationActionButton";
 import ImplementationCard from "../components/cards/ImplementationCard";
-import AgentCarousel from "../components/carousels/AgentCarousel";
+import TaskCard from "../components/cards/TaskCard";
 import { StateDisplay } from "../components/State";
 import Timestamp from "react-timestamp";
-import { ClientAvatar, ClientImage } from "@/lok-next/components/ClientAvatar";
-
-export const sizer = (length: number, index: number): string => {
-  const divider = 3;
-
-  return (index || 1) % 3 == 0 && index != 0
-    ? "col-span-2 row-span-1"
-    : "col-span-1 row-span-1";
-};
-
-const ImplementationBentoCard = ({
-  implementation,
-  className,
-}: {
-  implementation: ListImplementationFragment;
-  className: string;
-}) => (
-  <div
-    key={implementation.id}
-    className={cn(
-      "group relative  flex flex-col justify-between overflow-hidden rounded-xl",
-      // light styles
-      "bg-white [box-shadow:0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)] ",
-      // dark styles
-      "transform-gpu dark:bg-black dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
-      className,
-    )}
-  >
-    <div>
-      <img className="absolute -right-20 -top-20 opacity-60" />
-    </div>
-    <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 p-6 transition-all duration-300 group-hover:-translate-y-40 cursor-pointer">
-      <BellIcon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75" />
-      <h3 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300">
-        {implementation.action.name}
-      </h3>
-      <p className="max-w-lg text-neutral-400"> @{implementation.interface}</p>
-    </div>
-
-    <div
-      className={cn(
-        "absolute bottom-0 flex w-full translate-y-[100%] flex-col items-start p-6 opacity-100 transition-all duration-300 group-hover:translate-y-0 ",
-      )}
-    >
-      <p className="max-w-lg text-neutral-400"> {implementation.action.description}</p>
-      <ImplementationActionButton id={implementation.id}>
-        <Button
-          variant="ghost"
-          asChild
-          size="sm"
-          className="cursor-pointer opacity-100"
-        >
-          <a>
-            Assign
-            <ArrowRightIcon className="ml-2 h-4 w-4" />
-          </a>
-        </Button>
-      </ImplementationActionButton>
-    </div>
-  </div>
-);
+import { ClientImage } from "@/lok-next/components/ClientAvatar";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();
+
+  return (
+    <div className="flex flex-row gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          pin({
+            variables: {
+              input: { id: props.agent.id, pin: !props.agent.pinned },
+            },
+          });
+        }}
+      >
+        {props.agent.pinned ? "Unpin" : "Pin"}
+      </Button>
+    </div>
+  );
+};
+
+export const BounceAgentButton = (props: { agent: AgentFragment }) => {
+  const [bounce] = useBounceMutation();
 
   return (
     <div className="flex flex-row gap-2">
@@ -131,7 +90,7 @@ export const ManagedByCard = (props: { agent: AgentFragment }) => {
 
 export default asDetailQueryRoute(
   useAgentQuery,
-  ({ data, refetch, subscribeToMore }) => {
+  ({ data, subscribeToMore }) => {
     useEffect(() => {
       return subscribeToMore<
         WatchImplementationsSubscription,
@@ -177,6 +136,7 @@ export default asDetailQueryRoute(
 
     return (
       <RekuestAgent.ModelPage
+        variant="black"
         title={data.agent.name}
         object={data.agent.id}
         sidebars={
@@ -210,6 +170,7 @@ export default asDetailQueryRoute(
                 Memory Shelve
               </Button>
             </RekuestMemoryShelve.DetailLink>}
+            <RekuestAgent.ObjectButton object={data.agent.id} />
           </div>
         }
       >
@@ -229,6 +190,7 @@ export default asDetailQueryRoute(
                   />
                   <span className="text-sm font-medium text-muted-foreground">
                     {data.agent.connected ? "Connected" : "Disconnected"}
+                    {data.agent.blocked ? " • Blocked" : ""}
                   </span>
                   <span className="text-sm text-muted-foreground">•</span>
                   <span className="text-sm text-muted-foreground">
@@ -263,6 +225,22 @@ export default asDetailQueryRoute(
               </div>
             </div>
           </div>
+
+          {/* Assignations Section */}
+          {data.agent.assignations && data.agent.assignations.length > 0 && (
+            <div className="space-y-6 pt-8 border-t">
+              <ListRender
+                array={data.agent.assignations}
+                title={
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <h2 className="text-2xl font-bold">Latest Tasks</h2>
+                  </div>
+                }
+              >
+                {(item) => <TaskCard item={item} />}
+              </ListRender>
+            </div>
+          )}
 
           {/* Implementations Section */}
           <div className="space-y-6 pt-8 border-t">

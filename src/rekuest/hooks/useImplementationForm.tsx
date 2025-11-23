@@ -43,7 +43,7 @@ export const useImplementationForm = (props: {
 
     const zodSchema = Zod.object({
       args: argsSchema,
-      dependencies: Zod.record(Zod.string()).optional(),
+      dependencies: Zod.record(Zod.string(), Zod.string()).optional(),
     });
     return zodResolver(zodSchema);
   }, [hash, props.additionalSchema]);

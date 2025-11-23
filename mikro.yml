@@ -14,6 +14,11 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/mikro/funcs"
+  electron/main/schemas/mikro.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-graphql-request"
 
   src/mikro-next/graphql.schema.json:
     plugins:

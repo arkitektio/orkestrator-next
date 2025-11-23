@@ -23,12 +23,11 @@ import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
 import {
   JustUsername,
-  UserAvatarUsername,
-  UserUsername,
 } from "@/lok-next/components/UserAvatar";
 import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
 import { SubTree } from "@/components/explorer/SubTree";
 import { Separator } from "@/components/ui/separator";
+import { UploadProgress } from "@/components/upload/UploadProgress";
 
 export const NavigationPane = () => {
   const { data, error } = useMembersQuery();
@@ -198,7 +197,7 @@ const Pane: React.FunctionComponent = () => {
   );
 
   return (
-    <SidebarLayout searchBar={searchBar}>
+    <SidebarLayout searchBar={searchBar} bottomBar={<UploadProgress />}>
       {search.trim() === "" ? (
         <NavigationPane />
       ) : (

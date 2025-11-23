@@ -134,12 +134,14 @@ export const YieldItem = (props: {
           <p className="text-xs mb-1">
             <Timestamp date={props.event.createdAt} />
           </p>
-          <ReturnsContainer
-            registry={registry}
-            ports={props.assignation.action.returns}
-            values={props.event.returns}
-            options={{ labels: false }}
-          />
+          <div className="flex items-center justify-center flex-row gap-2 mb-4 p-3 bg-muted rounded-md">
+            <ReturnsContainer
+              registry={registry}
+              ports={props.assignation.action.returns}
+              values={props.event.returns}
+              options={{ labels: false }}
+            />
+          </div>
         </TimelineDescription>
       </TimelineContent>
     </TimelineItem>
@@ -206,10 +208,10 @@ export const useReassign = ({
 };
 
 export const isCancalable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone;
+  return assignation.isDone !== true;
 };
 export const isInterruptable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone;
+  return assignation.isDone !== true;
 };
 
 export default asDetailQueryRoute(
@@ -312,15 +314,6 @@ export default asDetailQueryRoute(
               Report Bug
             </DialogButton>
           </div>
-        }
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <RekuestAssignation.Komments object={data?.assignation?.id} />
-              ),
-            }}
-          />
         }
       >
         <div className="flex h-full w-full relative">

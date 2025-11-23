@@ -6,7 +6,7 @@ import {
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { Connection, XYPosition } from "reactflow";
+import { Connection, XYPosition } from "@xyflow/react";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
 import {
   handleToStream,

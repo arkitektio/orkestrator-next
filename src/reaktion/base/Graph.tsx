@@ -1,7 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import React from "react";
-import ReactFlow, { Background, EdgeTypes, ReactFlowProps } from "reactflow";
-import "reactflow/dist/style.css";
+import { ReactFlow, Background, EdgeTypes, ReactFlowProps } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { FlowEdge, FlowNode, NodeTypes } from "../types";
 
 type Props = {

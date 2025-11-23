@@ -64,7 +64,7 @@ import {
   ReactFlowInstance,
   applyEdgeChanges,
   applyNodeChanges,
-} from "reactflow";
+} from "@xyflow/react";
 import useUndoable, { MutationBehavior } from "use-undoable";
 import { Graph } from "../base/Graph";
 import { rekuestActionToMatchingNode } from "../plugins/rekuest";

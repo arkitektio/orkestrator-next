@@ -26,7 +26,7 @@ import {
   Node,
   NodeProps,
   OnConnectStartParams,
-} from "reactflow";
+} from "@xyflow/react";
 
 export type DataEnhancer<T, L = {}> = T & { extras?: L };
 

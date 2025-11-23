@@ -1,6 +1,6 @@
 import { DetailClientFragment } from "@/lok-next/api/graphql";
 import React from "react";
-import ReactFlow, { ReactFlowInstance } from "reactflow";
+import { ReactFlow, ReactFlowInstance } from "@xyflow/react";
 import InstanceMappingEdge from "./edges/InstanceMappingEdge";
 import ClientNode from "./nodes/ClientNode";
 import ServiceInstanceNode from "./nodes/ServiceInstanceNode";

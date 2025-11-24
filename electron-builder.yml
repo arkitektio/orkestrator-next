@@ -1,6 +1,6 @@
 appId: live.arkitekt.orkestrator.next
 productName: Orkestrator
-
+electronLanguages: ["en", "en-US"]
 publish:
   provider: github
   owner: arkitektio
@@ -11,11 +11,13 @@ directories:
   buildResources: build
 files:
   - "out/**/*"
+  - "!**/locales/*"
+  - "**/locales/en-US.pak"
+  - "**/locales/de.pak"
   - "public/**/*"
   - "package.json"
   - "resources/**/*"
-asarUnpack:
-  - resources/**
+asar: true
 win:
   executableName: orkestrator
 nsis:
@@ -48,4 +50,4 @@ linux:
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
-npmRebuild: false
+afterPack: "scripts/remove-locales.cjs"

@@ -1,5 +1,5 @@
 appId: live.arkitekt.orkestrator.next
-productName: OrkestratorNext
+productName: Orkestrator
 electronLanguages: ["en", "en-US"]
 publish:
   provider: github

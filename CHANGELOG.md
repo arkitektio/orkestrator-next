@@ -1,3 +1,10 @@
+## [1.33.1](https://github.com/arkitektio/orkestrator-next/compare/v1.33.0...v1.33.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* test xrun? ([87406a0](https://github.com/arkitektio/orkestrator-next/commit/87406a0550d33bc7a4b4e09db5025104526500ee))
+
 # [1.33.0](https://github.com/arkitektio/orkestrator-next/compare/v1.32.1...v1.33.0) (2025-11-24)
 
 

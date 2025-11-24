@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/arkitektio/orkestrator-next/compare/v1.34.0...v1.35.0) (2025-11-24)
+
+
+### Features
+
+* fix name ([3b94f42](https://github.com/arkitektio/orkestrator-next/commit/3b94f428c9c1a083e81b554ba93bfd0c6e60d59f))
+
 # [1.34.0](https://github.com/arkitektio/orkestrator-next/compare/v1.33.1...v1.34.0) (2025-11-24)
 
 

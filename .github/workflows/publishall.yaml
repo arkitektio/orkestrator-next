@@ -34,6 +34,15 @@ jobs:
         with:
           node-version: 22
 
+      - name: Debug Notarization Creds
+        if: matrix.os == 'macos-latest'
+        run: |
+          xcrun notarytool history --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID"
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
       - name: Install Dependencies
         run: npm install -g yarn
 

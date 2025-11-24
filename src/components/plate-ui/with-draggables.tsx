@@ -115,13 +115,6 @@ export const withDraggables = (components: any) => {
       },
     },
     {
-      key: ExcalidrawPlugin.key,
-      draggableProps: {
-        className:
-          "[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0",
-      },
-    },
-    {
       key: TogglePlugin.key,
       draggableProps: {
         className:

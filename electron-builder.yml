@@ -11,6 +11,9 @@ directories:
   buildResources: build
 files:
   - "out/**/*"
+  - "!**/locales/*"
+  - "**/locales/en-US.pak"
+  - "**/locales/de.pak"
   - "public/**/*"
   - "package.json"
   - "resources/**/*"
@@ -47,3 +50,4 @@ linux:
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
+afterPack: "scripts/remove-locales.cjs"

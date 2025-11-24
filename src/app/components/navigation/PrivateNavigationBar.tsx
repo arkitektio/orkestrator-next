@@ -2,17 +2,17 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DroppableNavLink } from "@/components/ui/link";
 import {
-  NavigationMenu,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
-import { cn } from "@/lib/utils";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
@@ -37,7 +37,6 @@ import { TbBugOff } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
-import { PopoverTrigger, Popover, PopoverContent } from "@/components/ui/popover";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 
 export type INavigationBarProps = {
@@ -86,7 +85,7 @@ export const matchIcon = (key: string) => {
  * All links to respective modules should be wrapped in their respective guards, so that
  * only modules that are available to the user are shown. See the example below.
  */
-const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
+const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
   const disconnect = Arkitekt.useDisconnect();
   const reconnect = Arkitekt.useReconnect();
   const { debug, setDebug } = useDebug();
@@ -205,52 +204,56 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             side="right"
-            className="p-2 mb-2 border-seperator"
+            className="w-56 mb-2 border-border"
           >
             <DropdownMenuLabel>
-              <Guard.Lok fallback={<div>No lok?</div>}>
+              <Guard.Lok fallback={<div>Guest</div>}>
                 <Username />
               </Guard.Lok>
             </DropdownMenuLabel>
-
-            <Button
-              variant="ghost"
-              className={cn(
-                "md:block text-foreground hidden mx-auto h-12 w-12",
-                debug && "bg-red-500",
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setDebug(!debug)}>
+              {debug ? (
+                <Bug className="mr-2 h-4 w-4" />
+              ) : (
+                <TbBugOff className="mr-2 h-4 w-4" />
               )}
-              onClick={() => setDebug(!debug)}
-            >
-              {debug ? <Bug /> : <TbBugOff />}
-            </Button>
-            <DroppableNavLink key={"Settings"} to={"settings"} className={""}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <Settings />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-
-            <div className="flex flex-row gap-2 w-full">
+              <span>Debug Mode</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <DroppableNavLink
+                key={"Settings"}
+                to={"settings"}
+                className="w-full cursor-pointer flex items-center"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DroppableNavLink>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <div className="flex flex-row gap-2 w-full p-2">
               <Button
                 variant="outline"
+                size="sm"
                 className="flex-1"
                 onClick={() => disconnect()}
               >
                 Disconnect
-              </Button>{" "}
+              </Button>
               <Button
                 variant="outline"
+                size="sm"
                 className="flex-1"
                 onClick={() => reconnect()}
               >
                 Reconnect
-              </Button>{" "}
+              </Button>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <Button variant="ghost" className="h-20 w-20" onClick={reload}><ReloadIcon /></Button>
+        <Button variant="ghost" className="h-10 w-10 mt-2" onClick={reload}>
+          <ReloadIcon />
+        </Button>
       </div>
     </>
   );

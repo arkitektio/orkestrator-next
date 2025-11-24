@@ -1,3 +1,10 @@
+## [1.35.1](https://github.com/arkitektio/orkestrator-next/compare/v1.35.0...v1.35.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* add reload button ([ffbe2b5](https://github.com/arkitektio/orkestrator-next/commit/ffbe2b5bd2be1b05793fd6338a5c8b2ca114c4d5))
+
 # [1.35.0](https://github.com/arkitektio/orkestrator-next/compare/v1.34.0...v1.35.0) (2025-11-24)
 
 

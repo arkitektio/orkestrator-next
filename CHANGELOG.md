@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/arkitektio/orkestrator-next/compare/v1.31.0...v1.32.0) (2025-11-24)
+
+
+### Features
+
+* removal of other items ([23c808c](https://github.com/arkitektio/orkestrator-next/commit/23c808cc578cb98ce96a8c040c6e8f20a8d6d840))
+
 # [1.31.0](https://github.com/arkitektio/orkestrator-next/compare/v1.30.0...v1.31.0) (2025-11-23)
 
 

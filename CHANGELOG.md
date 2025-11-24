@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/arkitektio/orkestrator-next/compare/v1.32.0...v1.32.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* add debug statement to workflow ([48e2e44](https://github.com/arkitektio/orkestrator-next/commit/48e2e44b983d0cafee57471c005917dce5fa8c56))
+
 # [1.32.0](https://github.com/arkitektio/orkestrator-next/compare/v1.31.0...v1.32.0) (2025-11-24)
 
 

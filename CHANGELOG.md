@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/arkitektio/orkestrator-next/compare/v1.33.1...v1.34.0) (2025-11-24)
+
+
+### Features
+
+* fix unsupported notarizing as of now. thanks apple... ([bc75ee9](https://github.com/arkitektio/orkestrator-next/commit/bc75ee9713e066b9827097eaf427cac6bb686383))
+
 ## [1.33.1](https://github.com/arkitektio/orkestrator-next/compare/v1.33.0...v1.33.1) (2025-11-24)
 
 

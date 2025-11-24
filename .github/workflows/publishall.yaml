@@ -13,6 +13,7 @@ env:
   APPLE_ID: ${{ secrets.APPLE_ID }}
   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }} # Map your secret to this specific var name
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  DEBUG: "electron-osx-sign*"
 
 jobs:
   release:

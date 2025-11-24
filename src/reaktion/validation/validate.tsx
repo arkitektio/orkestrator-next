@@ -284,7 +284,7 @@ function noDoubleEdgeForOutput(previous: ValidationResult) {
 
   const newEdges = edges
     .filter((e) => e.target != returnNode?.id)
-    .concat([returnEdges[0]]);
+    .concat(returnEdges.length > 0 ? [returnEdges[0]] : []);
 
   return {
     ...previous,

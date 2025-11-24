@@ -895,11 +895,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
     // Create a Zip Node
 
-    const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
-
-    let position = reactFlowInstance.project({
-      x: event.clientX - (reactFlowBounds?.left || 0),
-      y: event.clientY - (reactFlowBounds?.top || 0),
+    let position = reactFlowInstance.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
     });
 
     newState.nodes = newState.nodes.concat({ ...stagingNode, position });
@@ -1054,12 +1052,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
       // Create a Zip Node
 
-      const reactFlowBounds =
-        reactFlowWrapper?.current?.getBoundingClientRect();
-
-      let position = reactFlowInstance.project({
-        x: event.clientX - (reactFlowBounds?.left || 0),
-        y: event.clientY - (reactFlowBounds?.top || 0),
+      let position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
 
       newState.nodes = newState.nodes.concat({ ...stagingNode, position });
@@ -1084,6 +1079,43 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       });
 
       setState((e) => integratedState);
+      setShowContextual(undefined);
+    } else if (params.connectionParams.handleType == "target") {
+      // We are dealing with a scenario were a new node should be added
+      const oldNodeTargetId = oldNode.id;
+      const oldNodeTargetStreamID = handleToStream(connectionParams.handleId);
+
+      const newState = { ...state };
+
+      // Create a Zip Node
+
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: (event as MouseEvent).clientX,
+        y: (event as MouseEvent).clientY,
+      });
+
+      newState.nodes = newState.nodes.concat({ ...stagingNode, position });
+
+      // Adding the new edges
+      newState.edges = newState.edges.concat(
+        createVanillaTransformEdge(
+          nodeIdBuilder(),
+          stagingNode.id,
+          0,
+          oldNodeTargetId,
+          oldNodeTargetStreamID,
+        ),
+      );
+
+      // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
+      const integratedState = integrate(newState, {
+        source: stagingNode.id,
+        sourceHandle: "return_0",
+        target: oldNodeTargetId,
+        targetHandle: connectionParams.handleId,
+      });
+
+      setState(() => integratedState);
       setShowContextual(undefined);
     }
   };
@@ -1203,12 +1235,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
           let zipNodeInstream = order;
 
-          const reactFlowBounds =
-            reactFlowWrapper?.current?.getBoundingClientRect();
-
-          let position = reactFlowInstance.project({
-            x: event.clientX - (reactFlowBounds.left || 0),
-            y: event.clientY - (reactFlowBounds.top || 0),
+          let position = reactFlowInstance.screenToFlowPosition({
+            x: (event as MouseEvent).clientX,
+            y: (event as MouseEvent).clientY,
           });
 
           let zipNode: FlowNode = {
@@ -1288,10 +1317,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
         console.log(id, flowInstance, reactFlowBounds, x, y);
 
-        if (id && reactFlowInstance && reactFlowBounds && x && y && type) {
-          const position = reactFlowInstance.project({
-            x: x - reactFlowBounds.left,
-            y: y - reactFlowBounds.top + index * 100,
+        if (id && reactFlowInstance && x && y && type) {
+          const position = reactFlowInstance.screenToFlowPosition({
+            x: x,
+            y: y + index * 100,
           });
 
           if (type == RekuestAction.identifier) {

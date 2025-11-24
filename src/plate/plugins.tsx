@@ -7,7 +7,6 @@ import { ColumnElement } from "@/components/plate-ui/column-element";
 import { ColumnGroupElement } from "@/components/plate-ui/column-group-element";
 import { CommentLeaf } from "@/components/plate-ui/comment-leaf";
 import { DateElement } from "@/components/plate-ui/date-element";
-import { ExcalidrawElement } from "@/components/plate-ui/excalidraw-element";
 import { HeadingElement } from "@/components/plate-ui/heading-element";
 import { HighlightLeaf } from "@/components/plate-ui/highlight-leaf";
 import { HrElement } from "@/components/plate-ui/hr-element";
@@ -55,7 +54,6 @@ import { DatePlugin } from "@udecode/plate-date/react";
 import { DndPlugin } from "@udecode/plate-dnd";
 import { DocxPlugin } from "@udecode/plate-docx";
 import { EmojiPlugin } from "@udecode/plate-emoji/react";
-import { ExcalidrawPlugin } from "@udecode/plate-excalidraw/react";
 import {
   FontBackgroundColorPlugin,
   FontColorPlugin,

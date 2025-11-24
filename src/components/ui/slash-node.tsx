@@ -172,12 +172,6 @@ const groups: Group[] = [
         label: 'Equation',
         value: KEYS.equation,
       },
-      {
-        icon: <PenToolIcon />,
-        keywords: ['excalidraw'],
-        label: 'Excalidraw',
-        value: KEYS.excalidraw,
-      },
     ].map((item) => ({
       ...item,
       onSelect: (editor, value) => {

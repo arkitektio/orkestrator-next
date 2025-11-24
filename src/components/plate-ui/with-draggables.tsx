@@ -10,7 +10,6 @@ import {
   type WithDraggableOptions,
   withDraggable as withDraggablePrimitive,
 } from "@udecode/plate-dnd";
-import { ExcalidrawPlugin } from "@udecode/plate-excalidraw/react";
 import { HEADING_KEYS } from "@udecode/plate-heading";
 import { ColumnPlugin } from "@udecode/plate-layout/react";
 import {

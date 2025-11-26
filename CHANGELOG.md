@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/arkitektio/orkestrator-next/compare/v1.35.1...v1.36.0) (2025-11-26)
+
+
+### Features
+
+* try notarization ([5c9fe62](https://github.com/arkitektio/orkestrator-next/commit/5c9fe62650a3851e949bf287f3d4d2302e1617fe))
+
 ## [1.35.1](https://github.com/arkitektio/orkestrator-next/compare/v1.35.0...v1.35.1) (2025-11-24)
 
 

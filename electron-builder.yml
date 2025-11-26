@@ -20,7 +20,6 @@ files:
 asar: true
 win:
   executableName: orkestrator
-  notarize: false
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

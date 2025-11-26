@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/arkitektio/orkestrator-next/compare/v1.36.0...v1.37.0) (2025-11-26)
+
+
+### Features
+
+* test nozarization ([b81be9d](https://github.com/arkitektio/orkestrator-next/commit/b81be9d09b72f35050f07f79973453597d0bb7df))
+
 # [1.36.0](https://github.com/arkitektio/orkestrator-next/compare/v1.35.1...v1.36.0) (2025-11-26)
 
 

@@ -20,6 +20,7 @@ files:
 asar: true
 win:
   executableName: orkestrator
+  notarize: false
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -38,7 +39,7 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
+  notarize: true
 dmg:
   artifactName: ${name}-${version}.${ext}
   sign: true

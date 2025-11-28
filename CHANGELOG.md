@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/arkitektio/orkestrator-next/compare/v1.37.0...v1.38.0) (2025-11-28)
+
+
+### Features
+
+* add elektro features ([ddf6a92](https://github.com/arkitektio/orkestrator-next/commit/ddf6a9280ca07258a56435b0815e7e3c596de45a))
+
 # [1.37.0](https://github.com/arkitektio/orkestrator-next/compare/v1.36.0...v1.37.0) (2025-11-26)
 
 

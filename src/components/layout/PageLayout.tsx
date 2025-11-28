@@ -17,7 +17,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
-import { Actionbar } from "./Actionbar";
 import { useReport } from "@/hooks/use-report";
 
 export type PageVariant = "black" | "default";
@@ -26,7 +25,6 @@ export type PageLayoutProps = {
   title: React.ReactNode | undefined;
   children: React.ReactNode;
   sidebars?: React.ReactNode;
-  actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: "black" | "default";
 };
@@ -35,7 +33,6 @@ export const PageLayout = ({
   title = "Loading...",
   sidebars,
   children,
-  actions,
   pageActions,
   variant = "default",
 }: PageLayoutProps) => {
@@ -69,10 +66,10 @@ export const PageLayout = ({
 
   return (
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
-      <ResizablePanel className="" defaultSize={80} id="page" order={1}>
+      <ResizablePanel className="h-full w-full" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col relative",
+            "h-full w-full flex flex-col",
             variant == "default" ? "" : "bg-black text-gray-300",
           )}
         >

@@ -7,7 +7,7 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { BarChart3, Network, TrendingUp } from "lucide-react";
 import { BsLightning } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
-import { useHomePageQuery } from "../api/graphql";
+import { Ordering, useHomePageQuery } from "../api/graphql";
 import BlockList from "../components/lists/BlockList";
 import ExperimentList from "../components/lists/ExperimentList";
 import NeuronModelList from "../components/lists/NeuronModelList";
@@ -83,10 +83,10 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
             </CardDescription>
           </CardHeader>
 
-          <BlockList />
-          <SimulationList />
-          <NeuronModelList />
-          <ExperimentList />
+          <BlockList order={{ createdAt: Ordering.Desc }} />
+          <SimulationList order={{ createdAt: Ordering.Desc }} />
+          <NeuronModelList order={{ createdAt: Ordering.Desc }} />
+          <ExperimentList order={{ createdAt: Ordering.Desc }} />
 
           <Separator />
         </div>

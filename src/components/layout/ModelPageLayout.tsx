@@ -32,22 +32,20 @@ export const ModelPageLayout = ({
   const objects = useMemo(() => [{ identifier, object }], [identifier, object]);
 
   return (
-    <div className="h-full w-full">
-      <PageLayout
-        title={title}
-        sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
-          "Comments": <Komments identifier={identifier} object={object} />,
-          "Knowledge": <KnowledgeSidebar identifier={identifier} object={object} />,
+    <PageLayout
+      title={title}
+      sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
+        "Comments": <Komments identifier={identifier} object={object} />,
+        "Knowledge": <KnowledgeSidebar identifier={identifier} object={object} />,
 
 
-        }} sidebarKey="DetailModel" />}
-        actions={actions}
-        variant={variant}
-        pageActions={pageActions}
-      >
-        <CommandMenu objects={objects} />
-        {children}
-      </PageLayout>
-    </div >
+      }} sidebarKey="DetailModel" />}
+      actions={actions}
+      variant={variant}
+      pageActions={pageActions}
+    >
+      <CommandMenu objects={objects} />
+      {children}
+    </PageLayout>
   );
 };

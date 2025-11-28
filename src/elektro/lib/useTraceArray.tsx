@@ -7,7 +7,7 @@ import {
 } from "@/elektro/api/graphql";
 import { Arkitekt, useDatalayerEndpoint, useElektro } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { ApolloClient } from "@apollo/client";
+import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
 import { Chunk, DataType, get, open } from "zarrita";
@@ -65,13 +65,13 @@ export const downloadSelectionFromStore = async (
   };
 };
 
-export const viewToSlices = (t: number | null): Slice[] => {
+export const viewToSlices = (t: number | null, left?: number | undefined | null, right?: number | undefined | null): Slice[] => {
   let selection: Slice[] = [
     {
       _slice: true,
       step: t,
-      start: null,
-      stop: null,
+      start: left ?? null,
+      stop: right ?? null,
     },
   ];
 
@@ -89,12 +89,14 @@ export const renderArray = async (
   datalayerUrl: string,
   store: ZarrStoreFragment,
   t: number | null,
+  left?: number | undefined | null,
+  right?: number | undefined | null,
   abortSignal?: AbortSignal,
 ): Promise<number[]> => {
-  let slices = viewToSlices(t);
+  const slices = viewToSlices(t, left, right);
   console.log("Slices", slices);
 
-  let selection = await downloadSelectionFromStore(
+  const selection = await downloadSelectionFromStore(
     credentials,
     datalayerUrl,
     store,
@@ -110,9 +112,11 @@ export const renderArray = async (
 };
 
 const downloadArray = async (
-  client: ApolloClient<any> | undefined,
+  client: ApolloClient<NormalizedCache> | undefined,
   endpoint_url: string | undefined,
   t: number | null,
+  left: number | undefined | null,
+  right: number | undefined | null,
   store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
@@ -134,7 +138,7 @@ const downloadArray = async (
     throw Error("No credentials loaded");
   }
 
-  return await renderArray(data.requestAccess, endpoint_url, store, t, signal);
+  return await renderArray(data.requestAccess, endpoint_url, store, t, left, right, signal);
 };
 
 export const useTraceArray = () => {
@@ -149,6 +153,8 @@ export const useTraceArray = () => {
     async (
       trace: DetailTraceFragment,
       t: number | null,
+      left?: number | undefined | null,
+      right?: number | undefined | null,
       signal?: AbortSignal,
     ) => {
       if (!client) {
@@ -159,10 +165,13 @@ export const useTraceArray = () => {
         throw Error("No fakts found");
       }
 
+
+
       const imageData = await downloadArray(
         client,
         endpoint_url,
         t,
+        left, right,
         trace.store,
         signal,
       );

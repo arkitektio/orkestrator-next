@@ -30,7 +30,7 @@ export default asDetailQueryRoute(
           />
         }
       >
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-2 h-full w-full">
           <div className="flex-1">
             <SimulationRender simulation={data.stimulus.simulation} highlight={[data.stimulus.id]} />
           </div>

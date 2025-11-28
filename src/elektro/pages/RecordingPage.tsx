@@ -52,7 +52,7 @@ export default asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full flex flex-col gap-2">
-          <div className="flex-initial grid grid-cols-12 gap-2">
+          <div className="flex-initial grid grid-cols-12 gap-2 h-32 w-full">
             <div className="col-span-11 h-32 p-3">
               <div>
                 <h1 className="scroll-m-16 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -83,7 +83,7 @@ export default asDetailQueryRoute(
               </div>
             </div>
           </div>
-          <div className="flex-grow w-full gap-2 flex">
+          <div className="flex-grow w-full gap-2 flex h-full">
             <SimulationRender
               simulation={data.recording.simulation}
               hidden={hidden}

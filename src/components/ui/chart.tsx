@@ -51,6 +51,10 @@ const ChartContainer = React.forwardRef<
         ref={ref}
         className={cn(
           "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
+          // Pointer-events handling: allow pointer events to pass through empty parts of the svg
+          // while still keeping chart elements interactive. This prevents the chart's
+          // invisible surface/overlay from blocking cursor events on other UI.
+          "[&_.recharts-surface]:pointer-events-none [&_.recharts-layer_path]:pointer-events-auto [&_.recharts-line]:pointer-events-auto [&_.recharts-dot]:pointer-events-auto [&_.recharts-rect]:pointer-events-auto [&_.recharts-reference-area]:pointer-events-auto [&_.recharts-reference-line]:pointer-events-auto [&_.recharts-brush]:pointer-events-auto [&_.recharts-xaxis]:pointer-events-auto [&_.recharts-yaxis]:pointer-events-auto",
           className,
         )}
         {...props}

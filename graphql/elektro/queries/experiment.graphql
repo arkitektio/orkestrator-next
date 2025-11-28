@@ -4,8 +4,12 @@ query DetailExperiment($id: ID!) {
   }
 }
 
-query ListExperiments($pagination: OffsetPaginationInput, $filters: ExperimentFilter) {
-  experiments(pagination: $pagination, filters: $filters) {
+query ListExperiments(
+  $pagination: OffsetPaginationInput
+  $filters: ExperimentFilter
+  $order: ExperimentOrder
+) {
+  experiments(pagination: $pagination, filters: $filters, order: $order) {
     ...ListExperiment
   }
 }

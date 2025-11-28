@@ -4,8 +4,12 @@ query DetailBlock($id: ID!) {
   }
 }
 
-query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter) {
-  blocks(pagination: $pagination, filters: $filters) {
+query ListBlocks(
+  $pagination: OffsetPaginationInput
+  $filters: BlockFilter
+  $order: BlockOrder
+) {
+  blocks(pagination: $pagination, filters: $filters, order: $order) {
     ...ListBlock
   }
 }

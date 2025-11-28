@@ -8,13 +8,15 @@ import NeuronModelCard from "../cards/NeuronModelCard";
 export type Props = {
   filters?: NeuronModelFilter;
   pagination?: OffsetPaginationInput;
+  order?: NeuronModelOrder;
 };
 
-const List = ({ filters, pagination }: Props) => {
+const List = ({ filters, pagination, order }: Props) => {
   const { data, error, subscribeToMore, refetch } = useListNeuronModelsQuery({
     variables: {
       filters: filters,
       pagination: pagination,
+      order: order,
     },
   });
 
@@ -26,7 +28,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <NeuronModelCard key={index} item={ex} />}
+      {(ex, index) => <NeuronModelCard key={ex.id} item={ex} />}
     </ListRender>
   );
 };

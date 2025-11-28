@@ -14,6 +14,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,8 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -34,22 +33,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
-  NodeListFragment,
-  useRenderGraphQueryQuery,
   GraphQueryFilters,
-  GraphQueryPagination,
   GraphQueryOrder,
-  useSetNodePropertyMutation,
+  GraphQueryPagination,
   MetricKind,
-  VariableDefinitionFragment,
+  NodeListFragment,
   PropertyDefinitionFragment,
+  useRenderGraphQueryQuery,
+  useSetNodePropertyMutation
 } from "@/kraph/api/graphql";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
 import { KraphNode } from "@/linkers";
 import Timestamp from "react-timestamp";
-import { Calendar } from "@/components/ui/calendar";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
 
 export type FormValues = {
   metrics?: string[];

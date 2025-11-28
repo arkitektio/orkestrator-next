@@ -2,7 +2,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { ElektroExperiment } from "@/linkers";
 
 import { Button } from "@/components/ui/button";
-import { useListExperimentsQuery } from "@/elektro/api/graphql";
+import { ExperimentOrder, useListExperimentsQuery } from "@/elektro/api/graphql";
 import { OffsetPaginationInput } from "@/lok-next/api/graphql";
 import { ExperimentFilter } from "@/mikro-next/api/graphql";
 import ExperimentCard from "../cards/ExperimentCard";
@@ -10,13 +10,15 @@ import ExperimentCard from "../cards/ExperimentCard";
 export type Props = {
   filters?: ExperimentFilter;
   pagination?: OffsetPaginationInput;
+  order?: ExperimentOrder;
 };
 
-const List = ({ filters, pagination }: Props) => {
+const List = ({ filters, pagination, order }: Props) => {
   const { data, error, subscribeToMore, refetch } = useListExperimentsQuery({
     variables: {
       filters: filters,
       pagination: pagination,
+      order: order,
     },
 
   });

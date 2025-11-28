@@ -4,8 +4,12 @@ query DetailNeuronModel($id: ID!) {
   }
 }
 
-query ListNeuronModels {
-  neuronModels(pagination: { limit: 10 }) {
+query ListNeuronModels(
+  $pagination: OffsetPaginationInput
+  $filters: NeuronModelFilter
+  $order: NeuronModelOrder
+) {
+  neuronModels(pagination: $pagination, filters: $filters, order: $order) {
     ...ListNeuronModel
   }
 }

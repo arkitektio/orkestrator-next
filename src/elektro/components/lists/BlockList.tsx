@@ -9,13 +9,15 @@ import BlockCard from "../cards/BlockCard";
 export type Props = {
   filters?: BlockFilter;
   pagination?: OffsetPaginationInput;
+  order?: BlockOrder;
 };
 
-const List = ({ filters, pagination }: Props) => {
+const List = ({ filters, pagination, order }: Props) => {
   const { data, error, subscribeToMore, refetch } = useListBlocksQuery({
     variables: {
       filters: filters,
       pagination: pagination,
+      order: order,
     },
   });
 

@@ -4,8 +4,12 @@ query DetailSimulation($id: ID!) {
   }
 }
 
-query ListSimulations {
-  simulations(pagination: { limit: 10 }) {
+query ListSimulations(
+  $pagination: OffsetPaginationInput
+  $filters: SimulationFilter
+  $order: SimulationOrder
+) {
+  simulations(pagination: $pagination, filters: $filters, order: $order) {
     ...ListSimulation
   }
 }

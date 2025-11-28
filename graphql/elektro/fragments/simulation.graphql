@@ -29,4 +29,8 @@ fragment ListSimulation on Simulation {
   id
   name
   duration
+  createdAt
+  model {
+    name
+  }
 }

@@ -71,16 +71,23 @@ export const stimulusToLabel = (rec: StimulusFragment) => rec.label;
 
 const useValuesForSimulation = ({
   simulation,
+  selectedRange,
 }: {
   simulation: DetailSimulationFragment;
+  selectedRange?: { left?: number | null; right?: number | null };
 }) => {
   const { renderView } = useTraceArray();
   const [stepSize, setStepSize] = useState(
-    Math.max(
-      1,
-      Math.round((simulation.timeTrace.store?.shape?.at(0) || 2000) / 2000),
-    ),
+    1
   );
+
+  const [range, setRange, { redo, undo, canRedo, canUndo }] = useUndoable<{
+    left: number | null;
+    right: number | null;
+  }>({
+    left: selectedRange?.left || 0,
+    right: selectedRange?.right || null,
+  });
 
   const [values, setValues] = useState<{ [key: string]: number }[]>([]);
   const [spikeTimes, setSpikeTimes] = useState<
@@ -88,24 +95,74 @@ const useValuesForSimulation = ({
   >([]);
   const [loading, setLoading] = useState(true);
 
+  const reset = () => {
+    setRange({
+      left: selectedRange?.left || 0,
+      right: selectedRange?.right || null,
+    });
+  }
+
+
+  const zoomOnRange = async ({
+    left,
+    right,
+  }: {
+    left: number;
+    right: number;
+  }) => {
+    // Ensure left is always smaller than right
+    const start = Math.min(left, right);
+    const end = Math.max(left, right);
+
+    // Calculate global indices based on current view's start (range.left) and stepSize
+    const actualLeft = start * stepSize + (range.left || 0);
+    const actualRight = end * stepSize + (range.left || 0);
+
+    setRange({ left: actualLeft, right: actualRight });
+  };
+
+
+
+
+
+
+
+
+
+
+
   const render = async () => {
     if (simulation) {
-      console.log(
-        "Step size",
-        stepSize,
-        simulation.timeTrace.store?.shape?.at(0),
+
+      let stepSize = Math.max(
+        1,
+        Math.round((simulation.timeTrace.store?.shape?.at(0) || 2000) / 2000),
       );
+
+      if (range.left !== null || range.right !== null) {
+        stepSize = Math.max(
+          1,
+          Math.round(
+            ((range.right || simulation.timeTrace.store?.shape?.at(0) || 2000) -
+              (range.left || 0)) / 2000,
+          ),
+        );
+      }
+
 
       Promise.all([
         ...simulation.recordings.map((recording: RecordingFragment) => {
-          return renderView(recording.trace, stepSize);
+          return renderView(recording.trace, stepSize, range?.left, range?.right);
         }),
         ...simulation.stimuli.map((stimulus: StimulusFragment) => {
-          return renderView(stimulus.trace, stepSize);
+          return renderView(stimulus.trace, stepSize, range?.left, range?.right);
         }),
-        renderView(simulation.timeTrace, stepSize),
+        renderView(simulation.timeTrace, stepSize, range?.left, range?.right),
       ]).then((data) => {
         const values = data.map((x) => ({}));
+
+
+
 
         simulation.recordings.forEach(
           (recording: RecordingFragment, recordIndex: number) => {
@@ -164,7 +221,7 @@ const useValuesForSimulation = ({
         });
 
         console.log("Spikes", spikes);
-
+        setStepSize(stepSize);
         setValues(values);
         setSpikeTimes(spikes);
         setLoading(false);
@@ -178,9 +235,9 @@ const useValuesForSimulation = ({
     if (simulation) {
       render();
     }
-  }, [simulation, stepSize]);
+  }, [simulation, stepSize, range?.left, range?.right]);
 
-  return { values, loading, spikeTimes, setStepSize, stepSize };
+  return { values, loading, spikeTimes, setStepSize, stepSize, zoomOnRange, canRedo, canUndo, redo, undo, reset };
 };
 
 export const SimulationRender = (props: {
@@ -189,16 +246,21 @@ export const SimulationRender = (props: {
   hidden?: string[];
   hiddenStimuli?: string[];
 }) => {
-  const { loading, values, spikeTimes, setStepSize, stepSize } =
-    useValuesForSimulation({
-      simulation: props.simulation,
-    });
-  const [range, setRange, { redo, undo, canRedo, canUndo }] = useUndoable<{
-    left: number;
-    right: number;
-  }>({
-    left: 0,
-    right: values.length - 1,
+  const {
+    loading,
+    values,
+    spikeTimes,
+    setStepSize,
+    stepSize,
+    zoomOnRange,
+    canRedo,
+    canUndo,
+    redo,
+    undo,
+    reset, // Now available
+  } = useValuesForSimulation({
+    simulation: props.simulation,
+    selectedRange: { left: 0, right: null },
   });
 
   const [selection, setSelection] = useState<{
@@ -207,118 +269,73 @@ export const SimulationRender = (props: {
   }>({ left: null, right: null });
   const [selecting, setSelecting] = useState(false);
 
-  const reset = useCallback(() => {
-    setRange({ left: 0, right: values.length - 1 });
-  }, [values]);
-
-  useEffect(() => {
-    if (values.length > 0) {
-      setRange({ left: 0, right: values.length - 1 }, undefined, true);
-    }
-  }, [values]);
+  // --- REMOVED THE BAD USEEFFECT HERE ---
 
   const handleMouseDown = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (e.activeLabel) {
+    (e: CategoricalChartState) => {
+      // Use activeTooltipIndex for O(1) exact index lookup
+      if (e && e.activeTooltipIndex !== undefined) {
         setSelection({
-          left: values.findIndex(
-            (d) => d.t === (e.activeLabel as unknown as number),
-          ),
-          right: null,
+          left: e.activeTooltipIndex,
+          right: e.activeTooltipIndex, // Initialize right same as left
         });
         setSelecting(true);
       }
-      event.preventDefault();
-      event.stopPropagation();
     },
-    [values],
+    []
   );
 
   const handleMouseMove = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (selecting && e.activeLabel) {
+    (e: CategoricalChartState) => {
+      if (selecting && e && e.activeTooltipIndex !== undefined) {
         setSelection((prev) => ({
           ...prev,
-          right: values.findIndex(
-            (d) => d.t === (e.activeLabel as unknown as number),
-          ),
+          right: e.activeTooltipIndex,
         }));
       }
-      event.preventDefault();
-      event.stopPropagation();
     },
-    [selecting, values],
+    [selecting]
   );
 
   const handleMouseUp = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (selection.left !== null && selection.right !== null) {
-        const [tempLeft, tempRight] = [selection.left, selection.right].sort(
-          (a, b) => a - b,
-        );
-        setRange({ left: tempLeft, right: tempRight });
+    () => {
+      if (selecting && selection.left !== null && selection.right !== null) {
+        // Only zoom if there is a meaningful difference
+        if (Math.abs(selection.left - selection.right) > 1) {
+          zoomOnRange({ left: selection.left, right: selection.right });
+        }
       }
       setSelection({ left: null, right: null });
       setSelecting(false);
-      event.preventDefault();
-      event.stopPropagation();
     },
-    [selection],
+    [selection, selecting, zoomOnRange]
   );
-
-  const filteredValues = useMemo(() => {
-    return values;
-  }, [values]);
 
   const visibleRecordings = useMemo(() => {
     return props.simulation.recordings.filter(
-      (view) => !props.hidden || !props.hidden.includes(view.id),
+      (view) => !props.hidden || !props.hidden.includes(view.id)
     );
   }, [props.simulation.recordings, props.hidden]);
 
   const visibleStimuli = useMemo(() => {
     return props.simulation.stimuli.filter(
-      (view) => !props.hiddenStimuli || !props.hiddenStimuli?.includes(view.id),
+      (view) => !props.hiddenStimuli || !props.hiddenStimuli?.includes(view.id)
     );
   }, [props.simulation.stimuli, props.hiddenStimuli]);
 
-  const spikeLines = useMemo(() => {
-    return spikeTimes.map((spikeTime, index) => (
-      <ReferenceLine
-        key={`spike-${index}`}
-        x={spikeTime.value}
-        stroke="green"
-        strokeDasharray="3 3"
-        strokeOpacity={0.6}
-        label={spikeTime.label}
-      />
-    ));
-  }, [spikeTimes]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col w-full">
-        <CardHeader>
-          <CardTitle>Loading...</CardTitle>
-          <CardDescription>Loading simulation data</CardDescription>
-        </CardHeader>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex flex-col  relative">
-      <ChartContainer config={chartConfig} className="flex-grow">
-        {/* Chart 1: Recordings */}
-        <LineChart
-          data={filteredValues}
-          margin={{ left: 10, right: 10 }}
+    <div className="flex flex-col relative h-full w-full" onMouseUp={handleMouseUp}>
+      {/* Added global mouseUp to container to catch drags that end outside chart lines */}
 
-          syncId="simulation-chart"
+      <ChartContainer config={chartConfig} className="h-[85%]">
+        <LineChart
+          data={values}
+          margin={{ left: 10, right: 10 }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          syncId="simulation-chart"
         >
           <CartesianGrid vertical={false} />
           <XAxis
@@ -328,6 +345,7 @@ export const SimulationRender = (props: {
             axisLine={false}
             tickMargin={8}
             tickFormatter={(v) => `${v.toFixed(1)}`}
+            domain={['auto', 'auto']}
           />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} />
           <ChartTooltip
@@ -335,7 +353,6 @@ export const SimulationRender = (props: {
             content={<ChartTooltipContent indicator="line" />}
           />
 
-          {/* Recording traces */}
           {visibleRecordings.map((rec) => (
             <Line
               key={recordingToID(rec)}
@@ -349,19 +366,8 @@ export const SimulationRender = (props: {
             />
           ))}
 
-          {/* Spike times */}
-          {spikeLines}
-
-          <ReferenceLine
-            key={`spike0`}
-            x1={1500}
-            stroke="hsl(45, 70%, 60%)"
-            strokeOpacity={0.6}
-            strokeWidth={89}
-          />
-
-          {/* Selection highlight */}
-          {selection.left !== null && selection.right !== null && (
+          {/* Render Selection Box */}
+          {selection.left !== null && selection.right !== null && values[selection.left] && values[selection.right] && (
             <ReferenceArea
               x1={values[selection.left].t}
               x2={values[selection.right].t}
@@ -370,6 +376,7 @@ export const SimulationRender = (props: {
               fillOpacity={0.2}
             />
           )}
+
           <Brush
             dataKey="t"
             height={0}
@@ -378,28 +385,20 @@ export const SimulationRender = (props: {
             travellerWidth={5}
             travellerStroke="#181212"
             travellerFill="#181212"
-            startIndex={range.left}
-            endIndex={range.right}
-            onChange={(e) =>
-              setRange({
-                left: e?.startIndex ?? 0,
-                right: e?.endIndex ?? values.length - 1,
-              })
-            }
           />
         </LineChart>
       </ChartContainer>
-      <ChartContainer config={chartConfig} className="h-12 flex-initial ">
-        {/* Chart 2: Stimuli (e.g. current injections) */}
+
+      <ChartContainer config={chartConfig} className="h-[15%] flex-initial">
         <LineChart
-          data={filteredValues}
+          data={values}
           height={100}
           margin={{ left: 12, right: 12 }}
-          syncId="simulation-chart"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          syncId="simulation-chart"
+        // Add handlers here too if you want the bottom chart to be selectable
         >
           <CartesianGrid vertical={false} />
           <XAxis
@@ -409,6 +408,7 @@ export const SimulationRender = (props: {
             axisLine={false}
             tickMargin={8}
             tickFormatter={(v) => `${v.toFixed(1)}`}
+            domain={['auto', 'auto']}
           />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} />
           <ChartTooltip
@@ -416,7 +416,18 @@ export const SimulationRender = (props: {
             content={<ChartTooltipContent indicator="line" />}
           />
 
-          {/* Stimuli traces */}
+          {/* Render Selection Box */}
+          {selection.left !== null && selection.right !== null && values[selection.left] && values[selection.right] && (
+            <ReferenceArea
+              x1={values[selection.left].t}
+              x2={values[selection.right].t}
+              strokeOpacity={0.3}
+              fill="hsl(45, 70%, 60%)"
+              fillOpacity={0.2}
+            />
+          )}
+
+
           {visibleStimuli.map((s) => (
             <Line
               key={stimulusToID(s)}
@@ -428,35 +439,6 @@ export const SimulationRender = (props: {
               isAnimationActive={false}
             />
           ))}
-
-          {/* Brush for zooming */}
-          <Brush
-            dataKey="t"
-            height={30}
-            stroke="#1b1b25"
-            fill="transparent"
-            travellerWidth={5}
-            travellerStroke="#181212"
-            travellerFill="#181212"
-            startIndex={range.left}
-            endIndex={range.right}
-            onChange={(e) =>
-              setRange({
-                left: e?.startIndex ?? 0,
-                right: e?.endIndex ?? values.length - 1,
-              })
-            }
-          />
-          {/* Selection highlight */}
-          {selection.left !== null && selection.right !== null && (
-            <ReferenceArea
-              x1={values[selection.left].t}
-              x2={values[selection.right].t}
-              strokeOpacity={0.3}
-              fill="hsl(45, 70%, 60%)"
-              fillOpacity={0.2}
-            />
-          )}
         </LineChart>
       </ChartContainer>
 

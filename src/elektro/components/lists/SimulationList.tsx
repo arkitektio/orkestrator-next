@@ -1,20 +1,22 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { ElektroSimulation } from "@/linkers";
 
-import { SimulationFilter, useListSimulationsQuery } from "@/elektro/api/graphql";
+import { SimulationFilter, SimulationOrder, useListSimulationsQuery } from "@/elektro/api/graphql";
 import { OffsetPaginationInput } from "@/lok-next/api/graphql";
 import SimulationCard from "../cards/SimulationCard";
 
 export type Props = {
   filters?: SimulationFilter;
+  order?: SimulationOrder;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
+const List = ({ filters, order, pagination }: Props) => {
   const { data, error, subscribeToMore, refetch } = useListSimulationsQuery({
     variables: {
       filters: filters,
       pagination: pagination,
+      order: order,
     },
   });
 

@@ -183,7 +183,7 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
     entryPoints.forEach(root => processSection(root.id, null, 0));
 
     return segments;
-  }, [model]);
+  }, [model.id]);
 };
 
 // --- Camera Controller ---

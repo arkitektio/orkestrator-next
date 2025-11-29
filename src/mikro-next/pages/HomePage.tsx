@@ -18,6 +18,8 @@ import { HelpSidebar } from "@/components/sidebars/help";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 import { useUpload } from "@/providers/upload/UploadProvider";
+import { useState } from "react";
+import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IRepresentationScreenProps { }
@@ -31,6 +33,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
     },
   });
   const { startUpload } = useUpload();
+
+  const [temporalFilter, setTemporalFilter] = useState<{ createdBefore: Date | undefined, createdAfter: Date | undefined }>({ createdBefore: undefined, createdAfter: undefined });
+
 
   const handleFilesSelected = (files: File[]) => {
     files.forEach((file) => {
@@ -54,12 +59,15 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
   return (
     <PageLayout
       pageActions={
-        <UploadDialog onFilesSelected={handleFilesSelected}>
-          <PageActionButton className="gap-2">
-            <Upload className="h-4 w-4" />
-            Upload Files
-          </PageActionButton>
-        </UploadDialog>
+        <>
+          <UploadDialog onFilesSelected={handleFilesSelected}>
+            <PageActionButton className="gap-2">
+              <Upload className="h-4 w-4" />
+              Upload Files
+            </PageActionButton>
+          </UploadDialog>
+          <DateTimeRangePicker onUpdate={({ range }) => setTemporalFilter({ createdAfter: range.from, createdBefore: range.to })} />
+        </>
       }
       sidebars={
         <MultiSidebar map={{
@@ -138,16 +146,13 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
             </CardHeader>
 
             <ImageList
-              pagination={{ limit: 30 }}
-              filters={{ notDerived: true }}
+              filters={{ notDerived: true, ...temporalFilter }}
             />
-            <Separator className="my-4" />
             <DatasetList
-              pagination={{ limit: 30 }}
-              filters={{ parentless: true }}
+              filters={{ parentless: true, ...temporalFilter }}
             />
             <Separator className="my-4" />
-            <FileList pagination={{ limit: 30 }} order={{ createdAt: Ordering.Desc }} />
+            <FileList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />
           </div>
         )}
       </UploadWrapper>

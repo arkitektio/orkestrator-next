@@ -135,13 +135,13 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
                 <div key={child.id} className="relative group">
                   {/* Render appropriate card - cards already have Smart wrappers */}
                   {child.__typename === "Dataset" && (
-                    <DatasetCard dataset={child} className="h-20 w-full" />
+                    <DatasetCard item={child} className="h-20 w-full" />
                   )}
                   {child.__typename === "Image" && (
-                    <ImageCard image={child} className="h-20 w-full" />
+                    <ImageCard item={child} className="h-20 w-full" />
                   )}
                   {child.__typename === "File" && (
-                    <FileCard file={child} className="h-20 w-full" />
+                    <FileCard item={child} className="h-20 w-full" />
                   )}
                 </div>
               );
@@ -533,7 +533,7 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
       filters: {
         search: debouncedSearch || undefined,
         // TODO: Add type filtering when server supports it
-        // TODO: Add sorting when server supports it  
+        // TODO: Add sorting when server supports it
       },
     },
     // Enable polling for automatic updates (optional, can be disabled for performance)
@@ -641,7 +641,7 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
     error,
     filteredAndSortedData,
 
-    // Actions  
+    // Actions
     setSearchInput,
     setFilters,
     setViewMode,

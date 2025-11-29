@@ -1,36 +1,14 @@
-import { ListRender } from "@/components/layout/ListRender";
-import { ElektroSimulation } from "@/linkers";
 
-import { NeuronModelFilter, useListNeuronModelsQuery } from "@/elektro/api/graphql";
-import { OffsetPaginationInput } from "@/lok-next/api/graphql";
+import { createList } from "@/components/layout/createList";
+import { useListNeuronModelsQuery } from "@/elektro/api/graphql";
+import { ElektroNeuronModel } from "@/linkers";
 import NeuronModelCard from "../cards/NeuronModelCard";
 
-export type Props = {
-  filters?: NeuronModelFilter;
-  pagination?: OffsetPaginationInput;
-  order?: NeuronModelOrder;
-};
-
-const List = ({ filters, pagination, order }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListNeuronModelsQuery({
-    variables: {
-      filters: filters,
-      pagination: pagination,
-      order: order,
-    },
-  });
-
-  return (
-    <ListRender
-      array={data?.neuronModels}
-      title={
-        <ElektroSimulation.ListLink className="flex-0">NeuronModels</ElektroSimulation.ListLink>
-      }
-      refetch={refetch}
-    >
-      {(ex, index) => <NeuronModelCard key={ex.id} item={ex} />}
-    </ListRender>
-  );
-};
-
-export default List;
+const TList = createList({
+  useHook: useListNeuronModelsQuery,
+  dataKey: "neuronModels",
+  ItemComponent: NeuronModelCard,
+  title: "Neuron Models",
+  smart: ElektroNeuronModel,
+});
+export default TList;

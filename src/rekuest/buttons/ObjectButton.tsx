@@ -1842,6 +1842,9 @@ export type SmartContextProps = {
 export type ObjectButtonProps = SmartContextProps & {
   children?: React.ReactNode;
   className?: string;
+  variant?: "outline" | "default";
+  size?: "sm" | "md" | "lg" | "icon" | "link";
+
 };
 
 export type PassDownProps = SmartContextProps & {
@@ -1854,7 +1857,7 @@ export const ObjectButton = (props: ObjectButtonProps) => {
       <Popover>
         <PopoverTrigger asChild>
           {props.children || (
-            <Button variant={"outline"} className="text-white">
+            <Button variant={props.variant || "outline"} className={cn(props.className, "text-white")} size={props.size || "md"}>
               <PlayIcon />
             </Button>
           )}

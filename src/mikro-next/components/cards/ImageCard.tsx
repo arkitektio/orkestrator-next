@@ -6,26 +6,25 @@ import { MateFinder } from "../../../mates/types";
 import { ListImageFragment } from "../../api/graphql";
 
 interface ImageCardProps {
-  image: ListImageFragment;
-  mates?: MateFinder[];
+  item: ListImageFragment;
   className?: string;
 }
 
-const ImageCard = ({ image, mates, className }: ImageCardProps) => {
+const ImageCard = ({ item, className }: ImageCardProps) => {
   const resolve = useResolve();
 
-  const { progress } = MikroImage.useLive({ object: image.id });
+  const { progress } = MikroImage.useLive({ object: item.id });
   return (
-    <MikroImage.Smart object={image?.id} mates={mates}>
+    <MikroImage.Smart object={item?.id}>
       <div
         className={cn(
           `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl`,
           className,
         )}
       >
-        {image.latestSnapshot?.store.presignedUrl && (
+        {item.latestSnapshot?.store.presignedUrl && (
           <Image
-            src={resolve(image.latestSnapshot?.store.presignedUrl)}
+            src={resolve(item.latestSnapshot?.store.presignedUrl)}
             style={{ filter: "brightness(0.7)" }}
             className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
           />
@@ -44,9 +43,9 @@ const ImageCard = ({ image, mates, className }: ImageCardProps) => {
               "z-10 font-bold text-md mb-2 cursor-pointer break-words line-clamp-2" +
               (isActive ? "text-primary-300" : "")
             }
-            object={image.id}
+            object={item.id}
           >
-            {image?.name}
+            {item?.name}
           </MikroImage.DetailLink>
         </div>
       </div>

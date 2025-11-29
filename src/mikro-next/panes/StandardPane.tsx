@@ -203,13 +203,13 @@ const Pane: React.FunctionComponent = () => {
       ) : (
         <div className="h-full">
           <ListRender array={data?.images}>
-            {(item, i) => <ImageCard image={item} key={i} />}
+            {(item, i) => <ImageCard item={item} key={i} />}
           </ListRender>
           <ListRender array={data?.files}>
-            {(item, i) => <FileCard file={item} key={i} />}
+            {(item, i) => <FileCard item={item} key={i} />}
           </ListRender>
           <ListRender array={data?.datasets}>
-            {(item, i) => <DatasetCard dataset={item} key={i} />}
+            {(item, i) => <DatasetCard item={item} key={i} />}
           </ListRender>
         </div>
       )}

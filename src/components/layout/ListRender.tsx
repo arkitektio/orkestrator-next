@@ -1,5 +1,5 @@
 import { OffsetPaginationInput } from "@/rekuest/api/graphql";
-import React, { ReactNode, useEffect, useMemo, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { ListOffsetter, ListTitle } from "../ui/list";
 import { Refetcher } from "../ui/refetcher";
 import { ContainerGrid } from "./ContainerGrid";
@@ -38,12 +38,14 @@ export const ListRender = <T extends any>({
     if (refetch) {
       refetch({ pagination: { limit: limit, offset: offset } });
     }
+    // Ideally 'refetch' should be in dependencies, but be careful of infinite loops
+    // if the parent creates the function on every render without useCallback.
   }, [offset, limit]);
 
-  const childrenComponents = useMemo(
-    () => array?.map(children),
-    [array, offset],
-  );
+  // FIX: Removed useMemo.
+  // This ensures that if the parent re-renders (changing the 'children' prop),
+  // this list updates immediately.
+  const childrenComponents = array?.map(children);
 
   return (
     <>

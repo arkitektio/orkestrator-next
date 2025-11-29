@@ -1,31 +1,32 @@
 fragment Experiment on Experiment {
+  id
+  name
+  description
+  createdAt
+  timeTrace {
     id
-   name 
-   description
-   timeTrace {
-        id
-        name
-        store {
-            ...ZarrStore
-        }
-   }
-   stimulusViews {
-        id
-        label 
-        stimulus {
-            ...Stimulus
-        }
-   }
-   recordingViews {
-        id
-        label 
-        recording {
-            ...Recording
-        }
-   }
+    name
+    store {
+      ...ZarrStore
+    }
+  }
+  stimulusViews {
+    id
+    label
+    stimulus {
+      ...Stimulus
+    }
+  }
+  recordingViews {
+    id
+    label
+    recording {
+      ...Recording
+    }
+  }
 }
 
 fragment ListExperiment on Experiment {
-    id
-    name
+  id
+  name
 }

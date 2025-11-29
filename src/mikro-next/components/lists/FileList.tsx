@@ -1,4 +1,4 @@
-import { ListRender } from "@/components/layout/ListRender";
+import { createList } from "@/components/layout/createList";
 import { MikroFile } from "@/linkers";
 import {
   FileFilter,
@@ -8,30 +8,14 @@ import {
 } from "../../api/graphql";
 import FileCard from "../cards/FileCard";
 
-export type Props = {
-  filters?: FileFilter;
-  pagination?: OffsetPaginationInput;
-  order?: FileOrder
-};
 
-const List = ({ filters, pagination, order }: Props) => {
-  const { data, refetch } = useGetFilesQuery({
-    variables: { filters, pagination, order },
-  });
 
-  return (
-    <ListRender
-      array={data?.files}
-      title={
-        <MikroFile.ListLink className="flex-0">
-          Latest Uploads
-        </MikroFile.ListLink>
-      }
-      refetch={refetch}
-    >
-      {(ex) => <FileCard key={ex.id} file={ex} />}
-    </ListRender>
-  );
-};
+const TList = createList({
+  useHook: useGetFilesQuery,
+  dataKey: "files",
+  ItemComponent: FileCard,
+  title: "Latest Files",
+  smart: MikroFile,
+});
+export default TList;
 
-export default List;

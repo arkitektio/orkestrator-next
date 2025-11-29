@@ -5,14 +5,13 @@ import { ListDatasetFragment } from "@/omero-ark/api/graphql";
 
 
 interface Props {
-  dataset: ListDatasetFragment;
-  mates?: MateFinder[];
+  item: ListDatasetFragment;
 }
 
-const TCard = ({ dataset, mates }: Props) => {
+const TCard = ({ item }: Props) => {
   return (
     <OmeroArkDataset.Smart
-      object={dataset?.id}
+      object={item?.id}
     >
       <Card className="px-2 py-2 h-full w-full top-0 ">
         <OmeroArkDataset.DetailLink
@@ -20,9 +19,9 @@ const TCard = ({ dataset, mates }: Props) => {
             "z-10 font-bold text-md mb-2 cursor-pointer " +
             (isActive ? "text-primary-300" : "")
           }
-          object={dataset.id}
+          object={item.id}
         >
-          {dataset?.name}
+          {item?.name}
         </OmeroArkDataset.DetailLink>
       </Card>
     </OmeroArkDataset.Smart>

@@ -16,6 +16,7 @@ import {
   recordingViewToLabel,
   stimulusViewToLabel,
 } from "../components/ExperimentRender";
+import Timestamp from "react-timestamp";
 
 export type IRepresentationScreenProps = {};
 
@@ -54,7 +55,7 @@ export default asDetailQueryRoute(
                   {data.experiment.name}
                 </h1>
                 <p className="mt-3 text-xl text-muted-foreground">
-                  {data.experiment.description}
+                  {data.experiment.description} <Timestamp date={new Date(data.experiment.createdAt)} autoUpdate />
                 </p>
               </div>
             </div>

@@ -1,78 +1,77 @@
 fragment Coord on Coord {
-    x
-    y
-    z
+  x
+  y
+  z
 }
 
 fragment Section on Section {
-    id
-    diam
-    length
-    category
-    coords {
-        ...Coord
-    }
-    connections {
-        ...Connection
-    }
+  id
+  diam
+  length
+  category
+  coords {
+    ...Coord
+  }
+  connections {
+    ...Connection
+  }
 }
 
 fragment Connection on Connection {
-    parent
-    location
+  parent
+  location
 }
 
 fragment Compartment on Compartment {
-    id
-    mechanisms
-    globalParams {
-        param
-        value
-    }
-    sectionParams {
-        param
-        value
-    }
+  id
+  mechanisms
+  globalParams {
+    param
+    value
+  }
+  sectionParams {
+    param
+    value
+  }
 }
 
 fragment DetailNeuronModel on NeuronModel {
   id
   name
   config {
-  cells {
-    id
-    biophysics {
+    cells {
+      id
+      biophysics {
         compartments {
-            ...Compartment
-        } 
-        
-    }
-    topology {
+          ...Compartment
+        }
+      }
+      topology {
         sections {
-            ...Section
-        }   
+          ...Section
+        }
+      }
     }
   }
-  }
+  description
   comparisons {
     collection {
-        id
-        name
+      id
+      name
     }
     changes {
-        type 
-        path
-        valueA
-        valueB
+      type
+      path
+      valueA
+      valueB
     }
   }
   simulations {
     ...ListSimulation
   }
-
 }
 
 fragment ListNeuronModel on NeuronModel {
-    id
-    name
+  id
+  name
 }

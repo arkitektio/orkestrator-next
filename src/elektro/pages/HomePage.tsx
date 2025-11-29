@@ -3,8 +3,10 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { BarChart3, Network, TrendingUp } from "lucide-react";
+import { useState } from "react";
 import { BsLightning } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { Ordering, useHomePageQuery } from "../api/graphql";
@@ -14,11 +16,28 @@ import NeuronModelList from "../components/lists/NeuronModelList";
 import SimulationList from "../components/lists/SimulationList";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
+
+export const TemporalFilterSelector = (props: { onChange: (args: { from: Date | undefined, to: Date | undefined }, key: string) => void }) => {
+  return (
+    <div className="flex flex-row items-center gap-2">
+      <DateTimeRangePicker onUpdate={({ range }) => props.onChange({ from: range.from, to: range.to }, "temporalFilter")} />
+    </div>
+  );
+}
+
+
+
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
   const navigate = useNavigate();
 
+  const [temporalFilter, setTemporalFilter] = useState<{ createdBefore: Date | undefined, createdAfter: Date | undefined }>({ createdBefore: undefined, createdAfter: undefined });
+
+  const handleTemporalChange = (range: { from: Time, to: Date | undefined }, key: string) => {
+    setTemporalFilter({ createdAfter: range.from, createdBefore: range.to });
+  };
+
   return (
-    <PageLayout pageActions={<></>} title="Elektro" sidebars={
+    <PageLayout pageActions={<><TemporalFilterSelector onChange={handleTemporalChange} /></>} title="Elektro" sidebars={
       <MultiSidebar map={{
         Statistics: <HomePageStatisticsSidebar />,
         Help: <HelpSidebar />
@@ -83,10 +102,10 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
             </CardDescription>
           </CardHeader>
 
-          <BlockList order={{ createdAt: Ordering.Desc }} />
-          <SimulationList order={{ createdAt: Ordering.Desc }} />
-          <NeuronModelList order={{ createdAt: Ordering.Desc }} />
-          <ExperimentList order={{ createdAt: Ordering.Desc }} />
+          <BlockList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
+          <SimulationList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
+          <NeuronModelList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
+          <ExperimentList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
 
           <Separator />
         </div>

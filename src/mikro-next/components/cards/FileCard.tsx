@@ -4,13 +4,13 @@ import { cn } from "@udecode/cn";
 import { ListFileFragment } from "../../api/graphql";
 
 interface Props {
-  file: ListFileFragment;
+  item: ListFileFragment;
   className?: string;
 }
 
-const TheCard = ({ file, className }: Props) => {
+const TheCard = ({ item, className }: Props) => {
   return (
-    <MikroFile.Smart object={file?.id} key={file.id}>
+    <MikroFile.Smart object={item?.id} key={item.id}>
       <Card
         className={cn(
           "px-2 py-2 aspect-[20/3] max-h-20 justify-center flex items-center ",
@@ -18,8 +18,8 @@ const TheCard = ({ file, className }: Props) => {
         )}
       >
         <CardTitle className="line-clamp-2 break-words">
-          <MikroFile.DetailLink object={file.id}>
-            {file.name}
+          <MikroFile.DetailLink object={item.id}>
+            {item.name}
           </MikroFile.DetailLink>
         </CardTitle>
       </Card>

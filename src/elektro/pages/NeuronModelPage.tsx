@@ -5,6 +5,7 @@ import { ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
 import SimulationCard from "../components/cards/SimulationCard";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
+import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -23,22 +24,22 @@ export default asDetailQueryRoute(
           </div>
         }
       >
-        <div className="h-full w-full grid grid-cols-12 grid-reverse gap-4 pointers-events-none">
+        <div className="h-full w-full grid grid-cols-12 grid-reverse gap-4 pointers-events-none p-4 ">
 
-          <div className="col-span-3  @container p-4 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col ">
+          <div className="col-span-3  @container bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col ">
 
-            <div className="h-32 p-3">
+            <div className=" p-3">
               <div>
                 <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                   {data.neuronModel.name}
                 </h1>
                 <p className="mt-3 text-xl text-muted-foreground">
-                  {data.neuronModel.name}
+                  {data.neuronModel.description}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 p-3">
               {data.neuronModel.comparisons.map((comparison) => (
                 <Card className="col-span-1 p-4">
                   <ElektroModelCollection.DetailLink object={comparison.collection.id} className={"font-light text-xs"}>
@@ -60,9 +61,11 @@ export default asDetailQueryRoute(
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="mt-4 font-medium p-3">Simulations</div>
+
+            <div className="flex flex-col gap-2 mt-2 p-3">
               {data.neuronModel.simulations.map((comparison) => (
-                <SimulationCard item={comparison} />
+                <NeuronModelSimulationCard key={comparison.id} item={comparison} />
               ))}
             </div>
           </div>

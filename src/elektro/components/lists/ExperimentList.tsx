@@ -1,44 +1,14 @@
-import { ListRender } from "@/components/layout/ListRender";
-import { ElektroExperiment } from "@/linkers";
 
-import { Button } from "@/components/ui/button";
-import { ExperimentOrder, useListExperimentsQuery } from "@/elektro/api/graphql";
-import { OffsetPaginationInput } from "@/lok-next/api/graphql";
-import { ExperimentFilter } from "@/mikro-next/api/graphql";
+import { createList } from "@/components/layout/createList";
+import { useListExperimentsQuery } from "@/elektro/api/graphql";
+import { ElektroExperiment } from "@/linkers";
 import ExperimentCard from "../cards/ExperimentCard";
 
-export type Props = {
-  filters?: ExperimentFilter;
-  pagination?: OffsetPaginationInput;
-  order?: ExperimentOrder;
-};
-
-const List = ({ filters, pagination, order }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListExperimentsQuery({
-    variables: {
-      filters: filters,
-      pagination: pagination,
-      order: order,
-    },
-
-  });
-
-  return (
-    <ListRender
-      array={data?.experiments}
-      title={
-        <ElektroExperiment.ListLink className="flex-0">Experiments</ElektroExperiment.ListLink>
-      }
-      refetch={refetch}
-      actions={
-        <ElektroExperiment.NewButton
-          className="flex-1"
-        ><Button>x</Button></ElektroExperiment.NewButton>
-      }
-    >
-      {(ex, index) => <ExperimentCard key={index} item={ex} />}
-    </ListRender>
-  );
-};
-
-export default List;
+const ExperimentList = createList({
+  useHook: useListExperimentsQuery,
+  dataKey: "experiments",
+  ItemComponent: ExperimentCard,
+  title: "Experiments",
+  smart: ElektroExperiment,
+});
+export default ExperimentList;

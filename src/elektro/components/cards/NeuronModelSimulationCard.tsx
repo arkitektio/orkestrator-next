@@ -33,7 +33,12 @@ const TheCard = ({ item, className }: Props) => {
             <div className="text-xs text-muted-foreground truncate">{item.model.name}</div>
           </ElektroSimulation.DetailLink>
 
-
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant="secondary" className="uppercase">{formatted}</Badge>
+            <div className="text-xs text-muted-foreground">
+              <Timestamp date={new Date(item.createdAt)} autoUpdate />
+            </div>
+          </div>
         </div>
       </Card>
     </ElektroSimulation.Smart>

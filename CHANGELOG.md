@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/arkitektio/orkestrator-next/compare/v1.38.0...v1.39.0) (2025-11-29)
+
+
+### Features
+
+* add temporal filters to elektro + mikro ([e44b37d](https://github.com/arkitektio/orkestrator-next/commit/e44b37dfc8bcc2b7a23240694c9613271d5ef2d5))
+
 # [1.38.0](https://github.com/arkitektio/orkestrator-next/compare/v1.37.0...v1.38.0) (2025-11-28)
 
 

@@ -1,3 +1,10 @@
+## [1.39.1](https://github.com/arkitektio/orkestrator-next/compare/v1.39.0...v1.39.1) (2025-11-29)
+
+
+### Bug Fixes
+
+* create nodeId ([5d984e8](https://github.com/arkitektio/orkestrator-next/commit/5d984e82dc842dc0627c1987e8529e5447afa067))
+
 # [1.39.0](https://github.com/arkitektio/orkestrator-next/compare/v1.38.0...v1.39.0) (2025-11-29)
 
 

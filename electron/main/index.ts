@@ -18,6 +18,7 @@ import log from "electron-log";
 import Store from "electron-store";
 import { registerIssueIpc } from "./issue-reporter";
 import { AgentGateway } from "./gateway";
+import { machineIdSync } from "node-machine-id";
 
 
 const store = new Store();
@@ -190,6 +191,7 @@ function createWindow(): BrowserWindow {
 
 
 
+
   mainWindow.on("resize", () => {
     const [width, height] = mainWindow?.getSize() || [900, 670];
     mainWindow?.webContents.setZoomFactor(store.get("zoomFactor", 0.7));
@@ -291,6 +293,11 @@ ipcMain.on("ondragstart", (event, structure) => {
     icon: icon,
   });
 });
+
+ipcMain.handle("get-node-id", (event) => {
+  return machineIdSync(true);
+});
+
 
 function openSecondaryWindow(path: string): void {
   // Create the browser window.

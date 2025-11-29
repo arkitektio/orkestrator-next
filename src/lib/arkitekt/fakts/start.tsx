@@ -14,6 +14,17 @@ export const start = async ({
   expirationTime?: number;
   redirectURIs?: string[];
 }): Promise<string> => {
+
+  if (window.electron) {
+    const nodeId = await window.api.getNodeId();
+    manifest = {
+      ...manifest,
+      node_id: nodeId,
+    };
+    console.log("Using node ID:", nodeId);
+  }
+
+
   const response = await fetch(`${endpoint.base_url}start/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

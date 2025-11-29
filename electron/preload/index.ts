@@ -18,6 +18,7 @@ const api = {
   openSecondWindow: (path: string) => {
     ipcRenderer.send("open-second-window", path);
   },
+  getNodeId: () => ipcRenderer.invoke("get-node-id"),
   discoverBeacons: () => ipcRenderer.invoke("discover-beacons"),
   reloadWindow: () => ipcRenderer.invoke("reload-window"),
   forceReloadWindow: () => ipcRenderer.invoke("force-reload-window"),

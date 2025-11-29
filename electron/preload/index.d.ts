@@ -27,6 +27,7 @@ declare global {
         labels?: string[];
         template?: string;
       }) => Promise<void>;
+      getNodeId: () => Promise<string>;
       openFilePicker: () => Promise<string | undefined>;
       executeElectron: (assignation: Assign) => Promise<void>;
       onAgentYield: (cb: (data: any) => void) => void;

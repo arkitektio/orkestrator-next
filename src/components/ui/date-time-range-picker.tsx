@@ -206,11 +206,6 @@ export const DateTimeRangePicker = ({
         from.setHours(0, 0, 0, 0)
         to.setHours(23, 59, 59, 999)
         break
-      case 'last30':
-        from.setDate(from.getDate() - 29)
-        from.setHours(0, 0, 0, 0)
-        to.setHours(23, 59, 59, 999)
-        break
       case 'thisWeek':
         from.setDate(first)
         from.setHours(0, 0, 0, 0)

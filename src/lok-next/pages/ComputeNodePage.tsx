@@ -4,9 +4,13 @@ import { useGetComputeNodeQuery } from "../api/graphql";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Pencil } from "lucide-react";
 import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
+import ClientCard from "../components/cards/ClientCard";
+import { ContainerGrid } from "@/components/layout/ContainerGrid";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 
 export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
 
+  const manifest = Arkitekt.useConnectedManifest()
 
   return (
     <LokComputeNode.ModelPage
@@ -29,9 +33,28 @@ export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
             </div>
           </div>
         </div>
-        <div className="col-span-2">
-        </div>
+
       </div>
+
+      <div className="border-b border-seperator my-2 mx-4" />
+      {manifest && manifest.node_id === data.computeNode.nodeId && (
+        <div className="col-span-4 p-6 text-sm text-green-600 font-medium">
+          This is the current compute node you are connected to.
+        </div>
+      )}
+
+      <div className="col-span-4 p-6">
+        {data?.computeNode?.nodeId}
+      </div>
+      <ContainerGrid>
+        {data.computeNode.clients.map(c =>
+          <ClientCard key={c.id} item={c} />
+        )
+
+
+
+        }
+      </ContainerGrid>
     </LokComputeNode.ModelPage>
   );
 });

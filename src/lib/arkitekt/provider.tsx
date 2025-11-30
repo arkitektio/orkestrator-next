@@ -21,6 +21,7 @@ import { Manifest } from "./fakts/manifestSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { login } from "./oauth/login";
 import { end } from "slate";
+import { manifest } from "@/constants";
 
 export type AvailableService = {
   key: string;
@@ -67,7 +68,7 @@ export type ServiceMap = {
 export type Token = string;
 
 export type AppContext = {
-  manifest: Manifest;
+  manifest: EnhancedManifest;
   connection?: ConnectedContext;
 };
 
@@ -80,6 +81,7 @@ export type AppFunctions = {
 
 export type ConnectedContext = {
   fakts: ActiveFakts;
+  manifest: EnhancedManifest;
   clients: ServiceMap;
   token: Token;
   availableServices: AvailableService[];
@@ -145,7 +147,7 @@ export const buildContext = async ({
 }: {
   endpoint: FaktsEndpoint;
   fakts: ActiveFakts;
-  manifest: Manifest;
+  manifest: EnhancedManifest;
   serviceBuilderMap: ServiceBuilderMap;
   token: Token;
   controller: AbortController;
@@ -258,12 +260,28 @@ export const buildContext = async ({
 
   return {
     clients,
+    manifest: manifest,
     fakts: fakts,
     availableServices: availableServices,
     unresolvedServices:
       unresolvedServices.length > 0 ? unresolvedServices : undefined,
     token: token,
     endpoint: endpoint,
+  };
+};
+
+
+export type EnhancedManifest = Manifest & {
+  node_id: string;
+};
+
+export const enhanceManifest = async (
+  manifest: Manifest,
+): Promise<EnhancedManifest> => {
+  // Add any enhancements to the manifest here
+  return {
+    ...manifest,
+    node_id: await window.api.getNodeId(),
   };
 };
 
@@ -291,10 +309,15 @@ export const ArkitektProvider = ({
     // Build Manifest
     localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
 
+
+    const enhancedManifest = await enhanceManifest(manifest);
+
+
+
     const fakts = await flow({
       endpoint: options.endpoint,
       controller: options.controller,
-      manifest: manifest,
+      manifest: enhancedManifest,
     });
 
     // Save fakts to local storage
@@ -308,7 +331,7 @@ export const ArkitektProvider = ({
 
     const connectedContext = await buildContext({
       fakts,
-      manifest,
+      manifest: enhancedManifest,
       serviceBuilderMap,
       token: token.access_token,
       controller: options.controller,
@@ -317,7 +340,7 @@ export const ArkitektProvider = ({
 
     setContext((context) => ({
       ...context,
-      manifest: manifest,
+      manifest: enhancedManifest,
       connection: connectedContext,
     }));
 
@@ -325,7 +348,7 @@ export const ArkitektProvider = ({
 
     return {
       ...context,
-      manifest: manifest,
+      manifest: enhancedManifest,
       connection: connectedContext,
     };
   };
@@ -376,7 +399,7 @@ export const ArkitektProvider = ({
     await connect({ ...options, endpoint });
   };
 
-  const tryReconnect = async (manifest, serviceBuilderMap) => {
+  const tryReconnect = async (manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap) => {
     const faktsRaw = localStorage.getItem("fakts");
     const tokenRaw = localStorage.getItem("token");
     const endpointRaw = localStorage.getItem("endpoint");
@@ -423,7 +446,9 @@ export const ArkitektProvider = ({
   useEffect(() => {
     if (!connectingRef.current) {
       connectingRef.current = true;
-      tryReconnect(manifest, serviceBuilderMap);
+      enhanceManifest(manifest).then((enhancedManifest) => {
+        tryReconnect(enhancedManifest, serviceBuilderMap);
+      });
     }
   }, [manifest, serviceBuilderMap]);
 

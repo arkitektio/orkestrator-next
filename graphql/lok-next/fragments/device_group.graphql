@@ -1,0 +1,12 @@
+fragment DetailDeviceGroup on DeviceGroup {
+  id
+  name
+  computeNodes {
+    ...ListComputeNode
+  }
+}
+
+fragment ListDeviceGroup on DeviceGroup {
+  id
+  name
+}

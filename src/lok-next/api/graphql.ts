@@ -200,6 +200,8 @@ export type Communication = {
 export type ComputeNode = {
   __typename?: 'ComputeNode';
   clients: Array<Client>;
+  /** The device groups that belong to this compute node. */
+  deviceGroups: Array<DeviceGroup>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
   nodeId: Scalars['ID']['output'];
@@ -209,6 +211,13 @@ export type ComputeNode = {
 /** ComputeNode(id, node_id, name, organization) */
 export type ComputeNodeClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** ComputeNode(id, node_id, name, organization) */
+export type ComputeNodeDeviceGroupsArgs = {
+  filters?: InputMaybe<DeviceGroupFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -320,6 +329,35 @@ export type DevelopmentClientInput = {
   composition?: InputMaybe<Scalars['ID']['input']>;
   layers?: InputMaybe<Array<Scalars['String']['input']>>;
   manifest: ManifestInput;
+};
+
+/** A DeviceGroup is a group of compute nodes that can be used to run clients. DeviceGroups can be used to group compute nodes by location, hardware type, or any other criteria. */
+export type DeviceGroup = {
+  __typename?: 'DeviceGroup';
+  /** The compute nodes that belong to this device group. */
+  computeNodes: Array<ComputeNode>;
+  /** The description of the device group. */
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** The name of the device group. */
+  name: Scalars['String']['output'];
+};
+
+
+/** A DeviceGroup is a group of compute nodes that can be used to run clients. DeviceGroups can be used to group compute nodes by location, hardware type, or any other criteria. */
+export type DeviceGroupComputeNodesArgs = {
+  filters?: InputMaybe<ComputeNodeFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** DeviceGroup(id, name, organization) */
+export type DeviceGroupFilter = {
+  AND?: InputMaybe<DeviceGroupFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<DeviceGroupFilter>;
+  OR?: InputMaybe<DeviceGroupFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DjangoModelType = {
@@ -933,6 +971,8 @@ export type Query = {
   commentsFor: Array<Comment>;
   computeNode: ComputeNode;
   computeNodes: Array<ComputeNode>;
+  deviceGroup: DeviceGroup;
+  deviceGroups: Array<DeviceGroup>;
   group: Group;
   groups: Array<Group>;
   hallo: Scalars['String']['output'];
@@ -1014,6 +1054,17 @@ export type QueryComputeNodeArgs = {
 
 export type QueryComputeNodesArgs = {
   filters?: InputMaybe<ComputeNodeFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDeviceGroupArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryDeviceGroupsArgs = {
+  filters?: InputMaybe<DeviceGroupFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1776,13 +1827,17 @@ export type MentionCommentFragment = { __typename?: 'Comment', id: string, creat
 
 export type DetailCommentFragment = { __typename?: 'Comment', id: string, resolved: boolean, createdAt: any, object: string, identifier: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }>, resolvedBy?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null, children: Array<{ __typename?: 'Comment', createdAt: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }> }>, mentions: Array<{ __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> };
 
-export type DetailComputeNodeFragment = { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> };
+export type DetailComputeNodeFragment = { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, deviceGroups: Array<{ __typename?: 'DeviceGroup', id: string, name: string }> };
 
 export type ListComputeNodeFragment = { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string };
 
 export type ContextFragment = { __typename?: 'Context', roles: Array<string>, scope: Array<string>, organization: { __typename?: 'Organization', id: string, name: string, slug: string }, user: { __typename?: 'User', id: string, username: string } };
 
 export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string };
+
+export type DetailDeviceGroupFragment = { __typename?: 'DeviceGroup', id: string, name: string, computeNodes: Array<{ __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string }> };
+
+export type ListDeviceGroupFragment = { __typename?: 'DeviceGroup', id: string, name: string };
 
 export type DetailGroupFragment = { __typename?: 'Group', id: string, name: string, users: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, profile?: { __typename?: 'GroupProfile', id: string, name?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null };
 
@@ -1880,7 +1935,7 @@ export type UpdateComputeNodeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateComputeNodeMutation = { __typename?: 'Mutation', updateComputeNode: { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } };
+export type UpdateComputeNodeMutation = { __typename?: 'Mutation', updateComputeNode: { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, deviceGroups: Array<{ __typename?: 'DeviceGroup', id: string, name: string }> } };
 
 export type CreateGroupProfileMutationVariables = Exact<{
   input: CreateGroupProfileInput;
@@ -2083,12 +2138,27 @@ export type GetComputeNodeQueryVariables = Exact<{
 }>;
 
 
-export type GetComputeNodeQuery = { __typename?: 'Query', computeNode: { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } };
+export type GetComputeNodeQuery = { __typename?: 'Query', computeNode: { __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, node?: { __typename?: 'ComputeNode', id: string, name?: string | null } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, deviceGroups: Array<{ __typename?: 'DeviceGroup', id: string, name: string }> } };
 
 export type MyContextQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MyContextQuery = { __typename?: 'Query', mycontext: { __typename?: 'Context', roles: Array<string>, scope: Array<string>, organization: { __typename?: 'Organization', id: string, name: string, slug: string }, user: { __typename?: 'User', id: string, username: string } } };
+
+export type ListDeviceGroupQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<DeviceGroupFilter>;
+}>;
+
+
+export type ListDeviceGroupQuery = { __typename?: 'Query', deviceGroups: Array<{ __typename?: 'DeviceGroup', id: string, name: string }> };
+
+export type GetDeviceGroupQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetDeviceGroupQuery = { __typename?: 'Query', deviceGroup: { __typename?: 'DeviceGroup', id: string, name: string, computeNodes: Array<{ __typename?: 'ComputeNode', id: string, name?: string | null, nodeId: string }> } };
 
 export type GroupOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -2634,6 +2704,12 @@ export const DetailCommentFragmentDoc = gql`
     ${CommentUserFragmentDoc}
 ${DescendantFragmentDoc}
 ${SubthreadCommentFragmentDoc}`;
+export const ListDeviceGroupFragmentDoc = gql`
+    fragment ListDeviceGroup on DeviceGroup {
+  id
+  name
+}
+    `;
 export const DetailComputeNodeFragmentDoc = gql`
     fragment DetailComputeNode on ComputeNode {
   id
@@ -2642,15 +2718,12 @@ export const DetailComputeNodeFragmentDoc = gql`
   clients {
     ...ListClient
   }
+  deviceGroups {
+    ...ListDeviceGroup
+  }
 }
-    ${ListClientFragmentDoc}`;
-export const ListComputeNodeFragmentDoc = gql`
-    fragment ListComputeNode on ComputeNode {
-  id
-  name
-  nodeId
-}
-    `;
+    ${ListClientFragmentDoc}
+${ListDeviceGroupFragmentDoc}`;
 export const ContextFragmentDoc = gql`
     fragment Context on Context {
   organization {
@@ -2679,6 +2752,22 @@ export const PresignedPostCredentialsFragmentDoc = gql`
   store
 }
     `;
+export const ListComputeNodeFragmentDoc = gql`
+    fragment ListComputeNode on ComputeNode {
+  id
+  name
+  nodeId
+}
+    `;
+export const DetailDeviceGroupFragmentDoc = gql`
+    fragment DetailDeviceGroup on DeviceGroup {
+  id
+  name
+  computeNodes {
+    ...ListComputeNode
+  }
+}
+    ${ListComputeNodeFragmentDoc}`;
 export const GroupProfileFragmentDoc = gql`
     fragment GroupProfile on GroupProfile {
   id
@@ -4196,6 +4285,77 @@ export function useMyContextLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type MyContextQueryHookResult = ReturnType<typeof useMyContextQuery>;
 export type MyContextLazyQueryHookResult = ReturnType<typeof useMyContextLazyQuery>;
 export type MyContextQueryResult = Apollo.QueryResult<MyContextQuery, MyContextQueryVariables>;
+export const ListDeviceGroupDocument = gql`
+    query ListDeviceGroup($pagination: OffsetPaginationInput, $filters: DeviceGroupFilter) {
+  deviceGroups(pagination: $pagination, filters: $filters) {
+    ...ListDeviceGroup
+  }
+}
+    ${ListDeviceGroupFragmentDoc}`;
+
+/**
+ * __useListDeviceGroupQuery__
+ *
+ * To run a query within a React component, call `useListDeviceGroupQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListDeviceGroupQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListDeviceGroupQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListDeviceGroupQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListDeviceGroupQuery, ListDeviceGroupQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListDeviceGroupQuery, ListDeviceGroupQueryVariables>(ListDeviceGroupDocument, options);
+      }
+export function useListDeviceGroupLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListDeviceGroupQuery, ListDeviceGroupQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListDeviceGroupQuery, ListDeviceGroupQueryVariables>(ListDeviceGroupDocument, options);
+        }
+export type ListDeviceGroupQueryHookResult = ReturnType<typeof useListDeviceGroupQuery>;
+export type ListDeviceGroupLazyQueryHookResult = ReturnType<typeof useListDeviceGroupLazyQuery>;
+export type ListDeviceGroupQueryResult = Apollo.QueryResult<ListDeviceGroupQuery, ListDeviceGroupQueryVariables>;
+export const GetDeviceGroupDocument = gql`
+    query GetDeviceGroup($id: ID!) {
+  deviceGroup(id: $id) {
+    ...DetailDeviceGroup
+  }
+}
+    ${DetailDeviceGroupFragmentDoc}`;
+
+/**
+ * __useGetDeviceGroupQuery__
+ *
+ * To run a query within a React component, call `useGetDeviceGroupQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDeviceGroupQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDeviceGroupQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetDeviceGroupQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDeviceGroupQuery, GetDeviceGroupQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetDeviceGroupQuery, GetDeviceGroupQueryVariables>(GetDeviceGroupDocument, options);
+      }
+export function useGetDeviceGroupLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDeviceGroupQuery, GetDeviceGroupQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetDeviceGroupQuery, GetDeviceGroupQueryVariables>(GetDeviceGroupDocument, options);
+        }
+export type GetDeviceGroupQueryHookResult = ReturnType<typeof useGetDeviceGroupQuery>;
+export type GetDeviceGroupLazyQueryHookResult = ReturnType<typeof useGetDeviceGroupLazyQuery>;
+export type GetDeviceGroupQueryResult = Apollo.QueryResult<GetDeviceGroupQuery, GetDeviceGroupQueryVariables>;
 export const GroupOptionsDocument = gql`
     query GroupOptions($search: String, $values: [ID!]) {
   options: groups(filters: {search: $search, ids: $values}) {

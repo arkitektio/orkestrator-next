@@ -5,6 +5,9 @@ fragment DetailComputeNode on ComputeNode {
   clients {
     ...ListClient
   }
+  deviceGroups {
+    ...ListDeviceGroup
+  }
 }
 
 fragment ListComputeNode on ComputeNode {

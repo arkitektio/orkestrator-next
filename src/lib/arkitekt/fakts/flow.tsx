@@ -1,3 +1,4 @@
+import { EnhancedManifest } from "../provider";
 import { challenge } from "./challenge";
 import { claim } from "./claim";
 import { FaktsEndpoint } from "./endpointSchema";
@@ -15,7 +16,7 @@ export const flow = async ({
 }: {
   endpoint: FaktsEndpoint;
   controller: AbortController;
-  manifest: any;
+  manifest: EnhancedManifest;
   expirationTime?: number;
   redirectURIs?: string[];
   retrieveTimeout?: number;

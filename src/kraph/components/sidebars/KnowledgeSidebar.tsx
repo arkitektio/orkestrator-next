@@ -17,7 +17,7 @@ import {
   useSearchEntitiesForRoleLazyQuery
 } from "@/kraph/api/graphql";
 import CreateMeasurementCategoryForm from "@/kraph/forms/CreateMeasurementCategoryForm";
-import { KraphStructure } from "@/linkers";
+import { KraphGraph, KraphStructure } from "@/linkers";
 import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,7 @@ import { Form } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { MetricsTable } from "../tables/MetricsTable";
 import { Card } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
@@ -151,7 +152,7 @@ const ConnectableAs = (props: {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {data?.measurementCategories.map((category) => (
-          
+
           <Dialog key={category.id}>
             <DialogTrigger>
               <Button variant="outline" className="w-full">
@@ -219,21 +220,21 @@ export const GraphKnowledgeView = (props: {
       {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
       {error && <p className="text-red-500 text-xs">Error: {error.message}</p>}
       {!data?.structureByIdentifier && <div className="flex items-center justify-center"><Button
-            variant="outline"
-            className="w-full"
-            onClick={() =>
-              addStructure({
-                variables: {
-                  input: {
-                    structure: `${props.identifier}:${props.object}`,
-                    graph: props.graph.id,
-                  },
-                },
-              })
-            }
-          >
-            Connect
-          </Button></div>}
+        variant="outline"
+        className="w-full"
+        onClick={() =>
+          addStructure({
+            variables: {
+              input: {
+                structure: `${props.identifier}:${props.object}`,
+                graph: props.graph.id,
+              },
+            },
+          })
+        }
+      >
+        Connect
+      </Button></div>}
       {data?.structureByIdentifier &&
         <>
           {data?.structureByIdentifier.bestView ? (
@@ -248,38 +249,38 @@ export const GraphKnowledgeView = (props: {
               No best view available for this structure.
             </p>
           )}
-      <div className="flex flex-row gap-2 mt-4">
-          <ObjectButton
-            objects={[{ identifier: props.identifier, object: props.object }]}
-            className="w-full"
-            partners={[
-              {
-                identifier: "@kraph/graph",
-                object: props.graph.id,
-              },
-            ]}
-            disableKraph={true}
-            expect={["@mikro/metric"]}
-            onDone={() => {
-              refetch();
-            }}
-          >
-            <Button variant="outline" className="w-full">
-              Measure
-            </Button>
-          </ObjectButton>
-        
-        <ConnectableAs
-          identifier={props.identifier}
-          structure={data?.structureByIdentifier.id || ""}
-          graph={props.graph}
-          refetch={refetch}
-        />
-      </div>
-      <div className="flex flex-col gap-2 p-2">
-         {data.structureByIdentifier.metrics.length > 0 && <MetricsTable metrics={data?.structureByIdentifier.metrics || []} />}
-      </div>
-      </>}
+          <div className="flex flex-row gap-2 mt-4">
+            <ObjectButton
+              objects={[{ identifier: props.identifier, object: props.object }]}
+              className="w-full"
+              partners={[
+                {
+                  identifier: "@kraph/graph",
+                  object: props.graph.id,
+                },
+              ]}
+              disableKraph={true}
+              expect={["@mikro/metric"]}
+              onDone={() => {
+                refetch();
+              }}
+            >
+              <Button variant="outline" className="w-full">
+                Measure
+              </Button>
+            </ObjectButton>
+
+            <ConnectableAs
+              identifier={props.identifier}
+              structure={data?.structureByIdentifier.id || ""}
+              graph={props.graph}
+              refetch={refetch}
+            />
+          </div>
+          <div className="flex flex-col gap-2 p-2">
+            {data.structureByIdentifier.metrics.length > 0 && <MetricsTable metrics={data?.structureByIdentifier.metrics || []} />}
+          </div>
+        </>}
     </div>
   );
 };
@@ -314,7 +315,15 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
   }, [openItems]);
 
   if (!data || data.graphs.length === 0) {
-    return <p className="text-xs text-muted-foreground">No graphs available.</p>;
+    return <Empty>
+      <EmptyTitle>No pinned graphs</EmptyTitle>
+      <EmptyDescription>There are no graphs that you have pinned for quick access.</EmptyDescription>
+      <EmptyContent>Go to the graphs page to pin some graphs to your knowledge sidebar.</EmptyContent>
+      <KraphGraph.ListLink className="mt-4">
+        <Button variant="outline">View Graphs</Button>
+      </KraphGraph.ListLink>
+
+    </Empty>;
   }
 
 
@@ -326,17 +335,17 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
         <AccordionItem value={g.id} key={g.id}>
           <AccordionTrigger>{g.name}</AccordionTrigger>
           <AccordionContent className="flex-grow overflow-y-auto">
-          {openItems.includes(g.id) && (
-            <GraphKnowledgeView
-              identifier={props.identifier}
-              graph={g}
-              object={props.object}
-            />
-          )}
+            {openItems.includes(g.id) && (
+              <GraphKnowledgeView
+                identifier={props.identifier}
+                graph={g}
+                object={props.object}
+              />
+            )}
           </AccordionContent>
         </AccordionItem>
       ))}
-      
+
     </Accordion>
   );
 };

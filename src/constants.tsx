@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-export const Router = window.electron ? HashRouter : BrowserRouter;
+export const Router = HashRouter
 
 export const baseName = window.electron ? "" : "orkestrator";
 

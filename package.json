@@ -39,7 +39,8 @@
     "chokidar": "^4.0.3",
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.3",
-    "electron-store": "^11.0.0"
+    "electron-store": "^11.0.0",
+    "nuqs": "^2.8.1"
   },
   "devDependencies": {
     "@ai-sdk/react": "2.0.28",

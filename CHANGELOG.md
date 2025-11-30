@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/arkitektio/orkestrator-next/compare/v1.40.0...v1.41.0) (2025-11-30)
+
+
+### Features
+
+* persist date picker in search params ([d49a035](https://github.com/arkitektio/orkestrator-next/commit/d49a0351de0405de594a6796bd571622dbc7f44d))
+
 # [1.40.0](https://github.com/arkitektio/orkestrator-next/compare/v1.39.1...v1.40.0) (2025-11-30)
 
 

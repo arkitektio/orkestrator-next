@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/arkitektio/orkestrator-next/compare/v1.39.1...v1.40.0) (2025-11-30)
+
+
+### Features
+
+* add device groups ([017c9ca](https://github.com/arkitektio/orkestrator-next/commit/017c9ca145aab04f00e870f7f10fa09c49f88e7f))
+
 ## [1.39.1](https://github.com/arkitektio/orkestrator-next/compare/v1.39.0...v1.39.1) (2025-11-29)
 
 

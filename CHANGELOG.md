@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/arkitektio/orkestrator-next/compare/v1.42.0...v1.42.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* active agent ([d23d7dd](https://github.com/arkitektio/orkestrator-next/commit/d23d7ddb87cd4d827cb63ef3e20f5a395ad99daf))
+
 # [1.42.0](https://github.com/arkitektio/orkestrator-next/compare/v1.41.0...v1.42.0) (2025-12-01)
 
 

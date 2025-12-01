@@ -36,8 +36,6 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
   });
   const { startUpload } = useUpload();
 
-  // 2. Use the hook. It automatically detects it's running inside React Router
-  // via the adapter we added in Step 1.
   const [createdAfter, setCreatedAfter] = useQueryState(
     "after",
     parseAsIsoDateTime.withDefault(undefined)

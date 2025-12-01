@@ -61,6 +61,9 @@ fragment DetailAction on Action {
       latestEventKind
     }
   }
+  assignations(pagination: { limit: 10, offset: 0 }) {
+    ...MinimalAssignation
+  }
 }
 
 fragment PrimaryAction on Action {

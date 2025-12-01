@@ -30,6 +30,21 @@ fragment PostmanAssignation on Assignation {
   createdAt
 }
 
+fragment MinimalAssignation on Assignation {
+  id
+  reference
+  latestEventKind
+  isDone
+  createdAt
+  implementation {
+    id
+    interface
+    agent {
+      name
+    }
+  }
+}
+
 fragment DetailAssignation on Assignation {
   ...PostmanAssignation
   children {

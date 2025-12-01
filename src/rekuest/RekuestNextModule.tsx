@@ -2,7 +2,7 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
-import Action from "./pages/Action";
+import Action from "./pages/ActionPage";
 import Actions from "./pages/Actions";
 import AgentPage from "./pages/AgentPage";
 import AssignationPage from "./pages/AssignationPage";

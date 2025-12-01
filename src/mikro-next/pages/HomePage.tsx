@@ -29,11 +29,7 @@ export interface IRepresentationScreenProps { }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
   const performDataLayerUpload = useBigFileUpload();
-  const createFile = useCreateFile({
-    onCompleted: () => {
-      refetch();
-    },
-  });
+  const createFile = useCreateFile();
   const { startUpload } = useUpload();
 
   const [createdAfter, setCreatedAfter] = useQueryState(

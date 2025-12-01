@@ -2,7 +2,7 @@ import { useFrom_File_LikeMutation, GetFilesDocument } from "@/mikro-next/api/gr
 
 export const useCreateFile = () => {
   const [createFile] = useFrom_File_LikeMutation({
-    refetchQueries: [{ query: GetFilesDocument }]
+    refetchQueries: ["GetFiles"]
   });
 
   const upload = async (file: File, key: string) => {

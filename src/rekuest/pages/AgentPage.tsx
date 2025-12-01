@@ -183,13 +183,14 @@ export default asDetailQueryRoute(
                   <div
                     className={cn(
                       "w-3 h-3 rounded-full",
-                      data.agent.connected
+                      data.agent.active
                         ? "bg-green-500 animate-pulse shadow-lg shadow-green-500/50"
                         : "bg-red-500 shadow-lg shadow-red-500/50"
                     )}
                   />
                   <span className="text-sm font-medium text-muted-foreground">
                     {data.agent.connected ? "Connected" : "Disconnected"}
+                    {data.agent.active != data.agent.connected && " (Active state differs. This is weird....)"}
                     {data.agent.blocked ? " • Blocked" : ""}
                   </span>
                   <span className="text-sm text-muted-foreground">•</span>

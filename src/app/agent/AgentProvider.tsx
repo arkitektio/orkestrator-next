@@ -55,6 +55,8 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setAgent(newAgent);
 
+    console.log("AgentProvider: Agent started");
+
     return () => {
       unsubscribe();
       newAgent.disconnect();

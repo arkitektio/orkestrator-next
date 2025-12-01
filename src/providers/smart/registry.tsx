@@ -19,7 +19,6 @@ export class SmartRegistry {
   }
 
   register(registration: Registration) {
-    console.log("Registering", registration);
     this.registry.set(registration.identifier, registration);
   }
 

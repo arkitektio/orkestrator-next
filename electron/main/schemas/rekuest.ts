@@ -628,6 +628,7 @@ export type AssignationFilter = {
   NOT?: InputMaybe<AssignationFilter>;
   OR?: InputMaybe<AssignationFilter>;
   actedOn?: InputMaybe<Array<Scalars['String']['input']>>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
   clientId?: InputMaybe<Scalars['ID']['input']>;
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;

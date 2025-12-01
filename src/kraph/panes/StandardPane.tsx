@@ -144,7 +144,7 @@ export const NavigationPane = (props: {}) => {
             {data.entityCategories.map((i) => (
               <div
                 className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground"
-                key={key}
+                key={i.id}
               >
                 <KraphEntityCategory.DetailLink
                   object={i.id}
@@ -163,7 +163,7 @@ export const NavigationPane = (props: {}) => {
               Pinned Structures
             </div>
             {data.structureCategories.map((i) => (
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                 <KraphStructureCategory.DetailLink
                   object={i.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -181,7 +181,7 @@ export const NavigationPane = (props: {}) => {
               Pinned Reagents
             </div>
             {data.reagentCategories.map((i) => (
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                 <KraphReagentCategory.DetailLink
                   object={i.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -199,7 +199,7 @@ export const NavigationPane = (props: {}) => {
               Pinned Relations
             </div>
             {data.relationCategories.map((i) => (
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                 <KraphRelationCategory.DetailLink
                   object={i.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -250,7 +250,7 @@ export const NavigationPane = (props: {}) => {
                 Pinned Protocols
               </div>
               {data.protocolEventCategories.map((i) => (
-                <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+                <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                   <KraphProtocolEventCategory.DetailLink
                     object={i.id}
                     className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"

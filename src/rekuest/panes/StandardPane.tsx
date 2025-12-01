@@ -170,7 +170,7 @@ export const NavigationPane = () => {
                   <CardStackIcon
                     className="h-4 w-4"
                     style={{
-                      color: agent.connected ? "#00FF00" : "#A9A9A9",
+                      color: agent.active ? "#00FF00" : "#A9A9A9",
                     }}
                   />
                   {agent.name}

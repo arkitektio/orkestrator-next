@@ -21,6 +21,7 @@ import TaskCard from "../components/cards/TaskCard";
 import { StateDisplay } from "../components/State";
 import Timestamp from "react-timestamp";
 import { ClientImage } from "@/lok-next/components/ClientAvatar";
+import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();
@@ -157,7 +158,8 @@ export default asDetailQueryRoute(
                     </div>
                   </div>
                 )}
-              </>
+              </>,
+              Tasks: <AgentTasksSidebar agent={data.agent.id} />,
             }}
           />
         }

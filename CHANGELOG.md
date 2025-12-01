@@ -1,3 +1,10 @@
+## [1.42.2](https://github.com/arkitektio/orkestrator-next/compare/v1.42.1...v1.42.2) (2025-12-01)
+
+
+### Bug Fixes
+
+* file upload ([8a630b1](https://github.com/arkitektio/orkestrator-next/commit/8a630b1826c233c60320f7bf380d25a17f945811))
+
 ## [1.42.1](https://github.com/arkitektio/orkestrator-next/compare/v1.42.0...v1.42.1) (2025-12-01)
 
 

@@ -43,8 +43,7 @@ fragment GraphNodeAction on Action {
 fragment DetailAction on Action {
   ...GraphNodeAction
   implementations {
-    id
-    interface
+    ...MinimalImplementation
   }
   reservations {
     ...ListReservation

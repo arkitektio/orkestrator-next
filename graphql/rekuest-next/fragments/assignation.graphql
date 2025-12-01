@@ -50,6 +50,7 @@ fragment DetailAssignation on Assignation {
   children {
     ...PostmanAssignation
   }
+  finishedAt
   implementation {
     agent {
       registry {
@@ -100,6 +101,8 @@ fragment ListAsssignation on Assignation {
   reference
   latestEventKind
   isDone
+  finishedAt
+  createdAt
   action {
     id
     name

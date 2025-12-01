@@ -28,6 +28,7 @@ import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -291,15 +292,9 @@ export default asDetailQueryRoute(
           </>
         }
         object={data.implementation.id}
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <RekuestImplementation.Komments object={data?.implementation?.id} />
-              ),
-            }}
-          />
-        }
+        additionalSidebars={{
+          "Stats": <ImplementationStatsSidebar implementation={data.implementation.id} />,
+        }}
         pageActions={
           <>
             <RekuestAction.DetailLink object={data.implementation.action.id}>

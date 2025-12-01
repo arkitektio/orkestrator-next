@@ -3110,7 +3110,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"69073bc7-5eb1-4fca-97d6-35187eb93767\"",
+            "defaultValue": "\"0ead6955-d8f1-4c68-88c4-479da29e3f5d\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3501,6 +3501,30 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "actedOn",
+            "description": "List of resources or entities this assignation acted upon.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "action",
             "description": "Action assigned.",
             "args": [],
@@ -3718,6 +3742,18 @@
                   }
                 }
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "finishedAt",
+            "description": "Timestamp when the assignation was finished.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4308,6 +4344,26 @@
             "deprecationReason": null
           },
           {
+            "name": "actedOn",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "clientId",
             "description": null,
             "type": {
@@ -4334,6 +4390,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "implementation",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -17533,7 +17601,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"90f71a91-7bc0-4678-91b0-1ad119da2fd0\"",
+            "defaultValue": "\"888ba69b-1fb4-4613-b274-7cc533b21dc5\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

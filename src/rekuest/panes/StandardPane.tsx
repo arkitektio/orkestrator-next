@@ -144,7 +144,7 @@ export const NavigationPane = () => {
                     <div
                       className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
                       style={{
-                        backgroundColor: agent.connected
+                        backgroundColor: agent.active
                           ? "#00FF00"
                           : "#FF0000",
                       }}

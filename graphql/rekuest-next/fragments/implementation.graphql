@@ -29,3 +29,18 @@ fragment ListImplementation on Implementation {
     name
   }
 }
+
+fragment MinimalImplementation on Implementation {
+  id
+  interface
+  extension
+  agent {
+    name
+  }
+}
+
+query ImplementationStats($id: ID!) {
+  assignationStats(filters: { implementation: $id }) {
+    count
+  }
+}

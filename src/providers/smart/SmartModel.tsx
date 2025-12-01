@@ -11,12 +11,9 @@ import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 import {
-  useMySelect,
-  useMySelection,
-  useSelection,
+  useMySelect
 } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
-import { is } from "date-fns/locale";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -170,7 +167,7 @@ export const SmartModel = ({
         props.className,
         "@container relative z-10 cursor-pointer",
         isSelected &&
-          "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
+        "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
         isBSelected && "group ring ring-2  rounded ring-red-500",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",

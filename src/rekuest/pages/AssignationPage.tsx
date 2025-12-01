@@ -1,5 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+
+import {
+  Images
+} from "lucide-react";
+
 import {
   Timeline,
   TimelineConnector,
@@ -11,6 +15,7 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
-import { ChevronDown } from "lucide-react";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
   AssignationEventFragment,
@@ -31,12 +35,12 @@ import {
   useDetailAssignationQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
+import { ChevronDown } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { DialogButton } from "@/components/ui/dialogbutton";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -214,6 +218,56 @@ export const isInterruptable = (assignation: DetailAssignationFragment) => {
   return assignation.isDone !== true;
 };
 
+
+
+
+export const AssignationStatsSidebar = (props: { assignation: DetailAssignationFragment }) => {
+
+
+  // Calculate additional metrics from available data
+  const endTime = props.assignation.finishedAt
+  const startTime = props.assignation.createdAt;
+
+  const statsCards = [
+    {
+      title: "Total Waltime",
+      value: !endTime ? "..." : `${((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000).toFixed(2)}s`,
+      description: "Total walltime taken for this assignation",
+      icon: Images,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+    },
+  ];
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">Task Overview</h2>
+        <p className="text-sm text-muted-foreground">
+          Some basic statistics about this task.
+        </p>
+      </div>
+      {statsCards.map((card) => (
+        <div
+          key={card.title}
+          className="p-4 rounded-lg border dark:border-gray-700 flex items-center gap-4"
+        >
+          <div
+            className={`p-3 rounded-lg ${card.bgColor} ${card.color}`}
+          >
+            <card.icon className="h-6 w-6" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground">{card.title}</p>
+            <p className="text-2xl font-semibold">{card.value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{card.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, refetch, subscribeToMore }) => {
@@ -234,6 +288,7 @@ export default asDetailQueryRoute(
             </p>
           </div>
         }
+        additionalSidebars={{ "Stats": <AssignationStatsSidebar assignation={data.assignation} /> }}
         object={data.assignation.id}
         pageActions={
           <div className="flex gap-2">

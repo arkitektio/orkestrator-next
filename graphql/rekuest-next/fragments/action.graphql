@@ -43,8 +43,7 @@ fragment GraphNodeAction on Action {
 fragment DetailAction on Action {
   ...GraphNodeAction
   implementations {
-    id
-    interface
+    ...MinimalImplementation
   }
   reservations {
     ...ListReservation
@@ -60,6 +59,9 @@ fragment DetailAction on Action {
       implementation_id: arg(key: "implementation")
       latestEventKind
     }
+  }
+  assignations(pagination: { limit: 10, offset: 0 }) {
+    ...MinimalAssignation
   }
 }
 

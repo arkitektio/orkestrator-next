@@ -6,6 +6,7 @@ import { MultiSidebar } from "./MultiSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { ExportSidebar } from "../sidebars/export";
+import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export type ModelPageLayoutProps = {
   object: string;
   title?: React.ReactNode;
   sidebars?: React.ReactNode;
+  additionalSidebars?: { [key: string]: React.ReactNode };
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: PageVariant;
@@ -21,6 +23,7 @@ export type ModelPageLayoutProps = {
 
 export const ModelPageLayout = ({
   sidebars,
+  additionalSidebars,
   title,
   children,
   identifier,
@@ -37,8 +40,8 @@ export const ModelPageLayout = ({
       sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
         "Comments": <Komments identifier={identifier} object={object} />,
         "Knowledge": <KnowledgeSidebar identifier={identifier} object={object} />,
-
-
+        "Tasks": <RunsSidebar identifier={identifier} object={object} />,
+        ...additionalSidebars,
       }} sidebarKey="DetailModel" />}
       actions={actions}
       variant={variant}

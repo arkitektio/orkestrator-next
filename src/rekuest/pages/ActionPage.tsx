@@ -23,6 +23,10 @@ import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import AssignationCard from "../components/cards/AssignationCard";
+import MinimalAssignationCard from "../components/cards/MinimalAssignationCard";
+import ImplementationCard from "../components/cards/ImplementationCard";
+import MinimalImplementationCard from "../components/cards/MinimalImplementationCard";
 
 export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   const { assign, latestAssignation, cancel } = useAction({
@@ -230,8 +234,11 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
           </>
         )}
 
-        <ListRender array={data?.action?.reservations} title="Reservations">
-          {(item, key) => <ReservationCard item={item} key={key} />}
+        <ListRender array={data?.action?.assignations} title="Tasks">
+          {(item, key) => <MinimalAssignationCard item={item} key={key} />}
+        </ListRender>
+        <ListRender array={data?.action?.implementations} title="Implementations">
+          {(item, key) => <MinimalImplementationCard item={item} key={key} />}
         </ListRender>
       </div>
     </ModelPageLayout>

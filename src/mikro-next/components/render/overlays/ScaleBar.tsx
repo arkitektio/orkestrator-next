@@ -34,6 +34,11 @@ const formatScaleValue = (valueUm: number): string => {
  * @returns A nice round number close to the target
  */
 const getNiceScaleValue = (targetUm: number): number => {
+  // Handle edge cases
+  if (!targetUm || targetUm <= 0 || !isFinite(targetUm)) {
+    return 1; // Default to 1 µm if invalid input
+  }
+
   // Find nice round numbers: 1, 2, 5, 10, 20, 50, 100, etc.
   const niceNumbers = [1, 2, 5];
   const magnitude = Math.pow(10, Math.floor(Math.log10(targetUm)));
@@ -90,6 +95,11 @@ export const ScaleBar = ({
     ...(position.includes("left") ? { left: "20px" } : { right: "20px" }),
   };
 
+  // Calculate a fixed width in pixels based on the percentage
+  // Since we can't know the container width, we use a reasonable fixed range
+  // The bar width scales from 40px (minimum) to 120px (maximum) based on the percentage
+  const scaleBarWidthPx = Math.max(40, Math.min(120, scaleBarData.widthPercent * 3));
+
   return (
     <div
       style={{
@@ -117,7 +127,7 @@ export const ScaleBar = ({
         {/* Visual bar */}
         <div
           style={{
-            width: `${scaleBarData.widthPercent * 2}px`, // Multiply by factor for visibility
+            width: `${scaleBarWidthPx}px`,
             minWidth: "40px",
             maxWidth: "120px",
             height: "4px",

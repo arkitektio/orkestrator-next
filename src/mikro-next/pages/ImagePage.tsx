@@ -108,6 +108,11 @@ export default asDetailQueryRoute(
 
     const defautContext = data?.image?.rgbContexts?.at(0);
 
+    // Get pixel size from affine transformation views
+    const affineView = data?.image?.affineTransformationViews?.at(0);
+    const pixelSizeX = affineView?.pixelSizeX;
+    const pixelSizeY = affineView?.pixelSizeY;
+
     const resolve = useResolve();
     return (
       <MikroImage.ModelPage
@@ -155,7 +160,8 @@ export default asDetailQueryRoute(
                 <FinalRender
                   context={defautContext}
                   rois={data.image.rois}
-
+                  pixelSizeX={pixelSizeX}
+                  pixelSizeY={pixelSizeY}
                 />
               )}
             </div>

@@ -34,6 +34,7 @@ import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { EventPlane } from "./overlays/invisible/EventPlane";
+import { ScaleBarOverlay } from "./overlays/ScaleBar";
 import { PanelContent } from "./panels";
 import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
@@ -98,6 +99,9 @@ export interface RGBDProps {
   onValueClick?: (value: number) => void;
   // Milestone options
   milestones?: Array<{ x: number; y: number; label: string; color?: string }>;
+  // Pixel size for scale bar (in micrometers)
+  pixelSizeX?: number | null;
+  pixelSizeY?: number | null;
 }
 
 export const calculateChunkGrid = (
@@ -540,7 +544,7 @@ export const RGBContextRender = (props: {
 export const FinalRenderInner = (props: RGBDProps) => {
   const rbgContext = props.context;
 
-  const { setZ, z, showGrid } = useViewerState();
+  const { setZ, z, showGrid, showScaleBar } = useViewerState();
 
   const version = rbgContext.image.store.version;
   const zSize = rbgContext.image?.store.shape?.at(2) || 1;
@@ -659,6 +663,15 @@ export const FinalRenderInner = (props: RGBDProps) => {
             />
           </>
         </ThreeCanvas>
+
+        {/* Scale bar overlay */}
+        <ScaleBarOverlay
+          pixelSizeX={props.pixelSizeX}
+          pixelSizeY={props.pixelSizeY}
+          imageWidth={xSize}
+          show={showScaleBar}
+          position="bottom-left"
+        />
 
         {!props.hideControls && (
           <div className="absolute top-0 right-4 z-10 w-[20%]  py-3 h-[100vh] ">

@@ -1,3 +1,18 @@
+# [1.42.0](https://github.com/arkitektio/orkestrator-next/compare/v1.41.0...v1.42.0) (2025-12-01)
+
+
+### Bug Fixes
+
+* agents need to be active ([ce28605](https://github.com/arkitektio/orkestrator-next/commit/ce28605e363c5b3b0abd97aa8fe302e04a80d0f7))
+* fix with assignations details ([b129d6e](https://github.com/arkitektio/orkestrator-next/commit/b129d6e8ee5078619c166ea92a4f4d3cd66920e9))
+* list widgets ([e58952f](https://github.com/arkitektio/orkestrator-next/commit/e58952f18843a38f04e22d4531d31bb793727c28))
+
+
+### Features
+
+* add peer home filters ([16d0df3](https://github.com/arkitektio/orkestrator-next/commit/16d0df3ab12dd07b3894a41ccffbe7adfddf5a77))
+* add task stats to models ([f142089](https://github.com/arkitektio/orkestrator-next/commit/f1420897d523eea37dd38ba246167c4e35f14e66))
+
 # [1.41.0](https://github.com/arkitektio/orkestrator-next/compare/v1.40.0...v1.41.0) (2025-11-30)
 
 

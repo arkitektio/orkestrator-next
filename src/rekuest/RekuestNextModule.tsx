@@ -3,7 +3,7 @@ import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Action from "./pages/ActionPage";
-import Actions from "./pages/Actions";
+import Actions from "./pages/ActionsPage";
 import AgentPage from "./pages/AgentPage";
 import AssignationPage from "./pages/AssignationPage";
 import Blok from "./pages/Blok";

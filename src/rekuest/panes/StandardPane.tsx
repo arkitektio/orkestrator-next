@@ -246,7 +246,7 @@ const Pane: React.FunctionComponent = () => {
       ) : (
         <div className="h-full">
           <ListRender array={data?.actions}>
-            {(item, i) => <ActionCard action={item} key={i} />}
+            {(item, i) => <ActionCard item={item} key={i} />}
           </ListRender>
         </div>
       )}

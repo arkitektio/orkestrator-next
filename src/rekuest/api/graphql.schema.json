@@ -1412,6 +1412,30 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "usedAfter",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "usedBefore",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -1570,6 +1594,18 @@
         "inputFields": [
           {
             "name": "definedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "usedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -3110,7 +3146,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"b81a4e40-f40f-4b29-82cd-a6a005b7e03c\"",
+            "defaultValue": "\"c0a698d8-0a4a-442f-a463-4e1345ef8554\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17637,7 +17673,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"9a141915-b2d4-4d5e-9001-523482c745c3\"",
+            "defaultValue": "\"690ec10c-02b9-48c2-94e3-8e350cef9da2\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

@@ -51,7 +51,7 @@ const Page = () => {
           </div>
         </div>
 
-        <TaskList order={{ createdAt: Ordering.Desc }} pagination={{ limit: 20 }} filters={{ ...temporalFilter }} />
+        <TaskList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />
       </div>
     </RekuestAssignation.ListPage>
   );

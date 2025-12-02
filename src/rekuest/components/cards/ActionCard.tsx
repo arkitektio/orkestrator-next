@@ -16,19 +16,18 @@ import { ReserveActionButton } from "@/rekuest/buttons/ReserveActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
-  action: ListActionFragment;
-  mates?: MateFinder[];
+  item: ListActionFragment;
 }
 
-const TheCard = ({ action, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const reserveMate = useReserveMate();
 
   const progress = useLiveAssignation({
-    assignedAction: action.id,
+    assignedAction: item.id,
   });
 
   return (
-    <RekuestAction.Smart object={action?.id} mates={[reserveMate]}>
+    <RekuestAction.Smart object={item?.id} mates={[reserveMate]}>
       <Card
         className="group border border-gray-200 dark:border-gray-800 aspect-square ring ring-0 group-data-[selected=true]:ring-1  "
         style={{
@@ -41,24 +40,24 @@ const TheCard = ({ action, mates }: Props) => {
         <CardHeader className="flex flex-col justify-between p-3 h-full">
           <div className="flex-grow overflow-hidden">
             <CardTitle>
-              <RekuestAction.DetailLink object={action?.id}>
+              <RekuestAction.DetailLink object={item?.id}>
                 {" "}
-                {action.name}
+                {item.name}
               </RekuestAction.DetailLink>
             </CardTitle>
             <CardDescription>
-              {action?.description && (
-                <ActionDescription description={action?.description} />
+              {item?.description && (
+                <ActionDescription description={item?.description} />
               )}
             </CardDescription>
           </div>
           <CardFooter className="flex justify-between gap-2 truncate">
-            <ActionButton id={action.id}>
+            <ActionButton id={item.id}>
               <Button variant="outline" size="sm" className="flex-1 truncate">
                 Assign
               </Button>
             </ActionButton>
-            <ReserveActionButton id={action.id}>
+            <ReserveActionButton id={item.id}>
               <Button variant="outline" size="sm" className="flex-1 truncate">
                 Short
               </Button>

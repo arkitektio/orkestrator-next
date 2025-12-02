@@ -208,6 +208,8 @@ export type ActionFilter = {
   name?: InputMaybe<StrFilterLookup>;
   protocols?: InputMaybe<Array<Scalars['String']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  usedAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  usedBefore?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 /** The kind of action. */
@@ -228,6 +230,7 @@ export type ActionMapping = {
 
 export type ActionOrder = {
   definedAt?: InputMaybe<Ordering>;
+  usedAt?: InputMaybe<Ordering>;
 };
 
 export enum ActionScope {

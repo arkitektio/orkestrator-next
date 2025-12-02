@@ -1,33 +1,19 @@
-import { ListRender } from "@/components/layout/ListRender";
+import { createList } from "@/components/layout/createList";
 import { RekuestAction } from "@/linkers";
 import {
-  ActionFilter,
-  OffsetPaginationInput,
-  useAllActionsQuery,
+  useAllActionsQuery
 } from "@/rekuest/api/graphql";
 import ActionCard from "../cards/ActionCard";
 
-export type Props = {
-  filters?: ActionFilter;
-  pagination?: OffsetPaginationInput;
-};
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useAllActionsQuery({
-    variables: { filters, pagination },
-  });
+const ActionList = createList(
+  {
+    useHook: useAllActionsQuery,
+    dataKey: "actions",
+    ItemComponent: ActionCard,
+    title: "Actions",
+    smart: RekuestAction,
+  }
+)
 
-  return (
-    <ListRender
-      array={data?.actions}
-      title={
-        <RekuestAction.ListLink className="flex-0">Actions</RekuestAction.ListLink>
-      }
-      refetch={refetch}
-    >
-      {(ex, index) => <ActionCard key={index} action={ex} mates={[]} />}
-    </ListRender>
-  );
-};
-
-export default List;
+export default ActionList

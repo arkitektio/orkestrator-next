@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, PanelLeft, PanelRight } from "lucide-react";
-import { useCallback } from "react";
+import { ChevronDownIcon, PanelLeft, PanelRight, Clipboard, Check } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
@@ -45,6 +45,56 @@ export const PageLayout = ({
 
 
   const reportBug = useReport();
+
+  const [copied, setCopied] = useState(false);
+
+  const copyPathToClipboard = useCallback(() => {
+
+    const searchText = `${location.pathname}${location.search}`;
+    const fullUrl = `https://arkitekt.live/deeplink?orkestrator=${encodeURIComponent(searchText)}`;
+
+    // Try modern clipboard API first
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(fullUrl)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        })
+        .catch(() => {
+          // Fallback to electron API if available
+          const api = (window as any).api;
+          if (api?.copyToClipboard) {
+            api.copyToClipboard(fullUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }
+        });
+    } else {
+      // Try electron API
+      const api = (window as any).api;
+      if (api?.copyToClipboard) {
+        api.copyToClipboard(fullUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } else {
+        // Last resort: old-school execCommand
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = fullUrl;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch (e) {
+          console.warn("Failed to copy to clipboard", e);
+        }
+      }
+    }
+  }, [location.pathname, location.search]);
 
   const popOut = useCallback(() => {
     window.api.openSecondWindow(location.pathname);
@@ -98,6 +148,7 @@ export const PageLayout = ({
 
               {pageActions}
 
+
               <ButtonGroup>
                 <Button variant="ghost" onClick={togglePageSidebar} className="!pl-2 !pr-2"><PanelRight /></Button>
                 <DropdownMenu>
@@ -113,6 +164,12 @@ export const PageLayout = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={toggleSidebar}>
                       {params.get("sidebar") == "true" ? "Hide" : "Show"} Sidebar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={copyPathToClipboard}>
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={copyPathToClipboard}>
+                      Share Universal Link
                     </DropdownMenuItem>
 
                     <DropdownMenuItem onSelect={popOut}> Popout</DropdownMenuItem>

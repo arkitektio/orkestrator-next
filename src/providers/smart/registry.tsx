@@ -31,6 +31,17 @@ export class SmartRegistry {
   findModel(identifier: string): Registration | undefined {
     return this.registry.get(identifier);
   }
+
+  getModelPath(identifier: string): string | undefined {
+    const model = this.findModel(identifier);
+    return model?.path;
+  }
+
+  buildModelPath(identifier: string, id: string): string | undefined {
+    const model = this.findModel(identifier);
+    if (!model) return undefined;
+    return `${model.path}/${id}`;
+  }
 }
 
 export const smartRegistry = new SmartRegistry();

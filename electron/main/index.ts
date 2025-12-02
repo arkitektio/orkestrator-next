@@ -140,10 +140,11 @@ ipcMain.handle("open-webbrowser", async (_, url: string) => {
 
 function handleOrkestratorUrl(url: string) {
   try {
-    const { host: modelIdentifier, pathname } = new URL(url);
-    const id = pathname.replace(/^\/+/, ""); // strip leading slashes
-    const fullPath = `${modelIdentifier}/${id}`;
-
+    console.log(url);
+    const parsedUrl = new URL(url);
+    // Remove the protocol and get everything after orkestrator://
+    // e.g., "orkestrator://model/some/path" -> "model/some/path"
+    const fullPath = parsedUrl.hostname + parsedUrl.pathname;
 
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -326,7 +327,7 @@ function openSecondaryWindow(path: string): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    let loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
+    const loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
 
     secondaryWindow.loadURL(loaded_url);
   } else {
@@ -340,63 +341,16 @@ function openSecondaryWindow(path: string): void {
   }
 }
 
-function createAuthWindow(url: string): void {
-  // Create the browser window.
-
-
-  const authWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
-    ...(process.platform === "linux" ? { icon } : {}),
-  });
-
-  authWindow.on("ready-to-show", () => {
-    authWindow.show();
-  });
-
-  const callback = "http://127.0.0.1:9999/callback";
-
-  const redirect_url = new URL(url);
-  redirect_url.searchParams.set("redirect_uri", callback);
-  authWindow.loadURL(redirect_url.toString());
-
-
-
-  const {
-    session: { webRequest },
-  } = authWindow.webContents;
-  const filter = { urls: [`${callback}*`] };
-  webRequest.onBeforeRequest(filter, async ({ url }) => {
-    const parsedUrl = new URL(url);
-
-    const code = parsedUrl.searchParams.get("code");
-    if (!code) {
-
-      mainWindow?.webContents.send("oauth-error", "No code in the response");
-    }
-    // Do the rest of the authorization flow with the code.
-    else {
-
-      mainWindow?.webContents.send("oauth-response", code);
-    }
-
-    authWindow.close();
-  });
-}
 
 if (process.platform == "darwin") {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
 
-  // Handle the protocol. In this case, we choose to show an Error Box.
-  app.on("open-url", (_, url) => {
-    dialog.showErrorBox("Welcome Back", `You arrived from: ${url}`);
+  // Handle the protocol on macOS
+  app.on("open-url", (event, url) => {
+    event.preventDefault();
+    handleOrkestratorUrl(url);
   });
 }
 
@@ -411,17 +365,27 @@ if (!gotTheLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    // the commandLine is array of strings in which last element is deep link url
-    dialog.showErrorBox(
-      "Welcome Back",
-      `You arrived from: ${commandLine.pop()}`,
-    );
+
+    // Handle deep link on Windows/Linux
+    // The protocol URL is passed as a command line argument
+    const url = commandLine.find(arg => arg.startsWith('orkestrator://'));
+    if (url) {
+      handleOrkestratorUrl(url);
+    }
   });
 
   // Create mainWindow, load the rest of the app, etc...
   app.whenReady().then(() => {
     registerIssueIpc();
     createWindow();
+
+    // Handle deep link on Windows/Linux when app is not running
+    if (process.platform !== 'darwin') {
+      const url = process.argv.find(arg => arg.startsWith('orkestrator://'));
+      if (url) {
+        handleOrkestratorUrl(url);
+      }
+    }
   });
 }
 
@@ -496,7 +460,6 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on("fakts-start", (_: IpcMainEvent, msg) => createFaktsWindow(msg));
-  ipcMain.on("oauth-start", (_: IpcMainEvent, url) => createAuthWindow(url));
   ipcMain.on("open-second-window", (_: IpcMainEvent, path) =>
     openSecondaryWindow(path),
   );

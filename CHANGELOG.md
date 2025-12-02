@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/arkitektio/orkestrator-next/compare/v1.42.2...v1.43.0) (2025-12-02)
+
+
+### Features
+
+* implement deeplinks ([e491c53](https://github.com/arkitektio/orkestrator-next/commit/e491c5388e9597b69bc40f7a6165d10668c9ea88))
+
 ## [1.42.2](https://github.com/arkitektio/orkestrator-next/compare/v1.42.1...v1.42.2) (2025-12-01)
 
 

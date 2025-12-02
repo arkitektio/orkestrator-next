@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/arkitektio/orkestrator-next/compare/v1.43.0...v1.44.0) (2025-12-02)
+
+
+### Features
+
+* add action temporal filtering ([0422031](https://github.com/arkitektio/orkestrator-next/commit/04220318c89bcb48e319974bc215029a8e1261da))
+
 # [1.43.0](https://github.com/arkitektio/orkestrator-next/compare/v1.42.2...v1.43.0) (2025-12-02)
 
 

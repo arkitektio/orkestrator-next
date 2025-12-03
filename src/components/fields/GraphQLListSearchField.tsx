@@ -12,21 +12,24 @@ export type GraphQLListSearchFieldProps = Omit<
   searchQuery: (x: {
     variables: { search?: string | undefined; values?: string[] };
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
+  additionalVariables?: Record<string, any>;
 };
 
-export const GraphQLListSearchField: React.FC<GraphQLListSearchFieldProps> = ({
+export const GraphQLListSearchField = ({
   searchQuery,
+  additionalVariables,
   ...props
-}) => {
+}: GraphQLListSearchFieldProps) => {
   const search = useCallback(
     async (x: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let queryResult = await searchQuery({
+      const queryResult = await searchQuery({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),
+          ...additionalVariables,
         },
       });
       if (queryResult?.errors) {

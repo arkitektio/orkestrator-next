@@ -1,32 +1,17 @@
-import { FormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   ListGraphFragment,
-  ListMeasurementCategoryFragment,
-  useCreateEntityInlineMutation,
-  useCreateMeasurementMutation,
   useCreateStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery,
-  useListMeasurmentCategoryQuery,
-  useSearchEntitiesForRoleLazyQuery
 } from "@/kraph/api/graphql";
-import CreateMeasurementCategoryForm from "@/kraph/forms/CreateMeasurementCategoryForm";
-import { KraphGraph, KraphStructure } from "@/linkers";
+import { KraphGraph } from "@/linkers";
 import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { SelectiveNodeViewRenderer } from "../renderers/NodeQueryRenderer";
-import { Form } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { MetricsTable } from "../tables/MetricsTable";
-import { Card } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 
 export type KnowledgeSidebarProps = {
@@ -40,163 +25,7 @@ export type StructureViewWidgetProps = {
 
 
 
-const FindEntity = (props: {
-  structure: string;
-  measurement: ListMeasurementCategoryFragment;
-  refetch?: () => void;
-}) => {
-  const [search] = useSearchEntitiesForRoleLazyQuery({
-    variables: {
-      tags:
-        props.measurement?.targetDefinition?.tagFilters?.map((tag) => tag) ||
-        [],
-      categories:
-        props.measurement?.targetDefinition?.categoryFilters?.map(
-          (cat) => cat,
-        ) || [],
-    },
-    nextFetchPolicy: "cache-and-network",
-  });
-
-  const form = useForm({
-    defaultValues: {
-      entity: null,
-    },
-  });
-
-  const [createMeasurement] = useCreateMeasurementMutation({
-    refetchQueries: ["GetGraph"],
-  });
-
-  const [create] = useCreateEntityInlineMutation({
-    refetchQueries: ["SearchEntitiesForRole"],
-  });
-
-  const createCategory = props.measurement.targetDefinition.defaultUseNew;
-
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(async (data) => {
-          createMeasurement({
-            variables: {
-              input: {
-                entity: data.entity,
-                category: props.measurement.id,
-                structure: props.structure,
-              },
-            },
-          })
-            .then(() => {
-              props.refetch?.();
-              toast.success("Measurement created successfully.");
-            })
-            .catch((e) => {
-              toast.error("Error creating measurement:", e);
-            });
-        })}
-      >
-        {createCategory ? (
-          <GraphQLCreatableSearchField
-            label="Entity"
-            name="entity"
-            searchQuery={search}
-            description="Search for an entity to connect to this measurement."
-            createMutation={(s) =>
-              create({
-                variables: {
-                  input: s.variables.input,
-                  category: createCategory.id,
-                },
-              })
-            }
-          />
-        ) : (
-          <GraphQLSearchField
-            label="Entity"
-            name="entity"
-            searchQuery={search}
-            description="Search for an entity to connect to this measurement."
-          />
-        )}
-
-        <DialogFooter>
-          <Button type="submit">Create</Button>
-        </DialogFooter>
-      </form>
-    </Form>
-  );
-};
-
-const ConnectableAs = (props: {
-  identifier: string;
-  structure: string;
-  graph: ListGraphFragment;
-  refetch?: () => void;
-}) => {
-  const { data, refetch } = useListMeasurmentCategoryQuery({
-    variables: {
-      filters: {
-        graph: props.graph.id,
-        sourceIdentifier: props.identifier,
-      },
-    },
-  });
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-full">
-          Connect
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {data?.measurementCategories.map((category) => (
-
-          <Dialog key={category.id}>
-            <DialogTrigger>
-              <Button variant="outline" className="w-full">
-                {category.label}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <div className="flex flex-col gap-2">
-                <h3 className="text-scroll font-semibold text-xs">
-                  {category.label}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {category.description}
-                </p>
-                <FindEntity
-                  structure={props.structure}
-                  measurement={category}
-                  refetch={props.refetch}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-        ))}
-        <FormDialog
-          trigger={
-            <Button variant="outline" className="w-full">
-              Create Measurement Category
-            </Button>
-          }
-          onSubmit={() => {
-            refetch();
-          }}
-        >
-          <CreateMeasurementCategoryForm
-            graph={props.graph.id}
-            identifier={props.identifier}
-          />
-        </FormDialog>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-
+import { ConnectableAs } from "../ConnectableAs";
 
 export const GraphKnowledgeView = (props: {
   identifier: string;
@@ -273,8 +102,8 @@ export const GraphKnowledgeView = (props: {
             <ConnectableAs
               identifier={props.identifier}
               structure={data?.structureByIdentifier.id || ""}
-              graph={props.graph}
-              refetch={refetch}
+              graphId={props.graph.id}
+              onConnect={refetch}
             />
           </div>
           <div className="flex flex-col gap-2 p-2">

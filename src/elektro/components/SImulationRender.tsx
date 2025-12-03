@@ -102,7 +102,6 @@ const useValuesForSimulation = ({
     });
   }
 
-
   const zoomOnRange = async ({
     left,
     right,
@@ -120,14 +119,6 @@ const useValuesForSimulation = ({
 
     setRange({ left: actualLeft, right: actualRight });
   };
-
-
-
-
-
-
-
-
 
 
 

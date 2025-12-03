@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { model } from "@/hooks/use-metaapp";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
 import React, { createContext, useCallback, useContext, useState } from "react";
@@ -104,13 +105,14 @@ export function createDialogProvider<
       <K extends DialogId>(
         id: K,
         props: DialogPropsMap[K],
-        options?: { className?: string },
+        options?: { className?: string, size?: "small" | "medium" | "large" },
       ) => {
         setModalState({
           id: id as string,
           props,
           type: "dialog",
           className: options?.className,
+          size: options?.size
         });
       },
       [],
@@ -154,8 +156,12 @@ export function createDialogProvider<
           {Component && (
             <DialogContent className={cn(
               "text-foreground",
-              "w-full max-w-5xl max-h-[90vh]", // Default sizes
+              "w-full max-h-[90vh]", // Default sizes
               modalState.className,
+              modalState.size === "small" && "max-w-sm",
+              modalState.size === "medium" && "max-w-md",
+              modalState.size === "large" && "w-screen !min-w-[90vw] !max-w-[90vw] !min-h-[80vh] !max-h-[80vh]",
+              !modalState.className && modalState.size === undefined && "max-w-5xl",
             )}>
               <Guard.Rekuest>
                 <Component {...modalState.props} />

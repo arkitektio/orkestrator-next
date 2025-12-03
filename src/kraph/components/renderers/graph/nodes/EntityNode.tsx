@@ -29,13 +29,9 @@ export default memo(({ data, id, selected }: NodeProps<EntityNode>) => {
             object={data.id}
             className="font-bold text-lg text-foreground hover:underline bg-background/90 px-3 py-1 rounded backdrop-blur-sm shadow-sm"
           >
-            {data.category.label}
+            {data.label}
           </KraphEntity.DetailLink>
-          {data.externalId && (
-            <div className="text-sm font-medium text-muted-foreground bg-background/90 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
-              ID: {data.externalId}
-            </div>
-          )}
+          {data.category.label}
         </div>
       </Card>
     </>

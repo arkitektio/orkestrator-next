@@ -21,8 +21,6 @@ import { CategoricalChartState } from "recharts/types/chart/types";
 import useUndoable from "use-undoable";
 import {
   ExperimentFragment,
-  ExperimentRecordingView,
-  ExperimentStimulusView,
 } from "../api/graphql";
 import { useTraceArray } from "../lib/useTraceArray";
 
@@ -33,13 +31,17 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export const recordingViewToLabel = (view: any) =>
-  `r:${view.recording.label}${view.id}`;
-export const stimulusViewToLabel = (view: any) =>
-  `s:${view.stimulus.label}${view.id}`;
+export const recordingViewToLabel = (view: {
+  id: string;
+  recording: { label: string };
+}) => `r:${view.recording.label}${view.id}`;
+export const stimulusViewToLabel = (view: {
+  id: string;
+  stimulus: { label: string };
+}) => `s:${view.stimulus.label}${view.id}`;
 
 export const getColorForRecordingView = (
-  view: ExperimentRecordingView,
+  view: { id: string },
   highlight?: string,
 ) => {
   if (highlight && highlight === view.id) {
@@ -50,7 +52,7 @@ export const getColorForRecordingView = (
 };
 
 export const getColorForStimulusView = (
-  view: ExperimentStimulusView,
+  view: { id: string },
   highlight?: string,
 ) => {
   if (highlight && highlight === view.id) {
@@ -60,48 +62,113 @@ export const getColorForStimulusView = (
   return `hsl(${hue}, 70%, 60%)`;
 };
 
-const useValuesForExperiment = (experiment: ExperimentFragment) => {
+const useValuesForExperiment = ({
+  experiment,
+  selectedRange,
+}: {
+  experiment: ExperimentFragment;
+  selectedRange?: { left?: number | null; right?: number | null };
+}) => {
   const { renderView } = useTraceArray();
+  const [stepSize, setStepSize] = useState(1);
+
+  const [range, setRange, { redo, undo, canRedo, canUndo }] = useUndoable<{
+    left: number | null;
+    right: number | null;
+  }>({
+    left: selectedRange?.left || 0,
+    right: selectedRange?.right || null,
+  });
+
   const [values, setValues] = useState<{ [key: string]: number }[]>([]);
+  const [spikeTimes, setSpikeTimes] = useState<
+    { value: number; label: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [stepSize, setStepSize] = useState(
-    Math.max(
-      1,
-      Math.round((experiment.timeTrace.store?.shape?.at(0) || 2000) / 2000),
-    ),
-  );
+
+  const reset = () => {
+    setRange({
+      left: selectedRange?.left || 0,
+      right: selectedRange?.right || null,
+    });
+  };
+
+  const zoomOnRange = async ({
+    left,
+    right,
+  }: {
+    left: number;
+    right: number;
+  }) => {
+    // Ensure left is always smaller than right
+    const start = Math.min(left, right);
+    const end = Math.max(left, right);
+
+    // Calculate global indices based on current view's start (range.left) and stepSize
+    const actualLeft = start * stepSize + (range.left || 0);
+    const actualRight = end * stepSize + (range.left || 0);
+
+    setRange({ left: actualLeft, right: actualRight });
+  };
 
   const render = async () => {
     if (experiment) {
+      let stepSize = Math.max(
+        1,
+        Math.round((experiment.timeTrace.store?.shape?.at(0) || 2000) / 2000),
+      );
+
+      if (range.left !== null || range.right !== null) {
+        stepSize = Math.max(
+          1,
+          Math.round(
+            ((range.right || experiment.timeTrace.store?.shape?.at(0) || 2000) -
+              (range.left || 0)) / 2000,
+          ),
+        );
+      }
+
       Promise.all([
         ...experiment.recordingViews.map((view) => {
-          return renderView(view.recording.trace, stepSize);
+          return renderView(
+            view.recording.trace,
+            stepSize,
+            range?.left,
+            range?.right,
+          );
         }),
         ...experiment.stimulusViews.map((view) => {
-          return renderView(view.stimulus.trace, stepSize);
+          return renderView(
+            view.stimulus.trace,
+            stepSize,
+            range?.left,
+            range?.right,
+          );
         }),
-        renderView(experiment.timeTrace, stepSize),
+        renderView(experiment.timeTrace, stepSize, range?.left, range?.right),
       ]).then((data) => {
-        const values = data.map((x) => ({}));
+        const values = data.map(() => ({}));
 
         experiment.recordingViews.forEach((view, recordIndex: number) => {
           const array = data[recordIndex];
+          const recId = recordingViewToLabel(view);
 
           array.forEach((value, index) => {
             values[index] = {
               ...values[index],
-              [recordingViewToLabel(view)]: value,
+              [recId]: value,
             };
           });
         });
 
-        experiment.stimulusViews.forEach((s, sIndex: number) => {
+        experiment.stimulusViews.forEach((view, sIndex: number) => {
           const array = data[sIndex + experiment.recordingViews.length];
+          const stimId = stimulusViewToLabel(view);
 
           array.forEach((value, index) => {
             values[index] = {
               ...values[index],
-              [stimulusViewToLabel(s)]: value,
+              [stimId]: value,
             };
           });
         });
@@ -113,7 +180,28 @@ const useValuesForExperiment = (experiment: ExperimentFragment) => {
             ["t"]: value,
           };
         });
+
+        // Extract spikes
+        const spikes: { value: number; label: string }[] = [];
+        experiment.recordingViews.forEach((view) => {
+          if (view.recording.trace.rois) {
+            for (const roi of view.recording.trace.rois) {
+              for (const idx of roi.vectors) {
+                const idt = Math.floor(idx[0] / (stepSize || 1));
+                if (idt >= 0) {
+                  spikes.push({
+                    value: timeTrace[idt],
+                    label: roi.label || "No label",
+                  });
+                }
+              }
+            }
+          }
+        });
+
+        setStepSize(stepSize);
         setValues(values);
+        setSpikeTimes(spikes);
         setLoading(false);
       });
     }
@@ -123,26 +211,47 @@ const useValuesForExperiment = (experiment: ExperimentFragment) => {
     if (experiment) {
       render();
     }
-  }, [experiment, stepSize]);
+  }, [experiment, stepSize, range?.left, range?.right]);
 
-  return { values, loading, setStepSize, stepSize };
+  return {
+    values,
+    loading,
+    spikeTimes,
+    setStepSize,
+    stepSize,
+    zoomOnRange,
+    canRedo,
+    canUndo,
+    redo,
+    undo,
+    reset,
+  };
 };
+
+
+
+
 
 export const ExperimentRender = (props: {
   experiment: ExperimentFragment;
+  highlight?: string;
   hidden?: string[];
   hiddenStimuli?: string[];
-  highlight?: string;
 }) => {
-  const { loading, values, stepSize, setStepSize } = useValuesForExperiment(
-    props.experiment,
-  );
-  const [range, setRange, { redo, undo, canRedo, canUndo }] = useUndoable<{
-    left: number;
-    right: number;
-  }>({
-    left: 0,
-    right: values.length - 1,
+  const {
+    loading,
+    values,
+    setStepSize,
+    stepSize,
+    zoomOnRange,
+    canRedo,
+    canUndo,
+    redo,
+    undo,
+    reset,
+  } = useValuesForExperiment({
+    experiment: props.experiment,
+    selectedRange: { left: 0, right: null },
   });
 
   const [selection, setSelection] = useState<{
@@ -151,78 +260,47 @@ export const ExperimentRender = (props: {
   }>({ left: null, right: null });
   const [selecting, setSelecting] = useState(false);
 
-  const reset = useCallback(() => {
-    setRange({ left: 0, right: values.length - 1 });
-  }, [values]);
-
-  useEffect(() => {
-    if (values.length > 0) {
-      setRange({ left: 0, right: values.length - 1 }, undefined, true);
+  const handleMouseDown = useCallback((e: CategoricalChartState) => {
+    if (e && e.activeTooltipIndex !== undefined) {
+      setSelection({
+        left: e.activeTooltipIndex,
+        right: e.activeTooltipIndex,
+      });
+      setSelecting(true);
     }
-  }, [values]);
-
-  const handleMouseDown = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (e.activeLabel) {
-        setSelection({
-          left: values.findIndex(
-            (d) => d.t === (e.activeLabel as unknown as number),
-          ),
-          right: null,
-        });
-        setSelecting(true);
-      }
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    [values],
-  );
+  }, []);
 
   const handleMouseMove = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (selecting && e.activeLabel) {
+    (e: CategoricalChartState) => {
+      if (selecting && e && e.activeTooltipIndex !== undefined) {
         setSelection((prev) => ({
           ...prev,
-          right: values.findIndex(
-            (d) => d.t === (e.activeLabel as unknown as number),
-          ),
+          right: e.activeTooltipIndex ?? null,
         }));
       }
-      event.preventDefault();
-      event.stopPropagation();
     },
-    [selecting, values],
+    [selecting],
   );
 
-  const handleMouseUp = useCallback(
-    (e: CategoricalChartState, event) => {
-      if (selection.left !== null && selection.right !== null) {
-        const [tempLeft, tempRight] = [selection.left, selection.right].sort(
-          (a, b) => a - b,
-        );
-        setRange({ left: tempLeft, right: tempRight });
+  const handleMouseUp = useCallback(() => {
+    if (selecting && selection.left !== null && selection.right !== null) {
+      if (Math.abs(selection.left - selection.right) > 1) {
+        zoomOnRange({ left: selection.left, right: selection.right });
       }
-      setSelection({ left: null, right: null });
-      setSelecting(false);
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    [selection],
-  );
+    }
+    setSelection({ left: null, right: null });
+    setSelecting(false);
+  }, [selection, selecting, zoomOnRange]);
 
-  const filteredValues = useMemo(() => {
-    return values;
-  }, [values]);
-
-  const visibleRecordingViews = useMemo(() => {
+  const visibleRecordings = useMemo(() => {
     return props.experiment.recordingViews.filter(
       (view) => !props.hidden || !props.hidden.includes(view.id),
     );
   }, [props.experiment.recordingViews, props.hidden]);
 
-  const visibleStimulusViews = useMemo(() => {
+  const visibleStimuli = useMemo(() => {
     return props.experiment.stimulusViews.filter(
-      (view) => !props.hiddenStimuli || !props.hiddenStimuli.includes(view.id),
+      (view) => !props.hiddenStimuli || !props.hiddenStimuli?.includes(view.id),
     );
   }, [props.experiment.stimulusViews, props.hiddenStimuli]);
 
@@ -235,27 +313,28 @@ export const ExperimentRender = (props: {
   }
 
   return (
-    <div className="flex flex-col w-full max-h-[70vh] my-auto relative">
-      <ChartContainer config={chartConfig} className="flex-grow">
-        {/* Chart 1: Recordings */}
+    <div
+      className="flex flex-col relative h-full w-full"
+      onMouseUp={handleMouseUp}
+    >
+      <ChartContainer config={chartConfig} className="h-[85%]">
         <LineChart
-          data={filteredValues}
-          height={300}
+          data={values}
           margin={{ left: 10, right: 10 }}
-          className="relative"
-          syncId="simulation-chart"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          syncId="experiment-chart"
         >
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="t"
+            type="number"
             tickLine={false}
             axisLine={false}
             tickMargin={8}
             tickFormatter={(v) => `${v.toFixed(1)}`}
+            domain={["auto", "auto"]}
           />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} />
           <ChartTooltip
@@ -263,12 +342,11 @@ export const ExperimentRender = (props: {
             content={<ChartTooltipContent indicator="line" />}
           />
 
-          {/* Recording traces */}
-          {visibleRecordingViews.map((view) => (
+          {visibleRecordings.map((view) => (
             <Line
               key={recordingViewToLabel(view)}
               dataKey={recordingViewToLabel(view)}
-              type="natural"
+              type="linear"
               stroke={getColorForRecordingView(view, props.highlight)}
               fillOpacity={0.4}
               strokeWidth={2}
@@ -277,54 +355,48 @@ export const ExperimentRender = (props: {
             />
           ))}
 
-          {/* Selection highlight */}
-          {selection.left !== null && selection.right !== null && (
-            <ReferenceArea
-              x1={values[selection.left].t}
-              x2={values[selection.right].t}
-              strokeOpacity={0.3}
-              fill="hsl(45, 70%, 60%)"
-              fillOpacity={0.2}
-            />
-          )}
+          {selection.left !== null &&
+            selection.right !== null &&
+            values[selection.left] &&
+            values[selection.right] && (
+              <ReferenceArea
+                x1={values[selection.left].t}
+                x2={values[selection.right].t}
+                strokeOpacity={0.3}
+                fill="hsl(45, 70%, 60%)"
+                fillOpacity={0.2}
+              />
+            )}
+
           <Brush
             dataKey="t"
             height={0}
             stroke="#1b1b25"
             fill="transparent"
             travellerWidth={5}
-            travellerStroke="#181212"
-            travellerFill="#181212"
-            startIndex={range.left}
-            endIndex={range.right}
-            onChange={(e) =>
-              setRange({
-                left: e?.startIndex ?? 0,
-                right: e?.endIndex ?? values.length - 1,
-              })
-            }
           />
         </LineChart>
       </ChartContainer>
-      <ChartContainer config={chartConfig} className="flex-initial h-48">
-        {/* Chart 2: Stimuli (e.g. current injections) */}
+
+      <ChartContainer config={chartConfig} className="h-[15%] flex-initial">
         <LineChart
-          data={filteredValues}
+          data={values}
           height={100}
           margin={{ left: 12, right: 12 }}
-          syncId="simulation-chart"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          syncId="experiment-chart"
         >
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="t"
+            type="number"
             tickLine={false}
             axisLine={false}
             tickMargin={8}
             tickFormatter={(v) => `${v.toFixed(1)}`}
+            domain={["auto", "auto"]}
           />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} />
           <ChartTooltip
@@ -332,47 +404,30 @@ export const ExperimentRender = (props: {
             content={<ChartTooltipContent indicator="line" />}
           />
 
-          {/* Stimuli traces */}
-          {visibleStimulusViews.map((s) => (
+          {selection.left !== null &&
+            selection.right !== null &&
+            values[selection.left] &&
+            values[selection.right] && (
+              <ReferenceArea
+                x1={values[selection.left].t}
+                x2={values[selection.right].t}
+                strokeOpacity={0.3}
+                fill="hsl(45, 70%, 60%)"
+                fillOpacity={0.2}
+              />
+            )}
+
+          {visibleStimuli.map((view) => (
             <Line
-              key={stimulusViewToLabel(s)}
-              dataKey={stimulusViewToLabel(s)}
-              type="natural"
-              stroke={getColorForStimulusView(s, props.highlight)}
+              key={stimulusViewToLabel(view)}
+              dataKey={stimulusViewToLabel(view)}
+              type="stepAfter"
+              stroke={getColorForStimulusView(view, props.highlight)}
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}
             />
           ))}
-
-          {/* Brush for zooming */}
-          <Brush
-            dataKey="t"
-            height={30}
-            stroke="#1b1b25"
-            fill="transparent"
-            travellerWidth={5}
-            travellerStroke="#181212"
-            travellerFill="#181212"
-            startIndex={range.left}
-            endIndex={range.right}
-            onChange={(e) =>
-              setRange({
-                left: e?.startIndex ?? 0,
-                right: e?.endIndex ?? values.length - 1,
-              })
-            }
-          />
-          {/* Selection highlight */}
-          {selection.left !== null && selection.right !== null && (
-            <ReferenceArea
-              x1={values[selection.left].t}
-              x2={values[selection.right].t}
-              strokeOpacity={0.3}
-              fill="hsl(45, 70%, 60%)"
-              fillOpacity={0.2}
-            />
-          )}
         </LineChart>
       </ChartContainer>
 

@@ -18,6 +18,7 @@ import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
 import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
 import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
+import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,
@@ -31,6 +32,7 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   addusertoorganization: AddUserToOrganizationDialog,
   addpropertydefinition: AddPropertyDefinitionDialog,
   createentitywithproperties: CreateEntityWithPropertiesDialog,
+  createentitycategory: CreateEntityCategoryForm,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,
   createentity: CreateEntityForm,
   createpprotocoleventfrominsandouts: CreateProtocolEventFromInsAndOuts,

@@ -18,7 +18,7 @@ export const DialogButton = <T extends keyof DialogType>({
   name: T;
   className?: string;
   dialogProps: ExtractProps<DialogType[T]>;
-  options?: { className?: string };
+  options?: { className?: string, size: "small" | "medium" | "large" };
 } & ButtonProps) => {
   const { openDialog } = useDialog<T>();
 

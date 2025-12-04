@@ -412,6 +412,8 @@ export type AgentFilter = {
   /** Filter by name of the agents */
   search?: InputMaybe<Scalars['String']['input']>;
   stateDemands?: InputMaybe<Array<SchemaDemandInput>>;
+  /** Filter by user ID */
+  user?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AgentInput = {

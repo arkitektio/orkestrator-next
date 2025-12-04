@@ -2732,6 +2732,18 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "user",
+            "description": "Filter by user ID",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -3146,7 +3158,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"c0a698d8-0a4a-442f-a463-4e1345ef8554\"",
+            "defaultValue": "\"ff2a9af2-71d8-44a8-bfdf-e65c69beb1a3\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17673,7 +17685,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"690ec10c-02b9-48c2-94e3-8e350cef9da2\"",
+            "defaultValue": "\"2cf5bfa7-41bc-475d-b734-d24c444e31e6\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

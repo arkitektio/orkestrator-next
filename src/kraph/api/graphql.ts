@@ -2696,6 +2696,8 @@ export type PropertyDefinitionInput = {
   options?: InputMaybe<Array<OptionInput>>;
   /** WHere or not this is searchable */
   searchable?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether to use this property as a label when displaying nodes of this category */
+  useAsLabel?: InputMaybe<Scalars['Boolean']['input']>;
   /** The type of data this property stores */
   valueKind: MetricKind;
 };
@@ -5778,6 +5780,7 @@ export type GetEntityCategoryByGraphAndLabelQuery = { __typename?: 'Query', enti
 export type SearchEntityCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  graph?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -10092,9 +10095,9 @@ export type GetEntityCategoryByGraphAndLabelQueryHookResult = ReturnType<typeof 
 export type GetEntityCategoryByGraphAndLabelLazyQueryHookResult = ReturnType<typeof useGetEntityCategoryByGraphAndLabelLazyQuery>;
 export type GetEntityCategoryByGraphAndLabelQueryResult = Apollo.QueryResult<GetEntityCategoryByGraphAndLabelQuery, GetEntityCategoryByGraphAndLabelQueryVariables>;
 export const SearchEntityCategoryDocument = gql`
-    query SearchEntityCategory($search: String, $values: [ID!]) {
+    query SearchEntityCategory($search: String, $values: [ID!], $graph: ID) {
   options: entityCategories(
-    filters: {search: $search, ids: $values}
+    filters: {search: $search, ids: $values, graph: $graph}
     pagination: {limit: 10}
   ) {
     value: id
@@ -10117,6 +10120,7 @@ export const SearchEntityCategoryDocument = gql`
  *   variables: {
  *      search: // value for 'search'
  *      values: // value for 'values'
+ *      graph: // value for 'graph'
  *   },
  * });
  */

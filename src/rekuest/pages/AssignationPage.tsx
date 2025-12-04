@@ -152,6 +152,34 @@ export const YieldItem = (props: {
   );
 };
 
+
+export const ErrorItem = (props: {
+  assignation: DetailAssignationFragment;
+  event: AssignationEventFragment;
+}) => {
+  const { registry } = useWidgetRegistry();
+
+  return (
+    <TimelineItem className="w-full">
+      <TimelineConnector />
+      <TimelineHeader>
+        <TimelineIcon />
+        <TimelineTitle>Yielded</TimelineTitle>
+      </TimelineHeader>
+      <TimelineContent>
+        <TimelineDescription>
+          <p className="text-xs mb-1">
+            <Timestamp date={props.event.createdAt} />
+          </p>
+          <div className="flex items-center justify-center flex-row gap-2 mb-4 p-3 bg-red-900 text-white border-red-300 border border-1 rounded-md">
+            {props.event.message}
+          </div>
+        </TimelineDescription>
+      </TimelineContent>
+    </TimelineItem>
+  );
+};
+
 export const DefaultRenderer = (props: {
   assignation: DetailAssignationFragment;
 }) => {
@@ -176,9 +204,17 @@ export const AssignationTimeLine = (props: {
             <DelegateItem event={e} />
           )}
 
-          {![
-            AssignationEventKind.Yield,
-            AssignationEventKind.Delegate,
+          {e.kind === AssignationEventKind.Error && (
+            <ErrorItem assignation={props.assignation} event={e} />
+          )}
+
+          {e.kind === AssignationEventKind.Critical && (
+            <ErrorItem assignation={props.assignation} event={e} />
+          )}
+
+          {[
+            AssignationEventKind.Log,
+            AssignationEventKind.Progress,
           ].includes(e.kind) && <LogItem event={e} />}
         </>
       ))}

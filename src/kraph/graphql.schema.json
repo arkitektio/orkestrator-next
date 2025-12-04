@@ -18855,6 +18855,18 @@
             "deprecationReason": null
           },
           {
+            "name": "useAsLabel",
+            "description": "Whether to use this property as a label when displaying nodes of this category",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "valueKind",
             "description": "The type of data this property stores",
             "type": {

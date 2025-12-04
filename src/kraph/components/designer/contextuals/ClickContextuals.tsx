@@ -17,6 +17,7 @@ import { ContextualContainer } from "@/reaktion/edit/components/ContextualContai
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
+import { DialogButton } from "@/components/ui/dialogbutton";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -162,27 +163,15 @@ export const ClickContextual = (props: {
             params={props.params}
           />
         </FormDialog>
-        <FormDialog
-          trigger={
-            <Button
-              className={cn("flex flex-row items-center justify-center")}
-              variant={"outline"}
-              size="sm"
-            >
-              Entitiy
-            </Button>
-          }
+        <DialogButton
+          variant={"outline"}
+          name="createentitycategory"
+          size={"default"}
           onSubmit={props.onCancel}
           onError={props.onCancel}
-        >
-          <CreateEntityCategoryForm
-            graph={props.graph.id}
-            positionX={props.params.position.x}
-            positionY={props.params.position.y}
-            width={200}
-            height={100}
-          />
-        </FormDialog>
+          options={{ size: "large" }}
+          dialogProps={{ graph: props.graph.id }}
+        > Entity </DialogButton>
       </div>
     </ContextualContainer>
   );

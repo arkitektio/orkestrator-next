@@ -10,9 +10,9 @@ query GetEntityCategoryByGraphAndLabel($graph: ID!, $label: String!) {
   }
 }
 
-query SearchEntityCategory($search: String, $values: [ID!]) {
+query SearchEntityCategory($search: String, $values: [ID!], $graph: ID) {
   options: entityCategories(
-    filters: { search: $search, ids: $values }
+    filters: { search: $search, ids: $values, graph: $graph }
     pagination: { limit: 10 }
   ) {
     value: id

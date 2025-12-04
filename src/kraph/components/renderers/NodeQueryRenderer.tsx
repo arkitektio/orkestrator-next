@@ -198,7 +198,11 @@ export const SelectiveNodeQueryRenderer = (props: {
             )}
 
             {data.renderNodeQuery.__typename === "Path" && (
-              <PathGraph path={data.renderNodeQuery} options={props.options} />
+              <PathGraph
+                path={data.renderNodeQuery}
+                options={props.options}
+                root={props.node}
+              />
             )}
 
             {data.renderNodeQuery.__typename === "Table" && (

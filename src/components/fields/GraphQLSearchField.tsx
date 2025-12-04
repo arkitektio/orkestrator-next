@@ -5,12 +5,14 @@ export type GraphQLSearchFieldProps = Omit<SearchFieldProps, "search"> & {
   searchQuery: (x: {
     variables: { search?: string | undefined; values?: string[] };
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
+  additionalVariables?: Record<string, any>;
 };
 
-export const GraphQLSearchField: React.FC<GraphQLSearchFieldProps> = ({
+export const GraphQLSearchField = ({
   searchQuery,
+  additionalVariables,
   ...props
-}) => {
+}: GraphQLSearchFieldProps) => {
   const search = useCallback(
     async (x: {
       search?: string | undefined;
@@ -20,6 +22,7 @@ export const GraphQLSearchField: React.FC<GraphQLSearchFieldProps> = ({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),
+          ...additionalVariables
         },
       });
       if (queryResult?.errors) {

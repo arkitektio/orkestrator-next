@@ -20,6 +20,7 @@ export default asDetailQueryRoute(
         object={data.neuronModel.id}
         pageActions={
           <div className="flex flex-row gap-2">
+            <ElektroNeuronModel.DetailLink object={data.neuronModel.id} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>
             <ElektroNeuronModel.ObjectButton object={data.neuronModel.id} />
           </div>
         }

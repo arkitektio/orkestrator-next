@@ -1,0 +1,11 @@
+mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
+  createNeuronModel(input: $input) {
+    id
+    name
+    config {
+      cells {
+        id
+      }
+    }
+  }
+}

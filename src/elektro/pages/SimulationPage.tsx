@@ -1,12 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   ElektroNeuronModel,
   ElektroRecording,
@@ -16,7 +9,6 @@ import {
 import { cn } from "@udecode/cn";
 import React from "react";
 import { useDetailSimulationQuery } from "../api/graphql";
-import { NeuronSimulationVisualizer } from "../components/NeuronSimulationRender";
 import {
   getColorForRecording,
   getColorForStimulus,

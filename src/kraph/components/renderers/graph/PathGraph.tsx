@@ -120,6 +120,10 @@ export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
         y: node.position.y,
         width: node.width,
         height: node.height,
+        layoutOptions:
+          root === node.id
+            ? { "org.eclipse.elk.stress.fixed": "true" }
+            : undefined,
       })),
       edges: edges.map((edge) => ({
         id: edge.id,
@@ -135,10 +139,13 @@ export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
         return;
       }
 
-      const newNodes = children.map((node) => {
-        const child = the_nodes.find((n) => n.id === node.id);
-        return { ...child, position: { x: node.x, y: node.y } };
-      });
+      const newNodes = children
+        .map((node) => {
+          const child = the_nodes.find((n) => n.id === node.id);
+          if (!child) return null;
+          return { ...child, position: { x: node.x || 0, y: node.y || 0 } };
+        })
+        .filter((n): n is PathNode => n !== null);
 
       setNodes(newNodes);
       setEdges(entityRelationToEdges(path.edges));

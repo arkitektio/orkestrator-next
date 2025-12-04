@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/arkitektio/orkestrator-next/compare/v1.46.0...v1.47.0) (2025-12-04)
+
+
+### Features
+
+* fix filters ([d8943b9](https://github.com/arkitektio/orkestrator-next/commit/d8943b900d07c94a59999f8350fa689e2231acbd))
+
 # [1.46.0](https://github.com/arkitektio/orkestrator-next/compare/v1.45.0...v1.46.0) (2025-12-04)
 
 

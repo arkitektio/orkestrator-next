@@ -27,7 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import {
+  CheckSquare,
+  FileText,
+  Info,
+  Key,
+  List,
+  Plus,
+  Settings,
+  Tag,
+  Trash2,
+  Type,
+} from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import {
@@ -54,6 +65,7 @@ const PropertyItem = ({
     <AccordionItem value={`item-${index}`}>
       <AccordionTrigger className="hover:no-underline py-2">
         <div className="flex items-center gap-2 w-full">
+          <Settings className="w-4 h-4 text-muted-foreground" />
           <span className="font-mono text-xs bg-muted px-1 rounded">
             {key || "New Property"}
           </span>
@@ -62,48 +74,78 @@ const PropertyItem = ({
       </AccordionTrigger>
       <AccordionContent>
         <div className="grid grid-cols-2 gap-2 p-1">
-          <StringField
-            name={`propertyDefinitions.${index}.key`}
-            label="Key"
-            description="The key of the property (snake_case)"
-          />
-          <FormField
-            control={control}
-            name={`propertyDefinitions.${index}.valueKind`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(MetricKind).map((kind) => (
-                      <SelectItem key={kind} value={kind}>
-                        {kind}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <StringField
-            name={`propertyDefinitions.${index}.label`}
-            label="Label"
-            description="Human readable label"
-          />
-          <ParagraphField
-            name={`propertyDefinitions.${index}.description`}
-            label="Description"
-          />
-          <div className="col-span-2 flex gap-4 items-center border p-2 rounded-md">
+          <div className="col-span-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground mt-2">
+            <Info className="w-4 h-4" /> General
+          </div>
+          <div className="col-span-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Key className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs">Key</Label>
+            </div>
+            <StringField
+              name={`propertyDefinitions.${index}.key`}
+              label=""
+              description="The key of the property (snake_case)"
+            />
+          </div>
+          <div className="col-span-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Type className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs">Type</Label>
+            </div>
+            <FormField
+              control={control}
+              name={`propertyDefinitions.${index}.valueKind`}
+              render={({ field }) => (
+                <FormItem>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(MetricKind).map((kind) => (
+                        <SelectItem key={kind} value={kind}>
+                          {kind}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="col-span-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Tag className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs">Label</Label>
+            </div>
+            <StringField
+              name={`propertyDefinitions.${index}.label`}
+              label=""
+              description="Human readable label"
+            />
+          </div>
+          <div className="col-span-2">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs">Description</Label>
+            </div>
+            <ParagraphField
+              name={`propertyDefinitions.${index}.description`}
+              label=""
+            />
+          </div>
+
+          <div className="col-span-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground mt-2">
+            <CheckSquare className="w-4 h-4" /> Options
+          </div>
+          <div className="col-span-2 flex gap-4 items-center border p-2 rounded-md bg-muted/20">
             <FormField
               control={control}
               name={`propertyDefinitions.${index}.optional`}
@@ -181,9 +223,12 @@ const PropertyDefinitions = () => {
   const [expanded, setExpanded] = useState<string | undefined>(undefined);
 
   return (
-    <div className="flex flex-col gap-2 mt-4 border rounded-md p-4 h-full overflow-auto bg-slate-800">
+    <div className="flex flex-col gap-2 mt-4 border rounded-md p-4 h-full overflow-auto bg-muted/10">
       <div className="flex justify-between items-center">
-        <Label>Properties</Label>
+        <div className="flex items-center gap-2">
+          <List className="w-4 h-4" />
+          <Label>Properties</Label>
+        </div>
         <Button
           type="button"
           variant="outline"

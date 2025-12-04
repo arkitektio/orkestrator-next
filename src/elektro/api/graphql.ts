@@ -2038,6 +2038,13 @@ export type DeleteBlockMutationVariables = Exact<{
 
 export type DeleteBlockMutation = { __typename?: 'Mutation', deleteBlock: string };
 
+export type CreateNeuronModelMutationVariables = Exact<{
+  input: CreateNeuronModelInput;
+}>;
+
+
+export type CreateNeuronModelMutation = { __typename?: 'Mutation', createNeuronModel: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string }> } } };
+
 export type RequestUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
   datalayer: Scalars['String']['input'];
@@ -2661,6 +2668,45 @@ export function useDeleteBlockMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>;
 export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>;
 export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<DeleteBlockMutation, DeleteBlockMutationVariables>;
+export const CreateNeuronModelDocument = gql`
+    mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
+  createNeuronModel(input: $input) {
+    id
+    name
+    config {
+      cells {
+        id
+      }
+    }
+  }
+}
+    `;
+export type CreateNeuronModelMutationFn = Apollo.MutationFunction<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>;
+
+/**
+ * __useCreateNeuronModelMutation__
+ *
+ * To run a mutation, you first call `useCreateNeuronModelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateNeuronModelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createNeuronModelMutation, { data, loading, error }] = useCreateNeuronModelMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateNeuronModelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>(CreateNeuronModelDocument, options);
+      }
+export type CreateNeuronModelMutationHookResult = ReturnType<typeof useCreateNeuronModelMutation>;
+export type CreateNeuronModelMutationResult = Apollo.MutationResult<CreateNeuronModelMutation>;
+export type CreateNeuronModelMutationOptions = Apollo.BaseMutationOptions<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>;
 export const RequestUploadDocument = gql`
     mutation RequestUpload($key: String!, $datalayer: String!) {
   requestUpload(input: {key: $key, datalayer: $datalayer}) {

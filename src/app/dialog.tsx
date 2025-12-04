@@ -18,6 +18,7 @@ import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
 import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
 import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
+import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,
@@ -38,5 +39,6 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   reportbug: ReportBugDialog,
   reportclientbug: ReportClientBugDialog,
   editentitycategory: UpdateEntityCategoryForm,
-  usemodelfor: UseModelForDialog
+  usemodelfor: UseModelForDialog,
+  createorganization: CreateOrganizationForm
 });

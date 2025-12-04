@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/arkitektio/orkestrator-next/compare/v1.44.0...v1.45.0) (2025-12-04)
+
+
+### Features
+
+* add new signup ([bf65b3e](https://github.com/arkitektio/orkestrator-next/commit/bf65b3ec9326dedeba95106283076e76ae94adba))
+
 # [1.44.0](https://github.com/arkitektio/orkestrator-next/compare/v1.43.0...v1.44.0) (2025-12-02)
 
 

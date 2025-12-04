@@ -1,3 +1,16 @@
+# [1.46.0](https://github.com/arkitektio/orkestrator-next/compare/v1.45.0...v1.46.0) (2025-12-04)
+
+
+### Bug Fixes
+
+* add model stuff ([581b7d4](https://github.com/arkitektio/orkestrator-next/commit/581b7d423b133957804b70305d1e5fa5d5775321))
+
+
+### Features
+
+* add simulation + dialog updates ([e940145](https://github.com/arkitektio/orkestrator-next/commit/e940145480a86e6ce760899c404087f954ec321f))
+* update ([0405785](https://github.com/arkitektio/orkestrator-next/commit/040578588b343846aabb74fa17172ef7e51a179b))
+
 # [1.45.0](https://github.com/arkitektio/orkestrator-next/compare/v1.44.0...v1.45.0) (2025-12-04)
 
 

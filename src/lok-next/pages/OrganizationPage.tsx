@@ -6,20 +6,18 @@ import { DragZone } from "@/components/upload/drag";
 import { useLokUpload } from "@/datalayer/hooks/useLokUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokOrganization, LokUser } from "@/linkers";
-import { useRef } from "react";
-import { useCreateInviteMutation, useOrganizationQuery, useUpdateOrganizationMutation } from "../api/graphql";
+import { useRef, useState } from "react";
+import { useOrganizationQuery, useUpdateOrganizationMutation } from "../api/graphql";
+import { CreateInviteDialog } from "../dialogs/CreateInviteDialog";
 
 // (legacy) export type removed – not used
 
 const Page = asDetailQueryRoute(useOrganizationQuery, ({ data }) => {
   const uploadFile = useLokUpload();
+  const [createInviteOpen, setCreateInviteOpen] = useState(false);
 
   const resolve = useResolve();
   const [update] = useUpdateOrganizationMutation();
-
-  const [createInvite] = useCreateInviteMutation({
-    refetchQueries: ['Organization']
-  });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -51,7 +49,7 @@ const Page = asDetailQueryRoute(useOrganizationQuery, ({ data }) => {
   return (
     <LokOrganization.ModelPage
       object={data.organization.id}
-      pageActions={<><LokOrganization.ObjectButton object={data.organization.id} /><Button variant="outline" onClick={() => createInvite({ variables: { input: { organization: data.organization.id } } })}>Create Invite</Button></>}
+      pageActions={<><LokOrganization.ObjectButton object={data.organization.id} /><Button variant="outline" onClick={() => setCreateInviteOpen(true)}>Create Invite</Button><CreateInviteDialog open={createInviteOpen} onOpenChange={setCreateInviteOpen} organizationId={data.organization.id} availableRoles={data.organization.roles} /></>}
       title={data?.organization?.name}
     >
       {/* Profile Hero Section */}

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import UserList from "../components/lists/UserList";
 import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
 import OrganizationList from "../components/lists/OrganizationList";
+import { DialogButton } from "@/components/ui/dialogbutton";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -19,24 +20,15 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Organizations"
       pageActions={
         <>
-          <FormDialogAction
-            variant={"outline"}
-            size={"sm"}
-            label="Create"
-            description="Create a new Organization"
-            buttonChildren={
-              <>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New Organization
-              </>
-            }
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(LokService.linkBuilder(item.linkedExpression.id));
-            }}
+          <DialogButton
+            name="createorganization"
+            variant="outline"
+            size="sm"
+            dialogProps={{}}
           >
-            <CreateServiceInstanceForm />
-          </FormDialogAction>
+
+            <PlusIcon className="mr-2 h-4 w-4" />Create Organization
+          </DialogButton>
         </>
       }
     >

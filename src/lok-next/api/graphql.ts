@@ -265,6 +265,11 @@ export type CreateInviteInput = {
   roles?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type CreateOrganizationInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+};
+
 export type CreateProfileInput = {
   name: Scalars['String']['input'];
   user: Scalars['ID']['input'];
@@ -621,6 +626,7 @@ export type Mutation = {
   createGroupProfile: GroupProfile;
   createInstanceAlias: InstanceAlias;
   createInvite: Invite;
+  createOrganization: Organization;
   createProfile: Profile;
   createRedeemToken: RedeemToken;
   createServiceInstance: ServiceInstance;
@@ -695,6 +701,11 @@ export type MutationCreateInstanceAliasArgs = {
 
 export type MutationCreateInviteArgs = {
   input: CreateInviteInput;
+};
+
+
+export type MutationCreateOrganizationArgs = {
+  input: CreateOrganizationInput;
 };
 
 
@@ -1847,7 +1858,7 @@ export type GroupProfileFragment = { __typename?: 'GroupProfile', id: string, na
 
 export type ListInviteFragment = { __typename?: 'Invite', id: string, token: string, status: string, createdAt: any, expiresAt?: any | null, createdBy: { __typename?: 'User', id: string, username: string }, createdFor: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
 
-export type InviteFragment = { __typename?: 'Invite', id: string, token: string, status: string, createdAt: any, expiresAt?: any | null, createdBy: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, createdFor: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> }, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null };
+export type InviteFragment = { __typename?: 'Invite', id: string, token: string, status: string, createdAt: any, expiresAt?: any | null, createdBy: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, createdFor: { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> }, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null };
 
 export type LayerFragment = { __typename?: 'Layer', id: string, name: string, description?: string | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string, profile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }> }> };
 
@@ -1855,7 +1866,7 @@ export type ListLayerFragment = { __typename?: 'Layer', id: string, name: string
 
 export type MembershipFragment = { __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string, id: string }>, organization: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
 
-export type OrganizationFragment = { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> };
+export type OrganizationFragment = { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> };
 
 export type ListOrganizationFragment = { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
@@ -1970,7 +1981,7 @@ export type CreateInviteMutationVariables = Exact<{
 }>;
 
 
-export type CreateInviteMutation = { __typename?: 'Mutation', createInvite: { __typename?: 'Invite', id: string, token: string, status: string, createdAt: any, expiresAt?: any | null, createdBy: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, createdFor: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> }, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } };
+export type CreateInviteMutation = { __typename?: 'Mutation', createInvite: { __typename?: 'Invite', id: string, token: string, status: string, createdAt: any, expiresAt?: any | null, createdBy: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, createdFor: { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> }, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } };
 
 export type NotifyUserMutationVariables = Exact<{
   input: NotifyUserInput;
@@ -1984,7 +1995,14 @@ export type UpdateOrganizationMutationVariables = Exact<{
 }>;
 
 
-export type UpdateOrganizationMutation = { __typename?: 'Mutation', updateOrganization: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> } };
+export type UpdateOrganizationMutation = { __typename?: 'Mutation', updateOrganization: { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> } };
+
+export type CreateOrganizationMutationVariables = Exact<{
+  input: CreateOrganizationInput;
+}>;
+
+
+export type CreateOrganizationMutation = { __typename?: 'Mutation', createOrganization: { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> } };
 
 export type CreateUserProfileMutationVariables = Exact<{
   input: CreateProfileInput;
@@ -2213,7 +2231,7 @@ export type OrganizationQueryVariables = Exact<{
 }>;
 
 
-export type OrganizationQuery = { __typename?: 'Query', organization: { __typename?: 'Organization', id: string, name: string, slug: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> } };
+export type OrganizationQuery = { __typename?: 'Query', organization: { __typename?: 'Organization', id: string, name: string, slug: string, roles: Array<{ __typename?: 'Role', id: string, identifier: string, description: string }>, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null, memberships: Array<{ __typename?: 'Membership', id: string, roles: Array<{ __typename?: 'Role', identifier: string }>, user: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }>, invites: Array<{ __typename?: 'Invite', status: string, expiresAt?: any | null, token: string, inviteUrl: string, acceptedBy?: { __typename?: 'User', id: string, username: string, profile: { __typename?: 'Profile', id: string, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null }> } };
 
 export type ListOrganizationsQueryVariables = Exact<{
   filters?: InputMaybe<OrganizationFilter>;
@@ -2821,10 +2839,16 @@ export const OrganizationFragmentDoc = gql`
   id
   name
   slug
+  roles {
+    id
+    identifier
+    description
+  }
   avatar {
     presignedUrl
   }
   memberships {
+    id
     roles {
       identifier
     }
@@ -3529,6 +3553,39 @@ export function useUpdateOrganizationMutation(baseOptions?: ApolloReactHooks.Mut
 export type UpdateOrganizationMutationHookResult = ReturnType<typeof useUpdateOrganizationMutation>;
 export type UpdateOrganizationMutationResult = Apollo.MutationResult<UpdateOrganizationMutation>;
 export type UpdateOrganizationMutationOptions = Apollo.BaseMutationOptions<UpdateOrganizationMutation, UpdateOrganizationMutationVariables>;
+export const CreateOrganizationDocument = gql`
+    mutation CreateOrganization($input: CreateOrganizationInput!) {
+  createOrganization(input: $input) {
+    ...Organization
+  }
+}
+    ${OrganizationFragmentDoc}`;
+export type CreateOrganizationMutationFn = Apollo.MutationFunction<CreateOrganizationMutation, CreateOrganizationMutationVariables>;
+
+/**
+ * __useCreateOrganizationMutation__
+ *
+ * To run a mutation, you first call `useCreateOrganizationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateOrganizationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createOrganizationMutation, { data, loading, error }] = useCreateOrganizationMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateOrganizationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateOrganizationMutation, CreateOrganizationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateOrganizationMutation, CreateOrganizationMutationVariables>(CreateOrganizationDocument, options);
+      }
+export type CreateOrganizationMutationHookResult = ReturnType<typeof useCreateOrganizationMutation>;
+export type CreateOrganizationMutationResult = Apollo.MutationResult<CreateOrganizationMutation>;
+export type CreateOrganizationMutationOptions = Apollo.BaseMutationOptions<CreateOrganizationMutation, CreateOrganizationMutationVariables>;
 export const CreateUserProfileDocument = gql`
     mutation CreateUserProfile($input: CreateProfileInput!) {
   createProfile(input: $input) {

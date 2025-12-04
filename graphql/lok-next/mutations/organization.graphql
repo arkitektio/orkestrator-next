@@ -3,3 +3,9 @@ mutation UpdateOrganization($input: UpdateOrganizationInput!) {
     ...Organization
   }
 }
+
+mutation CreateOrganization($input: CreateOrganizationInput!) {
+  createOrganization(input: $input) {
+    ...Organization
+  }
+}

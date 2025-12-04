@@ -2,10 +2,16 @@ fragment Organization on Organization {
   id
   name
   slug
+  roles {
+    id
+    identifier
+    description
+  }
   avatar {
     presignedUrl
   }
   memberships {
+    id
     roles {
       identifier
     }

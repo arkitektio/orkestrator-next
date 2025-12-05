@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/arkitektio/orkestrator-next/compare/v1.48.1...v1.49.0) (2025-12-05)
+
+
+### Features
+
+* add some cleanup buttons ([aa62207](https://github.com/arkitektio/orkestrator-next/commit/aa62207091da309851fd9b080a73338c5d2a8705))
+
 ## [1.48.1](https://github.com/arkitektio/orkestrator-next/compare/v1.48.0...v1.48.1) (2025-12-05)
 
 

@@ -33,6 +33,11 @@ fragment Image on Image {
   rois {
     ...ListROI
   }
+  affineTransformationViews {
+    id
+    pixelSizeX
+    pixelSizeY
+  }
 }
 
 fragment RGBImage on Image {

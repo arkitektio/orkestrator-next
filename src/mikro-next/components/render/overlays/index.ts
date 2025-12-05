@@ -8,3 +8,5 @@ export { RoiDrawerCanvas } from "./RoiDrawerCanvas";
 export type { RoiDrawerProps } from "./RoiDrawerCanvas";
 export { convertFromThreeJSCoords } from "./roiUtils";
 export { useRoiCreation } from "./useRoiCreation";
+export { ScaleBar, ScaleBarOverlay } from "./ScaleBar";
+export type { ScaleBarProps, ScaleBarOverlayProps } from "./ScaleBar";

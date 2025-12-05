@@ -61,6 +61,8 @@ fragment AffineTransformationView on AffineTransformationView {
   ...View
   id
   affineMatrix
+  pixelSizeX
+  pixelSizeY
   stage {
     id
     name

@@ -19,6 +19,7 @@ import {
   MapPin,
   Minus,
   MoreHorizontal,
+  Ruler,
   Settings,
   Square,
   Type,
@@ -58,6 +59,7 @@ export const RenderControlsMenu = ({
     showLayerEdges,
     showDebugText,
     showGrid,
+    showScaleBar,
     enabledScales,
     allowRoiDrawing,
     roiDrawMode,
@@ -65,6 +67,7 @@ export const RenderControlsMenu = ({
     setShowLayerEdges,
     setShowDebugText,
     setShowGrid,
+    setShowScaleBar,
     setAllowRoiDrawing,
     setRoiDrawMode,
     toggleScale,
@@ -160,6 +163,20 @@ export const RenderControlsMenu = ({
             <Grid3X3 className="w-4 h-4 mr-2 opacity-50" />
           )}
           {showGrid ? "Hide Grid" : "Show Grid"}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setShowScaleBar(!showScaleBar)}
+          className={`cursor-pointer ${showScaleBar
+              ? "bg-blue-800 text-white"
+              : "text-gray-300 hover:bg-gray-800"
+            }`}
+        >
+          {showScaleBar ? (
+            <Ruler className="w-4 h-4 mr-2" />
+          ) : (
+            <Ruler className="w-4 h-4 mr-2 opacity-50" />
+          )}
+          {showScaleBar ? "Hide Scale Bar" : "Show Scale Bar"}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="bg-gray-700" />

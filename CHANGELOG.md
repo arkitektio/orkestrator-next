@@ -1,3 +1,10 @@
+## [1.48.1](https://github.com/arkitektio/orkestrator-next/compare/v1.48.0...v1.48.1) (2025-12-05)
+
+
+### Bug Fixes
+
+* remover overflow scroll on args container ([d3b422a](https://github.com/arkitektio/orkestrator-next/commit/d3b422a04327ea2ae63c45706baf8acc5ac9b557))
+
 # [1.48.0](https://github.com/arkitektio/orkestrator-next/compare/v1.47.0...v1.48.0) (2025-12-05)
 
 

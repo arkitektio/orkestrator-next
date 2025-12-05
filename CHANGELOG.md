@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/arkitektio/orkestrator-next/compare/v1.47.0...v1.48.0) (2025-12-05)
+
+
+### Features
+
+* a filters and fix artemiy issue ([51ffbcb](https://github.com/arkitektio/orkestrator-next/commit/51ffbcb79052b6c0f5c4ffaacd897d5db4c5b78d))
+
 # [1.47.0](https://github.com/arkitektio/orkestrator-next/compare/v1.46.0...v1.47.0) (2025-12-04)
 
 

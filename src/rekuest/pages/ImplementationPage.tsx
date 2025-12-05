@@ -29,6 +29,7 @@ import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
+import TaskList from "../components/lists/TaskList";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -251,9 +252,13 @@ export const DefaultRenderer = (props: {
       </div>
       <DoForm id={props.implementation.id} />
 
+
+      <div className="my-2">Dependencies</div>
       <ListRender array={props?.implementation?.dependencies}>
         {(implementation, key) => <DependencyCard item={implementation} key={key} />}
       </ListRender>
+
+      <TaskList filters={{implementation: props.implementation.id}}/>
     </div>
   );
 };

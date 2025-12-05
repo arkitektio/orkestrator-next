@@ -13,6 +13,16 @@ fragment Agent on Agent {
   registry {
     client {
       clientId
+      release {
+        version
+        app {
+          identifier
+        }
+      }
+      device {
+        deviceId
+      }
+
     }
     user {
       sub

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestAssignation, RekuestImplementation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
@@ -184,9 +184,11 @@ export const DefaultRenderer = (props: {
   assignation: DetailAssignationFragment;
 }) => {
   return (
-    <>
+    <div className="flex flex-col">
+      <div className="flex-initial mb-3">Runnning on: <RekuestImplementation.DetailLink object={props.assignation.implementation.id}>{props.assignation.implementation.interface} @ {props.assignation.implementation.agent.name}</RekuestImplementation.DetailLink></div>
+
       <AssignationTimeLine assignation={props.assignation} />
-    </>
+    </div>
   );
 };
 
@@ -194,7 +196,7 @@ export const AssignationTimeLine = (props: {
   assignation: DetailAssignationFragment;
 }) => {
   return (
-    <Timeline className="w-full p-2 flex-grow">
+    <Timeline className="w-full flex-grow">
       {props.assignation?.events.map((e) => (
         <>
           {e.kind === AssignationEventKind.Yield && (

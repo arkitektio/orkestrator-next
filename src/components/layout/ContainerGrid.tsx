@@ -6,11 +6,13 @@ import React, { useEffect, useRef } from "react";
 export type FittingResponsiveGridProps = {
   children?: React.ReactNode;
   fitLength?: number;
+  className?: string;
 };
 
 export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   children,
   fitLength,
+  className,
 }) => {
   const parent = useRef<HTMLDivElement | null>(null);
   const { registerSelectables, unregisterSelectables } = useSelection();
@@ -54,7 +56,7 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-2 @xl-grid-cols-2 @2xl:grid-cols-4  @3xl:grid-cols-6  @5xl:grid-cols-6 @6xl:grid-cols-8 @7xl:grid-cols-10 @7xl:grid-cols-10 gap-4`}
+      className={cn(`grid @lg:grid-cols-2 @xl:grid-cols-2 @2xl:grid-cols-4  @3xl:grid-cols-6  @5xl:grid-cols-6 @6xl:grid-cols-8 @7xl:grid-cols-10 @7xl:grid-cols-10 gap-4 `, className)}
       data-enableselect="true"
       ref={parent}
     >

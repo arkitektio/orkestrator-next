@@ -56,8 +56,13 @@ fragment DetailAssignation on Assignation {
       registry {
         client {
           clientId
+          device {
+            deviceId
+          }
         }
       }
+
+    name
     }
   }
 }

@@ -15,6 +15,7 @@ import {
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { ContainerGrid, ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -34,7 +35,7 @@ export const DependencyWidget = ({
   });
 
   return (
-    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md">
+    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md max-h-60 overflow-y-auto overflow-x-hidden ">
       <GraphQLSearchField
         name={`dependencies.${dependency.key}`}
         searchQuery={search}
@@ -102,32 +103,36 @@ export const ImplementationAssignForm = (
   }
 
   return (
-    <div className="flex flex-col w-full h-full mx-auto p-6">
-      <h1 className="text-lg font-semibold mb-1 flex-initial ">
-        {implementation?.action.name}
-        <p className="text-muted-foreground text-xs">
-          @ {implementation?.interface}
-        </p>
-      </h1>
-
-      <p className="text-muted-foreground flex-initial my-2">{description}</p>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow my-4 ">
-          <ArgsContainer
-            registry={registry}
-            ports={implementation?.action.args || []}
-            path={["args"]}
-            bound={implementation?.id}
-            groups={implementation?.action.portGroups}
-            hidden={props.hidden}
-          />
-          <div className="space-y-2 grid grid-cols-3 gap-2">
-            {implementation?.dependencies.map((dep) => (
-              <DependencyWidget dependency={dep} key={dep.id} />
-            ))}
-          </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6 overflow-hidden @container">
+          <div className="flex flex-col sm:justify-between mb-2 h-full min-h-0">
 
-          <DialogFooter>
+
+          <h1 className="text-lg font-semibold mb-1 flex-initial ">
+            {implementation?.action.name}
+            <p className="text-muted-foreground text-xs">
+              @ {implementation?.interface}
+            </p>
+          </h1>
+
+          <div className="text-muted-foreground flex-initial my-2">{description}</div>
+          <div className="flex-grow overflow-y-scroll mb-4 @container  gap-2">
+            <ArgsContainer
+              registry={registry}
+              ports={implementation?.action.args || []}
+              path={["args"]}
+              bound={implementation?.id}
+              groups={implementation?.action.portGroups}
+              hidden={props.hidden}
+            />
+
+          </div>
+            <ResponsiveContainerGrid className="max-h-96 overflow-y-scroll w-full @container mb-4" >
+              {implementation?.dependencies.map((dep) => (
+                <DependencyWidget dependency={dep} key={dep.id} />
+              ))}
+            </ResponsiveContainerGrid>
+          <DialogFooter className="flex-initial">
             <Button
               type="submit"
               className={cn("flex-initial", form.formState.isSubmitting && "bg-red-200")}
@@ -136,8 +141,8 @@ export const ImplementationAssignForm = (
               Submit{" "}
             </Button>
           </DialogFooter>
+          </div>
         </form>
       </Form>
-    </div>
   );
 };

@@ -116,7 +116,7 @@ export const ImplementationAssignForm = (
           </h1>
 
           <div className="text-muted-foreground flex-initial my-2">{description}</div>
-          <div className="flex-grow overflow-y-scroll mb-4 @container  gap-2">
+          <div className="flex-grow  mb-4 @container ">
             <ArgsContainer
               registry={registry}
               ports={implementation?.action.args || []}

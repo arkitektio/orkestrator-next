@@ -13,6 +13,7 @@ import * as React from "react";
 import Timestamp from "react-timestamp";
 import {
   GlobalSearchQueryVariables,
+  Ordering,
   useGlobalSearchQuery,
   useListRunsQuery,
   useWorkspacesQuery,
@@ -32,6 +33,7 @@ export const NavigationPane = (props: {}) => {
       pagination: {
         limit: 5,
       },
+      order : { createdAt: Ordering.Desc}
     },
   });
 

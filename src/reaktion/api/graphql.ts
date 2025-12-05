@@ -936,26 +936,6 @@ export type StateChoiceAssignWidget = AssignWidget & {
   stateChoices: Scalars['String']['output'];
 };
 
-export type StrFilterLookup = {
-  contains?: InputMaybe<Scalars['String']['input']>;
-  endsWith?: InputMaybe<Scalars['String']['input']>;
-  exact?: InputMaybe<Scalars['String']['input']>;
-  gt?: InputMaybe<Scalars['String']['input']>;
-  gte?: InputMaybe<Scalars['String']['input']>;
-  iContains?: InputMaybe<Scalars['String']['input']>;
-  iEndsWith?: InputMaybe<Scalars['String']['input']>;
-  iExact?: InputMaybe<Scalars['String']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['String']['input']>;
-  inList?: InputMaybe<Array<Scalars['String']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['String']['input']>;
-  lte?: InputMaybe<Scalars['String']['input']>;
-  range?: InputMaybe<Array<Scalars['String']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type StreamItem = {
   __typename?: 'StreamItem';
   kind: PortKind;
@@ -1078,7 +1058,6 @@ export type WorkspaceFilter = {
   NOT?: InputMaybe<WorkspaceFilter>;
   OR?: InputMaybe<WorkspaceFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1376,6 +1355,7 @@ export type EventsBetweenQuery = { __typename?: 'Query', eventsBetween: Array<{ 
 export type ListRunsQueryVariables = Exact<{
   filters?: InputMaybe<RunFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  order?: InputMaybe<RunOrder>;
 }>;
 
 
@@ -2376,8 +2356,8 @@ export type EventsBetweenQueryHookResult = ReturnType<typeof useEventsBetweenQue
 export type EventsBetweenLazyQueryHookResult = ReturnType<typeof useEventsBetweenLazyQuery>;
 export type EventsBetweenQueryResult = Apollo.QueryResult<EventsBetweenQuery, EventsBetweenQueryVariables>;
 export const ListRunsDocument = gql`
-    query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput) {
-  runs(filters: $filters, pagination: $pagination) {
+    query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput, $order: RunOrder) {
+  runs(filters: $filters, pagination: $pagination, order: $order) {
     ...ListRun
   }
 }
@@ -2397,6 +2377,7 @@ export const ListRunsDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
  *   },
  * });
  */

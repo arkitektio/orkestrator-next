@@ -41,27 +41,13 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
       {ins.map((s, index) => (
         <InStream stream={s} id={index} length={ins.length} />
       ))}
-      <CardHeader className="p-3 justify-between flex">
+      <CardHeader className="p-3 justify-between flex ">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="text-left font-semibold text-xs p-1">
             {data.title}
           </div>
-          <div className="text-center justify-between">
-            {latestEvent && ins && latestEvent.kind === RunEventKind.Next && (
-              <ReturnsContainer
-                ports={outs.at(0) || []}
-                values={
-                  outs.at(0)?.reduce(
-                    (acc, curr, index) => {
-                      acc[curr.key] = latestEvent.value[index];
-                      return acc;
-                    },
-                    {} as { [key: string]: any },
-                  ) || {}
-                }
-                registry={registry}
-              />
-            )}
+          <div className="text-center justify-between w-32 h-32">
+
             {latestEvent && latestEvent.kind === RunEventKind.Complete && (
               <div className="text-center font-light p-2 ">
                 {latestEvent?.kind === RunEventKind.Complete && "✅"}
@@ -79,7 +65,21 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription></CardDescription>
-        {expanded && <div></div>}
+        {expanded && <div className="flex-groww-full h-full bg-green-200">{latestEvent && ins && latestEvent.kind === RunEventKind.Next && (
+              <ReturnsContainer
+                ports={outs.at(0) || []}
+                values={
+                  outs.at(0)?.reduce(
+                    (acc, curr, index) => {
+                      acc[curr.key] = latestEvent.value[index];
+                      return acc;
+                    },
+                    {} as { [key: string]: any },
+                  ) || {}
+                }
+                registry={registry}
+              />
+            )}</div>}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

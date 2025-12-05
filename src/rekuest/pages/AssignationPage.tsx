@@ -342,6 +342,19 @@ export default asDetailQueryRoute(
                 Logs
               </Button>
             </RekuestAssignation.DetailLink>
+
+            {data.assignation.parent && <RekuestAssignation.DetailLink
+              object={data?.assignation?.parent.id || ""}
+              subroute="log"
+              className="font-semibold"
+            >
+              <Button
+                variant={"outline"}
+                size={"sm"}
+              >
+                Logs
+              </Button>
+            </RekuestAssignation.DetailLink>  }
             <div className="flex">
               <Button
                 variant={"outline"}

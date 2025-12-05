@@ -7,7 +7,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestAction, RekuestAssignation, RekuestImplementation } from "@/linkers";
+import { RekuestAction, RekuestAgent, RekuestAssignation, RekuestImplementation } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
@@ -302,9 +302,16 @@ export default asDetailQueryRoute(
         }}
         pageActions={
           <>
+          <>
             <RekuestAction.DetailLink object={data.implementation.action.id}>
               <Button variant="outline">Go to Action</Button>
             </RekuestAction.DetailLink>
+          </>
+          <>
+            <RekuestAgent.DetailLink object={data.implementation.agent.id}>
+              <Button variant="outline">Go to Agent</Button>
+            </RekuestAgent.DetailLink>
+          </>
           </>
         }
       >

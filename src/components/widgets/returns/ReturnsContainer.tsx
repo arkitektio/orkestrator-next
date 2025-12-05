@@ -22,7 +22,7 @@ export const ReturnsContainer = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5`}
+      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5 w-full h-full`}
     >
       {ports.map((port, index) => {
         const Widget = registry.getReturnWidgetForPort(port);

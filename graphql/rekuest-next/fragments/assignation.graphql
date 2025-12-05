@@ -50,6 +50,9 @@ fragment DetailAssignation on Assignation {
   children {
     ...PostmanAssignation
   }
+  parent {
+    id
+  }
   finishedAt
   implementation {
     agent {

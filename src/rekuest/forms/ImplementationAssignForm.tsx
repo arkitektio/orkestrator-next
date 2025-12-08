@@ -35,7 +35,7 @@ export const DependencyWidget = ({
   });
 
   return (
-    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md max-h-60 overflow-y-auto overflow-x-hidden ">
+    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md max-h-60  ">
       <GraphQLSearchField
         name={`dependencies.${dependency.key}`}
         searchQuery={search}
@@ -127,7 +127,7 @@ export const ImplementationAssignForm = (
             />
 
           </div>
-            <ResponsiveContainerGrid className="max-h-96 overflow-y-scroll w-full @container mb-4" >
+            <ResponsiveContainerGrid className="grid @lg:grid-cols-3 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-4 @4xl:grid-cols-4 @5xl:grid-cols-4  @6xl:grid-cols-4 gap-2 max-h-128 overflow-y-auto w-min-[80vw] @container mb-4" >
               {implementation?.dependencies.map((dep) => (
                 <DependencyWidget dependency={dep} key={dep.id} />
               ))}

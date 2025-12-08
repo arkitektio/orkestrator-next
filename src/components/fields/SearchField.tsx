@@ -241,7 +241,7 @@ export const SearchField = ({
                 )}
               </div>
             </Command>
-            {description && <FormDescription>{description}</FormDescription>}
+            {description && <FormDescription className="max-h-32 overflow-y-scroll">{description}</FormDescription>}
             <FormMessage />
           </FormItem>
         </>

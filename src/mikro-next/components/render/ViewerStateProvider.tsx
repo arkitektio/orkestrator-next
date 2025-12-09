@@ -22,6 +22,7 @@ export interface ViewerState {
   showDebugText: boolean;
   showDisplayStructures: boolean;
   showGrid: boolean;
+  showScaleBar: boolean;
 
   allowRoiDrawing: boolean; // Optional, used for ROIs
   roiDrawMode: RoiKind; // Optional, used for ROIs
@@ -45,6 +46,7 @@ export interface ViewerStateActions {
   setShowDebugText: (show: boolean) => void;
   setShowDisplayStructures: (show: boolean) => void;
   setShowGrid: (show: boolean) => void;
+  setShowScaleBar: (show: boolean) => void;
   setOpenPanels: Dispatch<React.SetStateAction<Panel[]>>;
   setRoiContextMenu: (
     menu: { open: boolean; x: number; y: number } | null,
@@ -112,6 +114,9 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     initialState.showDisplayStructures ?? false,
   );
   const [showGrid, setShowGrid] = useState(initialState.showGrid ?? false);
+  const [showScaleBar, setShowScaleBar] = useState(
+    initialState.showScaleBar ?? true,
+  );
   const [roiDrawMode, setRoiDrawMode] = useState(
     initialState.roiDrawMode ?? RoiKind.Rectangle,
   );
@@ -167,6 +172,7 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     showDebugText,
     showDisplayStructures,
     showGrid,
+    showScaleBar,
     enabledScales,
     displayStructures,
     allowRoiDrawing,
@@ -181,6 +187,7 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setShowDebugText,
     setShowDisplayStructures,
     setShowGrid,
+    setShowScaleBar,
     setRoiContextMenu,
     roiContextMenu,
     setOpenPanels,

@@ -11,11 +11,11 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <LokComputeNode.ListPage
-      title="Compute Nodes"
+      title="Devices"
     >
       <Explainer
-        title="Compute Nodes"
-        description="Compute Nodes are devices or virtual machines that provide computational resources within your Arkitekt Federation. Here you see all compute nodes that are registered and available for task execution."
+        title="Devices"
+        description="Devices or virtual machines that provide computational resources within your Arkitekt Federation. Here you see all compute nodes that are registered and available for task execution."
       />
       <ComputeNodeList />
 

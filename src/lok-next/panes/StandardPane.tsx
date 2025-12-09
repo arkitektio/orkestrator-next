@@ -5,7 +5,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Group, Home, User } from "lucide-react";
+import { AppleIcon, Group, GroupIcon, Home, OrigamiIcon, User } from "lucide-react";
 import * as React from "react";
 import { RiProfileFill } from "react-icons/ri";
 import {
@@ -41,15 +41,20 @@ export const NavigationPane = (props: {}) => {
         </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>Users</SubTreeTitle>
+      <SubTreeTitle>Management</SubTreeTitle>
       <SubTree>
+
         <DroppableNavLink
-          to="/lok/groups"
+          to="/lok/organizations"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
-          <Group className="h-4 w-4" />
-          Groups
+          <GroupIcon className="h-4 w-4" />
+          Organizations
         </DroppableNavLink>
+      </SubTree>
+
+      <SubTreeTitle>Organization</SubTreeTitle>
+      <SubTree>
         <DroppableNavLink
           to="/lok/users"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -61,15 +66,8 @@ export const NavigationPane = (props: {}) => {
           to="/lok/apps"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
-          <User className="h-4 w-4" />
+          <AppleIcon className="h-4 w-4" />
           Apps
-        </DroppableNavLink>
-        <DroppableNavLink
-          to="/lok/organizations"
-          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-        >
-          <CubeIcon className="h-4 w-4" />
-          Organizations
         </DroppableNavLink>
         <DroppableNavLink
           to="/lok/services"
@@ -97,7 +95,7 @@ export const NavigationPane = (props: {}) => {
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
-          Compute Nodes
+          Devices
         </DroppableNavLink>
       </SubTree>
     </Tree>

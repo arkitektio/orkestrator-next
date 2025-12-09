@@ -151,6 +151,7 @@ export default asDetailQueryRoute(useGetPodQuery, ({ data, refetch }) => {
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
             {data?.pod?.deployment.flavour.release.version} on{" "}
             {data?.pod?.deployment.flavour.release.id}
+            {data.pod.resource?.name}
           </p>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
             {data.pod.backend.name}

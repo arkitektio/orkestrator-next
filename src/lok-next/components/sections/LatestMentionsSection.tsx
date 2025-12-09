@@ -11,7 +11,7 @@ export const LatestMentionsSection = () => {
 
   if (loading) {
     return (
-      <Card>
+      <div>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
@@ -24,13 +24,13 @@ export const LatestMentionsSection = () => {
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
         </CardContent>
-      </Card>
+      </div>
     );
   }
 
   if (!data?.myMentions || data.myMentions.length === 0) {
     return (
-      <Card>
+      <div>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
@@ -39,13 +39,13 @@ export const LatestMentionsSection = () => {
           <CardDescription>Recent mentions and notifications</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
+          <Card className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
             <MessageSquare className="h-8 w-8 mb-2" />
             <p>No mentions yet</p>
             <p className="text-xs mt-1">You&apos;ll see mentions here when others tag you</p>
-          </div>
+          </Card>
         </CardContent>
-      </Card>
+      </div>
     );
   }
 

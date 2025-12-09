@@ -7,6 +7,7 @@ import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { ExportSidebar } from "../sidebars/export";
 import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -45,7 +46,7 @@ export const ModelPageLayout = ({
       }} sidebarKey="DetailModel" />}
       actions={actions}
       variant={variant}
-      pageActions={pageActions}
+      pageActions={pageActions || <ObjectButton  objects={objects} />}
     >
       <CommandMenu objects={objects} />
       {children}

@@ -539,7 +539,7 @@ export type Assignation = {
   dependencies: Scalars['AnyDefault']['output'];
   /** Indicates if the assignation should be deleted after completion. */
   ephemeral: Scalars['Boolean']['output'];
-  /** List of recent events for this assignation. */
+  /** The events */
   events: Array<AssignationEvent>;
   /** Timestamp when the assignation was finished. */
   finishedAt?: Maybe<Scalars['DateTime']['output']>;
@@ -585,6 +585,14 @@ export type AssignationChildrenArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+/** Tracks the assignment of an implementation to a specific task. */
+export type AssignationEventsArgs = {
+  filters?: InputMaybe<AssignationEventFilter>;
+  order?: InputMaybe<AssignationEventOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type AssignationChangeEvent = {
   __typename?: 'AssignationChangeEvent';
   create?: Maybe<Assignation>;
@@ -618,6 +626,15 @@ export type AssignationEvent = {
   returns?: Maybe<Scalars['AnyDefault']['output']>;
 };
 
+/** A way to filter assignation events */
+export type AssignationEventFilter = {
+  AND?: InputMaybe<AssignationEventFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AssignationEventFilter>;
+  OR?: InputMaybe<AssignationEventFilter>;
+  kind?: InputMaybe<Array<AssignationEventKind>>;
+};
+
 /** The event kind of the assignationevent */
 export enum AssignationEventKind {
   Assign = 'ASSIGN',
@@ -636,6 +653,10 @@ export enum AssignationEventKind {
   Queued = 'QUEUED',
   Yield = 'YIELD'
 }
+
+export type AssignationEventOrder = {
+  createdAt?: InputMaybe<Ordering>;
+};
 
 /** Numeric/aggregatable fields of Assignation */
 export enum AssignationField {
@@ -4659,7 +4680,7 @@ export const PostmanAssignationFragmentDoc = gql`
   args
   reference
   isDone
-  events {
+  events(order: {createdAt: DESC}) {
     ...AssignationEvent
   }
   ephemeral

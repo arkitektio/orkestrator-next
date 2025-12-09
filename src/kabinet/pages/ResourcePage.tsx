@@ -3,6 +3,9 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { KabinetResource } from "@/linkers";
 import { useGetResourceQuery } from "../api/graphql";
 import PodCard from "../components/cards/PodCard";
+import { ResponsiveContainer } from "recharts";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(
   useGetResourceQuery,
@@ -11,16 +14,6 @@ export default asDetailQueryRoute(
       <KabinetResource.ModelPage
         title={data?.resource?.name}
         object={data?.resource?.id}
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KabinetResource.Komments object={data?.resource?.id} />
-              ),
-            }}
-          />
-        }
-        pageActions={<></>}
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
@@ -37,6 +30,22 @@ export default asDetailQueryRoute(
               <PodCard key={pod.id} item={pod} />
             ))}
           </div>
+        </div>
+        <div className="p-6">
+          <div className="mt-4 font-light mb-2">Qualifiers</div>
+          <ResponsiveContainerGrid>
+            {data?.resource?.qualifiers.map((qualifier) => (
+              <Card
+                key={qualifier.id}
+                className="rounded-md border border-input p-4 truncate"
+              >
+                <h2 className="font-semibold">{qualifier.key}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {qualifier.value}
+                </p>
+              </Card>
+            ))}
+          </ResponsiveContainerGrid>
         </div>
       </KabinetResource.ModelPage>
     );

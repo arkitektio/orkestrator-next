@@ -7,10 +7,11 @@ export type ImageProps = {
   src: string;
   blurhash?: string | null;
   className?: string;
+  alt?: string;
   style?: React.CSSProperties;
 };
 
-export const Image = ({ src, blurhash, style, className }: ImageProps) => {
+export const Image = ({ src, blurhash, style, className, alt }: ImageProps) => {
   const [bgImage, setBgImage] = useState<string | undefined>();
 
   useEffect(() => {
@@ -40,11 +41,10 @@ export const Image = ({ src, blurhash, style, className }: ImageProps) => {
         backgroundImage: bgImage ? `url(${bgImage}) ` : undefined,
         backgroundSize: "cover",
       }}
-      onDoubleClick={() => {
-        window.open(src, "_blank");
-      }}
+      alt={alt || "Image"}
       className={cn(className)}
       threshold={100}
+
     />
   );
 };

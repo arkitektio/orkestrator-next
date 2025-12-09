@@ -1,3 +1,10 @@
+## [1.49.1](https://github.com/arkitektio/orkestrator-next/compare/v1.49.0...v1.49.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* hotfix assign form ([7b395cf](https://github.com/arkitektio/orkestrator-next/commit/7b395cfcebbe689835c961452adadbd1202d1b5a))
+
 # [1.49.0](https://github.com/arkitektio/orkestrator-next/compare/v1.48.1...v1.49.0) (2025-12-05)
 
 

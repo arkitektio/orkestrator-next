@@ -28,6 +28,7 @@ fragment PostmanAssignation on Assignation {
     extension
   }
   createdAt
+  finishedAt
 }
 
 fragment MinimalAssignation on Assignation {
@@ -41,6 +42,28 @@ fragment MinimalAssignation on Assignation {
     interface
     agent {
       name
+    }
+  }
+}
+
+fragment NoChildrenDetailAssignation on Assignation {
+  ...PostmanAssignation
+  parent {
+    id
+  }
+  finishedAt
+  implementation {
+    agent {
+      registry {
+        client {
+          clientId
+          device {
+            deviceId
+          }
+        }
+      }
+
+    name
     }
   }
 }
@@ -101,6 +124,14 @@ fragment AssignationChangeEvent on AssignationChangeEvent {
   }
   event {
     ...AssignationEvent
+  }
+}
+fragment ChildAssignationEvent on ChildAssignationEvent {
+  create {
+    ...PostmanAssignation
+  }
+  update {
+    ...PostmanAssignation
   }
 }
 

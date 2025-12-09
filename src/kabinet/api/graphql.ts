@@ -31,6 +31,7 @@ export type Scalars = {
  *     create a dependency graph for your implementations and actions
  */
 export type ActionDependencyInput = {
+  allowInactive?: InputMaybe<Scalars['Boolean']['input']>;
   argMatches?: InputMaybe<Array<PortMatchInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   forceArgLength?: InputMaybe<Scalars['Int']['input']>;
@@ -193,10 +194,39 @@ export type ChoiceReturnWidget = ReturnWidget & {
   kind: ReturnWidgetKind;
 };
 
+/** Represents a registered OAuth2 client. */
 export type Client = {
   __typename?: 'Client';
+  /** OAuth2 client ID. */
   clientId: Scalars['String']['output'];
+  /** Device associated with the client. */
+  device?: Maybe<Device>;
+  /** Unique ID of the client. */
+  id: Scalars['ID']['output'];
+  /** Name of the client. */
   name: Scalars['String']['output'];
+  /** Release associated with the client. */
+  release?: Maybe<ClientRelease>;
+};
+
+/** Profile information for a user. */
+export type ClientApp = {
+  __typename?: 'ClientApp';
+  /** Unique ID of the app. */
+  id: Scalars['ID']['output'];
+  /** Name of the app. */
+  identifier: Scalars['String']['output'];
+};
+
+/** Profile information for a user. */
+export type ClientRelease = {
+  __typename?: 'ClientRelease';
+  /** The app this release belongs to. */
+  app: ClientApp;
+  /** Unique ID of the release. */
+  id: Scalars['ID']['output'];
+  /** Version string of the release. */
+  version: Scalars['String']['output'];
 };
 
 /** A user of the bridge server. Maps to an authentikate user */
@@ -444,6 +474,15 @@ export type DescriptorInput = {
   value: Scalars['Arg']['input'];
 };
 
+/** Represents a device assigned to users within an organization. */
+export type Device = {
+  __typename?: 'Device';
+  /** The device identifier. */
+  deviceId: Scalars['ID']['output'];
+  /** Unique ID of the device. */
+  id: Scalars['ID']['output'];
+};
+
 /** The Feature you are trying to match */
 export type DeviceFeature = {
   cpuCount: Scalars['String']['input'];
@@ -522,6 +561,7 @@ export type Flavour = {
   name: Scalars['String']['output'];
   originalLogo?: Maybe<Scalars['String']['output']>;
   release: Release;
+  repo: GithubRepo;
   requirements: Array<Requirement>;
   selectors: Array<Selector>;
 };
@@ -563,10 +603,12 @@ export type GithubRepo = {
   branch: Scalars['String']['output'];
   flavours: Array<Flavour>;
   id: Scalars['ID']['output'];
+  issueUrl: Scalars['String']['output'];
   name: Scalars['String']['output'];
   organization: Organization;
   repo: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
   user: Scalars['String']['output'];
 };
 
@@ -733,6 +775,8 @@ export type Mutation = {
   /** Create a new resource for your backend */
   declareResource: Resource;
   /** Create a new dask cluster on a bridge server */
+  deleteBackend: Scalars['ID']['output'];
+  /** Create a new dask cluster on a bridge server */
   deletePod: Scalars['ID']['output'];
   /** Create a new dask cluster on a bridge server */
   dumpLogs: LogDump;
@@ -774,6 +818,11 @@ export type MutationDeclareBackendArgs = {
 
 export type MutationDeclareResourceArgs = {
   input: DeclareResourceInput;
+};
+
+
+export type MutationDeleteBackendArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -820,9 +869,10 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+/** Represents an organization in the system. */
 export type Organization = {
   __typename?: 'Organization';
-  id: Scalars['String']['output'];
+  /** Slug of the organization. */
   slug: Scalars['String']['output'];
 };
 
@@ -1381,11 +1431,11 @@ export type UpdatePodInput = {
   status: PodStatus;
 };
 
+/** Represents an authenticated user. */
 export type User = {
   __typename?: 'User';
-  activeOrganization?: Maybe<Organization>;
-  preferredUsername: Scalars['String']['output'];
-  sub: Scalars['String']['output'];
+  /** The subject identifier of the user. */
+  sub: Scalars['ID']['output'];
 };
 
 export type Validator = {
@@ -1498,6 +1548,13 @@ export type ListResourceFragment = { __typename?: 'Resource', id: string, name: 
 export type CudaSelectorFragment = { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null };
 
 export type RocmSelectorFragment = { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null };
+
+export type DeleteBackendMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteBackendMutation = { __typename?: 'Mutation', deleteBackend: string };
 
 export type DeletePodMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2100,6 +2157,37 @@ export const ResourceFragmentDoc = gql`
   }
 }
     ${ListPodFragmentDoc}`;
+export const DeleteBackendDocument = gql`
+    mutation DeleteBackend($id: ID!) {
+  deleteBackend(id: $id)
+}
+    `;
+export type DeleteBackendMutationFn = Apollo.MutationFunction<DeleteBackendMutation, DeleteBackendMutationVariables>;
+
+/**
+ * __useDeleteBackendMutation__
+ *
+ * To run a mutation, you first call `useDeleteBackendMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBackendMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBackendMutation, { data, loading, error }] = useDeleteBackendMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteBackendMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteBackendMutation, DeleteBackendMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteBackendMutation, DeleteBackendMutationVariables>(DeleteBackendDocument, options);
+      }
+export type DeleteBackendMutationHookResult = ReturnType<typeof useDeleteBackendMutation>;
+export type DeleteBackendMutationResult = Apollo.MutationResult<DeleteBackendMutation>;
+export type DeleteBackendMutationOptions = Apollo.BaseMutationOptions<DeleteBackendMutation, DeleteBackendMutationVariables>;
 export const DeletePodDocument = gql`
     mutation DeletePod($id: ID!) {
   deletePod(input: {id: $id})

@@ -29,3 +29,10 @@ query ListAssignationsDetails(
     ...PostmanAssignation
   }
 }
+
+
+query NoChildrenDetailAssignation($id: ID!) {
+  assignation(id: $id) {
+    ...NoChildrenDetailAssignation
+  }
+}

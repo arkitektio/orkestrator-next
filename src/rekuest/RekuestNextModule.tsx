@@ -31,6 +31,7 @@ import StructuresPage from "./pages/StructuresPage";
 import AssignationLogPage from "./pages/assignation/AssignationLogPage";
 import AssignationsPage from "./pages/AssignationsPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
+import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage";
 
 /**
  *
@@ -71,6 +72,7 @@ const Module: React.FC = () => {
           <Route path="assignations" element={<AssignationsPage />} />
           <Route path="assignations/:id" element={<AssignationPage />} />
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
+          <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />
         </Routes>
       </ModuleLayout>
     </Guard.Rekuest>

@@ -10,6 +10,8 @@ import {
 import { KabinetPod } from "@/linkers";
 import {
   ListImplementationFragment,
+  useAgentQuery,
+  useAgentsQuery,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
@@ -20,6 +22,8 @@ import {
   useGetPodQuery,
 } from "../api/graphql";
 import ResourceCard from "../components/cards/ResourceCard";
+import { useAgent } from "@/app/agent/AgentProvider";
+import { ag } from "node_modules/@faker-js/faker/dist/airline-DF6RqYmq";
 export const AssignButton = (props: {
   template: ListImplementationFragment;
   pod: string;
@@ -49,11 +53,15 @@ export const AssignButton = (props: {
 
 const RefreshLogsButton = (props: {
   pod: PodFragment;
+  agentId: string;
   refetch: () => void;
 }) => {
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
+        agent: {
+          ids: [props.agentId],
+        },
         action: {
           demands: [
             {
@@ -94,7 +102,34 @@ const RefreshLogsButton = (props: {
   );
 };
 
+export const AgentButtons = (props: {
+  pod: PodFragment;
+}) => {
+  const {data, error} = useAgentsQuery({
+      variables: { filters: {
+        clientId: props.pod.backend.clientId
+       } },
+    });
+
+    if (error)  {
+      return <div>Error loading agent {error.message}</div>;
+    }
+
+  return (
+    <>
+    {data?.agents.map((agent) => (
+      <RefreshLogsButton pod={props.pod} agentId={agent.id} refetch={() => {}} key={agent.id} />
+    ))}
+    </>
+  );
+}
+
+
 export default asDetailQueryRoute(useGetPodQuery, ({ data, refetch }) => {
+
+
+
+
   return (
     <KabinetPod.ModelPage
       title={data.pod.backend.name}
@@ -106,7 +141,7 @@ export default asDetailQueryRoute(useGetPodQuery, ({ data, refetch }) => {
           }}
         />
       }
-      pageActions={<RefreshLogsButton pod={data.pod} refetch={refetch} />}
+      pageActions={<AgentButtons pod={data.pod} />}
     >
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div className="mb-3">

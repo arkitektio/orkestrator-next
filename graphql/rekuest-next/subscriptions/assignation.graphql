@@ -9,3 +9,11 @@ subscription WatchAssignations($instanceId: InstanceId!) {
     ...AssignationChangeEvent
   }
 }
+
+
+
+subscription WatchChildAssignations($parentId: ID!) {
+  childAssignations(id: $parentId) {
+    ...ChildAssignationEvent
+  }
+}

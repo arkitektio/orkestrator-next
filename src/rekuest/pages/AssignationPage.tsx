@@ -342,7 +342,18 @@ export default asDetailQueryRoute(
                 Logs
               </Button>
             </RekuestAssignation.DetailLink>
-
+            <RekuestAssignation.DetailLink
+              object={data?.assignation?.id || ""}
+              subroute="timeline"
+              className="font-semibold"
+            >
+              <Button
+                variant={"outline"}
+                size={"sm"}
+              >
+                Timeline
+              </Button>
+            </RekuestAssignation.DetailLink>
             {data.assignation.parent && <RekuestAssignation.DetailLink
               object={data?.assignation?.parent.id || ""}
               subroute="log"

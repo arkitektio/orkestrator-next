@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/arkitektio/orkestrator-next/compare/v1.49.1...v1.50.0) (2025-12-09)
+
+
+### Features
+
+* add timeline module plus pod actions ([a0fda77](https://github.com/arkitektio/orkestrator-next/commit/a0fda77401435d88db08eb4c63c3f6d329ad348a))
+
 ## [1.49.1](https://github.com/arkitektio/orkestrator-next/compare/v1.49.0...v1.49.1) (2025-12-08)
 
 

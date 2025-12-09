@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/arkitektio/orkestrator-next/compare/v1.50.0...v1.51.0) (2025-12-09)
+
+
+### Features
+
+* minor ui fixes ([e026e7e](https://github.com/arkitektio/orkestrator-next/commit/e026e7e1e247778a0f369a9965856f5132481059))
+
 # [1.50.0](https://github.com/arkitektio/orkestrator-next/compare/v1.49.1...v1.50.0) (2025-12-09)
 
 

@@ -1,0 +1,5 @@
+mutation AutoResolve($input: AutoResolveInput!) {
+  autoResolve(input: $input) {
+    ...Resolution
+  }
+}

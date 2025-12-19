@@ -32,6 +32,7 @@ import AssignationLogPage from "./pages/assignation/AssignationLogPage";
 import AssignationsPage from "./pages/AssignationsPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
 import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage";
+import ResolutionPage from "./pages/ResolutionPage";
 
 /**
  *
@@ -70,6 +71,7 @@ const Module: React.FC = () => {
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<AgentPage />} />
           <Route path="assignations" element={<AssignationsPage />} />
+          <Route path="resolutions/:id" element={<ResolutionPage />} />
           <Route path="assignations/:id" element={<AssignationPage />} />
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
           <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />

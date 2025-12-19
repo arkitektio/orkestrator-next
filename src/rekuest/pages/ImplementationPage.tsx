@@ -7,7 +7,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestAction, RekuestAgent, RekuestAssignation, RekuestImplementation } from "@/linkers";
+import { RekuestAction, RekuestAgent, RekuestAssignation, RekuestImplementation, RekuestResolution } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
@@ -16,6 +16,7 @@ import {
   WatchImplementationDocument,
   WatchImplementationSubscription,
   WatchImplementationSubscriptionVariables,
+  useAutoResolveMutation,
   useImplementationQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
@@ -30,11 +31,13 @@ import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 import TaskList from "../components/lists/TaskList";
+import ResolutionCard from "../components/cards/ResolutionCard";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: props.id,
   });
+
 
   const form = usePortForm({
     ports: implementation?.action.args || [],
@@ -60,6 +63,8 @@ export const DoFormBackup = (props: { id: string }) => {
       },
     );
   };
+
+
 
   const { registry } = useWidgetRegistry();
 
@@ -91,7 +96,7 @@ export const DoFormBackup = (props: { id: string }) => {
   );
 };
 
-export const DoForm = ({ id }: { id: string }) => {
+export const DoForm = ({ id, resolution }: { id: string, resolution: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: id,
   });
@@ -108,6 +113,7 @@ export const DoForm = ({ id }: { id: string }) => {
     assign({
       implementation: id,
       args: data,
+      resolution: resolution,
       hooks: [],
     }).then(
       (result) => {
@@ -257,6 +263,9 @@ export const DefaultRenderer = (props: {
       <ListRender array={props?.implementation?.dependencies}>
         {(implementation, key) => <DependencyCard item={implementation} key={key} />}
       </ListRender>
+      <ListRender array={props?.implementation?.resolutions}>
+        {(implementation, key) => <ResolutionCard item={implementation} key={key} />}
+      </ListRender>
 
       <TaskList filters={{implementation: props.implementation.id}}/>
     </div>
@@ -289,6 +298,33 @@ export default asDetailQueryRoute(
       });
     }, [subscribeToMore]);
 
+
+    const [autoResolve] = useAutoResolveMutation()
+
+    const navigate = useNavigate();
+
+    const runAutoResolve = async () => {
+      try {
+        let mdata = await autoResolve({
+          variables: {
+            input: { implementation: data.implementation.id },
+          },
+        });
+        if (mdata.errors) {
+          toast.error("Auto-resolve failed: " + mdata.errors[0].message);
+        } else {
+          toast.success("Auto-resolve started");
+          if (mdata.data?.autoResolve?.id) {
+            navigate(RekuestResolution.linkBuilder(mdata.data?.autoResolve?.id))
+          }
+          refetch();
+        }
+      }
+      catch (e) {
+        toast.error("Auto-resolve failed: " + (e as Error).message);
+      }
+    };
+
     return (
       <RekuestImplementation.ModelPage
         title={
@@ -307,6 +343,9 @@ export default asDetailQueryRoute(
               <Button variant="outline">Go to Action</Button>
             </RekuestAction.DetailLink>
           </>
+          <Button variant="outline" onClick={() => runAutoResolve()}>
+            Auto-Resolve
+          </Button>
           <>
             <RekuestAgent.DetailLink object={data.implementation.agent.id}>
               <Button variant="outline">Go to Agent</Button>

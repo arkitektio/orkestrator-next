@@ -9,13 +9,18 @@ import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
 import {
   ListDependencyFragment,
+  ListResolutionFragment,
   PostmanAssignationFragment,
+  useAgentsLazyQuery,
+  useAgentsQuery,
   useImplementationOptionsLazyQuery,
 } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { ContainerGrid, ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import Timestamp from "react-timestamp";
+import React from "react";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -25,23 +30,57 @@ export type ImplementationAssignFormProps = {
   hidden?: { [key: string]: any };
 };
 
+
+
+export const ResolutionItem = ({
+  resolution,
+  isLatest,
+  onSelect,
+}: {
+  resolution: ListResolutionFragment;
+  isLatest?: boolean;
+  onSelect?: (resolution: string) => void;
+}) => {
+  return (
+    <div className={cn("rounded shadow-md border border-gray-600 p-4 rounded-md ", isLatest && "border-blue-500")} onClick={() => onSelect?.(resolution.id)}>
+      <h3 className="font-semibold mb-2">{resolution.name}</h3>
+      <p className="text-sm text-muted-foreground">
+        resolved at <Timestamp date={resolution.resolvedAt} autoUpdate />
+      </p>
+    </div>
+  );
+}
+
+
+
+
 export const DependencyWidget = ({
   dependency,
 }: {
   dependency: ListDependencyFragment;
 }) => {
-  const [search] = useImplementationOptionsLazyQuery({
-    variables: { dependency: dependency.id },
+  const {data} = useAgentsQuery({
+    variables: { filters: { dependency: dependency.id } },
   });
 
   return (
     <div className="rounded shadow-md border border-gray-600 p-4 rounded-md max-h-60  ">
-      <GraphQLSearchField
-        name={`dependencies.${dependency.key}`}
-        searchQuery={search}
-        label={dependency.key}
-        description={dependency.description || ""}
-      />
+      {data?.agents.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No agents available for this dependency.
+        </p>
+      ) : (
+        <>
+          <h3 className="font-semibold mb-2">{dependency.key}</h3>
+          <ul className="list-disc list-inside max-h-40 overflow-y-auto">
+            {data?.agents.map((agent) => (
+              <li key={agent.id} className="text-sm">
+                {agent.name} ({agent.id})
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 };
@@ -54,6 +93,9 @@ export const ImplementationAssignForm = (
       id: props.id,
     });
 
+
+  const [sele, setSele] = React.useState<string | null>(latestAssignation?.resolution.id || null);
+
   const description = useActionDescription({
     description: implementation?.action.description || "",
   });
@@ -61,7 +103,6 @@ export const ImplementationAssignForm = (
   const form = useImplementationForm({
     implementation: implementation,
     overwrites: { ...latestAssignation?.args, ...props.args },
-    presetDependencies: latestAssignation?.dependencies,
     reValidateMode: "onChange",
   });
 
@@ -77,6 +118,7 @@ export const ImplementationAssignForm = (
         args: data.args,
         dependencies: data.dependencies,
         hooks: [],
+        resolution: sele || undefined,
       });
 
       props.onAssign?.(assignation);
@@ -94,7 +136,6 @@ export const ImplementationAssignForm = (
     }
   };
 
-  const dependencies = form.watch("dependencies");
 
   const { registry } = useWidgetRegistry();
 
@@ -128,8 +169,8 @@ export const ImplementationAssignForm = (
 
           </div>
             <ResponsiveContainerGrid className="grid @lg:grid-cols-3 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-4 @4xl:grid-cols-4 @5xl:grid-cols-4  @6xl:grid-cols-4 gap-2 max-h-128 overflow-y-auto w-min-[80vw] @container mb-4" >
-              {implementation?.dependencies.map((dep) => (
-                <DependencyWidget dependency={dep} key={dep.id} />
+              {implementation?.resolutions.map((res) => (
+                <ResolutionItem key={res.id} resolution={res} isLatest={sele === res.id} onSelect={setSele} />
               ))}
             </ResponsiveContainerGrid>
           <DialogFooter className="flex-initial">

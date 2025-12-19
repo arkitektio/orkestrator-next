@@ -1,0 +1,182 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { RekuestResolution, RekuestToolbox } from "@/linkers";
+import {
+  AssignationEventKind,
+  useGetResolutionQuery
+} from "@/rekuest/api/graphql";
+import { ResolutionGraph } from "@/rekuest/components/global/ResolutionGraph";
+import { useImplementationAction } from "../hooks/useImplementationAction";
+import { usePortForm } from "../hooks/usePortForm";
+import { toast } from "sonner";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { Form } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
+import { portToLabel } from "../widgets/utils";
+
+export const DoForm = ({ id, resolution }: { id: string, resolution: string }) => {
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+    id: id,
+  });
+
+  const form = usePortForm({
+    ports: implementation?.action.args || [],
+  });
+
+
+  const onSubmit = (data: any) => {
+    assign({
+      implementation: id,
+      args: data,
+      resolution: resolution,
+      hooks: [],
+    }).then(
+      (result) => {
+        console.log("Result", result);
+      },
+      (error) => {
+        toast.error(error.message);
+      },
+    );
+  };
+
+  const { registry } = useWidgetRegistry();
+
+  const yieldEvent = latestAssignation?.events?.find(
+    (x) => x.kind == AssignationEventKind.Yield,
+  );
+
+  const errorEvent = latestAssignation?.events?.find(
+    (x) => x.kind == AssignationEventKind.Critical,
+  );
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex flex-col gap-4 h-full">
+            <Card className="flex-1 p-2">
+              <CardHeader>
+                <CardTitle className="font-light">Arguments</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <div className="w-full">
+                  <ArgsContainer
+                    registry={registry}
+                    ports={implementation?.action?.args || []}
+                    path={[]}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex-initial h-full flex flex-col ">
+              <Button
+                type="submit"
+                variant={"ghost"}
+                className="my-auto block h-full"
+              >
+                <ArrowRight className="my-auto" />
+              </Button>
+            </div>
+
+            {yieldEvent ? (
+              <Card className="flex-1 p-2">
+                <CardHeader>
+                  <CardTitle className="font-light">Outs</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    <ReturnsContainer
+                      registry={registry}
+                      ports={implementation?.action.returns || []}
+                      values={yieldEvent?.returns}
+                    ></ReturnsContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="flex-1">
+                <CardHeader>
+                  <CardTitle className="font-light">Outs</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    {implementation?.action?.returns?.map((p) => (
+                      <div>
+                        <div className=" font-bold">{p.label || p.key}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {p.description}
+                        </div>
+
+                        <div className="text-xs text-muted-foreground">
+                          {portToLabel(p)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {errorEvent && (
+              <Card className="flex-1">
+                <CardHeader>
+                  <CardTitle className="font-light text-red-800">
+                    Errors
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    {errorEvent.message}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </form>
+      </Form>
+    </>
+  );
+};
+
+export default asDetailQueryRoute(useGetResolutionQuery, ({ data, refetch }) => {
+  return (
+    <RekuestResolution.ModelPage
+      title={data.resolution.name}
+      object={data.resolution.id}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: <RekuestToolbox.Komments object={data?.resolution?.id} />,
+          }}
+        />
+      }
+    >
+      <div className="flex flex-col gap-4 h-full">
+      <div className="flex-initial p-6">
+        <div className="mb-3">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer">
+            {data?.resolution?.name}
+          </h1>
+        </div>
+        </div>
+        <div className="grid grid-cols-12 gap-4 px-6 h-full w-full">
+          <div className="col-span-2 ">
+        <DoForm id={data.resolution.implementation.id} resolution={data.resolution.id}/>
+        </div>
+        <div className="col-span-10 h-full w-full mb-6">
+        <ResolutionGraph resolution={data.resolution} />
+        </div>
+        </div>
+      </div>
+    </RekuestResolution.ModelPage>
+  );
+});

@@ -18,6 +18,10 @@ import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 
 
 
+export const RekuestResolution = buildSmart(
+  "@rekuest/resolution",
+  "rekuest/resolutions",
+);
 
 
 

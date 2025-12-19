@@ -16,6 +16,9 @@ fragment DetailImplementation on Implementation {
   myLatestAssignation {
     ...PostmanAssignation
   }
+  resolutions {
+    ...ListResolution
+  }
 }
 
 fragment ListImplementation on Implementation {

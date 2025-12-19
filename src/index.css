@@ -10,6 +10,9 @@
 
 @layer base {
   :root {
+    --xy-node-group-background-color: "transparent";
+    --xy-node-group-border-color: hsl(var(--border));
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --pane: 210 40% 98%;

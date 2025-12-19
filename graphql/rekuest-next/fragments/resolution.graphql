@@ -1,0 +1,86 @@
+
+
+fragment Resolution on Resolution {
+  id
+  name
+  implementation {
+    ...DetailImplementation
+  }
+  resolvedDependencies {
+    id
+    key
+    dependency {
+      id
+      key
+      description
+    }
+    implementation {
+      id
+      name
+      interface
+      agent {
+        id
+        name
+      }
+    }
+    downStreamResolution {
+      id
+      name
+      resolvedDependencies {
+        id
+        key
+        implementation {
+          id
+          name
+          interface
+          agent {
+            id
+            name
+          }
+        }
+        dependency {
+          id
+          key
+          description
+        }
+        downStreamResolution {
+          id
+          name
+          resolvedDependencies {
+            id
+            key
+            implementation {
+              id
+              name
+              interface
+              agent {
+                id
+                name
+              }
+            }
+            dependency {
+              id
+              key
+              description
+            }
+            downStreamResolution {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+fragment ListResolution on Resolution {
+  id
+  name
+  resolvedAt
+  creator {
+    sub
+
+  }
+}

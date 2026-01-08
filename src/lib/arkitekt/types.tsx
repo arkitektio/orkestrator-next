@@ -76,6 +76,7 @@ export type ConnectedContext<T extends ServiceBuilderMap> = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
   serviceMap: InferedServiceMap<T>;
+  aliasMap: { [K in keyof T]: Alias };
   serviceBuilderMap: T;
   token: Token;
   endpoint: FaktsEndpoint;

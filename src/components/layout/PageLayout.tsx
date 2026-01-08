@@ -119,7 +119,7 @@ export const PageLayout = ({
       <ResizablePanel className="h-full w-full" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col",
+            "h-full w-full flex flex-col bg-background",
             variant == "default" ? "" : "bg-black text-gray-300",
           )}
         >
@@ -182,7 +182,7 @@ export const PageLayout = ({
             </div>
           </div>
 
-          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto ">
+          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto bg-background">
             {children}
           </div>
         </div>
@@ -196,7 +196,7 @@ export const PageLayout = ({
             defaultSize={20}
             order={2}
             className={cn(
-              "border-l-1 border bg-pane dark:border-gray-700 dark:bg-sidebar",
+              "border-l-1 border bg-background",
               variant == "default" ? "" : "border-0 bg-black",
             )}
             id="sidebar"

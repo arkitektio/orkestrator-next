@@ -1,5 +1,5 @@
 import { anySignal } from "any-signal";
-import { AppContext, EnhancedManifest, ReportRequest } from "./types";
+import { AppContext, EnhancedManifest, ReportRequest, Service } from "./types";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { Manifest } from "./fakts/manifestSchema";
 import { Alias } from "./fakts/faktsSchema";
@@ -12,8 +12,8 @@ function mstimeout(ms: number) {
 }
 
 
-export const selectService = (context: AppContext, name: string) => {
-  const client = context.connection?.clients[name];
+export const selectService = (context: AppContext, name: string): Service => {
+  const client = context.connection?.serviceMap[name];
   if (!client) {
     throw new Error(`Client ${name} not found`);
   }
@@ -21,13 +21,13 @@ export const selectService = (context: AppContext, name: string) => {
 }
 
 export const selectAlias = (context: AppContext, name: string): Alias => {
-  const client = context.connection?.clients[name];
-  if (!client) {
-    throw new Error(`Client ${name} not found`);
+  const alias = context.connection?.aliasMap[name];
+  if (!alias) {
+    throw new Error(`Alias ${name} not found`);
   }
-  // @ts-ignore
-  return client.alias; // Wait, Service type doesn't have alias?
+  return alias;
 }
+
 
 
 export const selectApolloClient = (

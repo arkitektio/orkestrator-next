@@ -3,7 +3,6 @@ import { ActiveFakts, Alias } from "./fakts/faktsSchema";
 import {
   AliasReport,
   EnhancedManifest,
-  Token
 } from "./types";
 
 export const buildAliases = async ({

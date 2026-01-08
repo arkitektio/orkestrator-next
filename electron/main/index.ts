@@ -459,7 +459,9 @@ app.whenReady().then(() => {
     return { success: false, error: "No window to reload" };
   });
 
-  ipcMain.on("fakts-start", (_: IpcMainEvent, msg) => createFaktsWindow(msg));
+  ipcMain.on("fakts-start", (_: IpcMainEvent, msg) => {
+    shell.openExternal(msg);
+  });
   ipcMain.on("open-second-window", (_: IpcMainEvent, path) =>
     openSecondaryWindow(path),
   );

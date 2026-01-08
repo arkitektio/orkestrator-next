@@ -24,10 +24,10 @@ import { NotFound } from "./components/fallbacks/NotFound";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
-export const protect = (component: React.ReactNode) => {
+export const protect = (component: React.ReactNode, fallback?: React.ReactNode) => {
   return (
     <Arkitekt.Guard
-      notConnectedFallback={<NotConnected />}
+      notConnectedFallback={fallback || <NotConnected />}
       connectingFallback={<ConnectingFallback />}
     >
       {component}
@@ -42,7 +42,7 @@ export const Fallback = () => {
 function App() {
   return (
     <AppProvider>
-      <AppLayout navigationBar={<PrivateNavigationBar />}>
+      <AppLayout navigationBar={protect(<PrivateNavigationBar />, <></>)}>
         <BackNavigationErrorCatcher>
           <Routes>
             <Route index element={protect(<Hero />)} />

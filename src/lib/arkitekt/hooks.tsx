@@ -1,34 +1,48 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { ArkitektContext } from "./context";
-import { Service } from "./types";
+import { ArkitektContextType, Service, ServiceMap } from "./types";
 
-export const useArkitekt = () => useContext(ArkitektContext);
+export const useArkitekt = () =>
+  useContext(ArkitektContext) as ArkitektContextType;
 
-export const useService = <T extends string = string >(key: string): Service<T> => {
+
+export type IsOptional<T, K extends keyof T> = undefined extends T[K] ? true : false;
+
+
+export const useService = (key: string): Service=> {
   const { connection } = useArkitekt();
 
   if (!connection) {
     throw new Error("Arkitekt not connected");
   }
 
-  if (!connection.clients[key]) {
-    throw new Error(`Service ${key} not available`);
+  const service = connection.serviceMap[key];
+  if (!service) {
+    throw new Error(`Service ${key} not found`);
   }
-
-  return connection?.clients[key];
+  return service;
 };
 
-export const usePotentialService = <T extends string = string >(key: string): Service<T> | undefined => {
+
+export const useAvailableServices = () => {
   const { connection } = useArkitekt();
 
-  return connection?.clients[key];
+  if (!connection) {
+    throw new Error("Arkitekt not connected");
+  }
+
+  return Object.keys(connection.serviceMap).map(key =>({key: key, definition: connection.serviceBuilderMap[key], instance: connection.serviceMap[key]}));
+}
+
+export const usePotentialService = (key: string): Service | undefined => {
+  const { connection } = useArkitekt();
+  const service = connection?.serviceMap?.[key];
+  return service;
 };
 
 export const useToken = () => {
   return useArkitekt().connection?.token || null;
 };
-
-
 
 export const useManifest = () => {
   return useArkitekt().manifest;

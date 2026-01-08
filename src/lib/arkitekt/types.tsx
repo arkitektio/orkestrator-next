@@ -19,15 +19,14 @@ export type UnresolvedService = {
 export type Service = {
   ward?: Ward;
   alias?: Alias;
-  instance?: Instance;
   client: unknown;
+  instance: Instance;
 };
 
 export type Token = string;
 
 export type ServiceBuilder<T> = (options: {
   manifest: Manifest;
-  instance: Instance;
   alias: Alias;
   fakts: ActiveFakts;
   token: Token;
@@ -47,8 +46,9 @@ export type ServiceBuilderMap<T extends Record<string, ServiceDefinition> = Reco
   [K in keyof T]: T[K];
 };
 
-export type ServiceMap<T extends Record<string, any> = Record<string, any>> = {
-  [K in keyof T]: Service<T[K]>;
+
+export type InferedServiceMap<T extends ServiceBuilderMap> = {
+  [K in keyof T]: T[K] extends ServiceDefinition<infer R> ? R : never;
 };
 
 export type AliasReport = {
@@ -72,25 +72,23 @@ export type EnhancedManifest = Manifest & {
 
 // Context Types
 
-export type ConnectedContext<T extends Record<string, any> = Record<string, any>> = {
+export type ConnectedContext<T extends ServiceBuilderMap> = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
-  clients: ServiceMap<T>;
-  aliasReports: { [key: string]: AliasReport };
+  serviceMap: InferedServiceMap<T>;
+  serviceBuilderMap: T;
   token: Token;
-  availableServices: AvailableService[];
-  unresolvedServices?: UnresolvedService[];
   endpoint: FaktsEndpoint;
 };
 
-export type ConnectFunction<T extends Record<string, any> = Record<string, any>> = (options: {
+export type ConnectFunction = (options: {
   endpoint: FaktsEndpoint;
   controller: AbortController;
-}) => Promise<AppContext<T>>;
+}) => Promise<AppContext>;
 
 export type DisconnectFunction = () => Promise<void>;
 
-export type AppContext<T extends Record<string, any> = Record<string, any>> = {
+export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap> = {
   manifest: EnhancedManifest;
   connection?: ConnectedContext<T>;
 };

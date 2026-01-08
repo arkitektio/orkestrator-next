@@ -5,9 +5,12 @@ import {
   ConnectedGuard,
   ServiceBuilderMap,
   useArkitekt,
+  useAvailableServices,
+  useInstances,
   usePotentialService,
   useService,
 } from "./provider";
+import { K } from "handlebars";
 // When using the Tauri API npm package:
 
 export const buildGuard =
@@ -33,6 +36,9 @@ export const buildWith =
       return Wrapped as T;
     };
 
+
+
+
 export const buildArkitekt = <T extends ServiceBuilderMap>({
   manifest,
   serviceBuilderMap,
@@ -41,6 +47,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
   serviceBuilderMap: T;
   widgetRegistry?: WidgetRegistry;
 }) => {
+
   const requirements: Requirement[] = serviceBuilderMap
     ? Object.values(serviceBuilderMap).map((s) => ({
       service: s.service,
@@ -67,11 +74,12 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
     useConnectedManifest: () => useArkitekt().connection?.manifest,
     useConnection: () => useArkitekt().connection,
     useFakts: () => useArkitekt().connection?.fakts,
-    useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service),
-    useServices: () => useArkitekt().connection?.availableServices || [],
-    useUnresolvedServices: () =>
-      useArkitekt().connection?.unresolvedServices || [],
-
+    useAlias: <K extends keyof T>(serviceKey: K) => {
+      const service = useService(serviceKey as string);
+      return service?.alias;
+    },
+    useAvailableServices: useAvailableServices,
+    useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service as string) as ReturnType<T[K]["builder"]>,
     useToken: () => useArkitekt().connection?.token || null,
     useArkitekt: useArkitekt,
   };

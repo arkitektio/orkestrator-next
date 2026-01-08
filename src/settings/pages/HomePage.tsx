@@ -249,8 +249,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const { setSettings, settings } = useSettings();
   const fakts = Arkitekt.useFakts();
 
-  const services = Arkitekt.useServices();
-  const unresolvedServices = Arkitekt.useUnresolvedServices();
 
   const form = useForm({
     defaultValues: settings,
@@ -418,9 +416,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             </p>
           </div>
 
-          {services.length > 0 ? (
+          {fakts?.instances.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map((service) => (
+              {fakts?.instances.map((service) => (
                 <ServiceCard
                   key={service.key}
                   serviceKey={service.key}

@@ -9,7 +9,7 @@ import { createAlpakaClient } from "@/lib/alpaka/client";
 import { createElektroClient } from "@/lib/elektro/client";
 import { createFlussClient } from "@/lib/fluss/client";
 import { createKraphClient } from "@/lib/kraph/client";
-import { createLivekitClient, LivekitClient } from "@/lib/livekit/client";
+import { createLivekitClient } from "@/lib/livekit/client";
 import { createLovekitClient } from "@/lib/lovekit/client";
 import { createMikroClient } from "@/lib/mikro/client";
 import { createOmeroArkClient } from "@/lib/omero-ark/client";
@@ -21,11 +21,10 @@ import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
-import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { buildArkitekt, buildGuard } from ".";
 import { createDokumentsClient } from "../dokuments/client";
 import { aliasToHttpPath, aliasToWsPath } from "./alias/helpers";
-import { ServiceBuilderMap, useService } from "./provider";
+import { ServiceBuilderMap } from "./provider";
 
 export const electronRedirect = async (
   url: string,
@@ -236,7 +235,6 @@ export const serviceMap = {
         client: { url: aliasToHttpPath(alias, "") },
         alias
       };
-
     },
   },
 } as const satisfies ServiceBuilderMap;

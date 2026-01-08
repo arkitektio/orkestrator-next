@@ -89,7 +89,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
   const disconnect = Arkitekt.useDisconnect();
   const reconnect = Arkitekt.useReconnect();
   const { debug, setDebug } = useDebug();
-  const services = Arkitekt.useServices();
+  const instances = Arkitekt.useAvailableServices();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,7 +133,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
         )}
       </div>
       <div className="flex-grow flex-row md:flex-col flex justify-center  md:gap-6 items-center gap-2 overflow-hidden md:flex hidden">
-        {services.map((s) => {
+        {instances.map((s) => {
           if (s.key == "self") return null;
           if (s.key == "datalayer") return null;
           if (s.key == "livekit") return null;
@@ -169,7 +169,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
           <DrawerContent
             className="p-2 mb-2 border-seperator grid grid-cols-1 gap-2"
           >
-            {services.map((s) => {
+            {instances.map((s) => {
               if (s.key == "self") return null;
               if (s.key == "datalayer") return null;
               if (s.key == "livekit") return null;

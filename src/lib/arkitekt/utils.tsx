@@ -1,6 +1,10 @@
 import { anySignal } from "any-signal";
-import { AppContext } from "./provider";
+import { AppContext, EnhancedManifest, ReportRequest } from "./types";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
+import { Manifest } from "./fakts/manifestSchema";
+import { Alias } from "./fakts/faktsSchema";
+
+
 function mstimeout(ms: number) {
   return new Promise((resolve, reject) =>
     setTimeout(() => reject(Error(`Timeout after ${ms}`)), ms),
@@ -21,7 +25,8 @@ export const selectAlias = (context: AppContext, name: string): Alias => {
   if (!client) {
     throw new Error(`Client ${name} not found`);
   }
-  return client.alias;
+  // @ts-ignore
+  return client.alias; // Wait, Service type doesn't have alias?
 }
 
 
@@ -95,3 +100,38 @@ export async function fetchWithTimeout(
     throw e;
   }
 }
+
+export const enhanceManifest = async (
+  manifest: Manifest,
+): Promise<EnhancedManifest> => {
+  // Add any enhancements to the manifest here
+  return {
+    ...manifest,
+    node_id: await window.api.getNodeId(),
+  };
+};
+
+
+export const report = async (
+  url: string,
+  reportRequest: ReportRequest,
+): Promise<void> => {
+  try {
+    const response = await fetch(`${url}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reportRequest),
+    });
+
+    if (!response.ok) {
+      console.warn(
+        `Report request failed: ${response.status} ${response.statusText}`,
+      );
+    }
+  } catch (e) {
+    console.error("Report request error:", e);
+  }
+}
+

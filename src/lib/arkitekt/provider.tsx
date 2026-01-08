@@ -1,27 +1,16 @@
-import { Ward } from "@/rekuest/widgets/WidgetsContext";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { ApolloClient } from "@apollo/client";
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { resolveWorkingAlias } from "./alias/resolve";
+import { buildContext } from "./builder";
+import { ArkitektContext } from "./context";
 import { FaktsEndpoint, FaktsEndpointSchema } from "./fakts/endpointSchema";
-import {
-  ActiveFakts,
-  ActiveFaktsSchema,
-  Alias,
-  Instance,
-} from "./fakts/faktsSchema";
+import { ActiveFakts, ActiveFaktsSchema, Alias } from "./fakts/faktsSchema";
 import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
+import { useArkitekt } from "./hooks";
 import { login } from "./oauth/login";
-import { end } from "slate";
-import { manifest } from "@/constants";
+import { AppContext, EnhancedManifest, ReportRequest, ServiceBuilderMap } from "./types";
+import { enhanceManifest, report } from "./utils";
 
 export type AvailableService = {
   key: string;
@@ -35,304 +24,17 @@ export type UnresolvedService = {
   aliases: Alias[] | undefined;
 };
 
-export type Service<T extends any = any> = {
-  ward?: Ward;
-  client: ApolloClient<T>;
-};
-
-export type ServiceBuilder<T> = (options: {
-  manifest: Manifest;
-  instance: Instance;
-  alias: Alias;
-  fakts: ActiveFakts;
-  token: Token;
-}) => Promise<Service<T>>;
-
-export type ServiceDefinition<T extends any = any> = {
-  builder: ServiceBuilder<T>;
-  key: string;
-  service: string;
-  omitchallenge?: boolean;
-  forceinsecure?: boolean;
-  optional: boolean;
-};
-
-export type ServiceBuilderMap = {
-  [key: string]: ServiceDefinition<any>;
-};
-
-export type ServiceMap = {
-  [key: string]: Service<any>;
-};
-
-export type Token = string;
-
-export type AppContext = {
-  manifest: EnhancedManifest;
-  connection?: ConnectedContext;
-};
-
-export type AppFunctions = {
-  connect: ConnectFunction;
-  disconnect: DisconnectFunction;
-  reconnect: () => Promise<void>;
-  connecting?: boolean;
-};
-
-export type ConnectedContext = {
-  fakts: ActiveFakts;
-  manifest: EnhancedManifest;
-  clients: ServiceMap;
-  aliasReports: { [key: string]: AliasReport };
-  token: Token;
-  availableServices: AvailableService[];
-  unresolvedServices?: UnresolvedService[];
-  endpoint: FaktsEndpoint;
-};
-
-export type ConnectFunction = (options: {
-  endpoint: FaktsEndpoint;
-  controller: AbortController;
-}) => Promise<AppContext>;
-
-export type DisconnectFunction = () => Promise<void>;
-
-export const ArkitektContext = createContext<AppContext & AppFunctions>({
-  manifest: undefined as unknown as Manifest,
-  connect: async () => {
-    throw new Error("No provider");
-  },
-  disconnect: async () => {
-    throw new Error("No provider");
-  },
-  reconnect: async () => {
-    throw new Error("No provider");
-  },
-  // Default values
-  connection: undefined,
-  connecting: false,
-});
-export const useArkitekt = () => useContext(ArkitektContext);
-
-export const useService = (key: string) => {
-  const { connection } = useArkitekt();
-
-  if (!connection) {
-    throw new Error("Arkitekt not connected");
-  }
-
-  if (!connection.clients[key]) {
-    throw new Error(`Service ${key} not available`);
-  }
-
-  return connection?.clients[key];
-};
-
-export const usePotentialService = (key: string) => {
-  const { connection } = useArkitekt();
-
-  return connection?.clients[key];
-};
-
-export const useToken = () => {
-  return useArkitekt().connection?.token || null;
-};
-
-export const buildContext = async ({
-  endpoint,
-  fakts,
-  manifest,
-  serviceBuilderMap,
-  token,
-  controller,
-}: {
-  endpoint: FaktsEndpoint;
-  fakts: ActiveFakts;
-  manifest: EnhancedManifest;
-  serviceBuilderMap: ServiceBuilderMap;
-  token: Token;
-  controller: AbortController;
-}): Promise<ConnectedContext> => {
-  const clients: { [key: string]: Service<any> } = {};
-  const reports: { [key: string]: AliasReport } = {};
-
-  console.log("Building clients for", fakts);
-
-  const availableServices = [] as AvailableService[];
-  const unresolvedServices = [] as UnresolvedService[];
-
-  const servicePromises = Object.entries(serviceBuilderMap).map(
-    async ([key, definition]) => {
-      try {
-        if (!definition.builder) {
-          throw new Error(`No builder defined for service ${key}`);
-        }
-
-        if (!definition.service) {
-          throw new Error(`No service defined for service ${key}`);
-        }
-
-        const serviceInstance = fakts.instances[key];
-        if (!serviceInstance) {
-          throw new Error(`No instance found for service ${key}`);
-        }
-
-        let alias: Alias;
-
-        if (definition.omitchallenge) {
-          alias = serviceInstance.aliases[0];
-
-
-
-        } else {
-          // Perform challenge if needed
-          // (Challenge logic would go here)
-          alias = await resolveWorkingAlias({
-            instance: serviceInstance,
-            timeout: 1000,
-            controller,
-          });
-        }
-
-        if (definition.forceinsecure) {
-          alias.ssl = false;
-        }
-
-        const client = await definition.builder({
-          manifest,
-          alias,
-          token,
-          fakts,
-          instance: serviceInstance,
-        });
-
-        return {
-          key,
-          client,
-          availableService: {
-            key,
-            service: definition.service,
-            resolved: alias,
-          },
-        };
-      } catch (e) {
-        console.error(`Failed to build client for ${key}`, e);
-        return {
-          key,
-          unresolvedService: {
-            key,
-            service: definition.service,
-            aliases: fakts.instances[key]?.aliases,
-          },
-        };
-      }
-    },
-  );
-
-  const results = await Promise.allSettled(servicePromises);
-
-  for (const result of results) {
-    if (result.status === "fulfilled" && result.value) {
-      const { key, client, availableService, unresolvedService } = result.value;
-
-      if (client && availableService) {
-        clients[key] = client;
-        availableServices.push(availableService);
-        reports[key] = { valid: true, alias_id: availableService.resolved.id };
-      } else if (unresolvedService) {
-        reports[key] = { valid: true, reason: "Could not build service" };
-        unresolvedServices.push(unresolvedService);
-      }
-    } else if (result.status === "rejected") {
-      console.error("Service build failed:", result.reason);
-      // Re-throw if it's a non-optional service that failed
-      const failedKey = Object.keys(serviceBuilderMap).find(
-        (key) => serviceBuilderMap[key] && !serviceBuilderMap[key].optional,
-      );
-      if (failedKey) {
-        throw result.reason;
-      }
-    }
-  }
-
-  return {
-    clients,
-    manifest: manifest,
-    fakts: fakts,
-    aliasReports: reports,
-    availableServices: availableServices,
-    unresolvedServices:
-      unresolvedServices.length > 0 ? unresolvedServices : undefined,
-    token: token,
-    endpoint: endpoint,
-  };
-};
-
-
-export type AliasReport = {
-  valid: boolean;
-  alias_id?: string;
-  reason?: string;
-};
-
-
-export type ReportRequest = {
-  alias_reports: { [key: string]: AliasReport;}
-  token: string;
-  functional: boolean;
-};
-
-
-
-export type EnhancedManifest = Manifest & {
-  node_id: string;
-};
-
-export const enhanceManifest = async (
-  manifest: Manifest,
-): Promise<EnhancedManifest> => {
-  // Add any enhancements to the manifest here
-  return {
-    ...manifest,
-    node_id: await window.api.getNodeId(),
-  };
-};
-
-
-const report = async (
-  url: string,
-  reportRequest: ReportRequest,
-): Promise<void> => {
-  try {
-    const response = await fetch(`${url}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(reportRequest),
-    });
-
-    if (!response.ok) {
-      console.warn(
-        `Report request failed: ${response.status} ${response.statusText}`,
-      );
-    }
-  } catch (e) {
-    console.error("Report request error:", e);
-  }
-}
-
-export const ArkitektProvider = ({
+export const ArkitektProvider = <T extends Record<string, any> = Record<string, any>>({
   children,
   manifest,
   serviceBuilderMap,
 }: {
   children: ReactNode;
   manifest: Manifest;
-  serviceBuilderMap: ServiceBuilderMap;
+  serviceBuilderMap: ServiceBuilderMap<T>;
 }) => {
-  const [context, setContext] = useState<AppContext>({
-    manifest: manifest,
+  const [context, setContext] = useState<AppContext<T>>({
+    manifest: manifest as EnhancedManifest,
     connection: undefined,
   });
   const [connecting, setConnecting] = useState(false);
@@ -342,7 +44,7 @@ export const ArkitektProvider = ({
   const connect = async (options: {
     endpoint: FaktsEndpoint;
     controller: AbortController;
-  }): Promise<Omit<AppContext, "connect">> => {
+  }): Promise<Omit<AppContext<T>, "connect">> => {
     // Build Manifest
     localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
 
@@ -357,10 +59,6 @@ export const ArkitektProvider = ({
 
     // Save fakts to local storage
     localStorage.setItem("fakts", JSON.stringify(fakts));
-
-
-
-
 
 
     const token = await login(fakts.auth);
@@ -378,18 +76,21 @@ export const ArkitektProvider = ({
       endpoint: options.endpoint,
     });
 
+    const functional = enhancedManifest.requirements.every((req => {
+      return req.optional || connectedContext.aliasReports[req.key]?.valid;
+    }))
+
+
     const reportRequest : ReportRequest = {
       alias_reports: connectedContext.aliasReports,
       token: fakts.auth.client_token,
-      functional: enhancedManifest.requirements.every((req => {
-      return req.optional || connectedContext.aliasReports[req.key]?.valid;
-    })),
+      functional: functional,
     };
 
     await report(fakts.auth.report_url, reportRequest);
 
 
-
+    if (functional) {
 
 
 
@@ -401,6 +102,10 @@ export const ArkitektProvider = ({
     }));
 
     setConnecting(false);
+  } else {
+      setConnecting(false);
+      throw new Error("Could not connect to all required services");
+    }
 
     return {
       ...context,
@@ -455,7 +160,7 @@ export const ArkitektProvider = ({
     await connect({ ...options, endpoint });
   };
 
-  const tryReconnect = async (manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap) => {
+  const tryReconnect = async (manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap<T>) => {
     const faktsRaw = localStorage.getItem("fakts");
     const tokenRaw = localStorage.getItem("token");
     const endpointRaw = localStorage.getItem("endpoint");
@@ -483,6 +188,14 @@ export const ArkitektProvider = ({
         controller,
         endpoint: endpoint,
       });
+
+      const functional = manifest.requirements.every((req => {
+        return req.optional || connectedContext.aliasReports[req.key]?.valid;
+      }))
+
+      if (!functional) {
+        throw new Error("Not all required services are functional");
+      }
 
       setConnecting(false);
 
@@ -539,13 +252,13 @@ export const ConnectedGuard = ({
   return <>{children}</>;
 };
 
-export type ArkitektBuilderOptions = {
+export type ArkitektBuilderOptions<T extends ServiceBuilderMap> = {
   manifest: Manifest;
-  serviceBuilderMap: ServiceBuilderMap;
+  serviceBuilderMap: T;
 };
 
 export const buildArkitektProvider =
-  (options: ArkitektBuilderOptions) =>
+  <T extends Record<string, any> = Record<string, any>>(options: ArkitektBuilderOptions<T>) =>
     ({ children }: { children: ReactNode }) => {
       return (
         <ArkitektProvider
@@ -556,3 +269,7 @@ export const buildArkitektProvider =
         </ArkitektProvider>
       );
     };
+
+export * from "./types";
+export * from "./hooks";
+export { ArkitektContext } from "./context";

@@ -35,12 +35,12 @@ export const electronRedirect = async (
 };
 
 
-export const serviceMap: ServiceBuilderMap = {
+export const serviceMap = {
   mikro: {
     key: "mikro",
     service: "live.arkitekt.mikro",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createMikroClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -56,7 +56,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "rekuest",
     service: "live.arkitekt.rekuest",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createRekuestClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -72,7 +72,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "lovekit",
     service: "live.arkitekt.lovekit",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createLovekitClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -88,7 +88,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "fluss",
     service: "live.arkitekt.fluss",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createFlussClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -104,7 +104,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "lok",
     service: "live.arkitekt.lok",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createLokClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -120,7 +120,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "kabinet",
     service: "live.arkitekt.kabinet",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createKabinetClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -136,7 +136,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "omero_ark",
     service: "live.arkitekt.omero_ark",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createOmeroArkClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -152,7 +152,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "kraph",
     service: "live.arkitekt.kraph",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createKraphClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -168,7 +168,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "alpaka",
     service: "live.arkitekt.alpaka",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createAlpakaClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -184,7 +184,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "dokuments",
     service: "live.arkitekt.dokuments",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder:  ({ alias, token }) => {
       return {
         client: createDokumentsClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -200,7 +200,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "elektro",
     service: "live.arkitekt.elektro",
     optional: true,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias, token }) => {
       return {
         client: createElektroClient({
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
@@ -218,7 +218,7 @@ export const serviceMap: ServiceBuilderMap = {
     optional: true,
     omitchallenge: true,
     forceinsecure: true,
-    builder: async ({ alias, token }) => {
+    builder:  ({ alias }) => {
       return {
         client: createLivekitClient({
           url: aliasToHttpPath(alias, ""),
@@ -231,7 +231,7 @@ export const serviceMap: ServiceBuilderMap = {
     key: "datalayer",
     service: "live.arkitekt.s3",
     optional: false,
-    builder: async ({ alias, token }) => {
+    builder: ({ alias }) => {
       return {
         client: { url: aliasToHttpPath(alias, "") },
         alias
@@ -239,15 +239,10 @@ export const serviceMap: ServiceBuilderMap = {
 
     },
   },
-};
+} as const satisfies ServiceBuilderMap;
 
 // Check if running in tauri
-export const Arkitekt = window.electron
-  ? buildArkitekt({
-    manifest,
-    serviceBuilderMap: serviceMap,
-  })
-  : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
+export const Arkitekt = buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 
 export const Guard = {
   Lok: buildGuard("lok"),
@@ -264,55 +259,59 @@ export const Guard = {
   Dokuments: buildGuard("dokuments"),
 };
 
-export const useMikro = (): ApolloClient<NormalizedCache> => {
-  return useService("mikro").client as ApolloClient<NormalizedCache>;
+export const useMikro = () => {
+  return Arkitekt.useService("mikro").client;
 };
 
-export const useKabinet = (): ApolloClient<NormalizedCache> => {
-  return useService("kabinet").client as ApolloClient<NormalizedCache>;
+export const useKabinet = () => {
+  return Arkitekt.useService("kabinet").client
 };
 
-export const useRekuest = (): ApolloClient<NormalizedCache> => {
-  return useService("rekuest").client as ApolloClient<NormalizedCache>;
+export const useRekuest = () => {
+  return Arkitekt.useService("rekuest").client;
 };
 
-export const useLok = (): ApolloClient<NormalizedCache> => {
-  return useService("lok").client as ApolloClient<NormalizedCache>;
+export const useLok = () => {
+  return Arkitekt.useService("lok").client;
 };
 
-export const useFluss = (): ApolloClient<NormalizedCache> => {
-  return useService("fluss").client as ApolloClient<NormalizedCache>;
+export const useFluss = () => {
+  return Arkitekt.useService("fluss").client
 };
 
-export const useOmeroArk = (): ApolloClient<NormalizedCache> => {
-  return useService("omero_ark").client as ApolloClient<NormalizedCache>;
+export const useOmeroArk = () => {
+  return Arkitekt.useService("omero_ark").client
 };
 
-export const useKraph = (): ApolloClient<NormalizedCache> => {
-  return useService("kraph").client as ApolloClient<NormalizedCache>;
+export const useKraph = () => {
+  return Arkitekt.useService("kraph").client;
+}
+
+export const useAlpaka = ()=> {
+  return Arkitekt.useService("alpaka").client;
 };
 
-export const useAlpaka = (): ApolloClient<NormalizedCache> => {
-  return useService("alpaka").client as ApolloClient<NormalizedCache>;
+export const useLovekit = () => {
+  return Arkitekt.useService("lovekit").client;
 };
 
-export const useLovekit = (): ApolloClient<NormalizedCache> => {
-  return useService("lovekit").client as ApolloClient<NormalizedCache>;
+export const useElektro = () => {
+  return Arkitekt.useService("elektro").client;
 };
 
-export const useElektro = (): ApolloClient<NormalizedCache> => {
-  return useService("elektro").client as ApolloClient<NormalizedCache>;
+export const useLivekit = () => {
+  return Arkitekt.useService("livekit").client;
 };
 
-export const useLivekit = (): LivekitClient => {
-  return useService("livekit").client as LivekitClient;
-};
+export const useFake = () => {
+  return Arkitekt.useService("fake").client;
+}
 
-export const useDokuments = (): ApolloClient<NormalizedCache> => {
-  return useService("dokuments").client as ApolloClient<NormalizedCache>;
+export const useDokuments = () => {
+  return Arkitekt.useService("dokuments").client;
 };
 export const useDatalayerEndpoint = (): string => {
-  const url = useService("datalayer").client.url;
+  const url = Arkitekt.useService("datalayer").client.url;
   if (!url) {
     throw Error("No Datalayer configured ");
   }

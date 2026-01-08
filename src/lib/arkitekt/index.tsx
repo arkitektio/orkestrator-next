@@ -33,13 +33,12 @@ export const buildWith =
       return Wrapped as T;
     };
 
-export const buildArkitekt = ({
+export const buildArkitekt = <T extends ServiceBuilderMap>({
   manifest,
   serviceBuilderMap,
-  widgetRegistry,
 }: {
   manifest: Manifest;
-  serviceBuilderMap: ServiceBuilderMap;
+  serviceBuilderMap: T;
   widgetRegistry?: WidgetRegistry;
 }) => {
   const requirements: Requirement[] = serviceBuilderMap
@@ -68,12 +67,11 @@ export const buildArkitekt = ({
     useConnectedManifest: () => useArkitekt().connection?.manifest,
     useConnection: () => useArkitekt().connection,
     useFakts: () => useArkitekt().connection?.fakts,
-    useService: useService,
+    useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service),
     useServices: () => useArkitekt().connection?.availableServices || [],
     useUnresolvedServices: () =>
       useArkitekt().connection?.unresolvedServices || [],
 
-    useWidgetRegistry: () => widgetRegistry,
     useToken: () => useArkitekt().connection?.token || null,
     useArkitekt: useArkitekt,
   };

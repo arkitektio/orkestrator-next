@@ -83,6 +83,7 @@ export type ConnectedContext = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
   clients: ServiceMap;
+  aliasReports: { [key: string]: AliasReport };
   token: Token;
   availableServices: AvailableService[];
   unresolvedServices?: UnresolvedService[];
@@ -153,6 +154,7 @@ export const buildContext = async ({
   controller: AbortController;
 }): Promise<ConnectedContext> => {
   const clients: { [key: string]: Service<any> } = {};
+  const reports: { [key: string]: AliasReport } = {};
 
   console.log("Building clients for", fakts);
 
@@ -196,8 +198,6 @@ export const buildContext = async ({
           alias.ssl = false;
         }
 
-
-
         const client = await definition.builder({
           manifest,
           alias,
@@ -217,19 +217,14 @@ export const buildContext = async ({
         };
       } catch (e) {
         console.error(`Failed to build client for ${key}`, e);
-        if (!definition.optional) {
-          throw e;
-        } else {
-          console.warn(`Service ${key} is optional, skipping...`);
-          return {
+        return {
+          key,
+          unresolvedService: {
             key,
-            unresolvedService: {
-              key,
-              service: definition.service,
-              aliases: fakts.instances[key]?.aliases,
-            },
-          };
-        }
+            service: definition.service,
+            aliases: fakts.instances[key]?.aliases,
+          },
+        };
       }
     },
   );
@@ -243,7 +238,9 @@ export const buildContext = async ({
       if (client && availableService) {
         clients[key] = client;
         availableServices.push(availableService);
+        reports[key] = { valid: true, alias_id: availableService.resolved.id };
       } else if (unresolvedService) {
+        reports[key] = { valid: true, reason: "Could not build service" };
         unresolvedServices.push(unresolvedService);
       }
     } else if (result.status === "rejected") {
@@ -262,6 +259,7 @@ export const buildContext = async ({
     clients,
     manifest: manifest,
     fakts: fakts,
+    aliasReports: reports,
     availableServices: availableServices,
     unresolvedServices:
       unresolvedServices.length > 0 ? unresolvedServices : undefined,
@@ -269,6 +267,21 @@ export const buildContext = async ({
     endpoint: endpoint,
   };
 };
+
+
+export type AliasReport = {
+  valid: boolean;
+  alias_id?: string;
+  reason?: string;
+};
+
+
+export type ReportRequest = {
+  alias_reports: { [key: string]: AliasReport;}
+  token: string;
+  functional: boolean;
+};
+
 
 
 export type EnhancedManifest = Manifest & {
@@ -284,6 +297,30 @@ export const enhanceManifest = async (
     node_id: await window.api.getNodeId(),
   };
 };
+
+
+const report = async (
+  url: string,
+  reportRequest: ReportRequest,
+): Promise<void> => {
+  try {
+    const response = await fetch(`${url}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reportRequest),
+    });
+
+    if (!response.ok) {
+      console.warn(
+        `Report request failed: ${response.status} ${response.statusText}`,
+      );
+    }
+  } catch (e) {
+    console.error("Report request error:", e);
+  }
+}
 
 export const ArkitektProvider = ({
   children,
@@ -312,8 +349,6 @@ export const ArkitektProvider = ({
 
     const enhancedManifest = await enhanceManifest(manifest);
 
-
-
     const fakts = await flow({
       endpoint: options.endpoint,
       controller: options.controller,
@@ -322,6 +357,11 @@ export const ArkitektProvider = ({
 
     // Save fakts to local storage
     localStorage.setItem("fakts", JSON.stringify(fakts));
+
+
+
+
+
 
     const token = await login(fakts.auth);
 
@@ -337,6 +377,22 @@ export const ArkitektProvider = ({
       controller: options.controller,
       endpoint: options.endpoint,
     });
+
+    const reportRequest : ReportRequest = {
+      alias_reports: connectedContext.aliasReports,
+      token: fakts.auth.client_token,
+      functional: enhancedManifest.requirements.every((req => {
+      return req.optional || connectedContext.aliasReports[req.key]?.valid;
+    })),
+    };
+
+    await report(fakts.auth.report_url, reportRequest);
+
+
+
+
+
+
 
     setContext((context) => ({
       ...context,

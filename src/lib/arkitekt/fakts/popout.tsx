@@ -11,7 +11,7 @@ export const popOutWindowOpen = async ({
   endpoint: FaktsEndpoint;
   code: string;
 }): Promise<Closable> => {
-  const url = `${endpoint.base_url}configure/${code}`;
+  const url = `${endpoint.frontend_url}configure/${code}`;
 
   const win = window.api
     ? window.api.startFakts(url)

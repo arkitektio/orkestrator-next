@@ -43,19 +43,20 @@ const TheCard = ({ item }: Props) => {
               )}
             </CardDescription>
           </div>
-          <CardFooter className="flex justify-between gap-2 truncate">
+        </CardHeader>
+
+          <CardFooter className="flex justify-between items-center gap-2 truncate">
             <ActionButton id={item.id}>
-              <Button variant="default" size="default" className="flex-1 truncate">
+              <Button variant="default" size="lg" className="flex-1 truncate">
                 Assign
               </Button>
             </ActionButton>
             <ReserveActionButton id={item.id}>
-              <Button variant="outline" size="default" className="flex-1 truncate">
+              <Button variant="outline" size="lg" className="flex-1 truncate">
                 Short
               </Button>
             </ReserveActionButton>
           </CardFooter>
-        </CardHeader>
       </Card>
     </RekuestAction.Smart>
   );

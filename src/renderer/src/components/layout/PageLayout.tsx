@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, PanelLeft, PanelRight, Clipboard, Check } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -18,6 +17,7 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { useReport } from "@/hooks/use-report";
+import { Separator } from "../ui/separator";
 
 export type PageVariant = "black" | "default";
 
@@ -135,7 +135,7 @@ export const PageLayout = ({
               <PanelLeft />
               <span className="sr-only">Toggle ModulePane</span>
             </Button>
-            <Separator dir="vertical" className="w-2" />
+            <Separator orientation="vertical" className="h-6 my-auto mr-3" />
             <div className="flex-grow flex flex-col truncate">
               <div className="flex-shrink ">
                 <BreadCrumbs />

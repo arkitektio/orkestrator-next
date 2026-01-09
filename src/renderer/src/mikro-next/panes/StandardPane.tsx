@@ -165,7 +165,7 @@ const Pane: React.FunctionComponent = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="flex-grow h-full bg-background text-foreground w-full"
             />
-            <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+            <PopoverTrigger className="absolute right-0 top-[50%] translate-y-[-50%]  translate-x-[-50%] text-muted/20">
               <ArrowDown />
             </PopoverTrigger>
           </div>

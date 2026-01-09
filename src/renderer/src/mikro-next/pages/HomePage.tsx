@@ -115,7 +115,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                   Welcome to Mikro
                 </span>
               </h1>

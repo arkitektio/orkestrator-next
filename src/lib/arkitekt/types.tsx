@@ -3,6 +3,7 @@ import { ApolloClient } from "@apollo/client";
 import { FaktsEndpoint } from "./fakts/endpointSchema";
 import { ActiveFakts, Alias, Instance } from "./fakts/faktsSchema";
 import { Manifest } from "./fakts/manifestSchema";
+import { TokenResponse } from "./fakts/tokenSchema";
 
 export type AvailableService = {
   key: string;
@@ -23,13 +24,11 @@ export type Service = {
   instance: Instance;
 };
 
-export type Token = string;
-
 export type ServiceBuilder<T> = (options: {
   manifest: Manifest;
   alias: Alias;
   fakts: ActiveFakts;
-  token: Token;
+  token: TokenResponse;
 }) => T;
 
 
@@ -72,13 +71,13 @@ export type EnhancedManifest = Manifest & {
 
 // Context Types
 
-export type ConnectedContext<T extends ServiceBuilderMap> = {
+export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap> = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
   serviceMap: InferedServiceMap<T>;
   aliasMap: { [K in keyof T]: Alias };
   serviceBuilderMap: T;
-  token: Token;
+  token: TokenResponse;
   endpoint: FaktsEndpoint;
 };
 
@@ -92,13 +91,14 @@ export type DisconnectFunction = () => Promise<void>;
 export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap> = {
   manifest: EnhancedManifest;
   connection?: ConnectedContext<T>;
+  autoLoginError?: string;
 };
 
-export type AppFunctions<T extends Record<string, any> = Record<string, any>> = {
-  connect: ConnectFunction<T>;
+export type AppFunctions = {
+  connect: ConnectFunction;
   disconnect: DisconnectFunction;
   reconnect: () => Promise<void>;
   connecting?: boolean;
 };
 
-export type ArkitektContextType<T extends Record<string, any> = Record<string, any>> = AppContext<T> & AppFunctions<T>;
+export type ArkitektContextType<T extends ServiceBuilderMap> = AppContext<T>;

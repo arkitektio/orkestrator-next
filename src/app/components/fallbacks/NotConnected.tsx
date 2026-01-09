@@ -325,6 +325,7 @@ export const ProbeCard = ({
 
 export const PreconfiguredEndpointsWidget = () => {
   const connect = Arkitekt.useConnect();
+  const autoLoginError = Arkitekt.useAutoLoginError();
   const [probeResults, setProbeResults] = React.useState<ProbeResult[]>([]);
   const [isDiscovering, setIsDiscovering] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -423,7 +424,11 @@ export const PreconfiguredEndpointsWidget = () => {
             Discovering endpoints...
           </div>
         )}
-
+        {autoLoginError && (<div className="flex items-center gap-2 text-sm text-red-600">
+          <AlertCircle className="h-4 w-4" />
+          {autoLoginError}
+        </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4">

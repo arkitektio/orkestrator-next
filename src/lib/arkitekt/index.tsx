@@ -1,6 +1,7 @@
 import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { Manifest, Requirement } from "./fakts/manifestSchema";
 import {
+  AppContext,
   buildArkitektProvider,
   ConnectedGuard,
   ServiceBuilderMap,
@@ -72,12 +73,13 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
     useReconnect: () => useArkitekt().reconnect,
     useManifest: () => realManifest,
     useConnectedManifest: () => useArkitekt().connection?.manifest,
-    useConnection: () => useArkitekt().connection,
+    useConnection: (): AppContext<T>["connection"] => useArkitekt().connection,
     useFakts: () => useArkitekt().connection?.fakts,
     useAlias: <K extends keyof T>(serviceKey: K) => {
       const service = useService(serviceKey as string);
       return service?.alias;
     },
+    useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
     useAvailableServices: useAvailableServices,
     useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service as string) as ReturnType<T[K]["builder"]>,
     useToken: () => useArkitekt().connection?.token || null,

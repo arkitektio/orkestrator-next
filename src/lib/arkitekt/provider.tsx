@@ -7,11 +7,12 @@ import { FaktsEndpoint, FaktsEndpointSchema } from "./fakts/endpointSchema";
 import { ActiveFakts, ActiveFaktsSchema, Alias } from "./fakts/faktsSchema";
 import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
-import { TokenResponseSchema } from "./fakts/tokenSchema";
+import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { useArkitekt } from "./hooks";
 import { login } from "./oauth/login";
-import { AppContext, EnhancedManifest, ReportRequest, Service, ServiceBuilderMap, ServiceDefinition } from "./types";
+import { AppContext, ConnectedContext, EnhancedManifest, ReportRequest, Service, ServiceBuilderMap, ServiceDefinition } from "./types";
 import { enhanceManifest, report } from "./utils";
+
 
 export type AliasMap = {
   [key: string]: Alias;
@@ -21,7 +22,7 @@ export type ServiceMap = {
   [key: string]: Service;
 };
 
-export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: ServiceBuilderMap, manifest: EnhancedManifest, aliasMap: AliasMap, token: string, fakts: ActiveFakts}): ServiceMap => {
+export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: ServiceBuilderMap, manifest: EnhancedManifest, aliasMap: AliasMap, token: TokenResponse, fakts: ActiveFakts}): ServiceMap => {
   const services: ServiceMap= {};
 
   for (const key in map) {
@@ -38,7 +39,7 @@ export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: S
       manifest,
       alias: aliasMap[key],
       fakts: fakts,
-      token: token
+      token: token.access_token,
     }
     )
   }
@@ -71,6 +72,71 @@ export const mappedAliasesStillReachable = async ({aliasMap, controller, timeout
 }
 
 
+
+
+const refreshToken = async (fakts: ActiveFakts, currentToken: TokenResponse, controller: AbortController): Promise<TokenResponse> => {
+  const response = await fetch(`${fakts.auth.token_url}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: currentToken.refresh_token || "",
+      client_id: "arkitekt-client",
+    }),
+    signal: controller.signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to refresh token: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return TokenResponseSchema.parse(data);
+}
+
+
+
+
+type AuthClient = {
+
+  token: TokenResponse,
+  refresh: () => Promise<void>,
+  load: () => TokenResponse,
+
+}
+
+
+
+class MyAuthClient implements AuthClient {
+  private fakts: ActiveFakts;
+  private controller: AbortController;
+  private currentToken: TokenResponse;
+
+  constructor(fakts: ActiveFakts, initialToken: TokenResponse, controller: AbortController) {
+    this.fakts = fakts;
+    this.currentToken = initialToken;
+    this.controller = controller;
+  }
+
+  public async refresh() {
+    // Using an async lock to prevent multiple simultaneous refreshes
+
+
+
+
+    this.currentToken = await refreshToken(this.fakts, this.currentToken, this.controller);
+    localStorage.setItem("token", JSON.stringify(this.currentToken));
+  }
+
+  public load() {
+    return this.currentToken;
+  }
+
+}
+
+
 export const ArkitektProvider = ({
   children,
   manifest,
@@ -83,17 +149,110 @@ export const ArkitektProvider = ({
   const [context, setContext] = useState<AppContext>({
     manifest: manifest as EnhancedManifest,
     connection: undefined,
+    autoLoginError: undefined,
   });
   const [connecting, setConnecting] = useState(false);
 
+
+
   const connectingRef = useRef<boolean>(false);
+
+
+
+  const setValidatedConnection = (connection: ConnectedContext) => {
+    setContext(x => ({
+      ...x,
+      connection: connection,
+    })
+    );
+    localStorage.setItem("endpoint", JSON.stringify(connection.endpoint));
+    localStorage.setItem("fakts", JSON.stringify(connection.fakts));
+    localStorage.setItem("token", JSON.stringify(connection.token));
+    localStorage.setItem("aliasMap", JSON.stringify({aliasMap: connection.aliasMap}));
+  }
+
+  const setAutoLoginError = (error: string) => {
+    setContext(x => ({
+      ...x,
+      autoLoginError: error,
+      connection: undefined,
+    }));
+  }
+
+  const setCoordinatorNotReachable = (error: string) => {
+    // We cannot reach the Coordinator at all, clear everything
+    setContext(x => ({
+      ...x,
+      autoLoginError: error,
+      connection: undefined,
+    }));
+    localStorage.removeItem("endpoint");
+    localStorage.removeItem("fakts");
+    localStorage.removeItem("aliasMap");
+    localStorage.removeItem("token");
+  }
+
+
+  const setAliasDoNoLongerMatchManifest = (error: string) => {
+    // The stored aliases no longer match the manifest, we need to reauthenticate
+    setContext(x => ({
+      ...x,
+      autoLoginError: error,
+      connection: undefined,
+    }));
+    localStorage.removeItem("fakts");
+    localStorage.removeItem("aliasMap");
+    localStorage.removeItem("token");
+  }
+
+
+  const setAliasesArePersistentlyNotReachable = (error: string) => {
+    setContext(x => ({
+      ...x,
+      autoLoginError: error,
+      connection: undefined,
+    }));
+
+    localStorage.removeItem("fakts");
+    localStorage.removeItem("aliasMap");
+    localStorage.removeItem("token");
+  }
+
+
+   const setRefreshTokenNotValid = (error: string) => {
+    setContext(x => ({
+      ...x,
+      autoLoginError: error,
+      connection: undefined,
+    }));
+    localStorage.removeItem("token");
+    localStorage.removeItem("aliasMap");
+  }
+
+
+
+
+  const refreshToken = async () => {
+    if (!context.connection) {
+      throw new Error("No connection to refresh token for");
+    }
+  }
+
+
+
+
+
+
+
+
+
 
   const connect = async (options: {
     endpoint: FaktsEndpoint;
     controller: AbortController;
-  }): Promise<AppContext> => {
+  }): Promise<ConnectedContext> => {
     // Build Manifest
-try {
+  try {
 
     setConnecting(true);
     localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
@@ -122,7 +281,7 @@ try {
       controller: options.controller,
     });
 
-    localStorage.setItem("aliasReports", JSON.stringify({aliasMap: aliasMap}));
+    localStorage.setItem("aliasMap", JSON.stringify({aliasMap: aliasMap}));
 
 
     const reportRequest : ReportRequest = {
@@ -142,30 +301,21 @@ try {
       map: serviceBuilderMap,
       manifest: enhancedManifest,
       aliasMap: aliasMap,
-      token: token.access_token,
+      token: token,
       fakts: fakts,
     });
 
 
-    const context : AppContext = {
-      manifest: enhancedManifest,
-      connection: {
+    setValidatedConnection({
         endpoint: options.endpoint,
         fakts: fakts,
         manifest: enhancedManifest,
         serviceMap: serviceMap,
         aliasMap: aliasMap,
         serviceBuilderMap: serviceBuilderMap,
-        token: token.access_token,
-      },
-    };
-
-
-
-
-      setContext(context);
-
-      return context;
+        token: token,
+      }
+    );
     } catch (e) {
       console.error("Connection failed:", e);
       throw e;
@@ -228,9 +378,13 @@ try {
     const faktsRaw = localStorage.getItem("fakts");
     const tokenRaw = localStorage.getItem("token");
     const endpointRaw = localStorage.getItem("endpoint");
-    const aliasReportsRaw = localStorage.getItem("aliasReports");
+    const aliasMapRaw = localStorage.getItem("aliasMap");
+    console.log("Attempting auto-login with stored data...");
 
-    if (!faktsRaw || !tokenRaw || !endpointRaw || !aliasReportsRaw) return;
+    if (!faktsRaw || !tokenRaw || !endpointRaw || !aliasMapRaw) {
+      setAutoLoginError("No stored session data found");
+      return
+    }
 
     setConnecting(true);
 
@@ -239,16 +393,21 @@ try {
       const fakts = ActiveFaktsSchema.parse(JSON.parse(faktsRaw));
       const token = TokenResponseSchema.parse(JSON.parse(tokenRaw));
       const endpoint = FaktsEndpointSchema.parse(JSON.parse(endpointRaw));
-      const aliasStorage = AliasStorageSchema.parse(JSON.parse(aliasReportsRaw));
+      const aliasStorage = AliasStorageSchema.parse(JSON.parse(aliasMapRaw));
 
       if (!aliasMapStillValidForManifest(aliasStorage.aliasMap, manifest)) {
-       throw new Error("Stored aliases no longer valid for manifest");
+        setContext({
+              manifest: manifest,
+              autoLoginError: "Stored aliases no longer valid for manifest",
+              connection: undefined,
+          });
+        setConnecting(false);
       }
 
       const stillReachable = await mappedAliasesStillReachable({
         aliasMap: aliasStorage.aliasMap,
         controller: controller,
-        timeout: 2000,
+        timeout: 150,
       });
 
       let currentAliasMap = aliasStorage.aliasMap;
@@ -268,7 +427,13 @@ try {
 
         localStorage.setItem("aliasReports", JSON.stringify({aliasMap: aliasMap}));
         if (!functional) {
-          throw new Error("Could not connect to all required services");
+          setContext({
+            manifest: manifest,
+            autoLoginError: "Could not connect to all required services",
+            connection: undefined,
+          });
+          setConnecting(false);
+          return;
         }
 
         await report(fakts.auth.report_url, reportRequest);
@@ -282,9 +447,11 @@ try {
         map: serviceBuilderMap,
         manifest: manifest,
         aliasMap: currentAliasMap,
-        token: token.access_token,
+        token: token,
         fakts: fakts,
       });
+
+
       const context : AppContext = {
         manifest: manifest,
         connection: {
@@ -294,16 +461,21 @@ try {
           aliasMap: currentAliasMap,
           serviceBuilderMap: serviceBuilderMap,
           serviceMap: serviceMap,
-          token: token.access_token,
+          token: token,
         },
       };
 
       setContext(context);
       setConnecting(false);
     } catch (e) {
-      console.warn("Auto-login failed:", e);
+      console.log(e)
       localStorage.removeItem("fakts");
       localStorage.removeItem("token");
+      setContext({
+            manifest: manifest,
+            autoLoginError: e instanceof Error ? e.message : "Auto-login failed",
+            connection: undefined,
+      });
       setConnecting(false);
     }
   };
@@ -313,13 +485,12 @@ try {
     if (!connectingRef.current) {
       connectingRef.current = true;
       const controller = new AbortController();
+      console.log("Attempting auto-login...");
       enhanceManifest(manifest).then((enhancedManifest) => {
+        console.log("Enhanced manifest for auto-login:", enhancedManifest);
         tryReconnect({manifest: enhancedManifest, serviceBuilderMap, controller});
       });
 
-      return () => {
-        controller.abort();
-      }
     }
   }, [manifest, serviceBuilderMap]);
 

@@ -1,4 +1,5 @@
 import { LokUser } from "@/linkers";
+import { Badge } from "@/components/ui/badge";
 import { MentionType } from "../types";
 
 export const Mention = ({ element }: { element: MentionType }) => {
@@ -7,16 +8,18 @@ export const Mention = ({ element }: { element: MentionType }) => {
       {element?.user && (
         <LokUser.Smart
           object={element?.user?.id}
-          className=" px-1 border rounded-full inline "
+          className="inline-flex"
           dropClassName={() => "inline"}
-          containerClassName="inline mr-2"
+          containerClassName="inline"
           mates={[]}
         >
           <LokUser.DetailLink
             object={element?.user?.id}
-            className="bg-gray-700 p-1 rounded text-white"
+            className="inline"
           >
-            @{element?.user?.username}
+            <Badge variant="secondary" className="inline-flex items-center gap-1 font-normal cursor-pointer hover:bg-secondary/80">
+              @{element?.user?.username}
+            </Badge>
           </LokUser.DetailLink>
         </LokUser.Smart>
       )}

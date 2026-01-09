@@ -56,6 +56,7 @@ export const KraphModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
+          <Route path="home" element={<HomePage />} />
           <Route
             path="graphs/:id/reagentcategories"
             element={<GraphReagentCategoriesPage />}

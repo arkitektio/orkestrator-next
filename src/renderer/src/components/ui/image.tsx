@@ -44,7 +44,6 @@ export const Image = ({ src, blurhash, style, className, alt }: ImageProps) => {
       alt={alt || "Image"}
       className={cn(className)}
       threshold={100}
-
     />
   );
 };

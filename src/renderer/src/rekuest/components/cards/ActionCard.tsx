@@ -47,7 +47,7 @@ const TheCard = ({ item }: Props) => {
 
           <CardFooter className="flex justify-between items-center gap-2 truncate">
             <ActionButton id={item.id}>
-              <Button variant="default" size="lg" className="flex-1 truncate">
+              <Button variant="outline" size="lg" className="flex-1 truncate">
                 Assign
               </Button>
             </ActionButton>

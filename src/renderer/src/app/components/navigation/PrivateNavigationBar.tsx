@@ -114,7 +114,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
 
   return (
     <>
-      <div className="flex-initial h-12 w-12 justify-center items-center flex cursor-pointer mb-3" onClick={onClick}>
+      <div className="flex-initial h-10 w-10 justify-center items-center flex cursor-pointer mb-3" onClick={onClick}>
         {location.pathname == "/" ? (
           <ArkitektLogo
             width={"100%"}

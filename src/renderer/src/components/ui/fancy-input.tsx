@@ -44,7 +44,7 @@ const FancyInput = React.forwardRef<HTMLInputElement, InputProps>(
           focus-visible:outline-none focus-visible:ring-[2px]  focus-visible:ring-primary dark:focus-visible:ring-primary
            disabled:cursor-not-allowed disabled:opacity-50
            dark:shadow-[0px_0px_1px_1px_var(--neutral-700)]
-           group-hover/input:shadow-none transition duration-400
+           group-hover/input:shadow-none transition duration-400 bg-sidebar/20 dark:bg-background
            `,
             className,
           )}

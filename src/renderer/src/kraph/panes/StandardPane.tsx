@@ -42,7 +42,7 @@ export const NavigationPane = (props: {}) => {
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
         <SidePaneGroup title="Explore">
           <PaneLink
-            to="/kraph"
+            to="/kraph/home"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />

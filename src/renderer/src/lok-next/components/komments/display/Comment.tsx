@@ -1,7 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
+import { Reply, X } from "lucide-react";
 import { useState } from "react";
 import Timestamp from "react-timestamp";
 import { CommentEdit } from "../edit/CommentEdit";
@@ -44,92 +46,124 @@ export const renderDescendant = (x: DescendantType) => {
 export const Comment = ({ comment }: { comment: ListCommentType }) => {
   const [showReply, setShowReply] = useState(false);
   const s3resolve = useResolve();
-  return (
-    <>
-      <div className="flex flex-row rounded rounded-md p-2 group">
-        <div className="flex-initial my-auto">
-          <LokUser.DetailLink object={comment?.user?.id}>
-            <Avatar>
-              <AvatarImage
-                className="h-10 w-10 rounded-full hover:ring-pink-500 hover:ring-2 cursor-pointer"
-                src={
-                  comment?.user?.profile.avatar?.presignedUrl
-                    ? s3resolve(comment?.user?.profile.avatar?.presignedUrl)
-                    : `https://eu.ui-avatars.com/api/?name=${comment?.user?.username}&background=random`
-                }
-                alt=""
-              />
-              <AvatarFallback>
-                {comment?.user.username.slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-          </LokUser.DetailLink>
-        </div>
-        <div className="flex-grow flex-col ml-3">
-          <Card className="text-sm p-3 border rounded rounded-xl text-black dark:text-slate-200">
-            {comment?.descendants?.map(renderDescendant)}
-          </Card>
 
+  return (
+    <div className="flex gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group w-full">
+      <div className="flex-shrink-0 mt-1">
+        <LokUser.DetailLink object={comment?.user?.id}>
+          <Avatar className="h-10 w-10">
+            <AvatarImage
+              src={
+                comment?.user?.profile.avatar?.presignedUrl
+                  ? s3resolve(comment?.user?.profile.avatar?.presignedUrl)
+                  : ``
+              }
+              alt={comment?.user?.username}
+            />
+            <AvatarFallback>
+              {comment?.user.username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </LokUser.DetailLink>
+      </div>
+
+      <div className="flex flex-col flex-grow min-w-0">
+
+
+        <Card className="mb-2 border-border/50">
+          <CardContent className="p-3 text-sm">
+            {comment?.descendants?.map(renderDescendant)}
+          </CardContent>
+        </Card>
+
+        <div className="flex h-7">
+          <div className="flex-1 flex items-center gap-2">
+          <LokUser.DetailLink object={comment?.user?.id}>
+            <span className="font-light text-sm hover:underline">
+              {comment?.user?.username}
+            </span>
+          </LokUser.DetailLink>
           {comment?.createdAt && (
             <Timestamp
               date={comment?.createdAt}
               relative
-              className="mb-1 text-xs"
+              className="text-xs text-muted-foreground my-auto ml-2"
             />
           )}
-          <button
-            type="button"
-            className="ml-2 text-xs border-gray-400 px-2 border rounded-sm hidden group-hover:inline"
+          </div>
+
+        <div className="flex items-center gap-2 group-hover:block hidden">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowReply(!showReply)}
+            className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
           >
+            <Reply className="h-3 w-3 mr-1" />
             Reply
-          </button>
-          <div className="pl-1">
-            {comment?.children?.map((s) => {
-              return (
-                <div className="flex flex-row rounded rounded-md p-2 group">
-                  <div className="flex-initial">
-                    <img
-                      className="h-6 w-6 rounded-full hover:ring-pink-500 hover:ring-2 cursor-pointer"
-                      src={
-                        comment?.user?.avatar
-                          ? s3resolve(comment?.user?.avatar)
-                          : `https://eu.ui-avatars.com/api/?name=${comment?.user?.username}&background=random`
-                      }
-                      alt=""
-                    />
-                  </div>
-                  <div className="flex-grow flex-col ml-3">
-                    <div className=" text-sm bg-slate-300 p-3 border rounded text-black">
-                      {s?.descendants?.map(renderDescendant)}
-                    </div>
-                    <div className="mb-1 text-xs inline hidden group-hover:inline">
-                      {s?.user?.username}{" "}
-                    </div>{" "}
-                    {s?.createdAt && (
+          </Button>
+        </div>
+        </div>
+
+
+        {comment?.children && comment.children.length > 0 && (
+          <div className="mt-3 space-y-3 pl-2 border-l-2 border-border/50">
+            {comment.children.map((reply, index) => (
+              <div key={index} className="flex gap-2">
+                <Avatar className="h-6 w-6 flex-shrink-0">
+                  <AvatarImage
+                    src={
+                      reply?.user?.profile.avatar?.presignedUrl
+                        ? s3resolve(reply?.user?.profile.avatar?.presignedUrl)
+                        : `https://eu.ui-avatars.com/api/?name=${reply?.user?.username}&background=random`
+                    }
+                    alt={reply?.user?.username}
+                  />
+                  <AvatarFallback className="text-xs">
+                    {reply?.user?.username.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-xs">
+                      {reply?.user?.username}
+                    </span>
+                    {reply?.createdAt && (
                       <Timestamp
-                        date={s?.createdAt}
+                        date={reply?.createdAt}
                         relative
-                        className="mb-1 text-xs"
+                        className="text-xs text-muted-foreground"
                       />
                     )}
                   </div>
+                  <Card className="border-border/50">
+                    <CardContent className="p-2 text-xs">
+                      {reply?.descendants?.map(renderDescendant)}
+                    </CardContent>
+                  </Card>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-          {showReply && (
-            <div className="text-black mt-2 flex flex-row">
-              <button type="button" onClick={() => setShowReply(false)}>
-                x{" "}
-              </button>
-              <Card className="flex-grow">
+        )}
+
+        {showReply && (
+          <div className="mt-3 flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReply(false)}
+              className="h-7 w-7 p-0 flex-shrink-0 my-auto"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div className="flex-1">
                 <CommentEdit parent={comment?.id} />
-              </Card>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };

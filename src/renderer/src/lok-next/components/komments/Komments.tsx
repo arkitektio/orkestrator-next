@@ -1,10 +1,12 @@
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   CommentsForDocument,
   CommentsForQuery,
   useCommentsForQuery,
   useCreateCommentMutation,
 } from "@/lok-next/api/graphql";
+import { MessageSquare } from "lucide-react";
 import { CommentList } from "./display/CommentList";
 import { CommentEdit } from "./edit/CommentEdit";
 import { KommentProps } from "./types";
@@ -25,12 +27,13 @@ export const Komments = ({ identifier, object }: KommentProps) => {
           },
         },
         (data) => {
+          if (!data) return data;
           return {
             ...data,
             commentsFor:
               result.data?.createComment && data?.commentsFor
-                ? [result.data.createComment, ...data?.commentsFor]
-                : data?.commentsFor,
+                ? [result.data.createComment, ...data.commentsFor]
+                : data?.commentsFor || [],
           };
         },
       );
@@ -38,18 +41,27 @@ export const Komments = ({ identifier, object }: KommentProps) => {
   });
 
   return (
-    <div className="flex flex-col ">
-      <div className="flex-grow flex flex-col gap-2 p-3 direct @container">
-        <Card>
+    <div className="flex flex-col h-full">
+        <div className="">
           <CommentEdit
             identifier={identifier}
             object={object}
             createComment={createComment}
           />
-        </Card>
-        {JSON.stringify(error)}
-        {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
+        </div>
+        {error && (
+          <div className="px-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load comments: {error.message}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        <div className="flex-1 px-4 pb-4">
+          {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
+        </div>
       </div>
-    </div>
+
   );
 };

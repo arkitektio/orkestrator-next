@@ -250,7 +250,7 @@ export const Home = () => {
   });
 
   return (
-    <div className="min-h-screen w-full h-full bg-gradient-to-br from-slate-50/20 to-slate-100/20 dark:from-slate-900/30 dark:to-slate-800/30 flex items-center justify-center">
+    <div className="min-h-screen w-full h-full bg-radial-[at_100%_100%] from-background to-backgroundpaired  flex items-center justify-center">
       <div className="container mx-auto my-auto px-4 py-16 min-h-screen flex flex-col">
         <div className="max-w-6xl mx-auto my-auto">
           {/* Welcome Section */}

@@ -3,9 +3,12 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
@@ -17,6 +20,7 @@ import {
 } from "@/rekuest/api/graphql";
 import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { PlayCircle } from "lucide-react";
 
 interface Props {
   item: ListImplementationFragment;
@@ -41,32 +45,40 @@ const TheCard = ({ item, mates }: Props) => {
 
   return (
     <RekuestImplementation.Smart object={item?.id} mates={[reserveMate]}>
-      <Card
-        className="group border border-gray-200 dark:border-gray-800 aspect-square max-h-lg"
-        style={{
-          backgroundSize: `${progress?.progress || 0}% 100%`,
-          backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "left center",
-        }}
-      >
-        <CardHeader className="flex flex-row p-3">
-          <div>
-            <CardTitle className="mb-2">
-              <RekuestImplementation.DetailLink object={item?.id}>
-                {" "}
-                {item.action.name}
-              </RekuestImplementation.DetailLink>
-            </CardTitle>
-            <CardDescription>{item.action.description}</CardDescription>
-            <p className="text-xs text-gray-500">{item.interface}</p>
+      <Card className="group hover:shadow-md transition-shadow overflow-hidden">
+        {progress && progress.progress > 0 && (
+          <Progress value={progress.progress} className="h-1 rounded-none" />
+        )}
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-base mb-1">
+                <RekuestImplementation.DetailLink object={item?.id} className="hover:text-primary transition-colors">
+                  {item.action.name}
+                </RekuestImplementation.DetailLink>
+              </CardTitle>
+              <CardDescription className="line-clamp-2">
+                {item.action.description}
+              </CardDescription>
+              <Badge variant="secondary" className="text-xs font-mono">
+              {item.interface}
+            </Badge>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-row gap-2">
-            <DialogButton name={"implementationassign"} size="sm" dialogProps={{ id: item.id }} variant={"outline"}>Assign </DialogButton>
-          </div>
-        </CardContent>
+        <CardFooter className="pt-0">
+
+            <DialogButton
+              name={"implementationassign"}
+              size="sm"
+              dialogProps={{ id: item.id }}
+              variant={"outline"}
+              className="h-8"
+            >
+              <PlayCircle className="h-3 w-3 mr-1" />
+              Assign
+            </DialogButton>
+        </CardFooter>
       </Card>
     </RekuestImplementation.Smart>
   );

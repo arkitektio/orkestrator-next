@@ -88,7 +88,7 @@ export default ({
           }}
           className="p-1 text-xs group flex-row flex gap-2 "
         >
-          <div className="text-slate-300">as</div>{" "}
+          <div className="text-muted">as</div>{" "}
           <div className="text-xs">{data?.role}</div>
         </Card>
       </EdgeLabelRenderer>

@@ -1882,12 +1882,12 @@ export const SmartContext = (props: SmartContextProps) => {
     <>
       <div className="flex flex-row text-xs">
         {props.objects && props.objects.length > 1 && (
-          <div className="text-slate-500 p-2 text-xs">
+          <div className="p-2 text-xs">
             {props.objects.length} {props.objects.at(0)?.identifier}
           </div>
         )}
         {props.partners && props.partners.length >= 1 && (
-          <div className="text-slate-500 p-2 text-xs">
+          <div className="p-2 text-xs">
             {" "}
             with {props.partners.length} {props.partners.at(0)?.identifier}
           </div>

@@ -1,3 +1,4 @@
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -287,11 +288,6 @@ export const Home = () => {
                       </span>
                     </>
                   )}
-                  .
-                </p>
-                <p className="text-muted-foreground">
-                  You now have access to all features and services available on
-                  your server.
                 </p>
               </div>
 
@@ -351,6 +347,7 @@ export const Home = () => {
  */
 function Page() {
   return (
+
     <div className="min-h-screen w-full">
       <Home />
     </div>

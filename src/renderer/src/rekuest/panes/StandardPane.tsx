@@ -16,6 +16,7 @@ import {
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
 import { AgentController } from "@/app/agent/AgentController";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({
@@ -48,83 +49,83 @@ export const NavigationPane = () => {
     },
   });
 
+
+
+
+
+
   return (
     <div className="flex-1 flex-col h-full overflow-y-auto overflow-x-hidden">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2 flex-grow p-3 ">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
-            to="/rekuest"
+      <nav className="grid items-start px-1 text-xs font-medium lg:px-2 flex-grow p-3 ">
+        <SidePaneGroup title="Explore">
+
+          <PaneLink
+            to="/rekuest/home"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />
             Home
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Manage All
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-          <DroppableNavLink
+        <SidePaneGroup title="Manage All">
+          <PaneLink
             to="/rekuest/actions"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
             Actions
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/assignations"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Tasks
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/implementations"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
             Implementations
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/toolboxes"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Toolboxes
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/structurepackages"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Structure Packages
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/dashboards"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Dashboards
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/bloks"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Bloks
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/rekuest/shortcuts"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <ShoppingCart className="h-4 w-4" />
             Shortcuts
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
         {pinnedAgents?.agents && pinnedAgents.agents.length > 0 && (
           <>
@@ -134,7 +135,7 @@ export const NavigationPane = () => {
             <div className="flex flex-col items-start gap-4 rounded-lg ml-2 mb-4 text-muted-foreground">
               {pinnedAgents?.agents.map((agent, index) => (
                 <RekuestAgent.Smart object={agent.id} key={index}>
-                  <RekuestAgent.DetailLink
+                  <RekuestAgent.PaneLink
                     object={agent.id}
                     key={index}
                     className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
@@ -149,7 +150,7 @@ export const NavigationPane = () => {
                           : "#FF0000",
                       }}
                     />
-                  </RekuestAgent.DetailLink>
+                  </RekuestAgent.PaneLink>
                 </RekuestAgent.Smart>
               ))}
             </div>
@@ -162,7 +163,7 @@ export const NavigationPane = () => {
           {data?.agents.map((agent, index) => (
             <RekuestAgent.Smart object={agent.id} key={index}>
               <div className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary">
-                <RekuestAgent.DetailLink
+                <RekuestAgent.PaneLink
                   object={agent.id}
                   key={index}
                   className={"flex flex-row gap-2"}
@@ -175,7 +176,7 @@ export const NavigationPane = () => {
                   />
                   {agent.name}
                   <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
-                </RekuestAgent.DetailLink>
+                </RekuestAgent.PaneLink>
               </div>
             </RekuestAgent.Smart>
           ))}
@@ -188,7 +189,7 @@ export const NavigationPane = () => {
             <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
               {allDashboards.dashboards.map((dashboard, index) => (
                 <RekuestDashboard.Smart object={dashboard.id} key={index}>
-                  <RekuestDashboard.DetailLink
+                  <RekuestDashboard.PaneLink
                     object={dashboard.id}
                     key={index}
                     className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
@@ -196,7 +197,7 @@ export const NavigationPane = () => {
                     <CardStackIcon className="h-4 w-4" />
                     {dashboard.name}
                     <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
-                  </RekuestDashboard.DetailLink>
+                  </RekuestDashboard.PaneLink>
                 </RekuestDashboard.Smart>
               ))}
             </div>

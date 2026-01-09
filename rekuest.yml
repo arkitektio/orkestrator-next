@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/rekuest/graphql"
 documents: "graphql/rekuest-next/**/*.graphql"
 generates:
-  src/rekuest/api/fragments.ts:
+  src/renderer/src/rekuest/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/rekuest/api/graphql.ts:
+  src/renderer/src/rekuest/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -15,12 +15,9 @@ generates:
       reactApolloVersion: 3
       arrayInputCoercion: false
       apolloReactHooksImportFrom: "@/lib/rekuest/hooks"
-  electron/main/schemas/rekuest.ts:
+  src/main/schemas/rekuest.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
       - "typescript-graphql-request"
 
-  src/rekuest/api/graphql.schema.json:
-    plugins:
-      - "introspection"

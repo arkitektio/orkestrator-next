@@ -18,6 +18,7 @@ import {
 import RoomCard from "../components/cards/RoomCard";
 import { FancyInput } from "@/components/ui/fancy-input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 
 export const NavigationPane = (props: {}) => {
@@ -29,49 +30,47 @@ export const NavigationPane = (props: {}) => {
 
   return (
     <Tree>
-      <SubTreeTitle>Explore</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Explore">
+        <PaneLink
           to="/alpaka"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Home className="h-4 w-4" />
           Home
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
 
-      <SubTreeTitle>Data</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Data">
+        <PaneLink
           to="/alpaka/rooms"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Rooms
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/alpaka/collections"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Collections
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/alpaka/llmmodels"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Models
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/alpaka/providers"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Providers
-        </DroppableNavLink>
-      </SubTree>
-      <SubTreeTitle
+        </PaneLink>
+      </SidePaneGroup>
+      <SidePaneGroup title="Recent"
         action={
           <Button onClick={() => createRoom({
             variables: {
@@ -85,9 +84,6 @@ export const NavigationPane = (props: {}) => {
           </Button>
         }
       >
-        Recent Rooms
-      </SubTreeTitle>
-      <SubTree>
         {data?.rooms.map((room, index) => (
           <AlpakaRoom.DetailLink
             object={room.id}
@@ -98,7 +94,7 @@ export const NavigationPane = (props: {}) => {
             {room.title}
           </AlpakaRoom.DetailLink>
         ))}
-      </SubTree>
+      </SidePaneGroup>
     </Tree>
   );
 };

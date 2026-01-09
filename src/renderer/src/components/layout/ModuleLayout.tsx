@@ -23,14 +23,14 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
             minSize={10}
             maxSize={80}
             order={1}
-            className="border-r dark:border-gray-700 bg-panel"
+            className=""
             id="sidebar-module"
           >
             <ScrollArea className="flex flex-col h-full overflow-y-hidden bg-pane">
               {pane}
             </ScrollArea>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle  />
         </>
       )}
 

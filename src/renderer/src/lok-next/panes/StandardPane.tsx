@@ -17,87 +17,74 @@ import UserCard from "../components/cards/UserCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FancyInput } from "@/components/ui/fancy-input";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (
     <Tree>
-      <SubTreeTitle>Explore</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Explore">
+        <PaneLink
           to="/lok"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Home className="h-4 w-4" />
           Home
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/me"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <RiProfileFill className="h-4 w-4" />
           Me
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
 
-      <SubTreeTitle>Management</SubTreeTitle>
-      <SubTree>
-
-        <DroppableNavLink
-          to="/lok/organizations"
-          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-        >
-          <GroupIcon className="h-4 w-4" />
-          Organizations
-        </DroppableNavLink>
-      </SubTree>
-
-      <SubTreeTitle>Organization</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Organization">
+        <PaneLink
           to="/lok/users"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <User className="h-4 w-4" />
           Users
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/apps"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <AppleIcon className="h-4 w-4" />
           Apps
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/services"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Services
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/instances"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Instances
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/redeemtokens"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Redeem Tokens
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/lok/computenodes"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Devices
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
     </Tree>
   );
 };

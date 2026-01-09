@@ -1,4 +1,5 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
+import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useDrop } from "react-dnd";
 import {
@@ -9,11 +10,13 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-export const Link = ({ to, children }: LinkProps) => {
-  return <RouterLink to={to}>{children}</RouterLink>;
+export type PaneLinkProps = {
+  to: string;
+  children: React.ReactNode;
+  className?: string;
 };
 
-export const DroppableNavLink = (props: NavLinkProps) => {
+export const PaneLink = (props: PaneLinkProps) => {
   const navigate = useNavigate();
 
   const [{ isOver }, drop] = useDrop(() => {
@@ -48,7 +51,13 @@ export const DroppableNavLink = (props: NavLinkProps) => {
 
   return (
     <div ref={drop} className={`${isOver && "animate-pulse"}`}>
-      <NavLink {...props}/>
+      <NavLink to={props.to}>
+      {({isActive}) => (
+        <div className={cn(props.className, isActive ? "text-primary " : "text-foreground")}>
+          {props.children}
+        </div>
+      )}
+      </NavLink>
     </div>
   );
 };

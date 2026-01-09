@@ -28,90 +28,88 @@ import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
 import { SubTree } from "@/components/explorer/SubTree";
 import { Separator } from "@/components/ui/separator";
 import { UploadProgress } from "@/components/upload/UploadProgress";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data, error } = useMembersQuery();
 
   return (
     <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <SubTreeTitle>Explore</SubTreeTitle>
-        <SubTree>
-          <DroppableNavLink
-            to="/mikro"
+      <nav className="grid items-start px-1 text-xs font-medium lg:px-2">
+        <SidePaneGroup title="Explore">
+          <PaneLink
+            to="/mikro/home"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />
             Dashboard
-          </DroppableNavLink>
-        </SubTree>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <SubTreeTitle>Data</SubTreeTitle>
-        <SubTree>
-          <DroppableNavLink
+        <SidePaneGroup title="Data">
+          <PaneLink
             to="/mikro/images"
             className="flex gap-3 w-full hover:text-primary"
           >
             <Image className="h-4 w-4" />
             Images
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/tables"
             className="flex gap-3 w-full hover:text-primary"
           >
             <Home className="h-4 w-4" />
             Tables
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/stages"
             className="flex gap-3 w-full hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
             Stages
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/meshes"
             className="flex gap-3 w-full hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
             Meshes
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/rois"
             className="flex gap-3 w-full hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
             Rois
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/datasets"
             className="flex gap-3 w-full hover:text-primary"
           >
             <Folder className="h-4 w-4" />
             Datasets
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/mikro/files"
             className="flex gap-3 w-full hover:text-primary"
           >
             <File className="h-4 w-4" />
             Files
-          </DroppableNavLink>
-        </SubTree>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <Separator className="my-5" />
+        <Separator className="my-3" />
 
         {data?.members.map((i) => (
           <>
-            <SubTreeTitle>
+            <SidePaneGroup title={
               <DroppableNavLink
                 to={`/mikro/peerhome/${i.user.sub}`}
                 className="text-muted-foreground text-xs font-semibold uppercase "
               >
                 <JustUsername sub={i.user.sub} />
               </DroppableNavLink>
-            </SubTreeTitle>
-            <SubTree>
+            }>
               {i.datasets.map((dataset) => (
                 <DroppableNavLink
                   to={`/mikro/datasets/${dataset.id}`}
@@ -122,7 +120,7 @@ export const NavigationPane = () => {
                   {dataset.name}
                 </DroppableNavLink>
               ))}
-            </SubTree>
+            </SidePaneGroup>
           </>
         ))}
         {error && <div>Error: {JSON.stringify(error)}</div>}

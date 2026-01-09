@@ -437,32 +437,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             </Card>
           )}
         </div>
-
-        {/* Unresolved Services Section */}
-        {unresolvedServices.length > 0 && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2 text-red-600 dark:text-red-400">
-                <XCircle className="w-6 h-6" />
-                Unresolved Services
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                Services that could not be properly configured or connected.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unresolvedServices.map((service) => (
-                <ServiceCard
-                  key={service.key}
-                  serviceKey={service.key}
-                  service={service}
-                  isUnresolved={true}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </PageLayout>
   );

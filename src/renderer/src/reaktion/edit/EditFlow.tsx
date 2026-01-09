@@ -56,7 +56,6 @@ import React, {
 } from "react";
 import {
   Connection,
-  Controls,
   EdgeChange,
   NodeChange,
   OnConnectEnd,
@@ -108,6 +107,8 @@ import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
 import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
+import { Controls } from "../components/controls/Controls";
+import { Car, ChevronRight, ChevronsLeft } from "lucide-react";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget,
@@ -1398,11 +1399,11 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
           <AnimatePresence>
             {state.remainingErrors.length == 0 && (
-              <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2">
-                <Button onClick={() => save()}> Save </Button>
+              <Card className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2 items-center px-4 py-2 border">
+                <Button onClick={() => save()} size="lg"> Save </Button>
                 {flow.id && isEqual && <DeployInterfaceButton flow={flow} />}
                 {flow.id && isEqual && <RunButton flow={flow} />}
-              </div>
+              </Card>
             )}
             {globals.length > 0 && (
               <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
@@ -1469,54 +1470,50 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             onInit={(e) => setReactFlowInstance(e)}
             fitView
             attributionPosition="bottom-right"
+            proOptions={
+              {
+                hideAttribution: true
+              }
+            }
           >
-            <Controls className="flex flex-row bg-white gap-2 rounded rounded-md overflow-hidden px-2">
-              <button
+            <Controls className="flex flex-row bg-card gap-2 rounded rounded-md overflow-hidden px-2">
+              <Button
+              variant={"outline"}
+          size="icon"
                 onClick={() => undo()}
                 disabled={!canUndo}
-                className={cn(
-                  " hover:bg-primary",
-                  "text-muted disabled:text-gray-400",
-                )}
               >
-                <DoubleArrowLeftIcon />{" "}
-              </button>
-              <button
+                <ChevronsLeft />{" "}
+              </Button>
+              <Button
+              variant={"outline"}
+          size="icon"
                 onClick={() => redo()}
                 disabled={!canRedo}
-                className={cn(
-                  " hover:bg-primary",
-                  "text-muted disabled:text-gray-400",
-                )}
               >
-                <DoubleArrowRightIcon />{" "}
-              </button>
-              <button
+                <ChevronRight />{" "}
+              </Button>
+              <Button
+                variant={"outline"}
+          size="icon"
                 onClick={() => setShowEdgeLabels(!showEdgeLabels)}
-                className={cn(
-                  " hover:bg-primary",
-                  showEdgeLabels ? "text-muted" : "text-gray-400",
-                )}
               >
-                <LetterCaseToggleIcon />{" "}
-              </button>
-              <button
+                <LetterCaseToggleIcon />
+              </Button>
+              <Button
+              variant={"outline"}
+          size="icon"
                 onClick={() => setShowNodeErrors(!showNodeErrors)}
-                className={cn(
-                  " hover:bg-primary",
-                  showNodeErrors ? "text-muted" : "text-gray-400",
-                )}
               >
-                <QuestionMarkIcon />{" "}
-              </button>
+                <QuestionMarkIcon />
+              </Button>
               <Sheet>
                 <SheetTrigger
-                  className={cn(
-                    " hover:bg-primary",
-                    "text-muted disabled:text-gray-200",
-                  )}
+
                 >
-                  <EyeOpenIcon />{" "}
+                  <Button variant={"outline"} size="icon">
+                  <EyeOpenIcon />
+                  </Button>
                 </SheetTrigger>
                 <SheetContent>
                   <SheetHeader>

@@ -7,13 +7,13 @@ export const Me = () => {
   const resolve = useResolve();
 
   return (
-    <Avatar className="border border-3 border-seperator border-white mx-auto">
+    <Avatar className="border-seperator border-white mx-auto cursor-pointer rounded-md">
       <AvatarImage
         src={resolve(data?.me?.profile.avatar?.presignedUrl)}
         alt={data?.me?.username}
-        className="border border-1 border-seperator"
+        className="border-seperator rounded-md"
       />
-      <AvatarFallback className="border border-1 border-seperator">
+      <AvatarFallback className="border-seperator">
         {data?.me.username.slice(0, 2)}
       </AvatarFallback>
     </Avatar>

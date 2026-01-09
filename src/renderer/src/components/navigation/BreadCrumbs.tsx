@@ -17,7 +17,7 @@ const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = (props) => {
 
   return (
     <>
-      <Breadcrumb className="flex-initial">
+      <Breadcrumb className="flex-initial text-md">
         <BreadcrumbList>
           {breadcrumbs.slice(0, -1).map(({ match, breadcrumb }) => (
             <>

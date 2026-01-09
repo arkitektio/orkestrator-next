@@ -16,50 +16,46 @@ import {
 } from "../api/graphql";
 import DefinitionCard from "../components/cards/DefinitionCard";
 import { IconForBackendKind } from "../components/IconForBackendKind";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data } = useListBackendsQuery();
 
   return (
     <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
+      <nav className="grid items-start px-1 text-xs font-medium lg:px-2">
+        <SidePaneGroup title="Explore">
+          <PaneLink
             to="/kabinet/home"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />
             Dashboard
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kabinet/app-store"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <ShoppingCart className="h-4 w-4" />
             App Store
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Manage All
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-          <DroppableNavLink
+        <SidePaneGroup title="Manage All">
+          <PaneLink
             to="/kabinet/pods"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
             Pods
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 flex items-center gap-2">
-          Engines
+        <SidePaneGroup title={
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary items-center uppercase">
+
+            Backends
               <HelpCircle className="h-3 w-3 cursor-pointer" />
             </PopoverTrigger>
             <PopoverContent>
@@ -72,24 +68,21 @@ export const NavigationPane = () => {
               </p>
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+        }>
+
+
           {data?.backends.map((backend, index) => (
-            <KabinetBackend.DetailLink
+            <KabinetBackend.PaneLink
               object={backend.id}
               key={index}
               className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
             >
               <IconForBackendKind kind={backend.kind} className="h-4 w-4" />
               {backend.name}
-            </KabinetBackend.DetailLink>
+            </KabinetBackend.PaneLink>
           ))}
-          {data?.backends.length === 0 && (
-            <div className="text-xs text-muted-foreground">
-              No engines registered...
-            </div>
-          )}
-        </div>
+
+        </SidePaneGroup>
       </nav>
     </div>
   );

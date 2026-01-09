@@ -85,7 +85,7 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ data, id }) => {
         {/* Welcome Header */}
         <CardHeader>
           <CardTitle className="text-3xl flex items-center gap-3">
-            <Database className="h-8 w-8 text-blue-500" />
+            <Database className="h-8 w-8 text-primary" />
             <JustUsername sub={id} />
             {"'s Data"}
           </CardTitle>

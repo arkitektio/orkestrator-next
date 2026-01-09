@@ -34,20 +34,22 @@ export const MultiSidebar = (props: { map: ChildMap | undefined , sidebarKey?: s
       onValueChange={setActiveTab}
       className="w-full h-full flex flex-initial flex-col"
     >
-      <TabsList className="w-full flex flex-row h-16 p-2 bg-sidebar border-b dark:border-gray-700 rounded-xs ">
+      <div className="flex-initial h-16  flex px-2 py-2 1">
+      <TabsList className="w-full flex gap-2 my-auto">
         {props.map &&
           Object.keys(props.map).map((key) => {
             return (
               <TabsTrigger
                 key={key}
                 value={key}
-                className="flex-1 h-full text-md truncate px-2 py-1"
+                className="flex-1 h-full text-xs truncate px-2 py-1 cursor-pointer text-elevation-foreground/60 hover:text-elevation-foreground data-[state=active]:text-elevation-foreground data-[state=active]:bg-accent data-[state=active]:hover:bg-accent/90"
               >
                 {key}
               </TabsTrigger>
             );
           })}
       </TabsList>
+      </div>
       {props.map &&
         Object.keys(props.map).map((key) => {
           return (

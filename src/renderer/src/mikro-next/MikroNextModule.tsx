@@ -29,6 +29,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
+          <Route path="home" element={<HomePage />} />
           <Route path="images/:id" element={<ImagePage />} />
           <Route path="lightpathviews/:id" element={<LightpathViewPage />} />
           <Route

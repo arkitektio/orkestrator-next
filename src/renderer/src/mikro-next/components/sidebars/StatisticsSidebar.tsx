@@ -75,7 +75,7 @@ export const StatisticsSidebar = () => {
       {statsCards.map((card) => (
         <div
           key={card.title}
-          className="p-4 rounded-lg border dark:border-gray-700 flex items-center gap-4"
+          className="p-4 rounded-lg border border-primary/20 flex items-center gap-4"
         >
           <div
             className={`p-3 rounded-lg ${card.bgColor} ${card.color}`}

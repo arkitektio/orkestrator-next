@@ -14,13 +14,13 @@ export const HelpSidebar = (props: { help?: React.ReactNode }) => {
   return (
     <div className="p-4 flex flex-col gap-2 h-full">
       <h2 className="text-lg font-semibold">Help & Documentation</h2>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-muted-foreground">
         Here you can find useful resources and documentation to assist you with using the application.
       </p>
 
 
       <div className="flex-grow overflow-y-auto">
-        <div className="flex mt-4 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+        <div className="flex mt-4 p-4 rounded-lg border border-primary dark:bg-primary/10">
           {props.help || <>No additional help available.</>}
         </div>
       </div>

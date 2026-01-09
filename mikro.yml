@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/mikro/graphql"
 documents: "graphql/mikro-next/**/*.graphql"
 generates:
-  src/mikro-next/api/fragments.ts:
+  src/renderer/src/mikro-next/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/mikro-next/api/graphql.ts:
+  src/renderer/src/mikro-next/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -14,12 +14,8 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/mikro/funcs"
-  electron/main/schemas/mikro.ts:
+  src/main/schemas/mikro.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
       - "typescript-graphql-request"
-
-  src/mikro-next/graphql.schema.json:
-    plugins:
-      - "introspection"

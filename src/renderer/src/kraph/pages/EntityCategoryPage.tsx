@@ -23,7 +23,7 @@ import { DialogButton } from "@/components/ui/dialogbutton";
 import { ImageCreator } from "@/alpaka/components/ImageCreator";
 import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 
-export default asDetailQueryRoute(
+export const Page =  asDetailQueryRoute(
   useGetEntityCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -87,12 +87,11 @@ export default asDetailQueryRoute(
           />
         }
         pageActions={
-          <div className="flex flex-row gap-2">
+          <>
             <Button
               onClick={() => {
                 quickCreate().then(refetch);
               }}
-              className="w-full"
               variant="outline"
             >
               Quick+
@@ -101,7 +100,6 @@ export default asDetailQueryRoute(
               onClick={() => {
                 pin().then(refetch);
               }}
-              className="w-full"
               variant="outline"
             >
               {data.entityCategory.pinned ? "Unpin" : "Pin"}
@@ -114,17 +112,13 @@ export default asDetailQueryRoute(
             </FormDialog>
             <DialogButton
               variant="outline"
-              className="w-full"
               name="editentitycategory"
               dialogProps={{ entityCategory: data.entityCategory }}
             >
               Edit
             </DialogButton>
             <EnhanceButton identifier="@kraph/entitycategory" object={data.entityCategory.id} refetch={refetch} />
-            <KraphEntityCategory.ObjectButton
-              object={data.entityCategory.id}
-              className="w-full"
-            />
+
             <Button
               variant="outline"
               onClick={() =>
@@ -136,7 +130,10 @@ export default asDetailQueryRoute(
               <Plus className="h-3 w-3 mr-2" />
               Create {data.entityCategory.label || "Entity"}
             </Button>
-          </div>
+            <KraphEntityCategory.ObjectButton
+              object={data.entityCategory.id}
+            />
+          </>
         }
       >
         <div className="p-6 flex flex-col flex-initial">
@@ -174,3 +171,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default Page;

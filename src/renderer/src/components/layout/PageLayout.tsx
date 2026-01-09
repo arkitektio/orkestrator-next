@@ -119,8 +119,8 @@ export const PageLayout = ({
       <ResizablePanel className="h-full w-full" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col bg-background",
-            variant == "default" ? "" : "bg-black text-gray-300",
+            "h-full w-full flex flex-col ",
+            variant == "default" ? "bg-radial-[at_100%_100%] from-background to-backgroundpaired" : "bg-black text-gray-300",
           )}
         >
           <div
@@ -141,12 +141,12 @@ export const PageLayout = ({
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-initial text-foreground flex flex-row items-center gap-1">
+            <div className="flex-initial text-foreground flex flex-row gap-1 max-w-lg">
 
               {pageActions}
 
 
-              <ButtonGroup>
+              <ButtonGroup className="flex-initial">
                 <Button variant="ghost" onClick={togglePageSidebar} className="!pl-2 !pr-2"><PanelRight /></Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
@@ -186,17 +186,18 @@ export const PageLayout = ({
       </ResizablePanel>
       {params.get("pageSidebar") == "true" && (
         <>
-          <ResizableHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-seperator" />
+          <ResizableHandle  />
           <ResizablePanel
             minSize={10}
             maxSize={80}
             defaultSize={20}
             order={2}
             className={cn(
-              "border-l-1 border bg-pane",
-              variant == "default" ? "" : "border-0 bg-black",
+              "bg-sidebar l",
+              variant == "default" ? "" : "border-0 bg-sidebar bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
             )}
             id="sidebar"
+
           >
             {sidebars}
           </ResizablePanel>

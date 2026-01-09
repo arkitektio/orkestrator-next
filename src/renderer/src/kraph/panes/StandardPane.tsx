@@ -30,6 +30,7 @@ import {
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 import { FancyInput } from "@/components/ui/fancy-input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 interface IDataSidebarProps { }
 
@@ -39,102 +40,95 @@ export const NavigationPane = (props: {}) => {
   return (
     <div className="flex-1 flex-col">
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
+        <SidePaneGroup title="Explore">
+          <PaneLink
             to="/kraph"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />
             Dashboard
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/graphs"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <SparkleIcon className="h-4 w-4" />
             Graphs
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Categories
-        </div>
-
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          <DroppableNavLink
+        <SidePaneGroup title="Categories">
+          <PaneLink
             to="/kraph/structurecategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <BsRecord className="h-4 w-4" />
             Structures
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/reagentcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FlaskRoundIcon className="h-4 w-4" />
             Reagents
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/entitycategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <CatIcon className="h-4 w-4" />
             Entities
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/protocoleventcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Notebook className="h-4 w-4" />
             Protocol Events
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/naturaleventcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Divide className="h-4 w-4" />
             Natural Events
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/relationcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <TbRelationOneToOne className="h-4 w-4" />
             Relations
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/structurerelationcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <TbRelationOneToOne className="h-4 w-4" />
             Structure Relations
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/metriccategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <PiNumberCircleEight className="h-4 w-4" />
             Metrics
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/notes"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <PiNumberCircleEight className="h-4 w-4" />
             Notes
-          </DroppableNavLink>
-          <DroppableNavLink
+          </PaneLink>
+          <PaneLink
             to="/kraph/measurementcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Ruler className="h-4 w-4" />
             Measurement
-          </DroppableNavLink>
-        </div>
+          </PaneLink>
+        </SidePaneGroup>
 
         {data?.entityCategories && data.entityCategories.length > 0 && (
           <>

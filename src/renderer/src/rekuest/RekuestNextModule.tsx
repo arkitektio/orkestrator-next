@@ -44,6 +44,7 @@ const Module: React.FC = () => {
       <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
+          <Route path="home" element={<Home />} />
           <Route path="actions/:id" element={<Action />} />
           <Route path="agents" element={<AgentsPage />} />
           <Route path="reservations/:id" element={<Reservation />} />

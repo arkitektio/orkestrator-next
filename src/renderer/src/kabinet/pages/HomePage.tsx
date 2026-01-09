@@ -74,18 +74,18 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
 
       {data?.repos?.length == 0 ? (
         // Empty State with Hero Design
-        <div className="min-h-full w-full bg-gradient-to-br from-slate-50/20 to-slate-100/20 dark:from-slate-900/30 dark:to-slate-800/30 flex items-center justify-center rounded-lg">
+        <div className="min-h-full w-full  flex items-center justify-center rounded-lg">
           <div className="max-w-4xl mx-auto text-center px-6 py-16">
             {/* Hero Section */}
             <div className="space-y-6">
               <div className="flex justify-center">
-                <div className="p-6 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-200/20 dark:border-blue-700/20">
-                  <ShoppingBasket className="h-16 w-16 text-blue-500" />
+                <div className="">
+                  <ShoppingBasket className="h-16 w-16 text-primary" />
                 </div>
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                   Welcome to Kabinet
                 </span>
               </h1>
@@ -99,22 +99,22 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
             {/* Action Section */}
             <div className="mt-12 space-y-6">
               <div className="space-y-4">
-                <Button variant="primary" size="lg" onClick={() => { }}>
+                <Button variant="default" size="lg" onClick={() => { }}>
                   Add your first Repo
                 </Button>
               </div>
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span>Visualize Images</span>
+                  <span>Add Apps</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Network className="h-4 w-4" />
-                  <span>Explore Stages</span>
+                  <span>Manage Plugin Engines</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span>Analyze Tables</span>
+                  <span>Start Analyzing</span>
                 </div>
               </div>
             </div>

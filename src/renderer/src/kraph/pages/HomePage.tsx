@@ -95,13 +95,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               {/* Hero Section */}
               <div className="space-y-6">
                 <div className="flex justify-center">
-                  <div className="p-6 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-200/20 dark:border-blue-700/20">
-                    <PiGraph className="h-16 w-16 text-blue-500" />
+                  <div className="p-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/20 dark:border-primary/20">
+                    <PiGraph className="h-16 w-16 text-primary" />
                   </div>
                 </div>
 
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                     Welcome to Kraph
                   </span>
                 </h1>
@@ -157,7 +157,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             {/* Welcome Header */}
             <CardHeader>
               <CardTitle className="text-3xl flex items-center gap-3">
-                <PiGraph className="h-8 w-8 text-blue-500" />
+                <PiGraph className="h-8 w-8 text-primary" />
                 Your Graphs
               </CardTitle>
               <CardDescription className="text-lg">

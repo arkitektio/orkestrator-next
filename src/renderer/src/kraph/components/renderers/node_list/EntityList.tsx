@@ -906,14 +906,14 @@ export const EntityList = (props: {
   });
 
   return (
-    <div className="w-full h-full bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400  border  rounded-xl flex flex-col overflow-hidden">
+    <div className="w-full h-full bg-card text-card-foreground   border  rounded-xl flex flex-col overflow-hidden">
       {error && (
         <div className="p-4 bg-red-600 text-white">
           Error loading entities: {error.message}
         </div>
       )}
       {!props.options?.minimal && (
-        <div className="py-4 bg-slate-900 px-3 rounded-md rounded-top flex-initial">
+        <div className="py-4 bg-secondary/20 px-3 rounded-md rounded-top flex-initial">
           <div className="flex items-center gap-2 justify-between">
             <div className="flex items-center gap-2 flex-initial max-w-lg w-lg">
               <FancyInput
@@ -980,7 +980,7 @@ export const EntityList = (props: {
 
               {/* Add Order Dropdown */}
               <DropdownMenu open={isAddOrderOpen} onOpenChange={setIsAddOrderOpen}>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                   <Button variant="outline" size="sm">
                     <ArrowUpDown className="mr-2 h-4 w-4" />
                     Add Order
@@ -1045,7 +1045,7 @@ export const EntityList = (props: {
 
               {/* Add Filter Dropdown */}
               <DropdownMenu open={isAddFilterOpen} onOpenChange={setIsAddFilterOpen}>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                   <Button variant="outline" size="sm">
                     <Filter className="mr-2 h-4 w-4" />
                     Add Filter
@@ -1126,7 +1126,7 @@ export const EntityList = (props: {
               </DropdownMenu>
 
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                   <Button variant="outline">
                     Columns <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -1194,14 +1194,14 @@ export const EntityList = (props: {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-slate-900">
-                <TableHead key={"first"} className="border border-1 border-gray-300">
+              <TableRow key={headerGroup.id} className="bg-secondary/20">
+                <TableHead key={"first"} className=" ">
                   <ChevronDown className="ml-2 h-4 w-4 opacity-0" />
                 </TableHead>
 
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="border border-1 border-gray-300">
+                    <TableHead key={header.id} className="">
                       {header.isPlaceholder
                         ? null
                         : flexRender(

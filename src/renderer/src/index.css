@@ -7,12 +7,14 @@
 
 :root {
     --background: oklch(1 0 0);
+    --backgroundpaired: oklch(26.448% 0.00003 271.152);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.60 0.13 163);
+    --primary: oklch(31.185% 0.20962 267.256);
+    --primary-similar: oklch(77.97% 0.11269 258.167);
     --primary-foreground: oklch(0.98 0.02 166);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -41,14 +43,16 @@
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --background: oklch(0% 0 0);
+    --backgroundpaired: oklch(34.846% 0.00004 271.152);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.70 0.15 162);
-    --primary-foreground: oklch(0.26 0.05 173);
+    --primary: oklch(70.058% 0.14384 165.057);
+    --primary-similar: oklch(51.369% 0.1004 166.342);
+    --primary-foreground: oklch(100% 0.00011 271.152);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -126,4 +130,49 @@
   html {
     @apply font-sans;
     }
+}
+
+
+
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-border border-[1px] border-transparent border-solid bg-clip-padding;
+}
+
+
+.dockview-theme-abyss {
+  --dv-tab-divider-color: hsl(var(--pane));
+  --dv-tabs-and-actions-container-background-color: hsl(var(--pane));
+  --dv-separator-border: hsl(var(--pane));
+  .groupview {
+    &.active-group {
+      > .tabs-and-actions-container {
+        border-bottom: 2px solid
+          var(--dv-activegroup-visiblepanel-tab-background-color);
+      }
+    }
+    &.inactive-group {
+      > .tabs-and-actions-container {
+        border-bottom: 2px solid
+          var(--dv-inactivegroup-visiblepanel-tab-background-color);
+      }
+    }
+  }
+  .tabs-container {
+    background-color: black;
+  }
+}
+
+
+/* Add this to your CSS */
+.smartdraggable {
+  -webkit-user-drag: none;
+  user-select: none;
 }

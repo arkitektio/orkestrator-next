@@ -24,12 +24,14 @@ import {
   Identifier,
   ModelLinkProps,
   OmitedNavLinkProps,
+  SmartPaneLinkProps,
 } from "./types";
 import {
   ListPageLayout,
   ListPageLayoutProps,
 } from "@/components/layout/ListPageLayout";
 import { EnhanceButton, EnhanceButtonProps } from "@/alpaka/components/EnhanceButton";
+import { PaneLink } from "@/components/ui/sidepane";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -90,6 +92,27 @@ export const buildModelLink = (to: string) => {
       >
         {children}
       </NavLink>
+    );
+  };
+};
+
+
+export const buildPaneLink = (to: string) => {
+  return ({
+    children,
+    subroute,
+    subobject,
+    deeproute,
+    ...props
+  }: SmartPaneLinkProps) => {
+    return (
+      <PaneLink
+        {...props}
+        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+
+      >
+        {children}
+      </PaneLink>
     );
   };
 };
@@ -249,6 +272,7 @@ export const buildSmart = (
 
   return {
     DetailLink: buildModelLink(to),
+    PaneLink: buildPaneLink(to),
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
     listlinkBuilder: listLinkBuilder(to),

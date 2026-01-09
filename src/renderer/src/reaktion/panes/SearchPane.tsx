@@ -23,6 +23,7 @@ import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FancyInput } from "@/components/ui/fancy-input";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 interface IDataSidebarProps { }
 
@@ -39,36 +40,18 @@ export const NavigationPane = (props: {}) => {
 
   return (
     <Tree>
-      <SubTreeTitle>Explore</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
-          to="/fluss"
+      <SidePaneGroup title="Explore">
+        <PaneLink
+          to="/fluss/home"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Home className="h-4 w-4" />
           Dashboard
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
 
-      <SubTreeTitle>
-        <FlussRun.ListLink>Runs</FlussRun.ListLink>
-      </SubTreeTitle>
-      <SubTree>
-        {rundata?.runs.map((run, index) => (
-          <FlussRun.DetailLink
-            object={run.id}
-            key={index}
-            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4 my-auto" />
-            {run.flow.workspace.title}
-            <div className="text-slate-600 text-xs my-auto">
-              <Timestamp date={run.createdAt} relative />
-            </div>
-          </FlussRun.DetailLink>
-        ))}
-      </SubTree>
-      <SubTreeTitle
+
+      <SidePaneGroup title={<FlussWorkspace.ListLink>Workspaces</FlussWorkspace.ListLink>}
         action={
           <FormDialogAction
             label="Create"
@@ -82,20 +65,34 @@ export const NavigationPane = (props: {}) => {
           </FormDialogAction>
         }
       >
-        <FlussWorkspace.ListLink>Workspaces</FlussWorkspace.ListLink>
-      </SubTreeTitle>
-      <SubTree>
         {data?.workspaces.map((workspace, index) => (
-          <FlussWorkspace.DetailLink
+          <FlussWorkspace.PaneLink
             object={workspace.id}
             key={index}
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
             {workspace.title}
-          </FlussWorkspace.DetailLink>
+          </FlussWorkspace.PaneLink>
         ))}
-      </SubTree>
+      </SidePaneGroup>
+
+       <SidePaneGroup title={
+        <FlussRun.ListLink>Runs</FlussRun.ListLink>}>
+        {rundata?.runs.map((run, index) => (
+          <FlussRun.PaneLink
+            object={run.id}
+            key={index}
+            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4 my-auto" />
+            {run.flow.workspace.title}
+            <div className="text-slate-600 text-xs my-auto">
+              <Timestamp date={run.createdAt} relative />
+            </div>
+          </FlussRun.PaneLink>
+        ))}
+      </SidePaneGroup>
     </Tree>
   );
 };

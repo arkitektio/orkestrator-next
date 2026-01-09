@@ -40,9 +40,9 @@ export const AgentController = (props: any) => {
     <Collapsible
       open={settings.agentExpanded}
       onOpenChange={toggleExpanded}
-      className="w-full bg-foreground/5 rounded-t-lg border-t border-border overflow-hidden"
+      className="w-full bg-sidebar/5 rounded-t-lg border-t border-border overflow-hidden"
     >
-      <div className="p-3 border-b border-border/50 flex items-center justify-between bg-background/50">
+      <div className="p-3 border-b border-border/50 flex items-center justify-between bg-backgroundsimilar/50">
         <div className="flex items-center gap-2">
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-transparent">

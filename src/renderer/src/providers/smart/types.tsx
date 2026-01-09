@@ -1,11 +1,21 @@
+import { PaneLinkProps } from "@/components/ui/sidepane";
 import { MateFinder } from "@/mates/types";
 import { NavLinkProps } from "react-router-dom";
 
 export type Identifier = string;
 
 export type OmitedNavLinkProps = Omit<NavLinkProps, "to">;
+export type OmittedPaneLinkProps = Omit<PaneLinkProps, "to">;
 export type BaseLinkProps = OmitedNavLinkProps;
 export type ModelLinkProps = OmitedNavLinkProps & {
+  object: string;
+  subroute?: string;
+  subobject?: string;
+  deeproute?: string;
+};
+
+
+export type SmartPaneLinkProps = OmittedPaneLinkProps & {
   object: string;
   subroute?: string;
   subobject?: string;

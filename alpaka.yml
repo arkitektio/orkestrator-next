@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/alpaka/graphql"
 documents: "graphql/alpaka/**/*.graphql"
 generates:
-  src/alpaka/api/fragments.ts:
+  src/renderer/src/alpaka/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/alpaka/api/graphql.ts:
+  src/renderer/src/alpaka/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -15,6 +15,6 @@ generates:
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/alpaka/funcs"
 
-  src/alpaka/graphql.schema.json:
+  src/renderer/src/alpaka/graphql.schema.json:
     plugins:
       - "introspection"

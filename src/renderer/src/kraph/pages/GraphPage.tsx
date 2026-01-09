@@ -33,7 +33,7 @@ import { Plus, PlusIcon } from "lucide-react";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { SheetButton } from "@/components/ui/sheetbutton";
 
-export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
+export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const navigate = useNavigate();
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
@@ -241,3 +241,6 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
     </KraphGraph.ModelPage>
   );
 });
+
+
+export default Page;

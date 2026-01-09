@@ -45,17 +45,21 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger>
+        <ContextMenuTrigger asChild>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             key={id}
             className={cn(
-              "rounded-xl border bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400 w-full",
+              "rounded-xl border bg-card text-card-foreground shadow border-primary/80 w-full h-full group",
               "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
-              className,
+              "w-full  ",
             )}
+            style ={{
+              minWidth: minWidth,
+              minHeight: minHeight,
+            }}
           >
             {children}
 

@@ -38,6 +38,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
+import { is } from "date-fns/locale";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -112,27 +114,27 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
 
   return (
     <>
-      <div className="flex-initial h-12 w-12 justify-center items-center flex cursor-pointer " onClick={onClick}>
+      <div className="flex-initial h-12 w-12 justify-center items-center flex cursor-pointer mb-3" onClick={onClick}>
         {location.pathname == "/" ? (
           <ArkitektLogo
             width={"100%"}
             height={"100%"}
-            cubeColor={"hsl(var(--primary))"}
-            aColor={"hsl(var(--foreground))"}
-            strokeColor={"hsl(var(--foreground))"}
+            cubeColor={"var(--primary)"}
+            aColor={"var(--foreground)"}
+            strokeColor={"var(--foreground)"}
           />
         ) : (
           <BackLogo
 
             width={"100%"}
             height={"100%"}
-            cubeColor={"hsl(var(--primary))"}
-            aColor={"hsl(var(--foreground))"}
-            strokeColor={"hsl(var(--foreground))"}
+            cubeColor={"var(--primary)"}
+            aColor={"var(--foreground)"}
+            strokeColor={"var(--foreground)"}
           />
         )}
       </div>
-      <div className="flex-grow flex-row md:flex-col flex justify-center  md:gap-6 items-center gap-2 overflow-hidden md:flex hidden">
+      <div className="flex-grow flex-row md:flex-col flex justify-start md:gap-2 items-center gap-2 overflow-hidden md:flex hidden">
         {instances.map((s) => {
           if (s.key == "self") return null;
           if (s.key == "datalayer") return null;
@@ -144,7 +146,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
               {({ isActive }) => (
                 <Tooltip>
                   <TooltipTrigger>
-                    <NavigationMenuLink active={isActive}>
+                    <NavigationMenuLink active={isActive} className={cn("flex-1 cursor-pointer", isActive ? "bg-primary" : "") }>
                       {matchIcon(s.key)}
                     </NavigationMenuLink>
                   </TooltipTrigger>
@@ -157,7 +159,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
       </div>
       <div className="flex-grow block md:hidden">
         <Drawer>
-          <DrawerTrigger className="flex w-full h-full justify-center items-center">
+          <DrawerTrigger className="flex w-full h-full justify-start items-start">
             <IconContext.Provider
               value={{ className: "w-8 h-8 mx-auto  text-foreground" }}
             >
@@ -174,13 +176,14 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
               if (s.key == "datalayer") return null;
               if (s.key == "livekit") return null;
               return (
-                <DroppableNavLink key={s.key} to={`/${s.key}`} >
+                <DroppableNavLink key={s.key} to={`/${s.key}`} className={"cursor-pointer"}>
                   {({ isActive }) => (
                     <Tooltip>
-                      <TooltipTrigger className="flex flex-col items-center">
-                        <NavigationMenuLink active={isActive} className="flex-1">
+                      <TooltipTrigger className="flex flex-col items-center bg-green-500 p-2 rounded-md">
+                        <NavigationMenuLink className={cn("flex-1 cursor-pointer", isActive ? "text-primary" : "text-foreground") } active={isActive}>
                           {matchIcon(s.key)} {/* Show the name of the service below the icon */}
                         </NavigationMenuLink>
+                        {isActive && "Active"}
                         <div className="text-xs">{s.key}</div>
 
                       </TooltipTrigger>

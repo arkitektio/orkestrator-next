@@ -11,7 +11,7 @@ import {
 import { EditFlow } from "@/reaktion/edit/EditFlow";
 import { DeployPane } from "../edit/components/deploy/DeployPane";
 
-export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
+export const Page =  asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
   const [saveFlow] = useUpdateWorkspaceMutation({
     refetchQueries: [WorkspacesDocument, WorkspaceCarouselDocument],
   });
@@ -41,7 +41,7 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
             Versions: (
               <div className="p-4 flex flex-col gap-2">
                 {data?.workspace.flows.map((fl) => (
-                  <FlussFlow.Smart object={fl.id}>
+                  <FlussFlow.Smart object={fl.id } key={fl.id}>
                     <Card className="p-4">
                       <FlussFlow.DetailLink object={fl.id}>
                         {fl.title}
@@ -78,3 +78,5 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
     </FlussWorkspace.ModelPage>
   );
 });
+
+export default Page;

@@ -86,7 +86,7 @@ export const AssignationToaster = (props: { id: string }) => {
       // wait delay
       const timer = setTimeout(() => {
         toast.dismiss(props.id);
-      }, 3000);
+      }, 9000);
 
       return () => clearTimeout(timer);
     }
@@ -94,7 +94,7 @@ export const AssignationToaster = (props: { id: string }) => {
 
   return (
     <div
-      className={cn("relative w-full! !w-full  group flex flex-col gap-2 h-20")}
+      className={cn("relative w-md group flex flex-col gap-2 h-20 bg-background")}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -240,10 +240,11 @@ export const AssignationUpdater = (props: {}) => {
 
             console.error("Added assignation", create.reference);
             const toastId = create.id; // Use the assignation id as the toastId
-            toast(<AssignationToaster id={toastId} />, {
+            toast.custom((id) => <AssignationToaster id={toastId} />, {
               id: toastId,
               duration: Infinity, // Keep toast open until manually closed or task completes
               dismissible: true,
+
             });
           }
         });

@@ -96,7 +96,7 @@ export const RunButton = (props: { flow: FlowFragment }) => {
       {data?.implementations && data.implementations.length > 1 && (
         <Popover>
           <PopoverTrigger>
-            <Button>Run</Button>
+            <Button size="lg">Run</Button>
           </PopoverTrigger>
           <PopoverContent>
             {data?.implementations.map((template) => (

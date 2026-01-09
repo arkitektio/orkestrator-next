@@ -44,7 +44,6 @@ export const ModelPageLayout = ({
         "Tasks": <RunsSidebar identifier={identifier} object={object} />,
         ...additionalSidebars,
       }} sidebarKey="DetailModel" />}
-      actions={actions}
       variant={variant}
       pageActions={pageActions || <ObjectButton  objects={objects} />}
     >

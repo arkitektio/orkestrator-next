@@ -22,22 +22,14 @@ interface Props {
 const TheCard = ({ item }: Props) => {
   const reserveMate = useReserveMate();
 
-  const progress = useLiveAssignation({
-    assignedAction: item.id,
-  });
+
 
   return (
     <RekuestAction.Smart object={item?.id} mates={[reserveMate]}>
       <Card
-        className="group border border-gray-200 dark:border-gray-800 aspect-square ring ring-0 group-data-[selected=true]:ring-1  "
-        style={{
-          backgroundSize: `${progress?.progress || 0}% 100%`,
-          backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "left center",
-        }}
+        className="group border aspect-square ring ring-0 group-data-[selected=true]:ring-1 flex flex-col justify-between"
       >
-        <CardHeader className="flex flex-col justify-between p-3 h-full">
+        <CardHeader className="flex flex-col justify-between h-full">
           <div className="flex-grow overflow-hidden">
             <CardTitle>
               <RekuestAction.DetailLink object={item?.id}>
@@ -53,12 +45,12 @@ const TheCard = ({ item }: Props) => {
           </div>
           <CardFooter className="flex justify-between gap-2 truncate">
             <ActionButton id={item.id}>
-              <Button variant="outline" size="sm" className="flex-1 truncate">
+              <Button variant="default" size="default" className="flex-1 truncate">
                 Assign
               </Button>
             </ActionButton>
             <ReserveActionButton id={item.id}>
-              <Button variant="outline" size="sm" className="flex-1 truncate">
+              <Button variant="outline" size="default" className="flex-1 truncate">
                 Short
               </Button>
             </ReserveActionButton>

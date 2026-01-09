@@ -16,65 +16,63 @@ import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 import { FancyInput } from "@/components/ui/fancy-input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (
     <Tree>
-      <SubTreeTitle>Explore</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Explore">
+        <PaneLink
           to="/elektro"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Home className="h-4 w-4" />
           Home
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
 
-      <SubTreeTitle>Neuron</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Neuron">
+        <PaneLink
           to="/elektro/simulations"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <LineChartIcon className="h-4 w-4" />
           Simulations
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/elektro/experiments"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <RiCheckboxMultipleLine className="h-4 w-4" />
           Experiments
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/elektro/neuronmodels"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Network className="h-4 w-4" />
           Neuron models
-        </DroppableNavLink>
-        <DroppableNavLink
+        </PaneLink>
+        <PaneLink
           to="/elektro/modelcollections"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
           Model Collections
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
 
-      <SubTreeTitle>Ephys</SubTreeTitle>
-      <SubTree>
-        <DroppableNavLink
+      <SidePaneGroup title="Ephys"  >
+        <PaneLink
           to="/elektro/blocks"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Network className="h-4 w-4" />
           Blocks
-        </DroppableNavLink>
-      </SubTree>
+        </PaneLink>
+      </SidePaneGroup>
     </Tree>
   );
 };

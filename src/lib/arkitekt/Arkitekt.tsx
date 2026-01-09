@@ -45,7 +45,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: mikroResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -61,7 +61,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: rekuestResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -77,7 +77,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: lovekitResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -93,7 +93,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: flussResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -109,7 +109,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: lokResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -125,7 +125,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: kabinetResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -141,7 +141,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: omeroArkResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -157,7 +157,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: kraphResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -173,7 +173,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: alpakaResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };
@@ -189,7 +189,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: dokumentsResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias,
       };
@@ -205,7 +205,7 @@ export const serviceMap = {
           wsEndpointUrl: aliasToWsPath(alias, "graphql"),
           endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: elektroResult.possibleTypes,
-          retrieveToken: () => token,
+          retrieveToken: () => token.access_token,
         }),
         alias
       };

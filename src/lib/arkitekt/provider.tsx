@@ -39,7 +39,7 @@ export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: S
       manifest,
       alias: aliasMap[key],
       fakts: fakts,
-      token: token.access_token,
+      token: token,
     }
     )
   }

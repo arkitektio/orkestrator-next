@@ -16,15 +16,19 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
   return (
     <>
       <NodeResizer
-        color="#ff0071"
+        color="var(--primary)"
         isVisible={selected}
         minWidth={100}
         minHeight={30}
       />
       <Handles self={id} />
+      <Card
+        className={`h-full w-full rounded-xl border-emerald-500 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-1 ring-primary shadow-lg" : ""}`}
+        style={{ zIndex: 10 }}
+      >
       <KraphEntityCategory.Smart
         object={data.id}
-        containerClassName="h-full w-full relative group ring-4 rounded rounded-md ring-green-200  bg-black  data-[selected=true]:ring-4 data-[selected=true]:ring-primary data-[nselected=true]:ring-4 data-[bselected=true]:ring-red-400"
+        containerClassName="h-full w-full "
         className="h-full w-full  overflow-hidden"
       >
         {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
@@ -33,11 +37,10 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
         {data.store?.presignedUrl && (
           <Image
             src={resolve(data?.store.presignedUrl)}
-            style={{ filter: "brightness(0.7)" }}
             className="object-cover h-full w-full"
           />
         )}
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col gap-2 bg-black/50 ">
+        <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col gap-2 ">
           <KraphEntityCategory.DetailLink object={data.id}>
             {data.label}
           </KraphEntityCategory.DetailLink>
@@ -53,6 +56,7 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
         <PathMarker nodeId={id} />
         <NodeQueryControls nodeId={id} nodeType="Entity" />
       </KraphEntityCategory.Smart>
+      </Card>
     </>
   );
 });

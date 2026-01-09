@@ -74,6 +74,14 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
   }, [settings?.colorScheme]);
 
   useEffect(() => {
+    if (settings?.primaryColor) {
+      document.documentElement.style.setProperty("--primary", settings.primaryColor);
+      document.documentElement.style.setProperty("--sidebar-primary", settings.primaryColor);
+      // We might want to set derived colors too, but let's start with this
+    }
+  }, [settings?.primaryColor]);
+
+  useEffect(() => {
     // Apply zoom level when settings change (debounced)
     if (settings?.defaultZoomLevel) {
       debouncedApplyZoomLevel(settings.defaultZoomLevel);

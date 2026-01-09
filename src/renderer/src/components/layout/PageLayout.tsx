@@ -141,7 +141,7 @@ export const PageLayout = ({
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-initial text-foreground flex flex-row gap-1 max-w-lg">
+            <div className="flex-initial text-foreground flex flex-row gap-1 max-w-3xl">
 
               {pageActions}
 

@@ -14,6 +14,7 @@ export const settingsValidator = zod.object({
   defaultZoomLevel: zod.number().min(0.25).max(3.0),
   startAgent: zod.boolean(),
   agentExpanded: zod.boolean().optional(),
+  primaryColor: zod.string().optional(),
 });
 
 export const defaultSettings: Settings = {
@@ -22,6 +23,7 @@ export const defaultSettings: Settings = {
   allowBatch: true,
   darkMode: true,
   colorScheme: "red",
+  primaryColor: "oklch(0.60 0.13 163)",
   experimental: false,
   pollInterval: 3000,
   instanceId: "main",

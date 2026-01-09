@@ -94,7 +94,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       object={data.graph.id}
       title={data.graph.name}
       pageActions={
-        <div className="flex flex-row gap-2">
+        <>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -172,7 +172,6 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
             onClick={() => {
               pin();
             }}
-            className="w-full"
             variant="outline"
           >
             {data.graph.pinned ? "Unpin" : "Pin"}
@@ -183,12 +182,11 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
                 variables: { input: { id: data.graph.id } },
               });
             }}
-            className="w-full"
             variant="outline"
           >
             Materialize
           </Button>
-        </div>
+        </>
       }
       sidebars={
         <MultiSidebar

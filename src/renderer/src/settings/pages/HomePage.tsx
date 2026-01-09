@@ -2,6 +2,7 @@ import { SwitchField } from "@/components/fields/SwitchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ThemeCustomizer } from "../components/ThemeCustomizer";
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ import {
   Server,
   Settings,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import deepEqual from "deep-equal";
 import React, { useEffect, useState } from "react";
@@ -296,6 +298,23 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Application Settings"
     >
       <div className="space-y-8">
+
+       {/* App Updates Section */}
+        <Card>
+          <CardHeader>
+             <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              Appearance
+            </CardTitle>
+            <CardDescription>
+              Customize the look and feel of the application.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ThemeCustomizer />
+          </CardContent>
+        </Card>
+
         {/* App Updates Section */}
         <Card>
           <CardHeader>

@@ -23,7 +23,7 @@ export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
       </div>
 
       {/* Main content area */}
-      <div className="flex-grow flex overflow-y-auto z-2 md:ml-1 md:my-1 my-1 mx-1  md:mb-1  border-1 border border-gray-400 dark:border-gray-700 bg-pane shadow shadow-xs md:mr-1">
+      <div className="border-l border-gray-600 border-1 flex-grow flex overflow-y-auto z-2 bg-sidebar shadow shadow-xs md:mr-1">
         {children}
       </div>
 

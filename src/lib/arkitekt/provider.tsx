@@ -232,6 +232,8 @@ try {
 
     if (!faktsRaw || !tokenRaw || !endpointRaw || !aliasReportsRaw) return;
 
+    setConnecting(true);
+
     try {
 
       const fakts = ActiveFaktsSchema.parse(JSON.parse(faktsRaw));
@@ -249,33 +251,37 @@ try {
         timeout: 2000,
       });
 
+      let currentAliasMap = aliasStorage.aliasMap;
+
       if (!stillReachable) {
-        throw new Error("Stored aliases no longer reachable");
-      }
-      const { aliasReports, aliasMap, functional } = await buildAliases({
-        fakts,
-        manifest: manifest,
-        controller: controller,
-      });
+        const { aliasReports, aliasMap, functional } = await buildAliases({
+            fakts,
+            manifest: manifest,
+            controller: controller,
+        });
 
+        const reportRequest : ReportRequest = {
+          alias_reports: aliasReports,
+          token: fakts.auth.client_token,
+          functional: functional,
+        };
 
-      const reportRequest : ReportRequest = {
-        alias_reports: aliasReports,
-        token: fakts.auth.client_token,
-        functional: functional,
-      };
+        localStorage.setItem("aliasReports", JSON.stringify({aliasMap: aliasMap}));
+        if (!functional) {
+          throw new Error("Could not connect to all required services");
+        }
 
-      await report(fakts.auth.report_url, reportRequest);
+        await report(fakts.auth.report_url, reportRequest);
 
-      if (!functional) {
-        throw new Error("Could not connect to all required services");
+        currentAliasMap = aliasMap;
+
       }
 
 
       const serviceMap = buildServiceMap({
         map: serviceBuilderMap,
         manifest: manifest,
-        aliasMap: aliasMap,
+        aliasMap: currentAliasMap,
         token: token.access_token,
         fakts: fakts,
       });
@@ -285,7 +291,7 @@ try {
           endpoint: endpoint,
           fakts: fakts,
           manifest: manifest,
-          aliasMap: aliasMap,
+          aliasMap: currentAliasMap,
           serviceBuilderMap: serviceBuilderMap,
           serviceMap: serviceMap,
           token: token.access_token,

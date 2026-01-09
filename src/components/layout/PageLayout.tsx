@@ -119,13 +119,13 @@ export const PageLayout = ({
       <ResizablePanel className="h-full w-full" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col bg-background",
+            "h-full w-full flex flex-col bg-pane",
             variant == "default" ? "" : "bg-black text-gray-300",
           )}
         >
           <div
             className={cn(
-              "h-16 flex-row flex justify-between flex-initial border-b dark:border-gray-700 px-2 py-2 items-center",
+              "h-16 flex-row flex justify-between flex-initial dark:border-gray-700 px-2 py-2 items-center",
               variant == "default"
                 ? ""
                 : "border-0 bg-black bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
@@ -137,9 +137,6 @@ export const PageLayout = ({
             </Button>
             <Separator dir="vertical" className="w-2" />
             <div className="flex-grow flex flex-col truncate">
-              <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-xl truncate max-w-[70%]">
-                {title}
-              </h1>
               <div className="flex-shrink ">
                 <BreadCrumbs />
               </div>
@@ -182,7 +179,7 @@ export const PageLayout = ({
             </div>
           </div>
 
-          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto bg-background">
+          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto">
             {children}
           </div>
         </div>
@@ -196,7 +193,7 @@ export const PageLayout = ({
             defaultSize={20}
             order={2}
             className={cn(
-              "border-l-1 border bg-background",
+              "border-l-1 border bg-pane",
               variant == "default" ? "" : "border-0 bg-black",
             )}
             id="sidebar"

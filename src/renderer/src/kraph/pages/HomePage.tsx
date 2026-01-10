@@ -24,6 +24,7 @@ import CreateGraphForm from "../forms/CreateGraphForm";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { Button } from "@/components/ui/button";
 
 export type IRepresentationScreenProps = Record<string, never>;
 
@@ -90,18 +91,18 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           </div >
         ) : data?.graphs.length == 0 ? (
           // Empty State with Hero Design
-          <div className="min-h-full w-full bg-gradient-to-br from-slate-50/20 to-slate-100/20 dark:from-slate-900/30 dark:to-slate-800/30 flex items-center justify-center rounded-lg">
+          <div className="min-h-full w-full flex items-center justify-center rounded-lg">
             <div className="max-w-4xl mx-auto text-center px-6 py-16">
               {/* Hero Section */}
               <div className="space-y-6">
                 <div className="flex justify-center">
-                  <div className="p-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/20 dark:border-primary/20">
+                  <div className="p-6 ">
                     <PiGraph className="h-16 w-16 text-primary" />
                   </div>
                 </div>
 
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                  <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                     Welcome to Kraph
                   </span>
                 </h1>
@@ -121,10 +122,10 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                   label="Create"
                   description="Create a new Graph"
                   buttonChildren={
-                    <div className="flex items-center gap-3 px-6 py-2">
+                    <Button className="flex items-center gap-3 px-6 py-2 ">
                       <PlusIcon className="h-5 w-5" />
                       <span className="text-lg">Create Your First Graph</span>
-                    </div>
+                    </Button>
                   }
                   onSubmit={(item) => {
                     console.log(item);

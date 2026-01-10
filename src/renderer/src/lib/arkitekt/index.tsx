@@ -71,6 +71,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
     useConnect: () => useArkitekt().connect,
     useDisconnect: () => useArkitekt().disconnect,
     useReconnect: () => useArkitekt().reconnect,
+    useCancelConnection: () => useArkitekt().cancelConnection,
     useManifest: () => realManifest,
     useConnectedManifest: () => useArkitekt().connection?.manifest,
     useConnection: (): AppContext<T>["connection"] => useArkitekt().connection,

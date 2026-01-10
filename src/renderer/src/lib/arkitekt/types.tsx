@@ -99,6 +99,7 @@ export type AppFunctions = {
   disconnect: DisconnectFunction;
   reconnect: () => Promise<void>;
   connecting?: boolean;
+  cancelConnection: () => void;
 };
 
 export type ArkitektContextType<T extends ServiceBuilderMap> = AppContext<T>;

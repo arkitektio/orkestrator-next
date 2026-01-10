@@ -1,6 +1,10 @@
+import { useArkitekt } from "@/lib/arkitekt/provider";
+import { Button } from "@/components/ui/button";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 
 export const ConnectingFallback = () => {
+  const { cancelConnection } = useArkitekt();
+
   return (
     <div className="flex flex-col w-full h-full bg-radial-[at_100%_100%] from-background to-backgroundpaired items-center justify-center px-4">
           <div className="flex flex-col items-center max-w-md space-y-6 ">
@@ -21,12 +25,18 @@ export const ConnectingFallback = () => {
               </p>
             </div>
 
-            <div className="w-16 h-16 border-4 border-t-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mt-6"></div>
 
             <div className="text-sm text-muted-foreground">
               Authenticate to continue.
-              </div>
+            </div>
 
+            <Button
+              onClick={cancelConnection}
+              variant="outline"
+              className="mt-4"
+            >
+              Cancel Connection
+            </Button>
 
           </div>
         </div>

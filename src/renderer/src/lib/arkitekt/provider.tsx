@@ -152,7 +152,7 @@ export const ArkitektProvider = ({
     autoLoginError: undefined,
   });
   const [connecting, setConnecting] = useState(false);
-
+  const [currentController, setCurrentController] = useState<AbortController | null>(null);
 
 
   const connectingRef = useRef<boolean>(false);
@@ -255,6 +255,7 @@ export const ArkitektProvider = ({
   try {
 
     setConnecting(true);
+    setCurrentController(options.controller);
     localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
 
 
@@ -321,6 +322,7 @@ export const ArkitektProvider = ({
       throw e;
     } finally {
       setConnecting(false);
+      setCurrentController(null);
     }
 
   };
@@ -331,6 +333,20 @@ export const ArkitektProvider = ({
     );
     localStorage.removeItem("fakts");
     localStorage.removeItem("token");
+  };
+
+  const cancelConnection = () => {
+    if (currentController) {
+      console.log("Cancelling connection attempt...");
+      currentController.abort();
+      setCurrentController(null);
+      setConnecting(false);
+      setContext({
+        manifest: context.manifest,
+        connection: undefined,
+        autoLoginError: "Connection cancelled by user",
+      });
+    }
   };
 
   useEffect(() => {
@@ -477,6 +493,7 @@ export const ArkitektProvider = ({
             connection: undefined,
       });
       setConnecting(false);
+      setCurrentController(null);
     }
   };
 
@@ -496,7 +513,7 @@ export const ArkitektProvider = ({
 
   return (
     <ArkitektContext.Provider
-      value={{ ...context, connect, disconnect, reconnect, connecting }}
+      value={{ ...context, connect, disconnect, reconnect, connecting, cancelConnection }}
     >
       {children}
     </ArkitektContext.Provider>

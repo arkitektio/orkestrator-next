@@ -43,7 +43,7 @@ export function SchemaBuilderPage({
     control,
     name: "properties",
   });
-  
+
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
     initialProperties.length > 0 ? 0 : null
   );
@@ -114,7 +114,7 @@ export function SchemaBuilderPage({
   const onSubmit = async (data: SchemaFormData) => {
     // Validate the entire schema
     const validation = validateSchema(data.properties);
-    
+
     if (!validation.isValid) {
       toast.error(
         <div>

@@ -67,7 +67,7 @@ When schema changes are detected (additions, renames, removals):
 2. **Edit Properties**: All changes tracked by React Hook Form
 3. **Real-time Validation**: Errors shown immediately on change
 4. **Add/Remove/Reorder**: Uses `useFieldArray` methods (append, remove, move)
-5. **Submit**: 
+5. **Submit**:
    - `handleSubmit` wrapper calls `onSubmit`
    - Schema validation runs (`validateSchema`)
    - If valid: saves to backend

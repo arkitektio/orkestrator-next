@@ -31,12 +31,12 @@ const Header = React.forwardRef<HTMLDivElement, HeaderProps>(
     <div
       ref={ref}
       className={cn(
-        "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-1",
+        "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2 font-bold",
         className
       )}
       {...props}
     >
-      <div className="flex flex-col space-y-1 space-x-0 sm:space-x-2 sm:space-y-0">
+      <div className="flex flex-col space-y-2 space-x-0 sm:space-x-2 sm:space-y-0">
         <h3 className="font-light leading-none tracking-tight text-xl">
           {children}
         </h3>

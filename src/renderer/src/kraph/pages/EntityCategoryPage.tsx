@@ -1,9 +1,8 @@
 import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormDialog } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -20,14 +19,16 @@ import { EntityList } from "../components/renderers/node_list/EntityList";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
 import { DialogButton } from "@/components/ui/dialogbutton";
-import { ImageCreator } from "@/alpaka/components/ImageCreator";
 import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
+import { Settings2 } from "lucide-react";
+import { useNavigate as useNavigateRouter } from "react-router-dom";
 
 export const Page =  asDetailQueryRoute(
   useGetEntityCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
     const [update] = useUpdateEntityCategoryMutation();
+    const navigateRouter = useNavigateRouter();
 
     const [quickCreate] = useCreateEntityMutation({
       variables: {
@@ -40,7 +41,7 @@ export const Page =  asDetailQueryRoute(
 
     const resolve = useResolve();
 
-    const { openDialog, openSheet } = useDialog();
+    const { openSheet } = useDialog();
 
     const createFile = async (file: File) => {
       const response = await uploadFile(file);
@@ -98,7 +99,7 @@ export const Page =  asDetailQueryRoute(
             </Button>
             <Button
               onClick={() => {
-                pin().then(refetch);
+                pin().then(() => refetch());
               }}
               variant="outline"
             >
@@ -117,6 +118,13 @@ export const Page =  asDetailQueryRoute(
             >
               Edit
             </DialogButton>
+            <Button
+              variant="outline"
+              onClick={() => navigateRouter(`/kraph/entitycategories/${data.entityCategory.id}/schema`)}
+            >
+              <Settings2 className="h-3 w-3 mr-2" />
+              Schema Builder
+            </Button>
             <EnhanceButton identifier="@kraph/entitycategory" object={data.entityCategory.id} refetch={refetch} />
 
             <Button

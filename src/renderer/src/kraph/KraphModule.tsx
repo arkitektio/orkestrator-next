@@ -48,6 +48,7 @@ import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
 import EditEventPage from "./pages/EditEventPage";
 import NotesPage from "./pages/NotesPage";
+import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -141,6 +142,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           />
 
           <Route path="entitycategories/:id" element={<EntityCategoryPage />} />
+          <Route
+            path="entitycategories/:id/schema"
+            element={<EntityCategorySchemaBuilderPage />}
+          />
           <Route
             path="protocoleventcategories/:id"
             element={<ProtocolEventCategoryPage />}

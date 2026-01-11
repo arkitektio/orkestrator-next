@@ -210,7 +210,7 @@ export const createList = <
         {(title || headerActions) && (
           <ListLayout.Header actions={headerActions}>
             {smart ? (
-              <smart.ListLink className="flex-0">{title}</smart.ListLink>
+              <smart.ListLink className="flex-0 ">{title}</smart.ListLink>
             ) : (
               title
             )}

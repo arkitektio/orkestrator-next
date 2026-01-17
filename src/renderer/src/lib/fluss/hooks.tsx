@@ -1,4 +1,4 @@
-import { useFluss } from "@/lib/arkitekt/Arkitekt";
+import { useFluss } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

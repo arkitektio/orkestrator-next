@@ -30,6 +30,7 @@ export const AuthFaktSchema = z.object({
 // SelfFakt type
 export const SelfFaktSchema = z.object({
   deployment_name: z.string(),
+  alias: AliasSchema,
 });
 
 // ActiveFakts type

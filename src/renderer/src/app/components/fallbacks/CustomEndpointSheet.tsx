@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { discover } from "@/lib/arkitekt/fakts/discover";
 import React from "react";
 import { useForm } from "react-hook-form";

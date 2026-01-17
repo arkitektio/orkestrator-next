@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UpdateChecker } from "@/components/ui/update-checker";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import {
   CheckCircle,

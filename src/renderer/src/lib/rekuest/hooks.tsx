@@ -1,4 +1,4 @@
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useRekuest } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

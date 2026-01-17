@@ -1,4 +1,4 @@
-import { useOmeroArk } from "@/lib/arkitekt/Arkitekt";
+import { useOmeroArk } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

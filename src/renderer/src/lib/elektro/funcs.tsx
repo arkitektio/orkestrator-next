@@ -1,4 +1,4 @@
-import { useElektro } from "@/lib/arkitekt/Arkitekt";
+import { useElektro } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

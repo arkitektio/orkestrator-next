@@ -7,7 +7,7 @@ import {
 import {
   useDatalayerEndpoint,
   useKraph
-} from "@/lib/arkitekt/Arkitekt";
+} from "@/app/Arkitekt";
 import { useCallback } from "react";
 
 export const uploadFetch = (

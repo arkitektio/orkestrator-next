@@ -1,5 +1,5 @@
 import { build } from "@/hooks/use-metaapp";
-import { useMikro } from "@/lib/arkitekt/Arkitekt";
+import { useMikro } from "@/app/Arkitekt";
 import { buildDescribeFunction } from "@/rekuest/widgets/utils";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";

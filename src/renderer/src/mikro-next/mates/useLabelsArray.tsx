@@ -5,7 +5,7 @@ import {
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
-import { useDatalayerEndpoint, useMikro } from "@/lib/arkitekt/Arkitekt";
+import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { AwsClient } from "aws4fetch";

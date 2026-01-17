@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard } from "@/app/Arkitekt";
 import { KraphGraph, KraphStructure } from "@/linkers";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { DialogContent } from "@radix-ui/react-dialog";

@@ -6,7 +6,7 @@ import DokumentsModule from "@/dokuments/DokumentsModule";
 import ElektroModule from "@/elektro/ElektroModule";
 import KabinetModule from "@/kabinet/KabinetModule";
 import KraphModule from "@/kraph/KraphModule";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import LokNextModule from "@/lok-next/LokNextModule";
 import { Stash } from "@/lok-next/components/stash/Stash";
 import LovekitModule from "@/lovekit/LovekitModule";

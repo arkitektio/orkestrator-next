@@ -1,4 +1,4 @@
-import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt, useMikro } from "@/app/Arkitekt";
 import {
   useRequestAccessMutation,
   ZarrStoreFragment,

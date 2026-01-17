@@ -33,6 +33,7 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   useEffect(() => {
+    try {
     if (!arkitekt.connection || !settings.startAgent) {
       if (agent) {
         agent.disconnect();
@@ -61,6 +62,9 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
       unsubscribe();
       newAgent.disconnect();
     };
+  } catch (e) {
+    console.error("AgentProvider: Failed to start agent", e);
+  }
   }, [arkitekt.connection, settings.startAgent, settings.instanceId]);
 
   return (

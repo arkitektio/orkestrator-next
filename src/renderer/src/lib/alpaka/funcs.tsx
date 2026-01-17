@@ -1,4 +1,4 @@
-import { useAlpaka } from "@/lib/arkitekt/Arkitekt";
+import { useAlpaka } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

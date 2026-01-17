@@ -1,4 +1,4 @@
-import { useLok } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt, useLok } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,
@@ -24,31 +24,31 @@ export type {
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
-  const lok = useLok();
+  const lok = Arkitekt.useSelfService();
 
   return useApolloMutation(doc, {
     ...options,
-    client: lok,
+    client: lok?.client,
     onError: onApolloError("lok"),
   });
 };
 
 export const useQuery: QueryFuncType = (doc, options) => {
-  const lok = useLok();
+  const lok = Arkitekt.useSelfService();
 
   console.log("lok", lok);
 
-  return useApolloQuery(doc, { ...options, client: lok });
+  return useApolloQuery(doc, { ...options, client: lok?.client });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {
-  const lok = useLok();
+  const lok = Arkitekt.useSelfService();
 
-  return useApolloSubscription(doc, { ...options, client: lok });
+  return useApolloSubscription(doc, { ...options, client: lok?.client });
 };
 
 export const useLazyQuery: LazyQueryFuncType = (doc, options) => {
-  const lok = useLok();
+  const lok = Arkitekt.useSelfService();
 
-  return useApolloLazyQuery(doc, { ...options, client: lok });
+  return useApolloLazyQuery(doc, { ...options, client: lok?.client });
 };

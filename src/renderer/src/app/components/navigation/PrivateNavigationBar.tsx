@@ -12,7 +12,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";

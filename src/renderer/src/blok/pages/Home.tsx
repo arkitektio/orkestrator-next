@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard } from "@/app/Arkitekt";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import {
   useAgentsQuery,

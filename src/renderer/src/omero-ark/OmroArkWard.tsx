@@ -1,4 +1,4 @@
-import { useOmeroArk } from "@/lib/arkitekt/Arkitekt";
+import { useOmeroArk } from "@/app/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";

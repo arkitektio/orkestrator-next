@@ -1,4 +1,4 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard } from "@/app/Arkitekt";
 import { LokUser } from "@/linkers";
 import { UserAvatar } from "../UserAvatar";
 

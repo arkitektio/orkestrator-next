@@ -1,17 +1,15 @@
-import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { Manifest, Requirement } from "./fakts/manifestSchema";
 import {
   AppContext,
   buildArkitektProvider,
   ConnectedGuard,
+  ServiceBuilder,
   ServiceBuilderMap,
   useArkitekt,
   useAvailableServices,
-  useInstances,
   usePotentialService,
-  useService,
+  useService
 } from "./provider";
-import { K } from "handlebars";
 // When using the Tauri API npm package:
 
 export const buildGuard =
@@ -40,13 +38,14 @@ export const buildWith =
 
 
 
-export const buildArkitekt = <T extends ServiceBuilderMap>({
+export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuilder>({
   manifest,
   serviceBuilderMap,
+  selfServiceBuilder,
 }: {
   manifest: Manifest;
   serviceBuilderMap: T;
-  widgetRegistry?: WidgetRegistry;
+  selfServiceBuilder: S;
 }) => {
 
   const requirements: Requirement[] = serviceBuilderMap
@@ -66,7 +65,9 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
     Provider: buildArkitektProvider({
       manifest: realManifest,
       serviceBuilderMap,
+      selfServiceBuilder: selfServiceBuilder,
     }),
+    buildServiceGuard: <K extends keyof T>(serviceKey: K) => buildGuard(serviceKey as string),
     Guard: ConnectedGuard,
     useConnect: () => useArkitekt().connect,
     useDisconnect: () => useArkitekt().disconnect,
@@ -80,9 +81,12 @@ export const buildArkitekt = <T extends ServiceBuilderMap>({
       const service = useService(serviceKey as string);
       return service?.alias;
     },
+    useSelfService: (): ReturnType<S> | undefined => useArkitekt().connection?.selfService,
+    useSelf: () => useArkitekt().connection?.fakts.self,
     useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
     useAvailableServices: useAvailableServices,
     useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service as string) as ReturnType<T[K]["builder"]>,
+    usePotentialService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]> | undefined  => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
     useToken: () => useArkitekt().connection?.token || null,
     useArkitekt: useArkitekt,
   };

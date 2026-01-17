@@ -105,9 +105,20 @@ export const enhanceManifest = async (
   manifest: Manifest,
 ): Promise<EnhancedManifest> => {
   // Add any enhancements to the manifest here
+  let node_id: string | undefined = undefined;
+  try {
+    node_id = await window.api.getNodeId();
+  } catch (e) {
+    console.error("Failed to get node ID:", e);
+    node_id = undefined
+  }
+
+
+
+
   return {
     ...manifest,
-    node_id: await window.api.getNodeId(),
+    node_id: node_id,
   };
 };
 

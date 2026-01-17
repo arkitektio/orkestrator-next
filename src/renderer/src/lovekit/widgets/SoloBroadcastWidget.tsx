@@ -1,4 +1,4 @@
-import { useLivekit } from "@/lib/arkitekt/Arkitekt";
+import { useLivekit } from "@/app/Arkitekt";
 import {
   SoloBroadcastFragment,
   useGetSoloBroadcastQuery,

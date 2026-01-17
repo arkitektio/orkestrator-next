@@ -1,4 +1,4 @@
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useRekuest } from "@/app/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";

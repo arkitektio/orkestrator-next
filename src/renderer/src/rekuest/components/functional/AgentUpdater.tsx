@@ -1,4 +1,4 @@
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useRekuest } from "@/app/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useEffect } from "react";
 import { toast } from "sonner";

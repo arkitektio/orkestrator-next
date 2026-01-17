@@ -15,7 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useRekuest } from "@/app/Arkitekt";
 import { cn } from "@/lib/utils";
 import { FlussReactiveTemplate, RekuestAction } from "@/linkers";
 import { useSmartDrop } from "@/providers/smart/hooks";

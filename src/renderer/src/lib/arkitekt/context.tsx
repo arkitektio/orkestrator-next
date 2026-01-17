@@ -1,7 +1,7 @@
 import { createContext } from "react";
 import { ArkitektContextType, EnhancedManifest } from "./types";
 
-export const ArkitektContext = createContext<ArkitektContextType<any>>({
+export const ArkitektContext = createContext<ArkitektContextType<any, any>>({
   manifest: undefined as unknown as EnhancedManifest,
   connect: async () => {
     throw new Error("No provider");

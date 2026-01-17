@@ -1,7 +1,7 @@
 import {
   useDatalayerEndpoint,
   useLok
-} from "@/lib/arkitekt/Arkitekt";
+} from "@/app/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestMediaUploadDocument,

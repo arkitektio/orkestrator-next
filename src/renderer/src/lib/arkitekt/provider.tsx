@@ -10,7 +10,7 @@ import { Manifest } from "./fakts/manifestSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { useArkitekt } from "./hooks";
 import { login } from "./oauth/login";
-import { AppContext, ConnectedContext, EnhancedManifest, ReportRequest, Service, ServiceBuilderMap, ServiceDefinition } from "./types";
+import { AppContext, ConnectedContext, EnhancedManifest, ReportRequest, Service, ServiceBuilder, ServiceBuilderMap, ServiceDefinition } from "./types";
 import { enhanceManifest, report } from "./utils";
 
 
@@ -40,6 +40,7 @@ export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: S
       alias: aliasMap[key],
       fakts: fakts,
       token: token,
+      instance: fakts.instances[key],
     }
     )
   }
@@ -141,10 +142,12 @@ export const ArkitektProvider = ({
   children,
   manifest,
   serviceBuilderMap,
+  selfServiceBuilder
 }: {
   children: ReactNode;
   manifest: Manifest;
   serviceBuilderMap: ServiceBuilderMap;
+  selfServiceBuilder: ServiceBuilder;
 }) => {
   const [context, setContext] = useState<AppContext>({
     manifest: manifest as EnhancedManifest,
@@ -306,6 +309,14 @@ export const ArkitektProvider = ({
       fakts: fakts,
     });
 
+    const selfService  = selfServiceBuilder({
+      manifest: enhancedManifest,
+      alias: fakts.self.alias,
+      fakts: fakts,
+      token: token,
+    }
+    );
+
 
     setValidatedConnection({
         endpoint: options.endpoint,
@@ -313,6 +324,7 @@ export const ArkitektProvider = ({
         manifest: enhancedManifest,
         serviceMap: serviceMap,
         aliasMap: aliasMap,
+        selfService: selfService,
         serviceBuilderMap: serviceBuilderMap,
         token: token,
       }
@@ -467,6 +479,14 @@ export const ArkitektProvider = ({
         fakts: fakts,
       });
 
+      const selfService  = selfServiceBuilder({
+        manifest: manifest,
+        alias: fakts.self.alias,
+        fakts: fakts,
+        token: token,
+      }
+      );
+
 
       const context : AppContext = {
         manifest: manifest,
@@ -477,6 +497,7 @@ export const ArkitektProvider = ({
           aliasMap: currentAliasMap,
           serviceBuilderMap: serviceBuilderMap,
           serviceMap: serviceMap,
+          selfService: selfService,
           token: token,
         },
       };
@@ -542,18 +563,20 @@ export const ConnectedGuard = ({
   return <>{children}</>;
 };
 
-export type ArkitektBuilderOptions<T extends ServiceBuilderMap> = {
+export type ArkitektBuilderOptions<T extends ServiceBuilderMap, S extends ServiceBuilder> = {
   manifest: Manifest;
   serviceBuilderMap: T;
+  selfServiceBuilder: S;
 };
 
 export const buildArkitektProvider =
-  <T extends ServiceBuilderMap>(options: ArkitektBuilderOptions<T>) =>
+  <T extends ServiceBuilderMap, S extends ServiceBuilder>(options: ArkitektBuilderOptions<T, S>) =>
     ({ children }: { children: ReactNode }) => {
       return (
         <ArkitektProvider
           manifest={options.manifest}
           serviceBuilderMap={options.serviceBuilderMap}
+          selfServiceBuilder={options.selfServiceBuilder}
         >
           {children}
         </ArkitektProvider>

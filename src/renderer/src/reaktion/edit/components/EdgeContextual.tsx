@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipButton } from "@/components/ui/tooltip-button";
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useRekuest } from "@/app/Arkitekt";
 import {
   FlussPortFragment,
   GraphNodeKind,

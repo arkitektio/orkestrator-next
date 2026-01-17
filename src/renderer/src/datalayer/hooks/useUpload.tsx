@@ -1,7 +1,7 @@
 import {
   useDatalayerEndpoint,
   useMikro
-} from "@/lib/arkitekt/Arkitekt";
+} from "@/app/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestFileUploadPresignedDocument,

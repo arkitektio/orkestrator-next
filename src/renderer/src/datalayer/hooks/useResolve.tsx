@@ -1,4 +1,4 @@
-import { useDatalayerEndpoint } from "@/lib/arkitekt/Arkitekt";
+import { useDatalayerEndpoint } from "@/app/Arkitekt";
 import { useCallback } from "react";
 
 const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
@@ -16,11 +16,11 @@ const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
 };
 
 export const useResolve = () => {
-  let endpoint = useDatalayerEndpoint();
+  const endpoint = useDatalayerEndpoint();
 
   const s3resolve = useCallback(
     (key: string | undefined) => {
-      if (key == undefined || key == null || key == "") {
+      if (key == undefined || key == null || key == "" || !endpoint) {
         return "";
       }
 

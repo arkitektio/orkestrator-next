@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw, Server } from "lucide-react";
 import React from "react";

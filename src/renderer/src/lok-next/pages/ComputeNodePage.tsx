@@ -6,7 +6,7 @@ import { Pencil } from "lucide-react";
 import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
 import ClientCard from "../components/cards/ClientCard";
 import { ContainerGrid, ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 
 export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
 

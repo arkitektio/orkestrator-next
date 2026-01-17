@@ -1,4 +1,4 @@
-import { useDatalayerEndpoint } from "@/lib/arkitekt/Arkitekt";
+import { useDatalayerEndpoint } from "@/app/Arkitekt";
 import {
   useRequestAccessMutation,
   ZarrStoreFragment,

@@ -1,4 +1,4 @@
-import { Ward } from "@/rekuest/widgets/WidgetsContext";
+
 import { ApolloClient } from "@apollo/client";
 import { FaktsEndpoint } from "./fakts/endpointSchema";
 import { ActiveFakts, Alias, Instance } from "./fakts/faktsSchema";
@@ -17,14 +17,14 @@ export type UnresolvedService = {
   aliases: Alias[] | undefined;
 };
 
-export type Service = {
-  ward?: Ward;
+export type Service<T = unknown> = {
   alias?: Alias;
-  client: unknown;
-  instance: Instance;
+  client: T;
 };
 
-export type ServiceBuilder<T> = (options: {
+
+
+export type ServiceBuilder<T = unknown> = (options: {
   manifest: Manifest;
   alias: Alias;
   fakts: ActiveFakts;
@@ -39,6 +39,9 @@ export type ServiceDefinition<T extends Service = Service> = {
   omitchallenge?: boolean;
   forceinsecure?: boolean;
   optional: boolean;
+  description?: string;
+  name?: string;
+  logo?: () => React.ReactNode;
 };
 
 export type ServiceBuilderMap<T extends Record<string, ServiceDefinition> = Record<string, ServiceDefinition>> = {
@@ -69,14 +72,17 @@ export type EnhancedManifest = Manifest & {
 };
 
 
+
+
 // Context Types
 
-export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap> = {
+export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap, S extends ServiceBuilder = ServiceBuilder> = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
   serviceMap: InferedServiceMap<T>;
   aliasMap: { [K in keyof T]: Alias };
   serviceBuilderMap: T;
+  selfService: ReturnType<S>;
   token: TokenResponse;
   endpoint: FaktsEndpoint;
 };
@@ -88,9 +94,9 @@ export type ConnectFunction = (options: {
 
 export type DisconnectFunction = () => Promise<void>;
 
-export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap> = {
+export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap, S extends ServiceBuilder = ServiceBuilder> = {
   manifest: EnhancedManifest;
-  connection?: ConnectedContext<T>;
+  connection?: ConnectedContext<T,S>;
   autoLoginError?: string;
 };
 
@@ -102,4 +108,4 @@ export type AppFunctions = {
   cancelConnection: () => void;
 };
 
-export type ArkitektContextType<T extends ServiceBuilderMap> = AppContext<T>;
+export type ArkitektContextType<T extends ServiceBuilderMap, S extends ServiceBuilder> = AppContext<T, S>;

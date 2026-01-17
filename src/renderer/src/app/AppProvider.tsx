@@ -11,7 +11,7 @@ import { ElektroWard } from "@/elektro/ElektroWard";
 import { useFatalReport } from "@/hooks/use-report";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
-import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";

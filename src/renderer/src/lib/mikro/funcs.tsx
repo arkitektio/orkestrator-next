@@ -1,4 +1,4 @@
-import { useMikro } from "@/lib/arkitekt/Arkitekt";
+import { useMikro } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

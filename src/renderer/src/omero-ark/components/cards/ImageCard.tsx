@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";

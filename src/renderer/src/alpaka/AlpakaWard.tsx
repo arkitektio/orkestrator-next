@@ -1,4 +1,4 @@
-import { useAlpaka } from "@/lib/arkitekt/Arkitekt";
+import { useAlpaka } from "@/app/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";

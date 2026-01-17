@@ -1,4 +1,4 @@
-import { useKabinet } from "@/lib/arkitekt/Arkitekt";
+import { useKabinet } from "@/app/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

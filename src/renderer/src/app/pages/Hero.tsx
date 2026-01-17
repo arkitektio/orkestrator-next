@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
 import { ScrollArea } from "@radix-ui/react-scroll-area";

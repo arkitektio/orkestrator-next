@@ -6,7 +6,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard } from "@/app/Arkitekt";
 import { cn } from "@/lib/utils";
 import {
   ApplicableActions,

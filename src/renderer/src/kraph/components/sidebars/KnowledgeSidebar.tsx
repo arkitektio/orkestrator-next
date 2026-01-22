@@ -163,7 +163,7 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
       {data?.graphs.map((g) => (
         <AccordionItem value={g.id} key={g.id}>
           <AccordionTrigger>{g.name}</AccordionTrigger>
-          <AccordionContent className="flex-grow overflow-y-auto">
+          <AccordionContent className="flex-grow">
             {openItems.includes(g.id) && (
               <GraphKnowledgeView
                 identifier={props.identifier}

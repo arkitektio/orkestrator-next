@@ -82,7 +82,7 @@ export const AssignationToaster = (props: { id: string }) => {
       // wait delay
       const timer = setTimeout(() => {
         toast.dismiss(props.id);
-      }, 9000);
+      }, 2000);
 
       return () => clearTimeout(timer);
     }

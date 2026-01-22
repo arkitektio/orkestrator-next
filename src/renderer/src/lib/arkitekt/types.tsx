@@ -81,6 +81,7 @@ export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap, S 
   manifest: EnhancedManifest;
   serviceMap: InferedServiceMap<T>;
   aliasMap: { [K in keyof T]: Alias };
+  serviceInstanceMap: { [K in keyof T]: Instance };
   serviceBuilderMap: T;
   selfService: ReturnType<S>;
   token: TokenResponse;

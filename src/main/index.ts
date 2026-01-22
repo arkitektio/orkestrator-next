@@ -183,6 +183,14 @@ function createWindow(): BrowserWindow {
     electronAgent = new AgentGateway(ipcMain);
   }
 
+
+  if (!mainWindow) {
+    throw new Error("Failed to create main window");
+  }
+
+  // We will soon use this #arkitekt-gateway
+  //mainWindow.webContents.session.setProxy({ proxyRules: 'socks5://127.0.0.1:8080' });
+
   mainWindow.webContents.setZoomFactor(store.get("zoomFactor", 0.7));
 
 

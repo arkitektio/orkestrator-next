@@ -151,6 +151,8 @@ export const ServerHealthInfo = () => {
     fetchPolicy: "cache-and-network",
   });
 
+  const fakts = Arkitekt.useFakts();
+
   return (
     <div className="space-y-6">
       {/* User/Organization Info */}
@@ -178,6 +180,9 @@ export const ServerHealthInfo = () => {
           </CardContent>
         </Card>
 
+
+
+
         <Card className="border-none shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -200,6 +205,13 @@ export const ServerHealthInfo = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="h-0.5 bg-border my-4" >
+      <pre className="text-xs text-muted-foreground">
+        {JSON.stringify(fakts, null, 2)}
+
+      </pre>
       </div>
 
       {/* Services Section */}
@@ -290,6 +302,8 @@ export const Home = () => {
                   )}
                 </p>
               </div>
+
+
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-center gap-4 pt-6">

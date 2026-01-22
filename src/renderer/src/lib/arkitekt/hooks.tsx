@@ -45,7 +45,7 @@ export const useAvailableServices = () => {
     throw new Error("Arkitekt not connected");
   }
 
-  return Object.keys(connection.serviceMap).map(key =>({key: key, definition: connection.serviceBuilderMap[key], instance: connection.serviceMap[key]}));
+  return Object.keys(connection.serviceMap).map(key =>({key: key, definition: connection.serviceBuilderMap[key], service: connection.serviceMap[key], instance: connection.serviceInstanceMap[key]}));
 }
 
 export const usePotentialService = (key: string): Service | undefined => {

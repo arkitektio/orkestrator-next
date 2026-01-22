@@ -44,6 +44,8 @@ import {
 import deepEqual from "deep-equal";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Service, ServiceDefinition } from "@/lib/arkitekt/types";
+import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
 
 export type IRepresentationScreenProps = Record<string, never>;
 
@@ -179,9 +181,11 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
 // Component to display services in a nice card layout
 const ServiceCard: React.FC<{
   serviceKey: string;
-  service: Record<string, unknown>;
+  service: Service;
+  definition: ServiceDefinition;
+  instance: Instance
   isUnresolved?: boolean;
-}> = ({ serviceKey, service, isUnresolved = false }) => {
+}> = ({ serviceKey, service, isUnresolved = false, definition, instance }) => {
   return (
     <Card
       className={
@@ -203,35 +207,13 @@ const ServiceCard: React.FC<{
             {isUnresolved ? "Unresolved" : "Active"}
           </Badge>
         </CardTitle>
-        {typeof service.description === "string" ? (
-          <CardDescription>{service.description}</CardDescription>
+        {typeof definition.description === "string" ? (
+          <CardDescription>{definition.description}</CardDescription>
         ) : null}
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {typeof service.base_url === "string" ? (
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-gray-500" />
-              <a
-                href={service.base_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                {service.base_url}
-              </a>
-            </div>
-          ) : null}
-          {typeof service.version === "string" ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Version: {service.version}
-            </div>
-          ) : null}
-          {typeof service.name === "string" && service.name !== serviceKey ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Name: {service.name}
-            </div>
-          ) : null}
+          {instance.identifier}
         </div>
 
         <details className="mt-4">
@@ -239,7 +221,7 @@ const ServiceCard: React.FC<{
             View Raw Configuration
           </summary>
           <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto">
-            {JSON.stringify(service, null, 2)}
+            {JSON.stringify(instance, null, 2)}
           </pre>
         </details>
       </CardContent>
@@ -250,6 +232,8 @@ const ServiceCard: React.FC<{
 const Page: React.FC<IRepresentationScreenProps> = () => {
   const { setSettings, settings } = useSettings();
   const fakts = Arkitekt.useFakts();
+
+  const services = Arkitekt.useAvailableServices();
 
 
   const form = useForm({
@@ -435,13 +419,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             </p>
           </div>
 
-          {fakts?.instances.length > 0 ? (
+          {services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {fakts?.instances.map((service) => (
+              {services.map((service) => (
                 <ServiceCard
                   key={service.key}
-                  serviceKey={service.key}
                   service={service}
+                  instance={service.instance}
+                  definition={service.definition}
                 />
               ))}
             </div>

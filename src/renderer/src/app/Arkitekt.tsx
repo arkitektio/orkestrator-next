@@ -3,29 +3,18 @@ import { manifest } from "@/constants";
 import dokumentsResult from "@/dokuments/api/fragments";
 import elektroResult from "@/elektro/api/fragments";
 import kabinetResult from "@/kabinet/api/fragments";
-import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
 import kraphResult from "@/kraph/api/fragments";
-import { createAlpakaClient } from "@/lib/alpaka/client";
-import { createElektroClient } from "@/lib/elektro/client";
-import { createFlussClient } from "@/lib/fluss/client";
-import { createKraphClient } from "@/lib/kraph/client";
+import { buildArkitekt } from "@/lib/arkitekt";
+import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
+import { createGraphQLServiceBuilder } from "@/lib/arkitekt/builders/graphQlServiceBuidler";
+import { ServiceBuilderMap } from "@/lib/arkitekt/provider";
 import { createLivekitClient } from "@/lib/livekit/client";
-import { createLovekitClient } from "@/lib/lovekit/client";
-import { createMikroClient } from "@/lib/mikro/client";
-import { createOmeroArkClient } from "@/lib/omero-ark/client";
-import { createRekuestClient } from "@/lib/rekuest/client";
 import lokResult from "@/lok-next/api/fragments";
-import { createLokClient } from "@/lok-next/lib/LokClient";
 import lovekitResult from "@/lovekit/api/fragments";
 import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
-import { buildArkitekt, buildGuard } from "@/lib/arkitekt";
-import { createDokumentsClient } from "@/lib//dokuments/client";
-import { aliasToHttpPath, aliasToWsPath } from "@/lib/arkitekt/alias/helpers";
-import { ServiceBuilderMap } from "@/lib/arkitekt/provider";
-import { createGraphQLServiceBuilder } from "@/lib/arkitekt/builders/graphQlServiceBuidler";
 
 export const electronRedirect = async (
   url: string,
@@ -115,6 +104,7 @@ export const serviceMap = {
     key: "datalayer",
     service: "live.arkitekt.s3",
     optional: true,
+    omitchallenge: true,
     builder: ({ alias }) => {
       return {
         client: { url: aliasToHttpPath(alias, "") },

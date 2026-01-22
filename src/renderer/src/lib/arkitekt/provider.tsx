@@ -40,7 +40,6 @@ export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: S
       alias: aliasMap[key],
       fakts: fakts,
       token: token,
-      instance: fakts.instances[key],
     }
     )
   }
@@ -60,6 +59,7 @@ export const aliasMapStillValidForManifest = (aliasMap: AliasMap, enhancedManife
 
 export const mappedAliasesStillReachable = async ({aliasMap, controller, timeout}: {aliasMap: AliasMap, controller: AbortController, timeout: number}): Promise<boolean> => {
   const checkPromises = Object.values(aliasMap).map(async (alias) => {
+
     try {
       const response = await checkAliasHealth(alias, timeout,  controller);
       return response
@@ -324,6 +324,7 @@ export const ArkitektProvider = ({
         manifest: enhancedManifest,
         serviceMap: serviceMap,
         aliasMap: aliasMap,
+        serviceInstanceMap: fakts.instances,
         selfService: selfService,
         serviceBuilderMap: serviceBuilderMap,
         token: token,
@@ -495,6 +496,7 @@ export const ArkitektProvider = ({
           fakts: fakts,
           manifest: manifest,
           aliasMap: currentAliasMap,
+          serviceInstanceMap: fakts.instances,
           serviceBuilderMap: serviceBuilderMap,
           serviceMap: serviceMap,
           selfService: selfService,

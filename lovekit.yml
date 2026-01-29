@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/lovekit/graphql"
 documents: "graphql/lovekit/**/*.graphql"
 generates:
-  src/lovekit/api/fragments.ts:
+  src/renderer/src/lovekit/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/lovekit/api/graphql.ts:
+  src/renderer/src/lovekit/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -14,6 +14,6 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/lovekit/funcs"
-  src/lovekit/graphql.schema.json:
+  src/renderer/src/lovekit/graphql.schema.json:
     plugins:
       - "introspection"

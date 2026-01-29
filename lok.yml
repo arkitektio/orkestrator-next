@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/lok/graphql"
 documents: "graphql/lok-next/**/*.graphql"
 generates:
-  src/lok-next/api/fragments.ts:
+  src/renderer/src/lok-next/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/lok-next/api/graphql.ts:
+  src/renderer/src/lok-next/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -14,6 +14,6 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/lok/hooks"
-  src/lok-next/graphql.schema.json:
+  src/renderer/src/lok-next/graphql.schema.json:
     plugins:
       - "introspection"

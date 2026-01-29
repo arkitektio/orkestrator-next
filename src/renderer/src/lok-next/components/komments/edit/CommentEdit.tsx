@@ -1,0 +1,196 @@
+import { Button } from "@/components/ui/button";
+import {
+  DescendantInput,
+  DescendantKind,
+  useUserOptionsLazyQuery,
+} from "@/lok-next/api/graphql";
+import { useEffect, useState } from "react";
+import {
+  Bold,
+  Code,
+  Italic,
+  Send,
+  Underline,
+} from "lucide-react";
+import { CreateCommentFunc } from "../types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plate, PlateContent, usePlateEditor } from "platejs/react";
+import { BoldPlugin, CodePlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
+import { ItalicPlugin } from "@udecode/plate-basic-marks/react";
+import { MentionPlugin } from "@platejs/mention/react";
+
+export type CommentEditProps = {
+  identifier: string;
+  object: string;
+  parent?: string;
+  createComment: CreateCommentFunc;
+};
+
+// Convert Plate editor content to DescendantInput
+const convertToDescendantInput = (nodes: any[]): DescendantInput[] => {
+  return nodes.flatMap((node): DescendantInput[] => {
+    // Handle text nodes
+    if (node.text !== undefined) {
+      return [
+        {
+          kind: DescendantKind.Leaf,
+          text: node.text,
+          bold: node.bold || undefined,
+          italic: node.italic || undefined,
+          code: node.code || undefined,
+        },
+      ];
+    }
+
+    // Handle mention nodes
+    if (node.type === 'mention') {
+      return [
+        {
+          kind: DescendantKind.Mention,
+          user: node.value,
+          text: node.children?.[0]?.text || '',
+          children: [],
+        },
+      ];
+    }
+
+    // Handle paragraph nodes
+    if (node.type === 'p' || !node.type) {
+      return [
+        {
+          kind: DescendantKind.Paragraph,
+          children: node.children ? convertToDescendantInput(node.children) : [],
+        },
+      ];
+    }
+
+    // Recursively process children for other nodes
+    if (node.children) {
+      return convertToDescendantInput(node.children);
+    }
+
+    return [];
+  });
+};
+
+export const CommentEdit = ({
+  createComment,
+  object,
+  parent,
+  identifier,
+}: CommentEditProps) => {
+  const [searchUser, data] = useUserOptionsLazyQuery();
+  const [saving, setSaving] = useState(false);
+
+  const editor = usePlateEditor({
+    plugins: [BoldPlugin, UnderlinePlugin, CodePlugin, MentionPlugin],
+    value: [
+      {
+        type: 'p',
+        children: [{ text: '' }],
+      },
+    ],
+  });
+
+
+  const saveComment = () => {
+    const editorContent = editor.children;
+    console.log('Editor content:', editorContent);
+    setSaving(true);
+    createComment({
+      variables: {
+        identifier: identifier,
+        object: object,
+        parent: parent,
+        descendants: convertToDescendantInput(editorContent),
+      },
+    })
+      .catch(console.error)
+      .then(() => {
+        setSaving(false);
+        editor.reset();
+      });
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+      saveComment();
+    }
+  };
+
+  const mentionItems =
+    data?.data?.options?.map((option) => ({
+      key: option?.value || '',
+      text: option?.label || '',
+      value: option?.value || '',
+    })) || [];
+
+  return (
+    <div className="flex flex-col gap-2 p-3 min-h-32 ">
+      <Plate editor={editor}>
+        <div className="relative rounded-lg border bg-background/20 h-full">
+          <div className="flex items-center gap-1 border-b px-3 py-2 gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => editor.tf.toggle.mark({ key: 'bold' })}
+              className=" p-0"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => editor.tf.toggle.mark({ key: 'italic' })}
+              className=" p-0"
+            >
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => editor.tf.toggle.mark({ key: 'underline' })}
+              className="p-0"
+            >
+              <Underline className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => editor.tf.toggle.mark({ key: 'code' })}
+              className="p-0"
+            >
+              <Code className="h-4 w-4" />
+            </Button>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={saveComment}
+              disabled={saving}
+            >
+              {saving ? (
+                'Saving...'
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Send
+                </>
+              )}
+            </Button>
+          </div>
+          <PlateContent
+            className="h-full px-3 py-2 text-sm focus-visible:outline-none"
+            placeholder="Write a comment."
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+      </Plate>
+    </div>
+  );
+};

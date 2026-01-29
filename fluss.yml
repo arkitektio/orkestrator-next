@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/fluss/graphql"
 documents: "graphql/fluss-next/**/*.graphql"
 generates:
-  src/reaktion/api/fragments.ts:
+  src/renderer/src/reaktion/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/reaktion/api/graphql.ts:
+  src/renderer/src/reaktion/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -14,6 +14,6 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/fluss/hooks"
-  src/reaktion/graphql.schema.json:
+  src/renderer/src/reaktion/graphql.schema.json:
     plugins:
       - "introspection"

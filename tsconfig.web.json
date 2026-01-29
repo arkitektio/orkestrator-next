@@ -1,18 +1,18 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
   "include": [
-    "src",
-    "electron/preload/*.d.ts"
-, "src/mikro-next/forms/.tsx", "src/modules/.tsx", "src/kraph/components/cards/.tsx"  ],
+    "src/renderer/src/env.d.ts",
+    "src/renderer/src/**/*",
+    "src/renderer/src/**/*.tsx",
+    "src/preload/*.d.ts"
+  ],
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "src/renderer/src/*"
       ]
     }
   }

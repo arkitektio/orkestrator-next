@@ -2,10 +2,10 @@ overwrite: true
 schema: "http://jhnnsrs-lab/kraph/graphql"
 documents: "graphql/kraph/**/*.graphql"
 generates:
-  src/kraph/api/fragments.ts:
+  src/renderer/src/kraph/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/kraph/api/graphql.ts:
+  src/renderer/src/kraph/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -15,6 +15,6 @@ generates:
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/kraph/funcs"
 
-  src/kraph/graphql.schema.json:
+  src/renderer/src/kraph/graphql.schema.json:
     plugins:
       - "introspection"

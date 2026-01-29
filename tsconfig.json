@@ -1,14 +1,9 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.web.json" }, { "path": "./tsconfig.node.json" }],
+  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.web.json" }],
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/renderer/src/*"]
     }
   }
-  
-  
 }

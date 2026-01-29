@@ -1,59 +1,17 @@
 import { resolve } from "path";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { defineConfig } from "electron-vite";
 import react from "@vitejs/plugin-react";
-import { visualizer } from 'rollup-plugin-visualizer'
+import tailwindcss from '@tailwindcss/vite'
 
 
 export default defineConfig({
-  main: {
-    plugins: [externalizeDepsPlugin()],
-    build: {
-      sourcemap: false,
-      rollupOptions: {
-        input: {
-          index: resolve(__dirname, "electron/main/index.ts"),
-        },
-        output: {
-          format: "es",
-        },
-      },
-    },
-  },
-  preload: {
-    plugins: [externalizeDepsPlugin()],
-    build: {
-      sourcemap: false,
-      rollupOptions: {
-        input: {
-          index: resolve(__dirname, "electron/preload/index.ts"),
-        },
-        output: {
-          format: "es",
-        },
-      },
-    },
-  },
+  main: {},
+  preload: {},
   renderer: {
-    root: ".",
-    build: {
-      sourcemap: false,
-      rollupOptions: {
-        input: {
-          index: resolve(__dirname, "index.html"),
-        },
-        output: {
-          format: "es",
-        },
-      },
-    },
-    plugins: [react(), visualizer({
-        emitFile: true,
-        filename: 'stats.html', // This will be saved to your output folder
-        open: true // Automatically opens the report in your browser
-      })],
+    plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        "@": resolve(__dirname, "./src"),
+        "@": resolve(__dirname, 'src/renderer/src')
       },
     },
   },

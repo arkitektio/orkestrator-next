@@ -1,3 +1,28 @@
+# [1.52.0](https://github.com/arkitektio/orkestrator-next/compare/v1.51.0...v1.52.0) (2026-01-29)
+
+
+### Bug Fixes
+
+* fix komments ([112e74a](https://github.com/arkitektio/orkestrator-next/commit/112e74aa47813bc73bdc6c017c59b919fe49454e))
+* hallo ([5835d33](https://github.com/arkitektio/orkestrator-next/commit/5835d330cdab47a198651fad2a8bc580286b22e9))
+* lok is now self service ([55f98bf](https://github.com/arkitektio/orkestrator-next/commit/55f98bf73fea19b2775c2159af70f492554c90a4))
+* massive dependency update ([06664d3](https://github.com/arkitektio/orkestrator-next/commit/06664d34bd2d62dd0b2f3ef4af1934eb5d45ad00))
+* minor ui improvements ([767a8e2](https://github.com/arkitektio/orkestrator-next/commit/767a8e23d2d149ccaf970f62b5d1934f3dd411f2))
+* modules ([de3b931](https://github.com/arkitektio/orkestrator-next/commit/de3b9311e4cc1378fd2456f1d0464171f4b05264))
+* typing ([a1d884f](https://github.com/arkitektio/orkestrator-next/commit/a1d884f947a9fa6bc5ce6a9b67bb0fb96dc8fb8b))
+
+
+### Features
+
+* a bit better looking ([d82afd5](https://github.com/arkitektio/orkestrator-next/commit/d82afd54b8e94c640b4607d5e3d320d8c344bebc))
+* fix connection sta ([dc2a435](https://github.com/arkitektio/orkestrator-next/commit/dc2a435b8ded802d9b432053b705af8621e39c02))
+* layout better ([032058d](https://github.com/arkitektio/orkestrator-next/commit/032058dbed618bdca014991663787f583ca111e5))
+* make stuff ([77433d2](https://github.com/arkitektio/orkestrator-next/commit/77433d25b6a2eb7b3fca1f780fe80a02453ac3a2))
+* more ([7d3bb1e](https://github.com/arkitektio/orkestrator-next/commit/7d3bb1eb89bfada05d161553a4a4769ea82dbd44))
+* test ([9ae6782](https://github.com/arkitektio/orkestrator-next/commit/9ae6782b9465e652953e4108ee0ff55e58a53ea9))
+* trying new login ([45d65e6](https://github.com/arkitektio/orkestrator-next/commit/45d65e61ad05c9d48449f6926809c43445dac4c1))
+* with popouts ([6b44ff6](https://github.com/arkitektio/orkestrator-next/commit/6b44ff6bb373a6603926bfaa474e43c0fdf79ddf))
+
 # [1.51.0](https://github.com/arkitektio/orkestrator-next/compare/v1.50.0...v1.51.0) (2025-12-09)
 
 

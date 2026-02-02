@@ -1,16 +1,18 @@
 import { useDialog } from "@/app/dialog";
-import { ParagraphField } from "@/components/fields/ParagraphField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { useChatMutation, Role } from "@/alpaka/api/graphql";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { Role, useChatMutation } from "@/alpaka/api/graphql";
+import { BoldPlugin, CodePlugin, ItalicPlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
+import {
+    Bold,
+    Code,
+    Italic,
+    Send,
+    Underline,
+} from "lucide-react";
+import { Plate, PlateContent, usePlateEditor } from "platejs/react";
 import { useState } from "react";
-
-type ChatFormData = {
-    message: string;
-};
+import { toast } from "sonner";
 
 export const ChatDialog = (props: { model: string }) => {
     const [chat, { loading }] = useChatMutation();
@@ -18,7 +20,30 @@ export const ChatDialog = (props: { model: string }) => {
 
     const { closeDialog } = useDialog();
 
-    const handleChat = async (data: ChatFormData) => {
+    const editor = usePlateEditor({
+        plugins: [BoldPlugin, UnderlinePlugin, CodePlugin, ItalicPlugin],
+        value: [
+            {
+                type: 'p',
+                children: [{ text: '' }],
+            },
+        ],
+    });
+
+    const serialize = (nodes: any[]) => {
+        return nodes.map(node => {
+            if (node.children) {
+                return node.children.map((child: any) => child.text || (child.children ? serialize([child]) : '')).join('')
+            }
+            return node.text || ''
+        }).join('\n')
+    }
+
+
+    const handleChat = async () => {
+        const message = serialize(editor.children);
+        if (!message) return;
+
         try {
             const result = await chat({
                 variables: {
@@ -27,7 +52,7 @@ export const ChatDialog = (props: { model: string }) => {
                         messages: [
                             {
                                 role: Role.User,
-                                content: data.message,
+                                content: message,
                             },
                         ],
                     },
@@ -37,6 +62,7 @@ export const ChatDialog = (props: { model: string }) => {
             if (result.data?.chat?.choices?.[0]?.message?.content) {
                 setResponse(result.data.chat.choices[0].message.content);
                 toast.success("Chat response received");
+                editor.tf.setValue([{ type: 'p', children: [{ text: '' }] }]);
             } else {
                 toast.error("No response received");
             }
@@ -46,49 +72,107 @@ export const ChatDialog = (props: { model: string }) => {
         }
     };
 
-    const form = useForm<ChatFormData>({
-        defaultValues: {
-            message: "",
-        },
-    });
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.ctrlKey && event.key === 'Enter') {
+            event.preventDefault();
+            handleChat();
+        }
+    };
+
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleChat)}>
-                <DialogHeader>
-                    <DialogTitle>Chat with Model</DialogTitle>
-                </DialogHeader>
+        <>
+            <DialogHeader>
+                <DialogTitle>Chat with Model</DialogTitle>
+            </DialogHeader>
 
-                <div className="grid gap-4 py-4">
-                    <ParagraphField
-                        name="message"
-                        label="Your Message"
-                        description="Enter your message to send to the model"
-                        placeholder="Ask me anything..."
-                    />
-
-                    {response && (
-                        <div className="mt-4 p-4 bg-muted rounded-md">
-                            <h4 className="text-sm font-semibold mb-2">Response:</h4>
-                            <p className="text-sm whitespace-pre-wrap">{response}</p>
+            <div className="flex flex-col gap-4 py-4 min-w-[500px]">
+                <div className="flex flex-col gap-2 p-3 min-h-32 ">
+                    <Plate editor={editor}>
+                        <div className="relative rounded-lg border bg-background/20 h-full">
+                            <div className="flex items-center gap-1 border-b px-3 py-2 gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => editor.tf.toggle.mark({ key: 'bold' })}
+                                    className=" p-0 h-6 w-6"
+                                >
+                                    <Bold className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => editor.tf.toggle.mark({ key: 'italic' })}
+                                    className=" p-0 h-6 w-6"
+                                >
+                                    <Italic className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => editor.tf.toggle.mark({ key: 'underline' })}
+                                    className="p-0 h-6 w-6"
+                                >
+                                    <Underline className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => editor.tf.toggle.mark({ key: 'code' })}
+                                    className="p-0 h-6 w-6"
+                                >
+                                    <Code className="h-4 w-4" />
+                                </Button>
+                                <div className="flex-1" />
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleChat()}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        'Sending...'
+                                    ) : (
+                                        <>
+                                            <Send className="h-4 w-4 mr-1" />
+                                            Send
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                            <PlateContent
+                                className="h-full px-3 py-2 text-sm focus-visible:outline-none min-h-[100px]"
+                                placeholder="Message..."
+                                onKeyDown={handleKeyDown}
+                            />
                         </div>
-                    )}
+                    </Plate>
                 </div>
 
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={closeDialog}
-                        disabled={loading}
-                    >
-                        Close
-                    </Button>
-                    <Button type="submit" disabled={loading}>
-                        {loading ? "Sending..." : "Send"}
-                    </Button>
-                </DialogFooter>
-            </form>
-        </Form>
+
+                {response && (
+                    <div className="mt-4 p-4 bg-muted rounded-md max-h-[300px] overflow-y-auto">
+                        <h4 className="text-sm font-semibold mb-2">Response:</h4>
+                        <p className="text-sm whitespace-pre-wrap">{response}</p>
+                    </div>
+                )}
+            </div>
+
+            <DialogFooter>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeDialog}
+                    disabled={loading}
+                >
+                    Close
+                </Button>
+            </DialogFooter>
+        </>
     );
 };

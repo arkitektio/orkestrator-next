@@ -4,7 +4,8 @@ import {
   DescendantKind,
   useUserOptionsLazyQuery,
 } from "@/lok-next/api/graphql";
-import { useEffect, useState } from "react";
+import { BoldPlugin, CodePlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
+import { MentionPlugin } from "@platejs/mention/react";
 import {
   Bold,
   Code,
@@ -12,12 +13,9 @@ import {
   Send,
   Underline,
 } from "lucide-react";
-import { CreateCommentFunc } from "../types";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plate, PlateContent, usePlateEditor } from "platejs/react";
-import { BoldPlugin, CodePlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
-import { ItalicPlugin } from "@udecode/plate-basic-marks/react";
-import { MentionPlugin } from "@platejs/mention/react";
+import { useState } from "react";
+import { CreateCommentFunc } from "../types";
 
 export type CommentEditProps = {
   identifier: string;

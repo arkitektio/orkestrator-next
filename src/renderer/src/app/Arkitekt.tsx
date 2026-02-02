@@ -131,7 +131,6 @@ export const Guard = {
   Lovekit: Arkitekt.buildServiceGuard("lovekit"),
   Dokuments: Arkitekt.buildServiceGuard("dokuments"),
   Datalayer: Arkitekt.buildServiceGuard("datalayer"),
-  Livekit: Arkitekt.buildServiceGuard("livekit"),
 };
 
 export const useMikro = () => {

@@ -241,6 +241,15 @@ export const ArkitektProvider = ({
     }
   }
 
+  const reconfigure = async () => {
+    // A function to reconfigure the current connection (e.g., after manifest change, or
+    // when an alias becomes unreachable)
+    if (!context.connection) {
+      throw new Error("No connection to reconfigure");
+    }
+
+  };
+
 
 
 

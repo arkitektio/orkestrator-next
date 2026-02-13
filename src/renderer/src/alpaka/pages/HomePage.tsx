@@ -13,6 +13,7 @@ import RoomList from "../components/lists/RoomList";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { MoQPlayer } from "@/components/moq/MoQPlayer";
 
 export type IRepresentationScreenProps = {};
 
@@ -65,7 +66,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       <ProviderList />
       <LLMModelList />
       <CollectionList />
-
       <Separator />
     </PageLayout>
   );

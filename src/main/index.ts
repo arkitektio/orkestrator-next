@@ -24,6 +24,7 @@ import { machineIdSync } from "node-machine-id";
 const store = new Store();
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
+app.commandLine.appendSwitch('origin-to-force-quic-on', 'jhnnsrs-lab:4433');
 
 let mainWindow: BrowserWindow | null = null;
 let electronAgent: AgentGateway | null = null;

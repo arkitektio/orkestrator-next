@@ -47,7 +47,7 @@ export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
 
 export const baseColorToName = (baseColor: number[] | undefined | null) => {
   const rgb = baseColorToRGB(baseColor);
-  return closest(rgb).name;
+  return rgb
 };
 
 // Convert baseColor array to react-colorful RGB format

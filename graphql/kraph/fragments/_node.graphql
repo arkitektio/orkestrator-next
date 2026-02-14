@@ -5,12 +5,6 @@ fragment BaseNode on Node {
     id
   }
   label
-  bestView {
-    ...NodeQueryView
-  }
-  relevantQueries {
-    ...ListNodeQuery
-  }
 }
 
 fragment Node on Node {

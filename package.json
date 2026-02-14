@@ -9,7 +9,7 @@
   "homepage": "https://arkitekt.live",
   "scripts": {
     "format": "prettier --write .",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "lint": "eslint . --fix",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -69,6 +69,7 @@
     "@graphql-codegen/typescript-graphql-request": "^6.3.0",
     "@graphql-codegen/typescript-react-apollo": "^3.3.7",
     "@graphql-codegen/typescript-resolvers": "^5.1.3",
+    "@graphql-eslint/eslint-plugin": "^4.4.0",
     "@hookform/resolvers": "^5.2.2",
     "@livekit/components-react": "^2.3.6",
     "@livekit/components-styles": "^1.0.12",

@@ -1,10 +1,10 @@
-query GetEntity($id: ID!) {
+query GetEntity($id: GraphID!) {
   entity(id: $id) {
     ...Entity
   }
 }
 
-query SearchEntities($search: String, $values: [ID!]) {
+query SearchEntities($search: String, $values: [GraphID!]) {
   options: entities(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }

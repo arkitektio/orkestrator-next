@@ -1,5 +1,5 @@
-mutation SetNodeProperty($input: SetNodePropertyInput!) {
-  setNodeProperty(input: $input) {
+mutation SetEntityProperty($input: SetNodePropertyInput!) {
+  setEntityProperty(input: $input) {
     ... on Entity {
       id
       __typename

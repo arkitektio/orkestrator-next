@@ -1,15 +1,4 @@
-fragment MaterializedEdge on MaterializedEdge {
-  source {
-    id
-  }
-  target {
-    id
-  }
-  relation {
-    id
-    label
-  }
-}
+
 
 fragment ListMaterializedEdge on MaterializedEdge {
   id
@@ -71,7 +60,7 @@ fragment Graph on Graph {
     ...MediaStore
   }
   materializedEdges {
-    ...MaterializedEdge
+    ...ListMaterializedEdge
   }
 }
 

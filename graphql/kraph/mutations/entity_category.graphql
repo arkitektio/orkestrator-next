@@ -1,4 +1,4 @@
-mutation CreateEntityCategory($input: EntityCategoryInput!) {
+mutation CreateEntityCategory($input: CreateEntityCategoryInput!) {
   createEntityCategory(input: $input) {
     ...EntityCategory
   }
@@ -11,5 +11,5 @@ mutation UpdateEntityCategory($input: UpdateEntityCategoryInput!) {
 }
 
 mutation DeleteEntityCategory($id: ID!) {
-  deleteEntityCategory(input: {id: $id}) 
+  deleteEntityCategory(input: {id: $id})
 }

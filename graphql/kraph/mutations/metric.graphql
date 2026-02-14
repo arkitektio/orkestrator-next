@@ -3,3 +3,19 @@ mutation CreateMetric($input: MetricInput!) {
     ...Metric
   }
 }
+
+mutation DeleteMetric($id: ID!) {
+  deleteMetric(input: { id: $id })
+}
+
+mutation ArchiveMetric($id: ID!) {
+  archiveMetric(input: { id: $id }) {
+    ...Metric
+  }
+}
+
+mutation UpdateMetric($input: MetricInput!) {
+  updateMetric(input: $input) {
+    ...Metric
+  }
+}

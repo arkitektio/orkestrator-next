@@ -5,8 +5,6 @@ fragment BaseEdge on Edge {
 }
 
 fragment Measurement on Measurement {
-  validFrom
-  validTo
   category {
     id
     label

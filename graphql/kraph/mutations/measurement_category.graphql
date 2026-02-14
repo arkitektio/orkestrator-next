@@ -1,4 +1,4 @@
-mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
+mutation CreateMeasurementCategory($input: CreateMeasurementCategoryInput!) {
   createMeasurementCategory(input: $input) {
     ...MeasurementCategory
   }

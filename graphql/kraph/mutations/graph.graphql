@@ -1,4 +1,4 @@
-mutation CreateGraph($input: GraphInput!) {
+mutation CreateGraph($input: CreateGraphInput!) {
   createGraph(input: $input) {
     ...Graph
   }

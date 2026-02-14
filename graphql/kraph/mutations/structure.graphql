@@ -3,3 +3,19 @@ mutation CreateStructure($input: StructureInput!) {
     ...Structure
   }
 }
+
+mutation DeleteStructure($id: ID!) {
+  deleteStructure(input: { id: $id })
+}
+
+mutation ArchiveStructure($id: ID!) {
+  archiveStructure(input: { id: $id }) {
+    ...Structure
+  }
+}
+
+mutation UpdateStructure($input: UpdateStructureInput!) {
+  updateStructure(input: $input) {
+    ...Structure
+  }
+}

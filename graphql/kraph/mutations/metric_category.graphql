@@ -1,10 +1,10 @@
-mutation CreateMetricCategory($input: MetricCategoryInput!) {
+mutation CreateMetricCategory($input: CreateMetricCategoryInput!) {
   createMetricCategory(input: $input) {
     ...MetricCategory
   }
 }
 
-mutation UpdateMetricCategory($input: UpdateMetricCategoryInput!) {
+mutation UpdateMetricCategory($input: CreateUpdateMetricCategoryInput!) {
   updateMetricCategory(input: $input) {
     ...MetricCategory
   }

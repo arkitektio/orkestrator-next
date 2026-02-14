@@ -1,23 +1,32 @@
 projects:
-  fluss_next:
-    schema: http://jhnnsrs-lab/fluss/graphql
-    documents: graphql/fluss-next/**/*.graphql
-  elektro:
-    schema: http://jhnnsrs-lab/elektro/graphql
-    documents: graphql/elektro/**/*.graphql
-
-  mikro_next:
-    schema: http://jhnnsrs-lab/mikro/graphql
-    documents: graphql/mikro-next/**/*.graphql
-
   kraph:
-    schema: http://jhnnsrs-lab/kraph/graphql
-    documents: graphql/kraph/**/*.graphql
+    overwrite: true
+    schema:
+      "http://jhnnsrs-lab/kraph/schema":
+        handleAsSDL: true
+    documents: "graphql/kraph/**/*.graphql"
+    generates:
+      src/renderer/src/kraph/api/fragments.ts:
+        plugins:
+          - "fragment-matcher"
+      src/renderer/src/kraph/api/graphql.ts:
+        plugins:
+          - "typescript"
+          - "typescript-operations"
+          - "typescript-react-apollo"
+        config:
+          withHooks: true
+          reactApolloVersion: 3
+          apolloReactHooksImportFrom: "@/lib/kraph/funcs"
 
-  dokuments:
-    schema: http://jhnnsrs-lab/dokuments/graphql
-    documents: graphql/dokuments/**/*.graphql
+      src/renderer/src/kraph/graphql.schema.json:
+        plugins:
+          - "introspection"
+    extensions:
+          endpoints:
+            default:
+              url: "http://jhnnsrs-lab/kraph/graphql"
+              headers:
+                Authorization: "Bearer ${API_TOKEN}"
 
-  rekuest_next:
-    schema: http://jhnnsrs-lab/rekuest/graphql
-    documents: graphql/rekuest-next/**/*.graphql
+

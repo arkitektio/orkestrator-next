@@ -45,12 +45,6 @@ fragment GraphQuery on GraphQuery {
   returns {
     ...ReturnStatement
   }
-  render {
-    ...Path
-    ...Pairs
-    ...Table
-    ...NodeList
-  }
   pinned
 }
 

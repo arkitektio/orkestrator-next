@@ -1,5 +1,21 @@
-mutation RecordProtocolEvent($input: RecordProtocolEventInput!) {
-  recordProtocolEvent(input: $input) {
+mutation CreateProtocolEvent($input: CreateProtocolEventInput!) {
+  createProtocolEvent(input: $input) {
+    ...ProtocolEvent
+  }
+}
+
+mutation DeleteProtocolEvent($id: ID!) {
+  deleteProtocolEvent(input: { id: $id })
+}
+
+mutation ArchiveProtocolEvent($id: ID!) {
+  archiveProtocolEvent(input: { id: $id }) {
+    ...ProtocolEvent
+  }
+}
+
+mutation UpdateProtocolEvent($input: UpdateProtocolEventInput!) {
+  updateProtocolEvent(input: $input) {
     ...ProtocolEvent
   }
 }

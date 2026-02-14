@@ -1,20 +1,20 @@
 fragment Entity on Entity {
   ...BaseNode
-  ... on Node {
-    pinnedBy {
-      sub
-    }
-    pinned
-  }
   id
   graph {
     id
   }
-  externalId
   category {
     id
     label
     ageName
+    targetableBy {
+      role
+      category {
+        id
+        label
+      }
+    }
     propertyDefinitions {
       ...PropertyDefinition
     }
@@ -43,7 +43,7 @@ fragment Entity on Entity {
       }
     }
   }
-  subjectedTo {
+  participatedIn {
     id
     role
     target {
@@ -57,46 +57,6 @@ fragment Entity on Entity {
         }
       }
     }
-  }
-  targetedBy {
-    id
-    role
-    source {
-      ... on ProtocolEvent {
-        id
-        label
-        validFrom
-        validTo
-        category {
-          label
-        }
-      }
-    }
-  }
-  tags {
-    id
-    value
-  }
-  targetableBy {
-    role
-    category {
-      id
-      label
-    }
-  }
-  editedIn {
-    id
-    event {
-      id
-      timestamp
-      editor {
-        sub
-      }
-    }
-    propertyName
-    changeKind
-    previousValue
-    newValue
   }
 }
 

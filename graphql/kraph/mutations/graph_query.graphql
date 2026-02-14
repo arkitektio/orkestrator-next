@@ -1,4 +1,4 @@
-mutation CreateGraphQuery($input: GraphQueryInput!) {
+mutation CreateGraphQuery($input: CreateGraphQueryInput!) {
   createGraphQuery(input: $input) {
     ...GraphQuery
   }

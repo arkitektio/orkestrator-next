@@ -1,7 +1,7 @@
 fragment BaseListCategory on BaseCategory {
   id
   description
-  store {
+  image {
     presignedUrl
   }
   tags {

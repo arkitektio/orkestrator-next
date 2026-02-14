@@ -3,17 +3,14 @@ fragment MetricCategory on MetricCategory {
   ...BaseNodeCategory
   ageName
   label
-  metricKind
+  valueKind
   description
-  store {
+  image {
     presignedUrl
-  }
-  bestQuery {
-    ...GraphQuery
   }
   tags {
     id
-    value
+    name
   }
   pinned
 }
@@ -22,7 +19,7 @@ fragment ListMetricCategory on MetricCategory {
   ...BaseListCategory
   ...BaseNodeCategory
   label
-  metricKind
+  valueKind
   structureCategory {
     id
     identifier

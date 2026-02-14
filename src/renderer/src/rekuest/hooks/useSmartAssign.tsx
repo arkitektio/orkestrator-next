@@ -27,9 +27,9 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
   const onActionSelect = async (action: PrimaryActionFragment) => {
     alert("Conditional Assign");
-    let the_key = action.args?.at(0)?.key;
+    const the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = action.args.filter(
+    const neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -57,9 +57,9 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     action: PrimaryActionFragment,
     implementation: ListImplementationFragment,
   ) => {
-    let the_key = action.args?.at(0)?.key;
+    const the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = action.args.filter(
+    const neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {

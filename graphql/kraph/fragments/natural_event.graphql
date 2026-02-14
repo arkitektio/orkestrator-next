@@ -3,14 +3,14 @@ fragment NaturalEvent on NaturalEvent {
   id
   label
 
-  validFrom
-  validTo
+  measuredFrom
+  measuredTo
 }
 
 fragment ListNaturalEvent on NaturalEvent {
   id
-  validFrom
-  validTo
+  measuredFrom
+  measuredTo
   category {
     label
     id
@@ -21,7 +21,7 @@ fragment PathNaturalEvent on NaturalEvent {
   ...ListNaturalEvent
   category {
     label
-    store {
+    image {
       presignedUrl
     }
   }

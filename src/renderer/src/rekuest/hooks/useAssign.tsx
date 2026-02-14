@@ -36,7 +36,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     async (vars: ActionAssignVariables) => {
       console.log("Assigning", vars);
 
-      let mutation = await postAssign({
+      const mutation = await postAssign({
         variables: {
           input: {
             ...vars,
@@ -50,7 +50,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
       console.log(mutation);
 
-      let assignation = mutation.data?.assign;
+      const assignation = mutation.data?.assign;
 
       if (!assignation) {
         console.error(mutation);

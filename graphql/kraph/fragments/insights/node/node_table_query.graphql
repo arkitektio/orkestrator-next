@@ -1,0 +1,13 @@
+
+fragment NodeTableQuery on NodeTableQuery {
+  ...BaseNodeQuery
+  columns {
+    ...Column
+  }
+  builderArgs {
+    ...BuilderArgs
+  }
+
+}
+
+

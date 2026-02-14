@@ -42,10 +42,10 @@ export const changeZip = (
   if (event.type == "target") {
     if (isSameStream(data.ins.at(event.index), event.stream)) return {}; // No change needed
     // Otherwise we need to change the source port
-    let newIns = withNewStream(data.ins, event.index, event.stream);
-    let reducedStream = reduceStream(newIns);
-    let newOuts = [reducedStream];
-    let newData = { ...data, ins: newIns, outs: newOuts };
+    const newIns = withNewStream(data.ins, event.index, event.stream);
+    const reducedStream = reduceStream(newIns);
+    const newOuts = [reducedStream];
+    const newData = { ...data, ins: newIns, outs: newOuts };
     return {
       data: newData,
       changes: [{ type: "source", index: 0, stream: reducedStream }],
@@ -55,10 +55,10 @@ export const changeZip = (
     // Otherwise we need to change the target ports
     if (event.stream.length != 2)
       throw new Error("Zip node must have two source ports");
-    let newOutstream = withNewStream(data.outs, event.index, event.stream);
+    const newOutstream = withNewStream(data.outs, event.index, event.stream);
     if (newOutstream.length != 2) return {}; // No change needed
-    let newInstream = [newOutstream[0], newOutstream[1]];
-    let newData = { ...data, ins: newInstream, outs: newOutstream };
+    const newInstream = [newOutstream[0], newOutstream[1]];
+    const newData = { ...data, ins: newInstream, outs: newOutstream };
     return {
       data: newData,
       changes: [
@@ -115,7 +115,7 @@ export const onlyValid = (
 };
 
 export const streamContainsNonLocal = (stream: PortFragment[]): boolean => {
-  for (let port of stream) {
+  for (const port of stream) {
     if (port.kind == PortKind.MemoryStructure) return true;
   }
   return false;
@@ -348,7 +348,7 @@ export const removeEdgeAndSolve = (
   edgeID: string,
   message: string,
 ) => {
-  let edge = state.edges.find((e) => e.id == edgeID);
+  const edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   state.edges = state.edges.filter((e) => e.id != edgeID);
   state.solvedErrors = [
@@ -409,9 +409,9 @@ export const findSourceForEdgeID = (
   state: ValidationResult,
   edgeID: string,
 ): FlowNode => {
-  let edge = state.edges.find((e) => e.id == edgeID);
+  const edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
-  let node = state.nodes.find((n) => n.id == edge.source);
+  const node = state.nodes.find((n) => n.id == edge.source);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
 };
@@ -420,7 +420,7 @@ export const findSourceStreamForEdgeID = (
   state: ValidationResult,
   edgeID: string,
 ): number => {
-  let edge = state.edges.find((e) => e.id == edgeID);
+  const edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   return handleToStream(edge.sourceHandle);
 };
@@ -429,7 +429,7 @@ export const findTargetStreamForEdgeID = (
   state: ValidationResult,
   edgeID: string,
 ): number => {
-  let edge = state.edges.find((e) => e.id == edgeID);
+  const edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   return handleToStream(edge.targetHandle);
 };
@@ -438,9 +438,9 @@ export const findTargetForEdgeID = (
   state: ValidationResult,
   edgeID: string,
 ): FlowNode => {
-  let edge = state.edges.find((e) => e.id == edgeID);
+  const edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
-  let node = state.nodes.find((n) => n.id == edge.target);
+  const node = state.nodes.find((n) => n.id == edge.target);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
 };
@@ -449,7 +449,7 @@ export const findNodeForID = (
   state: ValidationResult,
   nodeID: string,
 ): FlowNode => {
-  let node = state.nodes.find((n) => n.id == nodeID);
+  const node = state.nodes.find((n) => n.id == nodeID);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
 };
@@ -462,21 +462,21 @@ export const addTransform = (
   // We remove the original edge
   // We need to add transform to the right direction
 
-  let targetNode = findTargetForEdgeID(state, options.edgeID);
-  let sourceNode = findSourceForEdgeID(state, options.edgeID);
+  const targetNode = findTargetForEdgeID(state, options.edgeID);
+  const sourceNode = findSourceForEdgeID(state, options.edgeID);
 
-  let sourceStream = findSourceStreamForEdgeID(state, options.edgeID);
-  let targetStream = findTargetStreamForEdgeID(state, options.edgeID);
+  const sourceStream = findSourceStreamForEdgeID(state, options.edgeID);
+  const targetStream = findTargetStreamForEdgeID(state, options.edgeID);
 
-  let targetNodePosition = targetNode.position; // node is target
-  let sourceNodePostion = sourceNode.position; // node is source
+  const targetNodePosition = targetNode.position; // node is target
+  const sourceNodePostion = sourceNode.position; // node is source
 
-  let inbetweenPosition: XYPosition = {
+  const inbetweenPosition: XYPosition = {
     x: (targetNodePosition.x + sourceNodePostion.x) / 2,
     y: (targetNodePosition.y + sourceNodePostion.y) / 2,
   };
 
-  let transformNode = getTransform(
+  const transformNode = getTransform(
     transform,
     options.stream,
     inbetweenPosition,
@@ -508,11 +508,11 @@ export const transitionOrCut = (
   state: ValidationResult,
   options: TransitionOptions,
 ): void => {
-  let changeCount = options.runningCount;
-  let node = state.nodes.find((n) => n.id == options.nodeID);
+  const changeCount = options.runningCount;
+  const node = state.nodes.find((n) => n.id == options.nodeID);
   if (!node) throw new Error("Node not found. Should never throw");
 
-  let outcome = propagateChange(node.data, {
+  const outcome = propagateChange(node.data, {
     type: options.type,
     stream: options.stream,
     index: options.index,
@@ -553,16 +553,16 @@ export const transitionOrCut = (
   if (outcome.changes) {
     // We need to propagate the changes of this change
 
-    let removedEdges: FlowEdge[] = [];
-    let solvedErrors: SolvedError[] = [];
+    const removedEdges: FlowEdge[] = [];
+    const solvedErrors: SolvedError[] = [];
 
-    for (let change of outcome.changes) {
+    for (const change of outcome.changes) {
       // find all edges that have this node as source or target
       if (change.type == "source") {
-        let affectedEdges = [
+        const affectedEdges = [
           ...state.edges.filter((e) => e.source == options.nodeID),
         ]; // We need to copy the array because we are changing it
-        for (let edge of affectedEdges) {
+        for (const edge of affectedEdges) {
           if (changeCount < options.maxCount) {
             transitionOrCut(state, {
               ...options,
@@ -587,10 +587,10 @@ export const transitionOrCut = (
       }
 
       if (change.type == "target") {
-        let affectedEdges = [
+        const affectedEdges = [
           ...state.edges.filter((e) => e.target == options.nodeID),
         ]; // We need to copy the array because we are changing it
-        for (let edge of affectedEdges) {
+        for (const edge of affectedEdges) {
           if (changeCount < options.maxCount) {
             transitionOrCut(state, {
               ...options,
@@ -635,7 +635,7 @@ export const istriviallyIntegratable = (
   const targetStream = targetNode?.data.ins.at(targetStreamIndex);
 
   if (targetNode?.type == "ReactiveNode") {
-    let alreadyConnected = state.edges.find((e) => e.source == targetNode.id);
+    const alreadyConnected = state.edges.find((e) => e.source == targetNode.id);
     if (alreadyConnected) {
       return isSameStream(sourceStream, targetStream);
     }
@@ -646,14 +646,14 @@ export const istriviallyIntegratable = (
 
   // Args and Returns are always trivially integratable if they have no connections
   if (sourceNode?.type == "ArgNode") {
-    let alreadyConnected = state.edges.find((e) => e.source == sourceNode.id);
+    const alreadyConnected = state.edges.find((e) => e.source == sourceNode.id);
     if (alreadyConnected) {
       return isSameStream(sourceStream, targetStream);
     }
     return true;
   }
   if (targetNode?.type == "ReturnNode") {
-    let alreadyConnected = state.edges.find((e) => e.target == targetNode.id);
+    const alreadyConnected = state.edges.find((e) => e.target == targetNode.id);
     if (alreadyConnected) {
       return isSameStream(sourceStream, targetStream);
     }
@@ -679,10 +679,10 @@ export const integrate = (
   const sourceNode = state.nodes.find((n) => n.id == connection.source);
   const targetNode = state.nodes.find((n) => n.id == connection.target);
 
-  let sourceNodeID = connection.source;
-  let targetNodeID = connection.target;
-  let sourceHandle = connection.sourceHandle;
-  let targetHandle = connection.targetHandle;
+  const sourceNodeID = connection.source;
+  const targetNodeID = connection.target;
+  const sourceHandle = connection.sourceHandle;
+  const targetHandle = connection.targetHandle;
 
   if (!sourceNodeID || !targetNodeID)
     throw new Error("SourceID or TargetID not found");
@@ -731,9 +731,9 @@ export const integrate = (
     valid: true,
   };
 
-  let validatableChangeRightState = { ...initialState };
+  const validatableChangeRightState = { ...initialState };
 
-  let transitionRightOptions: TransitionOptions = {
+  const transitionRightOptions: TransitionOptions = {
     maxCount: 10,
     runningCount: 0,
     nodeID: targetNodeID,
@@ -749,9 +749,9 @@ export const integrate = (
   // for the new connection
   transitionOrCut(validatableChangeRightState, transitionRightOptions);
 
-  let validatableChangeLeftState = { ...initialState };
+  const validatableChangeLeftState = { ...initialState };
 
-  let transitionLeftOptions: TransitionOptions = {
+  const transitionLeftOptions: TransitionOptions = {
     maxCount: 10,
     runningCount: 0,
     nodeID: sourceNodeID,

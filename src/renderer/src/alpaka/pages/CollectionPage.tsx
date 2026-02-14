@@ -40,7 +40,7 @@ export const DocumentsExplorer = (props: {
     });
   };
 
-  let debouncedQuery = useDebounce(query, 500);
+  const debouncedQuery = useDebounce(query, 500);
 
   useEffect(() => {
     if (debouncedQuery) {

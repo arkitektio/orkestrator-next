@@ -95,8 +95,8 @@ export const ListSearchWidget = (
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  let wardKey = props.widget?.ward;
-  let query = props?.widget?.query || "";
+  const wardKey = props.widget?.ward;
+  const query = props?.widget?.query || "";
 
   if (!wardKey) {
     return <>No ward set</>;
@@ -112,7 +112,7 @@ export const ListSearchWidget = (
   const search = useCallback(
     async (searching: SearchOptions) => {
       if (!theward.search) throw new Error("Ward does not support search");
-      let options = await theward.search({
+      const options = await theward.search({
         query: query,
         variables: searching,
       });

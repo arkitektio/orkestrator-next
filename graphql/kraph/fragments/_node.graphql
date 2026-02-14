@@ -12,7 +12,6 @@ fragment Node on Node {
   ...Entity
   ...Structure
   ...Metric
-  ...Reagent
 }
 
 fragment DetailNode on Node {
@@ -27,9 +26,7 @@ fragment PathNode on Node {
   id
   ...PathStructure
   ...PathEntity
-  ...PathReagent
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
-  ...PathEditEvent
 }

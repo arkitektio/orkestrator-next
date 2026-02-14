@@ -8,13 +8,14 @@ fragment StructureCategory on StructureCategory {
   }
   ageName
   description
-  store {
+  image {
     presignedUrl
   }
-  bestQuery {
-    ...GraphQuery
-  }
   pinned
+  tags {
+    id
+    name
+  }
 }
 
 fragment ListStructureCategory on StructureCategory {
@@ -22,11 +23,11 @@ fragment ListStructureCategory on StructureCategory {
   ...BaseNodeCategory
   identifier
   description
-  store {
+  image {
     presignedUrl
   }
   tags {
     id
-    value
+    name
   }
 }

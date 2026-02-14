@@ -1,0 +1,27 @@
+
+
+fragment BaseGraphQuery on GraphQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+}
+
+fragment ListGraphQuery on GraphQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+  __typename
+}
+
+fragment GraphQuery on GraphQuery {
+  ...BaseGraphQuery
+  ...GraphTableQuery
+}

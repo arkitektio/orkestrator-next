@@ -2,8 +2,9 @@ projects:
   kraph:
     overwrite: true
     schema:
-      "http://jhnnsrs-lab/kraph/schema":
-        handleAsSDL: true
+      "http://jhnnsrs-lab/kraph/graphql":
+         headers:
+            Authorization: "Bearer test_mother_fucker"
     documents: "graphql/kraph/**/*.graphql"
     generates:
       src/renderer/src/kraph/api/fragments.ts:
@@ -27,6 +28,6 @@ projects:
             default:
               url: "http://jhnnsrs-lab/kraph/graphql"
               headers:
-                Authorization: "Bearer ${API_TOKEN}"
+                Authorization: "Bearer test_mother_fucker"
 
 

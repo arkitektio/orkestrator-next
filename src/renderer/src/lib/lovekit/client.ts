@@ -17,7 +17,7 @@ export type Config = {
 };
 
 export const createLovekitClient = (config: Config) => {
-  let token = config.retrieveToken();
+  const token = config.retrieveToken();
 
   const httpLink = createHttpLink({
     uri: config.endpointUrl,

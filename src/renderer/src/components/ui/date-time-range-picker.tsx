@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+ 
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -328,7 +328,7 @@ export const DateTimeRangePicker = ({
         newFrom.setHours(0, 0, 0, 0)
       }
 
-      let newTo: Date | undefined = value.to ? new Date(value.to) : undefined
+      const newTo: Date | undefined = value.to ? new Date(value.to) : undefined
 
       // If we have an existing end time, keep it
       if (newTo && range.to) {

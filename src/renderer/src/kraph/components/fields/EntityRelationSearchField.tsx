@@ -100,7 +100,7 @@ export const GraphPanel = (props: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let queryResult = await graphSearch({
+      const queryResult = await graphSearch({
         variables: {
           filters: {
             search: x.search,
@@ -195,7 +195,7 @@ export const LinkExpressionPanel = (props: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let queryResult = await graphSearch({
+      const queryResult = await graphSearch({
         variables: {
           search: x.search,
         },
@@ -310,12 +310,12 @@ export const EntityRelationSearchField = ({
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let graphId = graph || selectedGraph?.id || mygraph?.id;
+      const graphId = graph || selectedGraph?.id || mygraph?.id;
 
       if (!graphId) {
         throw new Error("No graph selected");
       }
-      let queryResult = await entitySearch({
+      const queryResult = await entitySearch({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),

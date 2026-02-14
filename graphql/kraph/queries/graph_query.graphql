@@ -1,5 +1,5 @@
-query GetGraphQuery($id: ID!) {
-  graphQuery(id: $id) {
+query GetGraphTableQuery($id: ID!) {
+  graphTableQuery(id: $id) {
     ...GraphQuery
   }
 }

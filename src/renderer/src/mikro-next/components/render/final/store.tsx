@@ -251,7 +251,7 @@ function getAxisLabelsAndChannelAxis(
   arr: ZarrArray,
 ): { labels: Labels; channel_axis: number } {
   // type cast string[] to Labels
-  let labels = xarray_metadata.metadata["data/.zattrs"]
+  const labels = xarray_metadata.metadata["data/.zattrs"]
     ._ARRAY_DIMENSIONS as Labels;
 
   const channel_axis = labels.indexOf("c");
@@ -264,20 +264,20 @@ export async function openZarrArray(
   // If the loader fails to load, handle the error (show an error snackbar).
   // Otherwise load.
   try {
-    let aws = new AwsClient({
+    const aws = new AwsClient({
       accessKeyId: "kBcG6sCIlQvOWPOpzJhu",
       secretAccessKey: "FjiprDl3qHwIMR7azM2M",
       service: "s3",
     });
 
-    let x = await aws.fetch(url + "/.zmetadata");
-    let xarray_metadata = (await x.json()) as XArrayMetadata;
+    const x = await aws.fetch(url + "/.zmetadata");
+    const xarray_metadata = (await x.json()) as XArrayMetadata;
 
     const store = new S3Store(url, aws);
     const grp = await openGroup(store, "", "r");
     const rootAttrs = await grp.attrs.asObject();
 
-    let data = (await grp.getItem("data")) as ZarrArray;
+    const data = (await grp.getItem("data")) as ZarrArray;
 
     return { data, metadata: xarray_metadata };
   } catch (e) {

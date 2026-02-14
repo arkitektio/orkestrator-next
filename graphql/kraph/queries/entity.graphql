@@ -14,7 +14,7 @@ query SearchEntities($search: String, $values: [GraphID!]) {
   }
 }
 
-query ListEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
+query ListEntities($filters: EntityFilter, $pagination: EntityPaginationInput) {
   entities(filters: $filters, pagination: $pagination) {
     ...ListEntity
   }
@@ -22,8 +22,7 @@ query ListEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
 
 query SearchEntitiesForRole(
   $search: String
-  $values: [ID!]
-  $tags: [String!]
+  $values: [GraphID!]
   $categories: [ID!]
 ) {
   options: entities(

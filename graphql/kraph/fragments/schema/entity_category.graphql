@@ -1,17 +1,23 @@
 fragment EntityCategory on EntityCategory {
   ...BaseCategory
   ...BaseNodeCategory
-  instanceKind
   ageName
   label
   description
-  store {
+  image {
     presignedUrl
   }
-  latest {
+  latest: entities(ordering: [ {
+     createdAt: DESC
+  }], pagination:  {
+     limit: 3
+  }) {
     ...Entity
   }
   pinned
+  propertyDefinitions {
+    ...PropertyDefinition
+  }
 }
 
 fragment ListEntityCategory on EntityCategory {

@@ -195,9 +195,9 @@ export const reactiveTemplateToFlowNode = (
   node: ReactiveImplementationFragment,
   position: { x: number; y: number },
 ): FlowNode<ReactiveNodeFragment> => {
-  let nodeId = "reactive-" + uuidv4();
+  const nodeId = "reactive-" + uuidv4();
 
-  let node_: FlowNode<ReactiveNodeFragment> = {
+  const node_: FlowNode<ReactiveNodeFragment> = {
     id: nodeId,
     type: "ReactiveNode",
     dragHandle: ".custom-drag-handle",
@@ -224,7 +224,7 @@ export const listPortToSingle = (
   key: string,
 ): PortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
-  let listChild = port.children?.at(0);
+  const listChild = port.children?.at(0);
   if (!listChild) throw new Error("Port has no children");
 
   const { __typename, children, ...rest } = listChild;
@@ -355,16 +355,16 @@ export const streamToReactNode = (
 };
 
 export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
-  let args =
+  const args =
     flow.graph?.nodes
       ?.find((arg) => arg.__typename == "ArgNode")
       ?.outs.at(0)
       ?.map((p) => convertPortToInput(p)) || [];
 
-  let kwargs =
+  const kwargs =
     flow.graph.globals?.map((arg) => convertPortToInput(arg.port)) || [];
 
-  let returns =
+  const returns =
     flow.graph?.nodes
       ?.find((arg) => arg.__typename == "ReturnNode")
       ?.ins.at(0)
@@ -380,7 +380,7 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
 };
 
 export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
-  let hashes: DependencyInput[] =
+  const hashes: DependencyInput[] =
     flow.graph?.nodes
       ?.filter(
         (node) =>

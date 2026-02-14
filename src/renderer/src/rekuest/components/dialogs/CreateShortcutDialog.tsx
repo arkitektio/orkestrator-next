@@ -58,7 +58,7 @@ const ArgsContainer = ({
   bound,
   path,
 }: ArgsContainerProps) => {
-  let hash = portHash(ports.filter(notEmpty));
+  const hash = portHash(ports.filter(notEmpty));
 
   const filledGroups = useMemo(() => {
     if (!groups || groups.length === 0) {
@@ -70,7 +70,7 @@ const ArgsContainer = ({
       ];
     }
 
-    let argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
+    const argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
       ...g,
       filledPorts: ports
         .filter(notEmpty)
@@ -80,13 +80,13 @@ const ArgsContainer = ({
     return argGroups;
   }, [ports, hash]);
 
-  let len = 1;
+  const len = 1;
 
-  let lg_size = len < 2 ? len : 2;
-  let xl_size = len < 3 ? len : 3;
-  let xxl_size = len < 4 ? len : 4;
-  let xxxl_size = len < 5 ? len : 5;
-  let xxxxl_size = len < 6 ? len : 6;
+  const lg_size = len < 2 ? len : 2;
+  const xl_size = len < 3 ? len : 3;
+  const xxl_size = len < 4 ? len : 4;
+  const xxxl_size = len < 5 ? len : 5;
+  const xxxxl_size = len < 6 ? len : 6;
 
   return (
     <div

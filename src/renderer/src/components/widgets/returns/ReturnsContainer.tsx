@@ -12,13 +12,13 @@ export const ReturnsContainer = ({
   options,
   registry,
 }: ReturnContainerProps) => {
-  let len = ports.length;
+  const len = ports.length;
 
-  let lg_size = len < 2 ? len : 2;
-  let xl_size = len < 3 ? len : 3;
-  let xxl_size = len < 4 ? len : 4;
-  let xxxl_size = len < 5 ? len : 5;
-  let xxxxl_size = len < 6 ? len : 6;
+  const lg_size = len < 2 ? len : 2;
+  const xl_size = len < 3 ? len : 3;
+  const xxl_size = len < 4 ? len : 4;
+  const xxxl_size = len < 5 ? len : 5;
+  const xxxxl_size = len < 6 ? len : 6;
 
   return (
     <div

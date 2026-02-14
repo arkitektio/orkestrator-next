@@ -1,10 +1,10 @@
-fragment PathParticipant on Participant {
+fragment PathParticipant on InputParticipation {
   role
   leftId
   rightId
 }
 
-fragment Participant on Participant {
+fragment Participant on InputParticipation {
   id
   role
   leftId

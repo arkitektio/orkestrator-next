@@ -284,7 +284,7 @@ export const TargetDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -447,7 +447,7 @@ export const SourceDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });

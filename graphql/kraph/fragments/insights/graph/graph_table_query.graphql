@@ -1,0 +1,13 @@
+
+fragment GraphTableQuery on GraphTableQuery {
+  ...BaseGraphQuery
+  columns {
+    ...Column
+  }
+  builderArgs {
+    ...BuilderArgs
+  }
+
+}
+
+

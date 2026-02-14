@@ -50,7 +50,7 @@ export const GraphQLCreatableSearchField = ({
 
   const create = useCallback(
     async (input: string) => {
-      let queryResult = await createMutation({
+      const queryResult = await createMutation({
         variables: { input: input },
       });
       if (queryResult?.errors) {

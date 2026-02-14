@@ -17,10 +17,10 @@ import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+ 
 export interface IRepresentationScreenProps { }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ data, id }) => {
 
   const [parentless, setParentless] = useQueryState(

@@ -165,7 +165,7 @@ export const AssignationUpdater = (props: {}) => {
           console.log("Received assignation update", res);
 
           let event = res.data?.assignations.event;
-          let create = res?.data?.assignations.create;
+          const create = res?.data?.assignations.create;
 
           if (event) {
             client.cache.updateQuery<AssignationsQuery>(
@@ -176,7 +176,7 @@ export const AssignationUpdater = (props: {}) => {
                 },
               },
               (data) => {
-                let assignation = data?.assignations.find(
+                const assignation = data?.assignations.find(
                   (a) => a.id === event.assignation.id,
                 );
 

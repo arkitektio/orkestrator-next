@@ -1,4 +1,4 @@
-/* eslint-disable react/react-in-jsx-scope */
+ 
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";

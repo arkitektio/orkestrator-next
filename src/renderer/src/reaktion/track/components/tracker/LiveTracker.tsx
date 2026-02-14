@@ -28,9 +28,9 @@ export const LiveTracker = ({
 
   useEffect(() => {
     let highest_t = 0;
-    let newEvents = events?.eventsBetween?.reduce((prev, event) => {
+    const newEvents = events?.eventsBetween?.reduce((prev, event) => {
       if (event) {
-        let prev_node = prev?.find((i) => i.source === event?.source);
+        const prev_node = prev?.find((i) => i.source === event?.source);
         if (prev_node) {
           if (prev_node.t <= event.t) {
             highest_t = Math.max(highest_t, event.t);
@@ -51,7 +51,7 @@ export const LiveTracker = ({
   useEffect(() => {
     console.log("fetching events");
 
-    let unsubscripe = subscribeToMore<EventsSubscription>({
+    const unsubscripe = subscribeToMore<EventsSubscription>({
       document: EventsDocument,
       variables: { id: run.id },
       updateQuery: (prev, { subscriptionData }) => {

@@ -84,7 +84,7 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
       const indexesToSelect: number[] = [];
       console.log(selectables);
       selectables.forEach((item, index) => {
-        let lala = item.item.getBoundingClientRect();
+        const lala = item.item.getBoundingClientRect();
         if (lala && boxesIntersect(scrollAwareBox, lala)) {
           indexesToSelect.push(index);
         }
@@ -190,7 +190,7 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
        */
 
       if (target instanceof HTMLElement) {
-        let el = target;
+        const el = target;
         return el.dataset.enableselect == "true";
       }
 

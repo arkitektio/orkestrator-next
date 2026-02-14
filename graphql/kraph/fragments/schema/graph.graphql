@@ -9,7 +9,7 @@ fragment ListMaterializedEdge on MaterializedEdge {
     id
     label
   }
-  relation {
+  edge {
     id
     label
     description
@@ -40,9 +40,6 @@ fragment Graph on Graph {
   naturalEventCategories {
     ...ListNaturalEventCategory
   }
-  reagentCategories {
-    ...ListReagentCategory
-  }
   relationCategories {
     ...ListRelationCategory
   }
@@ -52,11 +49,11 @@ fragment Graph on Graph {
   structureRelationCategories {
     ...ListStructureRelationCategory
   }
-  graphQueries(pagination: { limit: 5 }) {
+  queries {
     ...ListGraphQuery
   }
   pinned
-  store {
+  image {
     ...MediaStore
   }
   materializedEdges {
@@ -69,7 +66,7 @@ fragment ListGraph on Graph {
   name
   description
   pinned
-  store {
+  image {
     ...MediaStore
   }
 }

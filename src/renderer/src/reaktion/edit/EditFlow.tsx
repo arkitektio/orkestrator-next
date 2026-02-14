@@ -451,7 +451,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         return state;
       }
 
-      let new_outstream = node.data.outs.map((s, index) => {
+      const new_outstream = node.data.outs.map((s, index) => {
         if (index == outstream) {
           return [...s, thevoid];
         }
@@ -460,11 +460,11 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
       console.log("new_instream", new_outstream);
 
-      let new_voids = node.data.voids.filter((i, index) => index != voidindex);
+      const new_voids = node.data.voids.filter((i, index) => index != voidindex);
 
       console.log("ne_voids", new_voids);
 
-      let new_data = {
+      const new_data = {
         ...node.data,
         outs: new_outstream, //TODO: This is not correct
         voids: new_voids,
@@ -502,14 +502,14 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         return state;
       }
 
-      let new_outstream = node.data.outs.map((s, index) => {
+      const new_outstream = node.data.outs.map((s, index) => {
         if (index == streamIndex) {
           return s.filter((i, index) => index != streamItem);
         }
         return s;
       });
 
-      let new_data = {
+      const new_data = {
         ...node.data,
         outs: new_outstream, //TODO: This is not correct
         voids: [...node.data.voids, streamitem],
@@ -547,14 +547,14 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         return state;
       }
 
-      let new_instream = node.data.ins.map((s, index) => {
+      const new_instream = node.data.ins.map((s, index) => {
         if (index == streamIndex) {
           return s.filter((i, index) => index != streamItem);
         }
         return s;
       });
 
-      let new_data = {
+      const new_data = {
         ...node.data,
         ins: new_instream, //TODO: This is not correct
         constants: [...node.data.constants, streamitem],
@@ -609,7 +609,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         });
       }
 
-      let new_data = {
+      const new_data = {
         ...node.data,
         constants: node.data.constants, //We are not removing the constant but we are removing the constant from the constantsMap
         constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
@@ -634,7 +634,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const removeGlobal = (globalkey: string) => {
     setState((state) => {
       const nodes = state.nodes.map((n) => {
-        let new_data = {
+        const new_data = {
           ...n.data,
           globalsMap: Object.fromEntries(
             Object.entries(n.data.globalsMap).filter(
@@ -684,7 +684,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
     console.log("reactFlowBounds", reactFlowBounds);
     if (reactFlowInstance && reactFlowBounds) {
-      let position = {
+      const position = {
         x: event.clientX - (reactFlowBounds?.left || 0),
         y: event.clientY - (reactFlowBounds?.top || 0),
       };
@@ -727,15 +727,15 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
     console.log("reactFlowBounds", reactFlowBounds);
     if (reactFlowInstance && reactFlowBounds) {
-      let position = {
+      const position = {
         x: event.clientX - (reactFlowBounds?.left || 0),
         y: event.clientY - (reactFlowBounds?.top || 0),
       };
 
       console.log("onPaneClick", position);
 
-      let leftNode = reactFlowInstance.getNode(edge.source);
-      let rightNode = reactFlowInstance.getNode(edge.target);
+      const leftNode = reactFlowInstance.getNode(edge.source);
+      const rightNode = reactFlowInstance.getNode(edge.target);
 
       if (!leftNode || !rightNode) {
         console.log("no left or right node found");
@@ -837,8 +837,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       setState(validated);
     } else {
       // We need to show the contextual menu
-      let leftNode = nodes.find((n) => n.id == connection.source);
-      let rightNode = nodes.find((n) => n.id == connection.target);
+      const leftNode = nodes.find((n) => n.id == connection.source);
+      const rightNode = nodes.find((n) => n.id == connection.target);
 
       if (!leftNode || !rightNode || !reactFlowInstance) {
         console.log("no left or right node found");
@@ -851,14 +851,14 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       console.log(rightNode.position);
 
       // Calcluate to Screen Position
-      let screenposition = reactFlowInstance.flowToScreenPosition(
+      const screenposition = reactFlowInstance.flowToScreenPosition(
         calculateMidpoint(leftNode.position, rightNode.position),
       );
 
       const reactFlowBounds =
         reactFlowWrapper?.current?.getBoundingClientRect();
 
-      let position = {
+      const position = {
         x: screenposition.x - (reactFlowBounds?.left || 0),
         y: screenposition.y - (reactFlowBounds?.top || 0),
       };
@@ -890,13 +890,13 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       return;
     }
 
-    let newState = { ...state };
+    const newState = { ...state };
 
-    let event = params.event;
+    const event = params.event;
 
     // Create a Zip Node
 
-    let position = reactFlowInstance.screenToFlowPosition({
+    const position = reactFlowInstance.screenToFlowPosition({
       x: event.clientX,
       y: event.clientY,
     });
@@ -916,18 +916,18 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       return;
     }
 
-    let oldNodeSourceId = params.connection.source;
-    let oldNodeSourceStreamID = handleToStream(params.connection.sourceHandle);
+    const oldNodeSourceId = params.connection.source;
+    const oldNodeSourceStreamID = handleToStream(params.connection.sourceHandle);
 
-    let targetNodeSourceStreamID = handleToStream(
+    const targetNodeSourceStreamID = handleToStream(
       params.connection.targetHandle,
     );
-    let targetNodeSourceId = params.connection.target;
+    const targetNodeSourceId = params.connection.target;
 
-    let newState = { ...state };
+    const newState = { ...state };
 
-    let leftNodeDims = { width: 200, height: 100 };
-    let rightNodeDims = { width: 200, height: 100 };
+    const leftNodeDims = { width: 200, height: 100 };
+    const rightNodeDims = { width: 200, height: 100 };
     // Create a Zip Node
 
     const centerLeft = {
@@ -977,10 +977,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       return;
     }
 
-    let newState = { ...state };
+    const newState = { ...state };
 
-    let leftNodeDims = { width: 200, height: 100 };
-    let rightNodeDims = { width: 200, height: 100 };
+    const leftNodeDims = { width: 200, height: 100 };
+    const rightNodeDims = { width: 200, height: 100 };
     // Create a Zip Node
 
     const centerLeft = {
@@ -1034,26 +1034,26 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       return;
     }
 
-    let oldNode = reactFlowInstance.getNode(params.connectionParams.nodeId);
+    const oldNode = reactFlowInstance.getNode(params.connectionParams.nodeId);
 
     if (!oldNode) {
       console.log("no node");
       return;
     }
 
-    let connectionParams = params.connectionParams;
-    let event = params.event;
+    const connectionParams = params.connectionParams;
+    const event = params.event;
 
     if (params.connectionParams.handleType == "source") {
       // We are dealing with a scenario were a new node should be added
-      let oldNodeSourceId = oldNode.id;
-      let oldNodeSourceStreamID = handleToStream(connectionParams.handleId);
+      const oldNodeSourceId = oldNode.id;
+      const oldNodeSourceStreamID = handleToStream(connectionParams.handleId);
 
-      let newState = { ...state };
+      const newState = { ...state };
 
       // Create a Zip Node
 
-      let position = reactFlowInstance.screenToFlowPosition({
+      const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
@@ -1072,7 +1072,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       );
 
       // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
-      let integratedState = integrate(newState, {
+      const integratedState = integrate(newState, {
         source: oldNodeSourceId,
         sourceHandle: connectionParams.handleId,
         target: stagingNode.id,
@@ -1127,7 +1127,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       console.log("onConnectEnd", event, target);
       const targetEdgeId = target.dataset?.edgeid;
 
-      let connectionParams = connectingStart.current;
+      const connectionParams = connectingStart.current;
       const targetIsPane = target.classList.contains("react-flow__pane");
 
       if (targetIsPane && reactFlowInstance && connectionParams) {
@@ -1135,21 +1135,21 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           reactFlowWrapper?.current?.getBoundingClientRect();
 
         if (connectionParams.nodeId && connectionParams.handleId) {
-          let node = reactFlowInstance.getNode(connectionParams.nodeId);
+          const node = reactFlowInstance.getNode(connectionParams.nodeId);
 
           if (!node) {
             console.log("no node found");
             return;
           }
 
-          let position = {
+          const position = {
             x: event.clientX - (reactFlowBounds?.left || 0),
             y: event.clientY - (reactFlowBounds?.top || 0),
           };
 
           // Calculate relative positoin (upright downetight form event to node)
 
-          let node_position = reactFlowInstance.flowToScreenPosition(
+          const node_position = reactFlowInstance.flowToScreenPosition(
             node?.position,
           );
 
@@ -1194,8 +1194,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           return;
         }
 
-        let node = reactFlowInstance.getNode(connectionParams.nodeId);
-        let edge = reactFlowInstance.getEdge(targetEdgeId);
+        const node = reactFlowInstance.getNode(connectionParams.nodeId);
+        const edge = reactFlowInstance.getEdge(targetEdgeId);
 
         if (!node || !edge) {
           console.log("no node or edge found");
@@ -1204,44 +1204,44 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
         if (connectionParams.handleType == "source") {
           // We are dealing with a scenario were a stream should be zipped
-          let stagingSourceId = node.id;
-          let stagingSourceHandle = connectionParams.handleId;
-          let stagingSourceStreamID = handleToStream(connectionParams.handleId);
+          const stagingSourceId = node.id;
+          const stagingSourceHandle = connectionParams.handleId;
+          const stagingSourceStreamID = handleToStream(connectionParams.handleId);
 
-          let oldEdgeId = edge?.id;
-          let oldEdgeSourceId = edge?.source;
-          let oldEdgeSourceHandle = edge?.sourceHandle;
-          let oldEdgeTargetId = edge?.target;
-          let oldEdgeTargetHandle = edge?.targetHandle;
-          let oldEdgeSourceStreamID = handleToStream(oldEdgeSourceHandle);
+          const oldEdgeId = edge?.id;
+          const oldEdgeSourceId = edge?.source;
+          const oldEdgeSourceHandle = edge?.sourceHandle;
+          const oldEdgeTargetId = edge?.target;
+          const oldEdgeTargetHandle = edge?.targetHandle;
+          const oldEdgeSourceStreamID = handleToStream(oldEdgeSourceHandle);
 
-          let oldNode = reactFlowInstance.getNode(oldEdgeSourceId);
+          const oldNode = reactFlowInstance.getNode(oldEdgeSourceId);
           if (!oldNode) {
             console.log("no old node found");
             return;
           }
 
-          let newState = { ...state };
+          const newState = { ...state };
           newState.edges = newState.edges.filter((e) => e.id != oldEdgeId); // Remove the old edge
 
           // Create a Zip Node
 
-          let stagingOutstream = node.data.outs.at(stagingSourceStreamID);
-          let oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamID);
+          const stagingOutstream = node.data.outs.at(stagingSourceStreamID);
+          const oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamID);
 
-          let order =
+          const order =
             node.position.x < oldNode.position.x
               ? [stagingOutstream, oldOutstream]
               : [oldOutstream, stagingOutstream];
 
-          let zipNodeInstream = order;
+          const zipNodeInstream = order;
 
-          let position = reactFlowInstance.screenToFlowPosition({
+          const position = reactFlowInstance.screenToFlowPosition({
             x: (event as MouseEvent).clientX,
             y: (event as MouseEvent).clientY,
           });
 
-          let zipNode: FlowNode = {
+          const zipNode: FlowNode = {
             id: nodeIdBuilder(),
             type: "ReactiveNode",
             position: position,
@@ -1279,7 +1279,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           );
 
           // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
-          let integratedState = integrate(newState, {
+          const integratedState = integrate(newState, {
             source: zipNode.id,
             sourceHandle: "return_0",
             target: oldEdgeTargetId,
@@ -1306,8 +1306,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       const reactFlowBounds =
         reactFlowWrapper?.current?.getBoundingClientRect();
 
-      let x = monitor && monitor.getClientOffset()?.x;
-      let y = monitor && monitor.getClientOffset()?.y;
+      const x = monitor && monitor.getClientOffset()?.x;
+      const y = monitor && monitor.getClientOffset()?.y;
 
       const flowInstance = reactFlowInstance;
 
@@ -1334,7 +1334,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 .then(async (event) => {
                   console.log(event);
                   if (event.data?.action) {
-                    let flownode = rekuestActionToMatchingNode(
+                    const flownode = rekuestActionToMatchingNode(
                       event.data?.action,
                       position,
                     );

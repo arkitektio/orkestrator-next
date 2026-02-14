@@ -318,7 +318,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   const hook = (state: keyof T["states"]) => {
     const { mblok } = useMaterializedBlokContext();
 
-    let stateID = mblok.stateMappings.find((s) => s.key === state)?.state.id;
+    const stateID = mblok.stateMappings.find((s) => s.key === state)?.state.id;
 
     if (!stateID) {
       console.error(
@@ -401,7 +401,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
   const hook = (action: keyof T["actions"], options?: UseActionOptions) => {
     const { mblok } = useMaterializedBlokContext();
 
-    let actionId = mblok.actionMappings.find((s) => s.key === action)
+    const actionId = mblok.actionMappings.find((s) => s.key === action)
       ?.implementation.id;
 
 

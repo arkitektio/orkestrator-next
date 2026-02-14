@@ -45,7 +45,7 @@ export const uploadFetch = (
     }
 
     if (options?.signal) {
-      let signal = options.signal;
+      const signal = options.signal;
 
       if (signal) {
         signal.addEventListener("abort", () => {
@@ -87,7 +87,7 @@ const uploadToStore = async (
 
   console.log("uploadToStore", z);
 
-  let data = new FormData();
+  const data = new FormData();
   data.append("key", z.key);
   data.append("bucket", z.bucket);
   data.append("X-Amz-Algorithm", z.xAmzAlgorithm);
@@ -98,7 +98,7 @@ const uploadToStore = async (
 
   data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
-  let x = customFetch(`${endpointUrl}/${z.bucket}`, {
+  const x = customFetch(`${endpointUrl}/${z.bucket}`, {
     body: data,
     mode: "cors",
     method: "POST",
@@ -121,7 +121,7 @@ export const useKraphUpload = () => {
         throw Error("No client configured");
       }
 
-      let data = await client.mutate<
+      const data = await client.mutate<
         RequestUploadMutation,
         RequestUploadMutationVariables
       >({
@@ -135,7 +135,7 @@ export const useKraphUpload = () => {
         throw Error("Failed to request upload");
       }
 
-      let z = data.data.requestUpload;
+      const z = data.data.requestUpload;
 
       return await uploadToStore(file, datalayerEndpoint, z, {});
     },

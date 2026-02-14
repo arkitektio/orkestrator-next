@@ -21,7 +21,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     run: async (state) => {
       setDoing(true);
       try {
-        let x = await run(state);
+        const x = await run(state);
         setDoing(false);
         return x;
       } catch (e) {

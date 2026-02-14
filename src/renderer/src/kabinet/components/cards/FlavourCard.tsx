@@ -35,7 +35,7 @@ export const AssignButton = (props: {
   );
 
   const doassign = async () => {
-    let argKey = implementation?.action.args.at(0)?.key;
+    const argKey = implementation?.action.args.at(0)?.key;
     if (!argKey) {
       return;
     }

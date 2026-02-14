@@ -38,7 +38,7 @@ const TCard = ({ image, mates }: Props) => {
       .then((res) => res.blob())
       .then((res) => {
         console.log("blob: ", res);
-        var objectURL = URL.createObjectURL(res);
+        const objectURL = URL.createObjectURL(res);
         if (ref.current === null) return;
         ref.current.style.background = "url('" + objectURL + "')";
         ref.current.style.backgroundSize = "cover";

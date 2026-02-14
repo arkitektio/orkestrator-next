@@ -273,7 +273,7 @@ const connectReactiveNodes = (
   }
 
   if (leftPorts.length == 0 && leftPorts.length < rightPorts.length) {
-    let intersection = leftPorts.filter((a) =>
+    const intersection = leftPorts.filter((a) =>
       rightPorts.find((b) => isStructuralMatch(a, b)),
     );
 
@@ -421,7 +421,7 @@ const connectReactiveNodes = (
   }
 
   if (leftPorts.length > rightPorts.length && rightPorts.length == 1) {
-    for (let i in leftPorts) {
+    for (const i in leftPorts) {
       nodes.push({
         node: {
           id: nodeIdBuilder(),
@@ -446,7 +446,7 @@ const connectReactiveNodes = (
     }
   }
 
-  for (let mapping of generateAllMappings(leftPorts, rightPorts)) {
+  for (const mapping of generateAllMappings(leftPorts, rightPorts)) {
     nodes.push({
       node: {
         id: nodeIdBuilder(),
@@ -589,7 +589,7 @@ const ConnectArkitektNodes = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestActionToMatchingNode(event.data?.node, {
+            const flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -609,7 +609,7 @@ const ConnectArkitektNodes = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestActionToMatchingNode(event.data?.node, {
+            const flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });

@@ -120,7 +120,7 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
     return filtered_nodes;
   }
 
-  let isInt = !isNaN(parseInt(search));
+  const isInt = !isNaN(parseInt(search));
 
   if (isInt) {
     filtered_nodes.push({
@@ -264,7 +264,7 @@ const ClickArkitektNodes = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -284,7 +284,7 @@ const ClickArkitektNodes = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });

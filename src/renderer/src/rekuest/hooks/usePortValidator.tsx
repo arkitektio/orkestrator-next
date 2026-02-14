@@ -3,11 +3,11 @@ import ShadowRealm from "shadowrealm-api";
 import { PortKind, ValidatorFragment } from "../api/graphql";
 
 const buildValidators = (validators: ValidatorFragment[]) => {
-  let ream = new ShadowRealm();
-  let buildValidators: ValidatorFunction[] = [];
+  const ream = new ShadowRealm();
+  const buildValidators: ValidatorFunction[] = [];
 
-  for (let validator of validators) {
-    let wrappedValidatorFunc = `(v, values) => {
+  for (const validator of validators) {
+    const wrappedValidatorFunc = `(v, values) => {
             const func = ${validator.function};
 
             let json_values = JSON.stringify(values);
@@ -15,13 +15,13 @@ const buildValidators = (validators: ValidatorFragment[]) => {
             return func(v, json_values);
         }`;
 
-    let func = ream.evaluate(wrappedValidatorFunc) as (
+    const func = ream.evaluate(wrappedValidatorFunc) as (
       v: any,
       ...value: any
     ) => any;
 
     const wrappedValidator = (v: any, values: any) => {
-      let params = validator.dependencies?.map((param) => values[param]);
+      const params = validator.dependencies?.map((param) => values[param]);
       if (params?.every((predicate) => predicate != undefined)) {
         console.log("Calling validator with params", params);
         return func(v, ...params);
@@ -53,7 +53,7 @@ export const usePortValidate = <
 ) =>
   useCallback(
     (v: any, values: any) => {
-      let validators: ValidatorFunction[] = [];
+      const validators: ValidatorFunction[] = [];
 
       if (!port.nullable) {
         validators.push((v) =>
@@ -71,13 +71,13 @@ export const usePortValidate = <
 
       if (port.validators) {
         console.log("Building validators", port.validators);
-        let builtValidators = buildValidators(port.validators);
+        const builtValidators = buildValidators(port.validators);
         validators.push(...builtValidators);
       }
 
-      let errors: (string | undefined)[] = [];
+      const errors: (string | undefined)[] = [];
 
-      for (let validator of validators) {
+      for (const validator of validators) {
         errors.push(validator(v, values));
       }
 

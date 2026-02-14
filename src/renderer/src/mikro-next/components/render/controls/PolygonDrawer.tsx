@@ -71,7 +71,7 @@ export function PolygonDrawer(props: PolygonDrawerProps) {
   const linePoints = (() => {
     if (points.length === 0) return [];
 
-    let allPoints = [...points];
+    const allPoints = [...points];
 
     if (currentPoint && points.length > 0) {
       allPoints.push(currentPoint);

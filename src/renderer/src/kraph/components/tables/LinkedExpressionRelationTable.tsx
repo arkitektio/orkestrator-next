@@ -240,9 +240,9 @@ const calculateColumns = (
   data?: ListEntityRelationsQuery | undefined,
 ) => {
   let calculated_columns = columns;
-  let other_columns = [];
+  const other_columns = [];
 
-  for (let rel of data?.entityRelations || []) {
+  for (const rel of data?.entityRelations || []) {
     Object.keys(rel.metricMap).forEach((metric) => {
       console.log("FOUND", metric);
       if (!other_columns.find((column) => column.id === `metric-${metric}`)) {

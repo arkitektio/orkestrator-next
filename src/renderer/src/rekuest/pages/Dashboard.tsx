@@ -194,7 +194,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
       },
     }).then(
       (result) => {
-        let mblok = result.data?.materializeBlok;
+        const mblok = result.data?.materializeBlok;
         if (mblok) {
           console.log("Materialized Blok", mblok);
           if (!api || dropContext == undefined) {

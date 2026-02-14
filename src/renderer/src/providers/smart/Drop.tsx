@@ -76,16 +76,16 @@ export const SmartDropZone = ({
 
         if (monitor.getItemType() === NativeTypes.URL) {
           console.log("URL", item);
-          let url = item.urls;
-          let partners: Structure[] = [];
+          const url = item.urls;
+          const partners: Structure[] = [];
           for (let i = 0; i < url.length; i++) {
-            let the_url = url[i];
+            const the_url = url[i];
             console.log("URL", the_url);
-            let match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
+            const match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
             if (match) {
               console.log("MATCH", match);
-              let [_, identifier, object] = match;
-              let structure: Structure = { identifier, object };
+              const [_, identifier, object] = match;
+              const structure: Structure = { identifier, object };
               partners.push(structure);
             }
           }
@@ -95,11 +95,11 @@ export const SmartDropZone = ({
           }
         }
 
-        let text = item.text;
+        const text = item.text;
 
         if (item.text) {
           try {
-            let structure: Structure = JSON.parse(text);
+            const structure: Structure = JSON.parse(text);
             setPartners([structure]);
             return {};
           } catch (e) {
@@ -129,9 +129,9 @@ export const SmartDropZone = ({
   const { assign } = useAssign();
 
   const conditionalAssign = async (node: PrimaryActionFragment) => {
-    let the_key = node.args?.at(0)?.key;
+    const the_key = node.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    const neededAdditionalPorts = node.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -159,9 +159,9 @@ export const SmartDropZone = ({
     node: PrimaryActionFragment,
     template: ListImplementationFragment,
   ) => {
-    let the_key = node.args?.at(0)?.key;
+    const the_key = node.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    const neededAdditionalPorts = node.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {

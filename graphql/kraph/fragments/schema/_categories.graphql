@@ -1,18 +1,19 @@
-fragment BaseCategory on BaseCategory {
+fragment BaseCategory on Category {
   id
   graph {
     id
   }
   tags {
     id
-    value
+    name
+    description
   }
   purl
   relevantQueries {
     ...ListGraphQuery
   }
-  relevantNodeQueries {
-    ...ListNodeQuery
+  image {
+    presignedUrl
   }
   ageName
 }
@@ -24,8 +25,8 @@ fragment BaseNodeCategory on NodeCategory {
   width
   label
   height
-  propertyDefinitions {
-    ...PropertyDefinition
+  relevantNodeQueries {
+    ...ListNodeQuery
   }
 }
 
@@ -39,5 +40,4 @@ fragment NodeCategory on NodeCategory {
   ...ProtocolEventCategory
   ...NaturalEventCategory
   ...MetricCategory
-  ...ReagentCategory
 }

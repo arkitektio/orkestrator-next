@@ -13,7 +13,7 @@ export const RekuestNextWard: React.FC<{
   useEffect(() => {
     if (client) {
       const runFunc = (options: { query: string; variables: any }) => {
-        let document = gql(options.query);
+        const document = gql(options.query);
         return client
           .query({
             query: document,

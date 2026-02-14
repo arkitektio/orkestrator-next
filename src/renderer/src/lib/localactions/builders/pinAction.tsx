@@ -34,13 +34,13 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
     },
   ],
   execute: async ({ services, onProgress, abortSignal, state }) => {
-    let service = services[params.service]
+    const service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
     if (!service) {
       throw new Error("Service not found");
     }
 
-    for (let i in state.left) {
+    for (const i in state.left) {
       await service.mutate({
         mutation: params.mutation,
         variables: {

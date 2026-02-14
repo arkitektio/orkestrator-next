@@ -1,24 +1,20 @@
 fragment StructureRelationCategory on StructureRelationCategory {
   ...BaseEdgeCategory
   ...BaseCategory
-  sourceDefinition {
-    tagFilters
-    categoryFilters
-    identifierFilters
+  sourceDescriptor {
+    ...StructureDescriptor
   }
-  targetDefinition {
-    tagFilters
-    categoryFilters
-    identifierFilters
+  targetDescriptor {
+    ...StructureDescriptor
   }
+   propertyDefinitions {
+     ...PropertyDefinition
+   }
   ageName
   label
   description
-  store {
+  image {
     presignedUrl
-  }
-  bestQuery {
-    ...GraphQuery
   }
   pinned
 }
@@ -26,16 +22,15 @@ fragment StructureRelationCategory on StructureRelationCategory {
 fragment ListStructureRelationCategory on StructureRelationCategory {
   ...BaseListCategory
   ...BaseListEdgeCategory
-  sourceDefinition {
-    tagFilters
-    categoryFilters
-    identifierFilters
+  sourceDescriptor {
+    ...StructureDescriptor
   }
-  targetDefinition {
-    tagFilters
-    categoryFilters
-    identifierFilters
+  targetDescriptor {
+    ...StructureDescriptor
   }
+  propertyDefinitions {
+     ...PropertyDefinition
+   }
   label
 }
 

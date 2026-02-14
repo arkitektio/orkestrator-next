@@ -98,14 +98,14 @@ export const withNewStream = (
   streamIndex: number,
   newStream: PortFragment[],
 ): PortFragment[][] => {
-  let newStreams = [...oldStreams];
+  const newStreams = [...oldStreams];
   newStreams[streamIndex] = newStream;
   return newStreams;
 };
 
 export const reduceStream = (streams: PortFragment[][]): PortFragment[] => {
   let reduced: PortFragment[] = [];
-  for (let stream of streams) {
+  for (const stream of streams) {
     reduced = reduced.concat(stream);
   }
   return reduced;

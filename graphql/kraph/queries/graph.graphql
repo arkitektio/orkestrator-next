@@ -14,8 +14,8 @@ query SearchGraphs($search: String, $values: [ID!]) {
   }
 }
 
-query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
-  graphs(filters: $filters, pagination: $pagination) {
+query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput, $ordering: [GraphOrder!]) {
+  graphs(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListGraph
   }
 }

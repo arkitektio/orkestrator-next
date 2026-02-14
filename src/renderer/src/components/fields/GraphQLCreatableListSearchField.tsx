@@ -32,7 +32,7 @@ export const GraphQLCreatableListSearchField: React.FC<GraphQLListSearchFieldPro
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let queryResult = await searchQuery({
+      const queryResult = await searchQuery({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),
@@ -51,7 +51,7 @@ export const GraphQLCreatableListSearchField: React.FC<GraphQLListSearchFieldPro
 
   const create = useCallback(
     async (input: string) => {
-      let queryResult = await createMutation({
+      const queryResult = await createMutation({
         variables: { input: input },
       });
       if (queryResult?.errors) {

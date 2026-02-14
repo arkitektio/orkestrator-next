@@ -1,18 +1,14 @@
 fragment NaturalEventCategory on NaturalEventCategory {
   ...BaseCategory
   ...BaseNodeCategory
-  plateChildren
   label
   ageName
   description
-  store {
-    presignedUrl
+  inputs {
+    ...EventRole
   }
-  sourceEntityRoles {
-    ...EntityRoleDefinition
-  }
-  targetEntityRoles {
-    ...EntityRoleDefinition
+  outputs {
+    ...EventRole
   }
 }
 
@@ -20,10 +16,10 @@ fragment ListNaturalEventCategory on NaturalEventCategory {
   ...BaseListCategory
   ...BaseNodeCategory
   label
-  sourceEntityRoles {
-    ...EntityRoleDefinition
+  inputs {
+    ...EventRole
   }
-  targetEntityRoles {
-    ...EntityRoleDefinition
+  outputs {
+    ...EventRole
   }
 }

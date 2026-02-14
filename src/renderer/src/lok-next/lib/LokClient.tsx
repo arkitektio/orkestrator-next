@@ -11,7 +11,7 @@ import { createClient } from "graphql-ws";
 import { LokConfig } from "./config";
 
 export const createLokClient = (config: LokConfig) => {
-  let token = config.retrieveToken();
+  const token = config.retrieveToken();
 
   const httpLink = createHttpLink({
     uri: config.endpointUrl,

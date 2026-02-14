@@ -102,7 +102,7 @@ export const Home = (props) => {
   const apiRef = useRef<DockviewApi>();
 
   const addPanel = (key: string, agent: string) => {
-    let api = apiRef.current;
+    const api = apiRef.current;
     if (api) {
       api.addPanel({
         id: `${key}-${agent}`,
@@ -134,7 +134,7 @@ export const Home = (props) => {
   };
 
   const onSave = () => {
-    let api = apiRef.current;
+    const api = apiRef.current;
     if (api) {
       const layout = api.toJSON();
       localStorage.setItem("dockview-layout", JSON.stringify(layout));
@@ -160,7 +160,7 @@ export const Home = (props) => {
           return { key: key, ...mod.app.actions[key].demand };
         });
 
-        let x = await createBlok({
+        const x = await createBlok({
           variables: {
             input: {
               name: mod.app.name,

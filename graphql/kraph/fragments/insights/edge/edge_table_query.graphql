@@ -1,0 +1,13 @@
+
+fragment EdgeTableQuery on EdgeTableQuery {
+  ...BaseEdgeQuery
+  columns {
+    ...Column
+  }
+  builderArgs {
+    ...BuilderArgs
+  }
+
+}
+
+

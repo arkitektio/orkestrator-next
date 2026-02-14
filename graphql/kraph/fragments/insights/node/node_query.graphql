@@ -1,0 +1,27 @@
+
+
+fragment BaseNodeQuery on NodeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+}
+
+fragment ListNodeQuery on NodeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+  __typename
+}
+
+fragment NodeQuery on NodeQuery {
+  ...BaseNodeQuery
+  ...NodeTableQuery
+}

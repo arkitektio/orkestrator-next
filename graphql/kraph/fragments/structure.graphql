@@ -29,7 +29,7 @@ fragment PathStructure on Structure {
   ...ListStructure
   category {
     identifier
-    store {
+    image {
       presignedUrl
     }
   }
@@ -53,8 +53,5 @@ fragment InformedStructure on Structure {
       label
     }
     value
-    createdBy
-    createdThrough
-    createdApp
   }
 }

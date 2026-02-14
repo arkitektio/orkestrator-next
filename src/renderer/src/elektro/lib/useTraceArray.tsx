@@ -34,9 +34,9 @@ export const downloadSelectionFromStore = async (
   selection: ArraySelection,
   abortSignal?: AbortSignal,
 ): Promise<DownloadedArray> => {
-  let path = datalayerUrl + "/" + zarrStore.bucket + "/" + zarrStore.key;
+  const path = datalayerUrl + "/" + zarrStore.bucket + "/" + zarrStore.key;
 
-  let aws = new AwsClient({
+  const aws = new AwsClient({
     accessKeyId: credentials.accessKey,
     secretAccessKey: credentials.secretKey,
     sessionToken: credentials.sessionToken,
@@ -44,13 +44,13 @@ export const downloadSelectionFromStore = async (
   });
 
   console.log("Path", path);
-  let store = new S3Store(path, aws);
+  const store = new S3Store(path, aws);
 
-  let array = await open.v3(store, { kind: "array" });
+  const array = await open.v3(store, { kind: "array" });
 
   console.log("Array", array);
 
-  let view = await get(array, selection);
+  const view = await get(array, selection);
 
   console.log("View", view);
 
@@ -66,7 +66,7 @@ export const downloadSelectionFromStore = async (
 };
 
 export const viewToSlices = (t: number | null, left?: number | undefined | null, right?: number | undefined | null): Slice[] => {
-  let selection: Slice[] = [
+  const selection: Slice[] = [
     {
       _slice: true,
       step: t,
@@ -124,7 +124,7 @@ const downloadArray = async (
     throw Error("No datalayer found");
   }
 
-  let x = await client?.mutate<
+  const x = await client?.mutate<
     RequestAccessMutation,
     RequestAccessMutationVariables
   >({
@@ -132,7 +132,7 @@ const downloadArray = async (
     variables: { store: store.id },
     context: { fetchOptions: { signal } },
   });
-  let data = x?.data;
+  const data = x?.data;
 
   if (!data?.requestAccess) {
     throw Error("No credentials loaded");

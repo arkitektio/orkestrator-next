@@ -1,9 +1,0 @@
-fragment NodeList on NodeList {
-  nodes {
-    __typename
-    id
-    externalId
-    label
-    properties
-  }
-}

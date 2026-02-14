@@ -1,0 +1,35 @@
+fragment RelationCategory on RelationCategory {
+  ...BaseEdgeCategory
+  ...BaseCategory
+  sourceDescriptor {
+    ...EntityDescriptor
+  }
+  targetDescriptor {
+    ...EntityDescriptor
+  }
+  propertyDefinitions {
+     ...PropertyDefinition
+  }
+  ageName
+  label
+  description
+  image {
+    presignedUrl
+  }
+  pinned
+}
+
+fragment ListRelationCategory on RelationCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+  sourceDescriptor {
+    ...EntityDescriptor
+  }
+  targetDescriptor {
+    ...EntityDescriptor
+  }
+  propertyDefinitions {
+     ...PropertyDefinition
+  }
+  label
+}

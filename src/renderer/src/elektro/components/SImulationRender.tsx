@@ -199,7 +199,7 @@ const useValuesForSimulation = ({
           if (recording.trace.rois) {
             for (const roi of recording.trace.rois) {
               for (const idx of roi.vectors) {
-                let idt = Math.floor(idx[0] / (stepSize || 1));
+                const idt = Math.floor(idx[0] / (stepSize || 1));
                 if (idt >= 0) {
                   spikes.push({
                     value: timeTrace[idt],

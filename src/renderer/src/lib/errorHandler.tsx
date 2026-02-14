@@ -5,7 +5,7 @@ export const onApolloError = (service: name) => (error: ApolloError) => {
   console.error(error);
 
   if (error.graphQLErrors) {
-    let message = error.graphQLErrors.map((e) => e.message).join(", ");
+    const message = error.graphQLErrors.map((e) => e.message).join(", ");
     error.graphQLErrors.forEach((e) => {
       toast.error(<div className="p-3">{message}</div>, {
         description: "This is a graphql-server on " + service,

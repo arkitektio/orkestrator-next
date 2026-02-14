@@ -8,26 +8,12 @@ fragment Entity on Entity {
     id
     label
     ageName
-    targetableBy {
-      role
-      category {
-        id
-        label
-      }
-    }
     propertyDefinitions {
       ...PropertyDefinition
     }
   }
   label
-  subjectableTo {
-    role
-    category {
-      id
-      label
-    }
-  }
-  propertyList {
+  richProperties {
     key
     value
   }
@@ -47,24 +33,23 @@ fragment Entity on Entity {
     id
     role
     target {
-      ... on ProtocolEvent {
         id
         label
-        validFrom
-        validTo
+        measuredFrom
+        measuredTo
         category {
           label
         }
       }
     }
-  }
+
 }
 
 fragment PathEntity on Entity {
   ...ListEntity
   category {
     label
-    store {
+    image {
       presignedUrl
     }
   }

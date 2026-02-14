@@ -98,7 +98,7 @@ export const DirectImplementationAssignment = (
     action: PrimaryActionFragment,
     implementation: ListImplementationFragment,
   ) => {
-    let the_key = action.args?.at(0)?.key;
+    const the_key = action.args?.at(0)?.key;
 
     if (!the_key) {
       toast.error("No key found");

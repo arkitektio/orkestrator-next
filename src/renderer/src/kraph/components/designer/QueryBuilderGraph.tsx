@@ -1461,7 +1461,7 @@ export const QueryBuilderGraph = ({
               const node = nodes.find(
                 (n) => n.id === nodeOccurrenceSelection.nodeId,
               );
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               const nodeLabel = node
                 ? (node.data as any)?.ageName ||
                 (node.data as any)?.label ||

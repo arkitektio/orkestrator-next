@@ -1,0 +1,45 @@
+fragment MatchPath on MatchPath {
+  nodes
+  relations
+  relationDirections
+  title
+  color
+  optional
+}
+fragment ReturnStatement on ReturnStatement {
+  path
+  property
+  node
+}
+
+fragment WhereClause on WhereClause {
+  path
+  node
+  property
+  operator
+  value
+}
+
+fragment Column on Column {
+  key
+  valueKind
+  label
+  description
+  categoryKey
+  searchable
+  isIdForKey
+  preferHidden
+}
+
+
+fragment BuilderArgs on BuilderArgs {
+  matchPaths {
+    ...MatchPath
+  }
+  whereClauses {
+    ...WhereClause
+  }
+  returnStatements {
+    ...ReturnStatement
+  }
+}

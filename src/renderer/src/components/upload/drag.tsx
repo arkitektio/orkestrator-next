@@ -33,9 +33,9 @@ export const DragZone: React.FC<{
         const files: File[] = (item as any).files;
         console.log("files", files);
         const futures: UploadFuture[] = files.map((file: any, index) => {
-          let abortController = new AbortController();
+          const abortController = new AbortController();
 
-          let hash = hashFile(file);
+          const hash = hashFile(file);
 
           return {
             hash: hash,

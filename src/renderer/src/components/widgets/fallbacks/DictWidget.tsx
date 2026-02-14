@@ -97,7 +97,7 @@ export const DictWidget = (props: InputWidgetProps) => {
     );
   }
 
-  let child = props.port.children?.at(0);
+  const child = props.port.children?.at(0);
 
   if (!child) {
     return <>Faulty port config. no child</>;

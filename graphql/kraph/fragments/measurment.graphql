@@ -1,10 +1,10 @@
 fragment PathMeasurement on Measurement {
-  validFrom
-  validTo
+  measuredTo
+  measuredFrom
   category {
     id
     label
   }
-  leftId
-  rightId
+  sourceId
+  targetId
 }

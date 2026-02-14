@@ -7,7 +7,7 @@ export type SingleMateFinder<T> = (
 
 export function composeMates(mateFunctions: MateFinder[]): MateFinder {
   return async (options) => {
-    let allmates: Mate[] = [];
+    const allmates: Mate[] = [];
     console.log("Reducing mates", mateFunctions);
 
     for (const f of mateFunctions) {

@@ -11,7 +11,7 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 
 export const createKabinetClient = (config: Config) => {
-  let token = config.retrieveToken();
+  const token = config.retrieveToken();
 
   const httpLink = createHttpLink({
     uri: config.endpointUrl,

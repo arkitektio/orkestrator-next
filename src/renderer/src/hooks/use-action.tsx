@@ -44,7 +44,7 @@ export const useAction = <T extends any>(
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
 
-  let assignations = assignations_data?.assignations.filter(
+  const assignations = assignations_data?.assignations.filter(
     (x) => x.id == currentAssign?.id,
   );
 
@@ -55,7 +55,7 @@ export const useAction = <T extends any>(
       console.log("Assigning", vars);
 
       try {
-        let mutation = await postAssign({
+        const mutation = await postAssign({
           variables: {
             input: {
               ...vars,
@@ -68,7 +68,7 @@ export const useAction = <T extends any>(
 
         console.log(mutation);
 
-        let assignation = mutation.data?.assign;
+        const assignation = mutation.data?.assign;
 
         if (!assignation) {
           throw Error(`Couldn't assign`);
@@ -105,13 +105,13 @@ export const useAction = <T extends any>(
       throw Error("Cannot Cancel as it is done");
     }
 
-    let mutation = await cancelAssign({
+    const mutation = await cancelAssign({
       variables: {
         input: { assignation: latestAssignation.id },
       },
     });
 
-    let assignation = mutation.data?.cancel;
+    const assignation = mutation.data?.cancel;
 
     if (!assignation) {
       console.error(mutation);

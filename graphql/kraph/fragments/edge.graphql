@@ -1,7 +1,7 @@
 fragment BaseEdge on Edge {
   id
-  leftId
-  rightId
+  sourceId
+  targetId
 }
 
 fragment Measurement on Measurement {
@@ -20,13 +20,13 @@ fragment Relation on Relation {
 
 fragment StructureRelation on StructureRelation {
   id
-  leftId
-  rightId
-  left {
+  sourceId
+  targetId
+  source {
     id
     label
   }
-  right {
+  target {
     id
     label
   }
@@ -36,15 +36,13 @@ fragment StructureRelation on StructureRelation {
   }
 }
 
-fragment Edited on Edited {
-  ...BaseEdge
-}
 
 fragment Edge on Edge {
+  sourceId
+  targetId
   ...BaseEdge
   ...Measurement
   ...Relation
-  ...Edited
   ...Participant
   ...StructureRelation
 }

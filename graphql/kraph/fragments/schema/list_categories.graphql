@@ -1,4 +1,4 @@
-fragment BaseListCategory on BaseCategory {
+fragment BaseListCategory on Category {
   id
   description
   image {
@@ -6,7 +6,7 @@ fragment BaseListCategory on BaseCategory {
   }
   tags {
     id
-    value
+    name
   }
   ageName
 

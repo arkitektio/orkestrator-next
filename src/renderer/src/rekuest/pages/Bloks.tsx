@@ -20,7 +20,7 @@ const Page = () => {
           return { key: key, ...mod.app.actions[key].demand };
         });
 
-        let x = await createBlok({
+        const x = await createBlok({
           variables: {
             input: {
               name: mod.app.name,

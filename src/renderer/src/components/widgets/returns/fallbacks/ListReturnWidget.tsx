@@ -28,7 +28,7 @@ const ListReturnWidget: React.FC<ReturnWidgetProps> = ({
     return <div>Only one child port is allowed</div>;
   }
 
-  let childPort = childPorts[0];
+  const childPort = childPorts[0];
 
   const Widget = registry.getReturnWidgetForPort(childPort);
 

@@ -32,7 +32,7 @@ const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
       .then((res) => res.blob())
       .then((res) => {
         console.log("blob: ", res);
-        var objectURL = URL.createObjectURL(res);
+        const objectURL = URL.createObjectURL(res);
         img.current.src = objectURL;
       });
   }, [props.id, img]);

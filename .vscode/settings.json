@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+  "*.graphql": "graphql",
+  "*.gql": "graphql",
+  "*.graphqls": "graphql"
+}
+}

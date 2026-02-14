@@ -55,7 +55,7 @@ export const viewIncludesView = (
   viewToCheck: ActiveView,
   activeView: ActiveView,
 ) => {
-  let result =
+  const result =
     nullOrBigger(viewToCheck.cMax, activeView.cMin) &&
     nullOrSmaller(viewToCheck.cMin, activeView.cMax) &&
     nullOrBigger(viewToCheck.tMax, activeView.tMin) &&

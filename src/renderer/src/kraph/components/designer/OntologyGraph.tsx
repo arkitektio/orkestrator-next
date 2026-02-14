@@ -183,7 +183,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
     console.log("reactFlowBounds", reactFlowBounds);
     if (reactFlowInstance && reactFlowBounds) {
-      let position = {
+      const position = {
         x: event.clientX - (reactFlowBounds?.left || 0),
         y: event.clientY - (reactFlowBounds?.top || 0),
       };
@@ -327,8 +327,8 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
 
     const nodes = (reactFlowInstance?.getNodes() as MyNode[]) || [];
 
-    let leftNode = nodes.find((n) => n.id == connection.source);
-    let rightNode = nodes.find((n) => n.id == connection.target);
+    const leftNode = nodes.find((n) => n.id == connection.source);
+    const rightNode = nodes.find((n) => n.id == connection.target);
 
     if (!leftNode || !rightNode) {
       return;
@@ -340,13 +340,13 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     console.log(rightNode.position);
 
     // Calcluate to Screen Position
-    let screenposition = reactFlowInstance.flowToScreenPosition(
+    const screenposition = reactFlowInstance.flowToScreenPosition(
       calculateMidpoint(leftNode.position, rightNode.position),
     );
 
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
 
-    let position = {
+    const position = {
       x: screenposition.x - (reactFlowBounds?.left || 0),
       y: screenposition.y - (reactFlowBounds?.top || 0),
     };
@@ -365,7 +365,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
       return;
     }
 
-    let position = reactFlowInstance.screenToFlowPosition({
+    const position = reactFlowInstance.screenToFlowPosition({
       x: params.event.clientX,
       y: params.event.clientY,
     });

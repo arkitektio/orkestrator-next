@@ -37,8 +37,8 @@ export const AgentUpdater = (props: {}) => {
         .subscribe((res) => {
           console.error("Received agent update", res);
 
-          let update = res.data?.agents.update;
-          let create = res?.data?.agents.create;
+          const update = res.data?.agents.update;
+          const create = res?.data?.agents.create;
 
           if (update) {
             client.cache.updateQuery<AgentsQuery>(

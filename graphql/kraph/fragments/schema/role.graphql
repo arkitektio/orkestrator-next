@@ -1,0 +1,23 @@
+fragment EventRole on EventRole {
+  key
+  role
+  descriptor {
+    ...EntityDescriptor
+  }
+}
+
+
+fragment EntityDescriptor on EntityDescriptor {
+  keys
+  tags
+  ontotologyTerms
+  defaultCategoryKey
+}
+
+fragment StructureDescriptor on StructureDescriptor {
+  keys
+  tags
+  ontotologyTerms
+  defaultCategoryKey
+}
+

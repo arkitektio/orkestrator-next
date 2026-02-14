@@ -19,8 +19,8 @@ export const SearchWidget = (
   console.log("SearchWidget", props);
   const { registry } = useWidgetRegistry();
 
-  let query = props?.widget?.query || "";
-  let wardKey = props.widget?.ward;
+  const query = props?.widget?.query || "";
+  const wardKey = props.widget?.ward;
 
   if (!wardKey) {
     return <>No ward set</>;
@@ -42,7 +42,7 @@ export const SearchWidget = (
       if (!theward.search) throw new Error("Ward does not support search");
       if (!met) throw new Error("Dependencies not met");
 
-      let options = await theward.search({
+      const options = await theward.search({
         query: query,
         variables: { ...searching, ...values },
       });

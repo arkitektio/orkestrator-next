@@ -1,10 +1,10 @@
 fragment PathRelation on Relation {
-  validFrom
-  validTo
+  measuredFrom
+  measuredTo
   category {
     id
     label
   }
-  leftId
-  rightId
+  sourceId
+  targetId
 }

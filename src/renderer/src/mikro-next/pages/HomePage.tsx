@@ -23,10 +23,10 @@ import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 // 1. Import from nuqs
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+ 
 export interface IRepresentationScreenProps { }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
   const performDataLayerUpload = useBigFileUpload();
   const createFile = useCreateFile();

@@ -15,10 +15,10 @@ export const useSmartDrop = (
       accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT],
       drop: (item, monitor) => {
         console.log("drop", item);
-        let text = item.text;
+        const text = item.text;
 
         if (text) {
-          let structure: Structure = JSON.parse(text);
+          const structure: Structure = JSON.parse(text);
           callback([structure], monitor);
         } else callback(item, monitor);
         return {};

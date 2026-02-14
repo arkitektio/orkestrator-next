@@ -178,7 +178,7 @@ export const DelegatinAccessorDisplay = (props: {
 };
 
 const calculateColumns = (table: TableFragment) => {
-  let calculated_columns = [...columns];
+  const calculated_columns = [...columns];
 
   table.columns.forEach((col, index) => {
     calculated_columns.push({

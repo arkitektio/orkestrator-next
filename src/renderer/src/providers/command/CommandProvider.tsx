@@ -10,7 +10,7 @@ export const CommandProvider: React.FC<GenerarMenuProviderProps> = (props) => {
   const [actions, setActions] = useState<RegisteredAction[]>([]);
 
   const registerAction = (action: Action) => {
-    let key = v4();
+    const key = v4();
     setActions((actions) => [{ ...action, key }, ...actions]);
 
     return () => {

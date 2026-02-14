@@ -27,9 +27,9 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   const [fetchInbetweenEvents] = useEventsBetweenLazyQuery();
 
   useEffect(() => {
-    let newEvents = rangeEvents?.reduce((prev, event) => {
+    const newEvents = rangeEvents?.reduce((prev, event) => {
       if (event && event.t <= t) {
-        let prev_node = prev?.find((i) => i.source === event?.source);
+        const prev_node = prev?.find((i) => i.source === event?.source);
         if (prev_node) {
           if (prev_node.t <= event.t) {
             return prev.map((i) => (i.source === event.source ? event : i));
@@ -55,7 +55,7 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   }, [play, range]);
 
   useEffect(() => {
-    let array = run?.snapshots?.map((snapshot) => snapshot.t) || [0, 100];
+    const array = run?.snapshots?.map((snapshot) => snapshot.t) || [0, 100];
     console.log("Snapshots", array);
 
     setRange({

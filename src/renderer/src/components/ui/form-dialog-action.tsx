@@ -20,7 +20,7 @@ export type Defered = {
 const createDefered = (): [Promise<any>, Defered] => {
   let resolve: any;
   let reject: any;
-  let promise = new Promise((res, rej) => {
+  const promise = new Promise((res, rej) => {
     resolve = res;
     reject = rej;
   });
@@ -57,7 +57,7 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
       const [promise, defered] = createDefered();
       setDefered(defered);
       try {
-        let x = await promise;
+        const x = await promise;
         setDefered(undefined);
         return x;
       } catch (e) {

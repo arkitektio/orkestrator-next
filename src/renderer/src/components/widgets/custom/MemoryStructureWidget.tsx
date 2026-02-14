@@ -23,7 +23,7 @@ export const MemoryStructureWidget = (
   const search = useCallback(
     async (searching: SearchOptions) => {
       console.log("Searching", searching)
-      let w = await searchD({
+      const w = await searchD({
         variables: {
           ...searching,
           template: props.bound,

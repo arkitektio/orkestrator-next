@@ -55,7 +55,7 @@ const SubForm = ({
 
   console.log(variants);
 
-  let choices = variants.map((v, i) => ({
+  const choices = variants.map((v, i) => ({
     label: portToLabel(v),
     value: i.toString(),
   }));

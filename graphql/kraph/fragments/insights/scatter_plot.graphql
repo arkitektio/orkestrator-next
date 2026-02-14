@@ -1,6 +1,6 @@
 fragment ScatterPlot on ScatterPlot {
   id
-  name
+  label
   description
   xColumn
   yColumn
@@ -9,24 +9,15 @@ fragment ScatterPlot on ScatterPlot {
   sizeColumn
   shapeColumn
   query {
-    id
-    name
-    render {
-      ...Path
-      ...Pairs
-      ...Table
-      ...NodeList
-    }
-    graph {
-      id
-      ageName
-    }
+    ...GraphTableQuery
+    ...NodeTableQuery
+    ...EdgeTableQuery
   }
 }
 
 fragment ListScatterPlot on ScatterPlot {
   id
-  name
+  label
   xColumn
   yColumn
 }

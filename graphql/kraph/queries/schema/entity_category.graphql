@@ -26,15 +26,15 @@ query ListEntityCategory(
 
 query EntityNodes(
   $category: ID!
-  $filters: CategoryNodesFilter
-  $pagination: GraphQueryPagination
-  $order: CategoryNodesOrder
+  $filters: EntityFilter
+  $pagination: EntityPaginationInput
+  $ordering: [EntityOrder!]
 ) {
-  entityNodes(
-    id: $category
+  entities(
+    entityCategoryId: $category
     filters: $filters
     pagination: $pagination
-    order: $order
+    ordering: $ordering
   ) {
     __typename
     id
@@ -44,7 +44,7 @@ query EntityNodes(
 }
 
 query EntityCategoryStats($id: ID!) {
-  entityCategoryStats(id: $id) {
+  entityCategoryStats(filters: { id: $id }) {
     count
   }
 }

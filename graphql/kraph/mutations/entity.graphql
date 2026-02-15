@@ -10,7 +10,7 @@ mutation UpdateEntity($input: UpdateEntityInput!) {
   }
 }
 
-mutation CreateEntityInline($category: ID!) {
+mutation CreateEntityInline($category: String!) {
   result: createEntity(input: {
     entityCategory: $category
   }) {
@@ -20,13 +20,13 @@ mutation CreateEntityInline($category: ID!) {
 }
 
 
-mutation ArchiveEntity($id: ID!) {
+mutation ArchiveEntity($id: GraphID!) {
   archiveEntity(input: {id: $id}) {
     ...Entity
   }
 }
 
 
-mutation DeleteEntity($id: ID!) {
+mutation DeleteEntity($id: GraphID!) {
   deleteEntity(input: {id: $id})
 }

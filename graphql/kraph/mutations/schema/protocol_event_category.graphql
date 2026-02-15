@@ -1,17 +1,17 @@
-mutation CreateProtocolEventCategory($input: ProtocolEventCategoryInput!) {
+mutation CreateProtocolEventCategory($input: CreateProtocolEventDefinitionInput!) {
   createProtocolEventCategory(input: $input) {
     ...ProtocolEventCategory
   }
 }
 
 mutation UpdateProtocolEventCategory(
-  $input: UpdateProtocolEventCategoryInput!
+  $input: UpdateProtocolEventDefinitionInput!
 ) {
   updateProtocolEventCategory(input: $input) {
     ...ProtocolEventCategory
   }
 }
 
-mutation DeleteProtocolEventCategory($id: ID!) {
+mutation DeleteProtocolEventCategory($id: String!) {
   deleteProtocolEventCategory(input: { id: $id })
 }

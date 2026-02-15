@@ -43,6 +43,5 @@ fragment Edge on Edge {
   ...BaseEdge
   ...Measurement
   ...Relation
-  ...Participant
   ...StructureRelation
 }

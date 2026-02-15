@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
     EntityCategoryFragment,
-    MetricKind,
+    ValueKind as MetricKind,
     useUpdateEntityCategoryMutation,
 } from "@/kraph/api/graphql";
 import { useForm } from "react-hook-form";

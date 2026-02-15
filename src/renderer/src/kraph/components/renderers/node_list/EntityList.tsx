@@ -641,7 +641,7 @@ export const EntityRow = ({
 };
 
 export const EntityList = (props: {
-  category: NodeCategoryFragment;
+  category: EntityCategoryFragment;
   options?: ViewOptions;
 }) => {
   const { openDialog } = useDialog();
@@ -691,7 +691,7 @@ export const EntityList = (props: {
     variables: {
       category: props.category.id,
       filters,
-      order,
+      ordering: order,
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
@@ -708,7 +708,7 @@ export const EntityList = (props: {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const columns = calculateColumns(props.category);
-  const rows = calculateRows(data?.entityNodes || []);
+  const rows = calculateRows(data?.entities || []);
 
   const exportToCSV = () => {
     if (!rows || rows.length === 0) {
@@ -819,9 +819,9 @@ export const EntityList = (props: {
       { value: WhereOperator.StartsWith, label: "Starts With" },
       { value: WhereOperator.EndsWith, label: "Ends With" },
       { value: WhereOperator.GreaterThan, label: "Greater Than" },
-      { value: WhereOperator.GreaterThanOrEqual, label: "Greater Than or Equal" },
+      { value: WhereOperator.GreaterOrEqual, label: "Greater Than or Equal" },
       { value: WhereOperator.LessThan, label: "Less Than" },
-      { value: WhereOperator.LessThanOrEqual, label: "Less Than or Equal" },
+      { value: WhereOperator.LessOrEqual, label: "Less Than or Equal" },
     ];
 
     switch (valueKind) {
@@ -838,8 +838,8 @@ export const EntityList = (props: {
         // Numeric operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
-          WhereOperator.GreaterThanOrEqual, WhereOperator.LessThan,
-          WhereOperator.LessThanOrEqual].includes(op.value)
+          WhereOperator.GreaterOrEqual, WhereOperator.LessThan,
+          WhereOperator.LessOrEqual].includes(op.value)
         );
 
       case MetricKind.Boolean:
@@ -852,8 +852,8 @@ export const EntityList = (props: {
         // DateTime operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
-          WhereOperator.GreaterThanOrEqual, WhereOperator.LessThan,
-          WhereOperator.LessThanOrEqual].includes(op.value)
+          WhereOperator.GreaterOrEqual, WhereOperator.LessThan,
+          WhereOperator.LessOrEqual].includes(op.value)
         );
 
       case MetricKind.OneDVector:
@@ -1001,7 +1001,7 @@ export const EntityList = (props: {
                         <SelectContent>
                           {props.category.propertyDefinitions?.map((prop) => (
                             <SelectItem key={prop.key} value={prop.key}>
-                              {prop.label || prop.key}
+                              {prop. || prop.key}
                             </SelectItem>
                           ))}
                         </SelectContent>

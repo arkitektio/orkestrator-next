@@ -1,14 +1,14 @@
-mutation CreateStructure($input: StructureInput!) {
+mutation CreateStructure($input: CreateStructureInput!) {
   createStructure(input: $input) {
     ...Structure
   }
 }
 
-mutation DeleteStructure($id: ID!) {
+mutation DeleteStructure($id: GraphID!) {
   deleteStructure(input: { id: $id })
 }
 
-mutation ArchiveStructure($id: ID!) {
+mutation ArchiveStructure($id: GraphID!) {
   archiveStructure(input: { id: $id }) {
     ...Structure
   }

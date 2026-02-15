@@ -1,0 +1,15 @@
+mutation CreateMetricCategory($input: CreateMetricDefinitionInput!) {
+  createMetricCategory(input: $input) {
+    ...MetricCategory
+  }
+}
+
+mutation UpdateMetricCategory($input: UpdateMetricDefinitionInput!) {
+  updateMetricCategory(input: $input) {
+    ...MetricCategory
+  }
+}
+
+mutation DeleteMetricCategory($id: String!) {
+  deleteMetricCategory(input: { id: $id })
+}

@@ -1,11 +1,12 @@
-query GetStructure($id: ID!) {
+query GetStructure($id: GraphID!) {
   structure(id: $id) {
     ...Structure
   }
 }
 
-query SearchStructures($search: String, $values: [ID!]) {
+query SearchStructures($id: ID!, $search: String, $values: [GraphID!]) {
   options: structures(
+    structureCategoryId: $id
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
@@ -17,7 +18,7 @@ query SearchStructures($search: String, $values: [ID!]) {
 query GetInformedStructure(
   $graph: ID!
   $identifier: StructureIdentifier!
-  $object: ID!
+  $object: StructureObject!
 ) {
   structureByIdentifier(
     graph: $graph
@@ -28,29 +29,14 @@ query GetInformedStructure(
   }
 }
 
-query GetKnowledgeViews(
-  $identifier: StructureIdentifier!
-  $object: ID!
-) {
-  knowledgeViews(identifier: $identifier, object: $object) {
-    structureCategory {
-      id
-      graph {
-        id
-        name
-      }
-    }
-    structure {
-      ...InformedStructure
-    }
-  }
-}
+
 
 query ListStructures(
+  $id: ID!
   $filters: StructureFilter
-  $pagination: GraphPaginationInput
+  $pagination: StructurePaginationInput
 ) {
-  structures(filters: $filters, pagination: $pagination) {
+  structures(structureCategoryId: $id, filters: $filters, pagination: $pagination) {
     ...ListStructure
   }
 }

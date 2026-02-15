@@ -6,27 +6,21 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "BaseCategory": [
+    "Category": [
       "EntityCategory",
       "MeasurementCategory",
       "MetricCategory",
       "NaturalEventCategory",
       "ProtocolEventCategory",
-      "ReagentCategory",
       "RelationCategory",
       "StructureCategory",
       "StructureRelationCategory"
     ],
-    "CategoryDefintion": [
-      "EntityCategoryDefinition",
-      "ReagentCategoryDefinition",
-      "StructureCategoryDefinition"
-    ],
     "Edge": [
-      "Description",
-      "Edited",
+      "Asserted",
+      "InputParticipation",
       "Measurement",
-      "Participant",
+      "OutputParticipation",
       "Relation",
       "StructureRelation"
     ],
@@ -35,13 +29,27 @@
       "RelationCategory",
       "StructureRelationCategory"
     ],
+    "EdgeQuery": [
+      "EdgePairsQuery",
+      "EdgePathQuery",
+      "EdgeTableQuery"
+    ],
+    "EventCategory": [
+      "NaturalEventCategory",
+      "ProtocolEventCategory"
+    ],
+    "GraphQuery": [
+      "GraphNodesQuery",
+      "GraphPairsQuery",
+      "GraphPathQuery",
+      "GraphTableQuery"
+    ],
     "Node": [
-      "EditEvent",
+      "Assertion",
       "Entity",
       "Metric",
       "NaturalEvent",
       "ProtocolEvent",
-      "Reagent",
       "Structure"
     ],
     "NodeCategory": [
@@ -49,25 +57,47 @@
       "MetricCategory",
       "NaturalEventCategory",
       "ProtocolEventCategory",
-      "ReagentCategory",
       "StructureCategory"
     ],
-    "PairsPathTableNodeList": [
-      "NodeList",
-      "Pairs",
-      "Path",
-      "Table"
+    "NodeQuery": [
+      "NodePairsQuery",
+      "NodePathQuery",
+      "NodeTableQuery"
     ],
-    "PathPairsTable": [
-      "Pairs",
-      "Path",
-      "Table"
+    "Plottable": [
+      "EdgeTableQuery",
+      "GraphTableQuery",
+      "NodeTableQuery"
     ],
-    "PathPairsTableNodeList": [
-      "NodeList",
-      "Pairs",
-      "Path",
-      "Table"
+    "VersionedNode": [
+      "Entity",
+      "NaturalEvent",
+      "ProtocolEvent"
+    ],
+    "_Entity": [
+      "CategoryTag",
+      "EdgePairsQuery",
+      "EdgePathQuery",
+      "EdgeTableQuery",
+      "EntityCategory",
+      "Graph",
+      "GraphNodesQuery",
+      "GraphPairsQuery",
+      "GraphPathQuery",
+      "GraphTableQuery",
+      "MaterializedEdge",
+      "MeasurementCategory",
+      "MediaStore",
+      "MetricCategory",
+      "NaturalEventCategory",
+      "NodePairsQuery",
+      "NodePathQuery",
+      "NodeTableQuery",
+      "ProtocolEventCategory",
+      "RelationCategory",
+      "ScatterPlot",
+      "StructureCategory",
+      "StructureRelationCategory"
     ]
   }
 };

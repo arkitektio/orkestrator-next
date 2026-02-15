@@ -1,0 +1,13 @@
+fragment GraphTableRender on GraphTableRender {
+  query  {
+    columns {
+      key
+      label
+      valueKind
+      description
+    }
+  }
+  rows
+}
+
+

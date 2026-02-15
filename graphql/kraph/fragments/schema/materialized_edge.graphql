@@ -1,0 +1,17 @@
+fragment MaterializedEdge on MaterializedEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    label
+    description
+  }
+  target {
+    id
+    label
+    description
+  }
+}

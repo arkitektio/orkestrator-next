@@ -155,9 +155,9 @@ export const Page =  asDetailQueryRoute(
               </p>
             </div>
             <div className="w-full h-full flex-row relative">
-              {data.entityCategory?.store?.presignedUrl && (
+              {data.entityCategory?.image?.presignedUrl && (
                 <img
-                  src={resolve(data.entityCategory?.store.presignedUrl)}
+                  src={resolve(data.entityCategory?.image.presignedUrl)}
                   style={{ filter: "brightness(0.7)" }}
                   className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
                 />

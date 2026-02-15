@@ -1,11 +1,12 @@
-query GetMeasurement($id: ID!) {
+query GetMeasurement($id: GraphID!) {
   measurement(id: $id) {
     ...Measurement
   }
 }
 
-query SearchMeasurements($search: String, $values: [ID!]) {
+query SearchMeasurements($category: ID!, $search: String, $values: [GraphID!]) {
   options: measurements(
+    measurementCategoryId: $category
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {

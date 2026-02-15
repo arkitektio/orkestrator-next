@@ -4,11 +4,11 @@ mutation CreateProtocolEvent($input: CreateProtocolEventInput!) {
   }
 }
 
-mutation DeleteProtocolEvent($id: ID!) {
+mutation DeleteProtocolEvent($id: String!) {
   deleteProtocolEvent(input: { id: $id })
 }
 
-mutation ArchiveProtocolEvent($id: ID!) {
+mutation ArchiveProtocolEvent($id: String!) {
   archiveProtocolEvent(input: { id: $id }) {
     ...ProtocolEvent
   }

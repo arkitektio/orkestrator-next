@@ -1,0 +1,15 @@
+mutation CreateMeasurementCategory($input: CreateMeasurementDefinitionInput!) {
+  createMeasurementCategory(input: $input) {
+    ...MeasurementCategory
+  }
+}
+
+mutation UpdateMeasurementCategory($input: UpdateMeasurementDefinitionInput!) {
+  updateMeasurementCategory(input: $input) {
+    ...MeasurementCategory
+  }
+}
+
+mutation DeleteMeasurementCategory($id: String!) {
+  deleteMeasurementCategory(input: { id: $id })
+}

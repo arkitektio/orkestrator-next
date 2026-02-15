@@ -25,3 +25,9 @@ fragment GraphQuery on GraphQuery {
   ...BaseGraphQuery
   ...GraphTableQuery
 }
+
+
+fragment ListGraphTableQuery on GraphTableQuery {
+  ...BaseGraphQuery
+  __typename
+}

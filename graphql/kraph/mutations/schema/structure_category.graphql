@@ -1,16 +1,16 @@
-mutation CreateStructureCategory($input: StructureCategoryInput!) {
+mutation CreateStructureCategory($input: CreateStructureDefinitionInput!) {
   createStructureCategory(input: $input) {
     ...StructureCategory
   }
 }
 
-mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
+mutation UpdateStructureCategory($input: UpdateStructureDefinitionInput!) {
   updateStructureCategory(input: $input) {
     ...StructureCategory
   }
 }
 
-mutation DeleteStructureCategory($id: ID!) {
+mutation DeleteStructureCategory($id: String!) {
   deleteStructureCategory(input: { id: $id })
 }
 

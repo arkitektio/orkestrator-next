@@ -1,9 +1,9 @@
-query SearchTags($search: String, $values: [String!]) {
-  options: tags(
-    filters: { search: $search, values: $values }
+query SearchTags($search: String, $values: [ID!]) {
+  options: categoryTags(
+    filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
-    value: value
-    label: value
+    value: id
+    label: name
   }
 }

@@ -1,8 +1,8 @@
 import {
   PresignedPostCredentialsFragment,
-  RequestUploadDocument,
-  RequestUploadMutation,
-  RequestUploadMutationVariables,
+  RequestMediaUploadDocument,
+  RequestMediaUploadMutation,
+  RequestMediaUploadMutationVariables,
 } from "@/kraph/api/graphql";
 import {
   useDatalayerEndpoint,
@@ -122,10 +122,10 @@ export const useKraphUpload = () => {
       }
 
       const data = await client.mutate<
-        RequestUploadMutation,
-        RequestUploadMutationVariables
+        RequestMediaUploadMutation,
+        RequestMediaUploadMutationVariables
       >({
-        mutation: RequestUploadDocument,
+        mutation: RequestMediaUploadDocument,
         variables: {
           input: { key: file.name, datalayer: "default" },
         },

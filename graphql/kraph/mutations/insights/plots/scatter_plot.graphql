@@ -1,4 +1,4 @@
-mutation CreateScatterPlot($input: ScatterPlotInput!) {
+mutation CreateScatterPlot($input: CreateScatterPlotInput!) {
   createScatterPlot(input: $input) {
     ...ScatterPlot
   }

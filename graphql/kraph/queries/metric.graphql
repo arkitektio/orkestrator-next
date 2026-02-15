@@ -1,11 +1,12 @@
-query GetMetric($id: ID!) {
-  metric(id: $id) {
+query GetMetric($id: GraphID!) {
+  metric(metricId: $id) {
     ...Metric
   }
 }
 
-query SearchMetrics($search: String, $values: [ID!]) {
+query SearchMetrics($category: ID!, $search: String, $values: [GraphID!]) {
   options: metrics( # Updated from structures to metrics
+    metricCategoryId: $category,
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
@@ -14,8 +15,8 @@ query SearchMetrics($search: String, $values: [ID!]) {
   }
 }
 
-query ListMetrics($filters: MetricFilter, $pagination: GraphPaginationInput) {
-  metrics(filters: $filters, pagination: $pagination) {
+query ListMetrics($category: ID!, $filters: MetricFilter, $pagination: MetricPaginationInput, $ordering: [MetricOrder!]) {
+  metrics(metricCategoryId: $category, filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListMetric
   }
 }

@@ -1,8 +1,4 @@
 query StartPane {
-  reagentCategories(filters: { pinned: true }, pagination: { limit: 5 }) {
-    id
-    label
-  }
   entityCategories(filters: { pinned: true }, pagination: { limit: 5 }) {
     id
     label
@@ -22,15 +18,5 @@ query StartPane {
   naturalEventCategories(filters: { pinned: true }, pagination: { limit: 5 }) {
     id
     label
-  }
-  graphQueries(
-    filters: { pinned: true, kind: NODE_LIST }
-    pagination: { limit: 5 }
-  ) {
-    id
-    name
-    render(pagination: { limit: 3 }) {
-      ...NodeList
-    }
   }
 }

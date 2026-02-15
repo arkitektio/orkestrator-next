@@ -1,11 +1,12 @@
-query GetNaturalEvent($id: ID!) {
+query GetNaturalEvent($id: GraphID!) {
   naturalEvent(id: $id) {
     ...NaturalEvent
   }
 }
 
-query SearchNaturalEvents($search: String, $values: [ID!]) {
+query SearchNaturalEvents($category: ID!, $search: String, $values: [GraphID!]) {
   options: naturalEvents(
+    naturalEventCategoryId: $category,
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {

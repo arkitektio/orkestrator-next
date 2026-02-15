@@ -1,5 +1,5 @@
 mutation CreateStructureRelationCategory(
-  $input: StructureRelationCategoryInput!
+  $input: CreateStructureRelationDefinitionInput!
 ) {
   createStructureRelationCategory(input: $input) {
     ...StructureRelationCategory
@@ -7,13 +7,13 @@ mutation CreateStructureRelationCategory(
 }
 
 mutation UpdateStructureRelationCategory(
-  $input: UpdateStructureRelationCategoryInput!
+  $input: UpdateStructureRelationDefinitionInput!
 ) {
   updateStructureRelationCategory(input: $input) {
     ...StructureRelationCategory
   }
 }
 
-mutation DeleteStructureRelationCategory($id: ID!) {
+mutation DeleteStructureRelationCategory($id: String!) {
   deleteStructureRelationCategory(input: { id: $id })
 }

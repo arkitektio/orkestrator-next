@@ -4,11 +4,11 @@ mutation CreateNaturalEvent($input: CreateNaturalEventInput!) {
   }
 }
 
-mutation DeleteNaturalEvent($id: ID!) {
+mutation DeleteNaturalEvent($id: String!) {
   deleteNaturalEvent(input: { id: $id })
 }
 
-mutation ArchiveNaturalEvent($id: ID!) {
+mutation ArchiveNaturalEvent($id: String!) {
   archiveNaturalEvent(input: { id: $id }) {
     ...NaturalEvent
   }

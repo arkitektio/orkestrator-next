@@ -1,29 +1,18 @@
 fragment ProtocolEvent on ProtocolEvent {
   ...BaseNode
   id
-  validFrom
-  validTo
+  measuredFrom
+
   category {
     id
     label
-    plateChildren
-  }
-  sourceParticipants {
-    ...DetailParticipant
-  }
-  targetParticipants {
-    ...DetailParticipant
-  }
-  variables {
-    role
-    value
   }
 }
 
 fragment ListProtocolEvent on ProtocolEvent {
   id
-  validFrom
-  validTo
+  measuredFrom
+  measuredTo
   category {
     label
     id
@@ -34,12 +23,11 @@ fragment PathProtocolEvent on ProtocolEvent {
   ...ListProtocolEvent
   category {
     label
-    store {
+    image {
       presignedUrl
     }
   }
-  variables {
-    role
+  richProperties {
     value
   }
 }

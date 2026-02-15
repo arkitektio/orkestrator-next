@@ -1,20 +1,20 @@
-mutation CreateMetric($input: MetricInput!) {
+mutation CreateMetric($input: CreateMetricInput!) {
   createMetric(input: $input) {
     ...Metric
   }
 }
 
-mutation DeleteMetric($id: ID!) {
+mutation DeleteMetric($id: String!) {
   deleteMetric(input: { id: $id })
 }
 
-mutation ArchiveMetric($id: ID!) {
+mutation ArchiveMetric($id: String!) {
   archiveMetric(input: { id: $id }) {
     ...Metric
   }
 }
 
-mutation UpdateMetric($input: MetricInput!) {
+mutation UpdateMetric($input: UpdateMetricInput!) {
   updateMetric(input: $input) {
     ...Metric
   }

@@ -1,0 +1,17 @@
+mutation CreateGraphTableQuery($input: CreateGraphTableQueryInput!) {
+  createGraphTableQuery(input: $input) {
+    ...GraphTableQuery
+  }
+}
+
+mutation UpdateGraphTableQuery($input: UpdateGraphTableQueryInput!) {
+  updateGraphTableQuery(input: $input) {
+    ...GraphTableQuery
+  }
+}
+
+
+
+mutation DeleteGraphTableQuery($id: String!) {
+  deleteGraphTableQuery(input: { id: $id })
+}

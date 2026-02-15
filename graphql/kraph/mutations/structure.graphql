@@ -4,6 +4,12 @@ mutation CreateStructure($input: CreateStructureInput!) {
   }
 }
 
+mutation EnsureStructure($input: EnsureStructureInput!) {
+  ensureStructure(input: $input) {
+    ...Structure
+  }
+}
+
 mutation DeleteStructure($id: GraphID!) {
   deleteStructure(input: { id: $id })
 }

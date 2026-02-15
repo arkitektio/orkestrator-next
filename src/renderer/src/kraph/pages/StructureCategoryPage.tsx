@@ -20,7 +20,7 @@ import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
-export default asDetailQueryRoute(
+const Page =  asDetailQueryRoute(
   useGetStructureCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -113,9 +113,9 @@ export default asDetailQueryRoute(
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.structureCategory?.store?.presignedUrl && (
+            {data.structureCategory?.image?.presignedUrl && (
               <Image
-                src={resolve(data.structureCategory?.store.presignedUrl)}
+                src={resolve(data.structureCategory?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -149,3 +149,4 @@ export default asDetailQueryRoute(
     );
   },
 );
+export default Page;

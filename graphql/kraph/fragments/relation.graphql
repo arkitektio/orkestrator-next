@@ -1,4 +1,5 @@
 fragment PathRelation on Relation {
+  id
   measuredFrom
   measuredTo
   category {

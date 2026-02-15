@@ -322,7 +322,7 @@ const EditableCell = ({
 
 
 const calculateColumns = (
-  category: NodeCategoryFragment,
+  category: EntityCategoryFragment,
 ): ColumnDef<NodeListFragment["nodes"][0]>[] => {
   if (!category) {
     return [];
@@ -1001,7 +1001,7 @@ export const EntityList = (props: {
                         <SelectContent>
                           {props.category.propertyDefinitions?.map((prop) => (
                             <SelectItem key={prop.key} value={prop.key}>
-                              {prop. || prop.key}
+                              {prop.label || prop.key}
                             </SelectItem>
                           ))}
                         </SelectContent>

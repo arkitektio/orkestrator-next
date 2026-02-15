@@ -6,6 +6,7 @@ import {
   ColumnFragment,
   ColumnKind,
   GraphFragment,
+  GraphTableRender,
   MetricKind,
   TableFragment,
 } from "@/kraph/api/graphql";
@@ -121,14 +122,15 @@ export const parseValue = (
 };
 
 export const calculateColumns = (
-  table: TableFragment | undefined,
+  render: GraphTableRender | undefined,
 ): ColumnDef<{ [key: string]: any }>[] => {
-  if (!table) {
+  if (!render || !render.query) {
     return [];
   }
 
-  return table.columns.map((c, item) => {
-    return columnToDef(c, table);
+  return render.query.columns.map((c, item) => {
+    return columnToDef(c, render.query);
+
   });
 };
 

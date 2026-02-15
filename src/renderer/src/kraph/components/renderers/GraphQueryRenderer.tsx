@@ -11,7 +11,7 @@ import { Calendar, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import React from "react";
 import { ViewOptions } from "./DelegatingNodeViewRenderer";
 import { PathGraph } from "./graph/PathGraph";
-import { NodeListRender } from "./node_list/NodeList";
+import { NodeListRender } from "./lists/NodeList";
 import { Pairs } from "./pairs/Pairs";
 import { GraphTable } from "./table/GraphTable";
 

@@ -2,14 +2,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import {
   ListGraphFragment,
-  useCreateStructureMutation,
+  useEnsureStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery,
 } from "@/kraph/api/graphql";
 import { KraphGraph } from "@/linkers";
 import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { SelectiveNodeViewRenderer } from "../renderers/NodeQueryRenderer";
 import { useEffect, useState } from "react";
 import { MetricsTable } from "../tables/MetricsTable";
 import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
@@ -40,7 +39,7 @@ export const GraphKnowledgeView = (props: {
     },
   });
 
-  const [addStructure] = useCreateStructureMutation({
+  const [addStructure] = useEnsureStructureMutation({
     onCompleted: () => refetch(),
   });
 
@@ -55,7 +54,8 @@ export const GraphKnowledgeView = (props: {
           addStructure({
             variables: {
               input: {
-                structure: `${props.identifier}:${props.object}`,
+                object: props.object,
+                identifier: props.identifier,
                 graph: props.graph.id,
               },
             },
@@ -66,18 +66,6 @@ export const GraphKnowledgeView = (props: {
       </Button></div>}
       {data?.structureByIdentifier &&
         <>
-          {data?.structureByIdentifier.bestView ? (
-            <div className="h-full w-full aspect-square">
-              <SelectiveNodeViewRenderer
-                view={data.structureByIdentifier.bestView}
-                options={{ minimal: true }}
-              />
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              No best view available for this structure.
-            </p>
-          )}
           <div className="flex flex-row gap-2 mt-4">
             <ObjectButton
               objects={[{ identifier: props.identifier, object: props.object }]}

@@ -37,12 +37,9 @@ import StructurePage from "./pages/StructurePage";
 import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
 import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
 import StandardPane from "./panes/StandardPane";
-import GraphReagentCategoriesPage from "./pages/graph/GraphReagentCategoriesPage";
 import MetricPage from "./pages/MetricPage";
 import RelationPage from "./pages/RelationPage";
 import StructureRelationPage from "./pages/StructureRelationPage";
-import GraphQueryDesignerPage from "./pages/designer/GraphQueryDesignerPage";
-import NodeQueryDesignerPage from "./pages/designer/NodeQueryDesignerPage";
 import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
@@ -58,10 +55,6 @@ export const KraphModule: React.FC<Props> = (props) => {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="home" element={<HomePage />} />
-          <Route
-            path="graphs/:id/reagentcategories"
-            element={<GraphReagentCategoriesPage />}
-          />
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="nodes/:id" element={<NodePage />} />
           <Route path="relations/:id" element={<RelationPage />} />
@@ -85,21 +78,11 @@ export const KraphModule: React.FC<Props> = (props) => {
             path="nodequeries/:id/node/:node"
             element={<NodeQueryPage />}
           />
-          <Route
-            path="nodequeries/:id/node/:node/designer"
-            element={<NodeQueryDesignerPage />}
-          />
-          <Route
-            path="graphqueries/:id/designer"
-            element={<GraphQueryDesignerPage />}
-          />
           <Route path="nodequeries/:id" element={<NodeQueryPage />} />
           <Route
             path="nodequeries/:id/view/:nodeid"
             element={<NodeViewPage />}
           />
-
-          <Route path="reagentcategories" element={<ReagentCategoriesPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
           <Route
             path="structurerelationcategories"

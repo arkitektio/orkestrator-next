@@ -15,7 +15,7 @@ import {
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
 import GraphQueryList from "../components/lists/GraphQueryList";
-import { EntityList } from "../components/renderers/node_list/EntityList";
+import { EntityList } from "../components/renderers/lists/EntityList";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
 import { DialogButton } from "@/components/ui/dialogbutton";

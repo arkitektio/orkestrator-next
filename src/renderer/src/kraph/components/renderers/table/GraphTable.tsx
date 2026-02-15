@@ -31,11 +31,11 @@ import {
 } from "@/components/ui/table";
 
 import {
-  TableFragment,
-  useRenderGraphQueryQuery,
-  GraphQueryFilters,
-  GraphQueryPagination,
-  GraphQueryOrder,
+  GraphTableRender,
+  useRenderGraphTableQuery,
+  RenderGraphTableFilter,
+  RenderGraphTablePagination,
+  RenderGraphTableOrder,
 } from "@/kraph/api/graphql";
 import { calculateColumns, calculateRows } from "../utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
@@ -47,7 +47,7 @@ export type FormValues = {
 };
 
 export const GraphTable = (props: {
-  table?: TableFragment;
+  render?: GraphTableRender;
   options?: ViewOptions;
 }) => {
   const [pagination, setPagination] = React.useState({
@@ -63,8 +63,8 @@ export const GraphTable = (props: {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = calculateColumns(props.table);
-  const rows = calculateRows(props.table);
+  const columns = calculateColumns(props.render?.table);
+  const rows = calculateRows(props.render?.table);
 
   const table = useReactTable({
     data: rows || [],

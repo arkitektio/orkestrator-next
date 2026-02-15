@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Search, Calendar, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { NodeListRender } from "./node_list/NodeList";
+import { NodeListRender } from "./lists/NodeList";
 
 export const PathRenderer = (props: { path: PathFragment }) => {
   return (

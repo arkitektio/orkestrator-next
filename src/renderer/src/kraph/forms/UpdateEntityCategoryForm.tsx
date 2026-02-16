@@ -7,7 +7,7 @@ import { Form } from "@/components/ui/form";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   EntityCategoryFragment,
-  MetricKind,
+  ValueKind,
   UpdateEntityCategoryMutationVariables,
   useCreateGraphTagInlineMutation,
   useSearchTagsLazyQuery,
@@ -27,7 +27,7 @@ const enumToOptions = (e: Record<string, string>) => {
   }));
 };
 
-export default (props: { entityCategory: EntityCategoryFragment, onSuccess?: () => void }) => {
+const TForm =  (props: { entityCategory: EntityCategoryFragment, onSuccess?: () => void }) => {
   const [update] = useUpdateEntityCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -163,7 +163,7 @@ export default (props: { entityCategory: EntityCategoryFragment, onSuccess?: () 
                               label="Value Type"
                               name={`propertyDefinitions.${index}.valueKind`}
                               description="The data type for this property"
-                              options={enumToOptions(MetricKind)}
+                              options={enumToOptions(ValueKind)}
                             />
                           </div>
                           <div className="flex items-start pt-8 min-w-[180px]">
@@ -207,7 +207,7 @@ export default (props: { entityCategory: EntityCategoryFragment, onSuccess?: () 
                       key: "",
                       label: "",
                       description: "",
-                      valueKind: MetricKind.String,
+                      valueKind: ValueKind.String,
                       optional: false,
                       default: null,
                     })
@@ -228,3 +228,6 @@ export default (props: { entityCategory: EntityCategoryFragment, onSuccess?: () 
     </>
   );
 };
+
+
+export default TForm;

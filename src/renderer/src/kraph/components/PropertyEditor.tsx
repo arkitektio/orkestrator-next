@@ -3,7 +3,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { GetEntityDocument, MetricKind, PropertyDefinitionFragment, useSetNodePropertyMutation } from "@/kraph/api/graphql";
+import { GetEntityDocument, ValueKind, PropertyDefinitionFragment } from "@/kraph/api/graphql";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -44,7 +44,7 @@ export const PropertyEditor = ({
 
   const renderInput = () => {
     switch (definition.valueKind) {
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -63,7 +63,7 @@ export const PropertyEditor = ({
             </Button>
           </div>
         );
-      case MetricKind.Int:
+      case ValueKind.Int:
         return (
           <Input
             type="number"
@@ -72,7 +72,7 @@ export const PropertyEditor = ({
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );
-      case MetricKind.Float:
+      case ValueKind.Float:
         return (
           <Input
             type="number"
@@ -81,14 +81,14 @@ export const PropertyEditor = ({
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         return (
           <DateTimePicker
             value={currentValue ? new Date(currentValue) : undefined}
             onChange={(date) => setCurrentValue(date?.toISOString())}
           />
         );
-      case MetricKind.String:
+      case ValueKind.String:
         if (definition.description && definition.description.length > 50) {
           return (
             <Textarea

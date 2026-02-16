@@ -6,10 +6,7 @@ import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
   useGetGraphQuery,
-  useMaterializeGraphMutation,
   useUpdateGraphMutation,
-  useCreateGraphQueryMutation,
-  ViewKind,
 } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
@@ -39,43 +36,10 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
     refetchQueries: ["GetGraph"],
   });
 
-  const [materialize] = useMaterializeGraphMutation({
-    refetchQueries: ["GetGraph"],
-  });
-
-  const [createGraphQuery] = useCreateGraphQueryMutation({
-    refetchQueries: ["GetGraph", "GetGraphQuery"],
-  });
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [queryName, setQueryName] = useState("");
 
-  const handleCreateQuery = async () => {
-    if (!queryName.trim()) return;
 
-    try {
-      const result = await createGraphQuery({
-        variables: {
-          input: {
-            name: queryName,
-            description: "New query created from builder",
-            graph: data.graph.id,
-            query: "MATCH (n) RETURN n LIMIT 25",
-            kind: ViewKind.NodeList,
-          },
-        },
-      });
-
-      if (result.data?.createGraphQuery) {
-        setDialogOpen(false);
-        setQueryName("");
-        // Navigate to the builder page for the newly created query
-        navigate(`/kraph/graphqueries/${result.data.createGraphQuery.id}/builder`);
-      }
-    } catch (error) {
-      console.error("Failed to create graph query:", error);
-    }
-  };
 
   const pin = async () => {
     await update({
@@ -95,64 +59,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       title={data.graph.name}
       pageActions={
         <>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Query
-              </Button>
-            </DialogTrigger>
 
-            <DialogButton
-              variant={"outline"}
-              size={"sm"}
-              name="createprotocoleventcategory"
-              dialogProps={{
-                graph: data.graph.id
-              }}
-              options={{
-                size: "large"
-              }}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create Protocol
-            </DialogButton>
-
-
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Graph Query</DialogTitle>
-                <DialogDescription>
-                  Enter a name for your new query. You&apos;ll be taken to the builder to design it.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Query Name</Label>
-                  <Input
-                    id="name"
-                    value={queryName}
-                    onChange={(e) => setQueryName(e.target.value)}
-                    placeholder="e.g., Sample Analysis Query"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleCreateQuery();
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateQuery} disabled={!queryName.trim()}>
-                  Create & Open Builder
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
           <FormSheet
             trigger={
               <Button variant="outline">
@@ -176,16 +83,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
           >
             {data.graph.pinned ? "Unpin" : "Pin"}
           </Button>
-          <Button
-            onClick={() => {
-              materialize({
-                variables: { input: { id: data.graph.id } },
-              });
-            }}
-            variant="outline"
-          >
-            Materialize
-          </Button>
+
         </>
       }
       sidebars={
@@ -214,28 +112,6 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
         <div className="col-span-7 flex justify-end"></div>
       </div>
       <OntologyGraph graph={data.graph} />
-      {data.graph.graphQueries.length > 0 && (
-        <>
-          <h2 className="mt-4 text-xl f">Popular Queries</h2>
-
-          <div className="mt-1 flex flex-row gap-2">
-            {data.graph.graphQueries.map((x) => (
-              <>
-                <Card className=" p-3">
-                  <KraphGraphQuery.DetailLink
-                    object={x.id}
-                    className="scroll-m-20 text-xl font-semibold tracking-tight"
-                  >
-                    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                      {x.name}
-                    </h3>
-                  </KraphGraphQuery.DetailLink>
-                </Card>
-              </>
-            ))}
-          </div>
-        </>
-      )}
     </KraphGraph.ModelPage>
   );
 });

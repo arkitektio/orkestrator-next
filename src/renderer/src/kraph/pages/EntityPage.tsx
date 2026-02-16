@@ -23,7 +23,6 @@ import Timestamp from "react-timestamp";
 import { useGetEntityQuery } from "../api/graphql";
 import { PropertyEditor } from "../components/PropertyEditor";
 import { PropertyRenderer } from "../components/PropertyRenderer";
-import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 
 export const calculateDuration = (start?: string, end?: string) => {
   if (!start) return null;
@@ -62,12 +61,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       }
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet
-            trigger={<Button variant="outline">New Query</Button>}
-            onSubmit={() => refetch()}
-          >
-            <CreateNodeQueryForm entity={data.entity} />
-          </FormSheet>
+
           <KraphEntity.ObjectButton
             object={data.entity.id}
             className="w-full"

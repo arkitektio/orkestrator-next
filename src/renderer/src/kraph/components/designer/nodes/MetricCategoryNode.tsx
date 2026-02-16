@@ -52,7 +52,7 @@ export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
                 </Badge>
               ))}
             </div>
-            <div className="flex flex-row gap-2">{data.metricKind}</div>
+            <div className="flex flex-row gap-2">{data.ValueKind}</div>
           </div>
           <NodeQueryControls nodeId={id} nodeType="Metric" />
         </Card>

@@ -1,49 +1,28 @@
-import { Position } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import {
-  BaseListCategoryFragment,
-  CategoryDefintion,
   GraphFragment,
   GraphNodeInput,
-  ListStructureCategoryFragment,
-  StructureCategoryDefinition,
-  useUpdateGraphMutation,
+  useUpdateGraphMutation
 } from "@/kraph/api/graphql";
-import {
-  Panel,
-  useReactFlow,
-  getNodesBounds,
-  getViewportForBounds,
-} from "@xyflow/react";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { notEmpty } from "@/lib/utils";
+import { KraphGraph } from "@/linkers";
 import {
   Connection,
-  MarkerType,
+  getNodesBounds,
+  getViewportForBounds,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
-  useNodesState,
+  useNodesState
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
+import { toPng } from "html-to-image";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
-import DescribeEdge from "./edges/DescribeEdge";
-import EntityRoleEdge from "./edges/EntityRoleEdge";
-import MeasurementEdge from "./edges/MeasurementEdge";
-import ReagentRoleEdge from "./edges/ReagentRoleEdge";
-import RelationEdge from "./edges/RelationEdge";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
-import GenericCategoryNode from "./nodes/EntityCategoryNode";
-import MetricCategoryNode from "./nodes/MetricCategoryNode";
-import NaturalEventNode from "./nodes/NaturalEventCategoryNode";
-import ProtocolEventNode from "./nodes/ProtocolEventCategoryNode";
-import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
-import StructureCategoryNode from "./nodes/StructureCategoryNode";
 import { OntologyGraphProvider } from "./OntologyGraphProvider";
 import {
   ClickContextualParams,
@@ -53,8 +32,6 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import { KraphGraph } from "@/linkers";
-import { toPng } from "html-to-image";
 import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, nodeToNodeInput, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {

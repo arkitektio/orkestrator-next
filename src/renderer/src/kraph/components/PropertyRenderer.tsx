@@ -1,4 +1,4 @@
-import { MetricKind, PropertyDefinitionFragment } from "@/kraph/api/graphql";
+import { ValueKind, PropertyDefinitionFragment } from "@/kraph/api/graphql";
 import { Check, X } from "lucide-react";
 import Timestamp from "react-timestamp";
 
@@ -14,7 +14,7 @@ export const PropertyRenderer = ({
     }
 
     switch (definition.valueKind) {
-        case MetricKind.Boolean:
+        case ValueKind.Boolean:
             return value === "true" || value === true ? (
                 <div className="flex items-center gap-1 text-emerald-500">
                     <Check className="h-4 w-4" />
@@ -27,26 +27,26 @@ export const PropertyRenderer = ({
                 </div>
             );
 
-        case MetricKind.Datetime:
+        case ValueKind.Datetime:
             return (
                 <span className="text-sm">
                     <Timestamp date={String(value)} />
                 </span>
             );
 
-        case MetricKind.Int:
+        case ValueKind.Int:
             return <span className="text-sm font-mono">{value}</span>;
 
-        case MetricKind.Float:
+        case ValueKind.Float:
             return <span className="text-sm font-mono">{value}</span>;
 
-        case MetricKind.Category: {
+        case ValueKind.Category: {
             // If options are available, try to find the label for the value
             const option = definition.options?.find((opt) => opt.value === value);
             return <span className="text-sm">{option?.label || value}</span>;
         }
 
-        case MetricKind.String:
+        case ValueKind.String:
         default:
             return <span className="text-sm">{value}</span>;
     }

@@ -15,9 +15,9 @@ import { Switch } from "@/components/ui/switch";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   EntityCategoryFragment,
-  MetricKind,
   PropertyDefinitionFragment,
   useCreateEntityMutation,
+  ValueKind,
 } from "@/kraph/api/graphql";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,25 +44,25 @@ const validateProperty = (
   // Type-specific validation
   if (value !== null && value !== undefined && value !== "") {
     switch (definition.valueKind) {
-      case MetricKind.Int:
+      case ValueKind.Int:
         if (typeof value === "string" && isNaN(parseInt(value))) {
           return `${definition.label || definition.key} must be a valid integer`;
         }
         break;
 
-      case MetricKind.Float:
+      case ValueKind  .Float:
         if (typeof value === "string" && isNaN(parseFloat(value))) {
           return `${definition.label || definition.key} must be a valid number`;
         }
         break;
 
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         if (typeof value !== "boolean") {
           return `${definition.label || definition.key} must be true or false`;
         }
         break;
 
-      case MetricKind.Category:
+      case ValueKind.Category:
         if (definition.options && definition.options.length > 0) {
           const validValues = definition.options.map((opt) => opt.value);
           if (!validValues.includes(String(value))) {
@@ -115,30 +115,30 @@ const useCreateEntityForm = (category: EntityCategoryFragment) => {
 
 const serializePropertyValue = (
   value: PropertyValue,
-  kind: MetricKind,
+  kind: ValueKind,
 ): string | number | boolean | null => {
   if (value === null || value === undefined || value === "") {
     return null;
   }
 
   switch (kind) {
-    case MetricKind.Int:
+    case ValueKind.Int:
       return typeof value === "string" ? parseInt(value) : Number(value);
 
-    case MetricKind.Float:
+    case ValueKind.Float:
       return typeof value === "string" ? parseFloat(value) : Number(value);
 
-    case MetricKind.Boolean:
+    case ValueKind.Boolean:
       return Boolean(value);
 
-    case MetricKind.Datetime:
+    case ValueKind.Datetime:
       if (value instanceof Date) {
         return value.toISOString();
       }
       return String(value);
 
-    case MetricKind.String:
-    case MetricKind.Category:
+    case ValueKind.String:
+    case ValueKind.Category:
     default:
       return String(value);
   }
@@ -190,7 +190,7 @@ const PropertyField = ({
     }
 
     switch (definition.valueKind) {
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         return (
           <div className="flex items-center space-x-2">
             <Switch
@@ -203,7 +203,7 @@ const PropertyField = ({
           </div>
         );
 
-      case MetricKind.Int:
+      case ValueKind.Int:
         return (
           <Input
             type="number"
@@ -215,7 +215,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Float:
+      case ValueKind.Float:
         return (
           <Input
             type="number"
@@ -227,7 +227,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         return (
           <DateTimePicker
             value={value instanceof Date ? value : value ? new Date(String(value)) : undefined}
@@ -236,7 +236,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.String:
+      case ValueKind.String:
         // Multi-line for longer descriptions
         if (definition.description && definition.description.length > 50) {
           return (
@@ -259,7 +259,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Category:
+      case ValueKind.Category:
       default:
         return (
           <Input

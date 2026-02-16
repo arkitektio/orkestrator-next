@@ -31,7 +31,7 @@ import {
 import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
-  MetricKind,
+  ValueKind,
   NaturalEventCategoryFragment,
   ProtocolEventCategoryFragment,
   UpdateProtocolEventCategoryMutationVariables,
@@ -601,15 +601,15 @@ export const RoleDefinitionCreator = ({
                                     options={[
                                       {
                                         label: "String",
-                                        value: MetricKind.String,
+                                        value: ValueKind.String,
                                       },
                                       {
                                         label: "Int",
-                                        value: MetricKind.Int,
+                                        value: ValueKind.Int,
                                       },
                                       {
                                         label: "Float",
-                                        value: MetricKind.Float,
+                                        value: ValueKind.Float,
                                       },
                                     ]}
                                     description="Filters for the entity's tags."
@@ -644,7 +644,7 @@ export const RoleDefinitionCreator = ({
                             onClick={() =>
                               variableDefinitionsArray.append({
                                 param: "new",
-                                valueKind: MetricKind.String,
+                                valueKind: ValueKind.String,
                                 label: "",
                                 description: "",
                               })

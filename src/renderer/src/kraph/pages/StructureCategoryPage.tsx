@@ -14,7 +14,6 @@ import {
   useGetStructureCategoryQuery,
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
 
 const Page =  asDetailQueryRoute(
@@ -83,12 +82,7 @@ const Page =  asDetailQueryRoute(
             <KraphStructureCategory.ObjectButton
               object={data.structureCategory.id}
             />
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateGraphQueryForm category={data.structureCategory} />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}

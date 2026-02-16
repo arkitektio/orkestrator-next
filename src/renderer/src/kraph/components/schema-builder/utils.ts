@@ -1,4 +1,4 @@
-import { MetricKind } from "../../api/graphql";
+import { ValueKind } from "../../api/graphql";
 import {
   Type,
   Hash,
@@ -12,7 +12,7 @@ export interface PropertyDefinition {
   key: string;
   label: string;
   description?: string;
-  valueKind: MetricKind;
+  valueKind: ValueKind;
   optional: boolean;
   default?: string;
   searchable?: boolean;
@@ -30,8 +30,8 @@ export interface DataTypeConfig {
   label: string;
 }
 
-export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
-  [MetricKind.String]: {
+export const dataTypeConfigs: Partial<Record<ValueKind, DataTypeConfig>> = {
+  [ValueKind.String]: {
     icon: Type,
     color: {
       bg: "bg-blue-50",
@@ -40,7 +40,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "String",
   },
-  [MetricKind.Int]: {
+  [ValueKind.Int]: {
     icon: Hash,
     color: {
       bg: "bg-green-50",
@@ -49,7 +49,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "Integer",
   },
-  [MetricKind.Float]: {
+  [ValueKind.Float]: {
     icon: Hash,
     color: {
       bg: "bg-green-50",
@@ -58,7 +58,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "Float",
   },
-  [MetricKind.Boolean]: {
+  [ValueKind.Boolean]: {
     icon: ToggleLeft,
     color: {
       bg: "bg-orange-50",
@@ -67,7 +67,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "Boolean",
   },
-  [MetricKind.Datetime]: {
+  [ValueKind.Datetime]: {
     icon: Calendar,
     color: {
       bg: "bg-teal-50",
@@ -76,7 +76,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "Date/Time",
   },
-  [MetricKind.Category]: {
+  [ValueKind.Category]: {
     icon: FileText,
     color: {
       bg: "bg-indigo-50",
@@ -85,7 +85,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "Category",
   },
-  [MetricKind.OneDVector]: {
+  [ValueKind.OneDVector]: {
     icon: ArrowRightCircle,
     color: {
       bg: "bg-purple-50",
@@ -94,7 +94,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "1D Vector",
   },
-  [MetricKind.TwoDVector]: {
+  [ValueKind.TwoDVector]: {
     icon: ArrowRightCircle,
     color: {
       bg: "bg-purple-50",
@@ -103,7 +103,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "2D Vector",
   },
-  [MetricKind.ThreeDVector]: {
+  [ValueKind.ThreeDVector]: {
     icon: ArrowRightCircle,
     color: {
       bg: "bg-purple-50",
@@ -112,7 +112,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "3D Vector",
   },
-  [MetricKind.FourDVector]: {
+  [ValueKind.FourDVector]: {
     icon: ArrowRightCircle,
     color: {
       bg: "bg-purple-50",
@@ -121,7 +121,7 @@ export const dataTypeConfigs: Partial<Record<MetricKind, DataTypeConfig>> = {
     },
     label: "4D Vector",
   },
-  [MetricKind.NVector]: {
+  [ValueKind.NVector]: {
     icon: ArrowRightCircle,
     color: {
       bg: "bg-purple-50",

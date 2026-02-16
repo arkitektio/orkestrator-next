@@ -45,7 +45,7 @@ import {
   CreateEntityCategoryMutationVariables,
   GetGraphDocument,
   ListEntitiesDocument,
-  MetricKind,
+  ValueKind,
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
@@ -108,7 +108,7 @@ const PropertyItem = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(MetricKind).map((kind) => (
+                      {Object.values(ValueKind).map((kind) => (
                         <SelectItem key={kind} value={kind}>
                           {kind}
                         </SelectItem>
@@ -214,7 +214,7 @@ const PropertyItem = ({
   );
 };
 
-const PropertyDefinitions = () => {
+export const PropertyDefinitions = () => {
   const { control } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -234,7 +234,7 @@ const PropertyDefinitions = () => {
           variant="outline"
           size="sm"
           onClick={() => {
-            append({ key: "new_property", valueKind: MetricKind.String });
+            append({ key: "new_property", valueKind: ValueKind.String });
             setExpanded(`item-${fields.length}`);
           }}
         >
@@ -263,7 +263,7 @@ const PropertyDefinitions = () => {
 
 
 
-export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) => {
+const TForm = (props: Partial<CreateEntityCategoryMutationVariables["input"]>) => {
   const [add] = useCreateEntityCategoryMutation({
     refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
 
@@ -334,3 +334,6 @@ export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) 
     </>
   );
 };
+
+
+export default TForm;

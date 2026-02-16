@@ -14,7 +14,6 @@ import {
   useGetRelationCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
 
 const Page = asDetailQueryRoute(
@@ -59,12 +58,7 @@ const Page = asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateGraphQueryForm category={data.relationCategory} />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}

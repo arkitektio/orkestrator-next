@@ -13,14 +13,8 @@ import {
   useUpdateMeasurementCategoryMutation
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
-export default (props: {
+const TForm =  (props: {
   measurementCategory: MeasurementCategoryFragment;
 }) => {
   const [update] = useUpdateMeasurementCategoryMutation({
@@ -35,7 +29,7 @@ export default (props: {
       label: props.measurementCategory.label,
       description: props.measurementCategory.description,
       purl: props.measurementCategory.purl || "",
-      tags: props.measurementCategory.tags.map((tag) => tag.value),
+      tags: props.measurementCategory.tags.map((tag) => tag.id),
     },
   });
 
@@ -89,3 +83,6 @@ export default (props: {
     </>
   );
 };
+
+
+export default TForm;

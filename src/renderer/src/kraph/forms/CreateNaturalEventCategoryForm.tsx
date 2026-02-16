@@ -12,14 +12,7 @@ import {
   useSearchGraphsLazyQuery
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
-
-export default (props: { graph?: string }) => {
+const TForm = (props: { graph?: string }) => {
   const [add] = useCreateNaturalEventCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -86,3 +79,6 @@ export default (props: { graph?: string }) => {
     </>
   );
 };
+
+
+export default TForm;

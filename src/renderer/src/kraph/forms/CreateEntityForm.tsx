@@ -11,7 +11,7 @@ import {
 } from "../api/graphql";
 import { toast } from "sonner";
 
-export default (props: { category: string }) => {
+const TForm = (props: { category: string }) => {
   const [add] = useCreateEntityMutation({
     variables: {
       input: { entityCategory: props.category },
@@ -28,7 +28,7 @@ export default (props: { category: string }) => {
 
   const form = useForm<CreateEntityMutationVariables["input"]>({
     defaultValues: {
-      name: "",
+
     },
   });
 
@@ -74,3 +74,5 @@ export default (props: { category: string }) => {
     </>
   );
 };
+
+export default TForm

@@ -5,7 +5,7 @@ import { PropertyInspector } from "../components/schema-builder/PropertyInspecto
 import { PropertyDefinition, validateSchema } from "../components/schema-builder/utils";
 import { Button } from "@/components/ui/button";
 import { Save, ArrowLeft } from "lucide-react";
-import { ValueKind as MetricKind } from "../api/graphql";
+import { ValueKind as ValueKind } from "../api/graphql";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -58,7 +58,7 @@ export function SchemaBuilderPage({
       key: `property_${properties.length + 1}`,
       label: `New Property ${properties.length + 1}`,
       description: "",
-      valueKind: MetricKind.String,
+      valueKind: ValueKind.String,
       optional: true,
       required: false,
       searchable: false,

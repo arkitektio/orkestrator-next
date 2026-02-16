@@ -1,10 +1,10 @@
-import { MetricKind } from "../../api/graphql";
+import { ValueKind } from "../../api/graphql";
 import { dataTypeConfigs } from "./utils";
 import { cn } from "@/lib/utils";
 
 interface DataTypeSelectorProps {
-  value: MetricKind;
-  onChange: (value: MetricKind) => void;
+  value: ValueKind;
+  onChange: (value: ValueKind) => void;
 }
 
 export function DataTypeSelector({ value, onChange }: DataTypeSelectorProps) {
@@ -18,7 +18,7 @@ export function DataTypeSelector({ value, onChange }: DataTypeSelectorProps) {
           <button
             key={kind}
             type="button"
-            onClick={() => onChange(kind as MetricKind)}
+            onClick={() => onChange(kind as ValueKind)}
             className={cn(
               "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
               "hover:scale-105",

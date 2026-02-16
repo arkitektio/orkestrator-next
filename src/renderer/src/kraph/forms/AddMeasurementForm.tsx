@@ -10,7 +10,7 @@ import {
   useSearchMeasurmentCategoryLazyQuery
 } from "../api/graphql";
 
-export default (props: {
+const TForm = (props: {
   identifier: string
   object: string
 }) => {
@@ -20,7 +20,7 @@ export default (props: {
 
   const form = useForm<CreateMeasurementMutationVariables["input"]>({
     defaultValues: {
-      structure: `@${props.identifier}/${props.object}`,
+
     },
   });
 
@@ -66,3 +66,6 @@ export default (props: {
     </>
   );
 };
+
+
+export default TForm

@@ -26,9 +26,7 @@ const TForm = (props: { graph?: string; identifier?: string }) => {
   const form = useForm<CreateMeasurementCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
-      structureDefinition: {
-        identifierFilters: [props.identifier],
-      },
+
     },
   });
 

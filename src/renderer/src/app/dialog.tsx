@@ -11,7 +11,6 @@ import { ReportClientBugDialog } from "@/dialogs/ReportClientBugDialog";
 import { SetAsMeasurement } from "@/dialogs/SetAsMeasurement";
 import CreateEntityForm from "@/kraph/forms/CreateEntityForm";
 import CreateProtocolEventCategoryForm from "@/kraph/forms/CreateProtocolEventCategoryForm";
-import CreateProtocolEventFromInsAndOuts from "@/kraph/forms/CreateProtocolEventFromInsAndOuts";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
@@ -36,7 +35,6 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   createentitycategory: CreateEntityCategoryForm,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,
   createentity: CreateEntityForm,
-  createpprotocoleventfrominsandouts: CreateProtocolEventFromInsAndOuts,
   chat: ChatDialog,
   reportbug: ReportBugDialog,
   reportclientbug: ReportClientBugDialog,

@@ -2,7 +2,6 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
@@ -177,7 +176,7 @@ const buildKnowledge = (model: Identifier) => {
 
 const buildTinyKnowledge = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <TinyStructureBox identifier={model} object={props.object} />;
+    return <> Not implemented right now</>
   };
 };
 

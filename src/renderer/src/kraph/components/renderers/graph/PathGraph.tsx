@@ -20,7 +20,6 @@ import {
   usePathViewerState,
 } from "./PathViewerStateProvider";
 import DescribeEdge from "./edges/DescribeEdge";
-import EditedEdge from "./edges/EditedEdge";
 import EntityRoleEdge from "./edges/InputParticipationEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import RelationEdge from "./edges/RelationEdge";
@@ -57,7 +56,6 @@ const pathEdgeTypes = {
   Relation: RelationEdge,
   StructureRelation: StructureRelationEdge,
   Description: DescribeEdge,
-  Edited: EditedEdge,
 };
 
 export type BaseContextual = {

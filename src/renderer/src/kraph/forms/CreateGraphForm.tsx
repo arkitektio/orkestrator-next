@@ -11,7 +11,7 @@ import {
   useCreateGraphMutation,
 } from "../api/graphql";
 
-export default (props) => {
+const TForm =  () => {
   const [add] = useCreateGraphMutation({
     refetchQueries: [HomePageDocument],
   });
@@ -62,3 +62,6 @@ export default (props) => {
     </>
   );
 };
+
+
+export default TForm;

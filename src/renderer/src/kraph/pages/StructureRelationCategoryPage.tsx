@@ -14,7 +14,6 @@ import {
   useGetStructureRelationCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import CreateStructureRelationGraphQueryForm from "../forms/CreateStructureRelationGraphQueryForm";
 import UpdateStructureRelationCategoryForm from "../forms/UpdateStructureRelationCategoryForm";
 
 const Page = asDetailQueryRoute(
@@ -57,14 +56,7 @@ const Page = asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateStructureRelationGraphQueryForm
-                category={data.structureRelationCategory}
-              />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}

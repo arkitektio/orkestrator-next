@@ -6,14 +6,14 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-    ColumnKind,
-    GraphQueryFragment,
-    MetricKind,
-    ScatterPlotInput,
-    useCreateScatterPlotMutation,
+  ColumnKind,
+  GraphTableQueryFragment,
+  ScatterPlotInput,
+  useCreateScatterPlotMutation,
+  ValueKind
 } from "../api/graphql";
 
-export default (props: { graphQuery: GraphQueryFragment }) => {
+const TForm =  (props: { graphQuery: GraphTableQueryFragment }) => {
     const [add] = useCreateScatterPlotMutation();
 
     const dialog = useGraphQlFormDialog(add);
@@ -21,8 +21,8 @@ export default (props: { graphQuery: GraphQueryFragment }) => {
     // Get numeric columns from the query
     const numericColumns = props.graphQuery.columns.filter(
         (col) =>
-            col.valueKind === MetricKind.Float ||
-            col.valueKind === MetricKind.Int ||
+            col.valueKind === ValueKind.Float ||
+            col.valueKind === ValueKind.Int ||
             col.kind === ColumnKind.Value,
     );
 
@@ -33,7 +33,7 @@ export default (props: { graphQuery: GraphQueryFragment }) => {
 
     const form = useForm<ScatterPlotInput>({
         defaultValues: {
-            name: "New Scatter Plot",
+            label: "New Scatter Plot",
             description: "A scatter plot visualization",
             query: props.graphQuery.id,
             xColumn: numericColumns[0]?.name || "",
@@ -43,18 +43,18 @@ export default (props: { graphQuery: GraphQueryFragment }) => {
     });
 
     const columnOptions = numericColumns.map((col) => ({
-        value: col.name,
-        label: col.label || col.name,
+        value: col.key,
+        label: col.label
     }));
 
     const idColumnOptions = idColumns.map((col) => ({
-        value: col.name,
-        label: col.label || col.name,
+        value: col.key,
+        label: col.label
     }));
 
     const allColumnOptions = props.graphQuery.columns.map((col) => ({
-        value: col.name,
-        label: col.label || col.name,
+        value: col.key,
+        label: col.label
     }));
 
     return (
@@ -71,7 +71,7 @@ export default (props: { graphQuery: GraphQueryFragment }) => {
                 <div className="grid grid-cols-1 gap-4 p-4">
                     <StringField
                         label="Name"
-                        name="name"
+                        name="label"
                         description="Name of the scatter plot"
                     />
                     <StringField
@@ -130,3 +130,5 @@ export default (props: { graphQuery: GraphQueryFragment }) => {
         </Form>
     );
 };
+
+export default TForm;

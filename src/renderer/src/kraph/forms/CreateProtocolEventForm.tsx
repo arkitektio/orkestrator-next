@@ -13,22 +13,12 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { useUserOptionsLazyQuery } from "@/lok-next/api/graphql";
 import { useForm } from "react-hook-form";
-import {
-  EntityRoleDefinitionFragment,
-  MetricKind,
-  ProtocolEventCategoryFragment,
-  ReagentRoleDefinitionFragment,
-  useCreateEntityInlineMutation,
-  useRecordProtocolEventMutation,
-  useSearchEntitiesForRoleLazyQuery,
-  useSearchReagentsForRoleLazyQuery,
-  VariableDefinitionFragment
-} from "../api/graphql";
+
 
 export const EntityRoleInput = ({
   role,
 }: {
-  role: EntityRoleDefinitionFragment;
+  role: Role;
 }) => {
   const [search] = useSearchEntitiesForRoleLazyQuery({
     variables: {
@@ -112,28 +102,28 @@ export const VariableParamInput = ({
 }) => {
   return (
     <div key={variable.param} className="col-span-2 flex-col gap-1 flex">
-      {variable.valueKind === MetricKind.String && (
+      {variable.valueKind === ValueKind.String && (
         <StringField
           name={"map." + variable.param}
           description={variable.description || ""}
           label={variable.label || variable.param}
         />
       )}
-      {variable.valueKind === MetricKind.Int && (
+      {variable.valueKind === ValueKind.Int && (
         <IntField
           name={"map." + variable.param}
           description={variable.description || ""}
           label={variable.label || variable.param}
         />
       )}
-      {variable.valueKind === MetricKind.Float && (
+      {variable.valueKind === ValueKind.Float && (
         <FloatField
           name={"map." + variable.param}
           description={variable.description || ""}
           label={variable.label || variable.param}
         />
       )}
-      {variable.valueKind === MetricKind.Datetime && (
+      {variable.valueKind === ValueKind.Datetime && (
         <DateField
           name={"map." + variable.param}
           description={variable.description || ""}

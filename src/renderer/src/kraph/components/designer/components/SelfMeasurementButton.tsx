@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import {
   CreateMeasurementCategoryMutationVariables,
   CreateMetricCategoryMutationVariables,
-  MetricKind,
+  ValueKind,
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
@@ -22,7 +22,7 @@ export const SelfMeasurementForm = (props: {}) => {
     defaultValues: {
       label: "",
       description: "",
-      kind: MetricKind.Float,
+      kind: ValueKind.Float,
     },
   });
 
@@ -53,9 +53,9 @@ export const SelfMeasurementForm = (props: {}) => {
                 name="kind"
                 description="Select a data kind"
                 options={[
-                  { label: "Float", value: MetricKind.Float },
-                  { label: "Integer", value: MetricKind.Int },
-                  { label: "String", value: MetricKind.String },
+                  { label: "Float", value: ValueKind.Float },
+                  { label: "Integer", value: ValueKind.Int },
+                  { label: "String", value: ValueKind.String },
                 ]}
               />
 

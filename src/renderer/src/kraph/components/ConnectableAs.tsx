@@ -17,7 +17,6 @@ import {
   useCreateEntityInlineMutation,
   useCreateMeasurementMutation,
   useListMeasurmentCategoryQuery,
-  useSearchEntitiesForRoleLazyQuery,
 } from "@/kraph/api/graphql";
 import CreateMeasurementCategoryForm from "@/kraph/forms/CreateMeasurementCategoryForm";
 import { Link, Plus } from "lucide-react";
@@ -31,18 +30,6 @@ const FindEntity = (props: {
   refetch?: () => void;
   onSuccess?: () => void;
 }) => {
-  const [search] = useSearchEntitiesForRoleLazyQuery({
-    variables: {
-      tags:
-        props.measurement?.targetDefinition?.tagFilters?.map((tag) => tag) ||
-        [],
-      categories:
-        props.measurement?.targetDefinition?.categoryFilters?.map(
-          (cat) => cat,
-        ) || [],
-    },
-    nextFetchPolicy: "cache-and-network",
-  });
 
   const form = useForm({
     defaultValues: {

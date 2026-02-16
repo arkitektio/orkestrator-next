@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,9 @@ import {
   useSearchTagsLazyQuery,
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
-export default (props: { structureCategory: StructureCategoryFragment }) => {
+const TForm =  (props: { structureCategory: StructureCategoryFragment }) => {
   const [update] = useUpdateStructureCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -33,8 +26,7 @@ export default (props: { structureCategory: StructureCategoryFragment }) => {
     defaultValues: {
       id: props.structureCategory.id,
       description: props.structureCategory.description,
-      purl: props.structureCategory.purl || "",
-      tags: props.structureCategory.tags.map((tag) => tag.value),
+      tags: props.structureCategory.tags.map((tag) => tag.id),
     },
   });
 
@@ -91,3 +83,5 @@ export default (props: { structureCategory: StructureCategoryFragment }) => {
     </>
   );
 };
+
+export default TForm;

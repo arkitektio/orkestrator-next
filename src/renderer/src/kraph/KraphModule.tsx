@@ -7,7 +7,7 @@ import EntityCategoriesPage from "./pages/EntityCategoriesPage";
 import EntityCategoryPage from "./pages/EntityCategoryPage";
 import EntityPage from "./pages/EntityPage";
 import GraphPage from "./pages/GraphPage";
-import GraphQueryPage from "./pages/GraphQueryPage";
+import GraphQueryPage from "./pages/GraphTableQueryPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
@@ -17,8 +17,6 @@ import MetricCategoryPage from "./pages/MetricCategoryPage";
 import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 import NaturalEventCategoryPage from "./pages/NaturalEventCategoryPage";
 import NodePage from "./pages/NodePage";
-import NodeQueryPage from "./pages/NodeQueryPage";
-import NodeViewPage from "./pages/NodeViewPage";
 import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 import ProtocolEventCategoryPage from "./pages/ProtocolEventCategoryPage";
 import ProtocolEventPage from "./pages/ProtocolEventPage";
@@ -39,8 +37,7 @@ import StructureRelationPage from "./pages/StructureRelationPage";
 import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
-import EditEventPage from "./pages/EditEventPage";
-import NotesPage from "./pages/NotesPage";
+
 import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }
 
@@ -63,22 +60,11 @@ export const KraphModule: React.FC<Props> = () => {
           <Route path="scatterplots/:id" element={<ScatterPlotPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
           <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
-          <Route path="editevents/:id" element={<EditEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id/queries" element={<GraphGraphQueriesPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
           <Route path="graphqueries/:id/builder" element={<BuilderPage />} />
-          <Route path="notes" element={<NotesPage />} />
-          <Route
-            path="nodequeries/:id/node/:node"
-            element={<NodeQueryPage />}
-          />
-          <Route path="nodequeries/:id" element={<NodeQueryPage />} />
-          <Route
-            path="nodequeries/:id/view/:nodeid"
-            element={<NodeViewPage />}
-          />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
           <Route
             path="structurerelationcategories"

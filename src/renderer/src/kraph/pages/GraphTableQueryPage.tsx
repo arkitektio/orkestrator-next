@@ -131,7 +131,7 @@ const Page =  asDetailQueryRoute(
           </div>
         </div>
 
-        <RenderGraphQueryTable graphQuery={data.graphTableQuery.id} />
+        <RenderGraphQueryTable graphQueryId={data.graphTableQuery.id} />
 
 
 

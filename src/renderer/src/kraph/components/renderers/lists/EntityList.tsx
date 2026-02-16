@@ -54,22 +54,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  CategoryNodesFilter,
-  CategoryNodesOrder,
   EntityCategoryFragment,
+  EntityFilter,
   EntityNodesQuery,
-  MetricKind,
-  NodeCategoryFilter,
-  NodeCategoryFragment,
-  NodeListFragment,
-  OrderDirection,
+  EntityOrder,
+  ListEntitiesQuery,
+  Ordering,
   PropertyDefinitionFragment,
   PropertyMatch,
   PropertyOrder,
+  ValueKind,
   WhereOperator,
   useEntityNodesQuery,
   useGetEntityQuery,
-  useSetNodePropertyMutation
+  useListEntitiesLazyQuery,
+  useListEntitiesQuery,
 } from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
 import { KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
@@ -85,15 +84,15 @@ export type FormValues = {
 };
 
 
-const toEditValue = (value: any, kind: MetricKind) => {
+const toEditValue = (value: any, kind: ValueKind) => {
   switch (kind) {
-    case MetricKind.Int:
+    case ValueKind.Int:
       return parseInt(value);
-    case MetricKind.Float:
+    case ValueKind.Float:
       return parseFloat(value);
-    case MetricKind.Boolean:
+    case ValueKind.Boolean:
       return value === "true" || value === true;
-    case MetricKind.Datetime:
+    case ValueKind.Datetime:
       return value ? new Date(value * 1000) : undefined;
     default:
       return value;
@@ -198,7 +197,7 @@ const EditableCell = ({
     }
 
     switch (kind) {
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         return (
           <div className="flex items-center justify-center p-2">
             <Switch
@@ -208,7 +207,7 @@ const EditableCell = ({
           </div>
         );
 
-      case MetricKind.Int:
+      case ValueKind.Int:
         return (
           <Input
             type="number"
@@ -221,7 +220,7 @@ const EditableCell = ({
           />
         );
 
-      case MetricKind.Float:
+      case ValueKind.Float:
         return (
           <Input
             type="number"
@@ -234,13 +233,13 @@ const EditableCell = ({
           />
         );
 
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         return (
           <DateTimePicker value={editingValue} onChange={onDateChange} className="h-8" />
         );
 
-      case MetricKind.String:
-      case MetricKind.Category:
+      case ValueKind.String:
+      case ValueKind.Category:
       default:
         return (
           <Input
@@ -254,40 +253,40 @@ const EditableCell = ({
     }
   };
 
-  const formatDisplayValue = (val: any, kind: MetricKind) => {
+  const formatDisplayValue = (val: any, kind: ValueKind) => {
     if (val === null || val === undefined) {
       return <span className="text-muted-foreground italic">None</span>;
     }
 
     switch (kind) {
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         return (
           <Badge variant={val ? "default" : "secondary"}>
             {val ? "True" : "False"}
           </Badge>
         );
 
-      case MetricKind.Int:
-      case MetricKind.Float:
+      case ValueKind.Int:
+      case ValueKind.Float:
         return (
           <span className="font-mono text-sm">
             {typeof val === "number" ? val.toLocaleString() : val}
           </span>
         );
 
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         return (
           <Timestamp date={val} autoUpdate relative />
         );
 
-      case MetricKind.Category:
+      case ValueKind.Category:
         return (
           <Badge variant="outline">
             {String(val)}
           </Badge>
         );
 
-      case MetricKind.String:
+      case ValueKind.String:
       default:
         return <span className="text-sm">{String(val)}</span>;
     }
@@ -296,7 +295,7 @@ const EditableCell = ({
   const renderDisplayValue = () => {
     const kind = propertyDefinition.valueKind;
 
-    if (kind === MetricKind.Boolean) {
+    if (kind === ValueKind.Boolean) {
       return (
         <div className="flex items-center justify-center">
           <Switch
@@ -323,7 +322,7 @@ const EditableCell = ({
 
 const calculateColumns = (
   category: EntityCategoryFragment,
-): ColumnDef<NodeListFragment["nodes"][0]>[] => {
+): ColumnDef<ListEntitiesQuery["entities"][0]>[] => {
   if (!category) {
     return [];
   }
@@ -455,7 +454,7 @@ const calculateColumns = (
   return defaults;
 };
 
-const calculateRows = (entities: EntityNodesQuery["entityNodes"] | undefined) => {
+const calculateRows = (entities: ListEntitiesQuery["entities"] | undefined) => {
   const rowObjects = entities;
   return rowObjects;
 };
@@ -464,7 +463,7 @@ const calculateRows = (entities: EntityNodesQuery["entityNodes"] | undefined) =>
 export const RowEntity = ({
   row,
 }: {
-  row: Row<NodeListFragment["nodes"][0]>;
+  row: Row<ListEntitiesQuery["entities"][0]>;
 }) => {
 
   const { data } = useGetEntityQuery({
@@ -594,7 +593,7 @@ export const RowEntity = ({
 export const EntityRow = ({
   row,
 }: {
-  row: Row<NodeListFragment["nodes"][0]>;
+  row: Row<ListEntitiesQuery["entities"][0]>;
 }) => {
 
   const [moreData, setMoreData] = React.useState(false);
@@ -678,20 +677,19 @@ export const EntityList = (props: {
     [],
   );
 
-  const filters: CategoryNodesFilter = {
+  const filters: EntityFilter = {
     search: search || undefined,
-    propertyMatches: propertyMatches.length > 0 ? propertyMatches : undefined,
+    matches: propertyMatches.length > 0 ? propertyMatches : undefined,
   };
 
-  const order: CategoryNodesOrder | undefined = propertyOrders.length > 0
-    ? { propertyOrder: propertyOrders }
+  const order: EntityOrder | undefined = propertyOrders.length > 0
+    ? { property: propertyOrders }
     : undefined;
 
-  const { data, loading, refetch, error } = useEntityNodesQuery({
+  const { data, loading, refetch, error } = useListEntitiesQuery({
     variables: {
-      category: props.category.id,
+      entityCategoryId: props.category.id,
       filters,
-      ordering: order,
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
@@ -811,7 +809,7 @@ export const EntityList = (props: {
     setPropertyOrders(propertyOrders.filter((_, i) => i !== index));
   };
 
-  const getOperatorsForValueKind = (valueKind: MetricKind) => {
+  const getOperatorsForValueKind = (valueKind: ValueKind) => {
     const allOperators = [
       { value: WhereOperator.Equals, label: "Equals" },
       { value: WhereOperator.NotEquals, label: "Not Equals" },
@@ -825,16 +823,16 @@ export const EntityList = (props: {
     ];
 
     switch (valueKind) {
-      case MetricKind.String:
-      case MetricKind.Category:
+      case ValueKind.String:
+      case ValueKind.Category:
         // String operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.Contains,
           WhereOperator.StartsWith, WhereOperator.EndsWith].includes(op.value)
         );
 
-      case MetricKind.Int:
-      case MetricKind.Float:
+      case ValueKind.Int:
+      case ValueKind.Float:
         // Numeric operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
@@ -842,13 +840,13 @@ export const EntityList = (props: {
           WhereOperator.LessOrEqual].includes(op.value)
         );
 
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         // Boolean operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals].includes(op.value)
         );
 
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         // DateTime operations
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
@@ -856,11 +854,11 @@ export const EntityList = (props: {
           WhereOperator.LessOrEqual].includes(op.value)
         );
 
-      case MetricKind.OneDVector:
-      case MetricKind.TwoDVector:
-      case MetricKind.ThreeDVector:
-      case MetricKind.FourDVector:
-      case MetricKind.NVector:
+      case ValueKind.OneDVector:
+      case ValueKind.TwoDVector:
+      case ValueKind.ThreeDVector:
+      case ValueKind.FourDVector:
+      case ValueKind.NVector:
         // Vector operations - only equality
         return allOperators.filter(op =>
           [WhereOperator.Equals, WhereOperator.NotEquals].includes(op.value)
@@ -960,7 +958,7 @@ export const EntityList = (props: {
                   {propertyOrders.map((order, index) => (
                     <Badge key={index} variant="outline" className="gap-1 pr-1">
                       <span className="font-mono text-xs">{order.key}</span>
-                      {order.direction === OrderDirection.Asc ? (
+                      {order.direction === Ordering.Asc ? (
                         <ArrowUp className="h-3 w-3" />
                       ) : (
                         <ArrowDown className="h-3 w-3" />
@@ -1015,13 +1013,13 @@ export const EntityList = (props: {
                           <SelectValue placeholder="Select direction" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={OrderDirection.Asc}>
+                          <SelectItem value={Ordering.Asc}>
                             <div className="flex items-center gap-2">
                               <ArrowUp className="h-4 w-4" />
                               Ascending
                             </div>
                           </SelectItem>
-                          <SelectItem value={OrderDirection.Desc}>
+                          <SelectItem value={Ordering.Desc}>
                             <div className="flex items-center gap-2">
                               <ArrowDown className="h-4 w-4" />
                               Descending

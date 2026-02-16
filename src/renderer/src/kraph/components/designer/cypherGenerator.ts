@@ -8,13 +8,10 @@ import {
 import {
   ColumnInput,
   ColumnKind,
-  MetricKind,
-  ViewKind,
-  GraphQueryInput,
+  ValueKind,
   MatchPathInput,
   WhereClauseInput,
   WhereOperator,
-  ReturnInput,
 } from "@/kraph/api/graphql";
 
 export interface EnrichedPath {
@@ -151,7 +148,7 @@ function buildNodeMapping(
           }
 
           const nodeLabel = getNodeLabel(node);
-           
+
           const nodeName =
             (node.data as any).ageName ||
             (node.data as any).label ||
@@ -690,22 +687,22 @@ export function generateGraphQueryInput(
 
       // Determine column kind based on property
       let columnKind = ColumnKind.Value;
-      let valueKind: MetricKind | undefined = undefined;
+      let valueKind: ValueKind | undefined = undefined;
       let idfor: string[] | undefined = undefined;
 
       if (col.property === "id") {
         columnKind = ColumnKind.Node;
         // Use idfor from column if provided, otherwise default to nodeId
         idfor = col.idfor || [col.nodeId];
-      } else if (col.property === "metricKind") {
+      } else if (col.property === "ValueKind") {
         columnKind = ColumnKind.Value;
       } else if (col.property === "label" || col.property === "identifier") {
         columnKind = ColumnKind.Value;
       }
 
-      // Try to infer MetricKind if it's a metric node
-      if (node.type === "metriccategory" && nodeData?.metricKind) {
-        valueKind = nodeData.metricKind as MetricKind;
+      // Try to infer ValueKind if it's a metric node
+      if (node.type === "metriccategory" && nodeData?.ValueKind) {
+        valueKind = nodeData.ValueKind as ValueKind;
       }
 
       // Use variable name when multiple occurrences, otherwise use alias or variable_property

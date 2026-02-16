@@ -34,7 +34,7 @@ interface WhereClauseBuilderProps {
 const NODE_PROPERTIES: Record<string, Array<{ property: string; label: string; type: "string" | "number" | "boolean" }>> = {
   metriccategory: [
     { property: "value", label: "Label", type: "number" },
-    { property: "metricKind", label: "Metric Kind", type: "string" },
+    { property: "ValueKind", label: "Metric Kind", type: "string" },
     { property: "description", label: "Description", type: "string" },
   ],
   entitycategory: [

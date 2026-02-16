@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,7 @@ import {
   useSearchTagsLazyQuery,
   useUpdateStructureRelationCategoryMutation
 } from "../api/graphql";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
 export const TForm = (props: {
   structureRelationCategory: StructureRelationCategoryFragment;

@@ -1,5 +1,14 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -7,25 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 import {
   GraphFragment,
-  useCreateGraphQueryMutation,
-  useUpdateGraphQueryMutation,
-  GraphQueryFragment,
-  RenderGraphQueryDocument,
+  GraphTableQueryFragment,
+  useCreateGraphTableQueryMutation,
+  useUpdateGraphTableQueryMutation
 } from "@/kraph/api/graphql";
-import { KraphGraph } from "@/linkers";
-import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
+import { KraphGraphQuery } from "@/linkers";
 import {
   ReactFlow,
   ReactFlowInstance,
@@ -34,16 +32,23 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
-import React, { useState, useMemo } from "react";
-import { Filter, Plus, X, ExternalLink } from "lucide-react";
+import { ExternalLink, Filter, Plus, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { CypherQueryDisplay } from "./components/CypherQueryDisplay";
+import { ReturnColumnBuilder } from "./components/ReturnColumnBuilder";
+import {
+  enrichPath,
+  generateGraphQueryInput,
+  generateUnifiedCypherQueryWithColumns,
+} from "./cypherGenerator";
 import "./index.css";
 import {
+  NodeWhereClause,
   OntologyGraphProvider,
   Path,
   PATH_COLORS,
-  WhereCondition,
   ReturnColumn,
-  NodeWhereClause,
+  WhereCondition,
 } from "./OntologyGraphProvider";
 import { MyEdge, MyNode } from "./types";
 import {
@@ -59,14 +64,6 @@ import {
   stressLayout,
   treeLayout,
 } from "./utils";
-import {
-  enrichPath,
-  generateUnifiedCypherQueryWithColumns,
-  generateGraphQueryInput,
-} from "./cypherGenerator";
-import { CypherQueryDisplay } from "./components/CypherQueryDisplay";
-import { ReturnColumnBuilder } from "./components/ReturnColumnBuilder";
-import { KraphGraphQuery } from "@/linkers";
 
 // Node property configurations
 const NODE_PROPERTIES: Record<
@@ -249,13 +246,13 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
 
 // Helper to convert GraphQL types to internal Path format
 const convertGraphQLToPath = (
-  graphQuery: GraphQueryFragment
+  graphQuery: GraphTableQueryFragment
 ): Path[] => {
-  if (!graphQuery.matches || graphQuery.matches.length === 0) {
+  if (!graphQuery.builderArgs?.matches || graphQuery.builderArgs.matches?.length === 0) {
     return [];
   }
 
-  return graphQuery.matches.map((match) => {
+  return graphQuery.builderArgs?.matches?.map((match) => {
     return {
       nodes: match.nodes,
       relations: match.relations,
@@ -295,16 +292,16 @@ const mapWhereOperatorToString = (operator: string): string => {
 
 // Helper to deserialize WHERE clauses from GraphQL
 const deserializeWhereClauses = (
-  graphQuery: GraphQueryFragment
+  graphQuery: GraphTableQueryFragment
 ): NodeWhereClause[] => {
-  if (!graphQuery.wheres || graphQuery.wheres.length === 0) {
+  if (!graphQuery.builderArgs || graphQuery.builderArgs.wheres?.length === 0) {
     return [];
   }
 
   // Group WHERE clauses by nodeId
   const clausesByNode = new Map<string, WhereCondition[]>();
 
-  graphQuery.wheres.forEach((where) => {
+  graphQuery.builderArgs.wheres.forEach((where) => {
     const nodeId = where.node || where.path; // Use node if available, fallback to path
     if (!nodeId) return;
 
@@ -329,13 +326,13 @@ const deserializeWhereClauses = (
 
 // Helper to deserialize RETURN columns from GraphQL
 const deserializeReturnColumns = (
-  graphQuery: GraphQueryFragment
+  graphQuery: GraphTableQueryFragment
 ): ReturnColumn[] => {
-  if (!graphQuery.returns || graphQuery.returns.length === 0) {
+  if (!graphQuery.builderArgs || graphQuery.builderArgs.returns.length === 0) {
     return [];
   }
 
-  return graphQuery.returns.map((ret) => ({
+  return graphQuery.builderArgs.returns.map((ret) => ({
     nodeId: ret.node || ret.path, // Use node if available, fallback to path
     property: ret.property || "id",
     alias: undefined, // Alias is not stored in GraphQL, will be generated
@@ -355,7 +352,7 @@ export const QueryBuilderGraph = ({
   graphQuery,
 }: {
   graph: GraphFragment;
-  graphQuery?: GraphQueryFragment;
+  graphQuery?: GraphTableQueryFragment;
 }) => {
   const [paths, setPaths] = useState<Path[]>(() =>
     graphQuery ? convertGraphQLToPath(graphQuery) : []
@@ -389,12 +386,11 @@ export const QueryBuilderGraph = ({
 
   // Query execution state
   const [executedGraphQuery, setExecutedGraphQuery] =
-    useState<GraphQueryFragment | null>(graphQuery || null);
+    useState<GraphTableQueryFragment | null>(graphQuery || null);
   const [isRunning, setIsRunning] = useState(false);
-  const [createGraphQuery] = useCreateGraphQueryMutation();
-  const [updateGraphQuery] = useUpdateGraphQueryMutation({
-    refetchQueries: [{ query: RenderGraphQueryDocument, variables: { id: graphQuery?.id } }],
-  });
+  const [createGraphQuery] = useCreateGraphTableQueryMutation();
+  const [updateGraphQuery] = useUpdateGraphTableQueryMutation({
+    });
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -926,8 +922,8 @@ export const QueryBuilderGraph = ({
           },
         });
 
-        if (result.data?.updateGraphQuery) {
-          setExecutedGraphQuery(result.data.updateGraphQuery);
+        if (result.data?.updateGraphTableQuery) {
+          setExecutedGraphQuery(result.data.updateGraphTableQuery);
         }
       } else {
         // Create new graph query
@@ -937,8 +933,8 @@ export const QueryBuilderGraph = ({
           },
         });
 
-        if (result.data?.createGraphQuery) {
-          setExecutedGraphQuery(result.data.createGraphQuery);
+        if (result.data?.createGraphTableQuery) {
+          setExecutedGraphQuery(result.data.createGraphTableQuery);
         }
       }
     } catch (error) {
@@ -1461,7 +1457,7 @@ export const QueryBuilderGraph = ({
               const node = nodes.find(
                 (n) => n.id === nodeOccurrenceSelection.nodeId,
               );
-               
+
               const nodeLabel = node
                 ? (node.data as any)?.ageName ||
                 (node.data as any)?.label ||

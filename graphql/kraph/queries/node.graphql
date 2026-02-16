@@ -1,0 +1,22 @@
+query GetNode($id: GraphID!) {
+  node(id: $id) {
+    ...Node
+  }
+}
+
+query SearchNodes($graph: ID!, $search: String, $values: [GraphID!], ) {
+  options: nodes(
+    graph: $graph,
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}
+
+query ListNodes($graph: ID!, $filters: NodeFilters, $pagination: NodePaginationInput) {
+  nodes(graph: $graph, filters: $filters, pagination: $pagination) {
+    ...ListNode
+  }
+}

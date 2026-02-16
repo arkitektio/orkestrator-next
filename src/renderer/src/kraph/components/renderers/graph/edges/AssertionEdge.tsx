@@ -1,12 +1,15 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
+  EdgeLabelRenderer,
   useInternalNode,
   useStore,
   type EdgeProps,
-  type ReactFlowState
+  type ReactFlowState,
 } from "@xyflow/react";
-import { DescribeEdge, EditedEdge } from "../types";
+import { AssertionEdge } from "../types";
 import { getEdgeParams } from "../utils";
+import { KraphStructureRelation } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -22,11 +25,11 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+const TEdge = ({
   id,
   data,
   source,
@@ -38,7 +41,7 @@ export default ({
   sourcePosition,
   targetPosition,
   markerEnd,
-}: EdgeProps<EditedEdge>) => {
+}: EdgeProps<AssertionEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
@@ -77,7 +80,26 @@ export default ({
 
   return (
     <>
-      <BaseEdge path={path} markerEnd={markerEnd} color="#ff00ff" />
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
+        label={data?.label}
+      />
+      <EdgeLabelRenderer>
+        <Card
+          style={{
+            position: "absolute",
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
+          }}
+          className="p-1 text-xs group nodrag nopan"
+        >
+          <KraphStructureRelation.DetailLink object={data?.id} style={{ pointerEvents: 'all' }}>
+            {data?.label}
+          </KraphStructureRelation.DetailLink>
+        </Card>
+      </EdgeLabelRenderer>
     </>
   );
 };
+
+export default TEdge;

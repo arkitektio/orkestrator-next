@@ -14,11 +14,10 @@ import {
   useGetRelationCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetRelationCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -121,3 +120,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default Page;

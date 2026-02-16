@@ -45,3 +45,57 @@ fragment Edge on Edge {
   ...Relation
   ...StructureRelation
 }
+
+
+fragment PathMeasurement on Measurement {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathStructureRelation on StructureRelation {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathRelation on Relation {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathAssertion on Assertion {
+  id
+  label
+}
+fragment PathDescription on Description {
+  id
+  label
+}
+fragment PathInputParticipation on InputParticipation {
+  id
+  label
+}
+fragment PathOutputParticipation on OutputParticipation {
+  id
+  label
+}
+fragment PathEdge on Edge {
+  sourceId
+  targetId
+  ...BaseEdge
+  ...PathMeasurement
+  ...PathRelation
+  ...PathStructureRelation
+  ...PathAssertion
+  ...PathDescription
+  ...PathInputParticipation
+  ...PathOutputParticipation
+}

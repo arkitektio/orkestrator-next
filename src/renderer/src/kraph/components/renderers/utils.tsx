@@ -6,29 +6,28 @@ import {
   ColumnFragment,
   ColumnKind,
   GraphFragment,
-  GraphTableRender,
-  MetricKind,
-  TableFragment,
+  GraphTableRenderFragment,
+  ValueKind,
 } from "@/kraph/api/graphql";
-import { KraphEntity, KraphNode } from "@/linkers";
+import { KraphEntity } from "@/linkers";
 import Timestamp from "react-timestamp";
 import { CypherSchema } from "../cypher/CypherField";
 
 const columnToDef = (
   column: ColumnFragment,
-  table: TableFragment,
-): ColumnDef<{ [key: string]: any }> => {
+  render: GraphTableRenderFragment,
+): ColumnDef<{ [key: string]: unknown }> => {
   if (column.kind == ColumnKind.Node) {
     return {
-      id: column.name,
-      accessorKey: column.name,
+      id: column.key,
+      accessorKey: column.key,
       header: () => (
-        <div className="text-center">{column.label || column.name}</div>
+        <div className="text-center">{column.label}</div>
       ),
       cell: ({ row, getValue }) => {
-        const label = row.getValue(column.name) as string;
+        const label = row.getValue(column.key) as string;
 
-        const concat_id = table.graph.ageName + ":" + label;
+        const concat_id = render.query.graph.ageName + ":" + label;
 
         return (
           <KraphEntity.Smart object={concat_id}>
@@ -46,13 +45,13 @@ const columnToDef = (
 
   if (column.kind == ColumnKind.Edge) {
     return {
-      id: column.name,
-      accessorKey: column.name,
+      id: column.key,
+      accessorKey: column.key,
       header: () => (
-        <div className="text-center">{column.label || column.name}</div>
+        <div className="text-center">{column.label || column.key}</div>
       ),
       cell: ({ row, getValue }) => {
-        const label = row.getValue(column.name) as string;
+        const label = row.getValue(column.key) as string;
 
         return <div className="text-center font-medium">{label || ""}</div>;
       },
@@ -62,15 +61,15 @@ const columnToDef = (
   }
 
   if (column.kind == ColumnKind.Value) {
-    if (column.valueKind == MetricKind.Datetime) {
+    if (column.valueKind == ValueKind.Datetime) {
       return {
-        id: column.name,
-        accessorKey: column.name,
+        id: column.key,
+        accessorKey: column.key,
         header: () => (
-          <div className="text-center">{column.label || column.name}</div>
+          <div className="text-center">{column.label || column.key}</div>
         ),
         cell: ({ row, getValue }) => {
-          const label = row.getValue(column.name) as int;
+          const label = row.getValue(column.key) as string;
 
           if (!label) {
             return <div className="text-center font-medium">No Date</div>;
@@ -88,13 +87,13 @@ const columnToDef = (
     }
 
     return {
-      id: column.name,
-      accessorKey: column.name,
+      id: column.key,
+      accessorKey: column.key,
       header: () => (
-        <div className="text-center">{column.label || column.name}</div>
+        <div className="text-center">{column.label || column.key}</div>
       ),
       cell: ({ row, getValue }) => {
-        const label = row.getValue(column.name) as string;
+        const label = row.getValue(column.key) as string;
 
         return <div className="text-center font-medium">{label || ""}</div>;
       },
@@ -108,13 +107,13 @@ const columnToDef = (
 
 export const parseValue = (
   value: string,
-  valueKind: MetricKind | null | undefined,
+  valueKind: ValueKind | null | undefined,
 ) => {
-  if (valueKind == MetricKind.Int) {
+  if (valueKind == ValueKind.Int) {
     return parseInt(value);
   }
 
-  if (valueKind == MetricKind.Float) {
+  if (valueKind == ValueKind.Float) {
     return parseFloat(value);
   }
 
@@ -122,30 +121,30 @@ export const parseValue = (
 };
 
 export const calculateColumns = (
-  render: GraphTableRender | undefined,
-): ColumnDef<{ [key: string]: any }>[] => {
+  render: GraphTableRenderFragment | undefined | null,
+): ColumnDef<{ [key: string]: unknown }>[] => {
   if (!render || !render.query) {
     return [];
   }
 
   return render.query.columns.map((c, item) => {
-    return columnToDef(c, render.query);
+    return columnToDef(c, render);
 
   });
 };
 
-export const calculateRows = (table: TableFragment | undefined) => {
-  if (!table) {
+export const calculateRows = (render: GraphTableRenderFragment | undefined | null) => {
+  if (!render || !render.query) {
     return [];
   }
 
-  const rowObjects = table.rows.map((row) =>
-    table.columns.reduce(
+  const rowObjects = render.rows.map((row) =>
+    render.query.columns.reduce(
       (acc, column, index) => {
-        acc[column.name] = parseValue(row[index], column.valueKind);
+        acc[column.key] = parseValue(row[index], column.valueKind);
         return acc;
       },
-      {} as Record<string, any>,
+      {} as Record<string, unknown>,
     ),
   );
   return rowObjects;
@@ -178,19 +177,7 @@ export const buildCypherSchemaFromGraph = (
     };
   });
 
-  graph.reagentCategories.forEach((node) => {
-    schema.nodes[node.ageName] = {
-      type: node.__typename || "Unknown",
-      label: node.label,
-      description: node.description || "No Description",
-      properties: {
-        ...baseProperties,
-        tags: { description: "Tags associated with the entity" },
-        pinned_by: { description: "Users who pinned this entity" },
-        active: { description: "Is the reagent active?" },
-      },
-    };
-  });
+
 
   graph.structureCategories.forEach((node) => {
     schema.nodes[node.ageName] = {

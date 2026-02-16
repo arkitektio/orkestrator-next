@@ -1,4 +1,3 @@
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { KraphGraph, KraphStructureRelationCategory } from "@/linkers";
@@ -6,12 +5,10 @@ import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import StructureRelationCategoryList from "../components/lists/StructureRelationCategoryList";
-import CreateRelationCategoryForm from "../forms/CreateRelationCategoryForm";
 import CreateStructureRelationCategoryForm from "../forms/CreateStructureRelationCategoryForm";
 
-export type IRepresentationScreenProps = {};
 
-const Page: React.FC<IRepresentationScreenProps> = () => {
+const Page = () => {
   const navigate = useNavigate();
 
   return (

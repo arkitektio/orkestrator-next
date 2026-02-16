@@ -1,8 +1,5 @@
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
-import { DialogButton } from "@/components/ui/dialogbutton";
 import { KraphProtocolEventCategory } from "@/linkers";
-import { PlusIcon } from "lucide-react";
 import React from "react";
 import ProtocolEventCategoryList from "../components/lists/ProtocolEventCategoryList";
 

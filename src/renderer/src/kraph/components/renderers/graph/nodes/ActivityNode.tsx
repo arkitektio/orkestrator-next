@@ -5,11 +5,11 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 
-import { EditEventNode } from "../types";
+import { ActivityNode } from "../types";
 import Timestamp from "react-timestamp";
 import { UserAvatar } from "@/lok-next/components/UserAvatar";
 
-export default memo(({ data, id, selected }: NodeProps<EditEventNode>) => {
+const TNode =  memo(({ data, id, selected }: NodeProps<ActivityNode>) => {
   const resolve = useResolve();
 
   return (
@@ -31,11 +31,12 @@ export default memo(({ data, id, selected }: NodeProps<EditEventNode>) => {
             object={data.id}
             className="font-bold text-sm text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
           >
-            <Timestamp date={data.timestamp} relative />
+            <Timestamp date={data.label} relative />
           </KraphEditEvent.DetailLink>
-          <UserAvatar sub={data.editor.sub} className="mt-2 w-8 h-8 rounded-full" />
         </div>
       </Card>
     </>
   );
 });
+
+export default TNode;

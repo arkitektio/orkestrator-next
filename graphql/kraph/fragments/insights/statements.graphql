@@ -24,6 +24,7 @@ fragment Column on Column {
   key
   valueKind
   label
+  kind
   description
   categoryKey
   searchable

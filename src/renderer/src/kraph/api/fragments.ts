@@ -17,7 +17,8 @@
       "StructureRelationCategory"
     ],
     "Edge": [
-      "Asserted",
+      "Assertion",
+      "Description",
       "InputParticipation",
       "Measurement",
       "OutputParticipation",
@@ -34,6 +35,10 @@
       "EdgePathQuery",
       "EdgeTableQuery"
     ],
+    "Event": [
+      "NaturalEvent",
+      "ProtocolEvent"
+    ],
     "EventCategory": [
       "NaturalEventCategory",
       "ProtocolEventCategory"
@@ -45,12 +50,15 @@
       "GraphTableQuery"
     ],
     "Node": [
-      "Assertion",
+      "Activity",
       "Entity",
+      "MeasurementShadowLink",
       "Metric",
       "NaturalEvent",
       "ProtocolEvent",
-      "Structure"
+      "RelationShadowLink",
+      "Structure",
+      "StructureRelationShadowLink"
     ],
     "NodeCategory": [
       "EntityCategory",
@@ -63,6 +71,9 @@
       "NodePairsQuery",
       "NodePathQuery",
       "NodeTableQuery"
+    ],
+    "PathLike": [
+      "GraphPathRender"
     ],
     "Plottable": [
       "EdgeTableQuery",

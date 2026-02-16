@@ -31,8 +31,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default (props: {
-  table: TableFragment;
+const ScatterPlot = (props: {
   scatterPlot: ScatterPlotFragment;
   enableMultiselect?: boolean;
 }) => {
@@ -349,3 +348,6 @@ export default (props: {
     </div>
   );
 };
+
+
+export default ScatterPlot;

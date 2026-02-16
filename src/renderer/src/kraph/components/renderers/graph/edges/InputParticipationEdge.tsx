@@ -7,7 +7,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { ParticipantEdge } from "../types";
+import { InputParticipationEdge } from "../types";
 import { getEdgeParams } from "../utils";
 
 export type GetSpecialPathParams = {
@@ -28,7 +28,7 @@ export const getSpecialPath = (
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+const TEdge = ({
   id,
   data,
   source,
@@ -40,7 +40,7 @@ export default ({
   sourcePosition,
   targetPosition,
   markerEnd,
-}: EdgeProps<ParticipantEdge>) => {
+}: EdgeProps<InputParticipationEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
@@ -95,3 +95,6 @@ export default ({
     </>
   );
 };
+
+
+export default TEdge;

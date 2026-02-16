@@ -14,11 +14,8 @@ import {
   useGetStructureCategoryQuery,
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 const Page =  asDetailQueryRoute(
   useGetStructureCategoryQuery,
@@ -124,27 +121,7 @@ const Page =  asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        <StructureQueriesPlanner category={data.structureCategory} />
 
-        <div className="flex flex-col p-6 h-full">
-          {data.structureCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.structureCategory.bestQuery}
-            />
-          ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Graph Query yet for this category
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.structureCategory} />
-              </FormDialog>
-            </div>
-          )}
-        </div>
       </KraphStructureCategory.ModelPage>
     );
   },

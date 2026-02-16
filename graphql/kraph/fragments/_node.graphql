@@ -22,11 +22,51 @@ fragment DetailNode on Node {
   }
 }
 
+
+fragment PathRelationShadowLink on RelationShadowLink {
+  id
+  label
+}
+
+fragment PathStructureRelationShadowLink on StructureRelationShadowLink {
+  id
+  label
+}
+
+fragment PathMeasurementRelationShadowLink on MeasurementShadowLink {
+  id
+  label
+}
+fragment PathActivity on Activity {
+  id
+  label
+}
+fragment PathStructure on Structure {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+
+
 fragment PathNode on Node {
   id
+
+  ...PathActivity
   ...PathStructure
   ...PathEntity
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
+  ...PathRelationShadowLink
+  ...PathStructureRelationShadowLink
+  ...PathMeasurementRelationShadowLink
+}
+
+
+fragment ListNode on Node {
+  id
+  label
 }

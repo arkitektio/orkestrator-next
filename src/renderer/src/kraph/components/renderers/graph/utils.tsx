@@ -1,9 +1,9 @@
-import { PathFragment } from "@/kraph/api/graphql";
+import { GraphPathRenderFragment } from "@/kraph/api/graphql";
 import { PathEdge, PathNode } from "./types";
 
 import { Position } from "@xyflow/react";
 export const entityNodesToNodes = (
-  nodes: PathFragment["nodes"],
+  nodes: GraphPathRenderFragment["nodes"],
   root?: string | undefined,
 ): PathNode[] => {
   return Array.from(
@@ -26,7 +26,7 @@ export const entityNodesToNodes = (
 };
 
 export const entityRelationToEdges = (
-  relations: PathFragment["edges"],
+  relations: GraphPathRenderFragment["edges"],
 ): PathEdge[] => {
   return Array.from(
     relations
@@ -35,8 +35,8 @@ export const entityRelationToEdges = (
           map.set(relation.id, {
             type: relation.__typename,
             id: relation.id,
-            source: relation.leftId,
-            target: relation.rightId,
+            source: relation.sourceId,
+            target: relation.targetId,
             data: relation,
           });
         }

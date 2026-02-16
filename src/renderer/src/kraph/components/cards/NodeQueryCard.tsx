@@ -4,7 +4,6 @@ import { KraphNodeQuery } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import {
   ListNodeQueryFragment,
-  usePinNodeQueryMutation,
 } from "../../api/graphql";
 
 interface Props {
@@ -13,7 +12,6 @@ interface Props {
 }
 
 const TheCard = ({ item, mates }: Props) => {
-  const [pin] = usePinNodeQueryMutation();
 
   return (
     <KraphNodeQuery.Smart object={item?.id} mates={mates}>
@@ -25,12 +23,12 @@ const TheCard = ({ item, mates }: Props) => {
           }
           object={item.id}
         >
-          {item?.name}
+          {item?.label}
           <p className="text-xs font-light">{item.description}</p>
         </KraphNodeQuery.DetailLink>
         <PinButton
           item={item}
-          func={pin}
+          func={() => {}}
           className="ml-auto text-xs p-1 group-hover:block hidden"
           variant={"outline"}
           size={"icon"}

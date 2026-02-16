@@ -10,7 +10,7 @@ import { StructureNode } from "../types";
 import { usePathViewerState } from "../PathViewerStateProvider";
 import { DisplayWidget } from "@/command/Menu";
 
-export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<StructureNode>) => {
   const resolve = useResolve();
 
   const { viewerState } = usePathViewerState();
@@ -60,3 +60,5 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
     </>
   );
 });
+
+export default TNode;

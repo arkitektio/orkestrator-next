@@ -17,6 +17,7 @@ fragment Entity on Entity {
     key
     value
   }
+  properties
   measuredBy {
     id
     category {
@@ -33,6 +34,31 @@ fragment Entity on Entity {
     id
     role
     target {
+      ... on NaturalEvent {
+         id
+        label
+        measuredFrom
+        measuredTo
+        category {
+          label
+        }
+      }
+      ... on ProtocolEvent {
+         id
+        label
+        measuredFrom
+        measuredTo
+        category {
+          label
+        }
+      }
+
+      }
+    }
+  resultedOut {
+    id
+    role
+    source {
         id
         label
         measuredFrom

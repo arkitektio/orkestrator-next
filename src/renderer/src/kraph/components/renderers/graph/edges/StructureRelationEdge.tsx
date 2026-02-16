@@ -29,7 +29,7 @@ export const getSpecialPath = (
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+const TEdge = ({
   id,
   data,
   source,
@@ -101,3 +101,5 @@ export default ({
     </>
   );
 };
+
+export default TEdge;

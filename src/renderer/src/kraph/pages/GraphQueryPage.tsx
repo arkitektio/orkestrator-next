@@ -3,39 +3,36 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
 import {
-  useGetGraphQueryQuery,
-  usePinGraphQueryMutation,
-  ViewKind,
+  useGetGraphTableQueryQuery,
 } from "../api/graphql";
 
-import { Card } from "@/components/ui/card";
-import { CypherEditor } from "../components/cypher/CypherEditor";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 import { FormDialog } from "@/components/dialog/FormDialog";
-import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
-import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
+import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import GraphQueryList from "../components/lists/GraphQueryList";
 import ScatterPlotCard from "../components/cards/ScatterPlotCard";
+import { CypherSidebar } from "../components/sidebars/CypherSidebar";
+import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
+import { RenderGraphQueryTable } from "../components/renderers/table/GraphTable";
 
-export default asDetailQueryRoute(
-  useGetGraphQueryQuery,
+const Page =  asDetailQueryRoute(
+  useGetGraphTableQueryQuery,
   ({ data, refetch }) => {
-    const [pin] = usePinGraphQueryMutation({
-      onCompleted: () => {
-        refetch();
-      },
-    });
 
+    const pin = async (variables: { input: { id: string; pin: boolean } }) => {
+      // Implement the pinning logic here, e.g., call a mutation to update the pinned state
+      // For example:
+      // await updateGraphQueryPin(variables);
+      // After updating, you might want to refetch the data to reflect the changes
+      await refetch();
+    }
     return (
       <KraphGraphQuery.ModelPage
-        object={data.graphQuery.id}
-        title={data.graphQuery.name}
+        object={data.graphTableQuery.id}
+        title={data.graphTableQuery.label}
         pageActions={
           <div className="flex flex-row gap-2">
             <KraphGraph.DetailLink
-              object={data.graphQuery.graph.id}
+              object={data.graphTableQuery.graph.id}
               subroute="entities"
             >
               <Button variant="outline" size="sm">
@@ -47,8 +44,8 @@ export default asDetailQueryRoute(
                 pin({
                   variables: {
                     input: {
-                      id: data.graphQuery.id,
-                      pin: !data.graphQuery.pinned,
+                      id: data.graphTableQuery.id,
+                      pin: !data.graphTableQuery.pinned,
                     },
                   },
                 });
@@ -56,11 +53,11 @@ export default asDetailQueryRoute(
               size="sm"
               variant={"outline"}
             >
-              {data.graphQuery.pinned ? "Unpin" : "Pin"}
+              {data.graphTableQuery.pinned ? "Unpin" : "Pin"}
             </Button>
 
             <KraphGraphQuery.DetailLink
-              object={data.graphQuery.id}
+              object={data.graphTableQuery.id}
               subroute="builder"
             >
               <Button variant="outline" size="sm">
@@ -75,25 +72,25 @@ export default asDetailQueryRoute(
                 </Button>
               }
             >
-              <CreateScatterPlotForm graphQuery={data.graphQuery} />
+              <CreateScatterPlotForm graphQuery={data.graphTableQuery} />
             </FormDialog>
 
             <KraphGraphQuery.DetailLink
-              object={data.graphQuery.id}
+              object={data.graphTableQuery.id}
               subroute="designer"
             >
               <Button variant="outline" size="sm">
                 Designer
               </Button>
             </KraphGraphQuery.DetailLink>
-            <KraphGraphQuery.ObjectButton object={data.graphQuery.id} />
+            <KraphGraphQuery.ObjectButton object={data.graphTableQuery.id} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <KraphGraphView.Komments object={data.graphQuery.id} />,
-              Cypher: <CypherSidebar cypher={data.graphQuery.query || ""} />,
+              Comments: <KraphGraphView.Komments object={data.graphTableQuery.id} />,
+              Cypher: <CypherSidebar cypher={data.graphTableQuery.query || ""} />,
               Plots: <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold">Visualizations</h2>
@@ -101,9 +98,9 @@ export default asDetailQueryRoute(
                 </div>
 
                 {/* Display existing scatter plots */}
-                {data.graphQuery.scatterPlots.length > 0 ? (
+                {data.graphTableQuery.scatterPlots.length > 0 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {data.graphQuery.scatterPlots.map((plot) => (
+                    {data.graphTableQuery.scatterPlots.map((plot) => (
                       <ScatterPlotCard key={plot.id} item={plot} />
                     ))}
                   </div>
@@ -121,23 +118,27 @@ export default asDetailQueryRoute(
           <div className="col-span-5">
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
               <KraphGraph.DetailLink
-                object={data.graphQuery.graph.id}
+                object={data.graphTableQuery.graph.id}
                 className={"text-slate-400 mr-2"}
               >
-                {data.graphQuery.graph.name}
+                {data.graphTableQuery.graph.name}
               </KraphGraph.DetailLink>
-              {data.graphQuery.name}
+              {data.graphTableQuery.label}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.graphQuery.description || "No Description"}
+              {data.graphTableQuery.description || "No Description"}
             </p>
           </div>
         </div>
 
-        <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
+        <RenderGraphQueryTable graphQuery={data.graphTableQuery.id} />
+
 
 
       </KraphGraphQuery.ModelPage>
     );
   },
 );
+
+
+export default Page;

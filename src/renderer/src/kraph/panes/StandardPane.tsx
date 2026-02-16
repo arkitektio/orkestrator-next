@@ -32,9 +32,8 @@ import { FancyInput } from "@/components/ui/fancy-input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
-interface IDataSidebarProps { }
 
-export const NavigationPane = (props: {}) => {
+export const NavigationPane = () => {
   const { data } = useStartPaneQuery();
 
   return (
@@ -169,24 +168,6 @@ export const NavigationPane = (props: {}) => {
             ))}
           </>
         )}
-        {data?.reagentCategories && data.reagentCategories.length > 0 && (
-          <>
-            <div className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4">
-              Pinned Reagents
-            </div>
-            {data.reagentCategories.map((i) => (
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
-                <KraphReagentCategory.DetailLink
-                  object={i.id}
-                  className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-                >
-                  <SparkleIcon className="h-4 w-4" />
-                  {i.label}
-                </KraphReagentCategory.DetailLink>
-              </div>
-            ))}
-          </>
-        )}
         {data?.relationCategories && data.relationCategories.length > 0 && (
           <>
             <div className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4">
@@ -268,9 +249,7 @@ const Pane: React.FunctionComponent = () => {
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    pagination: {
-      limit: 10,
-    },
+
   };
 
   const { data, refetch } = useGlobalSearchQuery({ variables });

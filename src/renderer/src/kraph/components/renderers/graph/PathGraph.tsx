@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  GraphQueryFilters,
-  PathFragment,
-  useRenderGraphQueryQuery,
+  RenderGraphPathFilter,
+  GraphPathRenderFragment,
+  useRenderGraphPathQuery
 } from "@/kraph/api/graphql.js";
 import {
   ReactFlow,
@@ -20,25 +20,23 @@ import {
   usePathViewerState,
 } from "./PathViewerStateProvider";
 import DescribeEdge from "./edges/DescribeEdge";
-import EntityRoleEdge from "./edges/EntityRoleEdge";
+import EditedEdge from "./edges/EditedEdge";
+import EntityRoleEdge from "./edges/InputParticipationEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import RelationEdge from "./edges/RelationEdge";
 import StructureRelationEdge from "./edges/StructureRelationEdge";
+import EditEventNode from "./nodes/ActivityNode";
 import EntityNode from "./nodes/EntityNode";
 import MetricNode from "./nodes/MetricNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
 import ProtocolEventNode from "./nodes/ProtocolEventNode";
-import ReagentNode from "./nodes/ReagentNode";
 import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
-import EditedEdge from "./edges/EditedEdge";
-import { Edit } from "lucide-react";
-import EditEventNode from "./nodes/EditEventNode";
 
 export type Props = {
-  path: PathFragment;
+  path: GraphPathRenderFragment;
   root?: string;
   options?: ViewOptions;
 };
@@ -48,7 +46,6 @@ const pathNodeTypes = {
   NaturalEvent: NaturalEventNode,
   ProtocolEvent: ProtocolEventNode,
   Structure: StructureNode,
-  Reagent: ReagentNode,
   Metric: MetricNode,
   EditEvent: EditEventNode,
   __THIS__: ThisNode,
@@ -94,7 +91,7 @@ const stressLayout = {
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 };
 
-const hashPash = (path: PathFragment): string => {
+const hashPash = (path: GraphPathRenderFragment): string => {
   return JSON.stringify(path);
 };
 
@@ -105,8 +102,8 @@ export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
 
   const { viewerState, setViewerState } = usePathViewerState();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<PathNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>([]);
+  const [nodes, setNodes] = useNodesState<PathNode>([]);
+  const [edges, setEdges] = useEdgesState<PathEdge>([]);
 
   useEffect(() => {
     const the_nodes = entityNodesToNodes(path.nodes, root);
@@ -198,18 +195,18 @@ export const PathGraph = (props: Props) => {
   );
 };
 
-export const RenderGraphQueryPath = (props: {
+export const RenderGraphPath = (props: {
   graphQueryId: string;
   options?: ViewOptions;
 }) => {
   const [search, setSearch] = React.useState<string>("");
 
   // Prepare GraphQL variables
-  const filters: GraphQueryFilters = {
+  const filters: RenderGraphPathFilter = {
     search: search || undefined,
   };
 
-  const { data, loading, error } = useRenderGraphQueryQuery({
+  const { data, loading, error } = useRenderGraphPathQuery({
     variables: {
       id: props.graphQueryId,
       filters,
@@ -217,10 +214,7 @@ export const RenderGraphQueryPath = (props: {
   });
 
   // Extract the Path from the response
-  const path =
-    data?.renderGraphQuery?.__typename === "Path"
-      ? data.renderGraphQuery
-      : undefined;
+  const path = data?.renderGraphPath;
 
   // Handle search with debouncing
   const debouncedSetSearch = React.useCallback(

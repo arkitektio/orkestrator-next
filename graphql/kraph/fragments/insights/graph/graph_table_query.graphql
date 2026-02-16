@@ -8,6 +8,9 @@ fragment GraphTableQuery on GraphTableQuery {
   builderArgs {
     ...BuilderArgs
   }
+  scatterPlots {
+    ...ListScatterPlot
+  }
 
 }
 

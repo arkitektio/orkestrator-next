@@ -1,22 +1,17 @@
+import { useDisplayComponent } from "@/app/display";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { DisplayWidget } from "@/command/Menu";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
-import { PortKind } from "@/rekuest/api/graphql";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
-import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateStructureNodeQueryForm from "../forms/CreateStructureNodeQueryForm";
-import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
-import { useDisplayComponent } from "@/app/display";
-import { DisplayWidget } from "@/command/Menu";
 
-export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
+const Page =  asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
   const Widget = useDisplayComponent(data.structure.identifier || "");
@@ -62,7 +57,7 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
         </div>
         <Card className="flex flex-row gap-2 p-4">
           <DisplayWidget
-            identifier={data.structure.identifier}  
+            identifier={data.structure.identifier}
             object={data.structure.object}
             link
           />
@@ -79,7 +74,7 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
       </div>
 
       <div className="flex flex-row p-6">
-        {data.structure.relevantQueries.map((query) => (
+        {data.structure.category.relevantNodeQueries.map((query) => (
           <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">
             <KraphNodeQuery.DetailLink
               object={query.id}
@@ -87,29 +82,14 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
               subroute="view"
               subobject={data.structure.id}
             >
-              {query.name}
+              {query.label}
             </KraphNodeQuery.DetailLink>
           </Card>
         ))}
       </div>
-
-      <div className="flex flex-col p-6 h-full">
-        {data.structure.bestView ? (
-          <SelectiveNodeViewRenderer view={data.structure.bestView} />
-        ) : (
-          <div className="h-ful w-ull flex flex-col items-center justify-center">
-            <p className="text-sm font-light mb-3">
-              No Graph Query yet for this category
-            </p>
-            <FormDialog
-              trigger={<Button variant="outline">Create Query</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateStructureNodeQueryForm structure={data.structure} />
-            </FormDialog>
-          </div>
-        )}
-      </div>
     </KraphStructure.ModelPage>
   );
 });
+
+
+export default Page;

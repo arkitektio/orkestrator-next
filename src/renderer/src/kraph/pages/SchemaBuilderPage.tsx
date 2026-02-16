@@ -5,7 +5,7 @@ import { PropertyInspector } from "../components/schema-builder/PropertyInspecto
 import { PropertyDefinition, validateSchema } from "../components/schema-builder/utils";
 import { Button } from "@/components/ui/button";
 import { Save, ArrowLeft } from "lucide-react";
-import { MetricKind } from "../api/graphql";
+import { ValueKind as MetricKind } from "../api/graphql";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 

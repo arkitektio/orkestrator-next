@@ -1,11 +1,8 @@
-import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
-import { KraphGraphQuery, KraphScatterPlot } from "@/linkers";
+import { KraphScatterPlot } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import {
-  ListGraphQueryFragment,
-  ListScatterPlotFragment,
-  usePinGraphQueryMutation,
+  ListScatterPlotFragment
 } from "../../api/graphql";
 
 interface Props {
@@ -25,8 +22,8 @@ const TheCard = ({ item, mates }: Props) => {
           }
           object={item.id}
         >
-          {item?.name}
-          <p className="text-xs font-light">{item.name}</p>
+          {item?.label}
+          <p className="text-xs font-light">{item.label}</p>
         </KraphScatterPlot.DetailLink>
       </Card>
     </KraphScatterPlot.Smart>

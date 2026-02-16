@@ -1,0 +1,15 @@
+query RenderGraphPath(
+  $id: ID!
+  $filters: RenderGraphPathFilter
+  $pagination: RenderGraphPathPagination
+  $order: RenderGraphPathOrder
+) {
+  renderGraphPath(
+    query: $id
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
+    ...GraphPathRender
+  }
+}

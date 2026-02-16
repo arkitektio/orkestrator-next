@@ -15,11 +15,10 @@ import {
   useGetProtocolEventCategoryQuery,
   useUpdateProtocolEventCategoryMutation,
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
 
-export default asDetailQueryRoute(
+const Page =  asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -84,9 +83,9 @@ export default asDetailQueryRoute(
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div className="w-full h-full relative flex items-center justify-center min-h-[300px]">
-            {data.protocolEventCategory?.store?.presignedUrl ? (
+            {data.protocolEventCategory?.image?.presignedUrl ? (
               <img
-                src={resolve(data.protocolEventCategory?.store.presignedUrl)}
+                src={resolve(data.protocolEventCategory?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -112,38 +111,23 @@ export default asDetailQueryRoute(
         </div>
 
         <div className="flex flex-col">
-          {data.protocolEventCategory.sourceEntityRoles.map((role) => (
+          {data.protocolEventCategory.inputs.map((role) => (
             <div key={role.role}> Source Role: {role.role}</div>
           ))}
         </div>
         <div className="flex flex-col">
-          {data.protocolEventCategory.targetEntityRoles.map((role) => (
+          {data.protocolEventCategory.outputs.map((role) => (
             <div key={role.role}> Target Role: {role.role}</div>
           ))}
         </div>
 
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        <div className="flex flex-col p-6 h-full">
-          {data.protocolEventCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.protocolEventCategory.bestQuery}
-            />
-          ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Graph Query yet for this category
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.protocolEventCategory} />
-              </FormDialog>
-            </div>
-          )}
-        </div>
+
       </KraphProtocolEventCategory.ModelPage>
     );
   },
 );
+
+
+export default Page;

@@ -7,7 +7,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { ParticipantEdge } from "../types";
+import { OutputParticipationEdge } from "../types";
 import { getEdgeParams } from "../utils";
 
 export type GetSpecialPathParams = {
@@ -28,7 +28,7 @@ export const getSpecialPath = (
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+const TEdge = ({
   id,
   data,
   source,
@@ -40,7 +40,7 @@ export default ({
   sourcePosition,
   targetPosition,
   markerEnd,
-}: EdgeProps<ParticipantEdge>) => {
+}: EdgeProps<OutputParticipationEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
@@ -68,6 +68,7 @@ export default ({
 
   let path = "";
   const offset = 0;
+
   path = getSpecialPath(
     { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
     offset,
@@ -78,19 +79,22 @@ export default ({
 
   return (
     <>
-      <BaseEdge path={path} markerEnd={markerEnd} label={data?.role} />
+      <BaseEdge path={path} markerEnd={markerEnd} label={data?.id} />
       <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group flex-row flex gap-2 ring-2 ring-blue ring-blue-200"
+          className="p-1 text-xs group flex-row flex gap-2 "
         >
-          <div className="text-slate-300">as</div>{" "}
-          <div className="text-xs">{data?.role}</div>
+          <div className="text-muted">as</div>{" "}
+          <div className="text-xs">{data?.id}</div>
         </Card>
       </EdgeLabelRenderer>
     </>
   );
 };
+
+
+export default TEdge;

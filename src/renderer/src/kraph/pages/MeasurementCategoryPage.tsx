@@ -15,11 +15,10 @@ import {
   useGetMeasurmentCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateMeasurementCategoryForm from "../forms/UpdateMeasurementCategoryForm";
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetMeasurmentCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -122,3 +121,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default Page;

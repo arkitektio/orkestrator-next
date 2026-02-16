@@ -18,7 +18,7 @@ export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export default (props: { queries: GraphQueryFragment[] }) => {
+ const TCarousel = (props: { queries: GraphQueryFragment[] }) => {
   return (
     <div className="w-full">
       <Carousel className="w-full dark:text-white">
@@ -32,18 +32,9 @@ export default (props: { queries: GraphQueryFragment[] }) => {
                     object={item.id}
                     className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
                   >
-                    {item.name}
+                    {item.label}
                   </KraphGraphQuery.DetailLink>
                 </div>
-              </div>
-              <div className="col-span-8">
-                {item.scatterPlots.map((plot) => (
-                  <KraphScatterPlot.DetailLink object={plot.id} key={plot.id}>
-                    {item.render.__typename == "Table" && (
-                      <ScatterPlot scatterPlot={plot} table={item.render} />
-                    )}
-                  </KraphScatterPlot.DetailLink>
-                ))}
               </div>
             </CarouselItem>
           ))}
@@ -53,3 +44,6 @@ export default (props: { queries: GraphQueryFragment[] }) => {
     </div>
   );
 };
+
+
+export default TCarousel;

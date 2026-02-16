@@ -19,7 +19,6 @@ import {
   ProtocolEventFragment,
   useGetProtocolEventQuery,
 } from "../api/graphql";
-import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 import { Card } from "@/components/ui/card";
 
@@ -77,7 +76,7 @@ export function PlateEditor({
   );
 }
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetProtocolEventQuery,
   ({ data, refetch }) => {
     const uploadFile = useMediaUpload();
@@ -234,3 +233,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default Page;

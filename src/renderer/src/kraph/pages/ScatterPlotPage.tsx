@@ -22,21 +22,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
-export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
+const Page  = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
   const navigate = useNavigate();
   const [createScatterPlot] = useCreateScatterPlotMutation();
   const [deleteScatterPlot] = useDeleteScatterPlotMutation();
 
   // Get available column names from the table
   const columnNames = React.useMemo(() => {
-    if (data.scatterPlot.query.render.__typename === "Table") {
-      return data.scatterPlot.query.render.columns.map((col) => col.name);
-    }
-    return [];
-  }, [data.scatterPlot.query.render]);
+    return data.scatterPlot.query.columns.map(c => c.name);
+  }, [data.scatterPlot.query]);
 
   // Local state for parameters
-  const [name, setName] = React.useState(data.scatterPlot.name);
+  const [name, setName] = React.useState(data.scatterPlot.label);
   const [description, setDescription] = React.useState(
     data.scatterPlot.description || "",
   );
@@ -56,7 +53,7 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
 
   // Reset local state when data changes
   React.useEffect(() => {
-    setName(data.scatterPlot.name);
+    setName(data.scatterPlot.label);
     setDescription(data.scatterPlot.description || "");
     setXColumn(data.scatterPlot.xColumn);
     setYColumn(data.scatterPlot.yColumn);
@@ -84,7 +81,7 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
           input: {
             name: name,
             description: description || null,
-            query: data.scatterPlot.query.id,
+            graphQueryId: data.scatterPlot.query.id,
             xColumn,
             yColumn,
             idColumn,
@@ -109,7 +106,7 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
   const handleDelete = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete "${data.scatterPlot.name}"? This action cannot be undone.`,
+        `Are you sure you want to delete "${data.scatterPlot.label}"? This action cannot be undone.`,
       )
     ) {
       return;
@@ -135,7 +132,7 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
   };
 
   const hasChanges =
-    name !== data.scatterPlot.name ||
+    name !== data.scatterPlot.label ||
     description !== (data.scatterPlot.description || "") ||
     xColumn !== data.scatterPlot.xColumn ||
     yColumn !== data.scatterPlot.yColumn ||
@@ -147,7 +144,7 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
   return (
     <KraphScatterPlot.ModelPage
       object={data.scatterPlot.id}
-      title={data.scatterPlot.name}
+      title={data.scatterPlot.label}
       pageActions={
         <div className="flex flex-row gap-2">
           <KraphGraphQuery.DetailLink object={data.scatterPlot.query.id}>
@@ -161,11 +158,11 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
       <div className="flex-initial grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">
         <div className="col-span-5">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.scatterPlot.name}
+            {data.scatterPlot.label}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
             <KraphGraphQuery.DetailLink object={data.scatterPlot.query.id}>
-              {data.scatterPlot.query.name}
+              {data.scatterPlot.query.label}
             </KraphGraphQuery.DetailLink>
           </p>
         </div>
@@ -333,15 +330,16 @@ export default asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
 
         {/* Right column - Scatter plot */}
         <div className="flex-grow min-w-0">
-          {data.scatterPlot.query.render.__typename == "Table" && (
+
             <ScatterPlot
-              table={data.scatterPlot.query.render}
               scatterPlot={data.scatterPlot}
               enableMultiselect
             />
-          )}
         </div>
       </div>
     </KraphScatterPlot.ModelPage>
   );
 });
+
+
+export default Page;

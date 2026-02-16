@@ -2,7 +2,6 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { useGetNodeQuery } from "../api/graphql";
 
 import EntityPage from "./EntityPage";
-import ReagentPage from "./ReagentPage";
 import StructurePage from "./StructurePage";
 
 

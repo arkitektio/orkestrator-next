@@ -7,7 +7,7 @@ import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { EntityNode } from "../types";
 
-export default memo(({ data, id, selected }: NodeProps<EntityNode>) => {
+const TNode =  memo(({ data, id, selected }: NodeProps<EntityNode>) => {
   const resolve = useResolve();
 
   return (
@@ -37,3 +37,6 @@ export default memo(({ data, id, selected }: NodeProps<EntityNode>) => {
     </>
   );
 });
+
+
+export default TNode;

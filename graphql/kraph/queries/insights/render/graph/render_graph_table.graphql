@@ -1,0 +1,15 @@
+query RenderGraphTable(
+  $id: ID!
+  $filters: RenderGraphTableFilter
+  $pagination: RenderGraphTablePagination
+  $order: RenderGraphTableOrder
+) {
+  renderGraphTable(
+    query: $id
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
+    ...GraphTableRender
+  }
+}

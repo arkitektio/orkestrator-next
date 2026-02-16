@@ -4,9 +4,7 @@ fragment Structure on Structure {
   object
   identifier
   category {
-    id
-    identifier
-    description
+    ...StructureCategory
   }
   metrics {
     id
@@ -25,16 +23,6 @@ fragment ListStructure on Structure {
   }
 }
 
-fragment PathStructure on Structure {
-  ...ListStructure
-  category {
-    identifier
-    image {
-      presignedUrl
-    }
-  }
-  object
-}
 
 fragment InformedStructure on Structure {
   ...BaseNode

@@ -22,10 +22,6 @@ import NodeViewPage from "./pages/NodeViewPage";
 import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 import ProtocolEventCategoryPage from "./pages/ProtocolEventCategoryPage";
 import ProtocolEventPage from "./pages/ProtocolEventPage";
-import ReagentCategoriesPage from "./pages/ReagentCategoriesPage";
-import ReagentCategoryPage from "./pages/ReagentCategoryPage";
-import ReagentPage from "./pages/ReagentPage";
-import ReagentsPage from "./pages/ReagentsPage";
 import RelationCategoriesPage from "./pages/RelationCategoriesPage";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
 import StructureCategoriesPage from "./pages/StructureCategoriesPage";
@@ -48,7 +44,7 @@ import NotesPage from "./pages/NotesPage";
 import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }
 
-export const KraphModule: React.FC<Props> = (props) => {
+export const KraphModule: React.FC<Props> = () => {
   return (
     <Guard.Mikro fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
@@ -138,16 +134,10 @@ export const KraphModule: React.FC<Props> = (props) => {
             element={<NaturalEventCategoryPage />}
           />
           <Route
-            path="reagentcategories/:id"
-            element={<ReagentCategoryPage />}
-          />
-          <Route
             path="measurementcategories/:id"
             element={<MeasurementCategoryPage />}
           />
           <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
-          <Route path="reagents" element={<ReagentsPage />} />
-          <Route path="reagents/:id" element={<ReagentPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>

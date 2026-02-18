@@ -16,6 +16,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   EntityCategoryFragment,
   PropertyDefinitionFragment,
+  PropertySet,
   useCreateEntityMutation,
   ValueKind,
 } from "@/kraph/api/graphql";
@@ -326,18 +327,22 @@ export const CreateEntityWithPropertiesDialog = (props: {
     // Serialize properties for GraphQL
     const serializedProperties: Record<string, string | number | boolean | null> = {};
 
+    const properties: PropertySet[] = []
+
+
     props.category.propertyDefinitions?.forEach((def) => {
       const value = data.properties[def.key];
-      serializedProperties[def.key] = serializePropertyValue(value, def.valueKind);
+      properties.push({
+        key: def.key,
+        value: serializePropertyValue(value, def.valueKind) as string | number | boolean | null,
+      });
     });
 
     await createEntity({
       variables: {
         input: {
           entityCategory: props.category.id,
-          externalId: data.externalId || undefined,
-          name: data.name || undefined,
-          properties: serializedProperties,
+          stickyProperties: properties,
         },
       },
     });
@@ -361,26 +366,6 @@ export const CreateEntityWithPropertiesDialog = (props: {
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="externalId">External ID</Label>
-                <Input
-                  id="externalId"
-                  {...form.register("externalId")}
-                  placeholder="Optional external identifier"
-                />
-                <p className="text-xs text-muted-foreground">
-                  A unique external identifier (will upsert if exists)
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  {...form.register("name")}
-                  placeholder="Optional name for this entity"
-                />
-              </div>
               {props.category.propertyDefinitions.map((def) => (
                 <Controller
                   key={def.key}

@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { KraphGraph, KraphGraphQuery } from "@/linkers";
+import { KraphGraph } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,25 +10,10 @@ import {
 } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import OntologyGraph from "../components/designer/OntologyGraph";
-import { UpdateGraphForm } from "../forms/UpdateGraphForm";
-import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { useState } from "react";
-import { Plus, PlusIcon } from "lucide-react";
-import { DialogButton } from "@/components/ui/dialogbutton";
-import { SheetButton } from "@/components/ui/sheetbutton";
+import OntologyGraph from "../components/designer/OntologyGraph";
+import ScatterPlotList from "../components/lists/ScatterPlotList";
+import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const navigate = useNavigate();

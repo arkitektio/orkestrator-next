@@ -8,10 +8,19 @@ import {
   CreateEntityMutationVariables,
   GetEntityCategoryDocument,
   useCreateEntityMutation,
+  useGetEntityCategoryQuery,
 } from "../api/graphql";
 import { toast } from "sonner";
 
 const TForm = (props: { category: string }) => {
+
+  const {data} = useGetEntityCategoryQuery({
+    variables: {
+      id: props.category
+    }
+  })
+
+
   const [add] = useCreateEntityMutation({
     variables: {
       input: { entityCategory: props.category },
@@ -53,16 +62,14 @@ const TForm = (props: { category: string }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
-              <StringField
-                label="External ID"
-                name="externalId"
-                description="An external identifier for this entity (unique is guaranteed)"
-              />
-              <StringField
-                label="Name"
-                name="name"
-                description="An optional name for this entity"
-              />
+              {data?.entityCategory.propertyDefinitions.map((p) => (
+                <StringField
+                  key={p.key}
+                  label={p.label || p.key}
+                  name={p.key}
+                  description={p.description || `Add a value for ${p.label || p.key}`}
+                />
+              ))}
             </div>
           </div>
 

@@ -68,18 +68,6 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     type: "entitycategory" as const,
   }));
 
-  const reagentNodes = graph.reagentCategories.map((entity, index) => ({
-    id: entity.id,
-    position: {
-      x: entity.positionX || 300,
-      y: entity.positionY || 300,
-    },
-    height: entity.height || 100,
-    width: entity.width || 100,
-    data: entity,
-    type: "reagentcategory" as const,
-  }));
-
   const protocolEventCategory = graph.protocolEventCategories.map(
     (entity, index) => ({
       id: entity.id,
@@ -125,7 +113,6 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     ...genericNodes,
     ...protocolEventCategory,
     ...naturalEventCategory,
-    ...reagentNodes,
     ...metricNode,
   ];
 };
@@ -134,7 +121,7 @@ const withCategoryFilter = (category: CategoryDefintion) => {
   return (cat: BaseListCategoryFragment) => {
     if (category.tagFilters && category.tagFilters.length > 0) {
       return category.tagFilters.some((tag) =>
-        cat.tags.find((t) => t.value == tag),
+        cat.tags.find((t) => t.name == tag),
       );
     }
     if (category.categoryFilters && category.categoryFilters.length > 0) {
@@ -148,7 +135,7 @@ const withStructureCategoryFilter = (category: StructureCategoryDefinition) => {
   return (cat: ListStructureCategoryFragment) => {
     if (category.tagFilters && category.tagFilters.length > 0) {
       return category.tagFilters.some((tag) =>
-        cat.tags.find((t) => t.value == tag),
+        cat.tags.find((t) => t.name == tag),
       );
     }
     if (category.categoryFilters && category.categoryFilters.length > 0) {
@@ -169,213 +156,23 @@ export const ontologyToEdges = (graph: GraphFragment) => {
 
   console.log("Relations", graph.relationCategories);
 
-  graph.relationCategories.forEach((cat) => {
-    const source_nodes = graph.entityCategories.filter(
-      withCategoryFilter(cat.sourceDefinition),
-    );
-    const target_nodes = graph.entityCategories.filter(
-      withCategoryFilter(cat.targetDefinition),
-    );
+  graph.materializedEdges.forEach((cat) => {
+    const source_nodes = cat.source.id
+    const target_nodes = cat.target.id
 
-    for (let i = 0; i < source_nodes.length; i++) {
-      for (let j = 0; j < target_nodes.length; j++) {
-        edges.push({
-          id: `${cat.id}-${i}-${j}`,
-          source: source_nodes[i].id,
-          target: target_nodes[j].id,
-          data: cat,
-          type: "relation" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    }
-  });
-
-  graph.structureRelationCategories.forEach((cat) => {
-    const source_nodes = graph.structureCategories.filter(
-      withStructureCategoryFilter(cat.sourceDefinition),
-    );
-
-    const target_nodes = graph.structureCategories.filter(
-      withStructureCategoryFilter(cat.targetDefinition),
-    );
-
-    for (let i = 0; i < source_nodes.length; i++) {
-      for (let j = 0; j < target_nodes.length; j++) {
-        edges.push({
-          id: `${cat.id}-${i}-${j}`,
-          source: source_nodes[i].id,
-          target: target_nodes[j].id,
-          data: cat,
-          type: "structure_relation" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    }
-  });
-
-  graph.measurementCategories.forEach((cat) => {
-    const source_nodes = graph.structureCategories.filter(
-      withStructureCategoryFilter(cat.sourceDefinition),
-    );
-    const target_nodes = graph.entityCategories.filter(
-      withCategoryFilter(cat.targetDefinition),
-    );
-
-    for (let i = 0; i < source_nodes.length; i++) {
-      for (let j = 0; j < target_nodes.length; j++) {
-        edges.push({
-          id: `${cat.id}-${i}-${j}`,
-          source: source_nodes[i].id,
-          target: target_nodes[j].id,
-          data: cat,
-          type: "measurement" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    }
-  });
-
-  graph.metricCategories.forEach((cat) => {
-    const source_nodes = graph.structureCategories.filter(
-      (n) => n.id == cat.structureCategory.id,
-    );
-
-    for (let i = 0; i < source_nodes.length; i++) {
-      for (let j = 0; j < source_nodes.length; j++) {
-        edges.push({
-          id: `${cat.id}-${i}-${j}`,
-          target: source_nodes[i].id,
-          source: cat.id,
-          data: cat,
-          type: "describe" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    }
-  });
-
-  graph.protocolEventCategories.forEach((cat) => {
-    cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      const source_nodes = graph.entityCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < source_nodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: source_nodes[i].id,
-          target: cat.id,
-          data: role,
-          type: "entityrole" as const,
-
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    });
-
-    cat.targetEntityRoles.forEach((role) => {
-      const targetNodes = graph.entityCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < targetNodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: cat.id,
-          target: targetNodes[i].id,
-          data: role,
-          type: "entityrole" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    });
-
-    cat.sourceReagentRoles.filter(notEmpty).forEach((role) => {
-      const source_nodes = graph.reagentCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < source_nodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: source_nodes[i].id,
-          target: cat.id,
-          data: role,
-          type: "reagentrole" as const,
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-    });
-
-    cat.targetReagentRoles.forEach((role) => {
-      const targetNodes = graph.reagentCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < targetNodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: cat.id,
-          target: targetNodes[i].id,
-          data: role,
-          type: "reagentrole" as const,
-        });
-      }
+    edges.push({
+      id: `${cat.id}`,
+      source: source_nodes,
+      target: target_nodes,
+      data: cat,
+      type: "relation" as const,
+      markerEnd: {
+        type: MarkerType.Arrow,
+      },
     });
   });
 
-  graph.naturalEventCategories.forEach((cat) => {
-    cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      const source_nodes = graph.entityCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < source_nodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: source_nodes[i].id,
-          target: cat.id,
-          data: role,
-          type: "entityrole" as const,
-        });
-      }
-    });
-
-    cat.targetEntityRoles.forEach((role) => {
-      const targetNodes = graph.entityCategories.filter(
-        withCategoryFilter(role.categoryDefinition),
-      );
-
-      for (let i = 0; i < targetNodes.length; i++) {
-        edges.push({
-          id: `${cat.id}-${i}-${role.role}`,
-          source: cat.id,
-          target: targetNodes[i].id,
-          data: role,
-          type: "entityrole" as const,
-        });
-      }
-    });
-  });
-
-  console.log("edges", edges);
-
-  return [...edges];
+  return edges;
 };
 
 export const NODE_TYPES = {

@@ -1442,13 +1442,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2926,7 +2922,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -3022,6 +3018,30 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "stickyProperties",
+            "description": "List of property key-value pairs to associate with this entity",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "PropertySet",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3666,7 +3686,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -5330,7 +5350,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -6094,7 +6114,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -9143,7 +9163,7 @@
                 "description": null,
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "GraphPaginationInput",
+                  "name": "EntityPaginationInput",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -9236,13 +9256,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -9296,13 +9312,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -9312,13 +9324,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -10032,7 +10040,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -10606,13 +10614,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -10702,13 +10706,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -10718,13 +10718,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -11596,13 +11592,9 @@
             "description": "An image representing this graph, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -13080,42 +13072,6 @@
               "ofType": null
             },
             "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "GraphPaginationInput",
-        "description": "Pagination options for graph queries",
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "limit",
-            "description": "Maximum number of items to return",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": "100",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "offset",
-            "description": "Number of items to skip before starting to collect the result set",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": "0",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -15324,13 +15280,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -16748,13 +16700,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -16796,13 +16744,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -16812,13 +16756,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -21696,13 +21636,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -21792,13 +21728,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -21808,13 +21740,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -22882,13 +22810,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -22898,13 +22822,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -25249,6 +25169,50 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "PropertySet",
+        "description": "Input for ensuring an entity exists with a given global ID",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "key",
+            "description": "The property key/label",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": "The property value",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "ENUM",
         "name": "PropertyType",
         "description": null,
@@ -25743,13 +25707,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -25839,13 +25799,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -25855,13 +25811,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -31789,13 +31741,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -34695,13 +34643,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -34743,13 +34687,9 @@
             "description": "X coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -34759,13 +34699,9 @@
             "description": "Y coordinate",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -35990,13 +35926,9 @@
             "description": "An image representing this category, for visualization purposes",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "MediaStore",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -37560,7 +37492,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "LIST",
@@ -38152,7 +38084,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -39796,7 +39728,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",
@@ -40540,7 +40472,7 @@
             "deprecationReason": null
           },
           {
-            "name": "properties",
+            "name": "propertyDefinitions",
             "description": "Property definitions",
             "type": {
               "kind": "NON_NULL",

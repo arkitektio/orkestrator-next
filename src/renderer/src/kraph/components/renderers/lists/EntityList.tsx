@@ -56,7 +56,6 @@ import {
 import {
   EntityCategoryFragment,
   EntityFilter,
-  EntityNodesQuery,
   EntityOrder,
   ListEntitiesQuery,
   Ordering,
@@ -65,10 +64,8 @@ import {
   PropertyOrder,
   ValueKind,
   WhereOperator,
-  useEntityNodesQuery,
   useGetEntityQuery,
-  useListEntitiesLazyQuery,
-  useListEntitiesQuery,
+  useListEntitiesQuery
 } from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
 import { KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
@@ -110,7 +107,7 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [setNodeProperty] = useSetNodePropertyMutation();
+  const [setNodeProperty] = [() => {}]
 
   const [editingValue, setEditingValue] = React.useState(value);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -654,7 +651,7 @@ export const EntityList = (props: {
 
   const [propertyOrders, setPropertyOrders] = React.useState<PropertyOrder[]>([]);
   const [newOrderKey, setNewOrderKey] = React.useState<string>("");
-  const [newOrderDirection, setNewOrderDirection] = React.useState<OrderDirection>(OrderDirection.Asc);
+  const [newOrderDirection, setNewOrderDirection] = React.useState<OrderDirection>(Ordering.Asc);
   const [isAddOrderOpen, setIsAddOrderOpen] = React.useState(false);
 
   const [pagination, setPagination] = React.useState({
@@ -800,7 +797,7 @@ export const EntityList = (props: {
         direction: newOrderDirection,
       }]);
       setNewOrderKey("");
-      setNewOrderDirection(OrderDirection.Asc);
+      setNewOrderDirection(Ordering.Asc);
       setIsAddOrderOpen(false);
     }
   };
@@ -1007,7 +1004,7 @@ export const EntityList = (props: {
 
                       <Select
                         value={newOrderDirection}
-                        onValueChange={(value) => setNewOrderDirection(value as OrderDirection)}
+                        onValueChange={(value) => setNewOrderDirection(value as Ordering)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select direction" />

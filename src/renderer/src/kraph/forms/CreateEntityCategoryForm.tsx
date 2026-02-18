@@ -39,16 +39,19 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import { useState } from "react";
-import { useFieldArray, useForm, useFormContext } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import {
   CreateEntityCategoryMutationVariables,
   GetGraphDocument,
   ListEntitiesDocument,
+  PropertyDefinitionInput,
   ValueKind,
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
+import { keyify } from "./utils";
+import { setValue } from "platejs";
 
 const PropertyItem = ({
   index,
@@ -57,9 +60,32 @@ const PropertyItem = ({
   index: number;
   remove: (index: number) => void;
 }) => {
-  const { watch, control } = useFormContext();
+  const { watch, control, getFieldState, setValue } = useFormContext();
   const key = watch(`propertyDefinitions.${index}.key`);
   const kind = watch(`propertyDefinitions.${index}.valueKind`);
+
+
+  // 1. Watch the source field (title)
+  const titleValue = useWatch({
+    control,
+    name: "label",
+  });
+
+
+
+  // 3. Effect with Dirty Check
+  useEffect(() => {
+    const { isDirty } = getFieldState("key");
+
+    // Only update if the user hasn't manually edited the key field
+    if (!isDirty && titleValue !== undefined) {
+      setValue("key", keyify(titleValue), {
+        shouldValidate: true,
+        // We do NOT set shouldDirty: true here, because we want
+        // the field to stay "pristine" so it keeps following the title.
+      });
+    }
+  }, [titleValue, setValue, getFieldState]);
 
   return (
     <AccordionItem value={`item-${index}`}>
@@ -216,7 +242,7 @@ const PropertyItem = ({
 
 export const PropertyDefinitions = () => {
   const { control } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<CreateEntityCategoryMutationVariables["input"], "propertyDefinitions">({
     control,
     name: "propertyDefinitions",
   });
@@ -279,6 +305,30 @@ const TForm = (props: Partial<CreateEntityCategoryMutationVariables["input"]>) =
 
   const [search] = useSearchGraphsLazyQuery();
 
+
+
+  // 1. Watch the source field (title)
+  const titleValue = useWatch({
+    control: form.control,
+    name: "label",
+  });
+
+
+
+  // 3. Effect with Dirty Check
+  useEffect(() => {
+    const { isDirty } = form.getFieldState("key");
+
+    // Only update if the user hasn't manually edited the key field
+    if (!isDirty && titleValue !== undefined) {
+      form.setValue("key", keyify(titleValue), {
+        shouldValidate: true,
+        // We do NOT set shouldDirty: true here, because we want
+        // the field to stay "pristine" so it keeps following the title.
+      });
+    }
+  }, [titleValue, form]);
+
   return (
     <>
       <Form {...form}>
@@ -309,6 +359,11 @@ const TForm = (props: Partial<CreateEntityCategoryMutationVariables["input"]>) =
                 label="Label"
                 name="label"
                 description="Whats the expression? (e.g. 'Person' or 'Connected to')"
+              />
+              <StringField
+                label="Key"
+                name="key"
+                description="What is the key of this expression? (e.g. 'person' or 'connected_to')"
               />
               <ParagraphField
                 label="Description"

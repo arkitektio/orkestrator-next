@@ -25,7 +25,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <ProtocolStepCard key={index} item={ex}  />}
+      {(ex, index) => <ProtocolStepCard key={index} item={ex} />}
     </ListRender>
   );
 };

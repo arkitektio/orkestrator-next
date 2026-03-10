@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   CreateEntityMutationVariables,
   GetEntityCategoryDocument,
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
 } from "../api/graphql";
-import { toast } from "sonner";
 
 const TForm = (props: { category: string }) => {
 

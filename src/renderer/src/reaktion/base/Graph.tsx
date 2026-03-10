@@ -1,7 +1,7 @@
+import { Background, EdgeTypes, ReactFlow, ReactFlowProps } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { AnimatePresence } from "framer-motion";
 import React from "react";
-import { ReactFlow, Background, EdgeTypes, ReactFlowProps } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
 import { FlowEdge, FlowNode, NodeTypes } from "../types";
 
 type Props = {

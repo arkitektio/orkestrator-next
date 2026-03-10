@@ -1,5 +1,8 @@
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { HelpSidebar } from "@/components/sidebars/help";
+import { Button } from "@/components/ui/button";
 import {
   CardDescription,
   CardHeader,
@@ -21,10 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { useHomePageQuery } from "../api/graphql";
 import GraphCard from "../components/cards/GraphCard";
 import CreateGraphForm from "../forms/CreateGraphForm";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { HelpSidebar } from "@/components/sidebars/help";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
-import { Button } from "@/components/ui/button";
 
 export type IRepresentationScreenProps = Record<string, never>;
 

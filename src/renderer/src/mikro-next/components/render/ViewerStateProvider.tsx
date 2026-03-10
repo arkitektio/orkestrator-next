@@ -68,7 +68,7 @@ export interface ViewerStateActions {
 
 export interface ViewerStateContextType
   extends ViewerState,
-    ViewerStateActions {}
+  ViewerStateActions { }
 
 const ViewerStateContext = createContext<ViewerStateContextType | undefined>(
   undefined,

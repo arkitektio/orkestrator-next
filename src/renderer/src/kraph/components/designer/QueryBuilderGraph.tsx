@@ -390,7 +390,7 @@ export const QueryBuilderGraph = ({
   const [isRunning, setIsRunning] = useState(false);
   const [createGraphQuery] = useCreateGraphTableQueryMutation();
   const [updateGraphQuery] = useUpdateGraphTableQueryMutation({
-    });
+  });
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 

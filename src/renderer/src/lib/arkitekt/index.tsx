@@ -85,8 +85,8 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
     useSelf: () => useArkitekt().connection?.fakts.self,
     useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
     useAvailableServices: useAvailableServices,
-    useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service as string) as ReturnType<T[K]["builder"]>,
-    usePotentialService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]> | undefined  => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
+    useService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> => useService(service as string) as ReturnType<T[K]["builder"]>,
+    usePotentialService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> | undefined => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
     useToken: () => useArkitekt().connection?.token || null,
     useArkitekt: useArkitekt,
   };

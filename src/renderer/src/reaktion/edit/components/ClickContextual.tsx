@@ -1,3 +1,4 @@
+import { useRekuest } from "@/app/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useRekuest } from "@/app/Arkitekt";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";

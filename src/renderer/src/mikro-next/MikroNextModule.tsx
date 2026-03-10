@@ -1,6 +1,6 @@
+import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { Guard } from "@/app/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
 import DatasetPage from "./pages/DatasetPage";
@@ -10,9 +10,11 @@ import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
+import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
 import LightpathViewPage from "./pages/LightpathViewPage";
 import MeshPage from "./pages/MeshPage";
 import MeshesPage from "./pages/MeshesPage";
+import PeerHomePage from "./pages/PeerHomePage";
 import RoiPage from "./pages/RoiPage";
 import RoisPage from "./pages/RoisPage";
 import StagePage from "./pages/StagePage";
@@ -20,8 +22,6 @@ import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
-import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
-import PeerHomePage from "./pages/PeerHomePage";
 
 export const MikroNextModule: React.FC<Props> = (props) => {
   return (

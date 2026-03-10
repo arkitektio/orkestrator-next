@@ -5,9 +5,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { NodeResizeControl } from "@xyflow/react";
 import { motion } from "framer-motion";
 import React from "react";
-import { NodeResizeControl } from "@xyflow/react";
 import { useEditNodeErrors, useEditRiver } from "../edit/context";
 
 type NodeProps = {
@@ -56,7 +56,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
               "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
               "w-full  ",
             )}
-            style ={{
+            style={{
               minWidth: minWidth,
               minHeight: minHeight,
             }}

@@ -1,7 +1,7 @@
 import { MikroLightpathView } from "@/linkers";
 import { LightpathViewFragment } from "../../api/graphql";
-import { ViewCard } from "./meta/ViewCard";
 import { LightPathListView } from "../lightpath/LightPathListView";
+import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: LightpathViewFragment;

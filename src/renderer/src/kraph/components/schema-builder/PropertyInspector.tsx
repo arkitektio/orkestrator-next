@@ -1,8 +1,5 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +8,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -18,25 +18,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CircleHelp, InfoIcon, Settings2, Trash2, AlertCircle } from "lucide-react";
+import { AlertCircle, CircleHelp, InfoIcon, Settings2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { AggregationFunction, DerivationType } from "../../api/graphql";
+import { DataTypeSelector } from "./DataTypeSelector";
 import {
   DEFAULT_AGGREGATION,
   DEFAULT_DERIVATION,
+  isValidMachineKey,
   PropertyDefinition,
   toSnakeCase,
-  isValidMachineKey,
 } from "./utils";
-import { DataTypeSelector } from "./DataTypeSelector";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
-import { AggregationFunction, DerivationType } from "../../api/graphql";
 
 interface PropertyInspectorProps {
   property: PropertyDefinition | null;

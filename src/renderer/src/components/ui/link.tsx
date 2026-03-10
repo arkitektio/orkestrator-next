@@ -48,7 +48,7 @@ export const DroppableNavLink = (props: NavLinkProps) => {
 
   return (
     <div ref={drop} className={`${isOver && "animate-pulse"}`}>
-      <NavLink {...props}/>
+      <NavLink {...props} />
     </div>
   );
 };

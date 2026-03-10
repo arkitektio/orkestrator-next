@@ -34,37 +34,37 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     try {
-    if (!arkitekt.connection || !settings.startAgent) {
-      if (agent) {
-        agent.disconnect();
-        setAgent(null);
+      if (!arkitekt.connection || !settings.startAgent) {
+        if (agent) {
+          agent.disconnect();
+          setAgent(null);
+        }
+        return;
       }
-      return;
+
+      const newAgent = new OrkestratorAgent(
+        arkitekt,
+        settings.instanceId,
+        navigate
+      );
+      newAgent.registerElectron();
+      newAgent.connect();
+
+      const unsubscribe = newAgent.subscribe((newState) => {
+        setState(newState);
+      });
+
+      setAgent(newAgent);
+
+      console.log("AgentProvider: Agent started");
+
+      return () => {
+        unsubscribe();
+        newAgent.disconnect();
+      };
+    } catch (e) {
+      console.error("AgentProvider: Failed to start agent", e);
     }
-
-    const newAgent = new OrkestratorAgent(
-      arkitekt,
-      settings.instanceId,
-      navigate
-    );
-    newAgent.registerElectron();
-    newAgent.connect();
-
-    const unsubscribe = newAgent.subscribe((newState) => {
-      setState(newState);
-    });
-
-    setAgent(newAgent);
-
-    console.log("AgentProvider: Agent started");
-
-    return () => {
-      unsubscribe();
-      newAgent.disconnect();
-    };
-  } catch (e) {
-    console.error("AgentProvider: Failed to start agent", e);
-  }
   }, [arkitekt.connection, settings.startAgent, settings.instanceId]);
 
   return (

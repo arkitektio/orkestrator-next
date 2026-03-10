@@ -1,3 +1,4 @@
+import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,8 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DemandKind, PortKind, PrimaryActionFragment, useAllPrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { useAssign, useAssignWithCallback } from "@/rekuest/hooks/useAssign";
-import { useDialog } from "@/app/dialog";
+import { useAssignWithCallback } from "@/rekuest/hooks/useAssign";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

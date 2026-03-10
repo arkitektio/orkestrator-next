@@ -15,8 +15,8 @@ import { KEYS } from 'platejs';
 import { PlateElement, useEditorPlugin, withHOC } from 'platejs/react';
 import { useFilePicker } from 'use-file-picker';
 
-import { cn } from '@/lib/utils';
 import { useUploadFile } from '@/hooks/use-upload-file';
+import { cn } from '@/lib/utils';
 
 const CONTENT: Record<
   string,
@@ -244,9 +244,8 @@ function formatBytes(
 
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
 
-  return `${(bytes / 1024 ** i).toFixed(decimals)} ${
-    sizeType === 'accurate'
+  return `${(bytes / 1024 ** i).toFixed(decimals)} ${sizeType === 'accurate'
       ? (accurateSizes[i] ?? 'Bytest')
       : (sizes[i] ?? 'Bytes')
-  }`;
+    }`;
 }

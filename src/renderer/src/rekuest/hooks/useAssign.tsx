@@ -1,15 +1,13 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
-  AssignationChangeEvent,
-  AssignationChangeEventFragment,
   AssignationEventFragment,
   AssignInput,
   PostmanAssignationFragment,
   ReserveMutationVariables,
-  useAssignMutation,
+  useAssignMutation
 } from "../api/graphql";
-import { v4 as uuidv4 } from "uuid";
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,

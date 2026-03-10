@@ -1,6 +1,5 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
 import { useDetailAnalogSignalChannelQuery } from "../api/graphql";
-import { AnalogSignalRender } from "../components/AnalogSignalRender";
 
 export const AnalogSignalChannelDisplay = (props: DisplayWidgetProps) => {
   const { data } = useDetailAnalogSignalChannelQuery({

@@ -23,7 +23,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <BlokCard key={index} item={ex}  />}
+      {(ex, index) => <BlokCard key={index} item={ex} />}
     </ListRender>
   );
 };

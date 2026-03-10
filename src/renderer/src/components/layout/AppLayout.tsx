@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { NavigationMenu } from "../ui/navigation-menu";
 
 export type AppLayoutProps = {

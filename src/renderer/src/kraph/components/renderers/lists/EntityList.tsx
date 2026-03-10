@@ -107,7 +107,7 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [setNodeProperty] = [() => {}]
+  const [setNodeProperty] = [() => { }]
 
   const [editingValue, setEditingValue] = React.useState(value);
   const [isEditing, setIsEditing] = React.useState(false);

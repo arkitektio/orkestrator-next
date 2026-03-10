@@ -2,14 +2,12 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Button } from "@/components/ui/button";
 import { KraphGraphQuery, KraphScatterPlot } from "@/linkers";
 import {
-  useGetScatterPlotQuery,
   useCreateScatterPlotMutation,
   useDeleteScatterPlotMutation,
+  useGetScatterPlotQuery,
 } from "../api/graphql";
 
-import { useNavigate } from "react-router-dom";
-import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
-import * as React from "react";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -18,11 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
 
-const Page  = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
+const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
   const navigate = useNavigate();
   const [createScatterPlot] = useCreateScatterPlotMutation();
   const [deleteScatterPlot] = useDeleteScatterPlotMutation();
@@ -331,10 +331,10 @@ const Page  = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
         {/* Right column - Scatter plot */}
         <div className="flex-grow min-w-0">
 
-            <ScatterPlot
-              scatterPlot={data.scatterPlot}
-              enableMultiselect
-            />
+          <ScatterPlot
+            scatterPlot={data.scatterPlot}
+            enableMultiselect
+          />
         </div>
       </div>
     </KraphScatterPlot.ModelPage>

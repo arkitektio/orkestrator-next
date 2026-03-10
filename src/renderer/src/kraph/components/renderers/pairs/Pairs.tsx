@@ -9,25 +9,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { DisplayWidget } from "@/command/Menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  PairsFragment,
-  useRenderGraphQueryQuery,
   GraphQueryFilters,
   GraphQueryPagination,
+  PairsFragment,
+  useRenderGraphQueryQuery,
 } from "@/kraph/api/graphql";
+import { SmartLink } from "@/providers/smart/builder";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import * as React from "react";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
-import { Input } from "@/components/ui/input";
 import {
   PairsViewerStateProvider,
   usePairsViewerState,
 } from "./PairsViewerStateProvider";
-import { Button } from "@/components/ui/button";
-import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Dmi28cCy";
-import { DisplayWidget } from "@/command/Menu";
-import { SmartModel } from "@/providers/smart/SmartModel";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { SmartLink } from "@/providers/smart/builder";
 
 export type FormValues = {
   metrics?: string[];

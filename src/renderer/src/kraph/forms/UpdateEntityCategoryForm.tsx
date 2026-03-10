@@ -1,24 +1,24 @@
 import { useDialog } from "@/app/dialog";
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   EntityCategoryFragment,
-  ValueKind,
   UpdateEntityCategoryMutationVariables,
   useCreateGraphTagInlineMutation,
   useSearchTagsLazyQuery,
   useUpdateEntityCategoryMutation,
+  ValueKind,
 } from "../api/graphql";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
-import { ChoicesField } from "@/components/fields/ChoicesField";
-import { SwitchField } from "@/components/fields/SwitchField";
-import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const enumToOptions = (e: Record<string, string>) => {
   return Object.keys(e).map((key) => ({
@@ -27,7 +27,7 @@ const enumToOptions = (e: Record<string, string>) => {
   }));
 };
 
-const TForm =  (props: { entityCategory: EntityCategoryFragment, onSuccess?: () => void }) => {
+const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () => void }) => {
   const [update] = useUpdateEntityCategoryMutation({
     refetchQueries: ["GetGraph"],
   });

@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { KraphGraph, MikroDataset } from "@/linkers";
+import { KraphGraph } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
@@ -25,7 +25,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <GraphCard key={index} item={ex}/>}
+      {(ex, index) => <GraphCard key={index} item={ex} />}
     </ListRender>
   );
 };

@@ -30,7 +30,7 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
               {pane}
             </ScrollArea>
           </ResizablePanel>
-          <ResizableHandle  />
+          <ResizableHandle />
         </>
       )}
 

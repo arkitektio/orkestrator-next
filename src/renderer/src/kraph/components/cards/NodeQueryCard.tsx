@@ -26,7 +26,7 @@ const TheCard = ({ item }: Props) => {
         </KraphNodeQuery.DetailLink>
         <PinButton
           item={item}
-          func={() => {}}
+          func={() => { }}
           className="ml-auto text-xs p-1 group-hover:block hidden"
           variant={"outline"}
           size={"icon"}

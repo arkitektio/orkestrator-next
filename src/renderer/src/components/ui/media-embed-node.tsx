@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
 import { Tweet } from 'react-tweet';
 
@@ -111,8 +110,8 @@ export const MediaEmbedElement = withHOC(
                   className={cn(
                     '[&_.react-tweet-theme]:my-0',
                     !readOnly &&
-                      selected &&
-                      '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
+                    selected &&
+                    '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
                   )}
                 >
                   <Tweet id={embed!.id!} />

@@ -365,7 +365,7 @@ export default asDetailQueryRoute(
               >
                 Logs
               </Button>
-            </RekuestAssignation.DetailLink>  }
+            </RekuestAssignation.DetailLink>}
             <div className="flex">
               <Button
                 variant={"outline"}

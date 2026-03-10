@@ -1,4 +1,5 @@
 import AlpakaModule from "@/alpaka/AlpakaModule";
+import { Arkitekt } from "@/app/Arkitekt";
 import Hero from "@/app/pages/Hero";
 import BlokModule from "@/blok/BlokModule";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -6,7 +7,6 @@ import DokumentsModule from "@/dokuments/DokumentsModule";
 import ElektroModule from "@/elektro/ElektroModule";
 import KabinetModule from "@/kabinet/KabinetModule";
 import KraphModule from "@/kraph/KraphModule";
-import { Arkitekt } from "@/app/Arkitekt";
 import LokNextModule from "@/lok-next/LokNextModule";
 import { Stash } from "@/lok-next/components/stash/Stash";
 import LovekitModule from "@/lovekit/LovekitModule";

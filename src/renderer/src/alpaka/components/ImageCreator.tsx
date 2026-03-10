@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { useGenerateImageMutation } from "../api/graphql";
+import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useGenerateImageMutation } from "../api/graphql";
 
 export const ImageCreator = (props: {
   kind: string;

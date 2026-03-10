@@ -1,4 +1,4 @@
-import { ListRender } from "@/components/layout/ListRender";
+import { createList } from "@/components/layout/createList";
 import { MikroDataset } from "@/linkers";
 import {
   DatasetFilter,
@@ -6,7 +6,6 @@ import {
   useGetDatasetsQuery,
 } from "../../api/graphql";
 import DatasetCard from "../cards/DatasetCard";
-import { createList } from "@/components/layout/createList";
 
 export type Props = {
   filters?: DatasetFilter;

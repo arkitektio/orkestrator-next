@@ -1,7 +1,7 @@
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
-import { PathNodePresentation } from "../../components/PathNodePresentation";
 import { Handles } from "../../components/Handles";
+import { PathNodePresentation } from "../../components/PathNodePresentation";
 import { StructureNode } from "../../types";
 
 export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {

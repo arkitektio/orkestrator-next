@@ -57,8 +57,7 @@ const useUploadErrorToast = () => {
       }
       case UploadErrorCode.TOO_MANY_FILES: {
         toast.error(
-          `The maximum number of files is ${data.maxFileCount} ${
-            data.fileType ? `for ${data.fileType}` : ''
+          `The maximum number of files is ${data.maxFileCount} ${data.fileType ? `for ${data.fileType}` : ''
           }`
         );
 

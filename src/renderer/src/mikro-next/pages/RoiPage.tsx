@@ -1,5 +1,4 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { DetailPane, DetailPaneContent } from "@/components/ui/pane";
 import { MikroImage, MikroROI } from "@/linkers";
@@ -8,7 +7,6 @@ import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
 import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
 import { FinalRender } from "../components/render/FInalRender";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export type IRepresentationScreenProps = {};
 

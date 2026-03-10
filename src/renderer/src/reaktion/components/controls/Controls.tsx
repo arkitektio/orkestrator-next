@@ -1,12 +1,10 @@
-import { memo } from 'react';
-import cc from 'classcat';
-import { shallow } from 'zustand/shallow';
-import { ControlProps, ReactFlowState, useReactFlow, useStore, useStoreApi } from '@xyflow/react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LockIcon, MinusIcon, PlusIcon, UnlockIcon, View } from 'lucide-react';
-import { HTMLAttributes, forwardRef } from 'react';
+import { ControlProps, ReactFlowState, useReactFlow, useStore, useStoreApi } from '@xyflow/react';
 import type { PanelPosition } from '@xyflow/system';
+import cc from 'classcat';
+import { LockIcon, MinusIcon, PlusIcon, UnlockIcon, View } from 'lucide-react';
+import { HTMLAttributes, forwardRef, memo } from 'react';
+import { shallow } from 'zustand/shallow';
 
 
 

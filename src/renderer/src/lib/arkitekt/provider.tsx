@@ -22,8 +22,8 @@ export type ServiceMap = {
   [key: string]: Service;
 };
 
-export const buildServiceMap = ({map, manifest, aliasMap, token, fakts}: {map: ServiceBuilderMap, manifest: EnhancedManifest, aliasMap: AliasMap, token: TokenResponse, fakts: ActiveFakts}): ServiceMap => {
-  const services: ServiceMap= {};
+export const buildServiceMap = ({ map, manifest, aliasMap, token, fakts }: { map: ServiceBuilderMap, manifest: EnhancedManifest, aliasMap: AliasMap, token: TokenResponse, fakts: ActiveFakts }): ServiceMap => {
+  const services: ServiceMap = {};
 
   for (const key in map) {
     const def: ServiceDefinition = map[key];
@@ -57,11 +57,11 @@ export const aliasMapStillValidForManifest = (aliasMap: AliasMap, enhancedManife
   });
 }
 
-export const mappedAliasesStillReachable = async ({aliasMap, controller, timeout}: {aliasMap: AliasMap, controller: AbortController, timeout: number}): Promise<boolean> => {
+export const mappedAliasesStillReachable = async ({ aliasMap, controller, timeout }: { aliasMap: AliasMap, controller: AbortController, timeout: number }): Promise<boolean> => {
   const checkPromises = Object.values(aliasMap).map(async (alias) => {
 
     try {
-      const response = await checkAliasHealth(alias, timeout,  controller);
+      const response = await checkAliasHealth(alias, timeout, controller);
       return response
     } catch (e: Error | unknown) {
       console.warn(`Alias health check failed: ${alias.host}`, (e as Error).message);
@@ -171,7 +171,7 @@ export const ArkitektProvider = ({
     localStorage.setItem("endpoint", JSON.stringify(connection.endpoint));
     localStorage.setItem("fakts", JSON.stringify(connection.fakts));
     localStorage.setItem("token", JSON.stringify(connection.token));
-    localStorage.setItem("aliasMap", JSON.stringify({aliasMap: connection.aliasMap}));
+    localStorage.setItem("aliasMap", JSON.stringify({ aliasMap: connection.aliasMap }));
   }
 
   const setAutoLoginError = (error: string) => {
@@ -222,7 +222,7 @@ export const ArkitektProvider = ({
   }
 
 
-   const setRefreshTokenNotValid = (error: string) => {
+  const setRefreshTokenNotValid = (error: string) => {
     setContext(x => ({
       ...x,
       autoLoginError: error,
@@ -264,70 +264,70 @@ export const ArkitektProvider = ({
     controller: AbortController;
   }): Promise<ConnectedContext> => {
     // Build Manifest
-  try {
+    try {
 
-    setConnecting(true);
-    setCurrentController(options.controller);
-    localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
-
-
-    const enhancedManifest = await enhanceManifest(manifest);
-
-    const fakts = await flow({
-      endpoint: options.endpoint,
-      controller: options.controller,
-      manifest: enhancedManifest,
-    });
-
-    // Save fakts to local storage
-    localStorage.setItem("fakts", JSON.stringify(fakts));
+      setConnecting(true);
+      setCurrentController(options.controller);
+      localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
 
 
-    const token = await login(fakts.auth);
+      const enhancedManifest = await enhanceManifest(manifest);
 
-    localStorage.setItem("token", JSON.stringify(token));
+      const fakts = await flow({
+        endpoint: options.endpoint,
+        controller: options.controller,
+        manifest: enhancedManifest,
+      });
 
-
-    const { aliasReports, aliasMap, functional } = await buildAliases({
-      fakts,
-      manifest: enhancedManifest,
-      controller: options.controller,
-    });
-
-    localStorage.setItem("aliasMap", JSON.stringify({aliasMap: aliasMap}));
+      // Save fakts to local storage
+      localStorage.setItem("fakts", JSON.stringify(fakts));
 
 
-    const reportRequest : ReportRequest = {
-      alias_reports: aliasReports,
-      token: fakts.auth.client_token,
-      functional: functional,
-    };
+      const token = await login(fakts.auth);
 
-    await report(fakts.auth.report_url, reportRequest);
-
-    if (!functional) {
-      throw new Error("Could not connect to all required services");
-    }
+      localStorage.setItem("token", JSON.stringify(token));
 
 
-    const serviceMap = buildServiceMap({
-      map: serviceBuilderMap,
-      manifest: enhancedManifest,
-      aliasMap: aliasMap,
-      token: token,
-      fakts: fakts,
-    });
+      const { aliasReports, aliasMap, functional } = await buildAliases({
+        fakts,
+        manifest: enhancedManifest,
+        controller: options.controller,
+      });
 
-    const selfService  = selfServiceBuilder({
-      manifest: enhancedManifest,
-      alias: fakts.self.alias,
-      fakts: fakts,
-      token: token,
-    }
-    );
+      localStorage.setItem("aliasMap", JSON.stringify({ aliasMap: aliasMap }));
 
 
-    setValidatedConnection({
+      const reportRequest: ReportRequest = {
+        alias_reports: aliasReports,
+        token: fakts.auth.client_token,
+        functional: functional,
+      };
+
+      await report(fakts.auth.report_url, reportRequest);
+
+      if (!functional) {
+        throw new Error("Could not connect to all required services");
+      }
+
+
+      const serviceMap = buildServiceMap({
+        map: serviceBuilderMap,
+        manifest: enhancedManifest,
+        aliasMap: aliasMap,
+        token: token,
+        fakts: fakts,
+      });
+
+      const selfService = selfServiceBuilder({
+        manifest: enhancedManifest,
+        alias: fakts.self.alias,
+        fakts: fakts,
+        token: token,
+      }
+      );
+
+
+      setValidatedConnection({
         endpoint: options.endpoint,
         fakts: fakts,
         manifest: enhancedManifest,
@@ -338,7 +338,7 @@ export const ArkitektProvider = ({
         serviceBuilderMap: serviceBuilderMap,
         token: token,
       }
-    );
+      );
     } catch (e) {
       console.error("Connection failed:", e);
       throw e;
@@ -385,13 +385,13 @@ export const ArkitektProvider = ({
             console.log(`Clearing service: ${key}`, service);
             if (service.client) {
               try {
-              console.log(`Clearing store for apollo: ${key}`);
-              await service.client.clearStore(); // stops the Apollo clien
-              await service.client.resetStore();
+                console.log(`Clearing store for apollo: ${key}`);
+                await service.client.clearStore(); // stops the Apollo clien
+                await service.client.resetStore();
               } catch (err) {
                 console.warn(`Failed to clear store for service ${key}:`, err);
+              }
             }
-          }
           }
         }
       }
@@ -412,7 +412,7 @@ export const ArkitektProvider = ({
     await connect({ ...options, endpoint });
   };
 
-  const tryReconnect = async ({manifest, serviceBuilderMap, controller}: {manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap, controller: AbortController}) => {
+  const tryReconnect = async ({ manifest, serviceBuilderMap, controller }: { manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap, controller: AbortController }) => {
     const faktsRaw = localStorage.getItem("fakts");
     const tokenRaw = localStorage.getItem("token");
     const endpointRaw = localStorage.getItem("endpoint");
@@ -435,10 +435,10 @@ export const ArkitektProvider = ({
 
       if (!aliasMapStillValidForManifest(aliasStorage.aliasMap, manifest)) {
         setContext({
-              manifest: manifest,
-              autoLoginError: "Stored aliases no longer valid for manifest",
-              connection: undefined,
-          });
+          manifest: manifest,
+          autoLoginError: "Stored aliases no longer valid for manifest",
+          connection: undefined,
+        });
         setConnecting(false);
       }
 
@@ -452,18 +452,18 @@ export const ArkitektProvider = ({
 
       if (!stillReachable) {
         const { aliasReports, aliasMap, functional } = await buildAliases({
-            fakts,
-            manifest: manifest,
-            controller: controller,
+          fakts,
+          manifest: manifest,
+          controller: controller,
         });
 
-        const reportRequest : ReportRequest = {
+        const reportRequest: ReportRequest = {
           alias_reports: aliasReports,
           token: fakts.auth.client_token,
           functional: functional,
         };
 
-        localStorage.setItem("aliasReports", JSON.stringify({aliasMap: aliasMap}));
+        localStorage.setItem("aliasReports", JSON.stringify({ aliasMap: aliasMap }));
         if (!functional) {
           setContext({
             manifest: manifest,
@@ -489,7 +489,7 @@ export const ArkitektProvider = ({
         fakts: fakts,
       });
 
-      const selfService  = selfServiceBuilder({
+      const selfService = selfServiceBuilder({
         manifest: manifest,
         alias: fakts.self.alias,
         fakts: fakts,
@@ -498,7 +498,7 @@ export const ArkitektProvider = ({
       );
 
 
-      const context : AppContext = {
+      const context: AppContext = {
         manifest: manifest,
         connection: {
           endpoint: endpoint,
@@ -520,9 +520,9 @@ export const ArkitektProvider = ({
       localStorage.removeItem("fakts");
       localStorage.removeItem("token");
       setContext({
-            manifest: manifest,
-            autoLoginError: e instanceof Error ? e.message : "Auto-login failed",
-            connection: undefined,
+        manifest: manifest,
+        autoLoginError: e instanceof Error ? e.message : "Auto-login failed",
+        connection: undefined,
       });
       setConnecting(false);
       setCurrentController(null);
@@ -537,7 +537,7 @@ export const ArkitektProvider = ({
       console.log("Attempting auto-login...");
       enhanceManifest(manifest).then((enhancedManifest) => {
         console.log("Enhanced manifest for auto-login:", enhancedManifest);
-        tryReconnect({manifest: enhancedManifest, serviceBuilderMap, controller});
+        tryReconnect({ manifest: enhancedManifest, serviceBuilderMap, controller });
       });
 
     }

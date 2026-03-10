@@ -13,7 +13,6 @@ import { RekuestAction } from "@/linkers";
 import { ListActionFragment } from "@/rekuest/api/graphql";
 import { ActionButton } from "@/rekuest/buttons/ActionButton";
 import { ReserveActionButton } from "@/rekuest/buttons/ReserveActionButton";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
   item: ListActionFragment;
@@ -44,18 +43,18 @@ const TheCard = ({ item }: Props) => {
           </div>
         </CardHeader>
 
-          <CardFooter className="flex justify-between items-center gap-2 truncate">
-            <ActionButton id={item.id}>
-              <Button variant="outline" size="lg" className="flex-1 truncate">
-                Assign
-              </Button>
-            </ActionButton>
-            <ReserveActionButton id={item.id}>
-              <Button variant="outline" size="lg" className="flex-1 truncate">
-                Short
-              </Button>
-            </ReserveActionButton>
-          </CardFooter>
+        <CardFooter className="flex justify-between items-center gap-2 truncate">
+          <ActionButton id={item.id}>
+            <Button variant="outline" size="lg" className="flex-1 truncate">
+              Assign
+            </Button>
+          </ActionButton>
+          <ReserveActionButton id={item.id}>
+            <Button variant="outline" size="lg" className="flex-1 truncate">
+              Short
+            </Button>
+          </ReserveActionButton>
+        </CardFooter>
       </Card>
     </RekuestAction.Smart>
   );

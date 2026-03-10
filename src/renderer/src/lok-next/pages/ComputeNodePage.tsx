@@ -1,12 +1,12 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { LokComputeNode } from "@/linkers";
-import { useGetComputeNodeQuery } from "../api/graphql";
-import { FormSheet } from "@/components/dialog/FormDialog";
-import { Pencil } from "lucide-react";
-import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
-import ClientCard from "../components/cards/ClientCard";
-import { ContainerGrid, ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { Arkitekt } from "@/app/Arkitekt";
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { FormSheet } from "@/components/dialog/FormDialog";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import { LokComputeNode } from "@/linkers";
+import { Pencil } from "lucide-react";
+import { useGetComputeNodeQuery } from "../api/graphql";
+import ClientCard from "../components/cards/ClientCard";
+import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
 
 export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
 
@@ -19,12 +19,12 @@ export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
       title={data?.computeNode?.name || "Untitled Compute Node"}
       pageActions={
         <FormSheet
-                trigger={
-                  <Pencil className="inline-block ml-2 w-4 h-4 transition-opacity cursor-pointer" />
-                }
-              >
-                <UpdateComputeNodeForm computeNode={data?.computeNode} />
-              </FormSheet>
+          trigger={
+            <Pencil className="inline-block ml-2 w-4 h-4 transition-opacity cursor-pointer" />
+          }
+        >
+          <UpdateComputeNodeForm computeNode={data?.computeNode} />
+        </FormSheet>
       }
     >
       <div className="grid grid-cols-6">
@@ -46,15 +46,15 @@ export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
       )}
 
       <div className="px-6 pb-4 text-sm text-muted-foreground">
-      <ResponsiveContainerGrid fitLength={data.computeNode.clients.length} >
-        {data.computeNode.clients.map(c =>
-          <ClientCard key={c.id} item={c} />
-        )
+        <ResponsiveContainerGrid fitLength={data.computeNode.clients.length} >
+          {data.computeNode.clients.map(c =>
+            <ClientCard key={c.id} item={c} />
+          )
 
 
 
-        }
-      </ResponsiveContainerGrid>
+          }
+        </ResponsiveContainerGrid>
       </div>
     </LokComputeNode.ModelPage>
   );

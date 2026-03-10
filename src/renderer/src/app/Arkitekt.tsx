@@ -91,7 +91,7 @@ export const serviceMap = {
     optional: true,
     omitchallenge: true,
     forceinsecure: true,
-    builder:  ({ alias }) => {
+    builder: ({ alias }) => {
       return {
         client: createLivekitClient({
           url: aliasToHttpPath(alias, ""),
@@ -161,7 +161,7 @@ export const useKraph = () => {
   return Arkitekt.useService("kraph").client;
 }
 
-export const useAlpaka = ()=> {
+export const useAlpaka = () => {
   return Arkitekt.useService("alpaka").client;
 };
 

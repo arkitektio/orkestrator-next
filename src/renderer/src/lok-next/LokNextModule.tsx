@@ -1,30 +1,29 @@
-import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/app/Arkitekt";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
 import AppPage from "./pages/AppPage";
 import AppsPage from "./pages/AppsPage";
 import ClientPage from "./pages/ClientPage";
-import GroupsPage from "./pages/GroupsPage";
+import ComputeNodePage from "./pages/ComputeNodePage";
+import ComputeNodesPage from "./pages/ComputeNodesPage";
 import HomePage from "./pages/HomePage";
 import InstancesPage from "./pages/InstancesPage";
 import LayerPage from "./pages/LayerPage";
 import LayersPage from "./pages/LayersPage";
 import MePage from "./pages/MePage";
+import OrganizationPage from "./pages/OrganizationPage";
+import OrganizationsPage from "./pages/OrganizationsPage";
+import RecordPage from "./pages/RecordPage";
+import RedeemTokenPage from "./pages/RedeemTokenPage";
+import RedeemTokensPage from "./pages/RedeemTokensPage";
 import ReleasePage from "./pages/ReleasePage";
 import ServiceInstancePage from "./pages/ServiceInstancePage";
 import ServicePage from "./pages/ServicePage";
 import ServicesPage from "./pages/ServicesPage";
 import UserPage from "./pages/UserPage";
 import UsersPage from "./pages/UsersPage";
-import ComputeNodePage from "./pages/ComputeNodePage";
-import ComputeNodesPage from "./pages/ComputeNodesPage";
 import StandardPane from "./panes/StandardPane";
-import RedeemTokensPage from "./pages/RedeemTokensPage";
-import RedeemTokenPage from "./pages/RedeemTokenPage";
-import RecordPage from "./pages/RecordPage";
-import OrganizationPage from "./pages/OrganizationPage";
-import OrganizationsPage from "./pages/OrganizationsPage";
 interface Props { }
 
 export const LokNextModule: React.FC<Props> = (props) => {

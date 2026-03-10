@@ -1,8 +1,7 @@
-import React from "react";
-import { useUpload } from "@/providers/upload/UploadProvider";
-import { Progress } from "@/components/ui/progress";
-import { Activity, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useUpload } from "@/providers/upload/UploadProvider";
+import { Activity, X } from "lucide-react";
 
 export const UploadProgress = () => {
   const { uploads, cancelUpload } = useUpload();

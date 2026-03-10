@@ -9,7 +9,6 @@ import {
   useQuery,
 } from "@apollo/client";
 import React from "react";
-import { useParams } from "react-router-dom";
 import { DebugPage } from "../components/fallbacks/DebugPage";
 import { ErrorPage } from "../components/fallbacks/ErrorPage";
 import { LoadingPage } from "../components/fallbacks/LoadingPage";

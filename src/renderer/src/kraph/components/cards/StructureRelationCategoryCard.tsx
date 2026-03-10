@@ -11,7 +11,7 @@ interface Props {
 
 }
 
-const TheCard = ({ item  }: Props) => {
+const TheCard = ({ item }: Props) => {
   const s3resolve = useResolve();
 
   return (

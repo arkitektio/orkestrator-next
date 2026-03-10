@@ -1,13 +1,11 @@
-export { PanelContent, getPanelKindIcon } from "./PanelContent";
-export { RoiToolsPanel } from "./RoiToolsPanel";
-export { LayerControlsPanel } from "./LayerControlsPanel";
-export { ViewSettingsPanel } from "./ViewSettingsPanel";
-export { DisplayStructuresPanel } from "./DisplayStructuresPanel";
-export { ObjectInfoPanel } from "./ObjectInfoPanel";
 export { ContextMenuPanel } from "./ContextMenuPanel";
+export { DisplayStructuresPanel } from "./DisplayStructuresPanel";
+export { LayerControlsPanel } from "./LayerControlsPanel";
+export { ObjectInfoPanel } from "./ObjectInfoPanel";
+export { getPanelKindIcon, PanelContent } from "./PanelContent";
+export { RoiToolsPanel } from "./RoiToolsPanel";
 export type {
-  Panel,
-  PanelKind,
-  BasePanelProps,
-  ViewerPanelProps,
+  BasePanelProps, Panel,
+  PanelKind, ViewerPanelProps
 } from "./types";
+export { ViewSettingsPanel } from "./ViewSettingsPanel";

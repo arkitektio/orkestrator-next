@@ -5,11 +5,10 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 
-import { ActivityNode } from "../types";
 import Timestamp from "react-timestamp";
-import { UserAvatar } from "@/lok-next/components/UserAvatar";
+import { ActivityNode } from "../types";
 
-const TNode =  memo(({ data, id, selected }: NodeProps<ActivityNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<ActivityNode>) => {
   const resolve = useResolve();
 
   return (

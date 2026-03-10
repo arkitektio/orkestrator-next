@@ -1,7 +1,6 @@
 import { NodeQueryViewFragment } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
-import { bool } from "yup";
 
 
 export type ViewOptions = {

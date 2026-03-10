@@ -1,18 +1,17 @@
-import { Button } from "@/components/ui/button";
 import { Arkitekt } from "@/app/Arkitekt";
-import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw, Server } from "lucide-react";
-import React from "react";
-import { discoverBeaconProbes, discoverFromProbe } from "./discovery";
-import { getStoredProbes, removeProbe, storeProbe } from "./storage";
-import { defaultProbes, ProbeResult, ProbeStatus } from "./types";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
+import { AlertCircle, ChevronDown, Loader2, RefreshCw } from "lucide-react";
+import React from "react";
+import { discoverBeaconProbes, discoverFromProbe } from "./discovery";
 import { ProbeCard } from "./ProbeCard";
+import { getStoredProbes, removeProbe, storeProbe } from "./storage";
+import { defaultProbes, ProbeResult, ProbeStatus } from "./types";
 
 export const EndpointsWidget = () => {
   const connect = Arkitekt.useConnect();

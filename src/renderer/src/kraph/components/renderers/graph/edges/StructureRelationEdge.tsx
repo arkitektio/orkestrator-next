@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { KraphStructureRelation } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -9,7 +10,6 @@ import {
 } from "@xyflow/react";
 import { StructureRelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { KraphStructureRelation } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;

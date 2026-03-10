@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 import { WidgetRegistryType } from "./types";
-import { THE_WIDGET_REGISTRY } from "@/app/shadCnWidgetRegistry";
 
 export type Ward = (...args: any[]) => Promise<any | undefined>;
 

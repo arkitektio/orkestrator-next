@@ -1,4 +1,6 @@
+import { Arkitekt } from "@/app/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
@@ -9,14 +11,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Arkitekt } from "@/app/Arkitekt";
 import { discover } from "@/lib/arkitekt/fakts/discover";
+import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { storeProbe } from "./storage";
 import { DiscoveryProbe } from "./types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 export const CustomEndpointSheet = () => {
   const connect = Arkitekt.useConnect();

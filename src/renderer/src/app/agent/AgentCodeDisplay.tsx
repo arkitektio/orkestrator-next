@@ -1,6 +1,5 @@
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import React from "react";
 
 export const AgentCodeDisplay = ({ code }: { code: number }) => {
   const getMessage = (code: number) => {

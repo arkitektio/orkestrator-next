@@ -1,11 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { RekuestInterface, RekuestStructure, RekuestToolbox } from "@/linkers";
+import { RekuestInterface, RekuestToolbox } from "@/linkers";
 import {
-  useGetInterfaceQuery,
-  useGetStructureQuery,
+  useGetInterfaceQuery
 } from "@/rekuest/api/graphql";
-import ShortcutList from "../components/lists/ShortcutList";
 
 export default asDetailQueryRoute(useGetInterfaceQuery, ({ data, refetch }) => {
   return (

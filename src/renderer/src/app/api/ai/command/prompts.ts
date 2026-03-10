@@ -1,16 +1,16 @@
-import type { ChatMessage } from '@/components/editor/use-chat';
-import type { SlateEditor } from 'platejs';
+import type { ChatMessage } from '@/components/editor/use-chat'
+import type { SlateEditor } from 'platejs'
 
-import { getMarkdown } from '@platejs/ai';
-import dedent from 'dedent';
+import { getMarkdown } from '@platejs/ai'
+import dedent from 'dedent'
 
 import {
   addSelection,
   buildStructuredPrompt,
   formatTextFromMessages,
   getMarkdownWithSelection,
-  isMultiBlocks,
-} from './utils';
+  isMultiBlocks
+} from './utils'
 
 export function getChooseToolPrompt({ messages }: { messages: ChatMessage[] }) {
   return buildStructuredPrompt({
@@ -27,7 +27,7 @@ export function getChooseToolPrompt({ messages }: { messages: ChatMessage[] }) {
 
       // COMMENT
       'User: "Can you review this text and give me feedback?" → Good: "comment" | Bad: "edit"',
-      'User: "Add inline comments to this code to explain what it does" → Good: "comment" | Bad: "generate"',
+      'User: "Add inline comments to this code to explain what it does" → Good: "comment" | Bad: "generate"'
     ],
     history: formatTextFromMessages(messages),
     rules: dedent`
@@ -36,21 +36,21 @@ export function getChooseToolPrompt({ messages }: { messages: ChatMessage[] }) {
       - Only return "comment" if the user explicitly asks for comments, feedback, annotations, or review. Do not infer "comment" implicitly.
       - Return only one enum value with no explanation.
     `,
-    task: `You are a strict classifier. Classify the user's last request as "generate", "edit", or "comment".`,
-  });
+    task: `You are a strict classifier. Classify the user's last request as "generate", "edit", or "comment".`
+  })
 }
 
 export function getCommentPrompt(
   editor: SlateEditor,
   {
-    messages,
+    messages
   }: {
-    messages: ChatMessage[];
+    messages: ChatMessage[]
   }
 ) {
   const selectingMarkdown = getMarkdown(editor, {
-    type: 'blockWithBlockId',
-  });
+    type: 'blockWithBlockId'
+  })
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
@@ -144,7 +144,7 @@ export function getCommentPrompt(
       "content": "human review remains essential to ensure accuracy and ethical use",
       "comments": "Good caution—explain briefly why ethics require human oversight."
     }
-  ]`,
+  ]`
     ],
     history: formatTextFromMessages(messages),
     rules: dedent`
@@ -168,19 +168,16 @@ export function getCommentPrompt(
         - blockId: the id of the block being commented on.
         - content: the original document fragment that needs commenting.
         - comments: a brief comment or explanation for that fragment.
-    `,
-  });
+    `
+  })
 }
 
-export function getGeneratePrompt(
-  editor: SlateEditor,
-  { messages }: { messages: ChatMessage[] }
-) {
+export function getGeneratePrompt(editor: SlateEditor, { messages }: { messages: ChatMessage[] }) {
   if (!isMultiBlocks(editor)) {
-    addSelection(editor);
+    addSelection(editor)
   }
 
-  const selectingMarkdown = getMarkdownWithSelection(editor);
+  const selectingMarkdown = getMarkdownWithSelection(editor)
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
@@ -207,7 +204,7 @@ export function getGeneratePrompt(
       'User: Generate three reflection questions based on the paragraph.\nBackground data:\nThe article discusses the role of creativity in problem-solving and how diverse perspectives enhance innovation.\nOutput:\n1. How can creativity be encouraged in structured environments?\n2. What role does diversity play in innovative teams?\n3. How can leaders balance creativity and efficiency?',
 
       // 8) Explain a concept (selected phrase)
-      'User: Explain the meaning of the selected phrase.\nBackground data:\nDeep learning relies on neural networks to automatically extract patterns from data, a process called <Selection>feature learning</Selection>.\nOutput:\n"Feature learning" means automatically discovering useful representations or characteristics from raw data without manual intervention.',
+      'User: Explain the meaning of the selected phrase.\nBackground data:\nDeep learning relies on neural networks to automatically extract patterns from data, a process called <Selection>feature learning</Selection>.\nOutput:\n"Feature learning" means automatically discovering useful representations or characteristics from raw data without manual intervention.'
     ],
     history: formatTextFromMessages(messages),
     rules: dedent`
@@ -223,18 +220,17 @@ export function getGeneratePrompt(
       Generate content based on the user's instructions, using the background data as context.
       If the instruction requests creation or transformation (e.g., summarize, translate, rewrite, create a table), directly produce the final result using only the provided background data.
       Do not ask the user for additional content.
-    `,
-  });
+    `
+  })
 }
 
 export function getEditPrompt(
   editor: SlateEditor,
   { isSelecting, messages }: { isSelecting: boolean; messages: ChatMessage[] }
 ) {
-  if (!isSelecting)
-    throw new Error('Edit tool is only available when selecting');
+  if (!isSelecting) throw new Error('Edit tool is only available when selecting')
   if (isMultiBlocks(editor)) {
-    const selectingMarkdown = getMarkdownWithSelection(editor);
+    const selectingMarkdown = getMarkdownWithSelection(editor)
 
     return buildStructuredPrompt({
       backgroundData: selectingMarkdown,
@@ -246,7 +242,7 @@ export function getEditPrompt(
         "User: Make the tone more formal and professional.\nbackgroundData: ## Intro\nHey, here's how you can set things up quickly.\nOutput:\n## Introduction\nThis section describes the setup procedure in a clear and professional manner.",
 
         // 3) Make it more concise without losing meaning
-        'User: Make it more concise without losing meaning.\nbackgroundData: The purpose of this document is to provide an overview that explains, in detail, all the steps required to complete the installation.\nOutput:\nThis document provides a detailed overview of the installation steps.',
+        'User: Make it more concise without losing meaning.\nbackgroundData: The purpose of this document is to provide an overview that explains, in detail, all the steps required to complete the installation.\nOutput:\nThis document provides a detailed overview of the installation steps.'
       ],
       history: formatTextFromMessages(messages),
       outputFormatting: 'markdown',
@@ -258,15 +254,15 @@ export function getEditPrompt(
         - CRITICAL: Provide only the content to replace <backgroundData>. Do not add additional blocks or change the block structure unless specifically requested.
       `,
       task: `The following <backgroundData> is user-provided Markdown content that needs improvement. Modify it according to the user's instruction.
-      Unless explicitly stated otherwise, your output should be a seamless replacement of the original content.`,
-    });
+      Unless explicitly stated otherwise, your output should be a seamless replacement of the original content.`
+    })
   }
 
-  addSelection(editor);
+  addSelection(editor)
 
-  const selectingMarkdown = getMarkdownWithSelection(editor);
-  const endIndex = selectingMarkdown.indexOf('<Selection>');
-  const prefilledResponse = selectingMarkdown.slice(0, endIndex);
+  const selectingMarkdown = getMarkdownWithSelection(editor)
+  const endIndex = selectingMarkdown.indexOf('<Selection>')
+  const prefilledResponse = selectingMarkdown.slice(0, endIndex)
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
@@ -293,7 +289,7 @@ export function getEditPrompt(
       'User: Expand the description.\nbackgroundData: The view was <Selection>beautiful</Selection>.\nOutput: breathtaking and full of vibrant colors',
 
       // 8) Make it sound more natural
-      'User: Make it sound more natural.\nbackgroundData: She <Selection>did a party</Selection> yesterday.\nOutput: had a party',
+      'User: Make it sound more natural.\nbackgroundData: She <Selection>did a party</Selection> yesterday.\nOutput: had a party'
     ],
     history: formatTextFromMessages(messages),
     outputFormatting: 'markdown',
@@ -312,6 +308,6 @@ export function getEditPrompt(
       You must only modify the text inside <Selection>.
       Your output should be a direct replacement for the selected text, without including any tags or surrounding content.
       Ensure the replacement is grammatically correct and fits naturally when substituted back into the original text.
-    `,
-  });
+    `
+  })
 }

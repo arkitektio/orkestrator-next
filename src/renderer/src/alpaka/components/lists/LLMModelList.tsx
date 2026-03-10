@@ -29,7 +29,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <LLMModelCard key={index} item={ex}  />}
+      {(ex, index) => <LLMModelCard key={index} item={ex} />}
     </ListRender>
   );
 };

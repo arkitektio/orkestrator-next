@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   CommentsForDocument,
@@ -6,7 +5,6 @@ import {
   useCommentsForQuery,
   useCreateCommentMutation,
 } from "@/lok-next/api/graphql";
-import { MessageSquare } from "lucide-react";
 import { CommentList } from "./display/CommentList";
 import { CommentEdit } from "./edit/CommentEdit";
 import { KommentProps } from "./types";

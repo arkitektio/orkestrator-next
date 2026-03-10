@@ -19,7 +19,7 @@ const List = ({ }: Props) => {
           </MikroDataset.ListLink>
         }
       >
-        {(ex, index) => <ReservationCard key={index} item={ex}  />}
+        {(ex, index) => <ReservationCard key={index} item={ex} />}
       </ListRender>
     </>
   );

@@ -1,6 +1,6 @@
 // Constants used in the app
 
-import { BrowserRouter, HashRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import { Manifest } from "./lib/arkitekt/fakts/manifestSchema";
 
 declare global {

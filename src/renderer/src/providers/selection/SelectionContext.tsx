@@ -5,15 +5,15 @@ import { SelectionContextType } from "./types";
 export const SelectionContext = React.createContext<SelectionContextType>({
   selection: [],
   bselection: [],
-  setSelection: () => {},
-  unselect: () => {},
+  setSelection: () => { },
+  unselect: () => { },
   isMultiSelecting: false,
-  setIsMultiSelecting: () => {},
-  registerSelectables: () => {},
-  unregisterSelectables: () => {},
-  toggleSelection: () => {},
-  toggleBSelection: () => {},
-  removeSelection: () => {},
+  setIsMultiSelecting: () => { },
+  registerSelectables: () => { },
+  unregisterSelectables: () => { },
+  toggleSelection: () => { },
+  toggleBSelection: () => { },
+  removeSelection: () => { },
 });
 
 export const useSelection = () => useContext(SelectionContext);
@@ -62,8 +62,8 @@ export const useMySelection = (
     onClick?: (event: any) => {};
     unselectOutside?: boolean;
   } = {
-    unselectOutside: false,
-  },
+      unselectOutside: false,
+    },
 ) => {
   const {
     isMultiSelecting,

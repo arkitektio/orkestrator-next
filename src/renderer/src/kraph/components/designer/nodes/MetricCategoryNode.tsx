@@ -6,9 +6,9 @@ import { KraphMetricCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { MetricNode } from "../types";
-import { PathMarker } from "../components/PathMarker";
 import { NodeQueryControls } from "../components/NodeQueryControls";
+import { PathMarker } from "../components/PathMarker";
+import { MetricNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
   const resolve = useResolve();

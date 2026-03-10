@@ -1,6 +1,6 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import { ArkitektContext } from "./context";
-import { ArkitektContextType, Service, ServiceMap } from "./types";
+import { ArkitektContextType, Service } from "./types";
 
 export const useArkitekt = () =>
   useContext(ArkitektContext) as ArkitektContextType<any, any>;
@@ -9,7 +9,7 @@ export const useArkitekt = () =>
 export type IsOptional<T, K extends keyof T> = undefined extends T[K] ? true : false;
 
 
-export const useService = (key: string): Service=> {
+export const useService = (key: string): Service => {
   const { connection } = useArkitekt();
 
   if (!connection) {
@@ -23,7 +23,7 @@ export const useService = (key: string): Service=> {
   return service;
 };
 
-export const useSelfService = (key: string): Service=> {
+export const useSelfService = (key: string): Service => {
   const { connection } = useArkitekt();
 
   if (!connection) {
@@ -45,7 +45,7 @@ export const useAvailableServices = () => {
     throw new Error("Arkitekt not connected");
   }
 
-  return Object.keys(connection.serviceMap).map(key =>({key: key, definition: connection.serviceBuilderMap[key], service: connection.serviceMap[key], instance: connection.serviceInstanceMap[key]}));
+  return Object.keys(connection.serviceMap).map(key => ({ key: key, definition: connection.serviceBuilderMap[key], service: connection.serviceMap[key], instance: connection.serviceInstanceMap[key] }));
 }
 
 export const usePotentialService = (key: string): Service | undefined => {

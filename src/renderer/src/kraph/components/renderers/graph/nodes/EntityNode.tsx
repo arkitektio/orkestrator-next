@@ -7,7 +7,7 @@ import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { EntityNode } from "../types";
 
-const TNode =  memo(({ data, id, selected }: NodeProps<EntityNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<EntityNode>) => {
   const resolve = useResolve();
 
   return (

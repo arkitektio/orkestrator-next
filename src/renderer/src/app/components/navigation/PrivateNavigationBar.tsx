@@ -1,4 +1,6 @@
+import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +14,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { Arkitekt, Guard } from "@/app/Arkitekt";
+import { cn } from "@/lib/utils";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
@@ -37,9 +39,6 @@ import { TbBugOff } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { cn } from "@/lib/utils";
-import { is } from "date-fns/locale";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -146,7 +145,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
               {({ isActive }) => (
                 <Tooltip>
                   <TooltipTrigger>
-                    <NavigationMenuLink active={isActive} className={cn("flex-1 cursor-pointer", isActive ? "bg-primary" : "") }>
+                    <NavigationMenuLink active={isActive} className={cn("flex-1 cursor-pointer", isActive ? "bg-primary" : "")}>
                       {matchIcon(s.key)}
                     </NavigationMenuLink>
                   </TooltipTrigger>
@@ -180,7 +179,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
                   {({ isActive }) => (
                     <Tooltip>
                       <TooltipTrigger className="flex flex-col items-center bg-green-500 p-2 rounded-md">
-                        <NavigationMenuLink className={cn("flex-1 cursor-pointer", isActive ? "text-primary" : "text-foreground") } active={isActive}>
+                        <NavigationMenuLink className={cn("flex-1 cursor-pointer", isActive ? "text-primary" : "text-foreground")} active={isActive}>
                           {matchIcon(s.key)} {/* Show the name of the service below the icon */}
                         </NavigationMenuLink>
                         {isActive && "Active"}

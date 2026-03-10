@@ -1,13 +1,12 @@
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphStructureCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { StructureNode } from "../types";
 import { NodeQueryControls } from "../components/NodeQueryControls";
+import { StructureNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
   const resolve = useResolve();

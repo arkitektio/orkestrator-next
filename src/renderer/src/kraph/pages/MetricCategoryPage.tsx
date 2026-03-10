@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -14,7 +14,7 @@ import {
 } from "../api/graphql";
 import UpdateMetricCategoryForm from "../forms/UpdateMetricCategoryForm";
 
-const Page =  asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetMetricCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();

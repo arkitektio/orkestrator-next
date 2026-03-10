@@ -1,6 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -23,13 +22,13 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import DependencyCard from "../components/cards/DependencyCard";
+import TaskList from "../components/lists/TaskList";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { usePortForm } from "../hooks/usePortForm";
+import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
-import TaskList from "../components/lists/TaskList";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -258,7 +257,7 @@ export const DefaultRenderer = (props: {
         {(implementation, key) => <DependencyCard item={implementation} key={key} />}
       </ListRender>
 
-      <TaskList filters={{implementation: props.implementation.id}}/>
+      <TaskList filters={{ implementation: props.implementation.id }} />
     </div>
   );
 };
@@ -302,16 +301,16 @@ export default asDetailQueryRoute(
         }}
         pageActions={
           <>
-          <>
-            <RekuestAction.DetailLink object={data.implementation.action.id}>
-              <Button variant="outline">Go to Action</Button>
-            </RekuestAction.DetailLink>
-          </>
-          <>
-            <RekuestAgent.DetailLink object={data.implementation.agent.id}>
-              <Button variant="outline">Go to Agent</Button>
-            </RekuestAgent.DetailLink>
-          </>
+            <>
+              <RekuestAction.DetailLink object={data.implementation.action.id}>
+                <Button variant="outline">Go to Action</Button>
+              </RekuestAction.DetailLink>
+            </>
+            <>
+              <RekuestAgent.DetailLink object={data.implementation.agent.id}>
+                <Button variant="outline">Go to Agent</Button>
+              </RekuestAgent.DetailLink>
+            </>
           </>
         }
       >

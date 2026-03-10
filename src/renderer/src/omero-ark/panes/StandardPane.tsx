@@ -2,22 +2,14 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
 import { DroppableNavLink } from "@/components/ui/link";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Toggle } from "@/components/ui/toggle";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
-import { ArrowDown, File, Folder, Home, Image } from "lucide-react";
+import { Home, Image } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
 } from "../api/graphql";
-import DatasetCard from "../components/cards/DatasetCard";
 import ImageCard from "../components/cards/ImageCard";
 
 export const NavigationPane = () => (

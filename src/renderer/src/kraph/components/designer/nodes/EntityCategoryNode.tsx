@@ -6,9 +6,9 @@ import { KraphEntityCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { GenericNode } from "../types";
-import { PathMarker } from "../components/PathMarker";
 import { NodeQueryControls } from "../components/NodeQueryControls";
+import { PathMarker } from "../components/PathMarker";
+import { GenericNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
   const resolve = useResolve();

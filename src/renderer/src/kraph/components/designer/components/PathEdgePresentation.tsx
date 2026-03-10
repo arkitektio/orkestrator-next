@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { ReactNode } from "react";
-import { useIsEdgePossible, useEdgePaths } from "../OntologyGraphProvider";
+import { useEdgePaths, useIsEdgePossible } from "../OntologyGraphProvider";
 
 // Helper to convert RGB array to CSS rgb() string
 const rgbToCSS = (rgb: number[]): string => {

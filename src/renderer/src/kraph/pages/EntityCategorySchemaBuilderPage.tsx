@@ -1,12 +1,12 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { SchemaBuilderPage } from "@/kraph/pages/SchemaBuilderPage";
-import { useGetEntityCategoryQuery, useUpdateEntityCategoryMutation, useEntityNodesQuery } from "../api/graphql";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEntityNodesQuery, useGetEntityCategoryQuery, useUpdateEntityCategoryMutation } from "../api/graphql";
 import {
   DEFAULT_AGGREGATION,
   DEFAULT_DERIVATION,
   PropertyDefinition,
 } from "../components/schema-builder/utils";
-import { PageLayout } from "@/components/layout/PageLayout";
 
 export function EntityCategorySchemaBuilderPage() {
   const { id } = useParams<{ id: string }>();

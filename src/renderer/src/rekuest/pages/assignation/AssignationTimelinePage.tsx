@@ -17,13 +17,12 @@ import {
   useInterruptMutation,
   useNoChildrenDetailAssignationQuery,
 } from "@/rekuest/api/graphql";
+import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 import { isCancalable, isInterruptable, useReassign } from "../AssignationPage";
-import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
-import { Separator } from "@/components/ui/separator";
 
 export function notEmpty<TValue>(
   value: TValue | null | undefined

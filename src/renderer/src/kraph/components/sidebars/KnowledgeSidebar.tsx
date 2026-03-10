@@ -1,5 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import {
   ListGraphFragment,
   useEnsureStructureMutation,
@@ -11,7 +12,6 @@ import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { useEffect, useState } from "react";
 import { MetricsTable } from "../tables/MetricsTable";
-import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;

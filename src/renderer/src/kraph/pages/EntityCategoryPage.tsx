@@ -19,7 +19,7 @@ import {
 import { EntityList } from "../components/renderers/lists/EntityList";
 import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
 
-export const Page =  asDetailQueryRoute(
+export const Page = asDetailQueryRoute(
   useGetEntityCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();

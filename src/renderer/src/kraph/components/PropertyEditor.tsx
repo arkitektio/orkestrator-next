@@ -3,7 +3,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { GetEntityDocument, ValueKind, PropertyDefinitionFragment } from "@/kraph/api/graphql";
+import { GetEntityDocument, PropertyDefinitionFragment, ValueKind } from "@/kraph/api/graphql";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

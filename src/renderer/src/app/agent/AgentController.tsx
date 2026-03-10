@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { useSettings } from "@/providers/settings/SettingsContext"
-import { useAgent } from "./AgentProvider";
-import { AgentCodeDisplay } from "./AgentCodeDisplay";
-import { Badge } from "@/components/ui/badge";
-import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useSettings } from "@/providers/settings/SettingsContext";
+import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
+import { AgentCodeDisplay } from "./AgentCodeDisplay";
+import { useAgent } from "./AgentProvider";
 
 export const AgentController = (props: any) => {
   const { settings, setSettings } = useSettings();

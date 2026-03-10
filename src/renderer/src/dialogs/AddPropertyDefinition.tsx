@@ -3,24 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
-    EntityCategoryFragment,
-    ValueKind as MetricKind,
-    useUpdateEntityCategoryMutation,
+  EntityCategoryFragment,
+  ValueKind as MetricKind,
+  useUpdateEntityCategoryMutation,
 } from "@/kraph/api/graphql";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 type PropertyOption = {
     label: string;

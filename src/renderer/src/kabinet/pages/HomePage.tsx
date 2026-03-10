@@ -3,13 +3,17 @@ import { Separator } from "@/components/ui/separator";
 
 import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
 import { CommandMenu } from "@/command/Menu";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { HelpSidebar } from "@/components/sidebars/help";
+import { ActionButton } from "@/components/ui/action";
+import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import {
   BarChart3,
-  Database,
   Network,
   ShoppingBasket,
-  TrendingUp,
+  TrendingUp
 } from "lucide-react";
 import {
   ListDefinitionsDocument,
@@ -17,16 +21,11 @@ import {
   useHomePageQuery,
   useRescanReposMutation,
 } from "../api/graphql";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { CreateRepoForm } from "../forms/CreateRepoForm";
-import { ActionButton } from "@/components/ui/action";
-import { Button } from "@/components/ui/button";
 import { PopularCarousel } from "../components/PopularCarousel";
 import DefinitionList from "../components/lists/DefinitionList";
 import ReleasesList from "../components/lists/ReleasesList";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { CreateRepoForm } from "../forms/CreateRepoForm";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
-import { HelpSidebar } from "@/components/sidebars/help";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {

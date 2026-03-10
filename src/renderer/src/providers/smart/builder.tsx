@@ -1,7 +1,13 @@
+import { EnhanceButton, EnhanceButtonProps } from "@/alpaka/components/EnhanceButton";
+import {
+  ListPageLayout,
+  ListPageLayoutProps,
+} from "@/components/layout/ListPageLayout";
 import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
+import { PaneLink } from "@/components/ui/sidepane";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
@@ -15,7 +21,6 @@ import { ObjectID } from "@/types";
 import { NavLink } from "react-router-dom";
 import { SmartDropZone } from "./Drop";
 import { SearchFunction, smartRegistry } from "./registry";
-import { ShareDialog } from "./ShareDialog";
 import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
@@ -25,12 +30,6 @@ import {
   OmitedNavLinkProps,
   SmartPaneLinkProps,
 } from "./types";
-import {
-  ListPageLayout,
-  ListPageLayoutProps,
-} from "@/components/layout/ListPageLayout";
-import { EnhanceButton, EnhanceButtonProps } from "@/alpaka/components/EnhanceButton";
-import { PaneLink } from "@/components/ui/sidepane";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {

@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <ReagentCard key={index} item={ex}  />}
+      {(ex, index) => <ReagentCard key={index} item={ex} />}
     </ListRender>
   );
 };

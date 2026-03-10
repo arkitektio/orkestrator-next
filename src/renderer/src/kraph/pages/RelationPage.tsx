@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphReagent, KraphRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useGetReagentQuery, useGetRelationQuery } from "../api/graphql";
+import { useGetRelationQuery } from "../api/graphql";
 
 export default asDetailQueryRoute(useGetRelationQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();

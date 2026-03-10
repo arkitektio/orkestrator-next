@@ -159,18 +159,18 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
         <div className="space-y-3">
           {filteredFakts && typeof filteredFakts === "object"
             ? Object.entries(filteredFakts as Record<string, unknown>).map(
-                ([key, value]) => (
-                  <Card key={key}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Settings className="w-4 h-4" />
-                        {key}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>{renderValue(value)}</CardContent>
-                  </Card>
-                ),
-              )
+              ([key, value]) => (
+                <Card key={key}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      {key}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>{renderValue(value)}</CardContent>
+                </Card>
+              ),
+            )
             : null}
         </div>
       </ScrollArea>
@@ -283,10 +283,10 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     >
       <div className="space-y-8">
 
-       {/* App Updates Section */}
+        {/* App Updates Section */}
         <Card>
           <CardHeader>
-             <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
               Appearance
             </CardTitle>

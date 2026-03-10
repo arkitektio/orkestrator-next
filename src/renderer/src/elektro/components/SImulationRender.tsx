@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -15,9 +14,8 @@ import {
   Line,
   LineChart,
   ReferenceArea,
-  ReferenceLine,
   XAxis,
-  YAxis,
+  YAxis
 } from "recharts";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import useUndoable from "use-undoable";

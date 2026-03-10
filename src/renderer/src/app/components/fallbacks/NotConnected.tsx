@@ -45,9 +45,8 @@ export const NotConnected = () => {
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-full">
               <ChevronDown
-                className={`h-4 w-4 mr-2 transition-transform ${
-                  showHelp ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 mr-2 transition-transform ${showHelp ? "rotate-180" : ""
+                  }`}
               />
               More Options
             </Button>

@@ -1,5 +1,5 @@
-import { MigrationPlan } from "./migration";
 import { ApolloClient, gql } from "@apollo/client";
+import { MigrationPlan } from "./migration";
 
 const UPDATE_ENTITY_PROPERTIES = gql`
   mutation UpdateEntityProperties($id: ID!, $properties: [PropertyInput!]!) {

@@ -1,14 +1,13 @@
+import { Guard } from "@/app/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import { Komments } from "@/lok-next/components/komments/Komments";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
+import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
 import { Identifier } from "@/types";
 import { useMemo } from "react";
-import { PageLayout, PageVariant } from "./PageLayout";
 import { MultiSidebar } from "./MultiSidebar";
-import { Komments } from "@/lok-next/components/komments/Komments";
-import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { ExportSidebar } from "../sidebars/export";
-import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { Guard } from "@/app/Arkitekt";
+import { PageLayout, PageVariant } from "./PageLayout";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -46,7 +45,7 @@ export const ModelPageLayout = ({
         ...additionalSidebars,
       }} sidebarKey="DetailModel" />}
       variant={variant}
-      pageActions={pageActions || <ObjectButton  objects={objects} />}
+      pageActions={pageActions || <ObjectButton objects={objects} />}
     >
       <CommandMenu objects={objects} />
       {children}

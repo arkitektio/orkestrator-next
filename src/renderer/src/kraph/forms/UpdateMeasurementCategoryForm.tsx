@@ -14,7 +14,7 @@ import {
 } from "../api/graphql";
 
 
-const TForm =  (props: {
+const TForm = (props: {
   measurementCategory: MeasurementCategoryFragment;
 }) => {
   const [update] = useUpdateMeasurementCategoryMutation({

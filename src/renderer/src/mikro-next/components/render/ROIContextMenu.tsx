@@ -1,4 +1,5 @@
 import { DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { RoiKind } from "@/mikro-next/api/graphql";
 import {
   Check,
   Circle,
@@ -8,9 +9,8 @@ import {
   MoreHorizontal,
   Square,
 } from "lucide-react";
-import { RoiKind } from "@/mikro-next/api/graphql";
-import { useViewerState } from "./ViewerStateProvider";
 import { forwardRef } from "react";
+import { useViewerState } from "./ViewerStateProvider";
 
 // Helper function to get icon for ROI type
 const getRoiIcon = (roiKind: RoiKind) => {
@@ -86,11 +86,10 @@ export const ROIContextMenu = forwardRef<HTMLDivElement, ROIContextMenuProps>(
               <div
                 key={kind}
                 onClick={() => handleRoiKindClick(kind)}
-                className={`flex items-center px-3 py-2 text-sm cursor-pointer rounded ${
-                  isActive
+                className={`flex items-center px-3 py-2 text-sm cursor-pointer rounded ${isActive
                     ? "bg-green-800 text-white"
                     : "text-gray-300 hover:bg-gray-800"
-                }`}
+                  }`}
               >
                 <IconComponent className="w-4 h-4 mr-2" />
                 {kind.charAt(0) + kind.slice(1).toLowerCase()}

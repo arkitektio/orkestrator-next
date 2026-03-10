@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CornerDownRight, Filter } from "lucide-react";
 import { ReactNode, useState } from "react";
-import { Filter, CornerDownRight } from "lucide-react";
-import { useIsNodePossible, useNodePaths, useNodeOccurrences, useOntologyGraph } from "../OntologyGraphProvider";
-import { WhereClauseDialog } from "./WhereClauseDialog";
+import { useIsNodePossible, useNodeOccurrences, useNodePaths, useOntologyGraph } from "../OntologyGraphProvider";
 import { ReturnDialog } from "./ReturnDialog";
+import { WhereClauseDialog } from "./WhereClauseDialog";
 
 interface PathNodePresentationProps {
   id: string;

@@ -1,8 +1,4 @@
-import {
-  GetImageDocument,
-  GetImageQuery,
-  useCreateRoiMutation,
-} from "@/mikro-next/api/graphql";
+import { GetImageDocument, GetImageQuery, useCreateRoiMutation } from '@/mikro-next/api/graphql'
 
 export const useRoiCreation = (imageId: string) => {
   const [createRoi] = useCreateRoiMutation({
@@ -11,8 +7,8 @@ export const useRoiCreation = (imageId: string) => {
         // Read the current cache for the image
         const existingImage = cache.readQuery<GetImageQuery>({
           query: GetImageDocument,
-          variables: { id: imageId },
-        });
+          variables: { id: imageId }
+        })
 
         if (existingImage?.image) {
           // Update the cache by adding the new ROI to the rois array
@@ -22,14 +18,14 @@ export const useRoiCreation = (imageId: string) => {
             data: {
               image: {
                 ...existingImage.image,
-                rois: [...existingImage.image.rois, data.createRoi],
-              },
-            },
-          });
+                rois: [...existingImage.image.rois, data.createRoi]
+              }
+            }
+          })
         }
       }
-    },
-  });
+    }
+  })
 
-  return createRoi;
-};
+  return createRoi
+}

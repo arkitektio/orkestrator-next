@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailModelCollectionQuery, useDetailNeuronModelQuery } from "../api/graphql";
 // NeuronModelCard import removed; inline expandable cards are used instead
-import { NeuronVisualizer } from "../components/NeuronRenderer";
 import { useState } from "react";
+import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export type IRepresentationScreenProps = {};
 

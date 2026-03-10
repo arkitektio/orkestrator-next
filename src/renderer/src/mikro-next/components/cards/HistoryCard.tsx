@@ -19,7 +19,7 @@ interface HistoryCardProps {
 
 const TheCard = ({ history }: HistoryCardProps) => {
   return (
-    <MikroHistory.Smart object={history?.id}  key={history.id}>
+    <MikroHistory.Smart object={history?.id} key={history.id}>
       <Card key={history.id}>
         <CardHeader className="flex flex-row gap-1">
           <div className="my-auto">

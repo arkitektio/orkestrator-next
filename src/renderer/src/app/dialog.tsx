@@ -1,7 +1,8 @@
-import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
+import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
 import { AddPropertyDefinitionDialog } from "@/dialogs/AddPropertyDefinition";
-import { CreateEntityWithPropertiesDialog } from "@/dialogs/CreateEntityWithProperties";
+import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { ChatDialog } from "@/dialogs/ChatDialog";
+import { CreateEntityWithPropertiesDialog } from "@/dialogs/CreateEntityWithProperties";
 import { CreateNewMeasurement } from "@/dialogs/CreateNewMeasurement";
 import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
 import { NotifyDialog } from "@/dialogs/NotifyDialog";
@@ -9,16 +10,15 @@ import { RelateStructures } from "@/dialogs/RelateStructures";
 import { ReportBugDialog } from "@/dialogs/ReportBugDialog";
 import { ReportClientBugDialog } from "@/dialogs/ReportClientBugDialog";
 import { SetAsMeasurement } from "@/dialogs/SetAsMeasurement";
+import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 import CreateEntityForm from "@/kraph/forms/CreateEntityForm";
 import CreateProtocolEventCategoryForm from "@/kraph/forms/CreateProtocolEventCategoryForm";
+import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
+import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
-import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
-import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
-import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
-import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,

@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Edit2, Database } from "lucide-react";
-import { stringToColor } from "./utils";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Database, Edit2, Lock } from "lucide-react";
+import { stringToColor } from "./utils";
 
 interface TypeCardProps {
   name: string;

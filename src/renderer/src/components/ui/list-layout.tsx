@@ -84,4 +84,4 @@ const Footer = React.forwardRef<
 ));
 Footer.displayName = "ListLayout.Footer";
 
-export { Root, Header, Grid, Footer };
+export { Footer, Grid, Header, Root };

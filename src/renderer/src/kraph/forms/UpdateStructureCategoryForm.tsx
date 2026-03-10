@@ -15,7 +15,7 @@ import {
 } from "../api/graphql";
 
 
-const TForm =  (props: { structureCategory: StructureCategoryFragment }) => {
+const TForm = (props: { structureCategory: StructureCategoryFragment }) => {
   const [update] = useUpdateStructureCategoryMutation({
     refetchQueries: ["GetGraph"],
   });

@@ -1,15 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KabinetBackend, RekuestAgent } from "@/linkers";
+import { useAgentsQuery } from "@/rekuest/api/graphql";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useGetBackendQuery } from "../api/graphql";
 import PodCard from "../components/cards/PodCard";
 import ResourceCard from "../components/cards/ResourceCard";
 import { IconForBackendKind } from "../components/IconForBackendKind";
-import { useAgentsQuery } from "@/rekuest/api/graphql";
-import { Agent } from "http";
-import { Button } from "@/components/ui/button";
 
 
 export const AgentForButton = ({
@@ -18,13 +16,15 @@ export const AgentForButton = ({
   backendId: string;
 }) => {
 
-  const {data, error} = useAgentsQuery({
-    variables: { filters: {
-      clientId: backendId
-     } },
+  const { data, error } = useAgentsQuery({
+    variables: {
+      filters: {
+        clientId: backendId
+      }
+    },
   });
 
-  if (error)  {
+  if (error) {
     return <div>Error loading agent {error.message}</div>;
   }
 
@@ -33,23 +33,23 @@ export const AgentForButton = ({
 
   return (
     <>
-    {data?.agents.map((agent) => (
+      {data?.agents.map((agent) => (
 
-    <RekuestAgent.DetailLink
-      object={agent.id}
-      key={agent.id}
-      className="text-sm font-medium hover:underline"
-    >
-      <Button variant="ghost" size="sm">
-      {agent.connected ? (
-        <span className="text-green-400">● </span>
-      ) : (
-        <span className="text-red-400">● </span>
-      )}
-      {agent.name || "No Agent"}
-      </Button>
-    </RekuestAgent.DetailLink>
-    ))}
+        <RekuestAgent.DetailLink
+          object={agent.id}
+          key={agent.id}
+          className="text-sm font-medium hover:underline"
+        >
+          <Button variant="ghost" size="sm">
+            {agent.connected ? (
+              <span className="text-green-400">● </span>
+            ) : (
+              <span className="text-red-400">● </span>
+            )}
+            {agent.name || "No Agent"}
+          </Button>
+        </RekuestAgent.DetailLink>
+      ))}
     </>
   );
 };

@@ -24,7 +24,6 @@ import InstanceMaskViewCard from "../cards/InstanceMaskViewCard";
 import LabelViewCard from "../cards/LabelViewCard";
 import LightpathViewCard from "../cards/LightpathViewCard";
 import MaskViewCard from "../cards/MaskViewCard";
-import OpticsViewCard from "../cards/OpticsViewCard";
 import ROIViewCard from "../cards/ROIViewCard";
 import TransformationViewCard from "../cards/TransformationViewCard";
 import WellPositionViewCard from "../cards/WellPositionViewCard";

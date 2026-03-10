@@ -1,3 +1,6 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertCircle, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { MigrationPlan } from "./migration";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MigrationDialogProps {
   open: boolean;

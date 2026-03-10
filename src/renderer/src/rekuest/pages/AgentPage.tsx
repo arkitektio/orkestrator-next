@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
+import { ClientImage } from "@/lok-next/components/ClientAvatar";
 import {
   AgentFragment,
   useAgentQuery,
@@ -17,14 +18,13 @@ import {
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
+import { Activity, Box, CheckCircle, Clock, Database, Pin, PinOff, Server } from "lucide-react";
 import { useEffect } from "react";
+import Timestamp from "react-timestamp";
 import ImplementationCard from "../components/cards/ImplementationCard";
 import TaskCard from "../components/cards/TaskCard";
 import { StateDisplay } from "../components/State";
-import Timestamp from "react-timestamp";
-import { ClientImage } from "@/lok-next/components/ClientAvatar";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
-import { Activity, Box, CheckCircle, Clock, Database, Pin, PinOff, Server } from "lucide-react";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();
@@ -188,34 +188,34 @@ export default asDetailQueryRoute(
         }
       >
         {/* Hero Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-12">
-              <div className="lg:col-span-8">
-                <div className="space-y-4">
-                  <RekuestAgent.DetailLink object={data.agent.id}>
-                    <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl hover:text-primary transition-colors cursor-pointer">
-                      {data.agent.name}
-                    </h1>
-                  </RekuestAgent.DetailLink>
+        <div className="grid grid-cols-1 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <div className="space-y-4">
+              <RekuestAgent.DetailLink object={data.agent.id}>
+                <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl hover:text-primary transition-colors cursor-pointer">
+                  {data.agent.name}
+                </h1>
+              </RekuestAgent.DetailLink>
 
-                  {data.agent.extensions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {data.agent.extensions.map((extension) => (
-                        <Badge key={extension} variant="secondary" className="text-xs font-mono">
-                          {extension}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+              {data.agent.extensions.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {data.agent.extensions.map((extension) => (
+                    <Badge key={extension} variant="secondary" className="text-xs font-mono">
+                      {extension}
+                    </Badge>
+                  ))}
                 </div>
-              </div>
-
-              <div className="lg:col-span-4  p-6 flex items-center justify-center">
-                <ClientImage
-                  clientId={data.agent.registry.client.clientId}
-                  className="w-full max-w-[200px] h-auto rounded-lg shadow-lg"
-                />
-              </div>
+              )}
             </div>
+          </div>
+
+          <div className="lg:col-span-4  p-6 flex items-center justify-center">
+            <ClientImage
+              clientId={data.agent.registry.client.clientId}
+              className="w-full max-w-[200px] h-auto rounded-lg shadow-lg"
+            />
+          </div>
+        </div>
         <div className="space-y-8 mt-6">
           {/* Status Cards Section */}
           <div className="grid grid-cols-8  gap-3">

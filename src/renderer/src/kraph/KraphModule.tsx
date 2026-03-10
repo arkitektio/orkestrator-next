@@ -1,6 +1,6 @@
+import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { Guard } from "@/app/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
 import EntityCategoriesPage from "./pages/EntityCategoriesPage";
@@ -14,6 +14,7 @@ import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
 import MetricCategoriesPage from "./pages/MetricCategoriesPage";
 import MetricCategoryPage from "./pages/MetricCategoryPage";
+import MetricPage from "./pages/MetricPage";
 import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 import NaturalEventCategoryPage from "./pages/NaturalEventCategoryPage";
 import NodePage from "./pages/NodePage";
@@ -22,6 +23,8 @@ import ProtocolEventCategoryPage from "./pages/ProtocolEventCategoryPage";
 import ProtocolEventPage from "./pages/ProtocolEventPage";
 import RelationCategoriesPage from "./pages/RelationCategoriesPage";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
+import RelationPage from "./pages/RelationPage";
+import ScatterPlotPage from "./pages/ScatterPlotPage";
 import StructureCategoriesPage from "./pages/StructureCategoriesPage";
 import {
   default as ExpressionPage,
@@ -30,13 +33,10 @@ import {
 import StructurePage from "./pages/StructurePage";
 import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
 import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
-import StandardPane from "./panes/StandardPane";
-import MetricPage from "./pages/MetricPage";
-import RelationPage from "./pages/RelationPage";
 import StructureRelationPage from "./pages/StructureRelationPage";
 import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
-import ScatterPlotPage from "./pages/ScatterPlotPage";
+import StandardPane from "./panes/StandardPane";
 
 import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }

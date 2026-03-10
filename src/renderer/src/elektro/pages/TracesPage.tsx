@@ -1,7 +1,6 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ElektroSimulation, ElektroTrace } from "@/linkers";
+import { ElektroTrace } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import TraceList from "../components/lists/TraceList";

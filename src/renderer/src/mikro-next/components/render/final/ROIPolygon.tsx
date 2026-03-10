@@ -1,16 +1,14 @@
 import { MikroROI } from "@/linkers";
 import {
   ListRoiFragment,
-  RoiKind,
-  useDeleteRoiMutation,
+  RoiKind
 } from "@/mikro-next/api/graphql";
+import { useMySelect } from "@/providers/selection/SelectionContext";
 import { Line, Text, useCursor } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import * as THREE from "three";
 import { useViewerState } from "../ViewerStateProvider";
-import { useMySelect } from "@/providers/selection/SelectionContext";
-import { e, t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
 
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],

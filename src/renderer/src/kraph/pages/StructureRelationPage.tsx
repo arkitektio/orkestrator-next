@@ -1,13 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { DisplayWidget } from "@/command/Menu";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Badge } from "@/components/ui/badge";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphStructureRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureRelationQuery } from "../api/graphql";
-import { DisplayWidget } from "@/command/Menu";
 
-const Page =  asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
+const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
   return (

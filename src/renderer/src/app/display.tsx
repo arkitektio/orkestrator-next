@@ -1,15 +1,15 @@
-import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
-import { createDisplayProvider } from "@/lib/display/registry";
-import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
-import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
-import { PodDisplay } from "@/kabinet/displays/PodDisplay";
-import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
-import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
 import { AnalogSignalChannelDisplay } from "@/elektro/displays/AnalogSignalChannelDisplay";
-import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
 import { BlockDisplay } from "@/elektro/displays/BlockDisplay";
 import { NeuronModelDisplay } from "@/elektro/displays/NeuronModelDisplay";
+import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
+import { PodDisplay } from "@/kabinet/displays/PodDisplay";
+import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
+import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
+import { createDisplayProvider } from "@/lib/display/registry";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
+import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
+import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
+import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
 
 // Import your display components here
 // Example:

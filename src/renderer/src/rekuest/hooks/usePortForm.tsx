@@ -25,7 +25,7 @@ export const usePortForm = (props: {
 }) => {
   const hash = portHash(props.ports);
 
-  const defaultValues = useCallback( () => {
+  const defaultValues = useCallback(() => {
     return portToDefaults(props.ports, props.overwrites || {});
   }, [hash, props.overwrites]);
 
@@ -35,7 +35,7 @@ export const usePortForm = (props: {
       return zodResolver(zodSchema.merge(props.additionalSchema));
     }
     return zodResolver(zodSchema);
-  }, [hash, props.additionalSchema, ]);
+  }, [hash, props.additionalSchema,]);
 
   const { handleSubmit, ...form } = useForm({
     defaultValues: defaultValues,

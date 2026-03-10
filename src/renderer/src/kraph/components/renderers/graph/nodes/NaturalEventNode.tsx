@@ -8,7 +8,7 @@ import { Handles } from "../components/Handles";
 
 import { NaturalEventNode } from "../types";
 
-const TNode =  memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
   const resolve = useResolve();
 
   return (

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as Moq from '@moq/lite';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MoQPlayerProps {
   /** The URL of the MoQ relay server (e.g., "https://jhnnsrs-lab:4443") */
@@ -268,14 +268,12 @@ export const MoQPlayer: React.FC<MoQPlayerProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-              status === 'streaming' ? 'bg-green-500/80' :
-              status === 'connecting' ? 'bg-yellow-500/80' :
-              status === 'error' ? 'bg-red-500/80' : 'bg-gray-500/80'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${
-                status === 'streaming' ? 'bg-green-200 animate-pulse' : 'bg-current'
-              }`}></span>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${status === 'streaming' ? 'bg-green-500/80' :
+                status === 'connecting' ? 'bg-yellow-500/80' :
+                  status === 'error' ? 'bg-red-500/80' : 'bg-gray-500/80'
+              }`}>
+              <span className={`w-2 h-2 rounded-full ${status === 'streaming' ? 'bg-green-200 animate-pulse' : 'bg-current'
+                }`}></span>
               {status === 'streaming' ? 'LIVE' : status.toUpperCase()}
             </span>
           </div>

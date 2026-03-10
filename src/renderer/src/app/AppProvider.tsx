@@ -1,4 +1,5 @@
 import { AlpakaWard } from "@/alpaka/AlpakaWard";
+import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { DialogProvider } from "@/app/dialog";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -11,7 +12,6 @@ import { ElektroWard } from "@/elektro/ElektroWard";
 import { useFatalReport } from "@/hooks/use-report";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
-import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
@@ -24,13 +24,12 @@ import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
+import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
 import React from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import { DisplayProvider } from "./display";
 import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
-import { Agent } from "./agent/Agent";
-import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
 
 
 function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {

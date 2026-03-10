@@ -1,7 +1,7 @@
 import { useGetProtocolEventCategoryQuery } from "../api/graphql";
 import CreateProtocolEventForm from "./CreateProtocolEventForm";
 
-const TForm =  (props: { id: string; rolemap: { [key: string]: any } }) => {
+const TForm = (props: { id: string; rolemap: { [key: string]: any } }) => {
   const { data, error, loading } = useGetProtocolEventCategoryQuery({
     variables: {
       id: props.id,

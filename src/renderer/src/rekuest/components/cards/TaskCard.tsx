@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { RekuestAssignation } from "@/linkers";
-import Timestamp from "react-timestamp";
 import { Clock } from "lucide-react";
+import Timestamp from "react-timestamp";
 import { ListAsssignationFragment } from "../../api/graphql";
 
 interface Props {

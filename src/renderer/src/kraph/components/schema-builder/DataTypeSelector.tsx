@@ -1,12 +1,12 @@
-import { ValueKind } from "../../api/graphql";
-import { dataTypeConfigs } from "./utils";
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { ValueKind } from "../../api/graphql";
+import { dataTypeConfigs } from "./utils";
 
 interface DataTypeSelectorProps {
   value: ValueKind;

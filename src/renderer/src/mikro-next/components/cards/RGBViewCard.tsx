@@ -21,8 +21,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
 
-import { Edit2, Scale3DIcon, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ChevronDown, Edit2, Scale3DIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { RgbColorPicker } from "react-colorful";
 import {
   ColorMap,

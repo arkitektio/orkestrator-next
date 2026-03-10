@@ -1,27 +1,27 @@
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { HelpSidebar } from "@/components/sidebars/help";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAppsQuery, useListComputeNodeQuery, useUsersQuery } from "@/lok-next/api/graphql";
 import ActionList from "@/rekuest/components/lists/ActionList";
 import AgentList from "@/rekuest/components/lists/AgentList";
 import AssignationList from "@/rekuest/components/lists/AssignationList";
 import ReservationList from "@/rekuest/components/lists/ReservationList";
-import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
-import { HelpSidebar } from "@/components/sidebars/help";
 import { useState } from "react";
-import { useAppsQuery, useListComputeNodeQuery, useUserOptionsQuery, useUsersQuery } from "@/lok-next/api/graphql";
-import { DropdownMenuItem, DropdownMenuTrigger, DropdownMenuContent, DropdownMenu } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
 
 
-const UserFitlerButton = (props: {onSelect: (value: string | undefined) => void}) => {
+const UserFitlerButton = (props: { onSelect: (value: string | undefined) => void }) => {
 
-  const { data }= useUsersQuery();
+  const { data } = useUsersQuery();
 
 
   return <DropdownMenu>
     <DropdownMenuTrigger>
       <Button variant="outline">
-      Filter Users
+        Filter Users
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent>
@@ -58,14 +58,14 @@ const UserFitlerButton = (props: {onSelect: (value: string | undefined) => void}
 
 
 
-const AppFilterButton = (props: {onSelect: (value: string | undefined) => void}) => {
+const AppFilterButton = (props: { onSelect: (value: string | undefined) => void }) => {
 
-  const { data }= useAppsQuery();
+  const { data } = useAppsQuery();
 
   return <DropdownMenu>
     <DropdownMenuTrigger>
       <Button variant="outline">
-      Filter Apps
+        Filter Apps
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent>
@@ -101,14 +101,14 @@ const AppFilterButton = (props: {onSelect: (value: string | undefined) => void})
 };
 
 
-const DeviceFilterButton = (props: {onSelect: (value: string | undefined) => void}) => {
+const DeviceFilterButton = (props: { onSelect: (value: string | undefined) => void }) => {
 
-  const { data }= useListComputeNodeQuery();
+  const { data } = useListComputeNodeQuery();
 
   return <DropdownMenu>
     <DropdownMenuTrigger >
       <Button variant="outline">
-      Filter Devices
+        Filter Devices
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent className="bg-popover text-popover-foreground rounded-md shadow-md p-2">
@@ -131,7 +131,7 @@ const DeviceFilterButton = (props: {onSelect: (value: string | undefined) => voi
           }}
           className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground cursor-pointer"
         >
-          {option.name || "Unnamed Device ("+option.nodeId+")"}
+          {option.name || "Unnamed Device (" + option.nodeId + ")"}
         </DropdownMenuItem>
       ))}
     </DropdownMenuContent>
@@ -154,12 +154,12 @@ const Page = () => {
 
 
   return (
-    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub}/><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
+    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
       <ActionList />
 
       <ReservationList />
       <AssignationList />
-      <AgentList filters={{user: userSub, appIdentifier: appIdentifier, deviceId: deviceId}}/>
+      <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} />
     </PageLayout>
   );
 };

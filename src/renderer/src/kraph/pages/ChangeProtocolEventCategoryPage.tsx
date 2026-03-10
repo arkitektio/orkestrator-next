@@ -31,14 +31,14 @@ import {
 import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
-  ValueKind,
   NaturalEventCategoryFragment,
   ProtocolEventCategoryFragment,
   UpdateProtocolEventCategoryMutationVariables,
   useGetProtocolEventCategoryQuery,
   useSearchEntityCategoryLazyQuery,
   useSearchTagsLazyQuery,
-  useUpdateProtocolEventCategoryMutation
+  useUpdateProtocolEventCategoryMutation,
+  ValueKind
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
 

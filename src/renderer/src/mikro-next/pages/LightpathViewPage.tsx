@@ -1,12 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Card, CardContent } from "@/components/ui/card";
-import { KabinetBackend, MikroLightpathView } from "@/linkers";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import { useGetBackendQuery, useGetLightpathViewQuery } from "../api/graphql";
-import PodCard from "../components/cards/PodCard";
-import ResourceCard from "../components/cards/ResourceCard";
-import { IconForBackendKind } from "../components/IconForBackendKind";
+import { MikroLightpathView } from "@/linkers";
+import { useGetLightpathViewQuery } from "../api/graphql";
 import LightPathGraph from "../components/lightpath/LightPathGraph";
 
 export default asDetailQueryRoute(

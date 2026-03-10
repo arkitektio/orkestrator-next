@@ -1,15 +1,13 @@
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { DialogButton } from "@/components/ui/dialogbutton";
+import { Progress } from "@/components/ui/progress";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
 
@@ -18,7 +16,6 @@ import {
   ListImplementationFragment,
   useDeleteImplementationMutation,
 } from "@/rekuest/api/graphql";
-import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { PlayCircle } from "lucide-react";
 

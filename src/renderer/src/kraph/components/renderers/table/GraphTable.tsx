@@ -6,9 +6,7 @@ import {
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useReactTable
 } from "@tanstack/react-table";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
@@ -31,14 +29,13 @@ import {
 } from "@/components/ui/table";
 
 import {
-  GraphTableRender,
-  useRenderGraphTableQuery,
   RenderGraphTableFilter,
-  RenderGraphTablePagination,
   RenderGraphTableOrder,
+  RenderGraphTablePagination,
+  useRenderGraphTableQuery
 } from "@/kraph/api/graphql";
-import { calculateColumns, calculateRows } from "../utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { calculateColumns, calculateRows } from "../utils";
 
 
 
@@ -72,9 +69,9 @@ export const RenderGraphQueryTable = (props: {
   const order: RenderGraphTableOrder | undefined =
     sorting.length > 0
       ? {
-          field: sorting[0].id,
-          direction: sorting[0].desc ? "DESC" : "ASC",
-        }
+        field: sorting[0].id,
+        direction: sorting[0].desc ? "DESC" : "ASC",
+      }
       : undefined;
 
   const { data, loading, error } = useRenderGraphTableQuery({
@@ -182,9 +179,9 @@ export const RenderGraphQueryTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

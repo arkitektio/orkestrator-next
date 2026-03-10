@@ -1,5 +1,4 @@
 
-import { ApolloClient } from "@apollo/client";
 import { FaktsEndpoint } from "./fakts/endpointSchema";
 import { ActiveFakts, Alias, Instance } from "./fakts/faktsSchema";
 import { Manifest } from "./fakts/manifestSchema";
@@ -97,7 +96,7 @@ export type DisconnectFunction = () => Promise<void>;
 
 export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap, S extends ServiceBuilder = ServiceBuilder> = {
   manifest: EnhancedManifest;
-  connection?: ConnectedContext<T,S>;
+  connection?: ConnectedContext<T, S>;
   autoLoginError?: string;
 };
 

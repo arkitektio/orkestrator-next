@@ -1,3 +1,5 @@
+import { Guard } from "@/app/Arkitekt";
+import { useDisplayComponent } from "@/app/display";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
@@ -6,8 +8,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
-import { Guard } from "@/app/Arkitekt";
 import { cn } from "@/lib/utils";
+import { SmartLink } from "@/providers/smart/builder";
 import {
   ApplicableActions,
   ApplicableDefinitions,
@@ -26,11 +28,7 @@ import {
   Modifier,
   useSmartExtension,
 } from "./ExtensionContext";
-import { LocalActionExtensions } from "./extensions/LocalActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
-import { ShortcutExtensions } from "./extensions/ShortcutExtensions";
-import { useDisplayComponent } from "@/app/display";
-import { SmartLink } from "@/providers/smart/builder";
 
 export const DisplayWidget = (props: {
   identifier: string;

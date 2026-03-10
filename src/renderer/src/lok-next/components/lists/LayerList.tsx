@@ -26,7 +26,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <LayerCard key={index} item={ex}  />}
+      {(ex, index) => <LayerCard key={index} item={ex} />}
     </ListRender>
   );
 };

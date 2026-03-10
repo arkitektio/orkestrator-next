@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 import { LokRedeemToken } from "@/linkers";
 import { ListRedeemTokenFragment } from "../../api/graphql";
-import { Card } from "@/components/ui/card";
 
 interface Props {
   item: ListRedeemTokenFragment;

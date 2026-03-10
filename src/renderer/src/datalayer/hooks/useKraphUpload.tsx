@@ -1,13 +1,13 @@
 import {
+  useDatalayerEndpoint,
+  useKraph
+} from "@/app/Arkitekt";
+import {
   PresignedPostCredentialsFragment,
   RequestMediaUploadDocument,
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
 } from "@/kraph/api/graphql";
-import {
-  useDatalayerEndpoint,
-  useKraph
-} from "@/app/Arkitekt";
 import { useCallback } from "react";
 
 export const uploadFetch = (

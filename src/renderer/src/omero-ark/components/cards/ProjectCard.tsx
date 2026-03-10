@@ -1,7 +1,7 @@
 import { OmeroArkProject } from "@/linkers";
 
-import { ListProjectFragment } from "../../api/graphql";
 import { Card } from "@/components/ui/card";
+import { ListProjectFragment } from "../../api/graphql";
 
 interface Props {
   project: ListProjectFragment;

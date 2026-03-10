@@ -1,13 +1,14 @@
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { DroppableNavLink } from "@/components/ui/link";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   KraphEntityCategory,
   KraphGraphQuery,
   KraphNode,
   KraphProtocolEventCategory,
-  KraphReagentCategory,
   KraphRelationCategory,
-  KraphStructureCategory,
+  KraphStructureCategory
 } from "@/linkers";
 import {
   CatIcon,
@@ -27,10 +28,6 @@ import {
   useGlobalSearchQuery,
   useStartPaneQuery,
 } from "../api/graphql";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { FancyInput } from "@/components/ui/fancy-input";
-import { useDebounce } from "@/hooks/use-debounce";
-import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 
 export const NavigationPane = () => {

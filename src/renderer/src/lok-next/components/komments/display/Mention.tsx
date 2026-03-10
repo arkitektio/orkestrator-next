@@ -1,5 +1,5 @@
-import { LokUser } from "@/linkers";
 import { Badge } from "@/components/ui/badge";
+import { LokUser } from "@/linkers";
 import { MentionType } from "../types";
 
 export const Mention = ({ element }: { element: MentionType }) => {

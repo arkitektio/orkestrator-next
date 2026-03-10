@@ -1,9 +1,9 @@
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { Textarea } from "@/components/ui/textarea";
 import {
   EntityCategoryFragment,
   PropertyDefinitionFragment,
@@ -20,10 +20,10 @@ import {
   useCreateEntityMutation,
   ValueKind,
 } from "@/kraph/api/graphql";
-import { useForm, Controller } from "react-hook-form";
-import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 type PropertyValue = string | number | boolean | Date | null | undefined;
 
@@ -51,7 +51,7 @@ const validateProperty = (
         }
         break;
 
-      case ValueKind  .Float:
+      case ValueKind.Float:
         if (typeof value === "string" && isNaN(parseFloat(value))) {
           return `${definition.label || definition.key} must be a valid number`;
         }

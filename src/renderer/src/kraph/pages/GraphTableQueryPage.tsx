@@ -10,11 +10,11 @@ import { FormDialog } from "@/components/dialog/FormDialog";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import ScatterPlotCard from "../components/cards/ScatterPlotCard";
+import { RenderGraphQueryTable } from "../components/renderers/table/GraphTable";
 import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
-import { RenderGraphQueryTable } from "../components/renderers/table/GraphTable";
 
-const Page =  asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetGraphTableQueryQuery,
   ({ data, refetch }) => {
 

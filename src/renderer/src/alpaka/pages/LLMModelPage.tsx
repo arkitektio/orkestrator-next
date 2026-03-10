@@ -1,12 +1,12 @@
+import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
 import { AlpakaCollection, AlpakaLLMModel } from "@/linkers";
+import { MessageSquare } from "lucide-react";
 import {
   useGetLlmModelQuery
 } from "../api/graphql";
-import { useDialog } from "@/app/dialog";
-import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
 
 export type IRepresentationScreenProps = {};
 

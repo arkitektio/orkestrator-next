@@ -173,9 +173,9 @@ export class S3Store extends FetchStore {
         const bufferToCache =
           result instanceof Uint8Array
             ? result.buffer.slice(
-                result.byteOffset,
-                result.byteOffset + result.byteLength,
-              )
+              result.byteOffset,
+              result.byteOffset + result.byteLength,
+            )
             : result;
         this.cache.set(cacheKey, bufferToCache as ArrayBuffer);
       }

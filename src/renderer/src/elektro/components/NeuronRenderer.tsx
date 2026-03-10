@@ -4,7 +4,6 @@ import { EffectComposer, Vignette } from '@react-three/postprocessing';
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
-import { AutoZoomCamera } from "@/mikro-next/components/render/cameras/AutoZoomCamera";
 
 // --- Types & Helpers ---
 type CompartmentMap = Record<string, CompartmentFragment>;

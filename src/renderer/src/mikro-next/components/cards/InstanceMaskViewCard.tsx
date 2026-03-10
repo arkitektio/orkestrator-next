@@ -1,12 +1,12 @@
 import { Card } from "@/components/ui/card";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   MikroImage,
   MikroInstanceMaskView,
   MikroInstanceMaskViewLabel,
 } from "@/linkers";
+import { useMemo, useState } from "react";
 import { InstanceMaskViewFragment } from "../../api/graphql";
-import React, { useEffect, useMemo, useState } from "react";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface HistoryCardProps {
   item: InstanceMaskViewFragment;

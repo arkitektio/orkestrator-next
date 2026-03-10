@@ -1,5 +1,5 @@
 import { OpticalElementFragment, PortRole } from "@/mikro-next/api/graphql";
-import { Handle, Position, useConnection } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 
 export const Handles = (props: { self: OpticalElementFragment }) => {
   return (

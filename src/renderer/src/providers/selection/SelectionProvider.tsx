@@ -1,14 +1,14 @@
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import {
   Box,
   boxesIntersect,
   useSelectionContainer,
 } from "@air/react-drag-to-select";
+import { motion } from "framer-motion";
 import React, { useCallback, useEffect, useState } from "react";
 import { Structure } from "../../types";
 import { SelectionContext, useSelection } from "./SelectionContext";
 import { Selectable } from "./types";
-import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
-import { motion } from "framer-motion";
 export type ArkitektProps = { children: React.ReactNode };
 
 export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {

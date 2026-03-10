@@ -91,9 +91,8 @@ export const ProbeCard = ({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-md ${
-        isDisabled ? "opacity-50" : "cursor-pointer"
-      } ${className}`}
+      className={`transition-all duration-200 hover:shadow-md ${isDisabled ? "opacity-50" : "cursor-pointer"
+        } ${className}`}
       onClick={handleClick}
     >
       <CardHeader className="pb-3">

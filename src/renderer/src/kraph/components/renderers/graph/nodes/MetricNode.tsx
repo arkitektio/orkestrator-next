@@ -9,7 +9,7 @@ import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { MetricNode } from "../types";
 
-const TNode =  memo(({ data, id, selected }: NodeProps<MetricNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<MetricNode>) => {
   const resolve = useResolve();
 
   return (

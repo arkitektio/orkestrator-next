@@ -5,8 +5,8 @@ import {
 } from "@/components/ui/tooltip";
 import { PortFragment } from "@/rekuest/api/graphql";
 import { portToLabel } from "@/rekuest/widgets/utils";
-import { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
+import { useState } from "react";
 
 export const InStream: React.FC<{
   stream: PortFragment[];

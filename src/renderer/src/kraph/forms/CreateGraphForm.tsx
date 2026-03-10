@@ -11,7 +11,7 @@ import {
   useCreateGraphMutation,
 } from "../api/graphql";
 
-const TForm =  () => {
+const TForm = () => {
   const [add] = useCreateGraphMutation({
     refetchQueries: [HomePageDocument],
   });

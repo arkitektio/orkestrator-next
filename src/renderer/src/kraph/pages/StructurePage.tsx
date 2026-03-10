@@ -10,7 +10,7 @@ import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linker
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
 
-const Page =  asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
+const Page = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
   const Widget = useDisplayComponent(data.structure.identifier || "");

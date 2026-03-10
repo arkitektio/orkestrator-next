@@ -1,11 +1,9 @@
-import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
-  EdgeLabelRenderer,
   useInternalNode,
   useStore,
   type EdgeProps,
-  type ReactFlowState,
+  type ReactFlowState
 } from "@xyflow/react";
 import { LightEdge } from "../types";
 import { getEdgeParams } from "../utils";

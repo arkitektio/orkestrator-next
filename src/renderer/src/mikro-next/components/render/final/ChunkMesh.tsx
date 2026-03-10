@@ -1,8 +1,9 @@
 import { Edges, Text } from "@react-three/drei";
 
 import { ColorMap, RgbViewFragment } from "@/mikro-next/api/graphql";
-import { useFrame, useThree, ThreeEvent } from "@react-three/fiber";
-import { useRef, useState, useMemo } from "react";
+import { a, useSpring } from "@react-spring/three";
+import { ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
 import { ScaledView } from "../FInalRender";
@@ -19,7 +20,6 @@ import {
   viridisColormap,
 } from "./colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
-import { a, useSpring } from "@react-spring/three";
 
 const VIEW_RADIUS = 20000; // Render radius around camera center
 

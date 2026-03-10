@@ -1,8 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokApp, LokComputeNode } from "@/linkers";
-import { ListAppFragment, ListComputeNodeFragment } from "../../api/graphql";
+import { LokComputeNode } from "@/linkers";
+import { ListComputeNodeFragment } from "../../api/graphql";
 
 interface Props {
   item: ListComputeNodeFragment;

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,10 +7,9 @@ import {
   type EdgeProps,
   type ReactFlowState
 } from "@xyflow/react";
+import { useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 import { DescribeEdge } from "../../types";
 import { getEdgeParams } from "../../utils";
-import { Card } from "@/components/ui/card";
-import { useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 
 export type GetSpecialPathParams = {
   sourceX: number;

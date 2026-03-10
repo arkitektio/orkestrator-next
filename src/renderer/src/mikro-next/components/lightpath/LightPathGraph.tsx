@@ -22,11 +22,10 @@ import MirrorElementNode from "./nodes/MirrorElementNode";
 import ObjectiveElementNode from "./nodes/ObjectiveElementNode";
 import OtherElementNode from "./nodes/OtherElementNode";
 import OtherSourceElementNode from "./nodes/OtherSourceElementNode";
+import PinHoleElementNode from "./nodes/PinHoleElementNode";
 import SampleElementNode from "./nodes/SampleElementNode";
 import SourceElementNode from "./nodes/SourceElementNode";
 import { MyEdge, MyNode } from "./types";
-import { Pin } from "lucide-react";
-import PinHoleElementNode from "./nodes/PinHoleElementNode";
 
 const graphToNodes = (graph: LightpathGraphFragment): MyNode[] => {
   return graph.elements.map((cat, index) => ({

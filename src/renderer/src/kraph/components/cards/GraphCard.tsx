@@ -1,14 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphGraph } from "@/linkers";
 import { ListGraphFragment } from "../../api/graphql";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface Props {
   item: ListGraphFragment;
 }
 
-const TheCard = ({ item  }: Props) => {
+const TheCard = ({ item }: Props) => {
 
   const s3resolve = useResolve();
   return (

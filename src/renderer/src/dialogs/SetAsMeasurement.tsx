@@ -1,4 +1,3 @@
-import { Structure } from "@/types";
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import {
   useCreateStructureMutation,
   useListEntitiesQuery,
 } from "@/kraph/api/graphql";
+import { Structure } from "@/types";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 import { toast } from "sonner";

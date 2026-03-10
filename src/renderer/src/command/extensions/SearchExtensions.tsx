@@ -1,8 +1,8 @@
 import { CommandGroup } from "@/components/ui/command";
+import { useGetImagesLazyQuery } from "@/mikro-next/api/graphql";
 import { useEffect } from "react";
 import { useExtension } from "../ExtensionContext";
 import { SmartCommandItem } from "../components/SmartCommandItem";
-import { useGetImagesLazyQuery } from "@/mikro-next/api/graphql";
 
 export const SearchExtensions = () => {
   const { query, activateModifier, modifiers } = useExtension();

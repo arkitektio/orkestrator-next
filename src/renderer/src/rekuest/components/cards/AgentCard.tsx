@@ -2,8 +2,6 @@ import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { AgentPill } from "@/lok-next/components/AgentPill";
-import { ClientAvatar } from "@/lok-next/components/ClientAvatar";
-import { UserAvatarUsername } from "@/lok-next/components/UserAvatar";
 
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 

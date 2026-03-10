@@ -9,16 +9,14 @@ import {
   GraphQueryFragment
 } from "@/kraph/api/graphql";
 import {
-  KraphGraphQuery,
-  KraphScatterPlot
+  KraphGraphQuery
 } from "@/linkers";
-import ScatterPlot from "../charts/scatterplot/ScatterPlot";
 
 export const Test = () => {
   return <div>Hallo</div>;
 };
 
- const TCarousel = (props: { queries: GraphQueryFragment[] }) => {
+const TCarousel = (props: { queries: GraphQueryFragment[] }) => {
   return (
     <div className="w-full">
       <Carousel className="w-full dark:text-white">

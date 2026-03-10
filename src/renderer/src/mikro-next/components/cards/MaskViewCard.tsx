@@ -9,7 +9,7 @@ interface HistoryCardProps {
 
 const TheCard = ({ item }: HistoryCardProps) => {
   return (
-    <MikroMaskView.Smart object={item?.id}  key={item.id}>
+    <MikroMaskView.Smart object={item?.id} key={item.id}>
       <Card key={item.id} className="p-4">
         <p className="font-light text-xs">Is mask for</p>
         <MikroImage.DetailLink object={item.referenceView.image.id}>

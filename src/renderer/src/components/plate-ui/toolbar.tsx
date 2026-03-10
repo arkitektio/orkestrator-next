@@ -58,7 +58,7 @@ const toolbarButtonVariants = cva(
 );
 
 const ToolbarButton = withTooltip(
-   
+
   React.forwardRef<
     React.ElementRef<typeof ToolbarToggleItem>,
     {

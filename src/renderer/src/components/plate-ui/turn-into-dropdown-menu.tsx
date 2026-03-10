@@ -98,7 +98,7 @@ export function TurnIntoDropdownMenu(props: DropdownMenuProps) {
   const openState = useOpenState();
 
   const selectedItem =
-     
+
     items.find((item) => item.value === value) ?? defaultItem;
   const { icon: SelectedItemIcon, label: selectedItemLabel } = selectedItem;
 

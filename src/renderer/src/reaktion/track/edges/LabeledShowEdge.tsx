@@ -1,5 +1,3 @@
-import { MergeIcon } from "lucide-react";
-import React from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,6 +5,8 @@ import {
   useNodes,
   useStore,
 } from "@xyflow/react";
+import { MergeIcon } from "lucide-react";
+import React from "react";
 import { FlowNode, VanillaEdgeProps } from "../../types";
 
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;

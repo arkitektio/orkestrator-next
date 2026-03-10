@@ -53,10 +53,10 @@ export default function ChatBottombar({
 
   const serialize = (nodes: any[]) => {
     return nodes.map(node => {
-        if (node.children) {
-            return node.children.map((child: any) => child.text || (child.children ? serialize([child]) : '')).join('')
-        }
-        return node.text || ''
+      if (node.children) {
+        return node.children.map((child: any) => child.text || (child.children ? serialize([child]) : '')).join('')
+      }
+      return node.text || ''
     }).join('\n')
   }
 
@@ -70,8 +70,8 @@ export default function ChatBottombar({
   };
 
   const checkContent = () => {
-      const text = serialize(editor.children)
-      setHasContent(!!text.trim())
+    const text = serialize(editor.children)
+    setHasContent(!!text.trim())
   }
 
 
@@ -219,31 +219,31 @@ export default function ChatBottombar({
         </motion.div>
 
         <div className="pb-1">
-            {hasContent ? (
+          {hasContent ? (
             <Link
-                to="#"
-                className={cn(
+              to="#"
+              className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
                 "h-9 w-9",
                 "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
-                )}
-                onClick={handleSend}
+              )}
+              onClick={handleSend}
             >
-                <SendHorizontal size={20} className="text-muted-foreground" />
+              <SendHorizontal size={20} className="text-muted-foreground" />
             </Link>
-            ) : (
+          ) : (
             <Link
-                to="#"
-                className={cn(
+              to="#"
+              className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
                 "h-9 w-9",
                 "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
-                )}
-                onClick={handleThumbsUp}
+              )}
+              onClick={handleThumbsUp}
             >
-                <ThumbsUp size={20} className="text-muted-foreground" />
+              <ThumbsUp size={20} className="text-muted-foreground" />
             </Link>
-            )}
+          )}
         </div>
       </AnimatePresence>
     </div>

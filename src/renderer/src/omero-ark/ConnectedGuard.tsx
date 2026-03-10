@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
-import { MeDocument, useDeleteMeMutation, useEnsureOmeroUserMutation, useMeQuery } from "./api/graphql";
-import { NotConnected } from "@/app/components/fallbacks/NotConnected";
 import { TbPlugConnected } from "react-icons/tb";
+import { MeDocument, useDeleteMeMutation, useEnsureOmeroUserMutation, useMeQuery } from "./api/graphql";
 
 interface OmeroConnectionForm {
   username: string;

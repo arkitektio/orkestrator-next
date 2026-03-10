@@ -29,7 +29,7 @@ const List = ({ filters, pagination }: Props) => {
       refetch={refetch}
     >
       {(ex, index) => (
-        <MeasurementCategoryCard key={index} item={ex}  />
+        <MeasurementCategoryCard key={index} item={ex} />
       )}
     </ListRender>
   );

@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import * as React from 'react';
+import * as React from 'react'
 
 import { type UseChatHelpers, useChat as useBaseChat } from '@ai-sdk/react';
 import { faker } from '@faker-js/faker';
@@ -12,140 +12,139 @@ import { type UIMessage, DefaultChatTransport } from 'ai';
 import { type TNode, KEYS, nanoid, NodeApi, TextApi } from 'platejs';
 import { type PlateEditor, useEditorRef, usePluginOption } from 'platejs/react';
 
+import { Role, useChatMutation } from "@/alpaka/api/graphql";
 import { aiChatPlugin } from '@/components/editor/plugins/ai-kit';
-import { useChatMutation, Role } from "@/alpaka/api/graphql";
 
-import { discussionPlugin } from './plugins/discussion-kit';
+import { discussionPlugin } from './plugins/discussion-kit'
 
-export type ToolName = 'comment' | 'edit' | 'generate';
+export type ToolName = 'comment' | 'edit' | 'generate'
 
 export type TComment = {
   comment: {
-    blockId: string;
-    comment: string;
-    content: string;
-  } | null;
-  status: 'finished' | 'streaming';
-};
+    blockId: string
+    comment: string
+    content: string
+  } | null
+  status: 'finished' | 'streaming'
+}
 
 export type MessageDataPart = {
-  toolName: ToolName;
-  comment?: TComment;
-};
+  toolName: ToolName
+  comment?: TComment
+}
 
-export type Chat = UseChatHelpers<ChatMessage>;
+export type Chat = UseChatHelpers<ChatMessage>
 
-export type ChatMessage = UIMessage<{}, MessageDataPart>;
+export type ChatMessage = UIMessage<{}, MessageDataPart>
 
 export const useChat = () => {
-  const editor = useEditorRef();
-  const options = usePluginOption(aiChatPlugin, 'chatOptions');
-  const [chatMutation] = useChatMutation();
+  const editor = useEditorRef()
+  const options = usePluginOption(aiChatPlugin, 'chatOptions')
+  const [chatMutation] = useChatMutation()
 
   // remove when you implement the route /api/ai/command
-  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const abortControllerRef = React.useRef<AbortController | null>(null)
   const _abortFakeStream = () => {
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
     }
-  };
+  }
 
   const baseChat = useBaseChat<ChatMessage>({
     id: 'editor',
     transport: new DefaultChatTransport({
       api: options.api || '/api/ai/command',
       fetch: async (input, init) => {
-        const bodyOptions = editor.getOptions(aiChatPlugin).chatOptions?.body;
-        const initBody = JSON.parse(init?.body as string);
-        const body = { ...initBody, ...bodyOptions };
+        const bodyOptions = editor.getOptions(aiChatPlugin).chatOptions?.body
+        const initBody = JSON.parse(init?.body as string)
+        const body = { ...initBody, ...bodyOptions }
 
         try {
           const messages = body.messages.map((m: any) => ({
             role: m.role.toUpperCase() as Role,
-            content: m.content,
-          }));
+            content: m.content
+          }))
 
           const { data } = await chatMutation({
             variables: {
               input: {
                 messages,
-                model: body.model,
-              },
-            },
-          });
+                model: body.model
+              }
+            }
+          })
 
-          const content = data?.chat?.choices[0]?.message?.content || "";
-          const encoder = new TextEncoder();
+          const content = data?.chat?.choices[0]?.message?.content || ''
+          const encoder = new TextEncoder()
           const stream = new ReadableStream({
             start(controller) {
-              controller.enqueue(encoder.encode(`0:${JSON.stringify(content)}\n`));
-              controller.close();
-            },
-          });
+              controller.enqueue(encoder.encode(`0:${JSON.stringify(content)}\n`))
+              controller.close()
+            }
+          })
 
           return new Response(stream, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-          });
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+          })
         } catch (error) {
-          console.error("Chat mutation failed", error);
+          console.error('Chat mutation failed', error)
 
-          let sample: 'comment' | 'markdown' | 'mdx' | null = null;
+          let sample: 'comment' | 'markdown' | 'mdx' | null = null
           try {
-             const content = JSON.parse(init?.body as string)
+            const content = JSON.parse(init?.body as string)
               .messages.at(-1)
-              .parts.find((p: any) => p.type === 'text')?.text;
+              .parts.find((p: any) => p.type === 'text')?.text
 
             if (content.includes('Generate a markdown sample')) {
-              sample = 'markdown';
+              sample = 'markdown'
             } else if (content.includes('Generate a mdx sample')) {
-              sample = 'mdx';
+              sample = 'mdx'
             } else if (content.includes('comment')) {
-              sample = 'comment';
+              sample = 'comment'
             }
           } catch {
-            sample = null;
+            sample = null
           }
 
-          abortControllerRef.current = new AbortController();
-          await new Promise((resolve) => setTimeout(resolve, 400));
+          abortControllerRef.current = new AbortController()
+          await new Promise((resolve) => setTimeout(resolve, 400))
           const stream = fakeStreamText({
             editor,
             sample,
-            signal: abortControllerRef.current.signal,
-          });
+            signal: abortControllerRef.current.signal
+          })
 
-           return new Response(stream, {
+          return new Response(stream, {
             headers: {
               'Content-Type': 'text/event-stream',
-              'X-Stream-Protocol-Version': 'v1',
-            },
-          });
+              'X-Stream-Protocol-Version': 'v1'
+            }
+          })
         }
-      },
+      }
     }),
     onData(data) {
       if (data.type === 'data-toolName') {
-        editor.setOption(AIChatPlugin, 'toolName', data.data);
+        editor.setOption(AIChatPlugin, 'toolName', data.data)
       }
 
       if (data.type === 'data-comment' && data.data) {
         if (data.data.status === 'finished') {
-          editor.getApi(BlockSelectionPlugin).blockSelection.deselect();
+          editor.getApi(BlockSelectionPlugin).blockSelection.deselect()
 
-          return;
+          return
         }
 
-        const aiComment = data.data.comment!;
-        const range = aiCommentToRange(editor, aiComment);
+        const aiComment = data.data.comment!
+        const range = aiCommentToRange(editor, aiComment)
 
-        if (!range) return console.warn('No range found for AI comment');
+        if (!range) return console.warn('No range found for AI comment')
 
-        const discussions =
-          editor.getOption(discussionPlugin, 'discussions') || [];
+        const discussions = editor.getOption(discussionPlugin, 'discussions') || []
 
         // Generate a new discussion ID
-        const discussionId = nanoid();
+        const discussionId = nanoid()
 
         // Create a new comment
         const newComment = {
@@ -154,8 +153,8 @@ export const useChat = () => {
           createdAt: new Date(),
           discussionId,
           isEdited: false,
-          userId: editor.getOption(discussionPlugin, 'currentUserId'),
-        };
+          userId: editor.getOption(discussionPlugin, 'currentUserId')
+        }
 
         // Create a new discussion
         const newDiscussion = {
@@ -166,12 +165,12 @@ export const useChat = () => {
             .map((node: TNode) => NodeApi.string(node))
             .join('\n'),
           isResolved: false,
-          userId: editor.getOption(discussionPlugin, 'currentUserId'),
-        };
+          userId: editor.getOption(discussionPlugin, 'currentUserId')
+        }
 
         // Update discussions
-        const updatedDiscussions = [...discussions, newDiscussion];
-        editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+        const updatedDiscussions = [...discussions, newDiscussion]
+        editor.setOption(discussionPlugin, 'discussions', updatedDiscussions)
 
         // Apply comment marks to the editor
         editor.tf.withMerging(() => {
@@ -179,145 +178,145 @@ export const useChat = () => {
             {
               [getCommentKey(newDiscussion.id)]: true,
               [getTransientCommentKey()]: true,
-              [KEYS.comment]: true,
+              [KEYS.comment]: true
             },
             {
               at: range,
               match: TextApi.isText,
-              split: true,
+              split: true
             }
-          );
-        });
+          )
+        })
       }
     },
 
-    ...options,
-  });
+    ...options
+  })
 
   const chat = {
     ...baseChat,
-    _abortFakeStream,
-  };
+    _abortFakeStream
+  }
 
   React.useEffect(() => {
-    editor.setOption(AIChatPlugin, 'chat', chat as any);
+    editor.setOption(AIChatPlugin, 'chat', chat as any)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.status, chat.messages, chat.error]);
+  }, [chat.status, chat.messages, chat.error])
 
-  return chat;
-};
+  return chat
+}
 
 // Used for testing. Remove it after implementing useChat api.
 const fakeStreamText = ({
   chunkCount = 10,
   editor,
   sample = null,
-  signal,
+  signal
 }: {
-  editor: PlateEditor;
-  chunkCount?: number;
-  sample?: 'comment' | 'markdown' | 'mdx' | null;
-  signal?: AbortSignal;
+  editor: PlateEditor
+  chunkCount?: number
+  sample?: 'comment' | 'markdown' | 'mdx' | null
+  signal?: AbortSignal
 }) => {
-  const encoder = new TextEncoder();
+  const encoder = new TextEncoder()
 
   return new ReadableStream({
     async start(controller) {
       const blocks = (() => {
         if (sample === 'markdown') {
-          return markdownChunks;
+          return markdownChunks
         }
 
         if (sample === 'mdx') {
-          return mdxChunks;
+          return mdxChunks
         }
 
         if (sample === 'comment') {
-          const commentChunks = createCommentChunks(editor);
-          return commentChunks;
+          const commentChunks = createCommentChunks(editor)
+          return commentChunks
         }
 
         return [
           Array.from({ length: chunkCount }, () => ({
             delay: faker.number.int({ max: 100, min: 30 }),
-            texts: `${faker.lorem.words({ max: 3, min: 1 })} `,
+            texts: `${faker.lorem.words({ max: 3, min: 1 })} `
           })),
 
           Array.from({ length: chunkCount + 2 }, () => ({
             delay: faker.number.int({ max: 100, min: 30 }),
-            texts: `${faker.lorem.words({ max: 3, min: 1 })} `,
+            texts: `${faker.lorem.words({ max: 3, min: 1 })} `
           })),
 
           Array.from({ length: chunkCount + 4 }, () => ({
             delay: faker.number.int({ max: 100, min: 30 }),
-            texts: `${faker.lorem.words({ max: 3, min: 1 })} `,
-          })),
-        ];
-      })();
+            texts: `${faker.lorem.words({ max: 3, min: 1 })} `
+          }))
+        ]
+      })()
       if (signal?.aborted) {
-        controller.error(new Error('Aborted before start'));
-        return;
+        controller.error(new Error('Aborted before start'))
+        return
       }
 
       const abortHandler = () => {
-        controller.error(new Error('Stream aborted'));
-      };
+        controller.error(new Error('Stream aborted'))
+      }
 
-      signal?.addEventListener('abort', abortHandler);
+      signal?.addEventListener('abort', abortHandler)
 
       // Generate a unique message ID
-      const messageId = `msg_${faker.string.alphanumeric(40)}`;
+      const messageId = `msg_${faker.string.alphanumeric(40)}`
 
       // Handle comment data differently
       if (sample === 'comment') {
-        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
-        controller.enqueue(encoder.encode('data: {"type":"start-step"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"start-step"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         // For comments, send data events directly
         for (const block of blocks) {
           for (const chunk of block) {
-            await new Promise((resolve) => setTimeout(resolve, chunk.delay));
+            await new Promise((resolve) => setTimeout(resolve, chunk.delay))
 
             if (signal?.aborted) {
-              signal?.removeEventListener('abort', abortHandler);
-              return;
+              signal?.removeEventListener('abort', abortHandler)
+              return
             }
 
             // Send the data event directly (already formatted as JSON)
-            controller.enqueue(encoder.encode(`data: ${chunk.texts}\n\n`));
+            controller.enqueue(encoder.encode(`data: ${chunk.texts}\n\n`))
           }
         }
 
         // Send the final DONE event
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       } else {
         // Send initial stream events for text content
-        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
-        controller.enqueue(encoder.encode('data: {"type":"start-step"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"start-step"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         controller.enqueue(
           encoder.encode(
             `data: {"type":"text-start","id":"${messageId}","providerMetadata":{"openai":{"itemId":"${messageId}"}}}\n\n`
           )
-        );
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        )
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         for (let i = 0; i < blocks.length; i++) {
-          const block = blocks[i];
+          const block = blocks[i]
 
           // Stream the block content
           for (const chunk of block) {
-            await new Promise((resolve) => setTimeout(resolve, chunk.delay));
+            await new Promise((resolve) => setTimeout(resolve, chunk.delay))
 
             if (signal?.aborted) {
-              signal?.removeEventListener('abort', abortHandler);
-              return;
+              signal?.removeEventListener('abort', abortHandler)
+              return
             }
 
             // Properly escape the text for JSON
@@ -326,47 +325,43 @@ const fakeStreamText = ({
               .replace(/"/g, String.raw`\"`) // Escape quotes
               .replace(/\n/g, String.raw`\n`) // Escape newlines
               .replace(/\r/g, String.raw`\r`) // Escape carriage returns
-              .replace(/\t/g, String.raw`\t`); // Escape tabs
+              .replace(/\t/g, String.raw`\t`) // Escape tabs
 
             controller.enqueue(
               encoder.encode(
                 `data: {"type":"text-delta","id":"${messageId}","delta":"${escapedText}"}\n\n`
               )
-            );
+            )
           }
 
           // Add double newline after each block except the last one
           if (i < blocks.length - 1) {
             controller.enqueue(
-              encoder.encode(
-                `data: {"type":"text-delta","id":"${messageId}","delta":"\\n\\n"}\n\n`
-              )
-            );
+              encoder.encode(`data: {"type":"text-delta","id":"${messageId}","delta":"\\n\\n"}\n\n`)
+            )
           }
         }
 
         // Send end events
-        controller.enqueue(
-          encoder.encode(`data: {"type":"text-end","id":"${messageId}"}\n\n`)
-        );
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode(`data: {"type":"text-end","id":"${messageId}"}\n\n`))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
-        controller.enqueue(encoder.encode('data: {"type":"finish-step"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"finish-step"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
-        controller.enqueue(encoder.encode('data: {"type":"finish"}\n\n'));
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        controller.enqueue(encoder.encode('data: {"type":"finish"}\n\n'))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       }
 
-      signal?.removeEventListener('abort', abortHandler);
-      controller.close();
-    },
-  });
-};
+      signal?.removeEventListener('abort', abortHandler)
+      controller.close()
+    }
+  })
+}
 
-const delay = faker.number.int({ max: 20, min: 5 });
+const delay = faker.number.int({ max: 20, min: 5 })
 
 const markdownChunks = [
   [
@@ -379,7 +374,7 @@ const markdownChunks = [
     { delay, texts: ', or apply a ' },
     {
       delay,
-      texts: '***combination***',
+      texts: '***combination***'
     },
     { delay, texts: ' ' },
     { delay, texts: 'of ' },
@@ -394,7 +389,7 @@ const markdownChunks = [
     { delay, texts: 'Add ' },
     {
       delay,
-      texts: '~~strikethrough~~',
+      texts: '~~strikethrough~~'
     },
     { delay, texts: ' ' },
     { delay, texts: 'to ' },
@@ -418,7 +413,7 @@ const markdownChunks = [
     { delay, texts: 'Add ' },
     {
       delay,
-      texts: '[links](https://example.com)',
+      texts: '[links](https://example.com)'
     },
     { delay: faker.number.int({ max: 100, min: 30 }), texts: ' to ' },
     { delay: faker.number.int({ max: 100, min: 30 }), texts: 'external ' },
@@ -426,7 +421,7 @@ const markdownChunks = [
     { delay, texts: 'or ' },
     {
       delay,
-      texts: 'references.\n\n',
+      texts: 'references.\n\n'
     },
 
     { delay, texts: 'Use ' },
@@ -488,17 +483,17 @@ const markdownChunks = [
     {
       delay,
       texts:
-        'text](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n',
+        'text](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n'
     },
     {
       delay,
-      texts: '### Advantage blocks:\n',
+      texts: '### Advantage blocks:\n'
     },
     { delay, texts: '\n' },
     { delay, texts: '$$\n' },
     {
       delay,
-      texts: 'a^2 + b^2 = c^2\n',
+      texts: 'a^2 + b^2 = c^2\n'
     },
     { delay, texts: '$$\n' },
     { delay, texts: '\n' },
@@ -521,7 +516,7 @@ const markdownChunks = [
     { delay, texts: '|\n' },
     {
       delay,
-      texts: '|----------|----------|\n',
+      texts: '|----------|----------|\n'
     },
     { delay, texts: '| ' },
     { delay, texts: 'Row ' },
@@ -534,732 +529,732 @@ const markdownChunks = [
     { delay, texts: '2   ' },
     { delay, texts: ' | ' },
     { delay, texts: 'Data    ' },
-    { delay, texts: ' |' },
-  ],
-];
+    { delay, texts: ' |' }
+  ]
+]
 
 const mdxChunks = [
   [
     {
       delay,
-      texts: '## ',
+      texts: '## '
     },
     {
       delay,
-      texts: 'Basic ',
+      texts: 'Basic '
     },
     {
       delay,
-      texts: 'Markdown\n\n',
+      texts: 'Markdown\n\n'
     },
     {
       delay,
-      texts: '> ',
+      texts: '> '
     },
     {
       delay,
-      texts: 'The ',
+      texts: 'The '
     },
     {
       delay,
-      texts: 'following ',
+      texts: 'following '
     },
     {
       delay,
-      texts: 'node ',
+      texts: 'node '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'marks ',
+      texts: 'marks '
     },
     {
       delay,
-      texts: 'is ',
+      texts: 'is '
     },
     {
       delay,
-      texts: 'supported ',
+      texts: 'supported '
     },
     {
       delay,
-      texts: 'by ',
+      texts: 'by '
     },
     {
       delay,
-      texts: 'the ',
+      texts: 'the '
     },
     {
       delay,
-      texts: 'Markdown ',
+      texts: 'Markdown '
     },
     {
       delay,
-      texts: 'standard.\n\n',
+      texts: 'standard.\n\n'
     },
     {
       delay,
-      texts: 'Format ',
+      texts: 'Format '
     },
     {
       delay,
-      texts: 'text ',
+      texts: 'text '
     },
     {
       delay,
-      texts: 'with **b',
+      texts: 'with **b'
     },
     {
       delay,
-      texts: 'old**, _',
+      texts: 'old**, _'
     },
     {
       delay,
-      texts: 'italic_,',
+      texts: 'italic_,'
     },
     {
       delay,
-      texts: ' _**comb',
+      texts: ' _**comb'
     },
     {
       delay,
-      texts: 'ined sty',
+      texts: 'ined sty'
     },
     {
       delay,
-      texts: 'les**_, ',
+      texts: 'les**_, '
     },
     {
       delay,
-      texts: '~~strike',
+      texts: '~~strike'
     },
     {
       delay,
-      texts: 'through~',
+      texts: 'through~'
     },
     {
       delay,
-      texts: '~, `code',
+      texts: '~, `code'
     },
     {
       delay,
-      texts: '` format',
+      texts: '` format'
     },
     {
       delay,
-      texts: 'ting, an',
+      texts: 'ting, an'
     },
     {
       delay,
-      texts: 'd [hyper',
+      texts: 'd [hyper'
     },
     {
       delay,
-      texts: 'links](https://en.wikipedia.org/wiki/Hypertext).\n\n',
+      texts: 'links](https://en.wikipedia.org/wiki/Hypertext).\n\n'
     },
     {
       delay,
-      texts: '```javascript\n',
+      texts: '```javascript\n'
     },
     {
       delay,
-      texts: '// Use code blocks to showcase code snippets\n',
+      texts: '// Use code blocks to showcase code snippets\n'
     },
     {
       delay,
-      texts: 'function greet() {\n',
+      texts: 'function greet() {\n'
     },
     {
       delay,
-      texts: '  console.info("Hello World!")\n',
+      texts: '  console.info("Hello World!")\n'
     },
     {
       delay,
-      texts: '}\n',
+      texts: '}\n'
     },
     {
       delay,
-      texts: '```\n\n',
+      texts: '```\n\n'
     },
     {
       delay,
-      texts: '- Simple',
+      texts: '- Simple'
     },
     {
       delay,
-      texts: ' lists f',
+      texts: ' lists f'
     },
     {
       delay,
-      texts: 'or organ',
+      texts: 'or organ'
     },
     {
       delay,
-      texts: 'izing co',
+      texts: 'izing co'
     },
     {
       delay,
-      texts: 'ntent\n',
+      texts: 'ntent\n'
     },
     {
       delay,
-      texts: '1. ',
+      texts: '1. '
     },
     {
       delay,
-      texts: 'Numbered ',
+      texts: 'Numbered '
     },
     {
       delay,
-      texts: 'lists ',
+      texts: 'lists '
     },
     {
       delay,
-      texts: 'for ',
+      texts: 'for '
     },
     {
       delay,
-      texts: 'sequential ',
+      texts: 'sequential '
     },
     {
       delay,
-      texts: 'steps\n\n',
+      texts: 'steps\n\n'
     },
     {
       delay,
-      texts: '| **Plugin**  | **Element** | **Inline** | **Void** |\n',
+      texts: '| **Plugin**  | **Element** | **Inline** | **Void** |\n'
     },
     {
       delay,
-      texts: '| ----------- | ----------- | ---------- | -------- |\n',
+      texts: '| ----------- | ----------- | ---------- | -------- |\n'
     },
     {
       delay,
-      texts: '| **Heading** |             |            | No       |\n',
+      texts: '| **Heading** |             |            | No       |\n'
     },
     {
       delay,
-      texts: '| **Image**   | Yes         | No         | Yes      |\n',
+      texts: '| **Image**   | Yes         | No         | Yes      |\n'
     },
     {
       delay,
-      texts: '| **Ment',
+      texts: '| **Ment'
     },
     {
       delay,
-      texts: 'ion** | Yes         | Yes        | Yes      |\n\n',
+      texts: 'ion** | Yes         | Yes        | Yes      |\n\n'
     },
     {
       delay,
       texts:
-        '![](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n',
+        '![](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n'
     },
     {
       delay,
-      texts: '- [x] Co',
+      texts: '- [x] Co'
     },
     {
       delay,
-      texts: 'mpleted ',
+      texts: 'mpleted '
     },
     {
       delay,
-      texts: 'tasks\n',
+      texts: 'tasks\n'
     },
     {
       delay,
-      texts: '- [ ] Pe',
+      texts: '- [ ] Pe'
     },
     {
       delay,
-      texts: 'nding ta',
+      texts: 'nding ta'
     },
     {
       delay,
-      texts: 'sks\n\n',
+      texts: 'sks\n\n'
     },
     {
       delay,
-      texts: '---\n\n## Advan',
+      texts: '---\n\n## Advan'
     },
     {
       delay,
-      texts: 'ced Feat',
+      texts: 'ced Feat'
     },
     {
       delay,
-      texts: 'ures\n\n',
+      texts: 'ures\n\n'
     },
     {
       delay,
-      texts: '<callout> ',
+      texts: '<callout> '
     },
     {
       delay,
-      texts: 'The ',
+      texts: 'The '
     },
     {
       delay,
-      texts: 'following ',
+      texts: 'following '
     },
     {
       delay,
-      texts: 'node ',
+      texts: 'node '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'marks ',
+      texts: 'marks '
     },
     {
       delay,
-      texts: 'are ',
+      texts: 'are '
     },
     {
       delay,
-      texts: 'not ',
+      texts: 'not '
     },
     {
       delay,
-      texts: 'supported ',
+      texts: 'supported '
     },
     {
       delay,
-      texts: 'in ',
+      texts: 'in '
     },
     {
       delay,
-      texts: 'Markdown ',
+      texts: 'Markdown '
     },
     {
       delay,
-      texts: 'but ',
+      texts: 'but '
     },
     {
       delay,
-      texts: 'can ',
+      texts: 'can '
     },
     {
       delay,
-      texts: 'be ',
+      texts: 'be '
     },
     {
       delay,
-      texts: 'serialized ',
+      texts: 'serialized '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'deserialized ',
+      texts: 'deserialized '
     },
     {
       delay,
-      texts: 'using ',
+      texts: 'using '
     },
     {
       delay,
-      texts: 'MDX ',
+      texts: 'MDX '
     },
     {
       delay,
-      texts: 'or ',
+      texts: 'or '
     },
     {
       delay,
-      texts: 'specialized ',
+      texts: 'specialized '
     },
     {
       delay,
-      texts: 'UnifiedJS ',
+      texts: 'UnifiedJS '
     },
     {
       delay,
-      texts: 'plugins. ',
+      texts: 'plugins. '
     },
     {
       delay,
-      texts: '</callout>\n\n',
+      texts: '</callout>\n\n'
     },
     {
       delay,
-      texts: 'Advanced ',
+      texts: 'Advanced '
     },
     {
       delay,
-      texts: 'marks: ',
+      texts: 'marks: '
     },
     {
       delay,
-      texts: '<kbd>⌘ ',
+      texts: '<kbd>⌘ '
     },
     {
       delay,
-      texts: '+ ',
+      texts: '+ '
     },
     {
       delay,
-      texts: 'B</kbd>,<u>underlined</u>, ',
+      texts: 'B</kbd>,<u>underlined</u>, '
     },
     {
       delay,
-      texts: '<mark',
+      texts: '<mark'
     },
     {
       delay,
-      texts: '>highli',
+      texts: '>highli'
     },
     {
       delay,
-      texts: 'ghted</m',
+      texts: 'ghted</m'
     },
     {
       delay,
-      texts: 'ark',
+      texts: 'ark'
     },
     {
       delay,
-      texts: '> text, ',
+      texts: '> text, '
     },
     {
       delay,
-      texts: '<span s',
+      texts: '<span s'
     },
     {
       delay,
-      texts: 'tyle="co',
+      texts: 'tyle="co'
     },
     {
       delay,
-      texts: 'lor: #93',
+      texts: 'lor: #93'
     },
     {
       delay,
-      texts: 'C47D;">c',
+      texts: 'C47D;">c'
     },
     {
       delay,
-      texts: 'olored t',
+      texts: 'olored t'
     },
     {
       delay,
-      texts: 'ext</spa',
+      texts: 'ext</spa'
     },
     {
       delay,
-      texts: 'n> and ',
+      texts: 'n> and '
     },
     {
       delay,
-      texts: '<spa',
+      texts: '<spa'
     },
     {
       delay,
-      texts: 'n',
+      texts: 'n'
     },
     {
       delay,
-      texts: ' style="',
+      texts: ' style="'
     },
     {
       delay,
-      texts: 'backgrou',
+      texts: 'backgrou'
     },
     {
       delay,
-      texts: 'nd-color',
+      texts: 'nd-color'
     },
     {
       delay,
-      texts: ': #6C9EE',
+      texts: ': #6C9EE'
     },
     {
       delay,
-      texts: 'B;">back',
+      texts: 'B;">back'
     },
     {
       delay,
-      texts: 'ground h',
+      texts: 'ground h'
     },
     {
       delay,
-      texts: 'ighlight',
+      texts: 'ighlight'
     },
     {
       delay,
-      texts: 's</spa',
+      texts: 's</spa'
     },
     {
       delay,
-      texts: 'n> for ',
+      texts: 'n> for '
     },
     {
       delay,
-      texts: 'visual e',
+      texts: 'visual e'
     },
     {
       delay,
-      texts: 'mphasis.\n\n',
+      texts: 'mphasis.\n\n'
     },
     {
       delay,
-      texts: 'Superscript ',
+      texts: 'Superscript '
     },
     {
       delay,
-      texts: 'like ',
+      texts: 'like '
     },
     {
       delay,
-      texts: 'E=mc<sup>2</sup> ',
+      texts: 'E=mc<sup>2</sup> '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'subscript ',
+      texts: 'subscript '
     },
     {
       delay,
-      texts: 'like ',
+      texts: 'like '
     },
     {
       delay,
-      texts: 'H<sub>2</sub>O ',
+      texts: 'H<sub>2</sub>O '
     },
     {
       delay,
-      texts: 'demonstrate ',
+      texts: 'demonstrate '
     },
     {
       delay,
-      texts: 'mathematical ',
+      texts: 'mathematical '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'chemical ',
+      texts: 'chemical '
     },
     {
       delay,
-      texts: 'notation ',
+      texts: 'notation '
     },
     {
       delay,
-      texts: 'capabilities.\n\n',
+      texts: 'capabilities.\n\n'
     },
     {
       delay,
-      texts: 'Add ',
+      texts: 'Add '
     },
     {
       delay,
-      texts: 'mentions ',
+      texts: 'mentions '
     },
     {
       delay,
-      texts: 'like ',
+      texts: 'like '
     },
     {
       delay,
-      texts: '@BB-8, d',
+      texts: '@BB-8, d'
     },
     {
       delay,
-      texts: 'ates (<d',
+      texts: 'ates (<d'
     },
     {
       delay,
-      texts: 'ate>2025',
+      texts: 'ate>2025'
     },
     {
       delay,
-      texts: '-05-08</',
+      texts: '-05-08</'
     },
     {
       delay,
-      texts: 'date>), ',
+      texts: 'date>), '
     },
     {
       delay,
-      texts: 'and math',
+      texts: 'and math'
     },
     {
       delay,
-      texts: ' formula',
+      texts: ' formula'
     },
     {
       delay,
-      texts: 's ($E=mc',
+      texts: 's ($E=mc'
     },
     {
       delay,
-      texts: '^2$).\n\n',
+      texts: '^2$).\n\n'
     },
     {
       delay,
-      texts: 'The ',
+      texts: 'The '
     },
     {
       delay,
-      texts: 'table ',
+      texts: 'table '
     },
     {
       delay,
-      texts: 'of ',
+      texts: 'of '
     },
     {
       delay,
-      texts: 'contents ',
+      texts: 'contents '
     },
     {
       delay,
-      texts: 'feature ',
+      texts: 'feature '
     },
     {
       delay,
-      texts: 'automatically ',
+      texts: 'automatically '
     },
     {
       delay,
-      texts: 'generates ',
+      texts: 'generates '
     },
     {
       delay,
-      texts: 'document ',
+      texts: 'document '
     },
     {
       delay,
-      texts: 'structure ',
+      texts: 'structure '
     },
     {
       delay,
-      texts: 'for ',
+      texts: 'for '
     },
     {
       delay,
-      texts: 'easy ',
+      texts: 'easy '
     },
     {
       delay,
-      texts: 'navigation.\n\n',
+      texts: 'navigation.\n\n'
     },
     {
       delay,
-      texts: '<toc ',
+      texts: '<toc '
     },
     {
       delay,
-      texts: '/>\n\n',
+      texts: '/>\n\n'
     },
     {
       delay,
-      texts: 'Math ',
+      texts: 'Math '
     },
     {
       delay,
-      texts: 'formula ',
+      texts: 'formula '
     },
     {
       delay,
-      texts: 'support ',
+      texts: 'support '
     },
     {
       delay,
-      texts: 'makes ',
+      texts: 'makes '
     },
     {
       delay,
-      texts: 'displaying ',
+      texts: 'displaying '
     },
     {
       delay,
-      texts: 'complex ',
+      texts: 'complex '
     },
     {
       delay,
-      texts: 'mathematical ',
+      texts: 'mathematical '
     },
     {
       delay,
-      texts: 'expressions ',
+      texts: 'expressions '
     },
     {
       delay,
-      texts: 'simple.\n\n',
+      texts: 'simple.\n\n'
     },
     {
       delay,
-      texts: '$$\n',
+      texts: '$$\n'
     },
     {
       delay,
-      texts: 'a^2',
+      texts: 'a^2'
     },
     {
       delay,
-      texts: '+b^2',
+      texts: '+b^2'
     },
     {
       delay,
-      texts: '=c^2\n',
+      texts: '=c^2\n'
     },
     {
       delay,
-      texts: '$$\n\n',
+      texts: '$$\n\n'
     },
     {
       delay,
-      texts: 'Multi-co',
+      texts: 'Multi-co'
     },
     {
       delay,
-      texts: 'lumn lay',
+      texts: 'lumn lay'
     },
     {
       delay,
-      texts: 'out feat',
+      texts: 'out feat'
     },
     {
       delay,
-      texts: 'ures ena',
+      texts: 'ures ena'
     },
     {
       delay,
-      texts: 'ble rich',
+      texts: 'ble rich'
     },
     {
       delay,
-      texts: 'er page ',
+      texts: 'er page '
     },
     {
       delay,
-      texts: 'designs ',
+      texts: 'designs '
     },
     {
       delay,
-      texts: 'and cont',
+      texts: 'and cont'
     },
     {
       delay,
-      texts: 'ent layo',
+      texts: 'ent layo'
     },
     {
       delay,
-      texts: 'uts.\n\n',
+      texts: 'uts.\n\n'
     },
     // {
     //  delay,
@@ -1295,236 +1290,231 @@ const mdxChunks = [
     // },
     {
       delay,
-      texts: 'PDF ',
+      texts: 'PDF '
     },
     {
       delay,
-      texts: 'embedding ',
+      texts: 'embedding '
     },
     {
       delay,
-      texts: 'makes ',
+      texts: 'makes '
     },
     {
       delay,
-      texts: 'document ',
+      texts: 'document '
     },
     {
       delay,
-      texts: 'referencing ',
+      texts: 'referencing '
     },
     {
       delay,
-      texts: 'simple ',
+      texts: 'simple '
     },
     {
       delay,
-      texts: 'and ',
+      texts: 'and '
     },
     {
       delay,
-      texts: 'intuitive.\n\n',
+      texts: 'intuitive.\n\n'
     },
     {
       delay,
-      texts: '<file ',
+      texts: '<file '
     },
     {
       delay,
-      texts: 'name="sample.pdf" ',
+      texts: 'name="sample.pdf" '
     },
     {
       delay,
-      texts: 'align="center" ',
-    },
-    {
-      delay,
-      texts:
-        'src="https://s26.q4cdn.com/900411403/files/doc_downloads/test.pdf" width="80%" isUpload="true" />\n\n',
-    },
-    {
-      delay,
-      texts: 'Audio ',
-    },
-    {
-      delay,
-      texts: 'players ',
-    },
-    {
-      delay,
-      texts: 'can ',
-    },
-    {
-      delay,
-      texts: 'be ',
-    },
-    {
-      delay,
-      texts: 'embedded ',
-    },
-    {
-      delay,
-      texts: 'directly ',
-    },
-    {
-      delay,
-      texts: 'into ',
-    },
-    {
-      delay,
-      texts: 'documents, ',
-    },
-    {
-      delay,
-      texts: 'supporting ',
-    },
-    {
-      delay,
-      texts: 'online ',
-    },
-    {
-      delay,
-      texts: 'audio ',
-    },
-    {
-      delay,
-      texts: 'resources.\n\n',
-    },
-    {
-      delay,
-      texts: '<audio ',
-    },
-    {
-      delay,
-      texts: 'align="center" ',
+      texts: 'align="center" '
     },
     {
       delay,
       texts:
-        'src="https://samplelib.com/lib/preview/mp3/sample-3s.mp3" width="80%" />\n\n',
+        'src="https://s26.q4cdn.com/900411403/files/doc_downloads/test.pdf" width="80%" isUpload="true" />\n\n'
     },
     {
       delay,
-      texts: 'Video ',
+      texts: 'Audio '
     },
     {
       delay,
-      texts: 'playback ',
+      texts: 'players '
     },
     {
       delay,
-      texts: 'features ',
+      texts: 'can '
     },
     {
       delay,
-      texts: 'support ',
+      texts: 'be '
     },
     {
       delay,
-      texts: 'embedding ',
+      texts: 'embedded '
     },
     {
       delay,
-      texts: 'various ',
+      texts: 'directly '
     },
     {
       delay,
-      texts: 'online ',
+      texts: 'into '
     },
     {
       delay,
-      texts: 'video ',
+      texts: 'documents, '
     },
     {
       delay,
-      texts: 'resources, ',
+      texts: 'supporting '
     },
     {
       delay,
-      texts: 'enriching ',
+      texts: 'online '
     },
     {
       delay,
-      texts: 'document ',
+      texts: 'audio '
     },
     {
       delay,
-      texts: 'content.\n\n',
+      texts: 'resources.\n\n'
     },
     {
       delay,
-      texts: '<video ',
+      texts: '<audio '
     },
     {
       delay,
-      texts: 'align="center" ',
+      texts: 'align="center" '
+    },
+    {
+      delay,
+      texts: 'src="https://samplelib.com/lib/preview/mp3/sample-3s.mp3" width="80%" />\n\n'
+    },
+    {
+      delay,
+      texts: 'Video '
+    },
+    {
+      delay,
+      texts: 'playback '
+    },
+    {
+      delay,
+      texts: 'features '
+    },
+    {
+      delay,
+      texts: 'support '
+    },
+    {
+      delay,
+      texts: 'embedding '
+    },
+    {
+      delay,
+      texts: 'various '
+    },
+    {
+      delay,
+      texts: 'online '
+    },
+    {
+      delay,
+      texts: 'video '
+    },
+    {
+      delay,
+      texts: 'resources, '
+    },
+    {
+      delay,
+      texts: 'enriching '
+    },
+    {
+      delay,
+      texts: 'document '
+    },
+    {
+      delay,
+      texts: 'content.\n\n'
+    },
+    {
+      delay,
+      texts: '<video '
+    },
+    {
+      delay,
+      texts: 'align="center" '
     },
     {
       delay,
       texts:
-        'src="https://videos.pexels.com/video-files/6769791/6769791-uhd_2560_1440_24fps.mp4" width="80%" isUpload="true" />',
-    },
-  ],
-];
+        'src="https://videos.pexels.com/video-files/6769791/6769791-uhd_2560_1440_24fps.mp4" width="80%" isUpload="true" />'
+    }
+  ]
+]
 
 const createCommentChunks = (editor: PlateEditor) => {
-  const selectedBlocksApi = editor.getApi(BlockSelectionPlugin).blockSelection;
+  const selectedBlocksApi = editor.getApi(BlockSelectionPlugin).blockSelection
 
   const selectedBlocks = selectedBlocksApi
     .getNodes({
       selectionFallback: true,
-      sort: true,
+      sort: true
     })
-    .map(([block]) => block);
+    .map(([block]) => block)
 
-  const isSelectingSome = editor.getOption(
-    BlockSelectionPlugin,
-    'isSelectingSome'
-  );
+  const isSelectingSome = editor.getOption(BlockSelectionPlugin, 'isSelectingSome')
 
   const blocks =
     selectedBlocks.length > 0 && (editor.api.isExpanded() || isSelectingSome)
       ? selectedBlocks
-      : editor.children;
+      : editor.children
 
-  const max = blocks.length;
+  const max = blocks.length
 
-  const commentCount = Math.ceil(max / 2);
+  const commentCount = Math.ceil(max / 2)
 
-  const result = new Set<number>();
+  const result = new Set<number>()
 
   while (result.size < commentCount) {
-    const num = Math.floor(Math.random() * max); // 0 to max-1 (fixed: was 1 to max)
-    result.add(num);
+    const num = Math.floor(Math.random() * max) // 0 to max-1 (fixed: was 1 to max)
+    result.add(num)
   }
 
-  const indexes = Array.from(result).sort((a, b) => a - b);
+  const indexes = Array.from(result).sort((a, b) => a - b)
 
   const chunks = indexes
     .map((index, i) => {
-      const block = blocks[index];
+      const block = blocks[index]
       if (!block) {
-        return [];
+        return []
       }
 
-      const blockString = NodeApi.string(block);
-      const endIndex = blockString.indexOf('.');
-      const content =
-        endIndex === -1 ? blockString : blockString.slice(0, endIndex);
+      const blockString = NodeApi.string(block)
+      const endIndex = blockString.indexOf('.')
+      const content = endIndex === -1 ? blockString : blockString.slice(0, endIndex)
 
       return [
         {
           delay: faker.number.int({ max: 500, min: 200 }),
-          texts: `{"id":"${nanoid()}","data":{"comment":{"blockId":"${block.id}","comment":"${faker.lorem.sentence()}","content":"${content}"},"status":"${i === indexes.length - 1 ? 'finished' : 'streaming'}"},"type":"data-comment"}`,
-        },
-      ];
+          texts: `{"id":"${nanoid()}","data":{"comment":{"blockId":"${block.id}","comment":"${faker.lorem.sentence()}","content":"${content}"},"status":"${i === indexes.length - 1 ? 'finished' : 'streaming'}"},"type":"data-comment"}`
+        }
+      ]
     })
-    .filter((chunk) => chunk.length > 0);
+    .filter((chunk) => chunk.length > 0)
 
   const result_chunks = [
     [{ delay: 50, texts: '{"data":"comment","type":"data-toolName"}' }],
-    ...chunks,
-  ];
+    ...chunks
+  ]
 
-  return result_chunks;
-};
+  return result_chunks
+}

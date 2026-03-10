@@ -2,12 +2,10 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { RekuestStructurePackage, RekuestToolbox } from "@/linkers";
 import {
-  useGetStructurePackageQuery,
-  useToolboxQuery,
+  useGetStructurePackageQuery
 } from "@/rekuest/api/graphql";
-import ShortcutList from "../components/lists/ShortcutList";
-import StructureCard from "../components/cards/StructureCard";
 import InterfaceCard from "../components/cards/InterfaceCard";
+import StructureCard from "../components/cards/StructureCard";
 
 export default asDetailQueryRoute(
   useGetStructurePackageQuery,

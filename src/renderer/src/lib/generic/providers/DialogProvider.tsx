@@ -1,9 +1,8 @@
 // typed-dialog-provider.tsx
 
+import { Guard } from "@/app/Arkitekt";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { model } from "@/hooks/use-metaapp";
-import { Guard } from "@/app/Arkitekt";
 import { cn } from "@/lib/utils";
 import React, { createContext, useCallback, useContext, useState } from "react";
 

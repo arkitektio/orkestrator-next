@@ -5,11 +5,11 @@ import { MateFinder } from "../../../mates/types";
 import { ListBlockFragment } from "../../api/graphql";
 interface Props {
   item: ListBlockFragment;
-  mates?: MateFinder[];
+
   className?: string;
 }
 
-const TheCard = ({ item, mates, className }: Props) => {
+const TheCard = ({ item, className }: Props) => {
   return (
     <ElektroBlock.Smart object={item?.id} mates={mates}>
       <Card

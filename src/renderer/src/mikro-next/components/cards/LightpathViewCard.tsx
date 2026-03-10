@@ -6,10 +6,10 @@ import { LightPathListView } from "../lightpath/LightPathListView";
 
 interface Props {
   view: LightpathViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroLightpathView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view} className="h-20 flex flex-row p-3 overflow-hidden">

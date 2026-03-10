@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useAppsQuery, useListComputeNodeQuery, useUserOptionsQuery, useUsersQuery } from "@/lok-next/api/graphql";
 import { DropdownMenuItem, DropdownMenuTrigger, DropdownMenuContent, DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoQPlayer } from "@/components/moq/MoQPlayer";
 
 
 
@@ -157,12 +156,6 @@ const Page = () => {
   return (
     <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub}/><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
       <ActionList />
-      <MoQPlayer
-        relayHost="jhnnsrs-lab"
-        relayPort={4443}
-        broadcastPath="clock"
-        trackName="video"
-      />
 
       <ReservationList />
       <AssignationList />

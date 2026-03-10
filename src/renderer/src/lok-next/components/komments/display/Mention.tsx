@@ -11,7 +11,7 @@ export const Mention = ({ element }: { element: MentionType }) => {
           className="inline-flex"
           dropClassName={() => "inline"}
           containerClassName="inline"
-          mates={[]}
+
         >
           <LokUser.DetailLink
             object={element?.user?.id}

@@ -6,10 +6,10 @@ import { Card } from "@/components/ui/card";
 
 interface Props {
   item: ListRedeemTokenFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <LokRedeemToken.Smart object={item?.id} mates={mates}>
       <Card>

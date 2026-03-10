@@ -15,10 +15,10 @@ import { HistoryKind, ProvenanceEntry } from "../../api/graphql";
 
 interface HistoryCardProps {
   history: ProvenanceEntry;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ history, mates }: HistoryCardProps) => {
+const TheCard = ({ history }: HistoryCardProps) => {
   return (
     <MikroHistory.Smart object={history?.id} mates={mates} key={history.id}>
       <Card key={history.id}>

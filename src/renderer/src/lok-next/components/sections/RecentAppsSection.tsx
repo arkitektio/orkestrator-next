@@ -62,7 +62,7 @@ export const RecentAppsSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.apps.map((app, index) => (
             <div key={app.id} className="relative">
-              <AppCard item={app} mates={[]} />
+              <AppCard item={app}  />
               {index === 0 && (
                 <Badge variant="secondary" className="absolute -top-2 -right-2 text-xs">
                   <Clock className="w-3 h-3 mr-1" />

@@ -1,4 +1,9 @@
-import { ValueKind } from "../../api/graphql";
+import {
+  AggregationFunction,
+  DerivationRuleInput,
+  DerivationType,
+  ValueKind,
+} from "../../api/graphql";
 import {
   Type,
   Hash,
@@ -13,12 +18,14 @@ export interface PropertyDefinition {
   label: string;
   description?: string;
   valueKind: ValueKind;
-  optional: boolean;
-  default?: string;
+  derivation?: DerivationType;
+  rule?: DerivationRuleInput;
+  index?: boolean;
   searchable?: boolean;
-  required?: boolean;
-  unique?: boolean;
 }
+
+export const DEFAULT_DERIVATION = DerivationType.Latest;
+export const DEFAULT_AGGREGATION = AggregationFunction.Latest;
 
 export interface DataTypeConfig {
   icon: React.ComponentType<{ className?: string }>;
@@ -222,14 +229,6 @@ export function validateSchema(properties: PropertyDefinition[]): {
   if (missingLabels.length > 0) {
     errors.push(
       `Properties missing labels: ${missingLabels.map((p) => p.key).join(", ")}`
-    );
-  }
-
-  // Check that required properties are not also optional
-  const conflictingRequired = properties.filter((p) => p.required && p.optional);
-  if (conflictingRequired.length > 0) {
-    errors.push(
-      `Properties cannot be both required and optional: ${conflictingRequired.map((p) => p.key).join(", ")}`
     );
   }
 

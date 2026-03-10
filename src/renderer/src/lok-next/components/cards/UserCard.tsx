@@ -7,7 +7,7 @@ import { ListUserFragment } from "../../api/graphql";
 
 interface Props {
   item: ListUserFragment;
-  mates?: MateFinder[];
+
 }
 
 const TheCard = ({ item }: Props) => {

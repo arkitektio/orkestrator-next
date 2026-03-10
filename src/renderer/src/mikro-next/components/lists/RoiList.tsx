@@ -31,7 +31,7 @@ const List = ({ filters, pagination }: Props) => {
       actions={<MikroROI.NewButton minimal />}
       refetch={refetch}
     >
-      {(ex, index) => <RoiCard key={ex.id} item={ex} mates={[]} />}
+      {(ex, index) => <RoiCard key={ex.id} item={ex}  />}
     </ListRender>
   );
 };

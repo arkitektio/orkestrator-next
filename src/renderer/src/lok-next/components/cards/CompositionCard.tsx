@@ -4,10 +4,10 @@ import { ListClientFragment } from "../../api/graphql";
 
 interface Props {
   item: ListClientFragment;
-  mates?: MateFinder[];
+
 }
 
-const Card = ({ item, mates }: Props) => {
+const Card = ({ item }: Props) => {
   return (
     <LokComposition.Smart object={item?.id} mates={mates}>
       <LokComposition.DetailLink

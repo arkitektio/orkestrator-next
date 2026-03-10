@@ -11,10 +11,10 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: PixelViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroFileView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>

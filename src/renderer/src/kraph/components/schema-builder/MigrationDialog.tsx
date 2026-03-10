@@ -12,16 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { MigrationPlan } from "./migration";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
 
 interface MigrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plan: MigrationPlan;
   entityCount: number;
-  onConfirm: (defaultValues: Record<string, string>) => void;
+  onConfirm: () => void;
   onCancel: () => void;
 }
 
@@ -33,18 +30,6 @@ export function MigrationDialog({
   onConfirm,
   onCancel,
 }: MigrationDialogProps) {
-  const [defaultValues, setDefaultValues] = useState<Record<string, string>>({});
-
-  const handleConfirm = () => {
-    // Convert string values to appropriate types
-    const processedValues: Record<string, string> = {};
-    for (const [key, value] of Object.entries(defaultValues)) {
-      if (value === "") continue;
-      processedValues[key] = value;
-    }
-    onConfirm(processedValues);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
@@ -82,7 +67,7 @@ export function MigrationDialog({
                   {plan.additions.map((prop) => (
                     <div
                       key={prop.key}
-                      className="p-3 bg-green-50 rounded-lg space-y-2"
+                      className="p-3 bg-green-50 rounded-lg"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -93,40 +78,6 @@ export function MigrationDialog({
                         </div>
                         <Badge variant="outline">{prop.valueKind}</Badge>
                       </div>
-                      {!prop.optional && (
-                        <div className="space-y-1">
-                          <Label htmlFor={`default-${prop.key}`} className="text-xs">
-                            Default value for existing entities
-                            {!prop.default && (
-                              <span className="text-red-500 ml-1">*</span>
-                            )}
-                          </Label>
-                          <Input
-                            id={`default-${prop.key}`}
-                            value={defaultValues[prop.key] || prop.default || ""}
-                            onChange={(e) =>
-                              setDefaultValues((prev) => ({
-                                ...prev,
-                                [prop.key]: e.target.value,
-                              }))
-                            }
-                            placeholder={
-                              prop.default || "Enter default value..."
-                            }
-                            className="text-sm"
-                          />
-                          {!prop.default && !defaultValues[prop.key] && (
-                            <p className="text-xs text-red-600">
-                              Required: This property is not optional
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {prop.optional && prop.default && (
-                        <p className="text-xs text-muted-foreground">
-                          Default: {prop.default}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -196,14 +147,7 @@ export function MigrationDialog({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={
-              plan.additions.some(
-                (p) => !p.optional && !p.default && !defaultValues[p.key]
-              )
-            }
-          >
+          <Button onClick={onConfirm}>
             Migrate {entityCount} {entityCount === 1 ? "Entity" : "Entities"}
           </Button>
         </DialogFooter>

@@ -7,10 +7,10 @@ import { ListGroupFragment } from "../../api/graphql";
 
 interface Props {
   item: ListGroupFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (

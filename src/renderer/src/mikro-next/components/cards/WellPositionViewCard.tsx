@@ -7,10 +7,10 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: WellPositionViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroMultiPositionView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>

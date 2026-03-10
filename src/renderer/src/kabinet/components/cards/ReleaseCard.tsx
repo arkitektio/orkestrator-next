@@ -26,7 +26,7 @@ import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;
-  mates?: MateFinder[];
+
 }
 
 export const AssignButton = (props: {
@@ -112,7 +112,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   );
 };
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const { progress } = useLiveAssignation({
     identifier: "@kabinet/release",
     object: item.id,

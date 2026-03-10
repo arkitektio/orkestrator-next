@@ -5,10 +5,10 @@ import { ListServiceFragment } from "../../api/graphql";
 
 interface Props {
   item: ListServiceFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <LokService.Smart object={item?.id} mates={mates}>
       <Card className="p-3">

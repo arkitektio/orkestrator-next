@@ -5,11 +5,11 @@ import { MateFinder } from "../../../mates/types";
 import { ListTraceFragment } from "../../api/graphql";
 interface Props {
   item: ListTraceFragment;
-  mates?: MateFinder[];
+
   className?: string;
 }
 
-const TheCard = ({ item, mates, className }: Props) => {
+const TheCard = ({ item, className }: Props) => {
   return (
     <ElektroTrace.Smart object={item?.id} mates={mates}>
       <Card

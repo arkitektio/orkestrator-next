@@ -16,7 +16,7 @@ import { ListProviderFragment, ProviderKind } from "../../api/graphql";
 
 interface Props {
   item: ListProviderFragment;
-  mates?: MateFinder[];
+
 }
 
 export const kindToIcon: Record<ProviderKind, React.ReactNode> = {
@@ -178,7 +178,7 @@ const getProviderKindDisplayName = (kind: ProviderKind): string => {
   }
 };
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <AlpakaProvider.Smart object={item?.id} mates={mates}>
       <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group">

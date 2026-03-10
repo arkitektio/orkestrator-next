@@ -1,20 +1,18 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { KraphGraph } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import { ListGraphFragment } from "../../api/graphql";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface Props {
   item: ListGraphFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item  }: Props) => {
 
   const s3resolve = useResolve();
   return (
-    <KraphGraph.Smart object={item?.id} mates={mates}>
+    <KraphGraph.Smart object={item?.id}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate group">
         {item?.image?.presignedUrl && (
           <Image

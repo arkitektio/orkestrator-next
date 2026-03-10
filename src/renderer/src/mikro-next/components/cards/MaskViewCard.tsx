@@ -5,10 +5,10 @@ import { MaskViewFragment } from "../../api/graphql";
 
 interface HistoryCardProps {
   item: MaskViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: HistoryCardProps) => {
+const TheCard = ({ item }: HistoryCardProps) => {
   return (
     <MikroMaskView.Smart object={item?.id} mates={mates} key={item.id}>
       <Card key={item.id} className="p-4">

@@ -5,16 +5,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RekuestDependency } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import { ListDependencyFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListDependencyFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const reserveMate = useReserveMate();
 
 

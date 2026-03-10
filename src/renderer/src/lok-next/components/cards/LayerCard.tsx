@@ -7,10 +7,10 @@ import { ListLayerFragment } from "../../api/graphql";
 
 interface Props {
   item: ListLayerFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (

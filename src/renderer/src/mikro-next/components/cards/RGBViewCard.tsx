@@ -20,7 +20,7 @@ import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { Edit2, Scale3DIcon, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { RgbColorPicker } from "react-colorful";
@@ -35,7 +35,7 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: RgbViewFragment;
-  mates?: MateFinder[];
+
 }
 
 export const baseColorToRGB = (baseColor: number[] | undefined | null) => {

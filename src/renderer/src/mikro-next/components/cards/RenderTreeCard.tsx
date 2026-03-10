@@ -4,10 +4,10 @@ import { ListRenderTreeFragment } from "../../api/graphql";
 
 interface Props {
   item: ListRenderTreeFragment;
-  mates?: MateFinder[];
+
 }
 
-const Card = ({ item, mates }: Props) => {
+const Card = ({ item }: Props) => {
   return (
     <MikroRenderTree.Smart
       object={item?.id}

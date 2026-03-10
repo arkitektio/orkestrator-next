@@ -12,8 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import {
   ListImplementationFragment,
   useDeleteImplementationMutation,
@@ -24,10 +24,10 @@ import { PlayCircle } from "lucide-react";
 
 interface Props {
   item: ListImplementationFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const reserveMate = useReserveMate();
   const [deleteImplementation, _] = useDeleteImplementationMutation({
     variables: {

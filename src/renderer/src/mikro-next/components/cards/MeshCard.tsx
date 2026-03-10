@@ -5,10 +5,10 @@ import { ListMeshFragment } from "../../api/graphql";
 
 interface Props {
   mesh: ListMeshFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ mesh, mates }: Props) => {
+const TheCard = ({ mesh }: Props) => {
   return (
     <MikroMesh.Smart object={mesh?.id} mates={mates}>
       <Card className="px-2 py-2 aspect-[5/3]">

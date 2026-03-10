@@ -6,10 +6,10 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: OpticsViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroOpticsView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>

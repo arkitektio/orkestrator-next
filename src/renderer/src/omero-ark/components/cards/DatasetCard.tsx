@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { OmeroArkDataset } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListDatasetFragment } from "@/omero-ark/api/graphql";
 
 

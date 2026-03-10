@@ -11,10 +11,10 @@ import { ListPodFragment } from "../../api/graphql";
 
 interface Props {
   item: ListPodFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <KabinetPod.Smart object={item?.id} mates={mates}>
       <Card className="group aspect-[3/2]">

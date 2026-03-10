@@ -19,7 +19,7 @@ const List = ({ }: Props) => {
         }
       >
         {(ex, index) => (
-          <AssignationCard key={index} assignation={ex} mates={[]} />
+          <AssignationCard key={index} assignation={ex}  />
         )}
       </ListRender>
     </>

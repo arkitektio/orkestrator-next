@@ -3,19 +3,46 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, Trash2, AlertCircle } from "lucide-react";
-import { PropertyDefinition, toSnakeCase, isValidMachineKey } from "./utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CircleHelp, InfoIcon, Settings2, Trash2, AlertCircle } from "lucide-react";
+import {
+  DEFAULT_AGGREGATION,
+  DEFAULT_DERIVATION,
+  PropertyDefinition,
+  toSnakeCase,
+  isValidMachineKey,
+} from "./utils";
 import { DataTypeSelector } from "./DataTypeSelector";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
-import { FieldError } from "react-hook-form";
+import { AggregationFunction, DerivationType } from "../../api/graphql";
 
 interface PropertyInspectorProps {
   property: PropertyDefinition | null;
   onUpdate: (updates: Partial<PropertyDefinition>) => void;
   onDelete: () => void;
-  errors?: Partial<Record<keyof PropertyDefinition, FieldError>>;
+  errors?: Record<string, any>;
 }
 
 export function PropertyInspector({
@@ -25,6 +52,7 @@ export function PropertyInspector({
   errors,
 }: PropertyInspectorProps) {
   const [autoGenerateKey, setAutoGenerateKey] = useState(true);
+  const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
 
   if (!property) {
     return (
@@ -143,76 +171,25 @@ export function PropertyInspector({
 
         {/* Data Type Selector */}
         <fieldset className="space-y-3 border rounded-lg p-4">
-          <legend className="text-base font-semibold px-2">Data Type</legend>
+          <legend className="text-base font-semibold px-2 flex items-center gap-1.5">
+            Data Type
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Select the value format this field should store.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </legend>
           <DataTypeSelector
             value={property.valueKind}
             onChange={(valueKind) => onUpdate({ valueKind })}
           />
-        </fieldset>
-
-        {/* Validation Settings */}
-        <fieldset className="space-y-4 border rounded-lg p-4">
-          <legend className="text-base font-semibold px-2">Validation</legend>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="optional" className="font-medium">
-                Optional Field
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Allow this field to be empty
-              </p>
-            </div>
-            <Switch
-              id="optional"
-              checked={property.optional}
-              onCheckedChange={(optional) => onUpdate({ optional })}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="required" className="font-medium">
-                Required
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Must have a value
-              </p>
-            </div>
-            <Switch
-              id="required"
-              checked={property.required || false}
-              onCheckedChange={(required) => onUpdate({ required })}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="unique" className="font-medium">
-                Unique
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                No duplicate values allowed
-              </p>
-            </div>
-            <Switch
-              id="unique"
-              checked={property.unique || false}
-              onCheckedChange={(unique) => onUpdate({ unique })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="default" className="font-medium">
-              Default Value
-            </Label>
-            <Input
-              id="default"
-              value={property.default || ""}
-              onChange={(e) => onUpdate({ default: e.target.value })}
-              placeholder="Optional default value"
-            />
-          </div>
         </fieldset>
 
         {/* Indexing & Search */}
@@ -223,6 +200,34 @@ export function PropertyInspector({
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
+              <Label htmlFor="index" className="font-medium">
+                Indexed
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Improves filtering and sorting speed for this field
+              </p>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground mr-2">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Indexes speed up filtering and ordering on this field.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Switch
+              id="index"
+              checked={property.index || false}
+              onCheckedChange={(index) => onUpdate({ index })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
               <Label htmlFor="searchable" className="font-medium">
                 Searchable
               </Label>
@@ -230,11 +235,117 @@ export function PropertyInspector({
                 Enable full-text search on this field
               </p>
             </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground mr-2">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Enables full-text search matching for this field.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Switch
               id="searchable"
               checked={property.searchable || false}
               onCheckedChange={(searchable) => onUpdate({ searchable })}
             />
+          </div>
+
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="font-medium flex items-center gap-1.5">
+                  Derivation Rule
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground">
+                          <CircleHelp className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Defines how supporting evidence fills this field.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Auto-fills from supporting evidence using <span className="font-medium lowercase">{(property.rule?.aggregation || DEFAULT_AGGREGATION).toLowerCase()}</span>.
+                </p>
+              </div>
+              <Dialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" size="sm">
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Configure
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Derivation Rule</DialogTitle>
+                    <DialogDescription>
+                      Choose how this field should be filled from supporting evidence. Aggregation defines which evidence values are used to compute the final value for this field.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Derivation Type</Label>
+                      <Select
+                        value={property.derivation || DEFAULT_DERIVATION}
+                        onValueChange={(derivation) =>
+                          onUpdate({ derivation: derivation as DerivationType })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select derivation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(DerivationType).map((derivation) => (
+                            <SelectItem key={derivation} value={derivation}>
+                              {derivation}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Aggregation</Label>
+                      <Select
+                        value={
+                          property.rule?.aggregation || DEFAULT_AGGREGATION
+                        }
+                        onValueChange={(aggregation) =>
+                          onUpdate({
+                            derivation: property.derivation || DEFAULT_DERIVATION,
+                            rule: {
+                              ...property.rule,
+                              aggregation:
+                                aggregation as AggregationFunction,
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select aggregation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(AggregationFunction).map((aggregation) => (
+                            <SelectItem key={aggregation} value={aggregation}>
+                              {aggregation}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {property.searchable && (

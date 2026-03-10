@@ -3,18 +3,16 @@ import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { ListProtocolEventCategoryFragment } from "@/kraph/api/graphql";
 import { KraphProtocolEventCategory } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 
 interface Props {
   item: ListProtocolEventCategoryFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const s3resolve = useResolve();
 
   return (
-    <KraphProtocolEventCategory.Smart object={item?.id} mates={mates}>
+    <KraphProtocolEventCategory.Smart object={item?.id}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate relative">
         {item?.image?.presignedUrl && (
           <Image

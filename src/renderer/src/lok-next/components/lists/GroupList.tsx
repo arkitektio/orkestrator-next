@@ -24,7 +24,7 @@ const List = ({ filters, pagination }: Props) => {
       title={<LokGroup.ListLink className="flex-0">Groups</LokGroup.ListLink>}
       refetch={refetch}
     >
-      {(ex, index) => <GroupCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <GroupCard key={index} item={ex}  />}
     </ListRender>
   );
 };

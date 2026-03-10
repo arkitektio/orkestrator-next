@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <PlotViewCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <PlotViewCard key={index} item={ex}  />}
     </ListRender>
   );
 };

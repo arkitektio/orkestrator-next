@@ -4,10 +4,10 @@ import { ImageMetricFragment } from "../../api/graphql";
 
 interface Props {
   metric: ImageMetricFragment;
-  mates?: MateFinder[];
+
 }
 
-const Card = ({ metric, mates }: Props) => {
+const Card = ({ metric }: Props) => {
   return (
     <KraphMetric.Smart
       object={metric?.id}

@@ -9,10 +9,10 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: RoiViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroROIView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>

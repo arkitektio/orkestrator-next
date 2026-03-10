@@ -6,11 +6,11 @@ import { ListRoiFragment } from "../../api/graphql";
 
 interface ImageCardProps {
   item: ListRoiFragment;
-  mates?: MateFinder[];
+
   className?: string;
 }
 
-const ImageCard = ({ item, mates, className }: ImageCardProps) => {
+const ImageCard = ({ item, className }: ImageCardProps) => {
   const resolve = useResolve();
 
   const { progress } = MikroROI.useLive({ object: item.id });

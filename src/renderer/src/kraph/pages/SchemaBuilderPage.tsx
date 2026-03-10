@@ -2,12 +2,18 @@ import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { PropertyList } from "../components/schema-builder/PropertyList";
 import { PropertyInspector } from "../components/schema-builder/PropertyInspector";
-import { PropertyDefinition, validateSchema } from "../components/schema-builder/utils";
+import {
+  DEFAULT_AGGREGATION,
+  DEFAULT_DERIVATION,
+  PropertyDefinition,
+  validateSchema,
+} from "../components/schema-builder/utils";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowLeft } from "lucide-react";
-import { ValueKind as ValueKind } from "../api/graphql";
+import { Save } from "lucide-react";
+import { ValueKind } from "../api/graphql";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { PageLayout } from "@/components/layout/PageLayout";
 
 interface SchemaBuilderPageProps {
   initialProperties?: PropertyDefinition[];
@@ -49,7 +55,6 @@ export function SchemaBuilderPage({
   );
   const navigate = useNavigate();
 
-  // Helper to get current properties
   const getProperties = () => getValues("properties");
 
   const handleAddProperty = () => {
@@ -59,10 +64,12 @@ export function SchemaBuilderPage({
       label: `New Property ${properties.length + 1}`,
       description: "",
       valueKind: ValueKind.String,
-      optional: true,
-      required: false,
+      derivation: DEFAULT_DERIVATION,
+      rule: {
+        aggregation: DEFAULT_AGGREGATION,
+      },
+      index: false,
       searchable: false,
-      unique: false,
     };
     append(newProperty);
     setSelectedIndex(properties.length);
@@ -85,7 +92,7 @@ export function SchemaBuilderPage({
     remove(index);
     if (selectedIndex === index) {
       setSelectedIndex(properties.length > 1 ? 0 : null);
-    } else if (selectedIndex && selectedIndex > index) {
+    } else if (selectedIndex !== null && selectedIndex > index) {
       setSelectedIndex(selectedIndex - 1);
     }
   };
@@ -93,7 +100,6 @@ export function SchemaBuilderPage({
   const handleReorderProperties = (fromIndex: number, toIndex: number) => {
     move(fromIndex, toIndex);
 
-    // Adjust selected index if needed
     if (selectedIndex === fromIndex) {
       setSelectedIndex(toIndex);
     } else if (
@@ -112,7 +118,6 @@ export function SchemaBuilderPage({
   };
 
   const onSubmit = async (data: SchemaFormData) => {
-    // Validate the entire schema
     const validation = validateSchema(data.properties);
 
     if (!validation.isValid) {
@@ -143,46 +148,31 @@ export function SchemaBuilderPage({
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
-    } else {
-      navigate(-1);
+      return;
     }
+    navigate(-1);
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCancel}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{title}</h1>
-              <p className="text-sm text-muted-foreground">
-                Define the properties and structure of this type
-              </p>
-            </div>
-          </div>
+    <PageLayout
+      title={title}
+      pageActions={
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting || getProperties().length === 0}
-            size="lg"
+            size="sm"
           >
             <Save className="h-4 w-4 mr-2" />
             {isSubmitting ? "Saving..." : "Save Schema"}
           </Button>
         </div>
-      </div>
-
-      {/* Split Pane Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Pane - Property List */}
+      }
+    >
+      <div className="flex h-full min-h-0 overflow-hidden">
         <div className="w-96">
           <PropertyList
             properties={getProperties()}
@@ -193,8 +183,7 @@ export function SchemaBuilderPage({
           />
         </div>
 
-        {/* Right Pane - Property Inspector */}
-        <div className="flex-1 bg-accent/20">
+        <div className="flex-1 bg-accent/20 min-h-0">
           <PropertyInspector
             property={
               selectedIndex !== null ? getProperties()[selectedIndex] : null
@@ -214,6 +203,6 @@ export function SchemaBuilderPage({
           />
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

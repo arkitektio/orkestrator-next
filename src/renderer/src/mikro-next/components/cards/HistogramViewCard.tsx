@@ -20,7 +20,7 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: HistogramViewFragment;
-  mates?: MateFinder[];
+
 }
 
 const histogramViewToChartData = (view: HistogramViewFragment) => {
@@ -39,7 +39,7 @@ const chartConfig = {
   },
 };
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   const [deleteHistogram] = useDeleteHistogramViewMutation();
 
   return (

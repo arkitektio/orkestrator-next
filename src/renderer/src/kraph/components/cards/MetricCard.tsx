@@ -1,16 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { KraphMetric } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import { ListMetricFragment } from "../../api/graphql";
 
 interface Props {
   item: ListMetricFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <KraphMetric.Smart object={item?.id} mates={mates}>
+    <KraphMetric.Smart object={item?.id} >
       <Card className="px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate">
         <KraphMetric.DetailLink
           className={({ isActive } /*  */) =>

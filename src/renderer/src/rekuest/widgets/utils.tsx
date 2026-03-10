@@ -82,7 +82,7 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.coerce.number({ message: "Please enter a valid integer" });
       break;
     case PortKind.MemoryStructure:
-      baseType = z.string({ message: "Please enter a valid memory structure" });
+      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
       break;
     case PortKind.Float:
       baseType = z.coerce
@@ -92,7 +92,7 @@ export const portToZod = (port: LabellablePort): any => {
         });
       break;
     case PortKind.Structure:
-      baseType = z.string({ message: "Please enter a valid structure" });
+      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
       break;
     case PortKind.Union:
       const variants = port.children?.filter(notEmpty);
@@ -100,13 +100,9 @@ export const portToZod = (port: LabellablePort): any => {
         throw new Error("Union port is not defined");
         break;
       }
-      baseType = z.discriminatedUnion(
-        "__use",
+      baseType = z.union(
         variants.map((v, index) =>
-          z.object({
-            __value: portToZod(v),
-            __use: z.literal(index.toString()),
-          }),
+          portToZod(v)
         ) || [],
       );
       break;
@@ -186,15 +182,24 @@ export type ValidatorFunction = (
 
 const ream = new ShadowRealm();
 
-export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
-  const schema = z.object(
-    ports.reduce(
+export const buildZodSchema = (ports: PortablePort[], path: string[] = [], __identifier?: string) => {
+
+  let portSchemas =  ports.reduce(
       (prev, curr) => {
         prev[curr.key] = portToZod(curr);
         return prev;
       },
       {} as { [key: string]: any },
-    ),
+    )
+
+  if (__identifier) {
+    portSchemas = {
+      ...portSchemas,
+      __identifier: z.literal(__identifier),
+    }
+  }
+  const schema = z.object(
+    portSchemas
   );
 
   ports.forEach((port) => {

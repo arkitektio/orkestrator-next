@@ -11,12 +11,12 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface HistoryCardProps {
   item: InstanceMaskViewFragment;
-  mates?: MateFinder[];
+
 }
 
 type Row = Record<string, unknown>;
 
-const TheCard = ({ item, mates }: HistoryCardProps) => {
+const TheCard = ({ item }: HistoryCardProps) => {
   const resolve = useResolve();
 
   const url = resolve(item?.labels?.presignedUrl) ?? null;

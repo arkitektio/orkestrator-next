@@ -1,20 +1,18 @@
 import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
 import { KraphGraphQuery } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import {
   ListGraphQueryFragment,
 } from "../../api/graphql";
 
 interface Props {
   item: ListGraphQueryFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
 
   return (
-    <KraphGraphQuery.Smart object={item?.id} mates={mates}>
+    <KraphGraphQuery.Smart object={item?.id} >
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate">
         <KraphGraphQuery.DetailLink
           className={({ isActive } /*  */) =>

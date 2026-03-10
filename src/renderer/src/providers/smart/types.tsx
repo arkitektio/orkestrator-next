@@ -1,5 +1,5 @@
 import { PaneLinkProps } from "@/components/ui/sidepane";
-import { MateFinder } from "@/mates/types";
+
 import { NavLinkProps } from "react-router-dom";
 
 export type Identifier = string;
@@ -43,7 +43,7 @@ export interface SmartModelProps {
   hover?: boolean;
   showSelfMates?: boolean;
   className?: string;
-  mates?: MateFinder[];
+
 }
 
 export interface CreatedSmartSmartProps

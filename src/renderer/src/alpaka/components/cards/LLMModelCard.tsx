@@ -5,10 +5,10 @@ import { ListLlmModelFragment } from "../../api/graphql";
 
 interface Props {
   item: ListLlmModelFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <AlpakaLLMModel.Smart object={item?.id} mates={mates}>
       <Card className="w-full h-30 flex flex-col p-3  hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group" >

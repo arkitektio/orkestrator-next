@@ -8,8 +8,8 @@ import {
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import {
   ListImplementationFragment,
   MinimalImplementationFragment,
@@ -19,10 +19,10 @@ import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
   item: MinimalImplementationFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const reserveMate = useReserveMate();
 
   const progress = useLiveAssignation({

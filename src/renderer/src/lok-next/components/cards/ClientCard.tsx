@@ -15,10 +15,10 @@ import { ListClientFragment } from "../../api/graphql";
 
 interface Props {
   item: ListClientFragment;
-  mates?: MateFinder[];
+
 }
 
-const ClientCard = ({ item, mates }: Props) => {
+const ClientCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (

@@ -6,10 +6,10 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: LabelViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
     <MikroLabelView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>

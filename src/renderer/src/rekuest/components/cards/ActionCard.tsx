@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/card";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestAction } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import { ListActionFragment } from "@/rekuest/api/graphql";
 import { ActionButton } from "@/rekuest/buttons/ActionButton";
 import { ReserveActionButton } from "@/rekuest/buttons/ReserveActionButton";

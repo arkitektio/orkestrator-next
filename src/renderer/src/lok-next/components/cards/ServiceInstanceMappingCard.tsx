@@ -4,10 +4,10 @@ import { ListServiceInstanceMappingFragment } from "../../api/graphql";
 
 interface Props {
   item: ListServiceInstanceMappingFragment;
-  mates?: MateFinder[];
+
 }
 
-const Card = ({ item, mates }: Props) => {
+const Card = ({ item }: Props) => {
   return (
     <LokMapping.Smart
       object={item?.id}

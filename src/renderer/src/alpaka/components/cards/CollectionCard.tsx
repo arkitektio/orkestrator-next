@@ -5,10 +5,10 @@ import { ListChromaCollectionFragment } from "../../api/graphql";
 
 interface Props {
   item: ListChromaCollectionFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <AlpakaCollection.Smart object={item?.id} mates={mates}>
       <Card className="w-full h-20 relative">

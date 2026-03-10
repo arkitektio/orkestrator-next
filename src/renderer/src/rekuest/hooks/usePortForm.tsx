@@ -18,7 +18,6 @@ export const portHash = (port: Port[]) => {
 export const usePortForm = (props: {
   ports: Port[];
   overwrites?: { [key: string]: any };
-
   doNotAutoReset?: boolean;
   additionalSchema?: Zod.ZodObject<any>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
@@ -26,7 +25,7 @@ export const usePortForm = (props: {
 }) => {
   const hash = portHash(props.ports);
 
-  const defaultValues = useCallback(async () => {
+  const defaultValues = useCallback( () => {
     return portToDefaults(props.ports, props.overwrites || {});
   }, [hash, props.overwrites]);
 
@@ -36,7 +35,7 @@ export const usePortForm = (props: {
       return zodResolver(zodSchema.merge(props.additionalSchema));
     }
     return zodResolver(zodSchema);
-  }, [hash, props.additionalSchema]);
+  }, [hash, props.additionalSchema, ]);
 
   const { handleSubmit, ...form } = useForm({
     defaultValues: defaultValues,
@@ -71,7 +70,7 @@ export const usePortForm = (props: {
   useEffect(() => {
     if (props.doNotAutoReset) return;
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
-  }, [hash]);
+  }, [hash, form]);
 
   return { ...form, handleSubmit: overWrittenHandleSubmit, };
 };

@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Arkitekt } from "@/app/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListImageFragment } from "@/omero-ark/api/graphql";
 import React from "react";
 
 interface Props {
   image: ListImageFragment;
-  mates?: MateFinder[];
+
 }
 
 const apiUrlFromImageID = (id: string, fakts: any) => {
@@ -18,7 +18,7 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
   )}/api/thumbnails/${id}`;
 };
 
-const TCard = ({ image, mates }: Props) => {
+const TCard = ({ image }: Props) => {
   const token = Arkitekt.useToken();
   const omeroArk = Arkitekt.useService("omero_ark");
 

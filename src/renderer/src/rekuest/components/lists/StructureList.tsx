@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <StructureCard key={ex.id} item={ex} mates={[]} />}
+      {(ex, index) => <StructureCard key={ex.id} item={ex}  />}
     </ListRender>
   );
 };

@@ -1,15 +1,15 @@
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestToolbox } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListToolboxFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListToolboxFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestToolbox.Smart object={item?.id}>
       <Card className={cn("aspect-square flex flex-col")}>

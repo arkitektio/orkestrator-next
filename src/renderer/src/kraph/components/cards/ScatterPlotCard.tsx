@@ -1,19 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { KraphScatterPlot } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import {
   ListScatterPlotFragment
 } from "../../api/graphql";
 
 interface Props {
   item: ListScatterPlotFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
 
   return (
-    <KraphScatterPlot.Smart object={item?.id} mates={mates}>
+    <KraphScatterPlot.Smart object={item?.id}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate">
         <KraphScatterPlot.DetailLink
           className={({ isActive } /*  */) =>

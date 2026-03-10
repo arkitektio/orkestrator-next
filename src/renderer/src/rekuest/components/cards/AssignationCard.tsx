@@ -1,14 +1,14 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestAssignation } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import Timestamp from "react-timestamp";
 import { PostmanAssignationFragment } from "../../api/graphql";
 interface Props {
   assignation: PostmanAssignationFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ assignation, mates }: Props) => {
+const TheCard = ({ assignation }: Props) => {
   return (
     <RekuestAssignation.Smart object={assignation?.id}>
       <Card>

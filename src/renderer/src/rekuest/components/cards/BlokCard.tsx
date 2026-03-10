@@ -1,14 +1,14 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestBlok } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListBlokFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListBlokFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestBlok.Smart object={item?.id}>
       <Card>

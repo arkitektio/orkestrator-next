@@ -6,10 +6,10 @@ import { ListRenderedPlotFragment } from "../../api/graphql";
 
 interface ImageCardProps {
   item: ListRenderedPlotFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: ImageCardProps) => {
+const TheCard = ({ item }: ImageCardProps) => {
   const resolve = useResolve();
 
   const progress = MikroRenderedPlot.useProgress({ object: item.id });

@@ -6,10 +6,10 @@ import { ListStageFragment } from "../../api/graphql";
 
 interface Props {
   stage: ListStageFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ stage, mates }: Props) => {
+const TheCard = ({ stage }: Props) => {
   return (
     <MikroStage.Smart object={stage?.id} mates={mates}>
       <Card className={cn("aspect-square flex flex-col ")}>

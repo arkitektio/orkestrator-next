@@ -11,10 +11,10 @@ import { ListResourceFragment } from "../../api/graphql";
 
 interface Props {
   item: ListResourceFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <KabinetResource.Smart object={item?.id} mates={mates}>
       <Card className="group">

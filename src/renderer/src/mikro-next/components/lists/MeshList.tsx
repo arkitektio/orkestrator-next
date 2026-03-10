@@ -28,7 +28,7 @@ const List = ({ filters, pagination }: Props) => {
       actions={<MikroMesh.NewButton minimal />}
       refetch={refetch}
     >
-      {(ex, index) => <MeshCard key={index} mesh={ex} mates={[]} />}
+      {(ex, index) => <MeshCard key={index} mesh={ex}  />}
     </ListRender>
   );
 };

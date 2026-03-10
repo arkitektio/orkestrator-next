@@ -11,10 +11,10 @@ import { ListDefinitionFragment } from "../../api/graphql";
 
 interface Props {
   item: ListDefinitionFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <KabinetDefinition.Smart object={item?.id} mates={mates}>
       <Card className="group aspect-square @sm:aspect-[3/2] overflow-hidden">

@@ -5,10 +5,10 @@ import { ListRoomFragment } from "../../api/graphql";
 
 interface Props {
   item: ListRoomFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <AlpakaRoom.Smart object={item?.id} mates={mates}>
       <Card className="w-full h-20 relative">

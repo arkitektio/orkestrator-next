@@ -25,7 +25,7 @@ const List = ({ pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <PodCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <PodCard key={index} item={ex}  />}
     </ListRender>
   );
 };

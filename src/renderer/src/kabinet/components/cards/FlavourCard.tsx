@@ -21,7 +21,7 @@ import { ListFlavourFragment } from "../../api/graphql";
 
 interface Props {
   item: ListFlavourFragment;
-  mates?: MateFinder[];
+
 }
 
 export const AssignButton = (props: {
@@ -120,7 +120,7 @@ const DelegatingSelector = (props: {
   return <> Unknown </>;
 };
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const { progress } = useLiveAssignation({
     identifier: "@kabinet/flavour",
     object: item.id,

@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { LokServiceInstance } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListServiceInstanceFragment } from "../../api/graphql";
 
 interface Props {
@@ -10,7 +9,7 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <LokServiceInstance.Smart object={item?.id} mates={mates}>
+    <LokServiceInstance.Smart object={item?.id} >
       <Card className="p-3 flex flex-col">
         <LokServiceInstance.DetailLink object={item.id} className="">
           {item.identifier}

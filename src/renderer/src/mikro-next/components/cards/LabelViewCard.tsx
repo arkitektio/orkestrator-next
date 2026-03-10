@@ -1,6 +1,5 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroLabelView } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { LabelViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
@@ -11,7 +10,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroLabelView.Smart object={view?.id} mates={mates}>
+    <MikroLabelView.Smart object={view?.id} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle> {view.label}</CardTitle>

@@ -3,7 +3,6 @@ import {
   MikroFileView,
   MikroPixelView
 } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import {
   PixelViewFragment
 } from "../../api/graphql";
@@ -16,7 +15,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroFileView.Smart object={view?.id} mates={mates}>
+    <MikroFileView.Smart object={view?.id} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>

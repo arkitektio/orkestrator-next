@@ -10,7 +10,6 @@ import {
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient } from "@/linkers";
 import { Server, User } from "lucide-react";
-import { MateFinder } from "../../../mates/types";
 import { ListClientFragment } from "../../api/graphql";
 
 interface Props {
@@ -22,7 +21,7 @@ const ClientCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokClient.Smart object={item?.id} mates={mates}>
+    <LokClient.Smart object={item?.id} >
       <LokClient.DetailLink object={item.id} className="block h-full">
         <Card className="h-full hover:bg-muted/50 transition-colors group">
           <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">

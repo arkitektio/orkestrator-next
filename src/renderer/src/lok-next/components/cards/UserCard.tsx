@@ -2,7 +2,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListUserFragment } from "../../api/graphql";
 
 interface Props {

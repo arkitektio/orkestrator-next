@@ -1,7 +1,6 @@
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";
 import { MikroROI } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListRoiFragment } from "../../api/graphql";
 
 interface ImageCardProps {
@@ -15,7 +14,7 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
 
   const { progress } = MikroROI.useLive({ object: item.id });
   return (
-    <MikroROI.Smart object={item?.id} mates={mates}>
+    <MikroROI.Smart object={item?.id} >
       <div
         className={cn(
           `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl`,

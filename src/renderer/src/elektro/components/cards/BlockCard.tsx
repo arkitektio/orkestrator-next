@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ElektroBlock } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListBlockFragment } from "../../api/graphql";
 interface Props {
   item: ListBlockFragment;
@@ -11,7 +10,7 @@ interface Props {
 
 const TheCard = ({ item, className }: Props) => {
   return (
-    <ElektroBlock.Smart object={item?.id} mates={mates}>
+    <ElektroBlock.Smart object={item?.id} >
       <Card
         className={cn(
           "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",

@@ -21,7 +21,6 @@ import {
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
-import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
@@ -119,7 +118,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <KabinetRelease.Smart object={item?.id} mates={mates}>
+    <KabinetRelease.Smart object={item?.id} >
       <Card
         className="group transition-all duration-300 ease-in-out aspect-square"
         style={{

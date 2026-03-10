@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { LokService } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListServiceFragment } from "../../api/graphql";
 
 interface Props {
@@ -10,7 +9,7 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <LokService.Smart object={item?.id} mates={mates}>
+    <LokService.Smart object={item?.id} >
       <Card className="p-3">
         <LokService.DetailLink object={item.id} className="">
           {item.name}

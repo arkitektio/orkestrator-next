@@ -15,11 +15,10 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-  const reserveMate = useReserveMate();
 
 
   return (
-    <RekuestDependency.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestDependency.Smart object={item?.id} >
       <Card className="group">
         <CardHeader className="flex flex-row justify-between truncate ellipsis">
           <div>

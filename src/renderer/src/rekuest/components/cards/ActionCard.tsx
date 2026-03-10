@@ -20,12 +20,11 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-  const reserveMate = useReserveMate();
 
 
 
   return (
-    <RekuestAction.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestAction.Smart object={item?.id} >
       <Card
         className="group border aspect-square ring ring-0 group-data-[selected=true]:ring-1 flex flex-col justify-between"
       >

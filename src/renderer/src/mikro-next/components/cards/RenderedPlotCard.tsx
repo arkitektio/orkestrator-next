@@ -1,7 +1,6 @@
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroRenderedPlot } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListRenderedPlotFragment } from "../../api/graphql";
 
 interface ImageCardProps {
@@ -21,7 +20,7 @@ const TheCard = ({ item }: ImageCardProps) => {
         } ${isDragging && "ring-primary-200 ring"} ${isSelected && "ring-2 ring-secondary-500"
         }`
       }
-      mates={mates}
+
     >
       {item?.store.presignedUrl && (
         <Image

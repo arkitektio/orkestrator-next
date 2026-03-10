@@ -4,7 +4,6 @@ import {
   MikroInstanceMaskView,
   MikroInstanceMaskViewLabel,
 } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { InstanceMaskViewFragment } from "../../api/graphql";
 import React, { useEffect, useMemo, useState } from "react";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -31,7 +30,7 @@ const TheCard = ({ item }: HistoryCardProps) => {
   const [loading, setLoading] = useState<boolean>(!!url);
 
   return (
-    <MikroInstanceMaskView.Smart object={item?.id} mates={mates} key={item.id}>
+    <MikroInstanceMaskView.Smart object={item?.id}  key={item.id}>
       <Card key={item.id} className="p-4 space-y-2">
         <p className="text-light text-xs">Is instance mask foddr</p>
 

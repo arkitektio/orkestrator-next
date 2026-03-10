@@ -16,7 +16,6 @@ import {
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
-import { MateFinder } from "../../../mates/types";
 import { ListFlavourFragment } from "../../api/graphql";
 
 interface Props {
@@ -127,7 +126,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <KabinetFlavour.Smart object={item?.id} mates={mates}>
+    <KabinetFlavour.Smart object={item?.id} >
       <Card
         className="group transition-all duration-300 ease-in-out aspect-square"
         style={{

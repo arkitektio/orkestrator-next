@@ -6,14 +6,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialogbutton";
-import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
 
 
 import {
-  ListImplementationFragment,
-  MinimalImplementationFragment,
-  useDeleteImplementationMutation,
+  MinimalImplementationFragment
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
@@ -23,14 +20,13 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-  const reserveMate = useReserveMate();
 
   const progress = useLiveAssignation({
     assignedImplementation: item.id,
   });
 
   return (
-    <RekuestImplementation.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestImplementation.Smart object={item?.id} >
       <Card
         className="group border border-gray-200 dark:border-gray-800 aspect-square max-h-lg"
         style={{

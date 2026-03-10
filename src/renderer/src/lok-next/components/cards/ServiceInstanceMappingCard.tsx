@@ -1,5 +1,4 @@
 import { LokMapping } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListServiceInstanceMappingFragment } from "../../api/graphql";
 
 interface Props {
@@ -16,7 +15,7 @@ const Card = ({ item }: Props) => {
         } ${isDragging && "ring-primary-200 ring"} ${isSelected && "ring-2 ring-secondary-500"
         }`
       }
-      mates={mates}
+
     >
       <LokMapping.DetailLink
         object={item.id}

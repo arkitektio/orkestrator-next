@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokApp } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListAppFragment } from "../../api/graphql";
 
 interface Props {
@@ -14,7 +13,7 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokApp.Smart object={item?.id} mates={mates}>
+    <LokApp.Smart object={item?.id} >
       <Card className="p-3 truncate">
         <LokApp.DetailLink object={item.id} className="">
           {item.identifier}

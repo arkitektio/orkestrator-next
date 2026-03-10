@@ -11,7 +11,6 @@ import Ollama from "@lobehub/icons-static-svg/icons/ollama.svg";
 import OpenAI from "@lobehub/icons-static-svg/icons/openai.svg";
 import Perplexity from "@lobehub/icons-static-svg/icons/perplexity.svg";
 import { Bot, Cloud, Cpu, Server } from "lucide-react";
-import { MateFinder } from "../../../mates/types";
 import { ListProviderFragment, ProviderKind } from "../../api/graphql";
 
 interface Props {
@@ -180,7 +179,7 @@ const getProviderKindDisplayName = (kind: ProviderKind): string => {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaProvider.Smart object={item?.id} mates={mates}>
+    <AlpakaProvider.Smart object={item?.id} >
       <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group">
         <div
           className={`absolute inset-0 ${getProviderGradient(item.kind)} opacity-20 group-hover:opacity-40 transition-opacity duration-300`}

@@ -1,7 +1,6 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroAffineTransformationView, MikroImage } from "@/linkers";
 import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
-import { MateFinder } from "../../../mates/types";
 import { StageFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 

@@ -28,8 +28,7 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-  const reserveMate = useReserveMate();
-  const [deleteImplementation, _] = useDeleteImplementationMutation({
+    const [deleteImplementation, _] = useDeleteImplementationMutation({
     variables: {
       id: item.id,
     },
@@ -44,7 +43,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <RekuestImplementation.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestImplementation.Smart object={item?.id}>
       <Card className="group hover:shadow-md transition-shadow overflow-hidden">
         {progress && progress.progress > 0 && (
           <Progress value={progress.progress} className="h-1 rounded-none" />

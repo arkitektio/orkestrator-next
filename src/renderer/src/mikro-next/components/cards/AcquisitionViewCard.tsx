@@ -1,7 +1,6 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { LokUser, MikroAcquisitionView } from "@/linkers";
 import Timestamp from "react-timestamp";
-import { MateFinder } from "../../../mates/types";
 import { AcquisitionViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
@@ -12,7 +11,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroAcquisitionView.Smart object={view?.id} mates={mates}>
+    <MikroAcquisitionView.Smart object={view?.id} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>

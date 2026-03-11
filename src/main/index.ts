@@ -105,21 +105,6 @@ function setupAutoUpdater() {
   setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000);
 }
 
-ipcMain.handle("discover-beacons", async () => {
-  // Placeholder for mDNS/Bonjour beacon discovery
-  // In a real implementation, this would use libraries like 'bonjour-service' or 'mdns'
-  // to discover Arkitekt instances on the local network
-
-  try {
-    // For now, return some example local network probes
-    // In the future, this could discover actual services via mDNS
-    return [];
-  } catch (error) {
-    console.error("Beacon discovery failed:", error);
-    return [];
-  }
-});
-
 ipcMain.handle("check-for-updates", async () => {
   try {
     const result = await autoUpdater.checkForUpdates();

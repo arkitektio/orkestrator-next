@@ -7,10 +7,10 @@ import {
   useGetInformedStructureQuery,
   useListGraphsQuery,
 } from "@/kraph/api/graphql";
-import { KraphGraph } from "@/linkers";
 import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { MetricsTable } from "../tables/MetricsTable";
 
 export type KnowledgeSidebarProps = {
@@ -136,9 +136,9 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
       <EmptyTitle>No pinned graphs</EmptyTitle>
       <EmptyDescription>There are no graphs that you have pinned for quick access.</EmptyDescription>
       <EmptyContent>Go to the graphs page to pin some graphs to your knowledge sidebar.</EmptyContent>
-      <KraphGraph.ListLink className="mt-4">
-        <Button variant="outline">View Graphs</Button>
-      </KraphGraph.ListLink>
+      <Button asChild variant="outline" className="mt-4">
+        <NavLink to="/kraph/graphs">View Graphs</NavLink>
+      </Button>
 
     </Empty>;
   }

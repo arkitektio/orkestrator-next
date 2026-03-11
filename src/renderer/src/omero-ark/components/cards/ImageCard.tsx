@@ -28,6 +28,7 @@ const TCard = ({ image }: Props) => {
   // Load data
   React.useEffect(() => {
     if (!image.id) return;
+    if (!token) return;
     if (ref.current === null) return;
     fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
       headers: {
@@ -44,7 +45,7 @@ const TCard = ({ image }: Props) => {
         ref.current.style.backgroundSize = "cover";
         ref.current.style.backgroundPosition = "center";
       });
-  }, [image.id, ref]);
+  }, [image.id, omeroArk.client.url, token]);
 
   return (
     <OmeroArkImage.Smart

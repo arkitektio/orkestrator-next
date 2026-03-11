@@ -22,6 +22,7 @@ const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
   // Load data
   React.useEffect(() => {
     if (!props.id) return;
+    if (!token) return;
     if (img.current === null) return;
     fetch(apiUrlFromImageID(props.id, fakts), {
       headers: {
@@ -35,7 +36,7 @@ const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
         const objectURL = URL.createObjectURL(res);
         img.current.src = objectURL;
       });
-  }, [props.id, img]);
+  }, [fakts, props.id, token]);
 
   return <img src={""} alt={"Loading..."} ref={img} />;
 };

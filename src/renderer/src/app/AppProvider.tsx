@@ -1,5 +1,5 @@
-import { AlpakaWard } from "@/alpaka/AlpakaWard";
 import { Arkitekt, Guard } from "@/app/Arkitekt";
+import "@/app/configureSmartBuilder";
 import { DialogProvider } from "@/app/dialog";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -8,20 +8,13 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { baseName, Router } from "@/constants";
-import { ElektroWard } from "@/elektro/ElektroWard";
 import { useFatalReport } from "@/hooks/use-report";
-import { KabinetWard } from "@/kabinet/KabinetWard";
-import { KraphWard } from "@/kraph/KraphWard";
-import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
-import { FlussWard } from "@/reaktion/FlussWard";
-import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
-import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
@@ -100,6 +93,37 @@ import { UploadProvider } from "@/providers/upload/UploadProvider";
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 import { AgentProvider } from "./agent/AgentProvider";
 
+const AlpakaWard = React.lazy(() =>
+  import("@/alpaka/AlpakaWard").then((module) => ({ default: module.AlpakaWard })),
+);
+const ElektroWard = React.lazy(() =>
+  import("@/elektro/ElektroWard").then((module) => ({ default: module.ElektroWard })),
+);
+const KabinetWard = React.lazy(() =>
+  import("@/kabinet/KabinetWard").then((module) => ({ default: module.KabinetWard })),
+);
+const KraphWard = React.lazy(() =>
+  import("@/kraph/KraphWard").then((module) => ({ default: module.KraphWard })),
+);
+const MikroNextWard = React.lazy(() =>
+  import("@/mikro-next/MikroNextWard").then((module) => ({ default: module.MikroNextWard })),
+);
+const FlussWard = React.lazy(() =>
+  import("@/reaktion/FlussWard").then((module) => ({ default: module.FlussWard })),
+);
+const RekuestNextWard = React.lazy(() =>
+  import("@/rekuest/RekuestNextWard").then((module) => ({ default: module.RekuestNextWard })),
+);
+const AgentUpdater = React.lazy(() =>
+  import("@/rekuest/components/functional/AgentUpdater").then((module) => ({
+    default: module.AgentUpdater,
+  })),
+);
+
+const LazyProviderBoundary = ({ children }: { children: React.ReactNode }) => {
+  return <React.Suspense fallback={null}>{children}</React.Suspense>;
+};
+
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
@@ -120,30 +144,44 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                               <SelectionProvider>
                                 <AgentProvider>
                                   <Guard.Rekuest fallback={<></>}>
-                                    {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                                    <AssignationUpdater />
-                                    <AgentUpdater />
-                                    {/* We register the Shadn powered widgets to the widget registry. */}
-                                    <RekuestNextWard />
+                                    <LazyProviderBoundary>
+                                      {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                                      <AssignationUpdater />
+                                      <AgentUpdater />
+                                      {/* We register the Shadn powered widgets to the widget registry. */}
+                                      <RekuestNextWard />
+                                    </LazyProviderBoundary>
                                     <Toaster />
                                   </Guard.Rekuest>
                                   <Guard.Kabinet fallback={<></>}>
-                                    <KabinetWard key="kabinet" />
+                                    <LazyProviderBoundary>
+                                      <KabinetWard key="kabinet" />
+                                    </LazyProviderBoundary>
                                   </Guard.Kabinet>
                                   <Guard.Kraph fallback={<></>}>
-                                    <KraphWard key="kraph" />
+                                    <LazyProviderBoundary>
+                                      <KraphWard key="kraph" />
+                                    </LazyProviderBoundary>
                                   </Guard.Kraph>
                                   <Guard.Alpaka fallback={<></>}>
-                                    <AlpakaWard key="alpaka" />
+                                    <LazyProviderBoundary>
+                                      <AlpakaWard key="alpaka" />
+                                    </LazyProviderBoundary>
                                   </Guard.Alpaka>
                                   <Guard.Elektro fallback={<></>}>
-                                    <ElektroWard key="elektro" />
+                                    <LazyProviderBoundary>
+                                      <ElektroWard key="elektro" />
+                                    </LazyProviderBoundary>
                                   </Guard.Elektro>
                                   <Guard.Mikro fallback={<></>}>
-                                    <MikroNextWard key="mikro" />
+                                    <LazyProviderBoundary>
+                                      <MikroNextWard key="mikro" />
+                                    </LazyProviderBoundary>
                                   </Guard.Mikro>
                                   <Guard.Fluss fallback={<></>}>
-                                    <FlussWard key="fluss" />
+                                    <LazyProviderBoundary>
+                                      <FlussWard key="fluss" />
+                                    </LazyProviderBoundary>
                                   </Guard.Fluss>
                                   <BackNavigationErrorCatcher>
                                     {children}

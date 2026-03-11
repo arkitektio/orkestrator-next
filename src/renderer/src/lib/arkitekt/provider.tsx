@@ -2,11 +2,11 @@ import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { checkAliasHealth } from "./alias/resolve";
 import { buildAliases } from "./builder";
 import { ArkitektContext } from "./context";
-import { AliasStorageSchema } from "./fakts/aliasStorageSchema";
-import { FaktsEndpoint, FaktsEndpointSchema } from "./fakts/endpointSchema";
-import { ActiveFakts, ActiveFaktsSchema, Alias } from "./fakts/faktsSchema";
+import { FaktsEndpoint } from "./fakts/endpointSchema";
+import { ActiveFakts, Alias } from "./fakts/faktsSchema";
 import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
+import { ArkitektStorageKeys, clearStoredArkitektStorage, loadStoredArkitektSession, loadStoredEndpoint, writeStoredAliasMap, writeStoredArkitektSession, writeStoredEndpoint, writeStoredFakts, writeStoredToken } from "./fakts/sessionStorageSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { useArkitekt } from "./hooks";
 import { login } from "./oauth/login";
@@ -128,7 +128,7 @@ class MyAuthClient implements AuthClient {
 
 
     this.currentToken = await refreshToken(this.fakts, this.currentToken, this.controller);
-    localStorage.setItem("token", JSON.stringify(this.currentToken));
+    writeStoredToken(this.currentToken);
   }
 
   public load() {
@@ -168,10 +168,12 @@ export const ArkitektProvider = ({
       connection: connection,
     })
     );
-    localStorage.setItem("endpoint", JSON.stringify(connection.endpoint));
-    localStorage.setItem("fakts", JSON.stringify(connection.fakts));
-    localStorage.setItem("token", JSON.stringify(connection.token));
-    localStorage.setItem("aliasMap", JSON.stringify({ aliasMap: connection.aliasMap }));
+    writeStoredArkitektSession({
+      endpoint: connection.endpoint,
+      fakts: connection.fakts,
+      token: connection.token,
+      aliasMap: { aliasMap: connection.aliasMap },
+    });
   }
 
   const setAutoLoginError = (error: string) => {
@@ -189,10 +191,7 @@ export const ArkitektProvider = ({
       autoLoginError: error,
       connection: undefined,
     }));
-    localStorage.removeItem("endpoint");
-    localStorage.removeItem("fakts");
-    localStorage.removeItem("aliasMap");
-    localStorage.removeItem("token");
+    clearStoredArkitektStorage();
   }
 
 
@@ -203,9 +202,11 @@ export const ArkitektProvider = ({
       autoLoginError: error,
       connection: undefined,
     }));
-    localStorage.removeItem("fakts");
-    localStorage.removeItem("aliasMap");
-    localStorage.removeItem("token");
+    clearStoredArkitektStorage([
+      ArkitektStorageKeys.fakts,
+      ArkitektStorageKeys.aliasMap,
+      ArkitektStorageKeys.token,
+    ]);
   }
 
 
@@ -216,9 +217,11 @@ export const ArkitektProvider = ({
       connection: undefined,
     }));
 
-    localStorage.removeItem("fakts");
-    localStorage.removeItem("aliasMap");
-    localStorage.removeItem("token");
+    clearStoredArkitektStorage([
+      ArkitektStorageKeys.fakts,
+      ArkitektStorageKeys.aliasMap,
+      ArkitektStorageKeys.token,
+    ]);
   }
 
 
@@ -228,8 +231,10 @@ export const ArkitektProvider = ({
       autoLoginError: error,
       connection: undefined,
     }));
-    localStorage.removeItem("token");
-    localStorage.removeItem("aliasMap");
+    clearStoredArkitektStorage([
+      ArkitektStorageKeys.token,
+      ArkitektStorageKeys.aliasMap,
+    ]);
   }
 
 
@@ -268,7 +273,7 @@ export const ArkitektProvider = ({
 
       setConnecting(true);
       setCurrentController(options.controller);
-      localStorage.setItem("endpoint", JSON.stringify(options.endpoint));
+      writeStoredEndpoint(options.endpoint);
 
 
       const enhancedManifest = await enhanceManifest(manifest);
@@ -280,12 +285,12 @@ export const ArkitektProvider = ({
       });
 
       // Save fakts to local storage
-      localStorage.setItem("fakts", JSON.stringify(fakts));
+      writeStoredFakts(fakts);
 
 
       const token = await login(fakts.auth);
 
-      localStorage.setItem("token", JSON.stringify(token));
+      writeStoredToken(token);
 
 
       const { aliasReports, aliasMap, functional } = await buildAliases({
@@ -294,7 +299,7 @@ export const ArkitektProvider = ({
         controller: options.controller,
       });
 
-      localStorage.setItem("aliasMap", JSON.stringify({ aliasMap: aliasMap }));
+      writeStoredAliasMap({ aliasMap });
 
 
       const reportRequest: ReportRequest = {
@@ -353,8 +358,10 @@ export const ArkitektProvider = ({
     setContext(
       { manifest: context.manifest, connection: undefined }
     );
-    localStorage.removeItem("fakts");
-    localStorage.removeItem("token");
+    clearStoredArkitektStorage([
+      ArkitektStorageKeys.fakts,
+      ArkitektStorageKeys.token,
+    ]);
   };
 
   const cancelConnection = () => {
@@ -402,36 +409,29 @@ export const ArkitektProvider = ({
   }, [context.connection]);
 
   const reconnect = async () => {
-    const oldEndpoint = localStorage.getItem("endpoint");
-    if (!oldEndpoint) {
+    const endpoint = loadStoredEndpoint();
+    if (!endpoint) {
       throw new Error("No endpoint found in local storage");
     }
-    const endpoint: FaktsEndpoint = JSON.parse(oldEndpoint);
     const options = { controller: new AbortController(), endpoint: endpoint };
 
     await connect({ ...options, endpoint });
   };
 
   const tryReconnect = async ({ manifest, serviceBuilderMap, controller }: { manifest: EnhancedManifest, serviceBuilderMap: ServiceBuilderMap, controller: AbortController }) => {
-    const faktsRaw = localStorage.getItem("fakts");
-    const tokenRaw = localStorage.getItem("token");
-    const endpointRaw = localStorage.getItem("endpoint");
-    const aliasMapRaw = localStorage.getItem("aliasMap");
     console.log("Attempting auto-login with stored data...");
-
-    if (!faktsRaw || !tokenRaw || !endpointRaw || !aliasMapRaw) {
-      setAutoLoginError("No stored session data found");
-      return
-    }
 
     setConnecting(true);
 
     try {
+      const storedSession = loadStoredArkitektSession();
+      if (!storedSession) {
+        setAutoLoginError("No stored session data found");
+        setConnecting(false);
+        return;
+      }
 
-      const fakts = ActiveFaktsSchema.parse(JSON.parse(faktsRaw));
-      const token = TokenResponseSchema.parse(JSON.parse(tokenRaw));
-      const endpoint = FaktsEndpointSchema.parse(JSON.parse(endpointRaw));
-      const aliasStorage = AliasStorageSchema.parse(JSON.parse(aliasMapRaw));
+      const { fakts, token, endpoint, aliasMap: aliasStorage } = storedSession;
 
       if (!aliasMapStillValidForManifest(aliasStorage.aliasMap, manifest)) {
         setContext({
@@ -463,7 +463,7 @@ export const ArkitektProvider = ({
           functional: functional,
         };
 
-        localStorage.setItem("aliasReports", JSON.stringify({ aliasMap: aliasMap }));
+        writeStoredAliasMap({ aliasMap });
         if (!functional) {
           setContext({
             manifest: manifest,
@@ -517,8 +517,7 @@ export const ArkitektProvider = ({
       setConnecting(false);
     } catch (e) {
       console.log(e)
-      localStorage.removeItem("fakts");
-      localStorage.removeItem("token");
+      clearStoredArkitektStorage();
       setContext({
         manifest: manifest,
         autoLoginError: e instanceof Error ? e.message : "Auto-login failed",

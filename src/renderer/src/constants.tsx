@@ -13,6 +13,10 @@ export const Router = HashRouter
 
 export const baseName = window.electron ? "" : "orkestrator";
 
+export const DEFAULT_COORDINATION_SERVER_HOST = "go.arkitekt.live";
+export const DEFAULT_COORDINATION_SERVER_URL =
+  `https://${DEFAULT_COORDINATION_SERVER_HOST}`;
+
 export const manifest: Manifest = {
   version: "0.0.1",
   identifier: "live.arkitekt.orkestrator",

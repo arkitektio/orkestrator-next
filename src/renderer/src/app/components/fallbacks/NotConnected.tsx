@@ -29,7 +29,7 @@ export const NotConnected = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Welcome to Arkitekt</h1>
           <p className="text-sm text-muted-foreground">
-            Login with a coordination server to get started.
+            Login with go.arkitekt.live or connect to a custom coordination server.
           </p>
         </div>
 

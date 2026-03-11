@@ -1,6 +1,7 @@
 import { NO_RECONNECT_CODES } from "@/constants";
 import { aliasToWsPath } from "@/lib/arkitekt/alias/helpers";
 import { AppContext } from "@/lib/arkitekt/provider";
+import { TokenResponse } from "@/lib/arkitekt/fakts/tokenSchema";
 import { selectAlias, selectApolloClient } from "@/lib/arkitekt/utils";
 import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput, SetExtensionImplementationsDocument, SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables } from "@/rekuest/api/graphql";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
@@ -28,6 +29,18 @@ export type AgentState = {
 }
 
 export type AgentListener = (state: AgentState) => void;
+
+const getAccessToken = (token: TokenResponse | string) => {
+  if (typeof token === "string") {
+    return token;
+  }
+
+  if (token.access_token) {
+    return token.access_token;
+  }
+
+  throw new Error("No access token available for agent connection");
+};
 
 export class OrkestratorAgent {
   instanceId: string;
@@ -70,7 +83,7 @@ export class OrkestratorAgent {
       throw new Error("No connection in context");
     }
 
-    this.token = this.context.connection.token
+    this.token = getAccessToken(this.context.connection.token)
 
     if (window.api) {
       window.api.onAgentYield((data) => this.notifyElectronListener(data.assignation, "yield", data));

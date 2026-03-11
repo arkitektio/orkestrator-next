@@ -55,7 +55,8 @@ export const usePotentialService = (key: string): Service | undefined => {
 };
 
 export const useToken = () => {
-  return useArkitekt().connection?.token || null;
+  const token = useArkitekt().connection?.token;
+  return token?.access_token || null;
 };
 
 export const useManifest = () => {

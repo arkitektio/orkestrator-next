@@ -35,8 +35,9 @@ query ListStructures(
   $id: ID!
   $filters: StructureFilter
   $pagination: StructurePaginationInput
+  $ordering: [StructureOrder!]
 ) {
-  structures(structureCategoryId: $id, filters: $filters, pagination: $pagination) {
+  structures(structureCategoryId: $id, filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListStructure
   }
 }

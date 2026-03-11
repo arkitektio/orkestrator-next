@@ -15,6 +15,7 @@ import {
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
 import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
+import StructureList from "../components/renderers/lists/StructureList";
 
 const Page =  asDetailQueryRoute(
   useGetStructureCategoryQuery,
@@ -112,9 +113,12 @@ const Page =  asDetailQueryRoute(
               />
             )}
           </div>
+
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-
+            <div className="flex-grow w-full">
+            <StructureList category={data.structureCategory}/>
+          </div>
 
       </KraphStructureCategory.ModelPage>
     );

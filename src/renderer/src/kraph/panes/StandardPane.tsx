@@ -62,13 +62,6 @@ export const NavigationPane = () => {
             Structures
           </PaneLink>
           <PaneLink
-            to="/kraph/reagentcategories"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <FlaskRoundIcon className="h-4 w-4" />
-            Reagents
-          </PaneLink>
-          <PaneLink
             to="/kraph/entitycategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

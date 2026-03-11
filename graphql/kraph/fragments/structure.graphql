@@ -17,9 +17,14 @@ fragment Structure on Structure {
 
 fragment ListStructure on Structure {
   id
+  label
+  object
+  identifier
   category {
     identifier
     id
+    label
+    ageName
   }
 }
 

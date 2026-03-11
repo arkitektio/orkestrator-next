@@ -105,7 +105,7 @@ export const GraphKnowledgeView = (props: {
 const KNOWLEDGE_SIDEBAR_KEY = "knowledge-sidebar-accordion";
 
 export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
-  const { data } = useListGraphsQuery({
+  const { data, error } = useListGraphsQuery({
     variables: {
       filters: {
         pinned: true,
@@ -130,6 +130,14 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
   useEffect(() => {
     localStorage.setItem(KNOWLEDGE_SIDEBAR_KEY, JSON.stringify(openItems));
   }, [openItems]);
+
+  if  (error) {
+    return <Empty>
+      <EmptyTitle>Error loading graphs</EmptyTitle>
+      <EmptyDescription>There was an error loading your pinned graphs.</EmptyDescription>
+      <EmptyContent>{error.message}</EmptyContent>
+    </Empty>;
+  }
 
   if (!data || data.graphs.length === 0) {
     return <Empty>

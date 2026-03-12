@@ -15,7 +15,7 @@ import { buildGraphQlWard } from "../ward";
 
 
 export const createGraphQLServiceBuilder =
-  (possibleTypes: any): ServiceBuilder<Service<ApolloClient<any>>> =>
+  (possibleTypes: any, builderOptions?: { describe?: boolean }): ServiceBuilder<Service<ApolloClient<any>>> =>
     (options) => {
       const { alias, getToken } = options;
 
@@ -63,12 +63,12 @@ export const createGraphQLServiceBuilder =
         cache: new InMemoryCache({ possibleTypes }),
       });
 
-      const ward = buildGraphQlWard(client);
+      const ward = buildGraphQlWard(client, { describe: builderOptions?.describe });
 
       return {
         type: "apollo",
         client: client,
-        ward: ward, // Replace with appropriate logo component
+        ward: ward,
         alias: alias,
         clearCache: async () => {
           await client.clearStore();

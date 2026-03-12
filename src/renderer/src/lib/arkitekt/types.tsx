@@ -5,6 +5,7 @@ import { ActiveFakts, Alias, Instance } from "./fakts/faktsSchema";
 import { Manifest } from "./fakts/manifestSchema";
 import { StoredArkitektSession } from "./fakts/sessionStorageSchema";
 import { TokenResponse } from "./fakts/tokenSchema";
+import type { Ward } from "@/rekuest/widgets/types";
 
 export type AvailableService = {
   key: string;
@@ -23,7 +24,7 @@ export type Service<T = unknown> = {
   client: T;
   clearCache?: () => Promise<void>;
   type?: string;
-  ward?: unknown;
+  ward?: Ward;
 };
 
 export type ServiceBuilder<T extends Service = Service> = (options: {
@@ -41,6 +42,8 @@ export type ServiceDefinition<T extends Service = Service> = {
   forceinsecure?: boolean;
   optional: boolean;
   timeout?: number;
+  wardKey?: string;
+  describe?: boolean;
   description?: string;
   name?: string;
   logo?: () => ReactNode;

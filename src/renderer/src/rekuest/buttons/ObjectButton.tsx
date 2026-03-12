@@ -70,6 +70,7 @@ import {
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
+import { object } from "node_modules/zod/v4/classic/index.cjs";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -154,7 +155,7 @@ export const DirectImplementationAssignment = (
         onClick={() =>
           openDialog("createshortcut", {
             id: props.action.id,
-            args: { [props.action.args?.at(0)?.key || "object"]: props.object },
+            args: { [props.action.args?.at(0)?.key || "object"]: {__identifier: props.objects[0].identifier, object: props.objects[0].object} },
           })
         }
         variant={"outline"}
@@ -210,7 +211,7 @@ export const AssignButton = (
           toast.error("No key found for self");
           return;
         }
-        keys[the_key] = props.objects[0].object;
+        keys[the_key] = {__identifier: props.objects[0].identifier, object: props.objects[0].object};
       }
       if (props.objects.length > 1) {
         if (action.args.at(0)?.kind != PortKind.List) {
@@ -235,8 +236,8 @@ export const AssignButton = (
         if (!the_key) {
           toast.error("No key found for self");
           return;
-        }
-        keys[the_key] = props.partners[0].object;
+          }
+        keys[the_key] = {__identifier: props.partners[0].identifier, object: props.partners[0].object};
       }
       if (props.partners.length > 1) {
         if (action.args.at(1)?.kind != PortKind.List) {
@@ -248,7 +249,7 @@ export const AssignButton = (
           toast.error("No key found for self");
           return;
         }
-        keys[the_key] = props.partners.map((obj) => obj.object);
+        keys[the_key] = props.partners.map((obj) => ({__identifier: obj.identifier, object: obj.object}));
       }
     }
 
@@ -373,7 +374,7 @@ export const BatchAssignButton = (
             toast.error("No key found for self");
             return;
           }
-          keys[the_key] = props.partners[0].object;
+          keys[the_key] = {__identifier: props.partners[0].identifier, object: props.partners[0].object};
         }
         if (props.partners.length > 1) {
           if (action.args.at(1)?.kind != PortKind.List) {
@@ -385,7 +386,7 @@ export const BatchAssignButton = (
             toast.error("No key found for self");
             return;
           }
-          keys[the_key] = props.partners.map((obj) => obj.object);
+          keys[the_key] = props.partners.map((obj) => ({__identifier: obj.identifier, object: obj.object}));
         }
       }
 
@@ -514,7 +515,7 @@ export const ShortcutButton = (
           toast.error("No key found for self");
           return;
         }
-        keys[the_key] = props.objects.map((obj) => obj.object);
+        keys[the_key] = props.objects.map((obj) => ({__identifier: obj.identifier, object: obj.object}));
       }
     }
 
@@ -528,7 +529,7 @@ export const ShortcutButton = (
           toast.error("No key found for self");
           return;
         }
-        keys[the_key] = props.partners[0].object;
+        keys[the_key] ={__identifier: props.partners[0].identifier, object: props.partners[0].object};
       }
       if (props.partners.length > 1) {
         if (shortcut.args.at(1)?.kind != PortKind.List) {
@@ -540,7 +541,7 @@ export const ShortcutButton = (
           toast.error("No key found for self");
           return;
         }
-        keys[the_key] = props.partners.map((obj) => obj.object);
+        keys[the_key] = props.partners.map((obj) => ({__identifier: obj.identifier, object: obj.object}));
       }
     }
 

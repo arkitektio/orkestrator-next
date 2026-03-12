@@ -13,7 +13,7 @@ const TheCard = ({ item, className }: Props) => {
     <MikroFile.Smart object={item?.id} key={item.id}>
       <Card
         className={cn(
-          "px-2 py-2 aspect-[20/3] max-h-20 justify-center flex items-center ",
+          "px-2 py-2  max-h-20 min-h-10 justify-center flex items-center ",
           className,
         )}
       >

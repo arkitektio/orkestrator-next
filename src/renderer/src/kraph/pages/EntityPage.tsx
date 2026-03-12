@@ -10,8 +10,7 @@ import {
 } from "@/linkers";
 import { SmartLink } from "@/providers/smart/builder";
 import {
-  ActivityLogIcon,
-  PinRightIcon
+  ActivityLogIcon
 } from "@radix-ui/react-icons";
 import {
   Calendar,
@@ -43,7 +42,7 @@ export const calculateDuration = (start?: string, end?: string) => {
   return durationStr.trim();
 };
 
-const Page = asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
+const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
   return (
     <KraphEntity.ModelPage
       variant="black"
@@ -93,11 +92,6 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                   {data.entity.category.label}
                 </KraphEntityCategory.DetailLink>
               </div>
-              {data.entity.pinned && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <PinRightIcon className="h-4 w-4" /> Pinned
-                </div>
-              )}
             </div>
           </div>
 
@@ -108,7 +102,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                 <h3 className="text-lg font-semibold">Properties</h3>
                 <div className="grid gap-2 pl-2">
                   {data.entity.category.propertyDefinitions?.map((def) => {
-                    const prop = data.entity.properties.find(
+                    const prop = data.entity.richProperties.find(
                       (p) => p.key === def.key,
                     );
                     return (
@@ -257,34 +251,32 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
                         className="flex items-start gap-4 p-3 border rounded-lg"
                       >
                         <Badge variant="secondary">{targeted.role}</Badge>
-                        {targeted.source.__typename == "ProtocolEvent" && (
-                          <div className="flex-1">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Targeted by
-                            </div>
-                            <KraphProtocolEvent.DetailLink
-                              object={targeted.source.id}
-                              className="font-medium hover:underline block"
-                            >
-                              {targeted.source.category.label}
-                            </KraphProtocolEvent.DetailLink>
-                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                              <Calendar className="h-3 w-3" />
-                              {targeted.source.measuredFrom && (
-                                <Timestamp
-                                  date={targeted.source.measuredFrom}
-                                  relative
-                                />
-                              )}
-                              {targeted.source.measuredTo && (
-                                <Timestamp
-                                  date={targeted.source.measuredTo}
-                                  relative
-                                />
-                              )}
-                            </div>
+                        <div className="flex-1">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Targeted by
                           </div>
-                        )}
+                          <KraphProtocolEvent.DetailLink
+                            object={targeted.source.id}
+                            className="font-medium hover:underline block"
+                          >
+                            {targeted.source.category.label}
+                          </KraphProtocolEvent.DetailLink>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                            <Calendar className="h-3 w-3" />
+                            {targeted.source.measuredFrom && (
+                              <Timestamp
+                                date={targeted.source.measuredFrom}
+                                relative
+                              />
+                            )}
+                            {targeted.source.measuredTo && (
+                              <Timestamp
+                                date={targeted.source.measuredTo}
+                                relative
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

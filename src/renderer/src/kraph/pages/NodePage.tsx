@@ -13,9 +13,6 @@ export default asDetailQueryRoute(useGetNodeQuery, (props) => {
     return <StructurePage />;
   }
 
-  if (props.data.node.__typename == "Reagent") {
-    return <ReagentPage />;
-  }
 
   return <> Unknown Type yet </>;
 });

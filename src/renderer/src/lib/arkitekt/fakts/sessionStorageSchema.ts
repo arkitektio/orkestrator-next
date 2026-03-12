@@ -23,6 +23,18 @@ export const StoredArkitektSessionSchema = z.object({
 
 export type StoredArkitektSession = z.infer<typeof StoredArkitektSessionSchema>;
 
+function loadStoredItem(
+  storageKey: ArkitektStorageKey,
+  storage: Storage = localStorage,
+): unknown | null {
+  const rawValue = storage.getItem(storageKey);
+  if (!rawValue) {
+    return null;
+  }
+
+  return JSON.parse(rawValue);
+}
+
 function parseStoredItem<T>(
   storageKey: ArkitektStorageKey,
   schema: z.ZodType<T>,
@@ -100,20 +112,20 @@ export function writeStoredArkitektSession(
 
 export function loadStoredArkitektSession(
   storage: Storage = localStorage,
-): StoredArkitektSession | null {
-  const endpoint = loadStoredEndpoint(storage);
-  const fakts = parseStoredItem(ArkitektStorageKeys.fakts, ActiveFaktsSchema, storage);
-  const token = parseStoredItem(ArkitektStorageKeys.token, TokenResponseSchema, storage);
-  const aliasMap = parseStoredItem(ArkitektStorageKeys.aliasMap, AliasStorageSchema, storage);
+): Record<string, unknown> | null {
+  const endpoint = loadStoredItem(ArkitektStorageKeys.endpoint, storage);
+  const fakts = loadStoredItem(ArkitektStorageKeys.fakts, storage);
+  const token = loadStoredItem(ArkitektStorageKeys.token, storage);
+  const aliasMap = loadStoredItem(ArkitektStorageKeys.aliasMap, storage);
 
   if (!endpoint || !fakts || !token || !aliasMap) {
     return null;
   }
 
-  return StoredArkitektSessionSchema.parse({
+  return {
     endpoint,
     fakts,
     token,
     aliasMap,
-  });
+  };
 }

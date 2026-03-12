@@ -40,7 +40,7 @@ import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage
  */
 const Module: React.FC = () => {
   return (
-      <ModuleLayout pane={<Standardpane />}>
+      <ModuleLayout pane={<Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}><Standardpane /></Guard.Rekuest>}>
 
     <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
         <Routes>

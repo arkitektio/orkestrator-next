@@ -53,14 +53,14 @@ export const useService = (key: string): Service => {
   return service as Service;
 };
 
-export const useSelfService = (key: string): Service => {
+export const useSelfService = (): Service => {
   const service = useArkitektStore((state) => {
-    const selfService = state.connection?.selfService as Record<string, Service> | undefined;
-    return selfService?.[key];
+    const selfService = state.connection?.selfService;
+    return selfService;
   });
 
   if (!service) {
-    throw new Error(`Service ${key} not found`);
+    throw new Error(`Self service not found`);
   }
 
   return service;

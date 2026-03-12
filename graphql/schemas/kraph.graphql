@@ -2592,6 +2592,11 @@ type InputParticipation implements Edge {
   targetId: String!
 }
 
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
 """Input type for creating a new graph"""
 type MatchPath {
   """Color for the matched path as RGB values"""
@@ -3391,6 +3396,9 @@ type Mutation {
   """Upload media and return a URL for access"""
   requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
 
+  """Set a property on an existing entity in the graph"""
+  setEntityProperty(input: SetEntityPropertyInput!): Entity!
+
   """Update an existing category tag in the graph"""
   updateCategoryTag(input: UpdateCategoryTagInput!): CategoryTag!
 
@@ -4163,7 +4171,7 @@ input PropertySet {
   key: String!
 
   """The property value"""
-  value: String!
+  value: JSON!
 }
 
 enum PropertyType {
@@ -5176,6 +5184,18 @@ input SequenceMappingInput {
 
   """The sequence identifier (e.g., 'IAZ001')"""
   sequence: String!
+}
+
+"""Input for ensuring an entity exists with a given global ID"""
+input SetEntityPropertyInput {
+  """The ID of the entity to update"""
+  entityId: GraphID!
+
+  """The property key to set"""
+  key: String!
+
+  """The value to set for this property"""
+  value: JSON!
 }
 
 """A structure that provides evidence for entities"""

@@ -7,6 +7,8 @@ import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
 import {
   clearStoredArkitektStorage,
+  StoredArkitektSession,
+  StoredArkitektSessionSchema,
   loadStoredArkitektSession,
   loadStoredEndpoint,
   writeStoredAliasMap,
@@ -51,7 +53,8 @@ import {
 } from "./runtime/state";
 import { createArkitektStateStore } from "./store";
 
-type StoredSession = ReturnType<typeof loadStoredArkitektSession>;
+type StoredSession = StoredArkitektSession | null;
+type StorageProvider = () => Promise<Storage>;
 
 export type ArkitektProviderProps<
   T extends ServiceBuilderMap = ServiceBuilderMap,
@@ -62,6 +65,7 @@ export type ArkitektProviderProps<
   serviceBuilderMap: T;
   selfServiceBuilder: S;
   moduleRegistry?: ModuleRegistry;
+  storageProvider?: StorageProvider;
 };
 
 export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceBuilder>({
@@ -70,13 +74,17 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   serviceBuilderMap,
   selfServiceBuilder,
   moduleRegistry,
+  storageProvider = async () => localStorage,
 }: ArkitektProviderProps<T, S>) => {
   const resolvedModuleRegistry = useMemo(
     () => moduleRegistry || createModuleRegistryFromServices(serviceBuilderMap),
     [moduleRegistry, serviceBuilderMap],
   );
+  const storageProviderRef = useRef<StorageProvider>(storageProvider);
+  storageProviderRef.current = storageProvider;
 
   const controllerRef = useRef<AbortController | null>(null);
+  const validationRunIdsRef = useRef<Record<string, number>>({});
 
   // Async lock: only one token refresh at a time
   const refreshLockRef = useRef<Promise<void> | null>(null);
@@ -88,51 +96,23 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
     () => { throw new Error("Provider not initialized"); },
   );
 
-  // Read cached session synchronously so we can pre-render from it
   const [store] = useState(() => {
-    const storedSession = loadStoredArkitektSession();
-    console.log("[ArkitektProvider] Initializing store, cached session:", storedSession ? "found" : "none");
     const initialManifest: EnhancedManifest = { ...manifest, node_id: undefined };
 
-    const initialState: AppContext<T, S> = {
+    return createArkitektStateStore<T, S>({
       manifest: initialManifest,
       connection: undefined,
       autoLoginError: undefined,
       connecting: false,
       hasBootstrapped: false,
-      configurationIssues: buildConfigurationIssues(serviceBuilderMap, resolvedModuleRegistry, storedSession),
-      serviceStates: buildServiceStates(serviceBuilderMap, storedSession),
+      configurationIssues: buildConfigurationIssues(serviceBuilderMap, resolvedModuleRegistry, null),
+      serviceStates: buildServiceStates(serviceBuilderMap, null),
       moduleStates: buildModuleStates(
         resolvedModuleRegistry,
-        buildServiceStates(serviceBuilderMap, storedSession),
+        buildServiceStates(serviceBuilderMap, null),
       ),
-      storedSession,
-    };
-
-    // If we have a cached session, hydrate a connection immediately so children can pre-render
-    if (storedSession) {
-      console.log("[ArkitektProvider] Hydrating connection from cached session (sync init)");
-      const connection = instantiateConnection(
-        storedSession,
-        initialManifest,
-        serviceBuilderMap,
-        selfServiceBuilder,
-        () => refreshTokenRef.current(),
-      );
-      initialState.connection = connection;
-      initialState.serviceStates = buildServiceStates(
-        serviceBuilderMap,
-        storedSession,
-        connection.serviceMap as ServiceMap,
-      );
-      initialState.moduleStates = buildModuleStates(
-        resolvedModuleRegistry,
-        initialState.serviceStates,
-      );
-    }
-
-    console.log("[ArkitektProvider] Store created, hasConnection:", !!initialState.connection);
-    return createArkitektStateStore<T, S>(initialState);
+      storedSession: null,
+    });
   });
 
   // Wire up the locked refreshToken now that store exists
@@ -180,11 +160,12 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           currentToken,
           controllerRef.current || undefined,
         );
+        const storage = await storageProviderRef.current();
 
         console.log("[ArkitektProvider] Token refresh succeeded");
         const nextSession = { ...session, token: nextToken };
-        writeStoredToken(nextToken);
-        writeStoredArkitektSession(nextSession);
+        writeStoredToken(nextToken, storage);
+        writeStoredArkitektSession(nextSession, storage);
 
         const connection = store.getState().connection;
         store.setState({
@@ -206,13 +187,15 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
 
   // ── helpers ──
 
-  const recompute = useCallback(
-    (overrides: {
+  const deriveRuntimeState = useCallback(
+    (
+      current: AppContext<T, S>,
+      overrides: {
       storedSession?: StoredSession;
       connection?: ConnectedContext<T, S>;
       serviceStateOverrides?: Record<string, Partial<ServiceRuntimeState>>;
-    } = {}) => {
-      const current = store.getState();
+    } = {},
+    ) => {
       const session = overrides.storedSession !== undefined ? overrides.storedSession : current.storedSession;
       const connection = overrides.connection !== undefined ? overrides.connection : current.connection;
 
@@ -230,7 +213,16 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         moduleStates: buildModuleStates(resolvedModuleRegistry, serviceStates),
       };
     },
-    [store, serviceBuilderMap, resolvedModuleRegistry],
+    [serviceBuilderMap, resolvedModuleRegistry],
+  );
+
+  const recompute = useCallback(
+    (overrides: {
+      storedSession?: StoredSession;
+      connection?: ConnectedContext<T, S>;
+      serviceStateOverrides?: Record<string, Partial<ServiceRuntimeState>>;
+    } = {}) => deriveRuntimeState(store.getState(), overrides),
+    [store, deriveRuntimeState],
   );
 
   const hydrateConnection = useCallback(
@@ -257,9 +249,90 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
     [store, serviceBuilderMap, selfServiceBuilder, recompute],
   );
 
+  const stageStoredSession = useCallback(
+    (
+      session: StoredSession,
+      extras: Partial<AppContext<T, S>> = {},
+    ) => {
+      store.setState({
+        storedSession: session,
+        connection: undefined,
+        ...recompute({ storedSession: session, connection: undefined }),
+        ...extras,
+      });
+    },
+    [store, recompute],
+  );
+
+  const setBootstrapped = useCallback(
+    (extras: Partial<AppContext<T, S>> = {}) => {
+      store.setState({
+        connecting: false,
+        hasBootstrapped: true,
+        ...extras,
+      });
+    },
+    [store],
+  );
+
+  const setBootstrapError = useCallback(
+    (message: string) => {
+      store.setState({
+        storedSession: null,
+        connection: undefined,
+        connecting: false,
+        hasBootstrapped: true,
+        autoLoginError: message,
+        ...recompute({ storedSession: null, connection: undefined }),
+      });
+    },
+    [store, recompute],
+  );
+
+  const resolveEnhancedManifest = useCallback(async (): Promise<EnhancedManifest> => {
+    const currentManifest = store.getState().manifest;
+    if (currentManifest.node_id) {
+      return currentManifest;
+    }
+
+    const enhancedManifest = await enhanceManifest(manifest);
+    store.setState((state) => ({
+      manifest: enhancedManifest,
+      connection: state.connection
+        ? { ...state.connection, manifest: enhancedManifest }
+        : state.connection,
+    }));
+
+    return enhancedManifest;
+  }, [store, manifest]);
+
+  const loadValidatedStoredSession = useCallback(async (): Promise<StoredSession> => {
+    const storage = await storageProviderRef.current();
+    const loadedSession = loadStoredArkitektSession(storage);
+
+    if (!loadedSession) {
+      return null;
+    }
+
+    const parsedSession = StoredArkitektSessionSchema.safeParse(loadedSession);
+    if (parsedSession.success) {
+      return parsedSession.data;
+    }
+
+    const validationErrors = parsedSession.error.issues
+      .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+      .join("; ");
+
+    console.error("[ArkitektProvider] Invalid stored session schema:", parsedSession.error.issues);
+    throw new Error(`Invalid stored Arkitekt config: ${validationErrors}`);
+  }, []);
+
   const validateService = useCallback(
     async (serviceKey: string) => {
       console.log("[ArkitektProvider] validateService started:", serviceKey);
+      const runId = (validationRunIdsRef.current[serviceKey] || 0) + 1;
+      validationRunIdsRef.current[serviceKey] = runId;
+
       const state = store.getState();
       const session = state.storedSession;
       const serviceState = state.serviceStates[serviceKey];
@@ -271,11 +344,11 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       }
 
       // Mark as checking
-      store.setState(
-        recompute({
+      store.setState((current) => ({
+        ...deriveRuntimeState(current, {
           serviceStateOverrides: { [serviceKey]: { status: "checking", errors: [] } },
         }),
-      );
+      }));
 
       try {
         let alias = session.aliasMap.aliasMap[serviceKey];
@@ -287,65 +360,108 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           alias = await resolveWorkingAlias({ instance, timeout: serviceTimeout, controller: hc });
         }
 
-        const nextSession = {
-          ...session,
-          aliasMap: { aliasMap: { ...session.aliasMap.aliasMap, [serviceKey]: alias } },
-        };
+        const validationResult: { persistedSession?: StoredArkitektSession } = {};
 
-        writeStoredAliasMap(nextSession.aliasMap);
-        writeStoredArkitektSession(nextSession);
+        store.setState((current) => {
+          if (validationRunIdsRef.current[serviceKey] !== runId) {
+            return current;
+          }
 
-        const nextConnection = instantiateConnection(
-          nextSession,
-          store.getState().manifest,
-          serviceBuilderMap,
-          selfServiceBuilder,
-          () => refreshTokenRef.current(),
-        );
+          const currentSession = current.storedSession;
+          const currentInstance = currentSession?.fakts.instances[serviceKey];
+          if (!currentSession || !currentInstance || currentInstance !== instance) {
+            return current;
+          }
 
-        console.log("[ArkitektProvider] validateService succeeded:", serviceKey, "alias:", alias);
-        store.setState({
-          storedSession: nextSession,
-          connection: nextConnection,
-          ...recompute({
-            storedSession: nextSession,
-            connection: nextConnection,
-            serviceStateOverrides: {
-              [serviceKey]: {
-                alias,
-                service: nextConnection.serviceMap[serviceKey] as Service | undefined,
-                status: "ready",
-                errors: [],
-                lastCheckedAt: Date.now(),
+          const nextSession: StoredArkitektSession = {
+            ...currentSession,
+            aliasMap: {
+              aliasMap: {
+                ...currentSession.aliasMap.aliasMap,
+                [serviceKey]: alias,
               },
             },
-          }),
+          };
+          const nextConnection = instantiateConnection(
+            nextSession,
+            current.manifest,
+            serviceBuilderMap,
+            selfServiceBuilder,
+            () => refreshTokenRef.current(),
+          );
+
+          validationResult.persistedSession = nextSession;
+
+          return {
+            storedSession: nextSession,
+            connection: nextConnection,
+            ...deriveRuntimeState(current, {
+              storedSession: nextSession,
+              connection: nextConnection,
+              serviceStateOverrides: {
+                [serviceKey]: {
+                  alias,
+                  service: nextConnection.serviceMap[serviceKey] as Service | undefined,
+                  status: "ready",
+                  errors: [],
+                  lastCheckedAt: Date.now(),
+                },
+              },
+            }),
+          };
         });
+
+        const nextPersistedSession = validationResult.persistedSession;
+        if (!nextPersistedSession) {
+          return;
+        }
+
+        const storage = await storageProviderRef.current();
+        writeStoredAliasMap(nextPersistedSession.aliasMap, storage);
+        writeStoredArkitektSession(nextPersistedSession, storage);
+
+        console.log("[ArkitektProvider] validateService succeeded:", serviceKey, "alias:", alias);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to validate service";
         console.error("[ArkitektProvider] validateService failed:", serviceKey, message, error);
-        const currentConn = store.getState().connection;
-        const patchedConn = currentConn
-          ? {
-              ...currentConn,
-              serviceMap: Object.fromEntries(
-                Object.entries(currentConn.serviceMap).filter(([k]) => k !== serviceKey),
-              ) as ConnectedContext<T, S>["serviceMap"],
-            }
-          : undefined;
 
-        store.setState({
-          connection: patchedConn,
-          ...recompute({
+        store.setState((current) => {
+          if (validationRunIdsRef.current[serviceKey] !== runId) {
+            return current;
+          }
+
+          const currentInstance = current.storedSession?.fakts.instances[serviceKey];
+          if (!currentInstance || currentInstance !== instance) {
+            return current;
+          }
+
+          const patchedConn = current.connection
+            ? {
+                ...current.connection,
+                serviceMap: Object.fromEntries(
+                  Object.entries(current.connection.serviceMap).filter(([key]) => key !== serviceKey),
+                ) as ConnectedContext<T, S>["serviceMap"],
+              }
+            : undefined;
+
+          return {
             connection: patchedConn,
-            serviceStateOverrides: {
-              [serviceKey]: { service: undefined, status: "invalid", errors: [message], lastCheckedAt: Date.now() },
-            },
-          }),
+            ...deriveRuntimeState(current, {
+              connection: patchedConn,
+              serviceStateOverrides: {
+                [serviceKey]: {
+                  service: undefined,
+                  status: "invalid",
+                  errors: [message],
+                  lastCheckedAt: Date.now(),
+                },
+              },
+            }),
+          };
         });
       }
     },
-    [store, serviceBuilderMap, selfServiceBuilder, recompute],
+    [store, serviceBuilderMap, selfServiceBuilder, deriveRuntimeState],
   );
 
   // ── actions ──
@@ -358,16 +474,14 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       store.setState({ connecting: true, autoLoginError: undefined });
 
       try {
-        const enhancedManifest = prev.manifest.node_id
-          ? prev.manifest
-          : await enhanceManifest(manifest);
+        const enhancedManifest = await resolveEnhancedManifest();
+        const storage = await storageProviderRef.current();
         console.log("[ArkitektProvider] connect: manifest enhanced, node_id:", enhancedManifest.node_id);
-        store.setState({ manifest: enhancedManifest });
-        writeStoredEndpoint(endpoint);
+        writeStoredEndpoint(endpoint, storage);
 
         const fakts = await flow({ endpoint, controller, manifest: enhancedManifest });
         console.log("[ArkitektProvider] connect: fakts resolved, services:", Object.keys(fakts.instances || {}));
-        writeStoredFakts(fakts);
+        writeStoredFakts(fakts, storage);
 
         const token = normalizeToken(await login(fakts.auth));
         console.log("[ArkitektProvider] connect: login succeeded");
@@ -379,7 +493,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         });
         console.log("[ArkitektProvider] connect: aliases built, keys:", Object.keys(aliasMap));
 
-        writeStoredAliasMap({ aliasMap });
+        writeStoredAliasMap({ aliasMap }, storage);
         await report(fakts.auth.report_url, {
           alias_reports: aliasReports,
           token: fakts.auth.client_token,
@@ -387,8 +501,8 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         });
 
         const nextSession = { endpoint, fakts, token, aliasMap: { aliasMap } };
-        writeStoredToken(token);
-        writeStoredArkitektSession(nextSession);
+        writeStoredToken(token, storage);
+        writeStoredArkitektSession(nextSession, storage);
 
         console.log("[ArkitektProvider] connect: session stored, hydrating connection...");
         hydrateConnection(nextSession, enhancedManifest, {
@@ -402,7 +516,10 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         void Promise.all(Object.keys(serviceBuilderMap).map((k) => validateService(k)));
       } catch (error) {
         console.error("[ArkitektProvider] connect failed:", error);
-        if (!prev.storedSession) clearStoredArkitektStorage();
+        if (!prev.storedSession) {
+          const storage = await storageProviderRef.current();
+          clearStoredArkitektStorage(undefined, storage);
+        }
 
         store.setState({
           storedSession: prev.storedSession,
@@ -421,13 +538,14 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         controllerRef.current = null;
       }
     },
-    [store, manifest, serviceBuilderMap, hydrateConnection, validateService, recompute],
+    [store, serviceBuilderMap, hydrateConnection, validateService, recompute, resolveEnhancedManifest],
   );
 
   const disconnect = useCallback<AppFunctions["disconnect"]>(async () => {
     console.log("[ArkitektProvider] disconnect called");
     controllerRef.current = null;
-    clearStoredArkitektStorage();
+    const storage = await storageProviderRef.current();
+    clearStoredArkitektStorage(undefined, storage);
     hydrateConnection(null, store.getState().manifest, {
       connecting: false,
       hasBootstrapped: true,
@@ -437,7 +555,8 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
 
   const reconnect = useCallback<AppFunctions["reconnect"]>(async () => {
     console.log("[ArkitektProvider] reconnect called");
-    const endpoint = store.getState().storedSession?.endpoint || loadStoredEndpoint();
+    const storage = await storageProviderRef.current();
+    const endpoint = store.getState().storedSession?.endpoint || loadStoredEndpoint(storage);
     if (!endpoint) {
       console.error("[ArkitektProvider] reconnect failed: no endpoint found");
       throw new Error("No endpoint found in local storage");
@@ -504,53 +623,51 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   // ── ONE useEffect: detect cached fakts, hydrate, then run health checks ──
   useEffect(() => {
     const run = async () => {
-      const session = store.getState().storedSession;
-      console.log("[ArkitektProvider]: Bootstrapping ArkitektProvider with session:", session);
-
-      if (!session) {
-        console.log("[ArkitektProvider] Bootstrap: no cached session, marking bootstrapped");
-        store.setState({ connecting: false, hasBootstrapped: true });
-        return;
-      }
-
       try {
-        // Enhance manifest (get node_id)
-        const enhanced = await enhanceManifest(manifest);
-        console.log("[ArkitektProvider]: Enhanced manifest:", enhanced);
-        store.setState((s) => ({
-          manifest: enhanced,
-          connection: s.connection ? { ...s.connection, manifest: enhanced } : s.connection,
-        }));
+        const [enhancedManifest, session] = await Promise.all([
+          resolveEnhancedManifest(),
+          loadValidatedStoredSession(),
+        ]);
 
-        // Ensure token is still valid
+        console.log("[ArkitektProvider]: Bootstrapping ArkitektProvider with session:", session);
+
+        if (!session) {
+          console.log("[ArkitektProvider] Bootstrap: no cached session, marking bootstrapped");
+          setBootstrapped();
+          return;
+        }
+
+        stageStoredSession(session, {
+          manifest: enhancedManifest,
+          autoLoginError: undefined,
+        });
+
         console.log("[ArkitektProvider] Bootstrap: refreshing token...");
         await refreshTokenRef.current();
         console.log("[ArkitektProvider] Bootstrap: token refresh complete");
-        const refreshedSession = store.getState().storedSession;
 
-        if (refreshedSession) {
-          hydrateConnection(refreshedSession, enhanced, {
-            connecting: false,
-            hasBootstrapped: true,
-            autoLoginError: undefined,
-          });
-          console.log("[ArkitektProvider] Hydrated connection from stored session:", store.getState().connection);
-        } else {
-          console.log("[ArkitektProvider] Bootstrap: no session after refresh, marking bootstrapped");
-          store.setState({ connecting: false, hasBootstrapped: true });
+        const refreshedSession = store.getState().storedSession;
+        if (!refreshedSession) {
+          throw new Error("Stored session missing after refresh");
         }
-      } catch (error) {
-        console.error("[ArkitektProvider] Bootstrap error:", error);
-        store.setState({
+
+        hydrateConnection(refreshedSession, enhancedManifest, {
           connecting: false,
           hasBootstrapped: true,
-          autoLoginError: error instanceof Error ? error.message : "Auto-login failed",
+          autoLoginError: undefined,
         });
-      }
+        console.log("[ArkitektProvider] Hydrated connection from stored session:", store.getState().connection);
 
-      // Background health checks for every service
-      console.log("[ArkitektProvider] Bootstrap: starting background health checks");
-      void Promise.all(Object.keys(serviceBuilderMap).map((k) => validateService(k)));
+        console.log("[ArkitektProvider] Bootstrap: starting background health checks");
+        void Promise.all(Object.keys(serviceBuilderMap).map((k) => validateService(k)));
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message
+          : "Auto-login failed";
+
+        console.error("[ArkitektProvider] Bootstrap error:", error);
+        setBootstrapError(message);
+      }
     };
 
     void run();
@@ -590,13 +707,13 @@ export const ConnectedGuard = ({
 
   if (!storedSession) return <>{notConnectedFallback}</>;
 
-  if (!connection) {
+  if (!connection?.selfService) {
     if (connecting || (!hasBootstrapped && storedSession)) return <>{connectingFallback}</>;
     return <>{notConnectedFallback}</>;
   }
 
   return <>{children}</>;
-};
+}
 
 // ── Builder helper ──
 
@@ -605,6 +722,7 @@ export type ArkitektBuilderOptions<T extends ServiceBuilderMap, S extends Servic
   serviceBuilderMap: T;
   selfServiceBuilder: S;
   moduleRegistry?: ModuleRegistry;
+  storageProvider?: StorageProvider;
 };
 
 export const buildArkitektProvider =
@@ -615,6 +733,7 @@ export const buildArkitektProvider =
       serviceBuilderMap={options.serviceBuilderMap}
       selfServiceBuilder={options.selfServiceBuilder}
       moduleRegistry={options.moduleRegistry}
+      storageProvider={options.storageProvider}
     >
       {children}
     </ArkitektProvider>

@@ -15,6 +15,7 @@ import {
   usePotentialService,
   useService
 } from "@/lib/arkitekt/provider";
+import { useSelfService } from "./hooks";
 // When using the Tauri API npm package:
 
 export const buildGuard =
@@ -48,11 +49,13 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
   serviceBuilderMap,
   selfServiceBuilder,
   moduleRegistry,
+  storageProvider,
 }: {
   manifest: Manifest;
   serviceBuilderMap: T;
   selfServiceBuilder: S;
   moduleRegistry?: ModuleRegistry;
+  storageProvider?: () => Promise<Storage>;
 }) => {
 
   const requirements: Requirement[] = serviceBuilderMap
@@ -74,6 +77,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
       serviceBuilderMap,
       selfServiceBuilder: selfServiceBuilder,
       moduleRegistry,
+      storageProvider,
     }),
     buildServiceGuard: <K extends keyof T>(serviceKey: K) => buildGuard(serviceKey as string),
     Guard: ConnectedGuard,
@@ -89,7 +93,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
       const service = useService(serviceKey as string);
       return service?.alias;
     },
-    useSelfService: (): ReturnType<S> | undefined => useArkitekt().connection?.selfService as ReturnType<S> | undefined,
+    useSelfService: () => useSelfService(),
     useSelf: () => useArkitekt().connection?.fakts.self,
     useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
     useAvailableServices: useAvailableServices,

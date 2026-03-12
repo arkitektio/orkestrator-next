@@ -32,7 +32,7 @@ export const usePerformAction = (props: {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: app.connection?.clients || {},
+        services: app.connection?.serviceMap || {},
         dialog,
         navigate,
         location: window.location,

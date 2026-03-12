@@ -1,4 +1,6 @@
 import { Arkitekt } from "@/app/Arkitekt";
+import { ConnectingFallback } from "@/app/components/fallbacks/Connecting";
+import { NotConnected } from "@/app/components/fallbacks/NotConnected";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -360,9 +362,13 @@ export const Home = () => {
  */
 function Page() {
   return (
-
     <div className="min-h-screen w-full">
-      <Home />
+      <Arkitekt.Guard
+        notConnectedFallback={<NotConnected />}
+        connectingFallback={<ConnectingFallback />}
+      >
+        <Home />
+      </Arkitekt.Guard>
     </div>
   );
 }

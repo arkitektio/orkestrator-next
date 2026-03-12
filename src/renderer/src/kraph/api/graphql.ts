@@ -24,6 +24,8 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   GlobalID: { input: any; output: any; }
   GraphID: { input: string; output: string; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
+  JSON: { input: any; output: any; }
   /** The `StructureIdentifier` scalar type represents a structure identifier (e.g. '@mikro/roi') */
   StructureIdentifier: { input: any; output: any; }
   /** The `StructureObject` scalar type represents a structure object (e.g 1) on a specific identifier) */
@@ -2828,6 +2830,8 @@ export type Mutation = {
   recordMetric: Metric;
   /** Upload media and return a URL for access */
   requestMediaUpload: PresignedPostCredentials;
+  /** Set a property on an existing entity in the graph */
+  setEntityProperty: Entity;
   /** Update an existing category tag in the graph */
   updateCategoryTag: CategoryTag;
   /** Update an edge pairs query */
@@ -3370,6 +3374,12 @@ export type MutationRecordMetricArgs = {
 /** Graph Engine Mutations */
 export type MutationRequestMediaUploadArgs = {
   input: RequestMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationSetEntityPropertyArgs = {
+  input: SetEntityPropertyInput;
 };
 
 
@@ -4106,7 +4116,7 @@ export type PropertySet = {
   /** The property key/label */
   key: Scalars['String']['input'];
   /** The property value */
-  value: Scalars['String']['input'];
+  value: Scalars['JSON']['input'];
 };
 
 export enum PropertyType {
@@ -5473,6 +5483,16 @@ export type SequenceMappingInput = {
   property: Scalars['String']['input'];
   /** The sequence identifier (e.g., 'IAZ001') */
   sequence: Scalars['String']['input'];
+};
+
+/** Input for ensuring an entity exists with a given global ID */
+export type SetEntityPropertyInput = {
+  /** The ID of the entity to update */
+  entityId: Scalars['GraphID']['input'];
+  /** The property key to set */
+  key: Scalars['String']['input'];
+  /** The value to set for this property */
+  value: Scalars['JSON']['input'];
 };
 
 /** A structure that provides evidence for entities */
@@ -7035,6 +7055,13 @@ export type DeleteEntityMutationVariables = Exact<{
 
 
 export type DeleteEntityMutation = { __typename?: 'Mutation', deleteEntity: string };
+
+export type SetEntityPropertyMutationVariables = Exact<{
+  input: SetEntityPropertyInput;
+}>;
+
+
+export type SetEntityPropertyMutation = { __typename?: 'Mutation', setEntityProperty: { __typename?: 'Entity', id: string, label: string, properties: any, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> }, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, category: { __typename?: 'MeasurementCategory', label: string }, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'NaturalEventCategory', label: string } } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'ProtocolEventCategory', label: string } } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'NaturalEventCategory', label: string } } }> } };
 
 export type CreateGraphTableQueryMutationVariables = Exact<{
   input: CreateGraphTableQueryInput;
@@ -9465,6 +9492,39 @@ export function useDeleteEntityMutation(baseOptions?: ApolloReactHooks.MutationH
 export type DeleteEntityMutationHookResult = ReturnType<typeof useDeleteEntityMutation>;
 export type DeleteEntityMutationResult = Apollo.MutationResult<DeleteEntityMutation>;
 export type DeleteEntityMutationOptions = Apollo.BaseMutationOptions<DeleteEntityMutation, DeleteEntityMutationVariables>;
+export const SetEntityPropertyDocument = gql`
+    mutation SetEntityProperty($input: SetEntityPropertyInput!) {
+  setEntityProperty(input: $input) {
+    ...Entity
+  }
+}
+    ${EntityFragmentDoc}`;
+export type SetEntityPropertyMutationFn = Apollo.MutationFunction<SetEntityPropertyMutation, SetEntityPropertyMutationVariables>;
+
+/**
+ * __useSetEntityPropertyMutation__
+ *
+ * To run a mutation, you first call `useSetEntityPropertyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetEntityPropertyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setEntityPropertyMutation, { data, loading, error }] = useSetEntityPropertyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetEntityPropertyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<SetEntityPropertyMutation, SetEntityPropertyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<SetEntityPropertyMutation, SetEntityPropertyMutationVariables>(SetEntityPropertyDocument, options);
+      }
+export type SetEntityPropertyMutationHookResult = ReturnType<typeof useSetEntityPropertyMutation>;
+export type SetEntityPropertyMutationResult = Apollo.MutationResult<SetEntityPropertyMutation>;
+export type SetEntityPropertyMutationOptions = Apollo.BaseMutationOptions<SetEntityPropertyMutation, SetEntityPropertyMutationVariables>;
 export const CreateGraphTableQueryDocument = gql`
     mutation CreateGraphTableQuery($input: CreateGraphTableQueryInput!) {
   createGraphTableQuery(input: $input) {

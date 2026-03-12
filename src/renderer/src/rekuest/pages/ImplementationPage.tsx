@@ -29,6 +29,7 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { format } from "path";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -98,6 +99,7 @@ export const DoForm = ({ id }: { id: string }) => {
   const form = usePortForm({
     ports: implementation?.action.args || [],
   });
+
 
   const navigate = useNavigate();
 
@@ -184,7 +186,7 @@ export const DoForm = ({ id }: { id: string }) => {
                 <CardContent>
                   <div className="flex flex-col gap-2">
                     {implementation?.action?.returns?.map((p) => (
-                      <div>
+                      <div key={p.key} className="rounded border border-border/50 p-2">
                         <div className=" font-bold">{p.label || p.key}</div>
                         <div className="text-xs text-muted-foreground">
                           {p.description}
@@ -270,7 +272,7 @@ export const FlowRender = (props: { implementation: DetailImplementationFragment
   );
 };
 
-export default asDetailQueryRoute(
+const TPage = asDetailQueryRoute(
   useImplementationQuery,
   ({ data, refetch, subscribeToMore }) => {
     useEffect(() => {
@@ -323,3 +325,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

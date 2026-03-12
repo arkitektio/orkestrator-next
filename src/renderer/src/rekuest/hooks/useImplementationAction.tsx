@@ -1,3 +1,4 @@
+import { formatApolloError } from "@/lib/errorHandler";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
@@ -82,12 +83,12 @@ export const useImplementationAction = <T extends any>(
         const assignation = mutation.data?.assign;
 
         if (!assignation) {
-          throw Error(`Couldn't assign`);
+          throw Error("Couldn't assign: no assignation was returned by the GraphQL API");
         }
 
         return assignation;
-      } catch (error: any) {
-        throw Error(`Couldn't assign: ${error.message}`);
+        } catch (error: unknown) {
+          throw Error(`Couldn't assign: ${formatApolloError(error, "rekuest")}`);
       }
     },
     [postAssign, settings.instanceId, options.id],
@@ -127,7 +128,7 @@ export const useImplementationAction = <T extends any>(
       const errorMessages =
         mutation.errors?.map((error) => error.message).join(", ") ||
         "Unknown error";
-      throw Error(`Couldn't assign: ${errorMessages}`);
+      throw Error(`Couldn't cancel assignation: ${errorMessages}`);
     }
 
     return assignation;

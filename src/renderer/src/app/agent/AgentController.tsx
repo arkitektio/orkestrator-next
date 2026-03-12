@@ -67,7 +67,7 @@ export const AgentController = (_) => {
             Agent Status
           </div>
         </div>
-        <Badge variant={connected ? "active" : "destructive"} className="gap-1 h-5 px-2">
+        <Badge variant={connected ? "secondary" : "destructive"} className="gap-1 h-5 px-2">
           {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
           {connected ? "Online" : "Offline"}
         </Badge>
@@ -75,12 +75,12 @@ export const AgentController = (_) => {
 
       <CollapsibleContent>
         <div className="p-4 space-y-4">
-          {!connected && lastCode && (
+          {!connected && (lastCode || lastReason) && (
             <Alert variant="destructive" className="py-2 text-xs [&>svg]:top-2.5 [&>svg]:left-3 pl-9 bg-red-900/70 border-red-900/20 text-white">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Connection Error {lastCode && <span className="font-mono text-[10px] opacity-80">({lastCode})</span>}</AlertTitle>
               <AlertDescription>
-                <AgentCodeDisplay code={lastCode} />
+                {lastCode && <AgentCodeDisplay code={lastCode} />}
                 {lastReason && <div className="mt-1 text-[10px] opacity-80">{lastReason}</div>}
               </AlertDescription>
             </Alert>

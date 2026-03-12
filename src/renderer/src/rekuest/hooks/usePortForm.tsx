@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import Zod from "zod";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Port } from "../widgets/types";
@@ -17,34 +18,40 @@ export const portHash = (port: Port[]) => {
 
 export const usePortForm = (props: {
   ports: Port[];
-  overwrites?: { [key: string]: any };
+  overwrites?: Record<string, unknown>;
   doNotAutoReset?: boolean;
-  additionalSchema?: Zod.ZodObject<any>;
+  additionalSchema?: Zod.ZodObject<Zod.ZodRawShape>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
   reValidateMode?: "onChange" | "onBlur" | "onSubmit";
 }) => {
-  const hash = portHash(props.ports);
+  const defaultValuesKey = useMemo(
+    () => `${portHash(props.ports)}:${JSON.stringify(props.overwrites || {})}`,
+    [props.overwrites, props.ports],
+  );
 
-  const defaultValues = useCallback(() => {
-    return portToDefaults(props.ports, props.overwrites || {});
-  }, [hash, props.overwrites]);
+  const defaultValues = useMemo(
+    () => portToDefaults(props.ports, props.overwrites || {}),
+    [props.overwrites, props.ports],
+  );
 
-  const myResolver = useCallback(() => {
+  const lastResetKeyRef = useRef<string | null>(null);
+
+  const resolver = useMemo(() => {
     const zodSchema = buildZodSchema(props.ports);
     if (props.additionalSchema) {
       return zodResolver(zodSchema.merge(props.additionalSchema));
     }
     return zodResolver(zodSchema);
-  }, [hash, props.additionalSchema,]);
+  }, [props.additionalSchema, props.ports]);
 
   const { handleSubmit, ...form } = useForm({
-    defaultValues: defaultValues,
+    defaultValues,
     reValidateMode: props.reValidateMode || "onChange",
-    resolver: myResolver(),
+    resolver,
   });
 
   const overWrittenHandleSubmit = useCallback(
-    (onSubmit: any) => {
+    (onSubmit: (data: Record<string, unknown>) => void) => {
       return handleSubmit(
         (data) => {
           const additionalData = Object.keys(data).reduce((acc, key) => {
@@ -52,7 +59,7 @@ export const usePortForm = (props: {
               acc[key] = data[key];
             }
             return acc;
-          }, {});
+          }, {} as Record<string, unknown>);
 
           onSubmit({
             ...submittedDataToRekuestFormat(data, props.ports),
@@ -60,17 +67,21 @@ export const usePortForm = (props: {
           });
         },
         (errors) => {
+          console.log("Validation errors:", errors);
           toast.error(JSON.stringify(errors));
         },
       );
     },
-    [handleSubmit, hash],
+    [handleSubmit, props.additionalSchema, props.ports],
   );
 
   useEffect(() => {
     if (props.doNotAutoReset) return;
-    form.reset(portToDefaults(props.ports, props.overwrites || {}));
-  }, [hash, form]);
+    if (lastResetKeyRef.current === defaultValuesKey) return;
+
+    lastResetKeyRef.current = defaultValuesKey;
+    form.reset(defaultValues);
+  }, [defaultValues, defaultValuesKey, form, props.doNotAutoReset]);
 
   return { ...form, handleSubmit: overWrittenHandleSubmit, };
 };

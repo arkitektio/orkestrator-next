@@ -34,7 +34,6 @@ export interface SmartModelProps {
   object: string;
   as?: HTMLElement;
   children: React.ReactNode;
-  showSelectingIndex?: boolean;
   containerClassName?: string;
   dragClassName?: (props: ClassNameOptions) => string;
   dropClassName?: (props: ClassNameOptions) => string;

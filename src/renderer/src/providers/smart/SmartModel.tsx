@@ -3,297 +3,150 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
-import React, { useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { NativeTypes } from "react-dnd-html5-backend";
-import {
-  useMySelect,
-  useSelectionSelector,
-} from "../selection/SelectionContext";
+import React from "react";
+
+import { useSelectionSelector } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
+import { useSmartModel } from "./useSmartModel";
 
 export const SmartModel = ({
   showSelfMates = true,
-  showSelectingIndex = true,
   hover = false,
   ...props
 }: SmartModelProps) => {
-  const self: Structure = React.useMemo(
-    () => ({
-      identifier: props.identifier,
-      object: props.object,
-    }),
-    [props.identifier, props.object],
-  );
-
-  const portalRef = React.useRef<HTMLDivElement>(null);
-
-  const [partners, setPartners] = useState<Structure[]>([]);
-  const registerSelectables = useSelectionSelector(
-    (state) => state.registerSelectables,
-  );
-  const unregisterSelectables = useSelectionSelector(
-    (state) => state.unregisterSelectables,
-  );
-  const selectableRef = React.useRef<HTMLDivElement | null>(null);
-
-  const dropHandler = React.useCallback((item: any, monitor: any) => {
-    console.log("drop", item);
-
-    if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
-      console.log("SMART", item);
-      setPartners(item);
-      return {};
-    }
-
-    if (monitor.getItemType() === NativeTypes.URL) {
-      console.log("URL", item);
-      const url = item.urls;
-      const partners: Structure[] = [];
-      for (let i = 0; i < url.length; i++) {
-        const the_url = url[i];
-        console.log("URL", the_url);
-        const match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
-        if (match) {
-          console.log("MATCH", match);
-          const [_, identifier, object] = match;
-          const structure: Structure = { identifier, object };
-          partners.push(structure);
-        }
-      }
-      if (partners.length > 0) {
-        setPartners(partners);
-        return {};
-      }
-    }
-
-    const text = item.text;
-
-    if (item.text) {
-      try {
-        const structure: Structure = JSON.parse(text);
-        setPartners([structure]);
-        return {};
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    alert(`Drop unknown ${item}`);
-    return {};
-  }, []);
-
-  const collectDrop = React.useCallback(
-    (monitor: any) => ({
-      isOver: !!monitor.isOver(),
-      canDrop: !!monitor.canDrop(),
-    }),
-    [],
-  );
-
-  const [{ isOver }, drop] = useDrop(
-    () => ({
-      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
-      drop: dropHandler,
-      collect: collectDrop,
-    }),
-    [dropHandler, collectDrop],
-  );
-
-  const collectDrag = React.useCallback(
-    (monitor: any) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    [],
-  );
-
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: SMART_MODEL_DROP_TYPE,
-      item: [self],
-      collect: collectDrag,
-    }),
-    [self, collectDrag],
-  );
-
-  const clearPartners = React.useCallback(() => {
-    setPartners([]);
-  }, []);
-
-  const setSelectableNode = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      selectableRef.current = node;
-      drop(node);
-    },
-    [drop],
-  );
-
-  const setDragNode = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      drag(node);
-    },
-    [drag],
-  );
-
-  const handleDragStart = React.useCallback(
-    (e: React.DragEvent) => {
-      const data = JSON.stringify(self);
-      e.dataTransfer.setData("text/plain", data);
-      e.dataTransfer.setData(
-        "text/uri-list",
-        `arkitekt://${props.identifier}:${props.object}`,
-      );
-    },
-    [self, props.identifier, props.object],
-  );
-
-  React.useEffect(() => {
-    const node = selectableRef.current;
-    if (!node) {
-      return;
-    }
-
-    const selectable = {
-      structure: self,
-      item: node,
-    };
-
-    registerSelectables([selectable]);
-
-    return () => {
-      unregisterSelectables([selectable]);
-    };
-  }, [self, registerSelectables, unregisterSelectables]);
-
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        portalRef.current &&
-        !portalRef.current.contains(event.target as Node)
-      ) {
-        clearPartners();
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        clearPartners();
-      }
-    };
-
-    if (partners.length > 0) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [partners.length, clearPartners]);
-
-  const { isBSelected, toggleB, isSelected, toggle, selection, bselection } =
-    useMySelect({
-      self,
-    });
+  const {
+    ref,
+    portalRef,
+    self,
+    isOver,
+    isDragging,
+    canDrop,
+    partners,
+    clearPartners,
+    handleClick,
+    handleDragStart,
+    getCurrentSelection,
+  } = useSmartModel({ identifier: props.identifier, object: props.object });
 
   const className = React.useMemo(
     () =>
       cn(
         props.className,
-        "@container relative z-10 cursor-pointer",
-        isSelected &&
-        "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
-        isBSelected && "group ring ring-2  rounded ring-red-500",
-        isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
-        isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
+        "group @container relative z-10 cursor-pointer",
+        "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:rounded",
+        "b-selected:ring b-selected:ring-2 b-selected:rounded b-selected:ring-red-500",
+        "dragging:opacity-50 dragging:ring-2 dragging:ring-gray-600 dragging:rounded dragging:rounded-md",
+        "over:shadow-xl over:ring-2 over:border-gray-200 over:ring over:rounded over:rounded-md",
+          "selected:after:absolute selected:after:top-0 selected:after:right-0 selected:after:z-[9998] selected:after:flex selected:after:h-6 selected:after:w-6 selected:after:translate-x-1/2 selected:after:-translate-y-1/2 selected:after:items-center selected:after:justify-center selected:after:rounded-full selected:after:bg-primary selected:after:text-xs selected:after:font-semibold selected:after:text-white selected:after:content-[attr(data-selected-index)]",
+        "b-selected:before:absolute b-selected:before:top-0 b-selected:before:right-0 b-selected:before:z-[9999] b-selected:before:flex b-selected:before:h-6 b-selected:before:w-6 b-selected:before:translate-x-1/2 b-selected:before:-translate-y-1/2 b-selected:before:items-center b-selected:before:justify-center b-selected:before:rounded-full b-selected:before:bg-red-500 b-selected:before:text-xs b-selected:before:font-semibold b-selected:before:text-white b-selected:before:content-[attr(data-bselected-index)]",
+        isDragging &&
+          props.dragClassName?.({
+            isOver,
+            isDragging,
+            canDrop,
+            progress: undefined,
+          }),
+        isOver &&
+          props.dropClassName?.({
+            isOver,
+            isDragging,
+            canDrop,
+            progress: undefined,
+          }),
       ),
-    [props.className, isSelected, isDragging, isOver, isBSelected],
+    [
+      canDrop,
+      isDragging,
+      isOver,
+      props.className,
+      props.dragClassName,
+      props.dropClassName,
+    ],
+  );
+
+  const style = React.useMemo(
+    () => ({
+      ...(isDragging
+        ? props.dragStyle?.({
+            isOver,
+            isDragging,
+            canDrop,
+            progress: undefined,
+          })
+        : undefined),
+      ...(isOver
+        ? props.dropStyle?.({
+            isOver,
+            isDragging,
+            canDrop,
+            progress: undefined,
+          })
+        : undefined),
+    }),
+    [canDrop, isDragging, isOver, props.dragStyle, props.dropStyle],
   );
 
   return (
-    <div
-      key={`${props.identifier}:${props.object}`}
-      ref={setSelectableNode}
-      onClick={(e) => {
-        if (e.shiftKey && !e.ctrlKey) {
-          toggle();
-          return;
-        }
-        if (e.shiftKey && e.ctrlKey) {
-          toggleB();
-          return;
-        }
-      }}
-      className={cn("relative", props.containerClassName)}
-      onDragStart={handleDragStart}
-      data-identifier={props.identifier}
-      data-object={props.object}
-      data-selectable="true"
-      data-selected={isSelected ? "true" : "false"}
-      data-bselected={isBSelected ? "true" : "false"}
-    >
-      {isBSelected && (
-        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-red-500 w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
-          {isBSelected}
-        </div>
-      )}
-      {isSelected && (
-        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-primary w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
-          {isSelected}
-        </div>
-      )}
-      <ContextMenu modal={false}>
-        <ContextMenuContent className="dark:border-gray-700 max-w-md">
-          {selection && selection.length > 0 ? (
-            <SmartContext objects={selection} partners={bselection} />
-          ) : (
-            <SmartContext objects={[self]} partners={[]} />
-          )}
-        </ContextMenuContent>
-        <ContextMenuTrigger asChild>
-          <div
-            ref={setDragNode}
-            className={className}
-            draggable={false}
-            data-identifier={props.identifier}
-            data-object={props.object}
-          >
-            {props.children}
-            {isOver && <CombineButton />}
+    <ContextMenu modal={false}>
+      <ContextMenuContent className="dark:border-gray-700 max-w-md">
+        <SmartModelContext self={self} />
+      </ContextMenuContent>
+      <ContextMenuTrigger asChild>
+        <div
+          key={`${props.identifier}:${props.object}`}
+          ref={ref}
+          onClick={handleClick}
+          className={cn("relative", props.containerClassName, className)}
+          style={style}
+          onDragStart={handleDragStart}
+          draggable={false}
+        >
+          {props.children}
+          {isOver && <CombineButton />}
 
-            {partners.length > 0 && (
+          {partners.length > 0 && (
+            <div
+              className="fixed inset-0 z-[9998] flex items-center justify-center"
+              ref={portalRef}
+            >
               <div
-                className="fixed inset-0 z-[9998] flex items-center justify-center"
-                ref={portalRef}
+                className="fixed inset-0 bg-black bg-opacity-50"
+                onClick={clearPartners}
+              />
+              <div
+                className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="fixed inset-0 bg-black bg-opacity-50"
-                  onClick={clearPartners}
+                <SmartContext
+                  objects={
+                    getCurrentSelection().length > 1
+                      ? getCurrentSelection()
+                      : [self]
+                  }
+                  partners={partners}
+                  onDone={() => clearPartners()}
                 />
-                <div
-                  className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <SmartContext
-                    objects={
-                      selection && selection.length > 1 ? selection : [self]
-                    }
-                    partners={partners}
-                    onDone={() => clearPartners()}
-                  />
-                </div>
               </div>
-            )}
-          </div>
-        </ContextMenuTrigger>
-      </ContextMenu>
-    </div>
+            </div>
+          )}
+        </div>
+      </ContextMenuTrigger>
+    </ContextMenu>
   );
+};
+
+const SmartModelContext = ({ self }: { self: Structure }) => {
+  const selection = useSelectionSelector((state) => state.selection);
+  const bselection = useSelectionSelector((state) => state.bselection);
+
+  if (selection.length > 0) {
+    return <SmartContext objects={selection} partners={bselection} />;
+  }
+
+  return <SmartContext objects={[self]} partners={[]} />;
 };
 
 export const CombineButton = () => {

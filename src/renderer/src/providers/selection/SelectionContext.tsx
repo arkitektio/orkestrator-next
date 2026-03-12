@@ -7,7 +7,7 @@ import { SelectionContextType, SelectionSnapshot } from "./types";
 
 export const SelectionContext = React.createContext<SelectionContextType>(null);
 
-const useSelectionStore = () => {
+export const useSelectionStoreApi = () => {
   const store = useContext(SelectionContext);
 
   if (!store) {
@@ -20,7 +20,7 @@ const useSelectionStore = () => {
 export const useSelectionSelector = <T,>(
   selector: (state: SelectionState) => T,
 ): T => {
-  const store = useSelectionStore();
+  const store = useSelectionStoreApi();
 
   return useStore(store, selector);
 };

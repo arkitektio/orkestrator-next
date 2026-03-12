@@ -123,7 +123,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                           <SmartProvider>
                             <DialogProvider>
                               <SelectionProvider>
-                                <AgentProvider>
+                                <AgentProvider disabled={true}>
                                   <WardRegistrar />
                                   <Guard.Rekuest fallback={<></>}>
                                     <LazyProviderBoundary>

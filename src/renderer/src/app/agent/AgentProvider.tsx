@@ -14,35 +14,43 @@ import { resetAgentState, setAgentState, useAgentState } from "./store";
 
 export type AgentContextType = AgentState & {
   agent: OrkestratorAgent | null;
+  disabled: boolean;
 };
 
 type AgentProviderContextType = {
   agent: OrkestratorAgent | null;
+  disabled: boolean;
 };
 
 export const AgentContext = createContext<AgentProviderContextType>({
   agent: null,
+  disabled: false,
 });
 
 const useAgentContext = () => useContext(AgentContext);
 
 export const useAgent = (): AgentContextType => {
-  const { agent } = useAgentContext();
+  const { agent, disabled } = useAgentContext();
   const state = useAgentState((currentState) => currentState);
 
   return useMemo(
     () => ({
       ...state,
       agent,
+      disabled,
     }),
-    [agent, state],
+    [agent, disabled, state],
   );
 };
 
 export const useAgentInstance = () => useAgentContext().agent;
 
-export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
+export const AgentProvider: React.FC<{
+  children: React.ReactNode;
+  disabled?: boolean;
+}> = ({
   children,
+  disabled = false,
 }) => {
   const arkitekt = useArkitekt();
   const navigate = useNavigate();
@@ -53,7 +61,7 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     try {
-      if (!connection || !settings.startAgent) {
+      if (disabled || !connection || !settings.startAgent) {
         if (agentRef.current) {
           agentRef.current.disconnect();
           agentRef.current = null;
@@ -91,13 +99,14 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("AgentProvider: Failed to start agent", e);
       return undefined;
     }
-  }, [connection, navigate, settings.instanceId, settings.startAgent]);
+  }, [connection, disabled, navigate, settings.instanceId, settings.startAgent]);
 
   const contextValue = useMemo(
     () => ({
       agent,
+      disabled,
     }),
-    [agent],
+    [agent, disabled],
   );
 
   return <AgentContext.Provider value={contextValue}>{children}</AgentContext.Provider>;

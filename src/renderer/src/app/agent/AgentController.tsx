@@ -6,10 +6,12 @@ import { useSettings } from "@/providers/settings/SettingsContext";
 import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { AgentCodeDisplay } from "./AgentCodeDisplay";
+import { useAgent } from "./AgentProvider";
 import { useAgentState } from "./store";
 
 export const AgentController = (_) => {
   const { settings, setSettings } = useSettings();
+  const { disabled } = useAgent();
   const { assignments, errors, connected, lastCode, lastReason } = useAgentState(
     useShallow((state) => ({
       assignments: state.assignments,
@@ -26,6 +28,18 @@ export const AgentController = (_) => {
 
   const toggleExpanded = () => {
     setSettings({ ...settings, agentExpanded: !settings.agentExpanded })
+  }
+
+  if (disabled) {
+    return (
+      <div className="w-full bg-foreground/5 p-4 rounded-t-lg border-t border-border">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <div className="text-xs text-muted-foreground text-center">
+            Agent support is currently disabled for this build.
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!settings.startAgent) {

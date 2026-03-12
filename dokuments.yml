@@ -17,3 +17,7 @@ generates:
   src/renderer/src/dokuments/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/dokuments.graphql:
+    plugins:
+      - schema-ast

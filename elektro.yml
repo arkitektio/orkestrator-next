@@ -18,3 +18,8 @@ generates:
   src/renderer/src/elektro/graphql.schema.json:
     plugins:
       - "introspection"
+
+
+  graphql/schemas/elektro.graphql:
+    plugins:
+      - schema-ast

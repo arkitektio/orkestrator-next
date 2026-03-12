@@ -1,33 +1,24 @@
 projects:
   kraph:
-    overwrite: true
-    schema:
-      "http://jhnnsrs-lab/kraph/graphql":
-         headers:
-            Authorization: "Bearer test_mother_fucker"
+    schema: "graphql/schemas/kraph.graphql"
     documents: "graphql/kraph/**/*.graphql"
-    generates:
-      src/renderer/src/kraph/api/fragments.ts:
-        plugins:
-          - "fragment-matcher"
-      src/renderer/src/kraph/api/graphql.ts:
-        plugins:
-          - "typescript"
-          - "typescript-operations"
-          - "typescript-react-apollo"
-        config:
-          withHooks: true
-          reactApolloVersion: 3
-          apolloReactHooksImportFrom: "@/lib/kraph/funcs"
 
-      src/renderer/src/kraph/graphql.schema.json:
-        plugins:
-          - "introspection"
-    extensions:
-          endpoints:
-            default:
-              url: "http://jhnnsrs-lab/kraph/graphql"
-              headers:
-                Authorization: "Bearer test_mother_fucker"
+  mikro:
+    schema: "graphql/schemas/mikro.graphql"
+    documents: "graphql/mikro/**/*.graphql"
 
+  rekuest:
+    schema: "graphql/schemas/rekuest.graphql"
+    documents: "graphql/rekuest/**/*.graphql"
 
+  dokuments:
+    schema: "graphql/schemas/dokuments.graphql"
+    documents: "graphql/dokuments/**/*.graphql"
+
+  fluss:
+    schema: "graphql/schemas/fluss.graphql"
+    documents: "graphql/fluss/**/*.graphql"
+
+  kabinet:
+    schema: "graphql/schemas/kabinet.graphql"
+    documents: "graphql/kabinet/**/*.graphql"

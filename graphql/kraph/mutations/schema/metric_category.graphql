@@ -11,5 +11,5 @@ mutation UpdateMetricCategory($input: UpdateMetricDefinitionInput!) {
 }
 
 mutation DeleteMetricCategory($id: String!) {
-  deleteMetricCategory(input: { id: $id })
+  deleteMetricCategory(input: { id: $id})
 }

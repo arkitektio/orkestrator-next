@@ -17,3 +17,6 @@ generates:
   src/renderer/src/lovekit/graphql.schema.json:
     plugins:
       - "introspection"
+  graphql/schemas/lovekit.graphql:
+    plugins:
+      - schema-ast

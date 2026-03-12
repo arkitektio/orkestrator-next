@@ -4,12 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { AgentCodeDisplay } from "./AgentCodeDisplay";
-import { useAgent } from "./AgentProvider";
+import { useAgentState } from "./store";
 
-export const AgentController = (props: any) => {
+export const AgentController = (_) => {
   const { settings, setSettings } = useSettings();
-  const { assignments, errors, connected, lastCode, lastReason } = useAgent();
+  const { assignments, errors, connected, lastCode, lastReason } = useAgentState(
+    useShallow((state) => ({
+      assignments: state.assignments,
+      errors: state.errors,
+      connected: state.connected,
+      lastCode: state.lastCode,
+      lastReason: state.lastReason,
+    })),
+  );
 
   const toggleAgent = () => {
     setSettings({ ...settings, startAgent: !settings.startAgent })

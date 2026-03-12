@@ -18,3 +18,7 @@ generates:
   src/renderer/src/omero-ark/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/omero_ark.graphql:
+    plugins:
+      - schema-ast

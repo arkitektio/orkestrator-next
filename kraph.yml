@@ -24,3 +24,7 @@ generates:
   src/renderer/src/kraph/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/kraph.graphql:
+    plugins:
+      - schema-ast

@@ -1,5 +1,4 @@
-import { cn, notEmpty } from "@/lib/utils";
-import { useSelection } from "@/providers/selection/SelectionContext";
+import { cn } from "@/lib/utils";
 import autoAnimate from "@formkit/auto-animate";
 import React, { useEffect, useRef } from "react";
 
@@ -15,7 +14,6 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   className,
 }) => {
   const parent = useRef<HTMLDivElement | null>(null);
-  const { registerSelectables, unregisterSelectables } = useSelection();
 
   useEffect(() => {
     if (parent.current) {
@@ -28,29 +26,6 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
         // they don’t want them via prefers-reduced-motion.
         disrespectUserMotionPreference: false,
       });
-
-      const selectables = Array.from<HTMLElement>(
-        parent.current.children as unknown as HTMLElement[],
-      )
-        .map((item) => {
-          if (!item.dataset.identifier || !item.dataset.object) {
-            return null;
-          }
-          return {
-            structure: {
-              identifier: item.dataset.identifier,
-              object: item.dataset.object,
-            },
-            item: item,
-          };
-        })
-        .filter(notEmpty);
-
-      registerSelectables(selectables);
-
-      return () => {
-        unregisterSelectables(selectables);
-      };
     }
   }, [children]);
 

@@ -11,7 +11,8 @@ import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 import {
-  useMySelect
+  useMySelect,
+  useSelectionSelector,
 } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
 
@@ -19,7 +20,6 @@ export const SmartModel = ({
   showSelfMates = true,
   showSelectingIndex = true,
   hover = false,
-  mates,
   ...props
 }: SmartModelProps) => {
   const self: Structure = React.useMemo(
@@ -33,6 +33,13 @@ export const SmartModel = ({
   const portalRef = React.useRef<HTMLDivElement>(null);
 
   const [partners, setPartners] = useState<Structure[]>([]);
+  const registerSelectables = useSelectionSelector(
+    (state) => state.registerSelectables,
+  );
+  const unregisterSelectables = useSelectionSelector(
+    (state) => state.unregisterSelectables,
+  );
+  const selectableRef = React.useRef<HTMLDivElement | null>(null);
 
   const dropHandler = React.useCallback((item: any, monitor: any) => {
     console.log("drop", item);
@@ -117,6 +124,21 @@ export const SmartModel = ({
     setPartners([]);
   }, []);
 
+  const setSelectableNode = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      selectableRef.current = node;
+      drop(node);
+    },
+    [drop],
+  );
+
+  const setDragNode = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      drag(node);
+    },
+    [drag],
+  );
+
   const handleDragStart = React.useCallback(
     (e: React.DragEvent) => {
       const data = JSON.stringify(self);
@@ -128,6 +150,24 @@ export const SmartModel = ({
     },
     [self, props.identifier, props.object],
   );
+
+  React.useEffect(() => {
+    const node = selectableRef.current;
+    if (!node) {
+      return;
+    }
+
+    const selectable = {
+      structure: self,
+      item: node,
+    };
+
+    registerSelectables([selectable]);
+
+    return () => {
+      unregisterSelectables([selectable]);
+    };
+  }, [self, registerSelectables, unregisterSelectables]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -178,7 +218,7 @@ export const SmartModel = ({
   return (
     <div
       key={`${props.identifier}:${props.object}`}
-      ref={drop}
+      ref={setSelectableNode}
       onClick={(e) => {
         if (e.shiftKey && !e.ctrlKey) {
           toggle();
@@ -193,6 +233,7 @@ export const SmartModel = ({
       onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
+      data-selectable="true"
       data-selected={isSelected ? "true" : "false"}
       data-bselected={isBSelected ? "true" : "false"}
     >
@@ -216,7 +257,7 @@ export const SmartModel = ({
         </ContextMenuContent>
         <ContextMenuTrigger asChild>
           <div
-            ref={drag}
+            ref={setDragNode}
             className={className}
             draggable={false}
             data-identifier={props.identifier}
@@ -255,7 +296,7 @@ export const SmartModel = ({
   );
 };
 
-export const CombineButton = (props: { children?: React.ReactNode }) => {
+export const CombineButton = () => {
   return (
     <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 bg-black bg-opacity-75">
       <div className="font-light text-xs p-2 rounded-full bg-black bg-opacity-100">

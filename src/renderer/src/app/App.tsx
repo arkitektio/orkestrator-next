@@ -7,6 +7,8 @@ import { AppProvider, BackNavigationErrorCatcher } from "./AppProvider";
 import { ConnectingFallback } from "./components/fallbacks/Connecting";
 import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
+import {PrivateNavigationBar} from "./components/navigation/PrivateNavigationBar";
+
 
 const AlpakaModule = React.lazy(() => import("@/alpaka/AlpakaModule"));
 const BlokModule = React.lazy(() => import("@/blok/BlokModule"));
@@ -21,11 +23,7 @@ const OmeroArkModule = React.lazy(() => import("@/omero-ark/OmeroArkModule"));
 const ReaktionModule = React.lazy(() => import("@/reaktion/ReaktionModule"));
 const RekuestNextModule = React.lazy(() => import("@/rekuest/RekuestNextModule"));
 const SettingsModule = React.lazy(() => import("@/settings/SettingsModule"));
-const PrivateNavigationBar = React.lazy(() =>
-  import("./components/navigation/PrivateNavigationBar").then((module) => ({
-    default: module.PrivateNavigationBar,
-  })),
-);
+
 const Stash = React.lazy(() =>
   import("@/lok-next/components/stash/Stash").then((module) => ({
     default: module.Stash,
@@ -33,7 +31,7 @@ const Stash = React.lazy(() =>
 );
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
-export const protect = (component: React.ReactNode, fallback?: React.ReactNode) => {
+const protectModule = (component: React.ReactNode, fallback?: React.ReactNode) => {
   return (
     <Arkitekt.Guard
       notConnectedFallback={fallback || <NotConnected />}
@@ -57,23 +55,23 @@ const withModuleBoundary = (component: React.ReactNode) => {
 function App() {
   return (
     <AppProvider>
-      <AppLayout navigationBar={protect(withModuleBoundary(<PrivateNavigationBar />), <></>)}>
+      <AppLayout navigationBar={withModuleBoundary(<PrivateNavigationBar />)}>
         <BackNavigationErrorCatcher>
           <Routes>
-            <Route index element={protect(<Hero />)} />
-            <Route path="mikro/*" element={protect(withModuleBoundary(<MikroNextModule />))} />
-            <Route path="elektro/*" element={protect(withModuleBoundary(<ElektroModule />))} />
-            <Route path="rekuest/*" element={protect(withModuleBoundary(<RekuestNextModule />))} />
-            <Route path="fluss/*" element={protect(withModuleBoundary(<ReaktionModule />))} />
-            <Route path="kabinet/*" element={protect(withModuleBoundary(<KabinetModule />))} />
-            <Route path="omero_ark/*" element={protect(withModuleBoundary(<OmeroArkModule />))} />
-            <Route path="kraph/*" element={protect(withModuleBoundary(<KraphModule />))} />
-            <Route path="lok/*" element={protect(withModuleBoundary(<LokNextModule />))} />
-            <Route path="settings/*" element={protect(withModuleBoundary(<SettingsModule />))} />
-            <Route path="blok/*" element={protect(withModuleBoundary(<BlokModule />))} />
-            <Route path="alpaka/*" element={protect(withModuleBoundary(<AlpakaModule />))} />
-            <Route path="lovekit/*" element={protect(withModuleBoundary(<LovekitModule />))} />
-            <Route path="dokuments/*" element={protect(withModuleBoundary(<DokumentsModule />))} />
+            <Route index element={<Hero />} />
+            <Route path="mikro/*" element={protectModule(withModuleBoundary(<MikroNextModule />))} />
+            <Route path="elektro/*" element={protectModule(withModuleBoundary(<ElektroModule />))} />
+            <Route path="rekuest/*" element={protectModule(withModuleBoundary(<RekuestNextModule />))} />
+            <Route path="fluss/*" element={protectModule(withModuleBoundary(<ReaktionModule />))} />
+            <Route path="kabinet/*" element={protectModule(withModuleBoundary(<KabinetModule />))} />
+            <Route path="omero_ark/*" element={protectModule(withModuleBoundary(<OmeroArkModule />))} />
+            <Route path="kraph/*" element={protectModule(withModuleBoundary(<KraphModule />))} />
+            <Route path="lok/*" element={protectModule(withModuleBoundary(<LokNextModule />))} />
+            <Route path="settings/*" element={protectModule(withModuleBoundary(<SettingsModule />))} />
+            <Route path="blok/*" element={protectModule(withModuleBoundary(<BlokModule />))} />
+            <Route path="alpaka/*" element={protectModule(withModuleBoundary(<AlpakaModule />))} />
+            <Route path="lovekit/*" element={protectModule(withModuleBoundary(<LovekitModule />))} />
+            <Route path="dokuments/*" element={protectModule(withModuleBoundary(<DokumentsModule />))} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <React.Suspense fallback={null}>

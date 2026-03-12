@@ -7,7 +7,7 @@ import kraphResult from "@/kraph/api/fragments";
 import { buildArkitekt } from "@/lib/arkitekt";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { createGraphQLServiceBuilder } from "@/lib/arkitekt/builders/graphQlServiceBuidler";
-import { ServiceBuilderMap } from "@/lib/arkitekt/provider";
+import { ModuleRegistry, ServiceBuilderMap } from "@/lib/arkitekt/types";
 import { createLivekitClient } from "@/lib/livekit/client";
 import lokResult from "@/lok-next/api/fragments";
 import lovekitResult from "@/lovekit/api/fragments";
@@ -18,7 +18,7 @@ import rekuestResult from "@/rekuest/api/fragments";
 
 export const electronRedirect = async (
   url: string,
-  abortController: AbortController,
+  _abortController: AbortController,
 ) => {
   return await window.api.authenticate(url);
 };
@@ -114,8 +114,71 @@ export const serviceMap = {
   },
 } as const satisfies ServiceBuilderMap;
 
+export const moduleRegistry = {
+  mikro: {
+    key: "mikro",
+    route: "/mikro",
+    label: "Mikro",
+    requirement: { serviceKey: "mikro" },
+  },
+  rekuest: {
+    key: "rekuest",
+    route: "/rekuest",
+    label: "Rekuest",
+    requirement: { serviceKey: "rekuest" },
+  },
+  fluss: {
+    key: "fluss",
+    route: "/fluss",
+    label: "Fluss",
+    requirement: { serviceKey: "fluss" },
+  },
+  kabinet: {
+    key: "kabinet",
+    route: "/kabinet",
+    label: "Kabinet",
+    requirement: { serviceKey: "kabinet" },
+  },
+  omero_ark: {
+    key: "omero_ark",
+    route: "/omero_ark",
+    label: "Omero Ark",
+    requirement: { serviceKey: "omero_ark" },
+  },
+  kraph: {
+    key: "kraph",
+    route: "/kraph",
+    label: "Kraph",
+    requirement: { serviceKey: "kraph" },
+  },
+  alpaka: {
+    key: "alpaka",
+    route: "/alpaka",
+    label: "Alpaka",
+    requirement: { serviceKey: "alpaka" },
+  },
+  elektro: {
+    key: "elektro",
+    route: "/elektro",
+    label: "Elektro",
+    requirement: { serviceKey: "elektro" },
+  },
+  lovekit: {
+    key: "lovekit",
+    route: "/lovekit",
+    label: "Lovekit",
+    requirement: { serviceKey: "lovekit" },
+  },
+  dokuments: {
+    key: "dokuments",
+    route: "/dokuments",
+    label: "Dokuments",
+    requirement: { serviceKey: "dokuments" },
+  },
+} as const satisfies ModuleRegistry;
+
 // Check if running in tauri
-export const Arkitekt = buildArkitekt({ manifest, serviceBuilderMap: serviceMap, selfServiceBuilder: createGraphQLServiceBuilder(lokResult.possibleTypes) });
+export const Arkitekt = buildArkitekt({ manifest, serviceBuilderMap: serviceMap, moduleRegistry, selfServiceBuilder: createGraphQLServiceBuilder(lokResult.possibleTypes) });
 
 export const Guard = {
   Lok: Arkitekt.Guard,
@@ -146,7 +209,7 @@ export const useRekuest = () => {
 };
 
 export const useLok = () => {
-  return Arkitekt.useService("lok").client;
+  return Arkitekt.useSelfService()?.client;
 };
 
 export const useFluss = () => {
@@ -178,7 +241,7 @@ export const useLivekit = () => {
 };
 
 export const useFake = () => {
-  return Arkitekt.useService("fake").client;
+  return Arkitekt.usePotentialService("mikro")?.client;
 }
 
 export const useDokuments = () => {

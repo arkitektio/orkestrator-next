@@ -1,6 +1,6 @@
 import { NO_RECONNECT_CODES } from "@/constants";
 import { aliasToWsPath } from "@/lib/arkitekt/alias/helpers";
-import { AppContext } from "@/lib/arkitekt/provider";
+import type { AppContext } from "@/lib/arkitekt/provider";
 import { TokenResponse } from "@/lib/arkitekt/fakts/tokenSchema";
 import { selectAlias, selectApolloClient } from "@/lib/arkitekt/utils";
 import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput, SetExtensionImplementationsDocument, SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables } from "@/rekuest/api/graphql";

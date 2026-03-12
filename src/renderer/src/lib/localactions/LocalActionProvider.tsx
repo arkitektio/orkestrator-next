@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from "react";
 
 import { useDialog } from "@/app/dialog";
-import { ServiceMap } from "@/lib/arkitekt/provider";
+import type { ServiceMap } from "../arkitekt/provider";
 import { useNavigate } from "react-router-dom";
 
 export type IdentifierActive = {

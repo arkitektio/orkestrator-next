@@ -118,6 +118,7 @@ module.exports = {
     require("tailwindcss-animate"),
     require("@tailwindcss/container-queries"),
     addVariablesForColors,
+    addVariantsForSelection,
     require("tailwind-scrollbar-hide"),
 ],
 };
@@ -132,3 +133,15 @@ function addVariablesForColors({ addBase, theme }) {
     ":root": newVars,
   });
 }
+
+function addVariantsForSelection({ addVariant }) {
+  // Allows using 'selected:...' and 'b-selected:...'
+  addVariant('selected', '&[data-selected="true"]')
+  addVariant('b-selected', '&[data-bselected="true"]')
+
+  // Also handle "group" versions so parents can style children
+  addVariant('group-selected', ':merge(.group)[data-selected="true"] &')
+  addVariant('group-b-selected', ':merge(.group)[data-bselected="true"] &')
+}
+
+

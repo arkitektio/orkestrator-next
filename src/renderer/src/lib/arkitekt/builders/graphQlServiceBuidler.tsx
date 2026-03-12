@@ -5,6 +5,7 @@ import {
   createHttpLink,
   split,
 } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
@@ -16,23 +17,32 @@ import { buildGraphQlWard } from "../ward";
 export const createGraphQLServiceBuilder =
   (possibleTypes: any): ServiceBuilder<Service<ApolloClient<any>>> =>
     (options) => {
-      const { alias, token } = options;
+      const { alias, getToken } = options;
 
       const httpLink = createHttpLink({
         uri: aliasToHttpPath(alias, "graphql"),
-        headers: {
-          authorization: token ? `Bearer ${token.access_token}` : "",
-        },
       });
 
-      const queryLink = httpLink;
+      const queryLink = setContext(async (_, previousContext) => {
+        const token = await getToken();
+
+        return {
+          headers: {
+            ...previousContext.headers,
+            authorization: token ? `Bearer ${token.access_token}` : "",
+          },
+        };
+      }).concat(httpLink);
 
       const wslink = new GraphQLWsLink(
         createClient({
           url: aliasToWsPath(alias, "graphql"),
-          connectionParams: () => ({
-            token: token.access_token,
-          }),
+          connectionParams: async () => {
+            const token = await getToken();
+            return {
+              token: token.access_token,
+            };
+          },
         })
       );
 
@@ -60,5 +70,9 @@ export const createGraphQLServiceBuilder =
         client: client,
         ward: ward, // Replace with appropriate logo component
         alias: alias,
+        clearCache: async () => {
+          await client.clearStore();
+          await client.resetStore();
+        },
       }
     };

@@ -15,12 +15,7 @@ const TheCard = ({ item }: ImageCardProps) => {
   return (
     <MikroRenderedPlot.Smart
       object={item?.id}
-      dragClassName={({ isOver, canDrop, isSelected, isDragging }) =>
-        `relative rounded group text-white bg-center bg-background shadow-lg h-20 rounded roounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group ${isOver && !isDragging && "border-primary-200 border"
-        } ${isDragging && "ring-primary-200 ring"} ${isSelected && "ring-2 ring-secondary-500"
-        }`
-      }
-
+      className="relative group h-20 rounded-lg bg-background bg-center text-white shadow-lg transition-all duration-200 ease-in-out hover:bg-back-800 over:border over:border-primary-200 dragging:ring-primary-200 selected:ring-secondary-500"
     >
       {item?.store.presignedUrl && (
         <Image

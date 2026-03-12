@@ -9,7 +9,6 @@ export const Mention = ({ element }: { element: MentionType }) => {
         <LokUser.Smart
           object={element?.user?.id}
           className="inline-flex"
-          dropClassName={() => "inline"}
           containerClassName="inline"
 
         >

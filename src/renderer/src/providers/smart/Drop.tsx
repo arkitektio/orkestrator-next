@@ -111,12 +111,6 @@ export const SmartDropZone = ({
         className={cn(
           "group relative over:shadow-xl over:ring-2 over:ring-gray-300 over:rounded-md can-drop:border-gray-200",
           className,
-          props.dropClassName?.({
-            isOver,
-            isDragging: false,
-            canDrop,
-            progress: undefined,
-          }),
         )}
         style={props.dropStyle?.({
           isOver,

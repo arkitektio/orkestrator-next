@@ -35,8 +35,6 @@ export interface SmartModelProps {
   as?: HTMLElement;
   children: React.ReactNode;
   containerClassName?: string;
-  dragClassName?: (props: ClassNameOptions) => string;
-  dropClassName?: (props: ClassNameOptions) => string;
   dragStyle?: (props: ClassNameOptions) => React.CSSProperties;
   dropStyle?: (props: ClassNameOptions) => React.CSSProperties;
   hover?: boolean;
@@ -48,8 +46,6 @@ export interface SmartModelProps {
 export interface CreatedSmartSmartProps
   extends Omit<SmartModelProps, "accepts" | "identifier"> {
   object: string;
-  dropClassName?: (props: ClassNameOptions) => string;
-  dragClassName?: (props: ClassNameOptions) => string;
   dragStyle?: (props: ClassNameOptions) => React.CSSProperties;
   dropStyle?: (props: ClassNameOptions) => React.CSSProperties;
   children: React.ReactNode;

@@ -1,3 +1,11 @@
+## [1.53.2](https://github.com/arkitektio/orkestrator-next/compare/v1.53.1...v1.53.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* update ([2fdfe04](https://github.com/arkitektio/orkestrator-next/commit/2fdfe04b6b5cd46f2b40ac17e3e846df89632c73))
+* update ([3e4bdd6](https://github.com/arkitektio/orkestrator-next/commit/3e4bdd6023f97a45a1a2fb1d4813dfb1b0301a3f))
+
 ## [1.53.1](https://github.com/arkitektio/orkestrator-next/compare/v1.53.0...v1.53.1) (2026-03-13)
 
 

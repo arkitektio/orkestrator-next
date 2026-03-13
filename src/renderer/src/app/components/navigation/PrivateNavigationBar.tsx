@@ -20,7 +20,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
@@ -35,6 +44,9 @@ import {
   ShoppingBasket,
   Users2,
   Workflow,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import React from "react";
 import { BsLightning } from "react-icons/bs";
@@ -82,6 +94,132 @@ const matchIcon = (key: string) => {
   }
 };
 
+const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
+  const availableServices = Arkitekt.useAvailableServices();
+  const moduleState = Arkitekt.useAvailableModules().find((entry) => entry.key === moduleKey);
+  
+  if (!moduleState) {
+    return (
+      <div className="p-2 text-xs text-muted-foreground">
+        No module information available
+      </div>
+    );
+  }
+  
+  const serviceState = availableServices.find(service => service.key === moduleState.definition.key);
+
+  if (!serviceState) {
+    return (
+      <div className="p-2 text-xs text-muted-foreground">
+        No service information available
+      </div>
+    );
+  }
+
+  const connectedAlias = serviceState.alias;
+  const allAliases = serviceState.instance?.aliases || [];
+  const hasErrors = serviceState.errors.length > 0;
+  const isConnected = serviceState.status === "ready" && connectedAlias;
+  const lastChecked = serviceState.lastCheckedAt 
+    ? new Date(serviceState.lastCheckedAt).toLocaleString()
+    : "Never";
+
+  return (
+    <div className="p-2 space-y-3 min-w-[280px]">
+      <div>
+        <div className="text-xs font-semibold mb-2 flex items-center gap-2">
+          {isConnected ? (
+            <CheckCircle className="w-3 h-3 text-green-500" />
+          ) : (
+            <XCircle className="w-3 h-3 text-red-500" />
+          )}
+          {serviceState.key}
+        </div>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <div>Status: <span className="font-medium">{serviceState.status}</span></div>
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Last checked: {lastChecked}
+          </div>
+        </div>
+      </div>
+
+      {connectedAlias ? (
+        <div>
+          <div className="text-xs font-semibold mb-1 text-green-600 dark:text-green-400">✓ Connected Alias:</div>
+          <div className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 p-2 rounded border border-green-500/20 font-mono">
+            {aliasToHttpPath(connectedAlias, "")}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="text-xs font-semibold mb-1 text-red-600 dark:text-red-400">✗ No Connected Alias</div>
+          <div className="text-xs bg-red-500/10 text-red-700 dark:text-red-400 p-2 rounded border border-red-500/20">
+            Service is not currently connected
+          </div>
+        </div>
+      )}
+
+      {allAliases.length > 0 && (
+        <div>
+          <div className="text-xs font-semibold mb-1">
+            {connectedAlias ? "Available Aliases:" : "Tried Aliases (all failed):"}
+          </div>
+          <div className="space-y-1">
+            {allAliases.map((alias, index) => {
+              const isConnected = connectedAlias?.id === alias.id;
+              const url = aliasToHttpPath(alias, "");
+              return (
+                <div key={index}>
+                  <div
+                    className={cn(
+                      "text-xs p-2 rounded border font-mono",
+                      isConnected
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+                        : "bg-red-500/5 text-muted-foreground border-red-500/20"
+                    )}
+                  >
+                    {isConnected && <span className="text-green-600 dark:text-green-500 mr-1">✓</span>}
+                    {!isConnected && <span className="text-red-600 dark:text-red-500 mr-1">✗</span>}
+                    {url}
+                  </div>
+                  {!isConnected && hasErrors && (
+                    <div className="text-xs text-red-600 dark:text-red-400 pl-3 pt-0.5 italic">
+                      Failed to connect
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {hasErrors && (
+        <div>
+          <div className="text-xs font-semibold mb-1 text-red-600 dark:text-red-400">Connection Errors:</div>
+          <div className="space-y-1">
+            {serviceState.errors.map((error, index) => (
+              <div
+                key={index}
+                className="text-xs bg-red-500/10 text-red-700 dark:text-red-400 p-2 rounded border border-red-500/20"
+              >
+                {error}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!connectedAlias && !hasErrors && allAliases.length === 0 && (
+        <div className="text-xs text-muted-foreground italic p-2 bg-muted/20 rounded">
+          No instance configured for this service
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobile?: boolean }) => {
   const availableModules = Arkitekt.useAvailableModules();
   const arkitekt = Arkitekt.useArkitekt();
@@ -98,53 +236,71 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
 
   const buttonContent = (
     <div className="relative flex items-center justify-center">
-      <div className={cn(isInvalid ? "opacity-35 grayscale" : "", isChecking ? "animate-pulse" : "")}>{icon}</div>
-      {isInvalid && <AlertTriangle className="absolute -right-1 -top-1 h-3 w-3 text-amber-500" />}
+      <div className={cn(isInvalid ? "opacity-35 grayscale" : "")}>{icon}</div>
     </div>
   );
 
   if (isInteractive) {
     return (
-      <DroppableNavLink key={moduleKey} to={moduleState.route} className={mobile ? "cursor-pointer" : undefined}>
-        {({ isActive }) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <NavigationMenuLink
-                active={isActive}
-                className={cn(
-                  "flex-1 cursor-pointer",
-                  isActive ? "bg-primary" : "",
-                  isChecking ? "opacity-80" : "",
-                )}
-              >
-                {buttonContent}
-              </NavigationMenuLink>
-            </TooltipTrigger>
-            <TooltipContent side={mobile ? "top" : "right"}>
-              {moduleState.definition.label || moduleState.key}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </DroppableNavLink>
+      <ContextMenu key={moduleKey}>
+        <ContextMenuTrigger asChild>
+          <DroppableNavLink to={moduleState.route} className={mobile ? "cursor-pointer" : undefined}>
+            {({ isActive }) => (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <NavigationMenuLink
+                    active={isActive}
+                    className={cn(
+                      "flex-1 cursor-pointer",
+                      isActive ? "bg-primary" : "",
+                      isChecking ? "opacity-80" : "",
+                    )}
+                  >
+                    {buttonContent}
+                  </NavigationMenuLink>
+                </TooltipTrigger>
+                <TooltipContent side={mobile ? "top" : "right"}>
+                  {moduleState.definition.label || moduleState.key}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </DroppableNavLink>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-auto">
+          <ContextMenuLabel>{moduleState.definition.label || moduleState.key}</ContextMenuLabel>
+          <ContextMenuSeparator />
+          <ServiceConnectionInfo moduleKey={moduleKey} />
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            onClick={() => {
+              void arkitekt.retryModule(moduleKey);
+            }}
+          >
+            <RefreshCw className="mr-2 h-3 w-3" />
+            Retry Connection
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     );
   }
 
   return (
-    <Popover key={moduleKey}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex items-center justify-center rounded-md p-2 hover:bg-muted/40",
-                mobile ? "w-full" : "",
-              )}
-            >
-              {buttonContent}
-            </button>
-          </PopoverTrigger>
-        </TooltipTrigger>
+    <ContextMenu key={moduleKey}>
+      <Popover>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ContextMenuTrigger asChild>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                 className={cn("data-[active=true]:focus:bg-muted data-[active=true]:hover:bg-primary data-[active=true]:bg-muted/50 focus-visible:ring-ring/30 hover:bg-muted focus:bg-muted flex items-center gap-1.5 rounded-lg p-2 text-xs/relaxed transition-all outline-none focus-visible:ring-[2px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4")}
+                disabled={!isInteractive}
+                >
+                  {buttonContent}
+                </button>
+              </PopoverTrigger>
+            </ContextMenuTrigger>
+          </TooltipTrigger>
         <TooltipContent side={mobile ? "top" : "right"}>
           {moduleState.definition.label || moduleState.key}
         </TooltipContent>
@@ -177,6 +333,21 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
         </div>
       </PopoverContent>
     </Popover>
+    <ContextMenuContent className="w-auto">
+      <ContextMenuLabel>{moduleState.definition.label || moduleState.key}</ContextMenuLabel>
+      <ContextMenuSeparator />
+      <ServiceConnectionInfo moduleKey={moduleKey} />
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        onClick={() => {
+          void arkitekt.retryModule(moduleKey);
+        }}
+      >
+        <RefreshCw className="mr-2 h-3 w-3" />
+        Retry Connection
+      </ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
   );
 };
 

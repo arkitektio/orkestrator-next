@@ -2,15 +2,11 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import {
   ElektroAnalogSignal,
-  ElektroAnalogSignalChannel,
-  ElektroStimulus,
+  ElektroAnalogSignalChannel
 } from "@/linkers";
 import {
-  useDetailAnalogSignalChannelQuery,
-  useDetailStimulusQuery,
+  useDetailAnalogSignalChannelQuery
 } from "../api/graphql";
-import { SimulationRender } from "../components/SImulationRender";
-import { useTraceArray } from "../lib/useTraceArray";
 import { AnalogSignalRender } from "../components/AnalogSignalRender";
 
 export type IRepresentationScreenProps = {};

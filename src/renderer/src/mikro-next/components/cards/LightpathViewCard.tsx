@@ -1,17 +1,16 @@
 import { MikroLightpathView } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { LightpathViewFragment } from "../../api/graphql";
-import { ViewCard } from "./meta/ViewCard";
 import { LightPathListView } from "../lightpath/LightPathListView";
+import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: LightpathViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
-    <MikroLightpathView.Smart object={view?.id} mates={mates}>
+    <MikroLightpathView.Smart object={view?.id} >
       <ViewCard view={view} className="h-20 flex flex-row p-3 overflow-hidden">
         <MikroLightpathView.DetailLink object={view?.id} className="flex flex-row">
           <span className="font-light mr-2 my-auto">

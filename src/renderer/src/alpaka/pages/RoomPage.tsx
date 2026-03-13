@@ -26,7 +26,7 @@ export default asDetailQueryRoute(
           agentId: "default",
         },
         updateQuery: (prev, options) => {
-          let message = options.subscriptionData.data.room.message;
+          const message = options.subscriptionData.data.room.message;
           if (!message) {
             return prev;
           }

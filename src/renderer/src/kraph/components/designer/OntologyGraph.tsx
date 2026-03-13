@@ -1,49 +1,28 @@
-import { Position } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import {
-  BaseListCategoryFragment,
-  CategoryDefintion,
   GraphFragment,
   GraphNodeInput,
-  ListStructureCategoryFragment,
-  StructureCategoryDefinition,
-  useUpdateGraphMutation,
+  useUpdateGraphMutation
 } from "@/kraph/api/graphql";
-import {
-  Panel,
-  useReactFlow,
-  getNodesBounds,
-  getViewportForBounds,
-} from "@xyflow/react";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { notEmpty } from "@/lib/utils";
+import { KraphGraph } from "@/linkers";
 import {
   Connection,
-  MarkerType,
+  getNodesBounds,
+  getViewportForBounds,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
-  useNodesState,
+  useNodesState
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
+import { toPng } from "html-to-image";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
-import DescribeEdge from "./edges/DescribeEdge";
-import EntityRoleEdge from "./edges/EntityRoleEdge";
-import MeasurementEdge from "./edges/MeasurementEdge";
-import ReagentRoleEdge from "./edges/ReagentRoleEdge";
-import RelationEdge from "./edges/RelationEdge";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
-import GenericCategoryNode from "./nodes/EntityCategoryNode";
-import MetricCategoryNode from "./nodes/MetricCategoryNode";
-import NaturalEventNode from "./nodes/NaturalEventCategoryNode";
-import ProtocolEventNode from "./nodes/ProtocolEventCategoryNode";
-import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
-import StructureCategoryNode from "./nodes/StructureCategoryNode";
 import { OntologyGraphProvider } from "./OntologyGraphProvider";
 import {
   ClickContextualParams,
@@ -53,8 +32,6 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import { KraphGraph } from "@/linkers";
-import { toPng } from "html-to-image";
 import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, nodeToNodeInput, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
@@ -183,7 +160,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
     console.log("reactFlowBounds", reactFlowBounds);
     if (reactFlowInstance && reactFlowBounds) {
-      let position = {
+      const position = {
         x: event.clientX - (reactFlowBounds?.left || 0),
         y: event.clientY - (reactFlowBounds?.top || 0),
       };
@@ -327,8 +304,8 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
 
     const nodes = (reactFlowInstance?.getNodes() as MyNode[]) || [];
 
-    let leftNode = nodes.find((n) => n.id == connection.source);
-    let rightNode = nodes.find((n) => n.id == connection.target);
+    const leftNode = nodes.find((n) => n.id == connection.source);
+    const rightNode = nodes.find((n) => n.id == connection.target);
 
     if (!leftNode || !rightNode) {
       return;
@@ -340,13 +317,13 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     console.log(rightNode.position);
 
     // Calcluate to Screen Position
-    let screenposition = reactFlowInstance.flowToScreenPosition(
+    const screenposition = reactFlowInstance.flowToScreenPosition(
       calculateMidpoint(leftNode.position, rightNode.position),
     );
 
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
 
-    let position = {
+    const position = {
       x: screenposition.x - (reactFlowBounds?.left || 0),
       y: screenposition.y - (reactFlowBounds?.top || 0),
     };
@@ -365,7 +342,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
       return;
     }
 
-    let position = reactFlowInstance.screenToFlowPosition({
+    const position = reactFlowInstance.screenToFlowPosition({
       x: params.event.clientX,
       y: params.event.clientY,
     });

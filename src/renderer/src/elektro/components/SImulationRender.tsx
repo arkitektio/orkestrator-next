@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -15,9 +14,8 @@ import {
   Line,
   LineChart,
   ReferenceArea,
-  ReferenceLine,
   XAxis,
-  YAxis,
+  YAxis
 } from "recharts";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import useUndoable from "use-undoable";
@@ -199,7 +197,7 @@ const useValuesForSimulation = ({
           if (recording.trace.rois) {
             for (const roi of recording.trace.rois) {
               for (const idx of roi.vectors) {
-                let idt = Math.floor(idx[0] / (stepSize || 1));
+                const idt = Math.floor(idx[0] / (stepSize || 1));
                 if (idt >= 0) {
                   spikes.push({
                     value: timeTrace[idt],

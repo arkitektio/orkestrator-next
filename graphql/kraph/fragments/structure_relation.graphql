@@ -1,13 +1,13 @@
 fragment DetailStructureRelation on StructureRelation {
-  validFrom
-  validTo
+  id
+  measuredFrom
+  measuredTo
   category {
     id
     label
   }
-  leftId
-  rightId
-  id
+  sourceId
+  targetId
   source {
     ... on Structure {
       identifier

@@ -1,14 +1,12 @@
 import {
   BaseEdge,
-  EdgeLabelRenderer,
   useInternalNode,
   useStore,
   type EdgeProps,
-  type ReactFlowState,
+  type ReactFlowState
 } from "@xyflow/react";
 import { DescribeEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
 
 export type GetSpecialPathParams = {
   sourceX: number;

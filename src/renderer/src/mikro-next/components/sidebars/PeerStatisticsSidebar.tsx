@@ -1,10 +1,10 @@
 import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { usePeerHomePageStatsQuery } from "@/mikro-next/api/graphql";
 import {
-    Activity,
-    Calendar,
-    Images,
-    TrendingUp
+  Activity,
+  Calendar,
+  Images,
+  TrendingUp
 } from "lucide-react";
 
 export const PeerStatisticsSidebar = (props: { sub: string }) => {

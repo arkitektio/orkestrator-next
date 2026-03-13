@@ -92,7 +92,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
         }
 
         if (monitor.getItem()?.text) {
-          let structure: Structure = JSON.parse(monitor.getItem().text);
+          const structure: Structure = JSON.parse(monitor.getItem().text);
           addItems({
             variables: {
               stash: props.item.id,
@@ -101,7 +101,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
           });
         }
 
-        let items = monitor.getItem() as Structure[] | null;
+        const items = monitor.getItem() as Structure[] | null;
 
         if (items) {
           addItems({
@@ -115,10 +115,10 @@ export const StashZone = (props: { item: ListStashFragment }) => {
         return { stash: props.item.id };
       },
       collect: (monitor) => {
-        let text = monitor.getItem()?.text;
+        const text = monitor.getItem()?.text;
         console.log("text", text);
         if (text) {
-          let structure: Structure = JSON.parse(text);
+          const structure: Structure = JSON.parse(text);
           return {
             isOver: monitor.isOver(),
             canDrop: monitor.canDrop(),
@@ -126,7 +126,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
           };
         }
 
-        let item = monitor.getItem() as Structure[] | null;
+        const item = monitor.getItem() as Structure[] | null;
         console.log("item", item);
         console.log("monitor", monitor.isOver());
         return {

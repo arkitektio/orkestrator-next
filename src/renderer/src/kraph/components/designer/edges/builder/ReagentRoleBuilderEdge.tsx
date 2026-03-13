@@ -6,11 +6,11 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
+import { PathEdgePresentation, useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 import {
   ReagentRoleEdge
 } from "../../types";
 import { getEdgeParams } from "../../utils";
-import { PathEdgePresentation, useEdgeStrokeStyle } from "../../components/PathEdgePresentation";
 
 export type GetSpecialPathParams = {
   sourceX: number;

@@ -98,8 +98,8 @@ export const RenderControlsMenu = ({
         <DropdownMenuItem
           onClick={() => setShowRois(!showRois)}
           className={`cursor-pointer ${showRois
-              ? "bg-blue-800 text-white"
-              : "text-gray-300 hover:bg-gray-800"
+            ? "bg-blue-800 text-white"
+            : "text-gray-300 hover:bg-gray-800"
             }`}
         >
           {showRois ? (
@@ -130,8 +130,8 @@ export const RenderControlsMenu = ({
               key={kind}
               onClick={() => handleRoiKindClick(kind)}
               className={`cursor-pointer ${isActive
-                  ? "bg-green-800 text-white"
-                  : "text-gray-300 hover:bg-gray-800"
+                ? "bg-green-800 text-white"
+                : "text-gray-300 hover:bg-gray-800"
                 }`}
             >
               <IconComponent className="w-4 h-4 mr-2" />
@@ -150,8 +150,8 @@ export const RenderControlsMenu = ({
         <DropdownMenuItem
           onClick={() => setShowGrid(!showGrid)}
           className={`cursor-pointer ${showGrid
-              ? "bg-blue-800 text-white"
-              : "text-gray-300 hover:bg-gray-800"
+            ? "bg-blue-800 text-white"
+            : "text-gray-300 hover:bg-gray-800"
             }`}
         >
           {showGrid ? (
@@ -171,8 +171,8 @@ export const RenderControlsMenu = ({
         <DropdownMenuItem
           onClick={() => setShowLayerEdges(!showLayerEdges)}
           className={`cursor-pointer ${showLayerEdges
-              ? "bg-blue-800 text-white"
-              : "text-gray-300 hover:bg-gray-800"
+            ? "bg-blue-800 text-white"
+            : "text-gray-300 hover:bg-gray-800"
             }`}
         >
           <Grid3X3 className="w-4 h-4 mr-2" />
@@ -181,8 +181,8 @@ export const RenderControlsMenu = ({
         <DropdownMenuItem
           onClick={() => setShowDebugText(!showDebugText)}
           className={`cursor-pointer ${showDebugText
-              ? "bg-blue-800 text-white"
-              : "text-gray-300 hover:bg-gray-800"
+            ? "bg-blue-800 text-white"
+            : "text-gray-300 hover:bg-gray-800"
             }`}
         >
           <Type className="w-4 h-4 mr-2" />
@@ -202,8 +202,8 @@ export const RenderControlsMenu = ({
                 key={scale}
                 onClick={() => toggleScale(scale)}
                 className={`cursor-pointer ${enabledScales.has(scale)
-                    ? "bg-green-800 text-white"
-                    : "text-gray-400 hover:bg-gray-800"
+                  ? "bg-green-800 text-white"
+                  : "text-gray-400 hover:bg-gray-800"
                   }`}
               >
                 <Layers className="w-3 h-3 mr-2" />

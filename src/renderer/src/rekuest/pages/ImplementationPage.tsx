@@ -1,6 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -23,13 +22,14 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import DependencyCard from "../components/cards/DependencyCard";
+import TaskList from "../components/lists/TaskList";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { usePortForm } from "../hooks/usePortForm";
+import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
-import TaskList from "../components/lists/TaskList";
+import { format } from "path";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -99,6 +99,7 @@ export const DoForm = ({ id }: { id: string }) => {
   const form = usePortForm({
     ports: implementation?.action.args || [],
   });
+
 
   const navigate = useNavigate();
 
@@ -185,7 +186,7 @@ export const DoForm = ({ id }: { id: string }) => {
                 <CardContent>
                   <div className="flex flex-col gap-2">
                     {implementation?.action?.returns?.map((p) => (
-                      <div>
+                      <div key={p.key} className="rounded border border-border/50 p-2">
                         <div className=" font-bold">{p.label || p.key}</div>
                         <div className="text-xs text-muted-foreground">
                           {p.description}
@@ -258,7 +259,7 @@ export const DefaultRenderer = (props: {
         {(implementation, key) => <DependencyCard item={implementation} key={key} />}
       </ListRender>
 
-      <TaskList filters={{implementation: props.implementation.id}}/>
+      <TaskList filters={{ implementation: props.implementation.id }} />
     </div>
   );
 };
@@ -271,7 +272,7 @@ export const FlowRender = (props: { implementation: DetailImplementationFragment
   );
 };
 
-export default asDetailQueryRoute(
+const TPage = asDetailQueryRoute(
   useImplementationQuery,
   ({ data, refetch, subscribeToMore }) => {
     useEffect(() => {
@@ -302,16 +303,16 @@ export default asDetailQueryRoute(
         }}
         pageActions={
           <>
-          <>
-            <RekuestAction.DetailLink object={data.implementation.action.id}>
-              <Button variant="outline">Go to Action</Button>
-            </RekuestAction.DetailLink>
-          </>
-          <>
-            <RekuestAgent.DetailLink object={data.implementation.agent.id}>
-              <Button variant="outline">Go to Agent</Button>
-            </RekuestAgent.DetailLink>
-          </>
+            <>
+              <RekuestAction.DetailLink object={data.implementation.action.id}>
+                <Button variant="outline">Go to Action</Button>
+              </RekuestAction.DetailLink>
+            </>
+            <>
+              <RekuestAgent.DetailLink object={data.implementation.agent.id}>
+                <Button variant="outline">Go to Agent</Button>
+              </RekuestAgent.DetailLink>
+            </>
           </>
         }
       >
@@ -324,3 +325,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

@@ -182,7 +182,7 @@ export const useReassign = ({
   const navigate = useNavigate();
 
   const reassign = async () => {
-    let x = await assign({
+    const x = await assign({
       args: assignation.args,
       implementation: assignation?.implementation.id || "",
       hooks: [],

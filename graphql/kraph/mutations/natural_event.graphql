@@ -1,5 +1,21 @@
-mutation RecordNaturalEvent($input: RecordNaturalEventInput!) {
-  recordNaturalEvent(input: $input) {
+mutation CreateNaturalEvent($input: CreateNaturalEventInput!) {
+  createNaturalEvent(input: $input) {
+    ...NaturalEvent
+  }
+}
+
+mutation DeleteNaturalEvent($id: String!) {
+  deleteNaturalEvent(input: { id: $id })
+}
+
+mutation ArchiveNaturalEvent($id: String!) {
+  archiveNaturalEvent(input: { id: $id }) {
+    ...NaturalEvent
+  }
+}
+
+mutation UpdateNaturalEvent($input: UpdateNaturalEventInput!) {
+  updateNaturalEvent(input: $input) {
     ...NaturalEvent
   }
 }

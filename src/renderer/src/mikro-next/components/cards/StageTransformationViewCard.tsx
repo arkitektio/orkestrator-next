@@ -1,13 +1,12 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroAffineTransformationView, MikroImage } from "@/linkers";
 import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
-import { MateFinder } from "../../../mates/types";
 import { StageFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: StageFragment["affineViews"][0];
-  mates?: MateFinder[];
+
 }
 
 export const AffineInformation = ({
@@ -46,7 +45,7 @@ export const AffineInformation = ({
   );
 };
 
-const CardItem = ({ view, mates }: Props) => {
+const CardItem = ({ view }: Props) => {
   const deleteMate = useDeleteAffineTransformationViewMate();
 
   return (

@@ -5,21 +5,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RekuestDependency } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import { ListDependencyFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListDependencyFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
-  const reserveMate = useReserveMate();
+const TheCard = ({ item }: Props) => {
 
 
   return (
-    <RekuestDependency.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestDependency.Smart object={item?.id} >
       <Card className="group">
         <CardHeader className="flex flex-row justify-between truncate ellipsis">
           <div>

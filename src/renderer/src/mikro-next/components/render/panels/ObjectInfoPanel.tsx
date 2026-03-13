@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { BasePanelProps } from "./types";
 
@@ -15,8 +14,6 @@ export const ObjectInfoPanel = ({ panel, setOpenPanels }: BasePanelProps) => {
         </Button>
       </ObjectButton>
 
-      <div className="text-xs text-gray-500"> Knowledge </div>
-      <TinyStructureBox identifier={panel.identifier} object={panel.object} />
     </>
   );
 };

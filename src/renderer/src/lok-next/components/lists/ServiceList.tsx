@@ -36,7 +36,7 @@ const List = ({ filters, pagination }: Props) => {
         </>
       }
     >
-      {(ex, index) => <ServiceCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <ServiceCard key={index} item={ex} />}
     </ListRender>
   );
 };

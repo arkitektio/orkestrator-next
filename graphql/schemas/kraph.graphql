@@ -1,0 +1,6591 @@
+enum Action {
+  ADD_ENTITY_DEFINITIONS
+  ADD_RELATION_DEFINITIONS
+  ADD_STRUCTURE_DEFINITIONS
+  AUTO_ADD_METRICS
+  AUTO_ADD_STRUCTURES
+  AUTO_ADD_STRUCTURE_DEFINITIONS
+  CREATE_BUILDER_ARG
+}
+
+"""Simple boolean filter over request context for action rules"""
+input ActionFilterInput {
+  """All roles that must be present on the request"""
+  requiredRoles: [String!]! = []
+
+  """All scopes that must be present on the request"""
+  requiredScopes: [String!]! = []
+}
+
+"""Allow/deny rule for a graph action"""
+input ActionRuleInput {
+  """Action this rule controls"""
+  action: Action!
+
+  """Whether this rule allows or denies the action"""
+  allow: Boolean! = true
+
+  """Simple boolean filter against request context"""
+  filter: ActionFilterInput!
+}
+
+"""An activity representing provenance information"""
+type Activity implements Node {
+  """Action arguments as JSON"""
+  actionArgs: AnyScalar
+
+  """Action identifier"""
+  actionId: String
+
+  """Human-readable action name"""
+  actionName: String
+
+  """Application that performed the activity"""
+  appId: String
+
+  """When this activity was created"""
+  createdAt: DateTime
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """User/subject who performed the activity"""
+  subject: String
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+enum AggregationFunction {
+  COUNT
+  EUCLIDEAN_RANGE
+  LATEST
+  MAX
+  MEAN
+  MIN
+  RANGE
+  SUM
+}
+
+"""The `AnyScalar` scalar type represents an arbitrary JSON-like value"""
+scalar AnyScalar
+
+"""Input for archiving a category tag"""
+input ArchiveCategoryTagInput {
+  """The category tag ID"""
+  id: String!
+}
+
+"""Input for archiving an edge pairs query"""
+input ArchiveEdgePairsQueryInput {
+  """The ID of the edge pairs query to archive"""
+  id: String!
+}
+
+"""Input for archiving an edge path query"""
+input ArchiveEdgePathQueryInput {
+  """The ID of the edge path query to archive"""
+  id: String!
+}
+
+"""Input for archiving an edge table query"""
+input ArchiveEdgeTableQueryInput {
+  """The ID of the edge table query to archive"""
+  id: String!
+}
+
+"""Input for recalculating an entity's derived properties"""
+input ArchiveEntityInput {
+  """The ID of the entity to archive"""
+  id: GraphID!
+}
+
+"""Input for archiving a graph"""
+input ArchiveGraphInput {
+  """The ID of the graph to archive"""
+  id: String!
+}
+
+"""Input for archiving a graph pairs query"""
+input ArchiveGraphPairsQueryInput {
+  """The ID of the graph pairs query to archive"""
+  id: String!
+}
+
+"""Input for archiving a graph path query"""
+input ArchiveGraphPathQueryInput {
+  """The ID of the graph path query to archive"""
+  id: String!
+}
+
+"""Input for archiving a graph table query"""
+input ArchiveGraphTableQueryInput {
+  """The ID of the graph query to archive"""
+  id: String!
+}
+
+"""Input for archiving an existing measurement edge"""
+input ArchiveMeasurementInput {
+  """The ID of the measurement to archive"""
+  id: String!
+}
+
+"""Input for archiving an existing metric"""
+input ArchiveMetricInput {
+  """The ID of the metric to archive"""
+  id: String!
+}
+
+"""Input for archiving (soft deleting) an existing natural event instance"""
+input ArchiveNaturalEventInput {
+  """The ID of the natural event to archive"""
+  id: String!
+}
+
+"""Input for archiving a node pairs query"""
+input ArchiveNodePairsQueryInput {
+  """The ID of the node pairs query to archive"""
+  id: String!
+}
+
+"""Input for archiving a node path query"""
+input ArchiveNodePathQueryInput {
+  """The ID of the node path query to archive"""
+  id: String!
+}
+
+"""Input for archiving a node table query"""
+input ArchiveNodeTableQueryInput {
+  """The ID of the node table query to archive"""
+  id: String!
+}
+
+"""
+Input for archiving (soft deleting) an existing protocol event instance
+"""
+input ArchiveProtocolEventInput {
+  """The ID of the protocol event to archive"""
+  id: String!
+}
+
+"""Input for archiving an existing relation"""
+input ArchiveRelationInput {
+  """The ID of the relation to archive"""
+  id: GraphID!
+}
+
+"""Input for archiving a scatter plot"""
+input ArchiveScatterPlotInput {
+  """The database ID of the scatter plot to archive"""
+  id: Int!
+}
+
+"""Input for deleting an existing structure"""
+input ArchiveStructureInput {
+  """The ID of the structure to archive"""
+  id: GraphID!
+}
+
+"""Input for archiving an existing structure relation"""
+input ArchiveStructureRelationInput {
+  """The ID of the structure relation to archive"""
+  id: String!
+}
+
+"""
+An assertion edge linking provenance activity to asserted graph artifacts
+"""
+type Assertion implements Edge {
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""Input type for creating a new graph query"""
+type BuilderArgs {
+  """Optional patterns to match in the graph for this query"""
+  matchPaths: [MatchPath!]
+
+  """The values to return for each matched pattern in the graph query"""
+  returnStatements: [ReturnStatement!]
+
+  """Optional filtering conditions for the graph query"""
+  whereClauses: [WhereClause!]
+}
+
+"""Builder arguments for generating a graph table query"""
+input BuilderArgsInput {
+  """Optional patterns to match in the graph for this query"""
+  matchPaths: [MatchPathInput!] = null
+
+  """The values to return for each matched pattern in the graph query"""
+  returnStatements: [ReturnStatementInput!] = null
+
+  """Optional filtering conditions for the graph query"""
+  whereClauses: [WhereClauseInput!] = null
+}
+
+enum Cardinality {
+  MANY_TO_ONE
+  ONE_TO_MANY
+  ONE_TO_ONE
+}
+
+"""Base interface for structure categories/schemas"""
+interface Category {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+}
+
+"""Base interface for graph nodes representing entities"""
+type CategoryTag {
+  """Description of the category tag"""
+  description: String
+
+  """Database ID of the category tag"""
+  id: ID!
+
+  """Name of the category tag"""
+  name: String!
+}
+
+"""Numeric/aggregatable fields of CategoryTag"""
+enum CategoryTagField {
+  CREATED_AT
+}
+
+input CategoryTagFilter {
+  AND: CategoryTagFilter
+  DISTINCT: Boolean
+  NOT: CategoryTagFilter
+  OR: CategoryTagFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input CategoryTagOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+type CategoryTagStats {
+  """Average value"""
+  avg(field: CategoryTagField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: CategoryTagField!): Int!
+
+  """Maximum value"""
+  max(field: CategoryTagField!): Float
+
+  """Minimum value"""
+  min(field: CategoryTagField!): Float
+
+  """Sum of values"""
+  sum(field: CategoryTagField!): Float
+}
+
+"""Input type for defining a graph schema"""
+type Column {
+  """
+  Optional category/key for this column, used for grouping or filtering in the UI
+  """
+  categoryKey: String
+
+  """Optional description for this column"""
+  description: String
+
+  """
+  If this column represents an ID that can be used to link to another table, specify the target table name here
+  """
+  isIdForKey: String
+
+  """The property key for this column (inside the table query result)"""
+  key: String!
+
+  """The kind of column (e.g., 'property', 'id', 'metadata', 'derived')"""
+  kind: ColumnKind!
+
+  """
+  Optional human-readable label for this column (defaults to 'key' if not provided)
+  """
+  label: String
+
+  """
+  Whether this column should be hidden by default in the UI, even if it's not an ID or metadata column
+  """
+  preferHidden: Boolean!
+
+  """Whether this column should be full-text searchable"""
+  searchable: Boolean!
+
+  """The property type for this column (e.g., STRING, FLOAT)"""
+  type: String!
+
+  """Unit of measurement if applicable"""
+  unit: String
+
+  """
+  Whether this column represents a raw property value, a derived value, or a metric
+  """
+  valueKind: ValueKind
+}
+
+"""Input for a graph table query column"""
+input ColumnInput {
+  """
+  Optional category/key for this column, used for grouping or filtering in the UI
+  """
+  categoryKey: String = null
+
+  """Optional description for this column"""
+  description: String = null
+
+  """
+  If this column represents an ID that can be used to link to another table, specify the target table name here
+  """
+  isIdForKey: String = null
+
+  """The property key for this column (inside the table query result)"""
+  key: String!
+
+  """The kind of column (e.g., 'property', 'id', 'metadata', 'derived')"""
+  kind: ColumnKind!
+
+  """
+  Optional human-readable label for this column (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """
+  Whether this column should be hidden by default in the UI, even if it's not an ID or metadata column
+  """
+  preferHidden: Boolean! = false
+
+  """Whether this column should be full-text searchable"""
+  searchable: Boolean! = false
+
+  """The property type for this column (e.g., STRING, FLOAT)"""
+  type: String!
+
+  """Unit of measurement if applicable"""
+  unit: String = null
+
+  """
+  Whether this column represents a raw property value, a derived value, or a metric
+  """
+  valueKind: ValueKind = null
+}
+
+enum ColumnKind {
+  EDGE
+  NODE
+  VALUE
+}
+
+"""Input for creating a category tag"""
+input CreateCategoryTagInput {
+  """Optional category tag description"""
+  description: String = null
+
+  """The graph ID this category tag belongs to"""
+  graph: String!
+
+  """Optional human-readable name"""
+  name: String = null
+
+  """Unique tag value within the graph"""
+  value: String!
+}
+
+"""Input for creating a new edge pairs query"""
+input CreateEdgePairsQueryInput {
+  """Description of this edge query"""
+  description: String = null
+
+  """The graph id this edge pairs query will belong to"""
+  graph: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this edge query"""
+  query: String!
+}
+
+"""Input for creating a new edge path query"""
+input CreateEdgePathQueryInput {
+  """Description of this edge query"""
+  description: String = null
+
+  """The graph id this edge path query will belong to"""
+  graph: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this edge query"""
+  query: String!
+}
+
+"""Input for creating a new edge table query"""
+input CreateEdgeTableQueryInput {
+  """Definitions for the columns returned by this edge table query"""
+  columnInput: [ColumnInput!]! = []
+
+  """Description of this edge query"""
+  description: String = null
+
+  """The graph id this edge table query will belong to"""
+  graph: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this edge query"""
+  query: String!
+}
+
+"""Input for creating a new entity definition in the graph schema"""
+input CreateEntityDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this entitiy will beong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for creating a new entity"""
+input CreateEntityInput {
+  """The ID of the entity category/type to create"""
+  entityCategory: String!
+
+  """List of property key-value pairs to associate with this entity"""
+  stickyProperties: [PropertySet!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for creating a new graph from a schema definition"""
+input CreateGraphInput {
+  """The complete graph schema definition"""
+  definition: GraphDefinitionInput
+
+  """Description of the graph"""
+  description: String = null
+
+  """Name of the graph"""
+  name: String!
+}
+
+"""Input for creating a graph pairs query"""
+input CreateGraphPairsQueryInput {
+  """Description of this graph query"""
+  description: String = null
+
+  """The graph id this graph pairs query will belong to"""
+  graph: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String!
+}
+
+"""Input for creating a graph path query"""
+input CreateGraphPathQueryInput {
+  """Description of this graph query"""
+  description: String = null
+
+  """The graph id this graph path query will belong to"""
+  graph: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String!
+}
+
+"""Input for creating a new graph table query"""
+input CreateGraphTableQueryInput {
+  """Definitions for the columns returned by this graph query"""
+  columnInput: [ColumnInput!]! = []
+
+  """
+  The Cypher query string that defines this graph query. Can include parameter placeholders (e.g. $param) for dynamic filtering
+  """
+  cypher: String!
+
+  """Description of this graph query"""
+  description: String = null
+
+  """The graph id this table query will belong to"""
+  graph: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String!
+}
+
+"""Input for creating a graph table query through builder arguments"""
+input CreateGraphTableQueryThroughBuilderInput {
+  """
+  Optional additional arguments for the graph query builder to support advanced features like dynamic filtering or pattern matching
+  """
+  builderArgs: BuilderArgsInput!
+
+  """Definitions for the columns returned by this graph query"""
+  columnInput: [ColumnInput!]! = []
+
+  """Description of this graph query"""
+  description: String = null
+
+  """The graph id this table query will belong to"""
+  graph: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String!
+}
+
+"""Input for creating a new measurement definition in the graph schema"""
+input CreateMeasurementDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this measurement category will belong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Relation type name/key"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: EntityDescriptorInput!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: EntityDescriptorInput!
+}
+
+"""Input for creating a new measurement edge"""
+input CreateMeasurementInput {
+  """The unique ID of the measurement category"""
+  category: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+"""Input for creating a new metric definition in the graph schema"""
+input CreateMetricDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this metric will belong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """The label of the describing structure to read from"""
+  structure: String!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
+  valueKind: PropertyType!
+}
+
+"""Input for creating a new metric"""
+input CreateMetricInput {
+  key: String!
+
+  """The unique ID of the structure this metric is associated with"""
+  structure: GraphID!
+  value: AnyScalar!
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input CreateNaturalEventDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this event will belong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Input node roles"""
+  inputs: [EventRoleInput!]! = []
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """The kind of event"""
+  kind: EventKind!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Output node roles"""
+  outputs: [EventRoleInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for creating a new natural event instance"""
+input CreateNaturalEventInput {
+  """The ID of the natural event category/type to create"""
+  eventCategory: String!
+
+  """List of entity IDs that are inputs to this event"""
+  inputs: [RoleMappingInput!]! = []
+
+  """List of entity IDs that are outputs of this event"""
+  outputs: [RoleMappingInput!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for creating a new node pairs query"""
+input CreateNodePairsQueryInput {
+  """Description of this node query"""
+  description: String = null
+
+  """The graph id this node pairs query will belong to"""
+  graph: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this node query"""
+  query: String!
+}
+
+"""Input for creating a new node path query"""
+input CreateNodePathQueryInput {
+  """Description of this node query"""
+  description: String = null
+
+  """The graph id this node path query will belong to"""
+  graph: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this node query"""
+  query: String!
+}
+
+"""Input for creating a new node table query"""
+input CreateNodeTableQueryInput {
+  """Definitions for the columns returned by this node table query"""
+  columnInput: [ColumnInput!]! = []
+
+  """Description of this node query"""
+  description: String = null
+
+  """The graph id this node table query will belong to"""
+  graph: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this node query"""
+  query: String!
+}
+
+"""Input for creating a new protocol event definition in the graph schema"""
+input CreateProtocolEventDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this event will belong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Input node roles"""
+  inputs: [EventRoleInput!]! = []
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """The kind of event"""
+  kind: EventKind!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Output node roles"""
+  outputs: [EventRoleInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """The protocol this event definition belongs to"""
+  protocol: String!
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for creating a new protocol event instance"""
+input CreateProtocolEventInput {
+  """The ID of the protocol event category/type to create"""
+  eventCategory: String!
+
+  """List of entity IDs that are inputs to this event"""
+  inputs: [RoleMappingInput!]! = []
+
+  """List of entity IDs that are outputs of this event"""
+  outputs: [RoleMappingInput!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for creating a new relation definition in the graph schema"""
+input CreateRelationDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this entitiy will beong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""
+Input for creating a new relation between two entities with supporting evidence
+"""
+input CreateRelationInput {
+  """The unique ID of the structure this metric is associated with"""
+  category: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+"""Input for creating a scatter plot"""
+input CreateScatterPlotInput {
+  """Optional column key used for point color"""
+  colorColumn: String = null
+
+  """Optional description of the scatter plot"""
+  description: String = null
+
+  """Optional graph table query ID used by this scatter plot"""
+  graphQueryId: Int = null
+
+  """Column key used for point identifiers"""
+  idColumn: String!
+
+  """The display name of the scatter plot"""
+  name: String!
+
+  """Optional node table query ID used by this scatter plot"""
+  nodeQueryId: Int = null
+
+  """Optional node path query ID used by this scatter plot"""
+  pathQueryId: Int = null
+
+  """Optional column key used for point shape"""
+  shapeColumn: String = null
+
+  """Optional column key used for point size"""
+  sizeColumn: String = null
+
+  """Column key used for x-axis values"""
+  xColumn: String = null
+
+  """Column key used for x-axis identifiers"""
+  xIdColumn: String = null
+
+  """Column key used for y-axis values"""
+  yColumn: String = null
+
+  """Column key used for y-axis identifiers"""
+  yIdColumn: String = null
+}
+
+"""Input for creating a new structure definition in the graph schema"""
+input CreateStructureDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this structure will belong to"""
+  graph: String!
+
+  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
+  identifier: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for creating a new entity category/type in the graph schema"""
+input CreateStructureInput {
+  """The ID of the structure category/type to create"""
+  category: String!
+
+  """The graph id this structure will belong to"""
+  graph: String!
+
+  """List of measurements associated with this structure"""
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
+"""
+Input for creating a new structure relation definition in the graph schema
+"""
+input CreateStructureRelationDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The graph id this entitiy will beong to"""
+  graph: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for creating a new structure relation"""
+input CreateStructureRelationInput {
+  """The unique ID of the structure relation category"""
+  category: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+"""
+The `CypherLiteral` scalar type represents a raw Cypher query or fragment
+"""
+scalar CypherLiteral
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+"""Input for deleting a category tag"""
+input DeleteCategoryTagInput {
+  """The category tag ID"""
+  id: String!
+}
+
+"""Input for deleting an edge pairs query"""
+input DeleteEdgePairsQueryInput {
+  """The ID of the edge pairs query to delete"""
+  id: String!
+}
+
+"""Input for deleting an edge path query"""
+input DeleteEdgePathQueryInput {
+  """The ID of the edge path query to delete"""
+  id: String!
+}
+
+"""Input for deleting an edge table query"""
+input DeleteEdgeTableQueryInput {
+  """The ID of the edge table query to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing entity definition in the graph schema"""
+input DeleteEntityDefinitionInput {
+  """The ID of the structure category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing entity"""
+input DeleteEntityInput {
+  """The ID of the entity to delete"""
+  id: GraphID!
+}
+
+"""Input for deleting a graph"""
+input DeleteGraphInput {
+  """The ID of the graph to delete"""
+  id: String!
+}
+
+"""Input for deleting a graph pairs query"""
+input DeleteGraphPairsQueryInput {
+  """The ID of the graph pairs query to delete"""
+  id: String!
+}
+
+"""Input for deleting a graph path query"""
+input DeleteGraphPathQueryInput {
+  """The ID of the graph path query to delete"""
+  id: String!
+}
+
+"""Input for deleting a graph table query"""
+input DeleteGraphTableQueryInput {
+  """The ID of the graph query to delete"""
+  id: String!
+}
+
+"""
+Input for deleting an existing measurement definition in the graph schema
+"""
+input DeleteMeasurementDefinitionInput {
+  """The ID of the measurement category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing measurement edge"""
+input DeleteMeasurementInput {
+  """The ID of the measurement to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing metric definition in the graph schema"""
+input DeleteMetricDefinitionInput {
+  """The ID of the entity category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing metric"""
+input DeleteMetricInput {
+  """The ID of the metric to delete"""
+  id: String!
+}
+
+"""
+Input for deleting an existing natural event definition in the graph schema
+"""
+input DeleteNaturalEventDefinitionInput {
+  """The ID of the event category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing natural event instance"""
+input DeleteNaturalEventInput {
+  """The ID of the natural event to delete"""
+  id: String!
+}
+
+"""Input for deleting a node pairs query"""
+input DeleteNodePairsQueryInput {
+  """The ID of the node pairs query to delete"""
+  id: String!
+}
+
+"""Input for deleting a node path query"""
+input DeleteNodePathQueryInput {
+  """The ID of the node path query to delete"""
+  id: String!
+}
+
+"""Input for deleting a node table query"""
+input DeleteNodeTableQueryInput {
+  """The ID of the node table query to delete"""
+  id: String!
+}
+
+"""
+Input for deleting an existing protocol event definition in the graph schema
+"""
+input DeleteProtocolEventDefinitionInput {
+  """The ID of the event category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing protocol event instance"""
+input DeleteProtocolEventInput {
+  """The ID of the protocol event to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing relation definition in the graph schema"""
+input DeleteRelationDefinitionInput {
+  """The ID of the relation category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing relation"""
+input DeleteRelationInput {
+  """The ID of the metric to delete"""
+  id: GraphID!
+}
+
+"""Input for deleting a scatter plot"""
+input DeleteScatterPlotInput {
+  """The database ID of the scatter plot to delete"""
+  id: Int!
+}
+
+"""
+Input for deleting an existing structure definition in the graph schema
+"""
+input DeleteStructureDefinitionInput {
+  """The ID of the entity category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing structure"""
+input DeleteStructureInput {
+  """The ID of the structure to delete"""
+  id: GraphID!
+}
+
+"""
+Input for deleting an existing structure relation definition in the graph schema
+"""
+input DeleteStructureRelationDefinitionInput {
+  """The ID of the structure relation category to delete"""
+  id: String!
+}
+
+"""Input for deleting an existing structure relation"""
+input DeleteStructureRelationInput {
+  """The ID of the structure relation to delete"""
+  id: String!
+}
+
+"""A derivation rule in the graph schema"""
+type DerivationRule {
+  """Aggregation function (MEAN, SUM, MAX, MIN, COUNT, etc.)"""
+  aggregation: AggregationFunction
+
+  """The property key on the source node"""
+  key: String
+
+  """The label of the describing structure to read from"""
+  sourceNode: String
+}
+
+"""Configuration for property derivation rules"""
+input DerivationRuleInput {
+  """Aggregation function (MEAN, SUM, MAX, MIN, COUNT, etc.)"""
+  aggregation: AggregationFunction = null
+
+  """The property key on the source node"""
+  key: String = null
+
+  """The label of the describing structure to read from"""
+  sourceNode: String = null
+}
+
+enum DerivationType {
+  LATEST
+  LATEST_ASSERTION_TOOL
+  PRIORITY_LATEST
+  ROLLUP
+}
+
+"""A natural event category/schema definition"""
+type Description implements Edge {
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """The graph this node belongs to"""
+  source: Metric!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Structure!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""Base interface for all graph edges"""
+interface Edge {
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""Base interface for graph schemas"""
+interface EdgeCategory {
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  materializableAs: [MaterializedEdge!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant queries that use this category as input"""
+  relevantEdgeQueries: [EdgeQuery!]!
+}
+
+"""Base interface for graph schemas"""
+type EdgePairsQuery implements EdgeQuery {
+  """Description of the category"""
+  description: String
+
+  """Optional edge category/schema to filter pairs by"""
+  edgeCategory: EdgeCategory
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The source node category/schema to query"""
+  sourceCategory: NodeCategory!
+
+  """The target node category/schema to query"""
+  targetCategory: NodeCategory!
+}
+
+input EdgePairsQueryFilter {
+  AND: EdgePairsQueryFilter
+  DISTINCT: Boolean
+  NOT: EdgePairsQueryFilter
+  OR: EdgePairsQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input EdgePairsQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Base interface for graph schemas"""
+type EdgePathQuery implements EdgeQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+input EdgePathQueryFilter {
+  AND: EdgePathQueryFilter
+  DISTINCT: Boolean
+  NOT: EdgePathQueryFilter
+  OR: EdgePathQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input EdgePathQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Base interface for entity categories/schemas"""
+interface EdgeQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+"""Base interface for graph schemas"""
+type EdgeTableQuery implements EdgeQuery & Plottable {
+  """
+  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
+  """
+  builderArgs: BuilderArgs
+
+  """List of columns to return in the table query result"""
+  columns: [Column!]!
+
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The Cypher query to execute for this table query"""
+  query: CypherLiteral!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The graph this category belongs to"""
+  scatterPlots: [ScatterPlot!]!
+}
+
+input EdgeTableQueryFilter {
+  AND: EdgeTableQueryFilter
+  DISTINCT: Boolean
+  NOT: EdgeTableQueryFilter
+  OR: EdgeTableQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input EdgeTableQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Input for creating a new entity category/type in the graph schema"""
+input EnsureStructureInput {
+  """The graph id this structure will belong to"""
+  graph: String!
+
+  """The unique identifier for this structure"""
+  identifier: String!
+
+  """List of measurements associated with this structure"""
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
+"""An entity in the knowledge graph with derived properties"""
+type Entity implements Node & VersionedNode {
+  """The graph this node belongs to"""
+  category: EntityCategory!
+
+  """Category ID linking to EntityCategory model"""
+  categoryId: String
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """The entity type/kind (e.g. 'AIS', 'Cell')"""
+  kind: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Timestamp when properties were last derived (unix ms)"""
+  lastDerived: UnixMilliseconds
+
+  """External object ID this entity references"""
+  lifecycle: String
+
+  """Local ID if set"""
+  localId: String
+
+  """The source entity of this relation"""
+  measuredBy: [Measurement!]!
+
+  """The source entity of this relation"""
+  participatedIn: [InputParticipation!]!
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """List of the current derived properties for this entity"""
+  properties: AnyScalar!
+
+  """The source entity of this relation"""
+  resultedOut: [OutputParticipation!]!
+
+  """List of properties derived for this entity"""
+  richProperties: [RichProperty!]!
+
+  """Schema version used to derive properties"""
+  schemaVersion: String!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+
+  """When this entity became valid"""
+  validFrom: DateTime
+
+  """When this entity stopped being valid"""
+  validTo: DateTime
+}
+
+"""An entity category/schema definition"""
+type EntityCategory implements Category & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  entities(filters: EntityFilter = null, ordering: [EntityOrder!] = null, pagination: EntityPaginationInput = null): [Entity!]!
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """
+  What type of instance, (taking from the universe) 'LOT', 'BIOLOGICAL', 'PHYSICAL'
+  """
+  instanceKind: String
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """The graph this category belongs to"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Numeric/aggregatable fields of EntityCategory"""
+enum EntityCategoryField {
+  CREATED_AT
+}
+
+input EntityCategoryFilter {
+  AND: EntityCategoryFilter
+  DISTINCT: Boolean
+  NOT: EntityCategoryFilter
+  OR: EntityCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input EntityCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type EntityCategoryStats {
+  """Average value"""
+  avg(field: EntityCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: EntityCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: EntityCategoryField!): Float
+
+  """Minimum value"""
+  min(field: EntityCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: EntityCategoryField!): Float
+}
+
+"""Definition of an entity type in the graph schema"""
+input EntityDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input type for creating a new graph query"""
+type EntityDescriptor {
+  """Default category to link to if no entities match the filters"""
+  defaultCategoryKey: String
+
+  """Filter by entity key/label"""
+  keys: [String!]
+
+  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  ontotologyTerms: [String!]
+
+  """Filter by tags on the entity"""
+  tags: [String!]
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input EntityDescriptorInput {
+  """Default category to link to if no entities match the filters"""
+  defaultCategoryKey: String = null
+
+  """Filter by entity key/label"""
+  keys: [String!] = null
+
+  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  ontotologyTerms: [String!] = null
+
+  """Filter by tags on the entity"""
+  tags: [String!] = null
+}
+
+"""Filter options for querying entities"""
+input EntityFilter {
+  """Filter entities that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific entity IDs"""
+  ids: [GraphID!] = null
+
+  """Filter entities that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over entity properties"""
+  search: String = null
+}
+
+"""Ordering options for entity queries"""
+input EntityOrder {
+  """Order by entity kind/type"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by entity ID"""
+  id: Ordering = null
+
+  """Order by a specific property value (requires 'has_property' filter)"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying entities"""
+input EntityPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""Interface for edges that track schema version and derivation time"""
+interface Event {
+  """The event type/kind"""
+  kind: String!
+}
+
+"""Base interface for event categories/schemas"""
+interface EventCategory implements Category & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """The graph this category belongs to"""
+  inputs: [EventRole!]!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  outputs: [EventRole!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Definition of an event type in the graph schema"""
+input EventDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Input node roles"""
+  inputs: [EventRoleInput!]! = []
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """The kind of event"""
+  kind: EventKind!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Output node roles"""
+  outputs: [EventRoleInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+enum EventKind {
+  EXTRINSIC
+  INTRINSIC
+}
+
+"""Input type for defining roles in an event category"""
+type EventRole {
+  """
+  Optional filters to apply when linking entities to structures for this role
+  """
+  descriptor: EntityDescriptor!
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """Ontology references for this role"""
+  ontologyReferences: [OntologyReference!]!
+
+  """What type of role does this node play in the event"""
+  role: String!
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input EventRoleInput {
+  """
+  Optional filters to apply when linking entities to structures for this role
+  """
+  descriptor: EntityDescriptorInput!
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """Ontology references for this role"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """What type of role does this node play in the event"""
+  role: String!
+}
+
+scalar GlobalID
+
+"""Base interface for graph schemas"""
+type Graph {
+  """The name of the graph as used in AGE (e.g. 'CellGraph')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """List of edge categories/schemas defined in this graph"""
+  edgeCategories: [EdgeCategory!]!
+
+  """List of entity categories/schemas defined in this graph"""
+  entityCategories(filters: EntityCategoryFilter, ordering: [EntityCategoryOrder!]! = [], pagination: OffsetPaginationInput): [EntityCategory!]!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this graph, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of materialized edges in the graph"""
+  materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """List of measurement categories/schemas defined in this graph"""
+  measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
+
+  """List of metric categories/schemas defined in this graph"""
+  metricCategories(filters: MetricCategoryFilter, ordering: [MetricCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MetricCategory!]!
+
+  """Name of the graph"""
+  name: String!
+
+  """List of natural event categories/schemas defined in this graph"""
+  naturalEventCategories(filters: NaturalEventCategoryFilter, ordering: [NaturalEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [NaturalEventCategory!]!
+
+  """List of node categories/schemas defined in this graph"""
+  nodeCategories: [NodeCategory!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """List of protocol event categories/schemas defined in this graph"""
+  protocolEventCategories(filters: ProtocolEventCategoryFilter, ordering: [ProtocolEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [ProtocolEventCategory!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of graph queries defined in this graph"""
+  queries: [GraphQuery!]!
+
+  """List of relation categories/schemas defined in this graph"""
+  relationCategories(filters: RelationCategoryFilter, ordering: [RelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [RelationCategory!]!
+
+  """List of structure categories/schemas defined in this graph"""
+  structureCategories(filters: StructureCategoryFilter, ordering: [StructureCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureCategory!]!
+
+  """List of structure relation categories/schemas defined in this graph"""
+  structureRelationCategories(filters: StructureRelationCategoryFilter, ordering: [StructureRelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureRelationCategory!]!
+
+  """List of tags associated with this category"""
+  tags: [String!]!
+}
+
+"""Input for creating a new graph from a schema definition"""
+input GraphDefinitionInput {
+  """The graph extensions containing all type definitions"""
+  extensions: GraphExtensionsInput!
+
+  """Action-level allow/deny rules evaluated against request context"""
+  rules: [ActionRuleInput!]! = []
+
+  """Semantic version for this schema definition (e.g., '1.0.0')"""
+  systemVersion: String! = "0.0.1"
+}
+
+"""Input for creating a new graph from a schema definition"""
+input GraphExtensionsInput {
+  """Entity definitions"""
+  entities: [EntityDefinitionInput!]! = []
+
+  """Event definitions"""
+  events: [EventDefinitionInput!]! = []
+
+  """Graph table query definitions"""
+  graphTableQueries: [GraphTableQueryInput!]! = []
+
+  """Measurement definitions"""
+  measurements: [MeasurementDefinitionInput!]! = []
+
+  """Graph prefixes for namespacing"""
+  prefixes: [PrefixInput!]! = []
+
+  """Relation definitions"""
+  relations: [RelationDefinitionInput!]! = []
+
+  """Scatter plot definitions"""
+  scatterPlots: [ScatterPlotInput!]! = []
+
+  """Graph sequences for ordering entities"""
+  sequences: [SequenceInput!]! = []
+
+  """Structure relation definitions"""
+  structureRelations: [StructureRelationDefinitionInput!]! = []
+}
+
+"""Numeric/aggregatable fields of Graph"""
+enum GraphField {
+  CREATED_AT
+}
+
+input GraphFilter {
+  AND: GraphFilter
+  DISTINCT: Boolean
+  NOT: GraphFilter
+  OR: GraphFilter
+  description: String
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+scalar GraphID
+
+"""Base interface for graph schemas"""
+type GraphNodesQuery implements GraphQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The node category/schema to query"""
+  nodeCategory: NodeCategory!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+input GraphNodesQueryFilter {
+  AND: GraphNodesQueryFilter
+  DISTINCT: Boolean
+  NOT: GraphNodesQueryFilter
+  OR: GraphNodesQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input GraphNodesQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Result of linking a structure to an entity"""
+type GraphNodesRender {
+  """The graph rendered by this query"""
+  graph: Graph!
+
+  """The graph name used for this render"""
+  graphName: String!
+
+  """The graph query used for this render"""
+  query: GraphNodesQuery!
+}
+
+input GraphOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+"""Base interface for graph schemas"""
+type GraphPairsQuery implements GraphQuery {
+  """Description of the category"""
+  description: String
+
+  """Optional edge category/schema to filter pairs by"""
+  edgeCategory: EdgeCategory
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The source node category/schema to query"""
+  sourceCategory: NodeCategory!
+
+  """The target node category/schema to query"""
+  targetCategory: NodeCategory!
+}
+
+input GraphPairsQueryFilter {
+  AND: GraphPairsQueryFilter
+  DISTINCT: Boolean
+  NOT: GraphPairsQueryFilter
+  OR: GraphPairsQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input GraphPairsQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Base interface for graph schemas"""
+type GraphPathQuery implements GraphQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+"""Result of linking a structure to an entity"""
+type GraphPathRender implements PathLike {
+  """The graph name used for this render"""
+  edges: [Edge!]!
+
+  """The graph rendered by this query"""
+  graph: Graph!
+
+  """The graph name used for this render"""
+  graphName: String!
+
+  """The graph name used for this render"""
+  nodes: [Node!]!
+
+  """The graph query used for this render"""
+  query: GraphPathQuery!
+}
+
+"""Base interface for entity categories/schemas"""
+interface GraphQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+type GraphStats {
+  """Average value"""
+  avg(field: GraphField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: GraphField!): Int!
+
+  """Maximum value"""
+  max(field: GraphField!): Float
+
+  """Minimum value"""
+  min(field: GraphField!): Float
+
+  """Sum of values"""
+  sum(field: GraphField!): Float
+}
+
+"""Base interface for graph schemas"""
+type GraphTableQuery implements GraphQuery & Plottable {
+  """
+  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
+  """
+  builderArgs: BuilderArgs
+
+  """List of columns to return in the table query result"""
+  columns: [Column!]!
+
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The Cypher query to execute for this table query"""
+  query: CypherLiteral!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The graph this category belongs to"""
+  scatterPlots: [ScatterPlot!]!
+}
+
+input GraphTableQueryFilter {
+  AND: GraphTableQueryFilter
+  DISTINCT: Boolean
+  NOT: GraphTableQueryFilter
+  OR: GraphTableQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+"""Input for creating a new graph from a schema definition"""
+input GraphTableQueryInput {
+  """Description of this graph query"""
+  description: String = null
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String!
+}
+
+input GraphTableQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Result of linking a structure to an entity"""
+type GraphTableRender {
+  """The graph rendered by this query"""
+  graph: Graph!
+
+  """The graph name used for this render"""
+  graphName: String!
+
+  """The query used to generate this table"""
+  query: GraphTableQuery!
+
+  """Rows of the rendered table"""
+  rows: [AnyScalar!]!
+}
+
+"""A natural event category/schema definition"""
+type InputParticipation implements Edge {
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """The graph this node belongs to"""
+  role: String!
+
+  """The graph this node belongs to"""
+  source: Entity!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Event!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""Input type for creating a new graph"""
+type MatchPath {
+  """Color for the matched path as RGB values"""
+  color: [Float!]
+
+  """List of node IDs to match"""
+  nodes: [String!]!
+
+  """Whether the path match is optional"""
+  optional: Boolean!
+
+  """
+  List of booleans indicating the direction of each relationship in the path (True for outgoing, False for incoming)
+  """
+  relationDirections: [Boolean!]
+
+  """List of node IDs representing the path"""
+  relations: [String!]!
+
+  """Title for the matched path"""
+  title: String
+}
+
+"""Input for a graph match path"""
+input MatchPathInput {
+  """Color for the matched path as RGB values"""
+  color: [Float!] = null
+
+  """List of node IDs to match"""
+  nodes: [String!]!
+
+  """Whether the path match is optional"""
+  optional: Boolean! = false
+
+  """
+  List of booleans indicating the direction of each relationship in the path (True for outgoing, False for incoming)
+  """
+  relationDirections: [Boolean!] = null
+
+  """List of node IDs representing the path"""
+  relations: [String!]!
+
+  """Title for the matched path"""
+  title: String = null
+}
+
+"""A materialized edge representing a relationship in the graph"""
+type MaterializedEdge {
+  edge: EdgeCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: NodeCategory!
+  target: NodeCategory!
+}
+
+input MaterializedEdgeFilter {
+  AND: MaterializedEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedEdgeFilter
+  OR: MaterializedEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+}
+
+input MaterializedEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A natural event category/schema definition"""
+type Measurement implements Edge {
+  """The graph this node belongs to"""
+  category: MeasurementCategory!
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """When this relation became valid according to the evidence"""
+  measuredFrom: DateTime
+
+  """When this relation stopped being valid according to the evidence"""
+  measuredTo: DateTime
+
+  """The graph this node belongs to"""
+  source: Structure!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Entity!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""A measurement category/schema definition"""
+type MeasurementCategory implements Category & EdgeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  materializableAs: [MaterializedEdge!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant queries that use this category as input"""
+  relevantEdgeQueries: [EdgeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """The graph this category belongs to"""
+  sourceDescriptor: StructureDescriptor!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """The graph this category belongs to"""
+  targetDescriptor: EntityDescriptor!
+}
+
+"""Numeric/aggregatable fields of MeasurementCategory"""
+enum MeasurementCategoryField {
+  CREATED_AT
+}
+
+input MeasurementCategoryFilter {
+  AND: MeasurementCategoryFilter
+  DISTINCT: Boolean
+  NOT: MeasurementCategoryFilter
+  OR: MeasurementCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input MeasurementCategoryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+type MeasurementCategoryStats {
+  """Average value"""
+  avg(field: MeasurementCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: MeasurementCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: MeasurementCategoryField!): Float
+
+  """Minimum value"""
+  min(field: MeasurementCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: MeasurementCategoryField!): Float
+}
+
+"""Input for creating a new graph from a schema definition"""
+input MeasurementDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Relation type name/key"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: EntityDescriptorInput!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: EntityDescriptorInput!
+}
+
+"""Filter options for querying measurements"""
+input MeasurementFilter {
+  """Filter measurements that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific measurement IDs"""
+  ids: [GraphID!] = null
+
+  """Filter measurements that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over measurement properties"""
+  search: String = null
+}
+
+"""Ordering options for measurement queries"""
+input MeasurementOrder {
+  """Order by measurement category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by measurement ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying measurements"""
+input MeasurementPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""A structure that provides evidence for entities"""
+type MeasurementShadowLink implements Node {
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Schema identifier (e.g. '@mikro/roi')"""
+  reifies: Measurement!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+type MediaStore {
+  bucket: String!
+  id: ID!
+  key: String!
+  path: String!
+
+  """
+  Get a presigned URL for the media store. This is used to access the media store directly from the frontend without going through the backend. The URL is valid for 1 hour. If a host is provided, it will replace the AWS_S3_ENDPOINT_URL in the generated URL. This is useful for accessing the media store through a custom domain or a proxy.
+  """
+  presignedUrl(host: String = null): String!
+}
+
+"""A metric node representing computed values"""
+type Metric implements Node {
+  """The source entity of this relation"""
+  category: MetricCategory!
+
+  """Category ID linking to MetricCategory model"""
+  categoryId: String
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+
+  """The metric value"""
+  value: AnyScalar!
+}
+
+"""A metric category/schema definition"""
+type MetricCategory implements Category & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """
+  The structure category/schema this metric is relevant for, if applicable
+  """
+  structureCategory: StructureCategory!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """
+  What type of value, (taking from the universe) 'QUANTITATIVE', 'QUALITATIVE', 'BOOLEAN'
+  """
+  valueKind: ValueKind!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Numeric/aggregatable fields of MetricCategory"""
+enum MetricCategoryField {
+  CREATED_AT
+}
+
+input MetricCategoryFilter {
+  AND: MetricCategoryFilter
+  DISTINCT: Boolean
+  NOT: MetricCategoryFilter
+  OR: MetricCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+
+  """Filter by list of IDs"""
+  valueKind: ValueKind
+}
+
+input MetricCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type MetricCategoryStats {
+  """Average value"""
+  avg(field: MetricCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: MetricCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: MetricCategoryField!): Float
+
+  """Minimum value"""
+  min(field: MetricCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: MetricCategoryField!): Float
+}
+
+"""Filter options for querying metrics"""
+input MetricFilter {
+  """Filter metrics that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific metric IDs"""
+  ids: [GraphID!] = null
+
+  """Filter metrics that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over metric properties"""
+  search: String = null
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input MetricInput {
+  key: String!
+  value: AnyScalar!
+}
+
+"""Ordering options for metric queries"""
+input MetricOrder {
+  """Order by metric category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by metric ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying metrics"""
+input MetricPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""Graph Engine Mutations"""
+type Mutation {
+  """Archive an existing category tag in the graph"""
+  archiveCategoryTag(input: ArchiveCategoryTagInput!): CategoryTag!
+
+  """Archive an edge pairs query"""
+  archiveEdgePairsQuery(input: ArchiveEdgePairsQueryInput!): ID!
+
+  """Archive an edge path query"""
+  archiveEdgePathQuery(input: ArchiveEdgePathQueryInput!): ID!
+
+  """Archive an edge table query"""
+  archiveEdgeTableQuery(input: ArchiveEdgeTableQueryInput!): ID!
+
+  """Archive an entity in the graph (soft delete)"""
+  archiveEntity(input: ArchiveEntityInput!): Entity!
+
+  """Archive a graph in the graph engine (soft delete)"""
+  archiveGraph(input: ArchiveGraphInput!): Graph!
+
+  """Archive a graph pairs query"""
+  archiveGraphPairsQuery(input: ArchiveGraphPairsQueryInput!): ID!
+
+  """Archive a graph path query"""
+  archiveGraphPathQuery(input: ArchiveGraphPathQueryInput!): ID!
+
+  """Archive a graph table query"""
+  archiveGraphTableQuery(input: ArchiveGraphTableQueryInput!): ID!
+
+  """Archive a measurement in the graph (soft delete)"""
+  archiveMeasurement(input: ArchiveMeasurementInput!): Measurement!
+
+  """Archive a metric in the graph (soft delete)"""
+  archiveMetric(input: ArchiveMetricInput!): Metric!
+
+  """Archive a natural event in the graph (soft delete)"""
+  archiveNaturalEvent(input: ArchiveNaturalEventInput!): NaturalEvent!
+
+  """Archive a node pairs query"""
+  archiveNodePairsQuery(input: ArchiveNodePairsQueryInput!): ID!
+
+  """Archive a node path query"""
+  archiveNodePathQuery(input: ArchiveNodePathQueryInput!): ID!
+
+  """Archive a node table query"""
+  archiveNodeTableQuery(input: ArchiveNodeTableQueryInput!): ID!
+
+  """Archive a protocol event in the graph (soft delete)"""
+  archiveProtocolEvent(input: ArchiveProtocolEventInput!): ProtocolEvent!
+
+  """Archive a relation in the graph (soft delete)"""
+  archiveRelation(input: ArchiveRelationInput!): Relation!
+
+  """Archive a scatter plot"""
+  archiveScatterPlot(input: ArchiveScatterPlotInput!): ID!
+
+  """Archive a structure in the graph (soft delete)"""
+  archiveStructure(input: ArchiveStructureInput!): Structure!
+
+  """Archive a structure relation in the graph (soft delete)"""
+  archiveStructureRelation(input: ArchiveStructureRelationInput!): StructureRelation!
+
+  """Create a new category tag in the graph"""
+  createCategoryTag(input: CreateCategoryTagInput!): CategoryTag!
+
+  """Create an edge pairs query"""
+  createEdgePairsQuery(input: CreateEdgePairsQueryInput!): EdgePairsQuery!
+
+  """Create an edge path query"""
+  createEdgePathQuery(input: CreateEdgePathQueryInput!): EdgePathQuery!
+
+  """Create an edge table query"""
+  createEdgeTableQuery(input: CreateEdgeTableQueryInput!): EdgeTableQuery!
+
+  """Create a new entity in the graph"""
+  createEntity(input: CreateEntityInput!): Entity!
+
+  """Create a new entity category/schema in the graph"""
+  createEntityCategory(input: CreateEntityDefinitionInput!): EntityCategory!
+
+  """Create a new graph in the graph engine"""
+  createGraph(input: CreateGraphInput!): Graph!
+
+  """Create a graph pairs query"""
+  createGraphPairsQuery(input: CreateGraphPairsQueryInput!): GraphPairsQuery!
+
+  """Create a graph path query"""
+  createGraphPathQuery(input: CreateGraphPathQueryInput!): GraphPathQuery!
+
+  """Create a graph table query"""
+  createGraphTableQuery(input: CreateGraphTableQueryInput!): GraphTableQuery!
+
+  """Create or update a graph table query using builder arguments"""
+  createGraphTableQueryThroughBuilder(input: CreateGraphTableQueryThroughBuilderInput!): GraphTableQuery!
+
+  """Create a new measurement in the graph"""
+  createMeasurement(input: CreateMeasurementInput!): Measurement!
+
+  """Create a new measurement category/schema in the graph"""
+  createMeasurementCategory(input: CreateMeasurementDefinitionInput!): MeasurementCategory!
+
+  """Create a new metric in the graph"""
+  createMetric(input: CreateMetricInput!): Metric!
+
+  """Create a new metric category/schema in the graph"""
+  createMetricCategory(input: CreateMetricDefinitionInput!): MetricCategory!
+
+  """Create a new natural event in the graph"""
+  createNaturalEvent(input: CreateNaturalEventInput!): NaturalEvent!
+
+  """Create a new natural event category/schema in the graph"""
+  createNaturalEventCategory(input: CreateNaturalEventDefinitionInput!): NaturalEventCategory!
+
+  """Create a node pairs query"""
+  createNodePairsQuery(input: CreateNodePairsQueryInput!): NodePairsQuery!
+
+  """Create a node path query"""
+  createNodePathQuery(input: CreateNodePathQueryInput!): NodePathQuery!
+
+  """Create a node table query"""
+  createNodeTableQuery(input: CreateNodeTableQueryInput!): NodeTableQuery!
+
+  """Create a new protocol event in the graph"""
+  createProtocolEvent(input: CreateProtocolEventInput!): ProtocolEvent!
+
+  """Create a new protocol event category/schema in the graph"""
+  createProtocolEventCategory(input: CreateProtocolEventDefinitionInput!): ProtocolEventCategory!
+
+  """Create a new relation in the graph"""
+  createRelation(input: CreateRelationInput!): Relation!
+
+  """Create a new relation category/schema in the graph"""
+  createRelationCategory(input: CreateRelationDefinitionInput!): RelationCategory!
+
+  """Create a scatter plot"""
+  createScatterPlot(input: CreateScatterPlotInput!): ScatterPlot!
+
+  """Create a new structure in the graph"""
+  createStructure(input: CreateStructureInput!): Structure!
+
+  """Create a new structure category/schema in the graph"""
+  createStructureCategory(input: CreateStructureDefinitionInput!): StructureCategory!
+
+  """Create a new structure relation in the graph"""
+  createStructureRelation(input: CreateStructureRelationInput!): StructureRelation!
+
+  """Create a new structure relation category/schema in the graph"""
+  createStructureRelationCategory(input: CreateStructureRelationDefinitionInput!): StructureRelationCategory!
+
+  """Delete an existing category tag from the graph"""
+  deleteCategoryTag(input: DeleteCategoryTagInput!): ID!
+
+  """Delete an edge pairs query"""
+  deleteEdgePairsQuery(input: DeleteEdgePairsQueryInput!): ID!
+
+  """Delete an edge path query"""
+  deleteEdgePathQuery(input: DeleteEdgePathQueryInput!): ID!
+
+  """Delete an edge table query"""
+  deleteEdgeTableQuery(input: DeleteEdgeTableQueryInput!): ID!
+
+  """Delete an entity from the graph"""
+  deleteEntity(input: DeleteEntityInput!): GraphID!
+
+  """Delete an entity category/schema from the graph"""
+  deleteEntityCategory(input: DeleteEntityDefinitionInput!): ID!
+
+  """Delete a graph from the graph engine"""
+  deleteGraph(input: DeleteGraphInput!): ID!
+
+  """Delete a graph pairs query"""
+  deleteGraphPairsQuery(input: DeleteGraphPairsQueryInput!): ID!
+
+  """Delete a graph path query"""
+  deleteGraphPathQuery(input: DeleteGraphPathQueryInput!): ID!
+
+  """Delete a graph table query"""
+  deleteGraphTableQuery(input: DeleteGraphTableQueryInput!): ID!
+
+  """Delete a measurement from the graph"""
+  deleteMeasurement(input: DeleteMeasurementInput!): GraphID!
+
+  """Delete a measurement category/schema from the graph"""
+  deleteMeasurementCategory(input: DeleteMeasurementDefinitionInput!): ID!
+
+  """Delete a metric from the graph"""
+  deleteMetric(input: DeleteMetricInput!): GraphID!
+
+  """Delete a metric category/schema from the graph"""
+  deleteMetricCategory(input: DeleteMetricDefinitionInput!): ID!
+
+  """Delete a natural event from the graph"""
+  deleteNaturalEvent(input: DeleteNaturalEventInput!): GraphID!
+
+  """Delete a natural event category/schema from the graph"""
+  deleteNaturalEventCategory(input: DeleteNaturalEventDefinitionInput!): ID!
+
+  """Delete a node pairs query"""
+  deleteNodePairsQuery(input: DeleteNodePairsQueryInput!): ID!
+
+  """Delete a node path query"""
+  deleteNodePathQuery(input: DeleteNodePathQueryInput!): ID!
+
+  """Delete a node table query"""
+  deleteNodeTableQuery(input: DeleteNodeTableQueryInput!): ID!
+
+  """Delete a protocol event from the graph"""
+  deleteProtocolEvent(input: DeleteProtocolEventInput!): GraphID!
+
+  """Delete a protocol event category/schema from the graph"""
+  deleteProtocolEventCategory(input: DeleteProtocolEventDefinitionInput!): ID!
+
+  """Delete a relation from the graph"""
+  deleteRelation(input: DeleteRelationInput!): GraphID!
+
+  """Delete a relation category/schema from the graph"""
+  deleteRelationCategory(input: DeleteRelationDefinitionInput!): ID!
+
+  """Delete a scatter plot"""
+  deleteScatterPlot(input: DeleteScatterPlotInput!): ID!
+
+  """Delete a structure from the graph"""
+  deleteStructure(input: DeleteStructureInput!): GraphID!
+
+  """Delete a structure category/schema from the graph"""
+  deleteStructureCategory(input: DeleteStructureDefinitionInput!): ID!
+
+  """Delete a structure relation from the graph"""
+  deleteStructureRelation(input: DeleteStructureRelationInput!): GraphID!
+
+  """Delete a structure relation category/schema from the graph"""
+  deleteStructureRelationCategory(input: DeleteStructureRelationDefinitionInput!): ID!
+
+  """
+  Ensure a structure exists in the graph, creating it if it does not exist
+  """
+  ensureStructure(input: EnsureStructureInput!): Structure!
+
+  """Pin a node in the UI for a user"""
+  pinNode(input: PinNodeInput!): Node!
+
+  """Record a metric, auto-creating structure when allowed"""
+  recordMetric(input: RecordMetricInput!): Metric!
+
+  """Upload media and return a URL for access"""
+  requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
+
+  """Set a property on an existing entity in the graph"""
+  setEntityProperty(input: SetEntityPropertyInput!): Entity!
+
+  """Update an existing category tag in the graph"""
+  updateCategoryTag(input: UpdateCategoryTagInput!): CategoryTag!
+
+  """Update an edge pairs query"""
+  updateEdgePairsQuery(input: UpdateEdgePairsQueryInput!): EdgePairsQuery!
+
+  """Update an edge path query"""
+  updateEdgePathQuery(input: UpdateEdgePathQueryInput!): EdgePathQuery!
+
+  """Update an edge table query"""
+  updateEdgeTableQuery(input: UpdateEdgeTableQueryInput!): EdgeTableQuery!
+
+  """Update an existing entity in the graph"""
+  updateEntity(input: UpdateEntityInput!): Entity!
+
+  """Update an existing entity category/schema in the graph"""
+  updateEntityCategory(input: UpdateEntityDefinitionInput!): EntityCategory!
+
+  """Update an existing graph in the graph engine"""
+  updateGraph(input: UpdateGraphInput!): Graph!
+
+  """Update a graph pairs query"""
+  updateGraphPairsQuery(input: UpdateGraphPairsQueryInput!): GraphPairsQuery!
+
+  """Update a graph path query"""
+  updateGraphPathQuery(input: UpdateGraphPathQueryInput!): GraphPathQuery!
+
+  """Update a graph table query"""
+  updateGraphTableQuery(input: UpdateGraphTableQueryInput!): GraphTableQuery!
+
+  """Update an existing measurement in the graph"""
+  updateMeasurement(input: UpdateMeasurementInput!): Measurement!
+
+  """Update an existing measurement category/schema in the graph"""
+  updateMeasurementCategory(input: UpdateMeasurementDefinitionInput!): MeasurementCategory!
+
+  """Update an existing metric in the graph"""
+  updateMetric(input: UpdateMetricInput!): Metric!
+
+  """Update an existing metric category/schema in the graph"""
+  updateMetricCategory(input: UpdateMetricDefinitionInput!): MetricCategory!
+
+  """Update an existing natural event in the graph"""
+  updateNaturalEvent(input: UpdateNaturalEventInput!): NaturalEvent!
+
+  """Update an existing natural event category/schema in the graph"""
+  updateNaturalEventCategory(input: UpdateNaturalEventDefinitionInput!): NaturalEventCategory!
+
+  """Update a node pairs query"""
+  updateNodePairsQuery(input: UpdateNodePairsQueryInput!): NodePairsQuery!
+
+  """Update a node path query"""
+  updateNodePathQuery(input: UpdateNodePathQueryInput!): NodePathQuery!
+
+  """Update a node table query"""
+  updateNodeTableQuery(input: UpdateNodeTableQueryInput!): NodeTableQuery!
+
+  """Update an existing protocol event in the graph"""
+  updateProtocolEvent(input: UpdateProtocolEventInput!): ProtocolEvent!
+
+  """Update an existing protocol event category/schema in the graph"""
+  updateProtocolEventCategory(input: UpdateProtocolEventDefinitionInput!): ProtocolEventCategory!
+
+  """Update an existing relation in the graph"""
+  updateRelation(input: UpdateRelationInput!): Relation!
+
+  """Update an existing relation category/schema in the graph"""
+  updateRelationCategory(input: UpdateRelationDefinitionInput!): RelationCategory!
+
+  """Update a scatter plot"""
+  updateScatterPlot(input: UpdateScatterPlotInput!): ScatterPlot!
+
+  """Update an existing structure in the graph"""
+  updateStructure(input: UpdateStructureInput!): Structure!
+
+  """Update an existing structure category/schema in the graph"""
+  updateStructureCategory(input: UpdateStructureDefinitionInput!): StructureCategory!
+
+  """Update an existing structure relation in the graph"""
+  updateStructureRelation(input: UpdateStructureRelationInput!): StructureRelation!
+
+  """Update an existing structure relation category/schema in the graph"""
+  updateStructureRelationCategory(input: UpdateStructureRelationDefinitionInput!): StructureRelationCategory!
+}
+
+"""A natural event in the knowledge graph"""
+type NaturalEvent implements Event & Node & VersionedNode {
+  """The source entity of this relation"""
+  category: NaturalEventCategory!
+
+  """Category ID linking to NaturalEventCategory model"""
+  categoryId: String
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """The event type/kind"""
+  kind: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Timestamp when properties were last derived (unix ms)"""
+  lastDerived: UnixMilliseconds
+
+  """External object ID this entity references"""
+  lifecycle: String
+
+  """Local ID if set"""
+  localId: String
+
+  """List of the current derived properties for this event"""
+  measuredFrom: DateTime!
+
+  """The source entity of this relation"""
+  measuredTo: DateTime!
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """List of the current derived properties for this entity"""
+  properties: AnyScalar!
+
+  """List of properties derived for this entity"""
+  richProperties: [RichProperty!]!
+
+  """Schema version used to derive properties"""
+  schemaVersion: String!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""A relation category/schema definition"""
+type NaturalEventCategory implements Category & EventCategory & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """The graph this category belongs to"""
+  inputs: [EventRole!]!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  outputs: [EventRole!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Numeric/aggregatable fields of NaturalEventCategory"""
+enum NaturalEventCategoryField {
+  CREATED_AT
+}
+
+input NaturalEventCategoryFilter {
+  AND: NaturalEventCategoryFilter
+  DISTINCT: Boolean
+  NOT: NaturalEventCategoryFilter
+  OR: NaturalEventCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input NaturalEventCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type NaturalEventCategoryStats {
+  """Average value"""
+  avg(field: NaturalEventCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: NaturalEventCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: NaturalEventCategoryField!): Float
+
+  """Minimum value"""
+  min(field: NaturalEventCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: NaturalEventCategoryField!): Float
+}
+
+"""Filter options for querying natural events"""
+input NaturalEventFilter {
+  """Filter natural events that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific natural event IDs"""
+  ids: [GraphID!] = null
+
+  """Filter natural events that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over natural event properties"""
+  search: String = null
+}
+
+"""Ordering options for natural event queries"""
+input NaturalEventOrder {
+  """Order by natural event category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by natural event ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying natural events"""
+input NaturalEventPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""Base interface for all graph nodes"""
+interface Node {
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""Base interface for graph schemas"""
+interface NodeCategory {
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Filter options for querying nodes"""
+input NodeFilters {
+  """Filter nodes that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific node IDs"""
+  ids: [GraphID!] = null
+
+  """Filter nodes that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over node properties"""
+  search: String = null
+}
+
+"""Ordering options for node queries"""
+input NodeOrder {
+  """Order by entity kind/type"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by entity ID"""
+  id: Ordering = null
+
+  """Order by a specific property value (requires 'has_property' filter)"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying nodes"""
+input NodePaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""Base interface for graph schemas"""
+type NodePairsQuery implements NodeQuery {
+  """Description of the category"""
+  description: String
+
+  """Optional edge category/schema to filter pairs by"""
+  edgeCategory: EdgeCategory
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The source node category/schema to query"""
+  sourceCategory: NodeCategory!
+
+  """The target node category/schema to query"""
+  targetCategory: NodeCategory!
+}
+
+input NodePairsQueryFilter {
+  AND: NodePairsQueryFilter
+  DISTINCT: Boolean
+  NOT: NodePairsQueryFilter
+  OR: NodePairsQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input NodePairsQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Base interface for graph schemas"""
+type NodePathQuery implements NodeQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+input NodePathQueryFilter {
+  AND: NodePathQueryFilter
+  DISTINCT: Boolean
+  NOT: NodePathQueryFilter
+  OR: NodePathQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input NodePathQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+"""Base interface for entity categories/schemas"""
+interface NodeQuery {
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+}
+
+"""Base interface for graph schemas"""
+type NodeTableQuery implements NodeQuery & Plottable {
+  """
+  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
+  """
+  builderArgs: BuilderArgs
+
+  """List of columns to return in the table query result"""
+  columns: [Column!]!
+
+  """Description of the category"""
+  description: String
+
+  """The graph this query belongs to"""
+  graph: Graph!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The Cypher query to execute for this table query"""
+  query: CypherLiteral!
+
+  """List of node categories for which this query is relevant"""
+  relevantFor: [NodeCategory!]!
+
+  """The graph this category belongs to"""
+  scatterPlots: [ScatterPlot!]!
+}
+
+input NodeTableQueryFilter {
+  AND: NodeTableQueryFilter
+  DISTINCT: Boolean
+  NOT: NodeTableQueryFilter
+  OR: NodeTableQueryFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+input NodeTableQueryOrder @oneOf {
+  id: Ordering
+  label: Ordering
+}
+
+input OffsetPaginationInput {
+  limit: Int
+  offset: Int! = 0
+}
+
+"""An ontology reference in the graph schema"""
+type OntologyReference {
+  """The ontology prefix (e.g. 'OBI'). Must be defined in graph prefixes."""
+  prefix: String!
+
+  """The ontology term ID (e.g., '0008150')"""
+  termId: String!
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input OntologyReferenceInput {
+  """The ontology prefix (e.g. 'OBI'). Must be defined in graph prefixes."""
+  prefix: String!
+
+  """The full URI for the ontology term"""
+  uri: String!
+}
+
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
+"""A natural event category/schema definition"""
+type OutputParticipation implements Edge {
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """The graph this node belongs to"""
+  role: String!
+
+  """The graph this node belongs to"""
+  source: NaturalEvent!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Entity!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""Base interface for graph render results"""
+interface PathLike {
+  """Edges in the path"""
+  edges: [Edge!]!
+
+  """Nodes in the path"""
+  nodes: [Node!]!
+}
+
+"""Input for creating a new structure"""
+input PinNodeInput {
+  """The ID of the structure category/type to create"""
+  category: String!
+
+  """The graph id this structure will belong to"""
+  graph: String!
+
+  """List of measurements associated with this structure"""
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
+"""Base interface for plottable queries"""
+interface Plottable {
+  """List of columns to return in the table query result"""
+  columns: [Column!]!
+
+  """The graph this category belongs to"""
+  scatterPlots: [ScatterPlot!]!
+}
+
+input PrefixInput {
+  """The prefix string (e.g. 'OBI')"""
+  prefix: String!
+
+  """
+  The URI that the prefix maps to (e.g. 'http://purl.obolibrary.org/obo/OBI_')
+  """
+  uri: String!
+}
+
+"""
+Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)
+"""
+type PresignedPostCredentials {
+  bucket: String!
+  datalayer: String!
+  key: String!
+  policy: String!
+  store: String!
+  xAmzAlgorithm: String!
+  xAmzCredential: String!
+  xAmzDate: String!
+  xAmzSignature: String!
+}
+
+"""A property definition from the graph schema"""
+type PropertyDefinition {
+  """
+  Derivation type: LATEST, PRIORITY_LATEST, ROLLUP, LATEST_ASSERTION_TOOL
+  """
+  derivation: DerivationType!
+
+  """Description of this property"""
+  description: String
+
+  """Whether to create an index on this property for faster queries"""
+  index: Boolean!
+
+  """Property key/name"""
+  key: String!
+
+  """
+  Optional human-readable label for this property (defaults to 'key' if not provided)
+  """
+  label: String
+
+  """Rule configuration for ROLLUP derivation"""
+  rule: DerivationRule
+
+  """Whether this property should be full-text searchable"""
+  searchable: Boolean!
+
+  """Unit of measurement"""
+  unit: String
+  valueKind: ValueKind!
+}
+
+"""Definition of a property on an entity, structure, or relation"""
+input PropertyDefinitionInput {
+  """
+  Derivation type: LATEST, PRIORITY_LATEST, ROLLUP, LATEST_ASSERTION_TOOL
+  """
+  derivation: DerivationType! = LATEST
+
+  """Description of this property"""
+  description: String = null
+
+  """Whether to create an index on this property for faster queries"""
+  index: Boolean! = false
+
+  """Property key/name"""
+  key: String!
+
+  """
+  Optional human-readable label for this property (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Rule configuration for ROLLUP derivation"""
+  rule: DerivationRuleInput = null
+
+  """Whether this property should be full-text searchable"""
+  searchable: Boolean! = false
+
+  """Unit of measurement"""
+  unit: String = null
+  valueKind: ValueKind!
+}
+
+"""A property match condition for filtering entities"""
+input PropertyMatch {
+  """The property matching"""
+  key: String!
+
+  """The operator to use"""
+  operator: WhereOperator!
+
+  """THe value to filter agains"""
+  value: String!
+}
+
+"""Ordering options for graph table queries"""
+input PropertyOrder {
+  """The direction to order (ASC or DESC)"""
+  direction: Ordering!
+
+  """The property key to order by"""
+  key: String!
+}
+
+"""Input for ensuring an entity exists with a given global ID"""
+input PropertySet {
+  """The property key/label"""
+  key: String!
+
+  """The property value"""
+  value: JSON!
+}
+
+enum PropertyType {
+  BOOLEAN
+  DATETIME
+  FLOAT
+  INTEGER
+  POINT_3D
+  STRING
+}
+
+"""A protocol event in the graph"""
+type ProtocolEvent implements Event & Node & VersionedNode {
+  """The source entity of this relation"""
+  category: ProtocolEventCategory!
+
+  """Category ID linking to ProtocolEventCategory model"""
+  categoryId: String
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """The event type/kind"""
+  kind: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Timestamp when properties were last derived (unix ms)"""
+  lastDerived: UnixMilliseconds
+
+  """External object ID this entity references"""
+  lifecycle: String
+
+  """Local ID if set"""
+  localId: String
+
+  """List of the current derived properties for this event"""
+  measuredFrom: DateTime!
+
+  """The source entity of this relation"""
+  measuredTo: DateTime!
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """List of the current derived properties for this entity"""
+  properties: AnyScalar!
+
+  """List of properties derived for this entity"""
+  richProperties: [RichProperty!]!
+
+  """Schema version used to derive properties"""
+  schemaVersion: String!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""A relation category/schema definition"""
+type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """The graph this category belongs to"""
+  inputs: [EventRole!]!
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  outputs: [EventRole!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Numeric/aggregatable fields of ProtocolEventCategory"""
+enum ProtocolEventCategoryField {
+  CREATED_AT
+}
+
+input ProtocolEventCategoryFilter {
+  AND: ProtocolEventCategoryFilter
+  DISTINCT: Boolean
+  NOT: ProtocolEventCategoryFilter
+  OR: ProtocolEventCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input ProtocolEventCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type ProtocolEventCategoryStats {
+  """Average value"""
+  avg(field: ProtocolEventCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: ProtocolEventCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: ProtocolEventCategoryField!): Float
+
+  """Minimum value"""
+  min(field: ProtocolEventCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: ProtocolEventCategoryField!): Float
+}
+
+"""Filter options for querying protocol events"""
+input ProtocolEventFilter {
+  """Filter protocol events that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific protocol event IDs"""
+  ids: [GraphID!] = null
+
+  """Filter protocol events that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over protocol event properties"""
+  search: String = null
+}
+
+"""Ordering options for protocol event queries"""
+input ProtocolEventOrder {
+  """Order by protocol event category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by protocol event ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying protocol events"""
+input ProtocolEventPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
+  _service: _Service!
+
+  """
+  List activities in a graph with optional filters, ordering, and pagination
+  """
+  activities(filters: NodeFilters = null, graph: ID!, ordering: [NodeOrder!] = null, pagination: NodePaginationInput = null): [Activity!]!
+
+  """Get an activity node by composite graph ID"""
+  activity(id: GraphID!): Activity!
+
+  """Get an assertion edge by composite graph ID"""
+  assertion(id: GraphID!): Assertion!
+
+  """List assertion edges in a graph"""
+  assertions(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [Assertion!]!
+
+  """Get aggregated category-tag stats with optional filters"""
+  categoryTagStats(filters: CategoryTagFilter = null): CategoryTagStats!
+
+  """List all category tags"""
+  categoryTags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Get a description edge by composite graph ID"""
+  description(id: GraphID!): Description!
+
+  """List description edges in a graph"""
+  descriptions(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [Description!]!
+
+  """Show all saved edge pairs queries"""
+  edgePairsQueries(filters: EdgePairsQueryFilter, ordering: [EdgePairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgePairsQuery!]!
+
+  """Show a single saved edge pairs query by ID"""
+  edgePairsQuery(id: ID!): EdgePairsQuery!
+
+  """Show all saved edge path queries"""
+  edgePathQueries(filters: EdgePathQueryFilter, ordering: [EdgePathQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgePathQuery!]!
+
+  """Show a single saved edge path query by ID"""
+  edgePathQuery(id: ID!): EdgePathQuery!
+
+  """Show all saved edge queries"""
+  edgeQueries: [EdgeQuery!]!
+
+  """Show a single saved edge query by ID"""
+  edgeQuery(id: ID!): EdgeQuery!
+
+  """Show all saved edge table queries"""
+  edgeTableQueries(filters: EdgeTableQueryFilter, ordering: [EdgeTableQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgeTableQuery!]!
+
+  """Show a single saved edge table query by ID"""
+  edgeTableQuery(id: ID!): EdgeTableQuery!
+
+  """List entities with optional filters, ordering, and pagination"""
+  entities(entityCategoryId: ID!, filters: EntityFilter = null, ordering: [EntityOrder!] = null, pagination: EntityPaginationInput = null): [Entity!]!
+
+  """Get an entity by ID"""
+  entity(id: GraphID!): Entity!
+
+  """List all entity categories/schemas"""
+  entityCategories(filters: EntityCategoryFilter, ordering: [EntityCategoryOrder!]! = [], pagination: OffsetPaginationInput): [EntityCategory!]!
+
+  """Get a single entity category/schema by ID"""
+  entityCategory(id: ID!): EntityCategory!
+
+  """Get aggregated entity-category stats with optional filters"""
+  entityCategoryStats(filters: EntityCategoryFilter = null): EntityCategoryStats!
+
+  """Get a graph by ID"""
+  graph(id: ID!): Graph!
+
+  """Show a single saved graph node query by ID"""
+  graphNodeQuery(id: ID!): GraphNodesQuery!
+
+  """Show all saved graph nodes queries"""
+  graphNodesQueries(filters: GraphNodesQueryFilter, ordering: [GraphNodesQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphNodesQuery!]!
+
+  """Show all saved graph pairs queries"""
+  graphPairsQueries(filters: GraphPairsQueryFilter, ordering: [GraphPairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphPairsQuery!]!
+
+  """Show a single saved graph pairs query by ID"""
+  graphPairsQuery(id: ID!): GraphPairsQuery!
+
+  """Show all saved graph queries"""
+  graphQueries: [GraphQuery!]!
+
+  """Show a single saved graph query by ID"""
+  graphQuery(id: ID!): GraphQuery!
+
+  """Get aggregated graph stats with optional filters"""
+  graphStats(filters: GraphFilter = null): GraphStats!
+
+  """Show all saved graph table queries"""
+  graphTableQueries(filters: GraphTableQueryFilter, ordering: [GraphTableQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphTableQuery!]!
+
+  """Show a single saved graph table query by ID"""
+  graphTableQuery(id: ID!): GraphTableQuery!
+
+  """List all graphs in the graph engine"""
+  graphs(filters: GraphFilter, ordering: [GraphOrder!]! = [], pagination: OffsetPaginationInput): [Graph!]!
+
+  """Get an input participation edge by composite graph ID"""
+  inputParticipation(id: GraphID!): InputParticipation!
+
+  """List input participation edges in a graph"""
+  inputParticipations(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [InputParticipation!]!
+
+  """Get a single materialized edge by ID"""
+  materializedEdge(id: ID!): MaterializedEdge!
+
+  """List all materialized edges in the graph"""
+  materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """Get a measurement by composite graph ID"""
+  measurement(id: GraphID!): Measurement!
+
+  """List all measurement categories/schemas"""
+  measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
+
+  """Get a single measurement category/schema by ID"""
+  measurementCategory(id: ID!): MeasurementCategory!
+
+  """Get aggregated measurement-category stats with optional filters"""
+  measurementCategoryStats(filters: MeasurementCategoryFilter = null): MeasurementCategoryStats!
+
+  """List measurements for a measurement category"""
+  measurements(filters: MeasurementFilter = null, measurementCategoryId: ID!, ordering: [MeasurementOrder!] = null, pagination: MeasurementPaginationInput = null): [Measurement!]!
+
+  """Get a metric by ID"""
+  metric(metricId: GraphID!): Metric!
+
+  """List all metric categories/schemas"""
+  metricCategories(filters: MetricCategoryFilter, ordering: [MetricCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MetricCategory!]!
+
+  """Get a single metric category/schema by ID"""
+  metricCategory(id: ID!): MetricCategory!
+
+  """Get aggregated metric-category stats with optional filters"""
+  metricCategoryStats(filters: MetricCategoryFilter = null): MetricCategoryStats!
+
+  """List metrics for a metric category"""
+  metrics(filters: MetricFilter = null, metricCategoryId: ID!, ordering: [MetricOrder!] = null, pagination: MetricPaginationInput = null): [Metric!]!
+
+  """Get a natural event by composite graph ID"""
+  naturalEvent(id: GraphID!): NaturalEvent!
+
+  """List all natural event categories/schemas"""
+  naturalEventCategories(filters: NaturalEventCategoryFilter, ordering: [NaturalEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [NaturalEventCategory!]!
+
+  """Get a single natural event category/schema by ID"""
+  naturalEventCategory(id: ID!): NaturalEventCategory!
+
+  """Get aggregated natural-event-category stats with optional filters"""
+  naturalEventCategoryStats(filters: NaturalEventCategoryFilter = null): NaturalEventCategoryStats!
+
+  """List natural events for a natural event category"""
+  naturalEvents(filters: NaturalEventFilter = null, naturalEventCategoryId: ID!, ordering: [NaturalEventOrder!] = null, pagination: NaturalEventPaginationInput = null): [NaturalEvent!]!
+
+  """Get a node by ID"""
+  node(id: GraphID!): Node!
+
+  """Show all saved node pairs queries"""
+  nodePairsQueries(filters: NodePairsQueryFilter, ordering: [NodePairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodePairsQuery!]!
+
+  """Show a single saved node pairs query by ID"""
+  nodePairsQuery(id: ID!): NodePairsQuery!
+
+  """Show all saved node path queries"""
+  nodePathQueries(filters: NodePathQueryFilter, ordering: [NodePathQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodePathQuery!]!
+
+  """Show a single saved node path query by ID"""
+  nodePathQuery(id: ID!): NodePathQuery!
+
+  """Show all saved node queries"""
+  nodeQueries: [NodeQuery!]!
+
+  """Show a single saved node query by ID"""
+  nodeQuery(id: ID!): NodeQuery!
+
+  """Show all saved node table queries"""
+  nodeTableQueries(filters: NodeTableQueryFilter, ordering: [NodeTableQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodeTableQuery!]!
+
+  """Show a single saved node table query by ID"""
+  nodeTableQuery(id: ID!): NodeTableQuery!
+
+  """List nodes with optional filters, ordering, and pagination"""
+  nodes(filters: NodeFilters = null, graph: ID!, ordering: [NodeOrder!] = null, pagination: NodePaginationInput = null): [Node!]!
+
+  """Get an output participation edge by composite graph ID"""
+  outputParticipation(id: GraphID!): OutputParticipation!
+
+  """List output participation edges in a graph"""
+  outputParticipations(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [OutputParticipation!]!
+
+  """Get a protocol event by composite graph ID"""
+  protocolEvent(id: GraphID!): ProtocolEvent!
+
+  """List all protocol event categories/schemas"""
+  protocolEventCategories(filters: ProtocolEventCategoryFilter, ordering: [ProtocolEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [ProtocolEventCategory!]!
+
+  """Get a single protocol event category/schema by ID"""
+  protocolEventCategory(id: ID!): ProtocolEventCategory!
+
+  """Get aggregated protocol-event-category stats with optional filters"""
+  protocolEventCategoryStats(filters: ProtocolEventCategoryFilter = null): ProtocolEventCategoryStats!
+
+  """List protocol events for a protocol event category"""
+  protocolEvents(filters: ProtocolEventFilter = null, ordering: [ProtocolEventOrder!] = null, pagination: ProtocolEventPaginationInput = null, protocolEventCategoryId: ID!): [ProtocolEvent!]!
+
+  """Get a relation by composite graph ID"""
+  relation(id: GraphID!): Relation!
+
+  """List all relation categories/schemas"""
+  relationCategories(filters: RelationCategoryFilter, ordering: [RelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [RelationCategory!]!
+
+  """Get a single relation category/schema by ID"""
+  relationCategory(id: ID!): RelationCategory!
+
+  """Get aggregated relation-category stats with optional filters"""
+  relationCategoryStats(filters: RelationCategoryFilter = null): RelationCategoryStats!
+
+  """List relations for a relation category"""
+  relations(filters: RelationFilter = null, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null, relationCategoryId: ID!): [Relation!]!
+
+  """Render results for a graph nodes query"""
+  renderGraphNodes(filters: RenderGraphNodesFilter = null, order: RenderGraphNodesOrder = null, pagination: RenderGraphNodesPagination = null, query: ID!): GraphNodesRender!
+
+  """Render results for a graph pairs query"""
+  renderGraphPairs(filters: RenderGraphPathFilter = null, order: RenderGraphPathOrder = null, pagination: RenderGraphPathPagination = null, query: ID!): GraphPathRender!
+
+  """Render results for a graph path query"""
+  renderGraphPath(filters: RenderGraphPathFilter = null, order: RenderGraphPathOrder = null, pagination: RenderGraphPathPagination = null, query: ID!): GraphPathRender
+
+  """Render results for a graph table query"""
+  renderGraphTable(filters: RenderGraphTableFilter = null, order: RenderGraphTableOrder = null, pagination: RenderGraphTablePagination = null, query: ID!): GraphTableRender
+
+  """Show a single saved scatter plot by ID"""
+  scatterPlot(id: ID!): ScatterPlot!
+
+  """Show all saved scatter plots"""
+  scatterPlots(filters: ScatterPlotFilter, ordering: [ScatterPlotOrder!]! = [], pagination: OffsetPaginationInput): [ScatterPlot!]!
+
+  """Get a structure by composite graph ID"""
+  structure(id: GraphID!): Structure!
+
+  """Get a structure by graph, identifier and object"""
+  structureByIdentifier(graph: ID!, identifier: StructureIdentifier!, object: StructureObject!): Structure!
+
+  """List all structure categories/schemas"""
+  structureCategories(filters: StructureCategoryFilter, ordering: [StructureCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureCategory!]!
+
+  """Get a single structure category/schema by ID"""
+  structureCategory(id: ID!): StructureCategory!
+
+  """Get aggregated structure-category stats with optional filters"""
+  structureCategoryStats(filters: StructureCategoryFilter = null): StructureCategoryStats!
+
+  """Get a structure relation by composite graph ID"""
+  structureRelation(id: GraphID!): StructureRelation!
+
+  """List all structure relation categories/schemas"""
+  structureRelationCategories(filters: StructureRelationCategoryFilter, ordering: [StructureRelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureRelationCategory!]!
+
+  """Get a single structure relation category/schema by ID"""
+  structureRelationCategory(id: ID!): StructureRelationCategory!
+
+  """Get aggregated structure-relation-category stats with optional filters"""
+  structureRelationCategoryStats(filters: StructureRelationCategoryFilter = null): StructureRelationCategoryStats!
+
+  """List structure relations for a structure relation category"""
+  structureRelations(filters: StructureRelationFilter = null, ordering: [StructureRelationOrder!] = null, pagination: StructureRelationPaginationInput = null, structureRelationCategoryId: ID!): [StructureRelation!]!
+
+  """List structures with optional filters, ordering, and pagination"""
+  structures(filters: StructureFilter = null, ordering: [StructureOrder!] = null, pagination: StructurePaginationInput = null, structureCategoryId: ID!): [Structure!]!
+}
+
+"""Input for creating a new metric"""
+input RecordMetricInput {
+  """The graph id this metric will belong to"""
+  graph: String!
+
+  """The schema identifier for this metric (e.g. '@mikro/roi_volume')"""
+  identifier: String!
+  key: String!
+
+  """The unique ID of the object this metric references"""
+  object: String!
+  value: AnyScalar!
+
+  """
+  The kind of value this metric represents (e.g. 'float', 'integer', 'string', etc.)
+  """
+  valueKind: PropertyType!
+}
+
+"""A relation edge between two entities"""
+type Relation implements Edge {
+  """The graph this node belongs to"""
+  category: RelationCategory!
+
+  """When this relation was created"""
+  createdAt: DateTime
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """When this relation became valid according to the evidence"""
+  measuredFrom: DateTime
+
+  """When this relation stopped being valid according to the evidence"""
+  measuredTo: DateTime
+
+  """List of the current derived properties for this entity"""
+  properties: AnyScalar!
+
+  """List of properties derived for this entity"""
+  richProperties: [RichProperty!]!
+
+  """The graph this node belongs to"""
+  source: Entity!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Entity!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""A relation category/schema definition"""
+type RelationCategory implements Category & EdgeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  materializableAs: [MaterializedEdge!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant queries that use this category as input"""
+  relevantEdgeQueries: [EdgeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """The graph this category belongs to"""
+  sourceDescriptor: EntityDescriptor!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """The graph this category belongs to"""
+  targetDescriptor: EntityDescriptor!
+}
+
+"""Numeric/aggregatable fields of RelationCategory"""
+enum RelationCategoryField {
+  CREATED_AT
+}
+
+input RelationCategoryFilter {
+  AND: RelationCategoryFilter
+  DISTINCT: Boolean
+  NOT: RelationCategoryFilter
+  OR: RelationCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input RelationCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type RelationCategoryStats {
+  """Average value"""
+  avg(field: RelationCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: RelationCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: RelationCategoryField!): Float
+
+  """Minimum value"""
+  min(field: RelationCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: RelationCategoryField!): Float
+}
+
+"""Definition of a relation type in the graph schema"""
+input RelationDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Relation type name/key"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: EntityDescriptorInput!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: EntityDescriptorInput!
+}
+
+"""Filter options for querying relations"""
+input RelationFilter {
+  """Filter relations that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific relation IDs"""
+  ids: [GraphID!] = null
+
+  """Filter relations that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over relation properties"""
+  search: String = null
+}
+
+"""Ordering options for relation queries"""
+input RelationOrder {
+  """Order by relation category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by relation ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying relations"""
+input RelationPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""A structure that provides evidence for entities"""
+type RelationShadowLink implements Node {
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Schema identifier (e.g. '@mikro/roi')"""
+  reifies: Relation!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""Filters for querying node lists"""
+input RenderGraphNodesFilter {
+  key: String!
+  operator: String!
+  value: String!
+}
+
+"""Ordering options for querying node lists"""
+input RenderGraphNodesOrder {
+  direction: String! = "asc"
+  key: String!
+}
+
+"""Pagination options for querying node lists"""
+input RenderGraphNodesPagination {
+  limit: Int!
+  offset: Int!
+}
+
+"""Filters for querying node lists"""
+input RenderGraphPathFilter {
+  key: String = null
+  operator: String = null
+  search: String = null
+  value: String = null
+}
+
+"""Ordering options for querying node lists"""
+input RenderGraphPathOrder {
+  direction: String! = "asc"
+  key: String!
+}
+
+"""Pagination options for querying node lists"""
+input RenderGraphPathPagination {
+  limit: Int!
+  offset: Int!
+}
+
+"""Filters for querying node lists"""
+input RenderGraphTableFilter {
+  key: String = null
+  operator: String = null
+  search: String = null
+  value: String!
+}
+
+"""Ordering options for querying node lists"""
+input RenderGraphTableOrder {
+  direction: String! = "asc"
+  key: String!
+}
+
+"""Pagination options for querying node lists"""
+input RenderGraphTablePagination {
+  limit: Int!
+  offset: Int!
+}
+
+input RequestMediaUploadInput {
+  contentType: String = null
+  datalayer: String!
+  fileSize: Int = null
+  key: String!
+}
+
+"""Input type for creating a new graph"""
+type ReturnStatement {
+  """The node ID to return"""
+  node: String
+
+  """The path ID to return"""
+  path: String!
+
+  """The property name to return"""
+  property: String
+}
+
+"""Input for a return statement in a graph table query builder"""
+input ReturnStatementInput {
+  """The node ID to return"""
+  node: String = null
+
+  """The path ID to return"""
+  path: String!
+
+  """The property name to return"""
+  property: String = null
+}
+
+"""A rich property with metadata from schema and graph"""
+type RichProperty {
+  """The property key/name"""
+  definition: PropertyDefinition
+
+  """Local AGE graph ID"""
+  graphId: GraphID!
+
+  """The timestamp when this property was last derived (unix ms)"""
+  key: String
+
+  """
+  Supporting evidence for this property, in form of metrics derived from observations/measurements
+  """
+  supportingEvidence: [Metric!]!
+
+  """The property value"""
+  value: AnyScalar
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input RoleMappingInput {
+  """The ID of the entity assigned to this role"""
+  entityId: String!
+
+  """The role name"""
+  role: String!
+}
+
+"""Result of linking a structure to an entity"""
+type ScatterPlot {
+  """The name of the column to use for color values (optional)"""
+  colorColumn: String
+
+  """Description of the scatter plot definition"""
+  description: String
+
+  """Database ID of the category"""
+  id: ID!
+
+  """
+  The name of the column to use for point identifiers (e.g. structure ID, or entity id)
+  """
+  idColumn: String!
+
+  """Label/name of the scatter plot definition"""
+  label: String!
+
+  """The graph this category belongs to"""
+  query: Plottable!
+
+  """The name of the column to use for shape values (optional)"""
+  shapeColumn: String
+
+  """The name of the column to use for size values (optional)"""
+  sizeColumn: String
+
+  """The name of the column to use for x values"""
+  xColumn: String!
+
+  """The name of the column to use for y values"""
+  yColumn: String!
+}
+
+input ScatterPlotFilter {
+  AND: ScatterPlotFilter
+  DISTINCT: Boolean
+  NOT: ScatterPlotFilter
+  OR: ScatterPlotFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: String
+
+  """Full-text search over label and description"""
+  search: String
+}
+
+"""Input for creating a new graph from a schema definition"""
+input ScatterPlotInput {
+  """Optional column key to use for coloring the points"""
+  colorBy: String = null
+
+  """The key of the graph table query that provides the data for this plot"""
+  graphTableQuery: String
+
+  """Unique key for this plot definition, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable label for this plot definition (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """The key of the node table query that provides the data for this plot"""
+  nodeTableQuery: String
+
+  """The key of the path table query that provides the data for this plot"""
+  pathTableQuery: String
+
+  """Optional column key to use for sizing the points"""
+  sizeBy: String = null
+
+  """The column key to use for the x-axis"""
+  xAxis: String!
+
+  """The column key to use for the y-axis"""
+  yAxis: String!
+}
+
+input ScatterPlotOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+"""Input for creating a new graph from a schema definition"""
+input SequenceInput {
+  """The prefix string (e.g. 'IAZ')"""
+  prefix: String!
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input SequenceMappingInput {
+  """The property key that will be set with the sequence value"""
+  property: String!
+
+  """The sequence identifier (e.g., 'IAZ001')"""
+  sequence: String!
+}
+
+"""Input for ensuring an entity exists with a given global ID"""
+input SetEntityPropertyInput {
+  """The ID of the entity to update"""
+  entityId: GraphID!
+
+  """The property key to set"""
+  key: String!
+
+  """The value to set for this property"""
+  value: JSON!
+}
+
+"""A structure that provides evidence for entities"""
+type Structure implements Node {
+  """The graph this node belongs to"""
+  category: StructureCategory!
+
+  """Category ID linking to StructureCategory model"""
+  categoryId: String!
+
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """Schema identifier (e.g. '@mikro/roi')"""
+  identifier: StructureIdentifier!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The graph this node belongs to"""
+  metrics: [Metric!]!
+
+  """External object ID this structure references"""
+  object: String!
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""A structure category/schema definition"""
+type StructureCategory implements Category & NodeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Height for visualization (optional)"""
+  height: Float
+
+  """Database ID of the category"""
+  id: ID!
+
+  """
+  The identifier for this structure category, which is used to link structures to entities (e.g. 'Cell', 'ROI', 'Tissue')
+  """
+  identifier: String!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """X coordinate"""
+  positionX: Float
+
+  """Y coordinate"""
+  positionY: Float
+
+  """Z coordinate (optional)"""
+  positionZ: Float
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant node queries that use this category as input"""
+  relevantNodeQueries: [NodeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """Width for visualization (optional)"""
+  width: Float
+}
+
+"""Numeric/aggregatable fields of StructureCategory"""
+enum StructureCategoryField {
+  CREATED_AT
+}
+
+input StructureCategoryFilter {
+  AND: StructureCategoryFilter
+  DISTINCT: Boolean
+  NOT: StructureCategoryFilter
+  OR: StructureCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input StructureCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type StructureCategoryStats {
+  """Average value"""
+  avg(field: StructureCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: StructureCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: StructureCategoryField!): Float
+
+  """Minimum value"""
+  min(field: StructureCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: StructureCategoryField!): Float
+}
+
+"""Input type for creating a new graph query"""
+type StructureDescriptor {
+  """Default category to link to if no entities match the filters"""
+  defaultCategoryKey: String
+
+  """Filter by entity key/label"""
+  keys: [String!]
+
+  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  ontotologyTerms: [String!]
+
+  """Filter by tags on the entity"""
+  tags: [String!]
+}
+
+"""Filter options for querying structures"""
+input StructureFilter {
+  """Filter structures that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific structure IDs"""
+  ids: [GraphID!] = null
+
+  """Filter structures that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over structure properties"""
+  search: String = null
+}
+
+"""
+The `StructureIdentifier` scalar type represents a structure identifier (e.g. '@mikro/roi')
+"""
+scalar StructureIdentifier
+
+"""
+The `StructureObject` scalar type represents a structure object (e.g 1) on a specific identifier)
+"""
+scalar StructureObject
+
+"""Ordering options for structure queries"""
+input StructureOrder {
+  """Order by structure kind/type"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by structure ID"""
+  id: Ordering = null
+
+  """Order by a specific property value (requires 'has_property' filter)"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying structures"""
+input StructurePaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""Input for creating a new natural event definition in the graph schema"""
+input StructureReferenceInput {
+  """Schema identifier, e.g. '@mikro/roi'"""
+  identifier: String!
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
+"""A relation edge between two structures"""
+type StructureRelation implements Edge {
+  """The graph this node belongs to"""
+  category: StructureRelationCategory!
+
+  """Category ID linking to StructureRelationCategory model"""
+  categoryId: String
+
+  """When this relation was created"""
+  createdAt: DateTime
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """When this relation became valid according to the evidence"""
+  measuredFrom: DateTime
+
+  """When this relation stopped being valid according to the evidence"""
+  measuredTo: DateTime
+
+  """The graph this node belongs to"""
+  source: Structure!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The graph this node belongs to"""
+  target: Structure!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""A relation category/schema definition"""
+type StructureRelationCategory implements Category & EdgeCategory {
+  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
+  ageName: String!
+
+  """Color as RGBA list (0-255)"""
+  color: [Int!]
+
+  """Description of the category"""
+  description: String
+
+  """The graph this category belongs to"""
+  graph: Graph!
+
+  """ID of the graph this category belongs to"""
+  graphId: ID!
+
+  """Database ID of the category"""
+  id: ID!
+
+  """An image representing this category, for visualization purposes"""
+  image: MediaStore
+
+  """Label/name of the category"""
+  label: String!
+
+  """The graph this category belongs to"""
+  materializableAs: [MaterializedEdge!]!
+
+  """The graph this category belongs to"""
+  pinned: Boolean!
+
+  """List of property definitions for this entity category"""
+  propertyDefinitions: [PropertyDefinition!]!
+
+  """Persistent URL for this category"""
+  purl: String
+
+  """List of relevant queries that use this category as input"""
+  relevantEdgeQueries: [EdgeQuery!]!
+
+  """List of relevant queries that use this category as input"""
+  relevantQueries: [GraphQuery!]!
+
+  """The graph this category belongs to"""
+  sourceDescriptor: StructureDescriptor!
+
+  """List of tags associated with this category"""
+  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """The graph this category belongs to"""
+  targetDescriptor: StructureDescriptor!
+}
+
+"""Numeric/aggregatable fields of StructureRelationCategory"""
+enum StructureRelationCategoryField {
+  CREATED_AT
+}
+
+input StructureRelationCategoryFilter {
+  AND: StructureRelationCategoryFilter
+  DISTINCT: Boolean
+  NOT: StructureRelationCategoryFilter
+  OR: StructureRelationCategoryFilter
+  graph: GraphFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  label: String
+
+  """Filter by list of IDs"""
+  pinned: Boolean
+
+  """Filter by list of IDs"""
+  search: String
+}
+
+input StructureRelationCategoryOrder @oneOf {
+  id: Ordering
+  instanceKind: Ordering
+  label: Ordering
+}
+
+type StructureRelationCategoryStats {
+  """Average value"""
+  avg(field: StructureRelationCategoryField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: StructureRelationCategoryField!): Int!
+
+  """Maximum value"""
+  max(field: StructureRelationCategoryField!): Float
+
+  """Minimum value"""
+  min(field: StructureRelationCategoryField!): Float
+
+  """Sum of values"""
+  sum(field: StructureRelationCategoryField!): Float
+}
+
+"""Input for creating a new graph from a schema definition"""
+input StructureRelationDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Relation type name/key"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: EntityDescriptorInput!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: EntityDescriptorInput!
+}
+
+"""Filter options for querying structure relations"""
+input StructureRelationFilter {
+  """Filter structure relations that have a specific property"""
+  hasProperty: String = null
+
+  """Filter by specific structure relation IDs"""
+  ids: [GraphID!] = null
+
+  """Filter structure relations that match specific property conditions"""
+  matches: [PropertyMatch!] = null
+
+  """Full-text search over structure relation properties"""
+  search: String = null
+}
+
+"""Ordering options for structure relation queries"""
+input StructureRelationOrder {
+  """Order by structure relation category"""
+  category: Ordering = null
+
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
+
+  """Order by structure relation ID"""
+  id: Ordering = null
+
+  """Order by a specific property value"""
+  property: PropertyOrder = null
+}
+
+"""Pagination options for querying structure relations"""
+input StructureRelationPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
+}
+
+"""A structure that provides evidence for entities"""
+type StructureRelationShadowLink implements Node {
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Schema identifier (e.g. '@mikro/roi')"""
+  reifies: StructureRelation!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""Graph Engine Subscriptions"""
+type Subscription {
+  """Subscribe to updates for a specific graph"""
+  graphUpdated(graphId: GraphID!): Graph!
+}
+
+scalar UnixMilliseconds
+
+"""Input for updating a category tag"""
+input UpdateCategoryTagInput {
+  """Updated category tag description"""
+  description: String = null
+
+  """The category tag ID"""
+  id: String!
+
+  """Updated human-readable name"""
+  name: String = null
+
+  """Updated unique tag value"""
+  value: String = null
+}
+
+"""Input for updating an edge pairs query"""
+input UpdateEdgePairsQueryInput {
+  """Description of this edge query"""
+  description: String = null
+
+  """The ID of the edge pairs query to update"""
+  id: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating an edge path query"""
+input UpdateEdgePathQueryInput {
+  """Description of this edge query"""
+  description: String = null
+
+  """The ID of the edge path query to update"""
+  id: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating an edge table query"""
+input UpdateEdgeTableQueryInput {
+  """Definitions for the columns returned by this edge table query"""
+  columnInput: [ColumnInput!] = null
+
+  """Description of this edge query"""
+  description: String = null
+
+  """The ID of the edge table query to update"""
+  id: String!
+
+  """Unique key for this edge query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this edge query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating an existing entity definition in the graph schema"""
+input UpdateEntityDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the definition to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String = null
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!] = null
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!] = null
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!] = null
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!] = null
+}
+
+"""Input for updating an existing entity"""
+input UpdateEntityInput {
+  """The ID of the entity to update"""
+  id: String!
+
+  """List of property key-value pairs to associate with this entity"""
+  stickyProperties: [PropertySet!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for updating an existing graph"""
+input UpdateGraphInput {
+  """Optional archived flag update"""
+  archived: Boolean = null
+
+  """New graph description"""
+  description: String = null
+
+  """The ID of the graph to update"""
+  id: String!
+
+  """New graph name"""
+  name: String = null
+
+  """Optional pin flag update for the user making the request"""
+  pin: Boolean = null
+}
+
+"""Input for updating a graph pairs query"""
+input UpdateGraphPairsQueryInput {
+  """Description of this graph query"""
+  description: String = null
+
+  """The ID of the graph pairs query to update"""
+  id: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating a graph path query"""
+input UpdateGraphPathQueryInput {
+  """Description of this graph query"""
+  description: String = null
+
+  """The ID of the graph path query to update"""
+  id: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String!
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating a graph table query through builder arguments"""
+input UpdateGraphTableQueryInput {
+  """Definitions for the columns returned by this graph query"""
+  columnInput: [ColumnInput!] = null
+
+  """
+  The Cypher query string that defines this graph query. Can include parameter placeholders (e.g. $param) for dynamic filtering
+  """
+  cypher: String = null
+
+  """Description of this graph query"""
+  description: String = null
+
+  """The ID of the graph query to update"""
+  id: String!
+
+  """Unique key for this graph query, used for referencing in the UI"""
+  key: String = null
+
+  """
+  Human-readable name for this graph query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """The Cypher query string that defines this graph query"""
+  query: String = null
+}
+
+"""
+Input for updating an existing measurement definition in the graph schema
+"""
+input UpdateMeasurementDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the measurement category to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Relation type name/key"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: EntityDescriptorInput!
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: EntityDescriptorInput!
+}
+
+"""Input for updating an existing measurement edge"""
+input UpdateMeasurementInput {
+  """The ID of the measurement to update"""
+  id: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+"""Input for updating an existing metric definition in the graph schema"""
+input UpdateMetricDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the definition to update"""
+  id: String!
+
+  """Optional schema identifier for this metric (e.g. '@mikro/roi')"""
+  identifier: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """The label of the node participating in the event"""
+  key: String = null
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!] = null
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!] = null
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!] = null
+}
+
+"""Input for updating an existing metric"""
+input UpdateMetricInput {
+  """The ID of the metric to update"""
+  id: String!
+  key: String!
+  value: AnyScalar!
+}
+
+"""
+Input for updating an existing natural event definition in the graph schema
+"""
+input UpdateNaturalEventDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the event category to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Input node roles"""
+  inputs: [EventRoleInput!]! = []
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """The kind of event"""
+  kind: EventKind!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Output node roles"""
+  outputs: [EventRoleInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for updating an existing natural event instance"""
+input UpdateNaturalEventInput {
+  """The ID of the event category/type to create"""
+  eventCategory: String!
+
+  """The ID of the natural event to update"""
+  id: String!
+
+  """List of entity IDs that are inputs to this event"""
+  inputs: [RoleMappingInput!]! = []
+
+  """List of entity IDs that are outputs of this event"""
+  outputs: [RoleMappingInput!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for updating a node pairs query"""
+input UpdateNodePairsQueryInput {
+  """Description of this node query"""
+  description: String = null
+
+  """The ID of the node pairs query to update"""
+  id: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating a node path query"""
+input UpdateNodePathQueryInput {
+  """Description of this node query"""
+  description: String = null
+
+  """The ID of the node path query to update"""
+  id: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""Input for updating a node table query"""
+input UpdateNodeTableQueryInput {
+  """Definitions for the columns returned by this node table query"""
+  columnInput: [ColumnInput!] = null
+
+  """Description of this node query"""
+  description: String = null
+
+  """The ID of the node table query to update"""
+  id: String!
+
+  """Unique key for this node query, used for referencing in the UI"""
+  key: String!
+
+  """The kind/type of the query"""
+  kind: String! = "TABLE"
+
+  """
+  Human-readable name for this node query (defaults to 'key' if not provided)
+  """
+  name: String = null
+
+  """Updated Cypher query string"""
+  query: String = null
+}
+
+"""
+Input for updating an existing protocol event definition in the graph schema
+"""
+input UpdateProtocolEventDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the event category to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """Input node roles"""
+  inputs: [EventRoleInput!]! = []
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """The kind of event"""
+  kind: EventKind!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Output node roles"""
+  outputs: [EventRoleInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
+
+  """The protocol this event definition belongs to"""
+  protocol: String!
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for updating an existing protocol event instance"""
+input UpdateProtocolEventInput {
+  """The ID of the event category/type to create"""
+  eventCategory: String!
+
+  """The ID of the protocol event to update"""
+  id: String!
+
+  """List of entity IDs that are inputs to this event"""
+  inputs: [RoleMappingInput!]! = []
+
+  """List of entity IDs that are outputs of this event"""
+  outputs: [RoleMappingInput!]! = []
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+}
+
+"""Input for updating an existing relation definition in the graph schema"""
+input UpdateRelationDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the entity category to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for updating an existing relation"""
+input UpdateRelationInput {
+  """The ID of the relation to update"""
+  id: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+"""Input for updating a scatter plot"""
+input UpdateScatterPlotInput {
+  """Optional column key used for point color"""
+  colorColumn: String = null
+
+  """Optional description of the scatter plot"""
+  description: String = null
+
+  """Optional graph table query ID used by this scatter plot"""
+  graphQueryId: Int = null
+
+  """The database ID of the scatter plot to update"""
+  id: Int!
+
+  """Column key used for point identifiers"""
+  idColumn: String!
+
+  """The display name of the scatter plot"""
+  name: String!
+
+  """Optional node table query ID used by this scatter plot"""
+  nodeQueryId: Int = null
+
+  """Optional node path query ID used by this scatter plot"""
+  pathQueryId: Int = null
+
+  """Optional column key used for point shape"""
+  shapeColumn: String = null
+
+  """Optional column key used for point size"""
+  sizeColumn: String = null
+
+  """Column key used for x-axis values"""
+  xColumn: String = null
+
+  """Column key used for x-axis identifiers"""
+  xIdColumn: String = null
+
+  """Column key used for y-axis values"""
+  yColumn: String = null
+
+  """Column key used for y-axis identifiers"""
+  yIdColumn: String = null
+}
+
+"""
+Input for updating an existing structure definition in the graph schema
+"""
+input UpdateStructureDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the definition to update"""
+  id: String!
+
+  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
+  identifier: String = null
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """The label of the node participating in the event"""
+  key: String = null
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!] = null
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!] = null
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!] = null
+}
+
+"""Input for updating an existing structure"""
+input UpdateStructureInput {
+  """The ID of the structure to update"""
+  id: String!
+
+  """List of measurements associated with this structure"""
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
+"""
+Input for updating an existing structure relation definition in the graph schema
+"""
+input UpdateStructureRelationDefinitionInput {
+  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
+  color: [Int!] = null
+
+  """Description of this node role"""
+  description: String = null
+
+  """The ID of the structure relation category to update"""
+  id: String!
+
+  """Optional media store ID for an image representing this node role"""
+  image: String = null
+
+  """
+  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
+  """
+  instanceKind: String = null
+
+  """The label of the node participating in the event"""
+  key: String!
+
+  """
+  Optional human-readable label for this node role (defaults to 'key' if not provided)
+  """
+  label: String = null
+
+  """Ontology references for this event"""
+  ontologyReferences: [OntologyReferenceInput!]! = []
+
+  """Whether to pin this node role in the UI"""
+  pin: Boolean = null
+
+  """Property definitions"""
+  propertyDefinitions: [PropertyDefinitionInput!]! = []
+
+  """Sequence mappings for this node"""
+  sequences: [SequenceMappingInput!]! = []
+
+  """
+  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
+  """
+  tags: [String!]! = []
+}
+
+"""Input for updating an existing structure relation"""
+input UpdateStructureRelationInput {
+  """The ID of the structure relation to update"""
+  id: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
+enum ValueKind {
+  BOOLEAN
+  CATEGORY
+  DATETIME
+  FLOAT
+  FOUR_D_VECTOR
+  INT
+  N_VECTOR
+  ONE_D_VECTOR
+  STRING
+  THREE_D_VECTOR
+  TWO_D_VECTOR
+}
+
+"""Interface for versioned nodes with schema tracking"""
+interface VersionedNode implements Node {
+  """External ID if set"""
+  externalId: String
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """The graph this node belongs to"""
+  graph: Graph!
+
+  """Local AGE graph ID"""
+  graphId: Int!
+
+  """Composite ID for node lookup"""
+  id: String!
+
+  """
+  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  """
+  label: String!
+
+  """Timestamp when properties were last derived (unix ms)"""
+  lastDerived: UnixMilliseconds
+
+  """External object ID this entity references"""
+  lifecycle: String
+
+  """Local ID if set"""
+  localId: String
+
+  """The timestamp when this entity was materialized (unix ms)"""
+  pinned: Boolean!
+
+  """Schema version used to derive properties"""
+  schemaVersion: String!
+
+  """Tags associated with this node"""
+  tags: [String!]!
+}
+
+"""Input type for defining a graph schema"""
+type WhereClause {
+  node: String
+
+  """The operator to use for filtering"""
+  operator: WhereOperator!
+  path: String!
+
+  """The property name to filter on"""
+  property: String!
+
+  """The value to compare against"""
+  value: String!
+}
+
+"""Input for a where clause in a graph table query builder"""
+input WhereClauseInput {
+  node: String = null
+
+  """The operator to use for filtering"""
+  operator: WhereOperator!
+  path: String!
+
+  """The property name to filter on"""
+  property: String!
+
+  """The value to compare against"""
+  value: String!
+}
+
+enum WhereOperator {
+  CONTAINS
+  ENDS_WITH
+  EQUALS
+  GREATER_OR_EQUAL
+  GREATER_THAN
+  IN
+  LESS_OR_EQUAL
+  LESS_THAN
+  NOT_EQUALS
+  NOT_IN
+  STARTS_WITH
+}
+
+scalar _Any
+
+union _Entity = CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory
+
+type _Service {
+  sdl: String!
+}

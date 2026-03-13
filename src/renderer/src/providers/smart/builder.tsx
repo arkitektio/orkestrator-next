@@ -1,22 +1,15 @@
-import {
-  ModelPageLayout,
-  ModelPageLayoutProps,
-} from "@/components/layout/ModelPageLayout";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
-import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { Komments } from "@/lok-next/components/komments/Komments";
-import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import {
-  ObjectButton,
-  ObjectButtonProps,
-} from "@/rekuest/buttons/ObjectButton";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
-import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { ObjectID } from "@/types";
+import { PaneLink } from "@/components/ui/sidepane";
 import { NavLink } from "react-router-dom";
+import {
+  getSmartBuilderAdapters,
+  SmartEnhanceButtonProps,
+  SmartListPageProps,
+  SmartModelPage,
+  SmartNewButtonProps,
+  SmartObjectButtonProps,
+} from "./buildSmartAdapters";
 import { SmartDropZone } from "./Drop";
 import { SearchFunction, smartRegistry } from "./registry";
-import { ShareDialog } from "./ShareDialog";
 import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
@@ -26,12 +19,6 @@ import {
   OmitedNavLinkProps,
   SmartPaneLinkProps,
 } from "./types";
-import {
-  ListPageLayout,
-  ListPageLayoutProps,
-} from "@/components/layout/ListPageLayout";
-import { EnhanceButton, EnhanceButtonProps } from "@/alpaka/components/EnhanceButton";
-import { PaneLink } from "@/components/ui/sidepane";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -157,101 +144,94 @@ export type ObjectProps = {
   object: string;
 };
 
-const buildSelfActions = (model: Identifier) => {
-  return ({ ...props }: ObjectProps) => {
+const buildSelfActions = (_model: Identifier) => {
+  return (_props: ObjectProps) => {
     return <></>;
   };
 };
 
 const buildKomments = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <Komments identifier={model} object={props.object} />;
+    return getSmartBuilderAdapters().renderKomments({
+      identifier: model,
+      object: props.object,
+    });
   };
 };
 
 const buildKnowledge = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <KnowledgeSidebar identifier={model} object={props.object} />;
+    return getSmartBuilderAdapters().renderKnowledge({
+      identifier: model,
+      object: props.object,
+    });
   };
 };
 
-const buildTinyKnowledge = (model: Identifier) => {
+const buildTinyKnowledge = (_model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <TinyStructureBox identifier={model} object={props.object} />;
+    return getSmartBuilderAdapters().renderTinyKnowledge({
+      identifier: _model,
+      object: props.object,
+    });
   };
 };
-
-export type SmartModelPage = Omit<ModelPageLayoutProps, "identifier">;
-export type SmartListPageProps = Omit<ListPageLayoutProps, "identifier">;
 
 const buildModelPage = (model: Identifier) => {
   return ({ ...props }: SmartModelPage) => {
-    return (
-      <ModelPageLayout identifier={model} {...props}>
-        {props.children}
-      </ModelPageLayout>
-    );
+    return getSmartBuilderAdapters().renderModelPage({
+      identifier: model,
+      ...props,
+    });
   };
 };
 
 const buildListPage = (model: Identifier) => {
   return ({ ...props }: SmartListPageProps) => {
-    return (
-      <ListPageLayout identifier={model} {...props}>
-        {props.children}
-      </ListPageLayout>
-    );
+    return getSmartBuilderAdapters().renderListPage({
+      identifier: model,
+      ...props,
+    });
   };
 };
 
 const buildUseNodesQuery = (model: Identifier) => {
-  return usePrimaryActionsQuery({
-    variables: {
-      identifier: model,
-    },
-  });
+  return getSmartBuilderAdapters().useNodes(model);
 };
 
 const buildUseProgress = (model: Identifier, object: string) => {
-  return useAssignProgress({
-    identifier: model,
-    object: object,
-  });
+  return getSmartBuilderAdapters().useProgress(model, object);
 };
 
 const buildUseLive = (model: Identifier, object: string) => {
-  return useLiveAssignation({
-    identifier: model,
-    object: object,
-  });
+  return getSmartBuilderAdapters().useLive(model, object);
 };
-
-export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & {
-  object: ObjectID;
-};
-export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
-
-export type SmartEnhanceButtonProps = Omit<EnhanceButtonProps, "identifier">
 
 const buildObjectButton = (model: Identifier) => {
   return ({ object, ...props }: SmartObjectButtonProps) => {
-    return (
-      <ObjectButton objects={[{ identifier: model, object }]} {...props} />
-    );
+    return getSmartBuilderAdapters().renderObjectButton({
+      identifier: model,
+      object,
+      ...props,
+    });
   };
 };
 
 const buildEnhanceButton = (model: Identifier) => {
   return ({ ...props }: SmartEnhanceButtonProps) => {
-    return (
-      <EnhanceButton identifier={model} object={props.object} />
-    );
+    return getSmartBuilderAdapters().renderEnhanceButton({
+      identifier: model,
+      ...props,
+    });
   };
 }
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
-    return <ObjectButton returns={[model]} objects={[]} {...props} />;
+    return getSmartBuilderAdapters().renderNewButton({
+      identifier: model,
+      ...props,
+    });
   };
 };
 

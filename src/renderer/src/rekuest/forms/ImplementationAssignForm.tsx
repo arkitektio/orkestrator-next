@@ -1,4 +1,5 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -15,7 +16,6 @@ import {
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { ContainerGrid, ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -103,9 +103,9 @@ export const ImplementationAssignForm = (
   }
 
   return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6 overflow-hidden @container">
-          <div className="flex flex-col sm:justify-between mb-2 h-full min-h-0">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6 overflow-hidden @container">
+        <div className="flex flex-col sm:justify-between mb-2 h-full min-h-0">
 
 
           <h1 className="text-lg font-semibold mb-1 flex-initial ">
@@ -127,11 +127,11 @@ export const ImplementationAssignForm = (
             />
 
           </div>
-            <ResponsiveContainerGrid className="grid @lg:grid-cols-3 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-4 @4xl:grid-cols-4 @5xl:grid-cols-4  @6xl:grid-cols-4 gap-2 max-h-128 overflow-y-auto w-min-[80vw] @container mb-4" >
-              {implementation?.dependencies.map((dep) => (
-                <DependencyWidget dependency={dep} key={dep.id} />
-              ))}
-            </ResponsiveContainerGrid>
+          <ResponsiveContainerGrid className="grid @lg:grid-cols-3 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-4 @4xl:grid-cols-4 @5xl:grid-cols-4  @6xl:grid-cols-4 gap-2 max-h-128 overflow-y-auto w-min-[80vw] @container mb-4" >
+            {implementation?.dependencies.map((dep) => (
+              <DependencyWidget dependency={dep} key={dep.id} />
+            ))}
+          </ResponsiveContainerGrid>
           <DialogFooter className="flex-initial">
             <Button
               type="submit"
@@ -141,8 +141,8 @@ export const ImplementationAssignForm = (
               Submit{" "}
             </Button>
           </DialogFooter>
-          </div>
-        </form>
-      </Form>
+        </div>
+      </form>
+    </Form>
   );
 };

@@ -15,11 +15,9 @@ import {
   useGetMeasurmentCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateMeasurementCategoryForm from "../forms/UpdateMeasurementCategoryForm";
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetMeasurmentCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -61,12 +59,7 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateGraphQueryForm category={data.measurementCategory} />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}
@@ -122,3 +115,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default Page;

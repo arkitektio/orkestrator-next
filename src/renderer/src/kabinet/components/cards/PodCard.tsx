@@ -6,17 +6,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KabinetPod } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListPodFragment } from "../../api/graphql";
 
 interface Props {
   item: ListPodFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <KabinetPod.Smart object={item?.id} mates={mates}>
+    <KabinetPod.Smart object={item?.id} >
       <Card className="group aspect-[3/2]">
         <CardHeader className="flex flex-row justify-between">
           <div>

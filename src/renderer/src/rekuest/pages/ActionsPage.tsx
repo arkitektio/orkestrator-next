@@ -1,10 +1,10 @@
+import { Button } from "@/components/ui/button";
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { RekuestAction } from "@/linkers";
 import ActionList from "@/rekuest/components/lists/ActionList";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
-import { useCleanupActionsMutation } from "../api/graphql";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useCleanupActionsMutation } from "../api/graphql";
 
 
 const Page = () => {
@@ -44,10 +44,10 @@ const Page = () => {
           variables: {
           }
         })
-        .then((e) => {
+          .then((e) => {
             toast.success(`Cleanup ${e.data?.cleanupActions} Actions`)
-        }
-        )
+          }
+          )
       }}>Cleanup Implementationless</Button>
     </>} >
       <div className="p-6">

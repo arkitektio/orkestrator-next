@@ -5,22 +5,22 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { Database } from "lucide-react";
+import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { usePeerHomePageQuery } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
 import { PeerStatisticsSidebar } from "../components/sidebars/PeerStatisticsSidebar";
-import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
-import { parseAsIsoDateTime, useQueryState } from "nuqs";
-import { Button } from "@/components/ui/button";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 export interface IRepresentationScreenProps { }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ data, id }) => {
 
   const [parentless, setParentless] = useQueryState(

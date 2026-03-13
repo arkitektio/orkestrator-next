@@ -1,8 +1,7 @@
-import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { useActionSearchLazyQuery } from "@/rekuest/api/graphql";
+import { ApplicableActions } from "@/rekuest/buttons/ObjectButton";
 import { useEffect } from "react";
 import { useExtension } from "../ExtensionContext";
-import { ApplicableActions } from "@/rekuest/buttons/ObjectButton";
 
 export const NodeExtensions = () => {
   const { query, activateModifier, modifiers } = useExtension();

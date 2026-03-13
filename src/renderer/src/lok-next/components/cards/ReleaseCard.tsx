@@ -1,16 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { LokRelease } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <LokRelease.Smart object={item?.id} mates={mates}>
+    <LokRelease.Smart object={item?.id} >
       <Card className="p-3">
         <LokRelease.DetailLink object={item.id} className="">
           {item.version}

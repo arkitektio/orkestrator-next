@@ -1,0 +1,27 @@
+fragment MetricCategory on MetricCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  ageName
+  label
+  valueKind
+  description
+  image {
+    presignedUrl
+  }
+  tags {
+    id
+    name
+  }
+  pinned
+}
+
+fragment ListMetricCategory on MetricCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  label
+  valueKind
+  structureCategory {
+    id
+    identifier
+  }
+}

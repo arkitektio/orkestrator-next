@@ -220,13 +220,13 @@ function ColorCustom({
     () =>
       customColor
         ? [
-            ...customColors,
-            {
-              isBrightColor: false,
-              name: '',
-              value: customColor,
-            },
-          ]
+          ...customColors,
+          {
+            isBrightColor: false,
+            name: '',
+            value: customColor,
+          },
+        ]
         : customColors,
     [customColor, customColors]
   );

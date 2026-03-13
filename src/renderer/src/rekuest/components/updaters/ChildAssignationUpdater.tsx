@@ -1,7 +1,7 @@
 import { useDetailAssignationQuery, WatchChildAssignationsDocument, WatchChildAssignationsSubscription, WatchChildAssignationsSubscriptionVariables } from "@/rekuest/api/graphql";
 import { useEffect } from "react";
 
-export const ChildAssignationUpdater = (props: {assignationId: string}) => {
+export const ChildAssignationUpdater = (props: { assignationId: string }) => {
   const { assignationId } = props;
   const { data: childAssignationData, subscribeToMore } = useDetailAssignationQuery({
     variables: { id: assignationId },

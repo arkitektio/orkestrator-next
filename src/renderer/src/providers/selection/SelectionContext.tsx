@@ -1,33 +1,93 @@
 import React, { useCallback, useContext, useMemo } from "react";
+import { useStore } from "zustand";
+
 import { Structure } from "../../types";
-import { SelectionContextType } from "./types";
+import { selectFocus, SelectionState } from "./store";
+import { SelectionContextType, SelectionSnapshot } from "./types";
 
-export const SelectionContext = React.createContext<SelectionContextType>({
-  selection: [],
-  bselection: [],
-  setSelection: () => {},
-  unselect: () => {},
-  isMultiSelecting: false,
-  setIsMultiSelecting: () => {},
-  registerSelectables: () => {},
-  unregisterSelectables: () => {},
-  toggleSelection: () => {},
-  toggleBSelection: () => {},
-  removeSelection: () => {},
-});
+export const SelectionContext = React.createContext<SelectionContextType>(null);
 
-export const useSelection = () => useContext(SelectionContext);
+export const useSelectionStoreApi = () => {
+  const store = useContext(SelectionContext);
+
+  if (!store) {
+    throw new Error("useSelectionStore must be used within a SelectionProvider");
+  }
+
+  return store;
+};
+
+export const useSelectionSelector = <T,>(
+  selector: (state: SelectionState) => T,
+): T => {
+  const store = useSelectionStoreApi();
+
+  return useStore(store, selector);
+};
+
+export const useSelection = (): SelectionSnapshot => {
+  const selection = useSelectionSelector((state) => state.selection);
+  const bselection = useSelectionSelector((state) => state.bselection);
+  const isMultiSelecting = useSelectionSelector(
+    (state) => state.isMultiSelecting,
+  );
+  const setSelection = useSelectionSelector((state) => state.setSelection);
+  const setBSelection = useSelectionSelector((state) => state.setBSelection);
+  const unselect = useSelectionSelector((state) => state.unselect);
+  const setIsMultiSelecting = useSelectionSelector(
+    (state) => state.setIsMultiSelecting,
+  );
+  const registerSelectables = useSelectionSelector(
+    (state) => state.registerSelectables,
+  );
+  const unregisterSelectables = useSelectionSelector(
+    (state) => state.unregisterSelectables,
+  );
+  const toggleSelection = useSelectionSelector((state) => state.toggleSelection);
+  const toggleBSelection = useSelectionSelector((state) => state.toggleBSelection);
+  const removeSelection = useSelectionSelector((state) => state.clear);
+  const focus = useSelectionSelector(selectFocus);
+
+  return useMemo(
+    () => ({
+      selection,
+      bselection,
+      isMultiSelecting,
+      setSelection,
+      setBSelection,
+      unselect,
+      setIsMultiSelecting,
+      registerSelectables,
+      unregisterSelectables,
+      toggleSelection,
+      toggleBSelection,
+      removeSelection,
+      focus,
+    }),
+    [
+      selection,
+      bselection,
+      isMultiSelecting,
+      setSelection,
+      setBSelection,
+      unselect,
+      setIsMultiSelecting,
+      registerSelectables,
+      unregisterSelectables,
+      toggleSelection,
+      toggleBSelection,
+      removeSelection,
+      focus,
+    ],
+  );
+};
 
 export const useMySelect = (options: { self: Structure }) => {
   const { self } = options;
-
-  const {
-    selection,
-    toggleSelection,
-    toggleBSelection,
-    bselection,
-    removeSelection,
-  } = useSelection();
+  const selection = useSelectionSelector((state) => state.selection);
+  const bselection = useSelectionSelector((state) => state.bselection);
+  const toggleSelection = useSelectionSelector((state) => state.toggleSelection);
+  const toggleBSelection = useSelectionSelector((state) => state.toggleBSelection);
 
   const isSelected = useMemo(() => {
     const me = selection.findIndex(
@@ -53,7 +113,7 @@ export const useMySelect = (options: { self: Structure }) => {
     toggleBSelection(self);
   }, [self, toggleBSelection]);
 
-  return { isSelected, toggle, isBSelected, toggleB, selection };
+  return { isSelected, toggle, isBSelected, toggleB, selection, bselection };
 };
 
 export const useMySelection = (
@@ -62,16 +122,18 @@ export const useMySelection = (
     onClick?: (event: any) => {};
     unselectOutside?: boolean;
   } = {
-    unselectOutside: false,
-  },
+      unselectOutside: false,
+    },
 ) => {
-  const {
-    isMultiSelecting,
-    setIsMultiSelecting,
-    focus,
-    selection,
-    setSelection,
-  } = useSelection();
+  const isMultiSelecting = useSelectionSelector(
+    (state) => state.isMultiSelecting,
+  );
+  const setIsMultiSelecting = useSelectionSelector(
+    (state) => state.setIsMultiSelecting,
+  );
+  const focus = useSelectionSelector(selectFocus);
+  const selection = useSelectionSelector((state) => state.selection);
+  const setSelection = useSelectionSelector((state) => state.setSelection);
 
   const variables = useMemo(() => {
     const me = selection.find(
@@ -128,7 +190,7 @@ export const useMySelection = (
         return;
       }
     },
-    [isMultiSelecting, iam, selection, options.onClick],
+    [isMultiSelecting, iam, selection, options.onClick, setIsMultiSelecting, setSelection],
   );
 
   const bind = {

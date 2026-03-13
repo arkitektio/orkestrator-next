@@ -1,5 +1,5 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import {
   AssignationEventKind,
   PortKind,

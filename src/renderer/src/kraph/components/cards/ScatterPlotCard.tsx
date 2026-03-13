@@ -1,22 +1,17 @@
-import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
-import { KraphGraphQuery, KraphScatterPlot } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+import { KraphScatterPlot } from "@/linkers";
 import {
-  ListGraphQueryFragment,
-  ListScatterPlotFragment,
-  usePinGraphQueryMutation,
+  ListScatterPlotFragment
 } from "../../api/graphql";
 
 interface Props {
   item: ListScatterPlotFragment;
-  mates?: MateFinder[];
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
 
   return (
-    <KraphScatterPlot.Smart object={item?.id} mates={mates}>
+    <KraphScatterPlot.Smart object={item?.id}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate">
         <KraphScatterPlot.DetailLink
           className={({ isActive } /*  */) =>
@@ -25,8 +20,8 @@ const TheCard = ({ item, mates }: Props) => {
           }
           object={item.id}
         >
-          {item?.name}
-          <p className="text-xs font-light">{item.name}</p>
+          {item?.label}
+          <p className="text-xs font-light">{item.label}</p>
         </KraphScatterPlot.DetailLink>
       </Card>
     </KraphScatterPlot.Smart>

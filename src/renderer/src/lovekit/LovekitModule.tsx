@@ -1,5 +1,5 @@
-import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/app/Arkitekt";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
 import HomePage from "./pages/HomePage";

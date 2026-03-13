@@ -300,7 +300,7 @@ export function CustomChartComponent(values: { [key: string] }): JSX.Element {
           <a
             href={siteConfig.links.x}
             target="_blank"
-            className="underline text-blue-400"
+            className="underline text-blue-400" rel="noreferrer"
           >
             @rds_agi
           </a>

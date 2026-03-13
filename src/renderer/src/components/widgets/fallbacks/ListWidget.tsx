@@ -1,7 +1,6 @@
 import { ContainerGrid } from "@/components/layout/ContainerGrid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
@@ -98,7 +97,7 @@ export const ListWidget = (props: InputWidgetProps) => {
     );
   }
 
-  let child = props.port.children?.at(0);
+  const child = props.port.children?.at(0);
 
   if (!child) {
     return <>Faulty port config. no child</>;

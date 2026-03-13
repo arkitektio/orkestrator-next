@@ -1,17 +1,16 @@
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MikroStage } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListStageFragment } from "../../api/graphql";
 
 interface Props {
   stage: ListStageFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ stage, mates }: Props) => {
+const TheCard = ({ stage }: Props) => {
   return (
-    <MikroStage.Smart object={stage?.id} mates={mates}>
+    <MikroStage.Smart object={stage?.id} >
       <Card className={cn("aspect-square flex flex-col ")}>
         <CardHeader className="flex-grow">
           <CardTitle>

@@ -1,5 +1,8 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/rekuest/graphql"
+schema:
+  "http://jhnnsrs-lab/rekuest/schema":
+    handleAsSDL: true
+
 documents: "graphql/rekuest-next/**/*.graphql"
 generates:
   src/renderer/src/rekuest/api/fragments.ts:
@@ -20,4 +23,7 @@ generates:
       - "typescript"
       - "typescript-operations"
       - "typescript-graphql-request"
+  graphql/schemas/rekuest.graphql:
+    plugins:
+      - schema-ast
 

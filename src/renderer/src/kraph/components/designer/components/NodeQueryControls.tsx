@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Plus, X, ArrowDownToLine } from "lucide-react";
+import { ArrowDownToLine, Filter, Plus, X } from "lucide-react";
 import { useState } from "react";
-import { useWhereClauseManager, useReturnColumnManager, useIsNodeInPath, WhereCondition } from "../OntologyGraphProvider";
+import { useIsNodeInPath, useReturnColumnManager, useWhereClauseManager, WhereCondition } from "../OntologyGraphProvider";
 
 // Node property configurations
 const NODE_PROPERTIES: Record<string, Array<{ name: string; type: 'string' | 'number' | 'boolean' }>> = {

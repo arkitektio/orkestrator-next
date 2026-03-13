@@ -6,11 +6,11 @@ import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 
-import { StructureNode } from "../types";
-import { usePathViewerState } from "../PathViewerStateProvider";
 import { DisplayWidget } from "@/command/Menu";
+import { usePathViewerState } from "../PathViewerStateProvider";
+import { StructureNode } from "../types";
 
-export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<StructureNode>) => {
   const resolve = useResolve();
 
   const { viewerState } = usePathViewerState();
@@ -60,3 +60,5 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
     </>
   );
 });
+
+export default TNode;

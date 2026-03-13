@@ -1,0 +1,12 @@
+mutation CreateNodeTableQuery($input: CreateNodeTableQueryInput!) {
+  createNodeTableQuery(input: $input) {
+    ...NodeTableQuery
+  }
+}
+
+mutation UpdateNodeTableQuery($input: UpdateNodeTableQueryInput!) {
+  updateNodeTableQuery(input: $input) {
+    ...NodeTableQuery
+  }
+}
+

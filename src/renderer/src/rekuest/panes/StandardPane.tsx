@@ -1,9 +1,10 @@
+import { AgentController } from "@/app/agent/AgentController";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
-import { DroppableNavLink } from "@/components/ui/link";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { RekuestAgent, RekuestDashboard } from "@/linkers";
-import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
+import { CardStackIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
@@ -15,8 +16,6 @@ import {
   useListDashboardsQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
-import { AgentController } from "@/app/agent/AgentController";
-import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({

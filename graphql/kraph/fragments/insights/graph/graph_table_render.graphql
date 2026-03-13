@@ -1,0 +1,15 @@
+fragment GraphTableRender on GraphTableRender {
+  query  {
+    columns {
+      ...Column
+    }
+    graph {
+      id
+      ageName
+    }
+
+  }
+  rows
+}
+
+

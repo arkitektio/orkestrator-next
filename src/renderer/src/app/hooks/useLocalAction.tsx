@@ -2,9 +2,9 @@ import { useArkitekt } from "@/lib/arkitekt/provider";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { OnDone } from "@/rekuest/buttons/ObjectButton";
 import { useState } from "react";
-import { useDialog } from "../dialog";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDialog } from "../dialog";
 
 export const usePerformAction = (props: {
   action: Action;
@@ -32,7 +32,7 @@ export const usePerformAction = (props: {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: app.connection?.clients || {},
+        services: app.connection?.serviceMap || {},
         dialog,
         navigate,
         location: window.location,

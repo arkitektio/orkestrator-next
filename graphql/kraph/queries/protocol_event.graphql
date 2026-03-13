@@ -1,11 +1,12 @@
-query GetProtocolEvent($id: ID!) {
+query GetProtocolEvent($id: GraphID!) {
   protocolEvent(id: $id) {
     ...ProtocolEvent
   }
 }
 
-query SearchProtocolEvents($search: String, $values: [ID!]) {
+query SearchProtocolEvents($category: ID!, $search: String, $values: [GraphID!]) {
   options: protocolEvents(
+    protocolEventCategoryId: $category,
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {

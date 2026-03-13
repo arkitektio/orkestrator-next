@@ -1,0 +1,27 @@
+
+
+fragment BaseEdgeQuery on EdgeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+}
+
+fragment ListEdgeQuery on EdgeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
+  }
+  __typename
+}
+
+fragment EdgeQuery on EdgeQuery {
+  ...BaseEdgeQuery
+  ...EdgeTableQuery
+}

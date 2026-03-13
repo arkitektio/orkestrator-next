@@ -1,3 +1,4 @@
+import { useRekuest } from "@/app/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -15,7 +16,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipButton } from "@/components/ui/tooltip-button";
-import { useRekuest } from "@/app/Arkitekt";
 import {
   FlussPortFragment,
   GraphNodeKind,
@@ -221,7 +221,7 @@ const edgeReactiveNodes = (
       (port) => port.kind === PortKind.Int || port.kind === PortKind.Float,
     )
   ) {
-    let isInt = !isNaN(parseInt(search));
+    const isInt = !isNaN(parseInt(search));
 
     if (isInt) {
       suggestions.push({
@@ -278,7 +278,7 @@ const edgeReactiveNodes = (
     });
   }
 
-  for (let mapping of generateAllMappings(leftPorts, rightPorts)) {
+  for (const mapping of generateAllMappings(leftPorts, rightPorts)) {
     suggestions.push({
       node: {
         id: nodeIdBuilder(),
@@ -386,7 +386,7 @@ export const EdgeContextualRekuestNode = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });

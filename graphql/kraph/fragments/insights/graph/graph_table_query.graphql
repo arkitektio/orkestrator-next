@@ -1,0 +1,17 @@
+
+fragment GraphTableQuery on GraphTableQuery {
+  ...BaseGraphQuery
+  query
+  columns {
+    ...Column
+  }
+  builderArgs {
+    ...BuilderArgs
+  }
+  scatterPlots {
+    ...ListScatterPlot
+  }
+
+}
+
+

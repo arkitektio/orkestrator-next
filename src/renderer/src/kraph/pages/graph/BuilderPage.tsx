@@ -2,22 +2,21 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { KraphGraphQuery } from "@/linkers";
 import {
-  useGetGraphQueryQuery,
-  useUpdateGraphQueryMutation,
-  useGetGraphQuery,
+  useGetGraphTableQueryQuery,
+  useUpdateGraphTableQueryMutation,
 } from "../../api/graphql";
 
 import { Button } from "@/components/ui/button";
 import QueryBuilderGraph from "@/kraph/components/designer/QueryBuilderGraph";
 
-export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => {
-  const [update] = useUpdateGraphQueryMutation({
-    refetchQueries: ["GetGraphQuery"],
+const Page = asDetailQueryRoute(useGetGraphTableQueryQuery, ({ data, refetch }) => {
+  const [update] = useUpdateGraphTableQueryMutation({
+    refetchQueries: ["GetGraphTableQuery"],
   });
 
-  const { data: graphData } = useGetGraphQuery({
+  const { data: graphData } = useGetGraphTableQueryQuery({
     variables: {
-      id: data.graphQuery.graph.id,
+      id: data.graphTableQuery.graph.id,
     },
   });
 
@@ -25,29 +24,26 @@ export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => 
     await update({
       variables: {
         input: {
-          id: data.graphQuery.id,
-          name: data.graphQuery.name,
-          query: data.graphQuery.query,
-          kind: data.graphQuery.kind,
-          graph: data.graphQuery.graph.id,
-          pin: !data.graphQuery.pinned,
+          id: data.graphTableQuery.id,
+          name: data.graphTableQuery.label,
+          query: data.graphTableQuery.query,
         },
       },
     });
     await refetch();
   };
 
-  if (!graphData?.graph) {
+  if (!graphData?.graphTableQuery) {
     return <div>Loading graph data...</div>;
   }
 
   return (
     <KraphGraphQuery.ModelPage
-      object={data.graphQuery.id}
-      title={data.graphQuery.name}
+      object={data.graphTableQuery.id}
+      title={data.graphTableQuery.label}
       pageActions={
         <div className="flex flex-row gap-2">
-          <KraphGraphQuery.ObjectButton object={data.graphQuery.id} />
+          <KraphGraphQuery.ObjectButton object={data.graphTableQuery.id} />
           <Button
             onClick={() => {
               pin();
@@ -55,14 +51,14 @@ export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => 
             className="w-full"
             variant="outline"
           >
-            {data.graphQuery.pinned ? "Unpin" : "Pin"}
+            {data.graphTableQuery.pinned ? "Unpin" : "Pin"}
           </Button>
         </div>
       }
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KraphGraphQuery.Komments object={data.graphQuery.id} />,
+            Comments: <KraphGraphQuery.Komments object={data.graphTableQuery.id} />,
           }}
         />
       }
@@ -71,10 +67,13 @@ export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => 
         <div className="col-span-12 md:col-span-12">
           <QueryBuilderGraph
             graph={graphData.graph}
-            graphQuery={data.graphQuery}
+            graphQuery={data.graphTableQuery}
           />
         </div>
       </div>
     </KraphGraphQuery.ModelPage>
   );
 });
+
+
+export default Page;

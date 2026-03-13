@@ -19,7 +19,7 @@ fragment PathMetric on Metric {
   category {
     id
     label
-    store {
+    image {
       presignedUrl
     }
   }

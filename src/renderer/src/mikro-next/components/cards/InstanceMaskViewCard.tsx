@@ -1,22 +1,21 @@
 import { Card } from "@/components/ui/card";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   MikroImage,
   MikroInstanceMaskView,
   MikroInstanceMaskViewLabel,
 } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
+import { useMemo, useState } from "react";
 import { InstanceMaskViewFragment } from "../../api/graphql";
-import React, { useEffect, useMemo, useState } from "react";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface HistoryCardProps {
   item: InstanceMaskViewFragment;
-  mates?: MateFinder[];
+
 }
 
 type Row = Record<string, unknown>;
 
-const TheCard = ({ item, mates }: HistoryCardProps) => {
+const TheCard = ({ item }: HistoryCardProps) => {
   const resolve = useResolve();
 
   const url = resolve(item?.labels?.presignedUrl) ?? null;
@@ -31,7 +30,7 @@ const TheCard = ({ item, mates }: HistoryCardProps) => {
   const [loading, setLoading] = useState<boolean>(!!url);
 
   return (
-    <MikroInstanceMaskView.Smart object={item?.id} mates={mates} key={item.id}>
+    <MikroInstanceMaskView.Smart object={item?.id}  key={item.id}>
       <Card key={item.id} className="p-4 space-y-2">
         <p className="text-light text-xs">Is instance mask foddr</p>
 

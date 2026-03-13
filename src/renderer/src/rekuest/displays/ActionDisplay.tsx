@@ -1,6 +1,6 @@
+import { DisplayWidgetProps } from "@/lib/display/registry";
 import { RekuestAction } from "@/linkers";
 import { useDetailActionQuery } from "../api/graphql";
-import { DisplayWidgetProps } from "@/lib/display/registry";
 
 export const ActionDisplay = (props: DisplayWidgetProps) => {
   const { data } = useDetailActionQuery({

@@ -1,11 +1,12 @@
-query GetStructureRelation($id: ID!) {
+query GetStructureRelation($id: GraphID!) {
   structureRelation(id: $id) {
     ...DetailStructureRelation
   }
 }
 
-query SearchStructureRelations($search: String, $values: [ID!]) {
+query SearchStructureRelations($category: ID!, $search: String, $values: [GraphID!]) {
   options: structureRelations(
+    structureRelationCategoryId: $category,
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {

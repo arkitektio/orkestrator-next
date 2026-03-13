@@ -143,7 +143,7 @@ export class WidgetRegistry {
     allowFallback: boolean = true,
   ): React.FC<InputWidgetProps> {
     if (!port?.assignWidget?.__typename) {
-      let widget =
+      const widget =
         (port?.kind &&
           allowFallback &&
           this.portTypeInputFallbackMap[port?.kind]) ||
@@ -153,7 +153,7 @@ export class WidgetRegistry {
     }
     console.log("Getting widget for port", port);
 
-    let widget =
+    const widget =
       this.typeInputWidgetMap[port?.assignWidget?.__typename] ||
       this.unknownInputWidget;
 

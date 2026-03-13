@@ -10,8 +10,7 @@ import { setColumns } from '@platejs/layout';
 import { ResizableProvider } from '@platejs/resizable';
 import { BlockSelectionPlugin } from '@platejs/selection/react';
 import { useComposedRef } from '@udecode/cn';
-import { type LucideProps, Trash2Icon } from 'lucide-react';
-import { GripHorizontal } from 'lucide-react';
+import { GripHorizontal, type LucideProps, Trash2Icon } from 'lucide-react';
 import { PathApi } from 'platejs';
 import {
   PlateElement,
@@ -132,9 +131,9 @@ function DropLine() {
         'slate-dropLine',
         'absolute bg-brand/50',
         dropLine === 'left' &&
-          'group-first/column:-left-1 inset-y-0 left-[-10.5px] w-1',
+        'group-first/column:-left-1 inset-y-0 left-[-10.5px] w-1',
         dropLine === 'right' &&
-          'group-last/column:-right-1 inset-y-0 right-[-11px] w-1'
+        'group-last/column:-right-1 inset-y-0 right-[-11px] w-1'
       )}
     />
   );

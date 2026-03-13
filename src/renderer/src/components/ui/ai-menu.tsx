@@ -38,13 +38,15 @@ import {
   TextApi,
 } from 'platejs';
 import {
+  type PlateEditor,
   useEditorPlugin,
+  useEditorRef,
   useFocusedLast,
   useHotkeys,
   usePluginOption,
 } from 'platejs/react';
-import { type PlateEditor, useEditorRef } from 'platejs/react';
 
+import { commentPlugin } from '@/components/editor/plugins/comment-kit';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -58,7 +60,6 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { commentPlugin } from '@/components/editor/plugins/comment-kit';
 
 import { AIChatEditor } from './ai-chat-editor';
 

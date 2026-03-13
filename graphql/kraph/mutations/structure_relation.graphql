@@ -1,4 +1,4 @@
-mutation CreateStructureRelation($input: StructureRelationInput!) {
+mutation CreateStructureRelation($input: CreateStructureRelationInput!) {
   createStructureRelation(input: $input) {
     ...StructureRelation
   }

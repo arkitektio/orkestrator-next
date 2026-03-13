@@ -1,7 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/plate-ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
@@ -38,7 +37,6 @@ import {
 } from "../api/graphql";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import { FinalRender } from "../components/render/FInalRender";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 

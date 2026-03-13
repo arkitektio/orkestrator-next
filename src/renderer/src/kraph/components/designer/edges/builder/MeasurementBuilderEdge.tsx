@@ -1,5 +1,10 @@
 import { Card } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
@@ -7,15 +12,9 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
+import { useEdgePaths, useIsEdgePossible } from "../../OntologyGraphProvider";
 import { MeasurementEdge } from "../../types";
 import { getEdgeParams } from "../../utils";
-import { KraphMeasurementCategory } from "@/linkers";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useIsEdgePossible, useEdgePaths } from "../../OntologyGraphProvider";
 
 // Helper to convert RGB array to CSS rgb() string
 const rgbToCSS = (rgb: number[]): string => {

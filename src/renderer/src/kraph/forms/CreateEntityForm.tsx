@@ -4,14 +4,23 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   CreateEntityMutationVariables,
   GetEntityCategoryDocument,
   useCreateEntityMutation,
+  useGetEntityCategoryQuery,
 } from "../api/graphql";
-import { toast } from "sonner";
 
-export default (props: { category: string }) => {
+const TForm = (props: { category: string }) => {
+
+  const {data} = useGetEntityCategoryQuery({
+    variables: {
+      id: props.category
+    }
+  })
+
+
   const [add] = useCreateEntityMutation({
     variables: {
       input: { entityCategory: props.category },
@@ -28,7 +37,7 @@ export default (props: { category: string }) => {
 
   const form = useForm<CreateEntityMutationVariables["input"]>({
     defaultValues: {
-      name: "",
+
     },
   });
 
@@ -53,16 +62,14 @@ export default (props: { category: string }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
-              <StringField
-                label="External ID"
-                name="externalId"
-                description="An external identifier for this entity (unique is guaranteed)"
-              />
-              <StringField
-                label="Name"
-                name="name"
-                description="An optional name for this entity"
-              />
+              {data?.entityCategory.propertyDefinitions.map((p) => (
+                <StringField
+                  key={p.key}
+                  label={p.label || p.key}
+                  name={p.key}
+                  description={p.description || `Add a value for ${p.label || p.key}`}
+                />
+              ))}
             </div>
           </div>
 
@@ -74,3 +81,5 @@ export default (props: { category: string }) => {
     </>
   );
 };
+
+export default TForm

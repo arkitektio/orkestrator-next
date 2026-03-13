@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Eye, EyeOff, List } from "lucide-react";
 import { ViewerPanelProps } from "./types";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 
 export const DisplayStructuresPanel = ({
   showDisplayStructures,

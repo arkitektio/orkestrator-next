@@ -18,3 +18,7 @@ generates:
   src/renderer/src/alpaka/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/alpaka.graphql:
+    plugins:
+      - schema-ast

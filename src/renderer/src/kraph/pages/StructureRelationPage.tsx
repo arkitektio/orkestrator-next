@@ -1,18 +1,18 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { DisplayWidget } from "@/command/Menu";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Badge } from "@/components/ui/badge";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphStructureRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureRelationQuery } from "../api/graphql";
-import { DisplayWidget } from "@/command/Menu";
 
-export default asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
+const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
   return (
     <KraphStructureRelation.ModelPage
-      object={data.structureRelation.id}
+      object={data?.structureRelation.id}
       title={data?.structureRelation.category.label}
       sidebars={<KraphStructureRelation.Komments object={data.structureRelation.id} />}
       pageActions={
@@ -49,3 +49,5 @@ export default asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch
     </KraphStructureRelation.ModelPage>
   );
 });
+
+export default Page;

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Upload, X, File, Image, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Database, File, Image, Upload, X } from "lucide-react";
+import React, { useRef, useState } from "react";
 
 export interface UploadDialogProps {
   children: React.ReactNode;

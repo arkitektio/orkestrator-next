@@ -1,5 +1,6 @@
+import { useReport } from "@/hooks/use-report";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, PanelLeft, PanelRight, Clipboard, Check } from "lucide-react";
+import { ChevronDownIcon, PanelLeft, PanelRight } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
@@ -16,7 +17,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
-import { useReport } from "@/hooks/use-report";
 import { Separator } from "../ui/separator";
 
 export type PageVariant = "black" | "default";
@@ -186,7 +186,7 @@ export const PageLayout = ({
       </ResizablePanel>
       {params.get("pageSidebar") == "true" && (
         <>
-          <ResizableHandle  />
+          <ResizableHandle />
           <ResizablePanel
             minSize={10}
             maxSize={80}

@@ -1,5 +1,5 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { useDetailBlockQuery, useDetailNeuronModelQuery, useDetailSimulationQuery } from "../api/graphql";
+import { useDetailNeuronModelQuery } from "../api/graphql";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export const NeuronModelDisplay = (props: DisplayWidgetProps) => {
@@ -17,7 +17,7 @@ export const NeuronModelDisplay = (props: DisplayWidgetProps) => {
     <div className="flex flex-col items-center justify-center p-2">
       <div className="mb-4 font-bold">{data.neuronModel.name}</div>
       <div className="flex-grow">
-      <NeuronVisualizer model={data.neuronModel} />
+        <NeuronVisualizer model={data.neuronModel} />
       </div>
     </div>
   );

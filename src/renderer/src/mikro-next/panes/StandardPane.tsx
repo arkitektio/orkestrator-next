@@ -8,7 +8,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { Toggle } from "@/components/ui/toggle";
+import { UploadProgress } from "@/components/upload/UploadProgress";
+import {
+  JustUsername,
+} from "@/lok-next/components/UserAvatar";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { ArrowDown, File, Folder, Home, Image } from "lucide-react";
@@ -21,14 +27,6 @@ import {
 import DatasetCard from "../components/cards/DatasetCard";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
-import {
-  JustUsername,
-} from "@/lok-next/components/UserAvatar";
-import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
-import { SubTree } from "@/components/explorer/SubTree";
-import { Separator } from "@/components/ui/separator";
-import { UploadProgress } from "@/components/upload/UploadProgress";
-import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data, error } = useMembersQuery();

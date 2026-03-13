@@ -1,13 +1,13 @@
-import { Card } from "@/components/ui/card";
 import { Arkitekt } from "@/app/Arkitekt";
+import { Card } from "@/components/ui/card";
 import { OmeroArkImage } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListImageFragment } from "@/omero-ark/api/graphql";
 import React from "react";
 
 interface Props {
   image: ListImageFragment;
-  mates?: MateFinder[];
+
 }
 
 const apiUrlFromImageID = (id: string, fakts: any) => {
@@ -18,7 +18,7 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
   )}/api/thumbnails/${id}`;
 };
 
-const TCard = ({ image, mates }: Props) => {
+const TCard = ({ image }: Props) => {
   const token = Arkitekt.useToken();
   const omeroArk = Arkitekt.useService("omero_ark");
 
@@ -28,6 +28,7 @@ const TCard = ({ image, mates }: Props) => {
   // Load data
   React.useEffect(() => {
     if (!image.id) return;
+    if (!token) return;
     if (ref.current === null) return;
     fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
       headers: {
@@ -38,13 +39,13 @@ const TCard = ({ image, mates }: Props) => {
       .then((res) => res.blob())
       .then((res) => {
         console.log("blob: ", res);
-        var objectURL = URL.createObjectURL(res);
+        const objectURL = URL.createObjectURL(res);
         if (ref.current === null) return;
         ref.current.style.background = "url('" + objectURL + "')";
         ref.current.style.backgroundSize = "cover";
         ref.current.style.backgroundPosition = "center";
       });
-  }, [image.id, ref]);
+  }, [image.id, omeroArk.client.url, token]);
 
   return (
     <OmeroArkImage.Smart

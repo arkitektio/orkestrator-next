@@ -1,18 +1,15 @@
-import { PageLayout } from "@/components/layout/PageLayout";
-import React from "react";
-import ProjectList from "../components/lists/ProjectList";
-import { MeDocument, useDeleteMeMutation } from "../api/graphql";
-import { Button } from "@/components/ui/button";
-import { CreateProjectForm } from "../forms/CreateProjectForm";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "@radix-ui/react-icons";
-import { OmeroArkProject } from "@/linkers";
-import { useNavigate } from "react-router-dom";
-import { DeleteMeButton } from "../ConnectedGuard";
 import { CommandMenu } from "@/command/Menu";
-import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { OmeroArkProject } from "@/linkers";
+import { PlusIcon } from "@radix-ui/react-icons";
+import { useNavigate } from "react-router-dom";
+import ProjectList from "../components/lists/ProjectList";
+import { DeleteMeButton } from "../ConnectedGuard";
+import { CreateProjectForm } from "../forms/CreateProjectForm";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
 
 

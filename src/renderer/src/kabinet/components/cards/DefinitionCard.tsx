@@ -6,17 +6,16 @@ import {
 } from "@/components/ui/card";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListDefinitionFragment } from "../../api/graphql";
 
 interface Props {
   item: ListDefinitionFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <KabinetDefinition.Smart object={item?.id} mates={mates}>
+    <KabinetDefinition.Smart object={item?.id} >
       <Card className="group aspect-square @sm:aspect-[3/2] overflow-hidden">
         <CardHeader className="flex flex-row justify-between">
           <div>

@@ -17,16 +17,13 @@ import { ArrowRight } from "lucide-react";
 import { useCallback, useState } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
-import ReservationCard from "../components/cards/ReservationCard";
+import MinimalAssignationCard from "../components/cards/MinimalAssignationCard";
+import MinimalImplementationCard from "../components/cards/MinimalImplementationCard";
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import AssignationCard from "../components/cards/AssignationCard";
-import MinimalAssignationCard from "../components/cards/MinimalAssignationCard";
-import ImplementationCard from "../components/cards/ImplementationCard";
-import MinimalImplementationCard from "../components/cards/MinimalImplementationCard";
 
 export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   const { assign, latestAssignation, cancel } = useAction({

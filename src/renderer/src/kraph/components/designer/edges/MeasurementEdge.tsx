@@ -1,5 +1,11 @@
 import { Card } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { KraphMeasurementCategory } from "@/linkers";
+import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
@@ -9,13 +15,6 @@ import {
 } from "@xyflow/react";
 import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { KraphMeasurementCategory } from "@/linkers";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useIsEdgePossible } from "../OntologyGraphProvider";
 
 export type GetSpecialPathParams = {
   sourceX: number;

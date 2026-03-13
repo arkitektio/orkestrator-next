@@ -35,7 +35,7 @@ export const DropZone = ({
           };
         }
         if (compareWithList && compareWithList.length > 0) {
-          let compareIds = compareWithList.map((c) => c.id);
+          const compareIds = compareWithList.map((c) => c.id);
           items = items.filter((i) => !compareIds.includes(i.id));
           console.log("ALL COMPARED ITEMS", items);
         }

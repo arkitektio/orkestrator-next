@@ -1,4 +1,4 @@
-import { GripVertical, Search, Asterisk, Fingerprint } from "lucide-react";
+import { GripVertical, Search, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PropertyDefinition, dataTypeConfigs } from "./utils";
 
@@ -68,19 +68,14 @@ export function PropertyListItem({
 
       {/* Attribute Badges */}
       <div className="flex items-center gap-2">
+        {property.index && (
+          <div className="p-1 rounded bg-emerald-100">
+            <Database className="h-3 w-3 text-emerald-700" />
+          </div>
+        )}
         {property.searchable && (
           <div className="p-1 rounded bg-blue-100">
             <Search className="h-3 w-3 text-blue-700" />
-          </div>
-        )}
-        {property.required && (
-          <div className="p-1 rounded bg-red-100">
-            <Asterisk className="h-3 w-3 text-red-700" />
-          </div>
-        )}
-        {property.unique && (
-          <div className="p-1 rounded bg-purple-100">
-            <Fingerprint className="h-3 w-3 text-purple-700" />
           </div>
         )}
       </div>

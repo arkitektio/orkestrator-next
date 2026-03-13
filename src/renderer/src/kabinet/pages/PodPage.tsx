@@ -10,9 +10,8 @@ import {
 import { KabinetPod } from "@/linkers";
 import {
   ListImplementationFragment,
-  useAgentQuery,
   useAgentsQuery,
-  useImplementationsQuery,
+  useImplementationsQuery
 } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import {
@@ -22,8 +21,6 @@ import {
   useGetPodQuery,
 } from "../api/graphql";
 import ResourceCard from "../components/cards/ResourceCard";
-import { useAgent } from "@/app/agent/AgentProvider";
-import { ag } from "node_modules/@faker-js/faker/dist/airline-DF6RqYmq";
 export const AssignButton = (props: {
   template: ListImplementationFragment;
   pod: string;
@@ -105,21 +102,23 @@ const RefreshLogsButton = (props: {
 export const AgentButtons = (props: {
   pod: PodFragment;
 }) => {
-  const {data, error} = useAgentsQuery({
-      variables: { filters: {
+  const { data, error } = useAgentsQuery({
+    variables: {
+      filters: {
         clientId: props.pod.backend.clientId
-       } },
-    });
+      }
+    },
+  });
 
-    if (error)  {
-      return <div>Error loading agent {error.message}</div>;
-    }
+  if (error) {
+    return <div>Error loading agent {error.message}</div>;
+  }
 
   return (
     <>
-    {data?.agents.map((agent) => (
-      <RefreshLogsButton pod={props.pod} agentId={agent.id} refetch={() => {}} key={agent.id} />
-    ))}
+      {data?.agents.map((agent) => (
+        <RefreshLogsButton pod={props.pod} agentId={agent.id} refetch={() => { }} key={agent.id} />
+      ))}
     </>
   );
 }

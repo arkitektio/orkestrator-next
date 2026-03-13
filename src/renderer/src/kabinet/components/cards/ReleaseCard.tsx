@@ -21,12 +21,11 @@ import {
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
-import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;
-  mates?: MateFinder[];
+
 }
 
 export const AssignButton = (props: {
@@ -40,7 +39,7 @@ export const AssignButton = (props: {
   );
 
   const doassign = async () => {
-    let argKey = implementation?.action.args.at(0)?.key;
+    const argKey = implementation?.action.args.at(0)?.key;
     if (!argKey) {
       return;
     }
@@ -112,14 +111,14 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   );
 };
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   const { progress } = useLiveAssignation({
     identifier: "@kabinet/release",
     object: item.id,
   });
 
   return (
-    <KabinetRelease.Smart object={item?.id} mates={mates}>
+    <KabinetRelease.Smart object={item?.id} >
       <Card
         className="group transition-all duration-300 ease-in-out aspect-square"
         style={{

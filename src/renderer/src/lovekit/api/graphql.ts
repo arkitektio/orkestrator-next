@@ -1,215 +1,208 @@
 import * as ApolloReactHooks from '@/lib/lovekit/funcs';
 import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-const defaultOptions = {} as const;
+export type Maybe<T> = T | null
+export type InputMaybe<T> = Maybe<T>
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] }
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> }
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> }
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = {
+  [_ in K]?: never
+}
+export type Incremental<T> =
+  | T
+  | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never }
+const defaultOptions = {} as const
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  DateTime: { input: any; output: any; }
-};
+  ID: { input: string; output: string }
+  String: { input: string; output: string }
+  Boolean: { input: boolean; output: boolean }
+  Int: { input: number; output: number }
+  Float: { input: number; output: number }
+  DateTime: { input: any; output: any }
+}
 
 export type Client = {
-  __typename?: 'Client';
-  clientId: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-};
+  __typename?: 'Client'
+  clientId: Scalars['String']['output']
+  name: Scalars['String']['output']
+}
 
 export type CollaborativeBroadcast = {
-  __typename?: 'CollaborativeBroadcast';
-  audioStreams: Array<Stream>;
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
+  __typename?: 'CollaborativeBroadcast'
+  audioStreams: Array<Stream>
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['ID']['output']
   /** The streamers that are collaborating on this broadcast. */
-  streamers: Array<Streamer>;
-  streams: Array<Stream>;
-  title: Scalars['String']['output'];
-  videoStreams: Array<Stream>;
-};
-
+  streamers: Array<Streamer>
+  streams: Array<Stream>
+  title: Scalars['String']['output']
+  videoStreams: Array<Stream>
+}
 
 export type CollaborativeBroadcastStreamersArgs = {
-  filters?: InputMaybe<StreamerFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<StreamerFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 /** Filter for Solo Broadcasts */
 export type CollaborativeBroadcastFilter = {
-  AND?: InputMaybe<CollaborativeBroadcastFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<CollaborativeBroadcastFilter>;
-  OR?: InputMaybe<CollaborativeBroadcastFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<CollaborativeBroadcastFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<CollaborativeBroadcastFilter>
+  OR?: InputMaybe<CollaborativeBroadcastFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type EnsureCollaborativeBroadcastInput = {
-  instanceId?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
+  instanceId?: InputMaybe<Scalars['String']['input']>
+  title?: InputMaybe<Scalars['String']['input']>
+}
 
 export type EnsureSoloBroadcastInput = {
-  instanceId?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
+  instanceId?: InputMaybe<Scalars['String']['input']>
+  title?: InputMaybe<Scalars['String']['input']>
+}
 
 export type EnsureStreamInput = {
-  broadcast?: InputMaybe<Scalars['ID']['input']>;
-  kind?: StreamKind;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
+  broadcast?: InputMaybe<Scalars['ID']['input']>
+  kind?: StreamKind
+  title?: InputMaybe<Scalars['String']['input']>
+}
 
 export type JoinBroadcastInput = {
-  broadcast: Scalars['ID']['input'];
-};
+  broadcast: Scalars['ID']['input']
+}
 
 export type Mutation = {
-  __typename?: 'Mutation';
+  __typename?: 'Mutation'
   /** Create a collaborative broadcast */
-  ensureCollaborativeBroadcast: CollaborativeBroadcast;
+  ensureCollaborativeBroadcast: CollaborativeBroadcast
   /** Create a solo broadcast */
-  ensureSoloBroadcast: SoloBroadcast;
+  ensureSoloBroadcast: SoloBroadcast
   /** Create a stream and return the token for it */
-  ensureStream: Scalars['String']['output'];
+  ensureStream: Scalars['String']['output']
   /** Join a solo broadcast and return the token for it */
-  joinBroadcast: Scalars['String']['output'];
-};
-
+  joinBroadcast: Scalars['String']['output']
+}
 
 export type MutationEnsureCollaborativeBroadcastArgs = {
-  input: EnsureCollaborativeBroadcastInput;
-};
-
+  input: EnsureCollaborativeBroadcastInput
+}
 
 export type MutationEnsureSoloBroadcastArgs = {
-  input: EnsureSoloBroadcastInput;
-};
-
+  input: EnsureSoloBroadcastInput
+}
 
 export type MutationEnsureStreamArgs = {
-  input: EnsureStreamInput;
-};
-
+  input: EnsureStreamInput
+}
 
 export type MutationJoinBroadcastArgs = {
-  input: JoinBroadcastInput;
-};
+  input: JoinBroadcastInput
+}
 
 export type OffsetPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: Scalars['Int']['input'];
-};
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: Scalars['Int']['input']
+}
 
 export type Organization = {
-  __typename?: 'Organization';
-  id: Scalars['String']['output'];
-  slug: Scalars['String']['output'];
-};
+  __typename?: 'Organization'
+  id: Scalars['String']['output']
+  slug: Scalars['String']['output']
+}
 
 export type Query = {
-  __typename?: 'Query';
+  __typename?: 'Query'
   /** Get a collaborative broadcast by ID */
-  collaborativeBroadcast: CollaborativeBroadcast;
+  collaborativeBroadcast: CollaborativeBroadcast
   /** Get all collaborative broadcasts */
-  collaborativeBroadcasts: Array<CollaborativeBroadcast>;
+  collaborativeBroadcasts: Array<CollaborativeBroadcast>
   /** Get a solo broadcast by ID */
-  soloBroadcast: SoloBroadcast;
+  soloBroadcast: SoloBroadcast
   /** Get all solo broadcasts */
-  soloBroadcasts: Array<SoloBroadcast>;
+  soloBroadcasts: Array<SoloBroadcast>
   /** Get a stream by ID */
-  stream: Stream;
+  stream: Stream
   /** Get a stream */
-  streams: Array<Stream>;
-};
-
+  streams: Array<Stream>
+}
 
 export type QueryCollaborativeBroadcastArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryCollaborativeBroadcastsArgs = {
-  filters?: InputMaybe<CollaborativeBroadcastFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<CollaborativeBroadcastFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QuerySoloBroadcastArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QuerySoloBroadcastsArgs = {
-  filters?: InputMaybe<SoloBroadcastFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<SoloBroadcastFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryStreamArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryStreamsArgs = {
-  filters?: InputMaybe<StreamFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<StreamFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type SoloBroadcast = {
-  __typename?: 'SoloBroadcast';
-  audioStreams: Array<Stream>;
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  streamer: Streamer;
-  title: Scalars['String']['output'];
-  videoStreams: Array<Stream>;
-};
+  __typename?: 'SoloBroadcast'
+  audioStreams: Array<Stream>
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['ID']['output']
+  streamer: Streamer
+  title: Scalars['String']['output']
+  videoStreams: Array<Stream>
+}
 
 /** Filter for Solo Broadcasts */
 export type SoloBroadcastFilter = {
-  AND?: InputMaybe<SoloBroadcastFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<SoloBroadcastFilter>;
-  OR?: InputMaybe<SoloBroadcastFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<SoloBroadcastFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<SoloBroadcastFilter>
+  OR?: InputMaybe<SoloBroadcastFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type Stream = {
-  __typename?: 'Stream';
-  id: Scalars['ID']['output'];
-  kind: StreamKind;
-  streamer: Streamer;
-  title: Scalars['String']['output'];
-};
+  __typename?: 'Stream'
+  id: Scalars['ID']['output']
+  kind: StreamKind
+  streamer: Streamer
+  title: Scalars['String']['output']
+}
 
 export type StreamEvent = {
-  __typename?: 'StreamEvent';
-  create?: Maybe<Stream>;
-  delete?: Maybe<Scalars['ID']['output']>;
-  moved?: Maybe<Stream>;
-  update?: Maybe<Stream>;
-};
+  __typename?: 'StreamEvent'
+  create?: Maybe<Stream>
+  delete?: Maybe<Scalars['ID']['output']>
+  moved?: Maybe<Stream>
+  update?: Maybe<Stream>
+}
 
 /** Filter for Streams */
 export type StreamFilter = {
-  AND?: InputMaybe<StreamFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<StreamFilter>;
-  OR?: InputMaybe<StreamFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<StreamFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<StreamFilter>
+  OR?: InputMaybe<StreamFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 /** The state of a dask cluster */
 export enum StreamKind {
@@ -218,203 +211,291 @@ export enum StreamKind {
 }
 
 export type Streamer = {
-  __typename?: 'Streamer';
-  client: Client;
+  __typename?: 'Streamer'
+  client: Client
   /** The collaborative broadcasts created by this agent. */
-  collaborativeBroadcasts: Array<CollaborativeBroadcast>;
-  id: Scalars['ID']['output'];
+  collaborativeBroadcasts: Array<CollaborativeBroadcast>
+  id: Scalars['ID']['output']
   /** The solo broadcasts created by this agent, if any. */
-  soloBroadcasts?: Maybe<SoloBroadcast>;
-  user: User;
-};
-
+  soloBroadcasts?: Maybe<SoloBroadcast>
+  user: User
+}
 
 export type StreamerCollaborativeBroadcastsArgs = {
-  filters?: InputMaybe<CollaborativeBroadcastFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<CollaborativeBroadcastFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 /** Filter for Dask Clusters */
 export type StreamerFilter = {
-  AND?: InputMaybe<StreamerFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<StreamerFilter>;
-  OR?: InputMaybe<StreamerFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<StreamerFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<StreamerFilter>
+  OR?: InputMaybe<StreamerFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type Subscription = {
-  __typename?: 'Subscription';
+  __typename?: 'Subscription'
   /** Subscribe to stream events */
-  streams: StreamEvent;
-};
-
+  streams: StreamEvent
+}
 
 export type SubscriptionStreamsArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-};
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type User = {
-  __typename?: 'User';
-  activeOrganization?: Maybe<Organization>;
-  preferredUsername: Scalars['String']['output'];
-  sub: Scalars['String']['output'];
-};
+  __typename?: 'User'
+  activeOrganization?: Maybe<Organization>
+  preferredUsername: Scalars['String']['output']
+  sub: Scalars['String']['output']
+}
 
-export type SoloBroadcastFragment = { __typename?: 'SoloBroadcast', id: string, title: string, streamer: { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } } };
+export type SoloBroadcastFragment = {
+  __typename?: 'SoloBroadcast'
+  id: string
+  title: string
+  streamer: {
+    __typename?: 'Streamer'
+    user: { __typename?: 'User'; sub: string }
+    client: { __typename?: 'Client'; clientId: string }
+  }
+}
 
-export type CollaborativeBroadcastFragment = { __typename?: 'CollaborativeBroadcast', id: string, title: string, streamers: Array<{ __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> };
+export type CollaborativeBroadcastFragment = {
+  __typename?: 'CollaborativeBroadcast'
+  id: string
+  title: string
+  streamers: Array<{
+    __typename?: 'Streamer'
+    user: { __typename?: 'User'; sub: string }
+    client: { __typename?: 'Client'; clientId: string }
+  }>
+}
 
-export type StreamFragment = { __typename?: 'Stream', id: string };
+export type StreamFragment = { __typename?: 'Stream'; id: string }
 
-export type ListStreamFragment = { __typename?: 'Stream', id: string };
+export type ListStreamFragment = { __typename?: 'Stream'; id: string }
 
-export type StreamerFragment = { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } };
+export type StreamerFragment = {
+  __typename?: 'Streamer'
+  user: { __typename?: 'User'; sub: string }
+  client: { __typename?: 'Client'; clientId: string }
+}
 
 export type EnsureSoloBroadcastMutationVariables = Exact<{
-  input: EnsureSoloBroadcastInput;
-}>;
+  input: EnsureSoloBroadcastInput
+}>
 
-
-export type EnsureSoloBroadcastMutation = { __typename?: 'Mutation', ensureSoloBroadcast: { __typename?: 'SoloBroadcast', id: string, title: string, streamer: { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } } } };
+export type EnsureSoloBroadcastMutation = {
+  __typename?: 'Mutation'
+  ensureSoloBroadcast: {
+    __typename?: 'SoloBroadcast'
+    id: string
+    title: string
+    streamer: {
+      __typename?: 'Streamer'
+      user: { __typename?: 'User'; sub: string }
+      client: { __typename?: 'Client'; clientId: string }
+    }
+  }
+}
 
 export type JoinBroadcastMutationVariables = Exact<{
-  input: JoinBroadcastInput;
-}>;
+  input: JoinBroadcastInput
+}>
 
-
-export type JoinBroadcastMutation = { __typename?: 'Mutation', joinBroadcast: string };
+export type JoinBroadcastMutation = { __typename?: 'Mutation'; joinBroadcast: string }
 
 export type EnsureStreamMutationVariables = Exact<{
-  input: EnsureStreamInput;
-}>;
+  input: EnsureStreamInput
+}>
 
-
-export type EnsureStreamMutation = { __typename?: 'Mutation', ensureStream: string };
+export type EnsureStreamMutation = { __typename?: 'Mutation'; ensureStream: string }
 
 export type GetCollaborativeBroadcastQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetCollaborativeBroadcastQuery = { __typename?: 'Query', collaborativeBroadcast: { __typename?: 'CollaborativeBroadcast', id: string, title: string, streamers: Array<{ __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> } };
+export type GetCollaborativeBroadcastQuery = {
+  __typename?: 'Query'
+  collaborativeBroadcast: {
+    __typename?: 'CollaborativeBroadcast'
+    id: string
+    title: string
+    streamers: Array<{
+      __typename?: 'Streamer'
+      user: { __typename?: 'User'; sub: string }
+      client: { __typename?: 'Client'; clientId: string }
+    }>
+  }
+}
 
 export type SearchollaborativeBroadcastsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type SearchollaborativeBroadcastsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'CollaborativeBroadcast', value: string, label: string }> };
+export type SearchollaborativeBroadcastsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'CollaborativeBroadcast'; value: string; label: string }>
+}
 
 export type ListCollaborativeBroadcastsQueryVariables = Exact<{
-  filter?: InputMaybe<CollaborativeBroadcastFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filter?: InputMaybe<CollaborativeBroadcastFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type ListCollaborativeBroadcastsQuery = { __typename?: 'Query', collaborativeBroadcasts: Array<{ __typename?: 'CollaborativeBroadcast', id: string, title: string, streamers: Array<{ __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> }> };
+export type ListCollaborativeBroadcastsQuery = {
+  __typename?: 'Query'
+  collaborativeBroadcasts: Array<{
+    __typename?: 'CollaborativeBroadcast'
+    id: string
+    title: string
+    streamers: Array<{
+      __typename?: 'Streamer'
+      user: { __typename?: 'User'; sub: string }
+      client: { __typename?: 'Client'; clientId: string }
+    }>
+  }>
+}
 
 export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+}>
 
-
-export type GlobalSearchQuery = { __typename?: 'Query', streams: Array<{ __typename?: 'Stream', id: string }> };
+export type GlobalSearchQuery = {
+  __typename?: 'Query'
+  streams: Array<{ __typename?: 'Stream'; id: string }>
+}
 
 export type GetSoloBroadcastQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetSoloBroadcastQuery = { __typename?: 'Query', soloBroadcast: { __typename?: 'SoloBroadcast', id: string, title: string, streamer: { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } } } };
+export type GetSoloBroadcastQuery = {
+  __typename?: 'Query'
+  soloBroadcast: {
+    __typename?: 'SoloBroadcast'
+    id: string
+    title: string
+    streamer: {
+      __typename?: 'Streamer'
+      user: { __typename?: 'User'; sub: string }
+      client: { __typename?: 'Client'; clientId: string }
+    }
+  }
+}
 
 export type SearchSoloBroadcastQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type SearchSoloBroadcastQuery = { __typename?: 'Query', options: Array<{ __typename?: 'SoloBroadcast', value: string, label: string }> };
+export type SearchSoloBroadcastQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'SoloBroadcast'; value: string; label: string }>
+}
 
 export type ListSoloBroadcastsQueryVariables = Exact<{
-  filter?: InputMaybe<SoloBroadcastFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filter?: InputMaybe<SoloBroadcastFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type ListSoloBroadcastsQuery = { __typename?: 'Query', soloBroadcasts: Array<{ __typename?: 'SoloBroadcast', id: string, title: string, streamer: { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } } }> };
+export type ListSoloBroadcastsQuery = {
+  __typename?: 'Query'
+  soloBroadcasts: Array<{
+    __typename?: 'SoloBroadcast'
+    id: string
+    title: string
+    streamer: {
+      __typename?: 'Streamer'
+      user: { __typename?: 'User'; sub: string }
+      client: { __typename?: 'Client'; clientId: string }
+    }
+  }>
+}
 
 export type GetStreamQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetStreamQuery = { __typename?: 'Query', stream: { __typename?: 'Stream', id: string } };
+export type GetStreamQuery = { __typename?: 'Query'; stream: { __typename?: 'Stream'; id: string } }
 
 export type SearchStreamsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type SearchStreamsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Stream', value: string, label: string }> };
+export type SearchStreamsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'Stream'; value: string; label: string }>
+}
 
 export type ListStreamsQueryVariables = Exact<{
-  filter?: InputMaybe<StreamFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filter?: InputMaybe<StreamFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type ListStreamsQuery = { __typename?: 'Query', streams: Array<{ __typename?: 'Stream', id: string }> };
+export type ListStreamsQuery = {
+  __typename?: 'Query'
+  streams: Array<{ __typename?: 'Stream'; id: string }>
+}
 
 export const StreamerFragmentDoc = gql`
-    fragment Streamer on Streamer {
-  user {
-    sub
+  fragment Streamer on Streamer {
+    user {
+      sub
+    }
+    client {
+      clientId
+    }
   }
-  client {
-    clientId
-  }
-}
-    `;
+`
 export const SoloBroadcastFragmentDoc = gql`
-    fragment SoloBroadcast on SoloBroadcast {
-  id
-  title
-  streamer {
-    ...Streamer
+  fragment SoloBroadcast on SoloBroadcast {
+    id
+    title
+    streamer {
+      ...Streamer
+    }
   }
-}
-    ${StreamerFragmentDoc}`;
+  ${StreamerFragmentDoc}
+`
 export const CollaborativeBroadcastFragmentDoc = gql`
-    fragment CollaborativeBroadcast on CollaborativeBroadcast {
-  id
-  title
-  streamers {
-    ...Streamer
+  fragment CollaborativeBroadcast on CollaborativeBroadcast {
+    id
+    title
+    streamers {
+      ...Streamer
+    }
   }
-}
-    ${StreamerFragmentDoc}`;
+  ${StreamerFragmentDoc}
+`
 export const StreamFragmentDoc = gql`
-    fragment Stream on Stream {
-  id
-}
-    `;
-export const ListStreamFragmentDoc = gql`
-    fragment ListStream on Stream {
-  id
-}
-    `;
-export const EnsureSoloBroadcastDocument = gql`
-    mutation EnsureSoloBroadcast($input: EnsureSoloBroadcastInput!) {
-  ensureSoloBroadcast(input: $input) {
-    ...SoloBroadcast
+  fragment Stream on Stream {
+    id
   }
-}
-    ${SoloBroadcastFragmentDoc}`;
-export type EnsureSoloBroadcastMutationFn = Apollo.MutationFunction<EnsureSoloBroadcastMutation, EnsureSoloBroadcastMutationVariables>;
+`
+export const ListStreamFragmentDoc = gql`
+  fragment ListStream on Stream {
+    id
+  }
+`
+export const EnsureSoloBroadcastDocument = gql`
+  mutation EnsureSoloBroadcast($input: EnsureSoloBroadcastInput!) {
+    ensureSoloBroadcast(input: $input) {
+      ...SoloBroadcast
+    }
+  }
+  ${SoloBroadcastFragmentDoc}
+`
+export type EnsureSoloBroadcastMutationFn = Apollo.MutationFunction<
+  EnsureSoloBroadcastMutation,
+  EnsureSoloBroadcastMutationVariables
+>
 
 /**
  * __useEnsureSoloBroadcastMutation__
@@ -433,19 +514,35 @@ export type EnsureSoloBroadcastMutationFn = Apollo.MutationFunction<EnsureSoloBr
  *   },
  * });
  */
-export function useEnsureSoloBroadcastMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureSoloBroadcastMutation, EnsureSoloBroadcastMutationVariables>) {
+export function useEnsureSoloBroadcastMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureSoloBroadcastMutation,
+    EnsureSoloBroadcastMutationVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<EnsureSoloBroadcastMutation, EnsureSoloBroadcastMutationVariables>(EnsureSoloBroadcastDocument, options);
+  return ApolloReactHooks.useMutation<
+    EnsureSoloBroadcastMutation,
+    EnsureSoloBroadcastMutationVariables
+  >(EnsureSoloBroadcastDocument, options)
 }
-export type EnsureSoloBroadcastMutationHookResult = ReturnType<typeof useEnsureSoloBroadcastMutation>;
-export type EnsureSoloBroadcastMutationResult = Apollo.MutationResult<EnsureSoloBroadcastMutation>;
-export type EnsureSoloBroadcastMutationOptions = Apollo.BaseMutationOptions<EnsureSoloBroadcastMutation, EnsureSoloBroadcastMutationVariables>;
+export type EnsureSoloBroadcastMutationHookResult = ReturnType<
+  typeof useEnsureSoloBroadcastMutation
+>
+export type EnsureSoloBroadcastMutationResult = Apollo.MutationResult<EnsureSoloBroadcastMutation>
+export type EnsureSoloBroadcastMutationOptions = Apollo.BaseMutationOptions<
+  EnsureSoloBroadcastMutation,
+  EnsureSoloBroadcastMutationVariables
+>
 export const JoinBroadcastDocument = gql`
-    mutation JoinBroadcast($input: JoinBroadcastInput!) {
-  joinBroadcast(input: $input)
-}
-    `;
-export type JoinBroadcastMutationFn = Apollo.MutationFunction<JoinBroadcastMutation, JoinBroadcastMutationVariables>;
+  mutation JoinBroadcast($input: JoinBroadcastInput!) {
+    joinBroadcast(input: $input)
+  }
+`
+export type JoinBroadcastMutationFn = Apollo.MutationFunction<
+  JoinBroadcastMutation,
+  JoinBroadcastMutationVariables
+>
 
 /**
  * __useJoinBroadcastMutation__
@@ -464,19 +561,33 @@ export type JoinBroadcastMutationFn = Apollo.MutationFunction<JoinBroadcastMutat
  *   },
  * });
  */
-export function useJoinBroadcastMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<JoinBroadcastMutation, JoinBroadcastMutationVariables>) {
+export function useJoinBroadcastMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    JoinBroadcastMutation,
+    JoinBroadcastMutationVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<JoinBroadcastMutation, JoinBroadcastMutationVariables>(JoinBroadcastDocument, options);
+  return ApolloReactHooks.useMutation<JoinBroadcastMutation, JoinBroadcastMutationVariables>(
+    JoinBroadcastDocument,
+    options
+  )
 }
-export type JoinBroadcastMutationHookResult = ReturnType<typeof useJoinBroadcastMutation>;
-export type JoinBroadcastMutationResult = Apollo.MutationResult<JoinBroadcastMutation>;
-export type JoinBroadcastMutationOptions = Apollo.BaseMutationOptions<JoinBroadcastMutation, JoinBroadcastMutationVariables>;
+export type JoinBroadcastMutationHookResult = ReturnType<typeof useJoinBroadcastMutation>
+export type JoinBroadcastMutationResult = Apollo.MutationResult<JoinBroadcastMutation>
+export type JoinBroadcastMutationOptions = Apollo.BaseMutationOptions<
+  JoinBroadcastMutation,
+  JoinBroadcastMutationVariables
+>
 export const EnsureStreamDocument = gql`
-    mutation EnsureStream($input: EnsureStreamInput!) {
-  ensureStream(input: $input)
-}
-    `;
-export type EnsureStreamMutationFn = Apollo.MutationFunction<EnsureStreamMutation, EnsureStreamMutationVariables>;
+  mutation EnsureStream($input: EnsureStreamInput!) {
+    ensureStream(input: $input)
+  }
+`
+export type EnsureStreamMutationFn = Apollo.MutationFunction<
+  EnsureStreamMutation,
+  EnsureStreamMutationVariables
+>
 
 /**
  * __useEnsureStreamMutation__
@@ -495,20 +606,32 @@ export type EnsureStreamMutationFn = Apollo.MutationFunction<EnsureStreamMutatio
  *   },
  * });
  */
-export function useEnsureStreamMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureStreamMutation, EnsureStreamMutationVariables>) {
+export function useEnsureStreamMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureStreamMutation,
+    EnsureStreamMutationVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<EnsureStreamMutation, EnsureStreamMutationVariables>(EnsureStreamDocument, options);
+  return ApolloReactHooks.useMutation<EnsureStreamMutation, EnsureStreamMutationVariables>(
+    EnsureStreamDocument,
+    options
+  )
 }
-export type EnsureStreamMutationHookResult = ReturnType<typeof useEnsureStreamMutation>;
-export type EnsureStreamMutationResult = Apollo.MutationResult<EnsureStreamMutation>;
-export type EnsureStreamMutationOptions = Apollo.BaseMutationOptions<EnsureStreamMutation, EnsureStreamMutationVariables>;
+export type EnsureStreamMutationHookResult = ReturnType<typeof useEnsureStreamMutation>
+export type EnsureStreamMutationResult = Apollo.MutationResult<EnsureStreamMutation>
+export type EnsureStreamMutationOptions = Apollo.BaseMutationOptions<
+  EnsureStreamMutation,
+  EnsureStreamMutationVariables
+>
 export const GetCollaborativeBroadcastDocument = gql`
-    query GetCollaborativeBroadcast($id: ID!) {
-  collaborativeBroadcast(id: $id) {
-    ...CollaborativeBroadcast
+  query GetCollaborativeBroadcast($id: ID!) {
+    collaborativeBroadcast(id: $id) {
+      ...CollaborativeBroadcast
+    }
   }
-}
-    ${CollaborativeBroadcastFragmentDoc}`;
+  ${CollaborativeBroadcastFragmentDoc}
+`
 
 /**
  * __useGetCollaborativeBroadcastQuery__
@@ -526,28 +649,51 @@ export const GetCollaborativeBroadcastDocument = gql`
  *   },
  * });
  */
-export function useGetCollaborativeBroadcastQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCollaborativeBroadcastQuery, GetCollaborativeBroadcastQueryVariables>) {
+export function useGetCollaborativeBroadcastQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetCollaborativeBroadcastQuery,
+    GetCollaborativeBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GetCollaborativeBroadcastQuery, GetCollaborativeBroadcastQueryVariables>(GetCollaborativeBroadcastDocument, options);
+  return ApolloReactHooks.useQuery<
+    GetCollaborativeBroadcastQuery,
+    GetCollaborativeBroadcastQueryVariables
+  >(GetCollaborativeBroadcastDocument, options)
 }
-export function useGetCollaborativeBroadcastLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCollaborativeBroadcastQuery, GetCollaborativeBroadcastQueryVariables>) {
+export function useGetCollaborativeBroadcastLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetCollaborativeBroadcastQuery,
+    GetCollaborativeBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GetCollaborativeBroadcastQuery, GetCollaborativeBroadcastQueryVariables>(GetCollaborativeBroadcastDocument, options);
+  return ApolloReactHooks.useLazyQuery<
+    GetCollaborativeBroadcastQuery,
+    GetCollaborativeBroadcastQueryVariables
+  >(GetCollaborativeBroadcastDocument, options)
 }
-export type GetCollaborativeBroadcastQueryHookResult = ReturnType<typeof useGetCollaborativeBroadcastQuery>;
-export type GetCollaborativeBroadcastLazyQueryHookResult = ReturnType<typeof useGetCollaborativeBroadcastLazyQuery>;
-export type GetCollaborativeBroadcastQueryResult = Apollo.QueryResult<GetCollaborativeBroadcastQuery, GetCollaborativeBroadcastQueryVariables>;
+export type GetCollaborativeBroadcastQueryHookResult = ReturnType<
+  typeof useGetCollaborativeBroadcastQuery
+>
+export type GetCollaborativeBroadcastLazyQueryHookResult = ReturnType<
+  typeof useGetCollaborativeBroadcastLazyQuery
+>
+export type GetCollaborativeBroadcastQueryResult = Apollo.QueryResult<
+  GetCollaborativeBroadcastQuery,
+  GetCollaborativeBroadcastQueryVariables
+>
 export const SearchollaborativeBroadcastsDocument = gql`
-    query SearchollaborativeBroadcasts($search: String, $values: [ID!]) {
-  options: collaborativeBroadcasts(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: title
+  query SearchollaborativeBroadcasts($search: String, $values: [ID!]) {
+    options: collaborativeBroadcasts(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: title
+    }
   }
-}
-    `;
+`
 
 /**
  * __useSearchollaborativeBroadcastsQuery__
@@ -566,24 +712,51 @@ export const SearchollaborativeBroadcastsDocument = gql`
  *   },
  * });
  */
-export function useSearchollaborativeBroadcastsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchollaborativeBroadcastsQuery, SearchollaborativeBroadcastsQueryVariables>) {
+export function useSearchollaborativeBroadcastsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchollaborativeBroadcastsQuery,
+    SearchollaborativeBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<SearchollaborativeBroadcastsQuery, SearchollaborativeBroadcastsQueryVariables>(SearchollaborativeBroadcastsDocument, options);
+  return ApolloReactHooks.useQuery<
+    SearchollaborativeBroadcastsQuery,
+    SearchollaborativeBroadcastsQueryVariables
+  >(SearchollaborativeBroadcastsDocument, options)
 }
-export function useSearchollaborativeBroadcastsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchollaborativeBroadcastsQuery, SearchollaborativeBroadcastsQueryVariables>) {
+export function useSearchollaborativeBroadcastsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchollaborativeBroadcastsQuery,
+    SearchollaborativeBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<SearchollaborativeBroadcastsQuery, SearchollaborativeBroadcastsQueryVariables>(SearchollaborativeBroadcastsDocument, options);
+  return ApolloReactHooks.useLazyQuery<
+    SearchollaborativeBroadcastsQuery,
+    SearchollaborativeBroadcastsQueryVariables
+  >(SearchollaborativeBroadcastsDocument, options)
 }
-export type SearchollaborativeBroadcastsQueryHookResult = ReturnType<typeof useSearchollaborativeBroadcastsQuery>;
-export type SearchollaborativeBroadcastsLazyQueryHookResult = ReturnType<typeof useSearchollaborativeBroadcastsLazyQuery>;
-export type SearchollaborativeBroadcastsQueryResult = Apollo.QueryResult<SearchollaborativeBroadcastsQuery, SearchollaborativeBroadcastsQueryVariables>;
+export type SearchollaborativeBroadcastsQueryHookResult = ReturnType<
+  typeof useSearchollaborativeBroadcastsQuery
+>
+export type SearchollaborativeBroadcastsLazyQueryHookResult = ReturnType<
+  typeof useSearchollaborativeBroadcastsLazyQuery
+>
+export type SearchollaborativeBroadcastsQueryResult = Apollo.QueryResult<
+  SearchollaborativeBroadcastsQuery,
+  SearchollaborativeBroadcastsQueryVariables
+>
 export const ListCollaborativeBroadcastsDocument = gql`
-    query ListCollaborativeBroadcasts($filter: CollaborativeBroadcastFilter, $pagination: OffsetPaginationInput) {
-  collaborativeBroadcasts(filters: $filter, pagination: $pagination) {
-    ...CollaborativeBroadcast
+  query ListCollaborativeBroadcasts(
+    $filter: CollaborativeBroadcastFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    collaborativeBroadcasts(filters: $filter, pagination: $pagination) {
+      ...CollaborativeBroadcast
+    }
   }
-}
-    ${CollaborativeBroadcastFragmentDoc}`;
+  ${CollaborativeBroadcastFragmentDoc}
+`
 
 /**
  * __useListCollaborativeBroadcastsQuery__
@@ -602,24 +775,48 @@ export const ListCollaborativeBroadcastsDocument = gql`
  *   },
  * });
  */
-export function useListCollaborativeBroadcastsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>) {
+export function useListCollaborativeBroadcastsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListCollaborativeBroadcastsQuery,
+    ListCollaborativeBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>(ListCollaborativeBroadcastsDocument, options);
+  return ApolloReactHooks.useQuery<
+    ListCollaborativeBroadcastsQuery,
+    ListCollaborativeBroadcastsQueryVariables
+  >(ListCollaborativeBroadcastsDocument, options)
 }
-export function useListCollaborativeBroadcastsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>) {
+export function useListCollaborativeBroadcastsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListCollaborativeBroadcastsQuery,
+    ListCollaborativeBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>(ListCollaborativeBroadcastsDocument, options);
+  return ApolloReactHooks.useLazyQuery<
+    ListCollaborativeBroadcastsQuery,
+    ListCollaborativeBroadcastsQueryVariables
+  >(ListCollaborativeBroadcastsDocument, options)
 }
-export type ListCollaborativeBroadcastsQueryHookResult = ReturnType<typeof useListCollaborativeBroadcastsQuery>;
-export type ListCollaborativeBroadcastsLazyQueryHookResult = ReturnType<typeof useListCollaborativeBroadcastsLazyQuery>;
-export type ListCollaborativeBroadcastsQueryResult = Apollo.QueryResult<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>;
+export type ListCollaborativeBroadcastsQueryHookResult = ReturnType<
+  typeof useListCollaborativeBroadcastsQuery
+>
+export type ListCollaborativeBroadcastsLazyQueryHookResult = ReturnType<
+  typeof useListCollaborativeBroadcastsLazyQuery
+>
+export type ListCollaborativeBroadcastsQueryResult = Apollo.QueryResult<
+  ListCollaborativeBroadcastsQuery,
+  ListCollaborativeBroadcastsQueryVariables
+>
 export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String) {
-  streams(filters: {search: $search}) {
-    ...ListStream
+  query GlobalSearch($search: String) {
+    streams(filters: { search: $search }) {
+      ...ListStream
+    }
   }
-}
-    ${ListStreamFragmentDoc}`;
+  ${ListStreamFragmentDoc}
+`
 
 /**
  * __useGlobalSearchQuery__
@@ -637,24 +834,38 @@ export const GlobalSearchDocument = gql`
  *   },
  * });
  */
-export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+export function useGlobalSearchQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
+    GlobalSearchDocument,
+    options
+  )
 }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+export function useGlobalSearchLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
+    GlobalSearchDocument,
+    options
+  )
 }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>
+export type GlobalSearchQueryResult = Apollo.QueryResult<
+  GlobalSearchQuery,
+  GlobalSearchQueryVariables
+>
 export const GetSoloBroadcastDocument = gql`
-    query GetSoloBroadcast($id: ID!) {
-  soloBroadcast(id: $id) {
-    ...SoloBroadcast
+  query GetSoloBroadcast($id: ID!) {
+    soloBroadcast(id: $id) {
+      ...SoloBroadcast
+    }
   }
-}
-    ${SoloBroadcastFragmentDoc}`;
+  ${SoloBroadcastFragmentDoc}
+`
 
 /**
  * __useGetSoloBroadcastQuery__
@@ -672,28 +883,44 @@ export const GetSoloBroadcastDocument = gql`
  *   },
  * });
  */
-export function useGetSoloBroadcastQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>) {
+export function useGetSoloBroadcastQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetSoloBroadcastQuery,
+    GetSoloBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>(GetSoloBroadcastDocument, options);
+  return ApolloReactHooks.useQuery<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>(
+    GetSoloBroadcastDocument,
+    options
+  )
 }
-export function useGetSoloBroadcastLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>) {
+export function useGetSoloBroadcastLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetSoloBroadcastQuery,
+    GetSoloBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>(GetSoloBroadcastDocument, options);
+  return ApolloReactHooks.useLazyQuery<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>(
+    GetSoloBroadcastDocument,
+    options
+  )
 }
-export type GetSoloBroadcastQueryHookResult = ReturnType<typeof useGetSoloBroadcastQuery>;
-export type GetSoloBroadcastLazyQueryHookResult = ReturnType<typeof useGetSoloBroadcastLazyQuery>;
-export type GetSoloBroadcastQueryResult = Apollo.QueryResult<GetSoloBroadcastQuery, GetSoloBroadcastQueryVariables>;
+export type GetSoloBroadcastQueryHookResult = ReturnType<typeof useGetSoloBroadcastQuery>
+export type GetSoloBroadcastLazyQueryHookResult = ReturnType<typeof useGetSoloBroadcastLazyQuery>
+export type GetSoloBroadcastQueryResult = Apollo.QueryResult<
+  GetSoloBroadcastQuery,
+  GetSoloBroadcastQueryVariables
+>
 export const SearchSoloBroadcastDocument = gql`
-    query SearchSoloBroadcast($search: String, $values: [ID!]) {
-  options: soloBroadcasts(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: title
+  query SearchSoloBroadcast($search: String, $values: [ID!]) {
+    options: soloBroadcasts(filters: { search: $search, ids: $values }, pagination: { limit: 10 }) {
+      value: id
+      label: title
+    }
   }
-}
-    `;
+`
 
 /**
  * __useSearchSoloBroadcastQuery__
@@ -712,24 +939,46 @@ export const SearchSoloBroadcastDocument = gql`
  *   },
  * });
  */
-export function useSearchSoloBroadcastQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>) {
+export function useSearchSoloBroadcastQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchSoloBroadcastQuery,
+    SearchSoloBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>(SearchSoloBroadcastDocument, options);
+  return ApolloReactHooks.useQuery<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>(
+    SearchSoloBroadcastDocument,
+    options
+  )
 }
-export function useSearchSoloBroadcastLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>) {
+export function useSearchSoloBroadcastLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchSoloBroadcastQuery,
+    SearchSoloBroadcastQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>(SearchSoloBroadcastDocument, options);
+  return ApolloReactHooks.useLazyQuery<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>(
+    SearchSoloBroadcastDocument,
+    options
+  )
 }
-export type SearchSoloBroadcastQueryHookResult = ReturnType<typeof useSearchSoloBroadcastQuery>;
-export type SearchSoloBroadcastLazyQueryHookResult = ReturnType<typeof useSearchSoloBroadcastLazyQuery>;
-export type SearchSoloBroadcastQueryResult = Apollo.QueryResult<SearchSoloBroadcastQuery, SearchSoloBroadcastQueryVariables>;
+export type SearchSoloBroadcastQueryHookResult = ReturnType<typeof useSearchSoloBroadcastQuery>
+export type SearchSoloBroadcastLazyQueryHookResult = ReturnType<
+  typeof useSearchSoloBroadcastLazyQuery
+>
+export type SearchSoloBroadcastQueryResult = Apollo.QueryResult<
+  SearchSoloBroadcastQuery,
+  SearchSoloBroadcastQueryVariables
+>
 export const ListSoloBroadcastsDocument = gql`
-    query ListSoloBroadcasts($filter: SoloBroadcastFilter, $pagination: OffsetPaginationInput) {
-  soloBroadcasts(filters: $filter, pagination: $pagination) {
-    ...SoloBroadcast
+  query ListSoloBroadcasts($filter: SoloBroadcastFilter, $pagination: OffsetPaginationInput) {
+    soloBroadcasts(filters: $filter, pagination: $pagination) {
+      ...SoloBroadcast
+    }
   }
-}
-    ${SoloBroadcastFragmentDoc}`;
+  ${SoloBroadcastFragmentDoc}
+`
 
 /**
  * __useListSoloBroadcastsQuery__
@@ -748,24 +997,46 @@ export const ListSoloBroadcastsDocument = gql`
  *   },
  * });
  */
-export function useListSoloBroadcastsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>) {
+export function useListSoloBroadcastsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListSoloBroadcastsQuery,
+    ListSoloBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>(ListSoloBroadcastsDocument, options);
+  return ApolloReactHooks.useQuery<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>(
+    ListSoloBroadcastsDocument,
+    options
+  )
 }
-export function useListSoloBroadcastsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>) {
+export function useListSoloBroadcastsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListSoloBroadcastsQuery,
+    ListSoloBroadcastsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>(ListSoloBroadcastsDocument, options);
+  return ApolloReactHooks.useLazyQuery<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>(
+    ListSoloBroadcastsDocument,
+    options
+  )
 }
-export type ListSoloBroadcastsQueryHookResult = ReturnType<typeof useListSoloBroadcastsQuery>;
-export type ListSoloBroadcastsLazyQueryHookResult = ReturnType<typeof useListSoloBroadcastsLazyQuery>;
-export type ListSoloBroadcastsQueryResult = Apollo.QueryResult<ListSoloBroadcastsQuery, ListSoloBroadcastsQueryVariables>;
+export type ListSoloBroadcastsQueryHookResult = ReturnType<typeof useListSoloBroadcastsQuery>
+export type ListSoloBroadcastsLazyQueryHookResult = ReturnType<
+  typeof useListSoloBroadcastsLazyQuery
+>
+export type ListSoloBroadcastsQueryResult = Apollo.QueryResult<
+  ListSoloBroadcastsQuery,
+  ListSoloBroadcastsQueryVariables
+>
 export const GetStreamDocument = gql`
-    query GetStream($id: ID!) {
-  stream(id: $id) {
-    ...Stream
+  query GetStream($id: ID!) {
+    stream(id: $id) {
+      ...Stream
+    }
   }
-}
-    ${StreamFragmentDoc}`;
+  ${StreamFragmentDoc}
+`
 
 /**
  * __useGetStreamQuery__
@@ -783,28 +1054,35 @@ export const GetStreamDocument = gql`
  *   },
  * });
  */
-export function useGetStreamQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
+export function useGetStreamQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetStreamQuery, GetStreamQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
+  return ApolloReactHooks.useQuery<GetStreamQuery, GetStreamQueryVariables>(
+    GetStreamDocument,
+    options
+  )
 }
-export function useGetStreamLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
+export function useGetStreamLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStreamQuery, GetStreamQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
+  return ApolloReactHooks.useLazyQuery<GetStreamQuery, GetStreamQueryVariables>(
+    GetStreamDocument,
+    options
+  )
 }
-export type GetStreamQueryHookResult = ReturnType<typeof useGetStreamQuery>;
-export type GetStreamLazyQueryHookResult = ReturnType<typeof useGetStreamLazyQuery>;
-export type GetStreamQueryResult = Apollo.QueryResult<GetStreamQuery, GetStreamQueryVariables>;
+export type GetStreamQueryHookResult = ReturnType<typeof useGetStreamQuery>
+export type GetStreamLazyQueryHookResult = ReturnType<typeof useGetStreamLazyQuery>
+export type GetStreamQueryResult = Apollo.QueryResult<GetStreamQuery, GetStreamQueryVariables>
 export const SearchStreamsDocument = gql`
-    query SearchStreams($search: String, $values: [ID!]) {
-  options: streams(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: title
+  query SearchStreams($search: String, $values: [ID!]) {
+    options: streams(filters: { search: $search, ids: $values }, pagination: { limit: 10 }) {
+      value: id
+      label: title
+    }
   }
-}
-    `;
+`
 
 /**
  * __useSearchStreamsQuery__
@@ -823,24 +1101,41 @@ export const SearchStreamsDocument = gql`
  *   },
  * });
  */
-export function useSearchStreamsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchStreamsQuery, SearchStreamsQueryVariables>) {
+export function useSearchStreamsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<SearchStreamsQuery, SearchStreamsQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<SearchStreamsQuery, SearchStreamsQueryVariables>(SearchStreamsDocument, options);
+  return ApolloReactHooks.useQuery<SearchStreamsQuery, SearchStreamsQueryVariables>(
+    SearchStreamsDocument,
+    options
+  )
 }
-export function useSearchStreamsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchStreamsQuery, SearchStreamsQueryVariables>) {
+export function useSearchStreamsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchStreamsQuery,
+    SearchStreamsQueryVariables
+  >
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<SearchStreamsQuery, SearchStreamsQueryVariables>(SearchStreamsDocument, options);
+  return ApolloReactHooks.useLazyQuery<SearchStreamsQuery, SearchStreamsQueryVariables>(
+    SearchStreamsDocument,
+    options
+  )
 }
-export type SearchStreamsQueryHookResult = ReturnType<typeof useSearchStreamsQuery>;
-export type SearchStreamsLazyQueryHookResult = ReturnType<typeof useSearchStreamsLazyQuery>;
-export type SearchStreamsQueryResult = Apollo.QueryResult<SearchStreamsQuery, SearchStreamsQueryVariables>;
+export type SearchStreamsQueryHookResult = ReturnType<typeof useSearchStreamsQuery>
+export type SearchStreamsLazyQueryHookResult = ReturnType<typeof useSearchStreamsLazyQuery>
+export type SearchStreamsQueryResult = Apollo.QueryResult<
+  SearchStreamsQuery,
+  SearchStreamsQueryVariables
+>
 export const ListStreamsDocument = gql`
-    query ListStreams($filter: StreamFilter, $pagination: OffsetPaginationInput) {
-  streams(filters: $filter, pagination: $pagination) {
-    ...Stream
+  query ListStreams($filter: StreamFilter, $pagination: OffsetPaginationInput) {
+    streams(filters: $filter, pagination: $pagination) {
+      ...Stream
+    }
   }
-}
-    ${StreamFragmentDoc}`;
+  ${StreamFragmentDoc}
+`
 
 /**
  * __useListStreamsQuery__
@@ -859,14 +1154,24 @@ export const ListStreamsDocument = gql`
  *   },
  * });
  */
-export function useListStreamsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStreamsQuery, ListStreamsQueryVariables>) {
+export function useListStreamsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<ListStreamsQuery, ListStreamsQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListStreamsQuery, ListStreamsQueryVariables>(ListStreamsDocument, options);
+  return ApolloReactHooks.useQuery<ListStreamsQuery, ListStreamsQueryVariables>(
+    ListStreamsDocument,
+    options
+  )
 }
-export function useListStreamsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStreamsQuery, ListStreamsQueryVariables>) {
+export function useListStreamsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStreamsQuery, ListStreamsQueryVariables>
+) {
   const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListStreamsQuery, ListStreamsQueryVariables>(ListStreamsDocument, options);
+  return ApolloReactHooks.useLazyQuery<ListStreamsQuery, ListStreamsQueryVariables>(
+    ListStreamsDocument,
+    options
+  )
 }
-export type ListStreamsQueryHookResult = ReturnType<typeof useListStreamsQuery>;
-export type ListStreamsLazyQueryHookResult = ReturnType<typeof useListStreamsLazyQuery>;
-export type ListStreamsQueryResult = Apollo.QueryResult<ListStreamsQuery, ListStreamsQueryVariables>;
+export type ListStreamsQueryHookResult = ReturnType<typeof useListStreamsQuery>
+export type ListStreamsLazyQueryHookResult = ReturnType<typeof useListStreamsLazyQuery>
+export type ListStreamsQueryResult = Apollo.QueryResult<ListStreamsQuery, ListStreamsQueryVariables>

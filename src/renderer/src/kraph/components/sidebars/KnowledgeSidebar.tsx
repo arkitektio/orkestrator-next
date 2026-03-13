@@ -1,18 +1,17 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import {
   ListGraphFragment,
-  useCreateStructureMutation,
+  useEnsureStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery,
 } from "@/kraph/api/graphql";
-import { KraphGraph } from "@/linkers";
 import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { SelectiveNodeViewRenderer } from "../renderers/NodeQueryRenderer";
 import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { MetricsTable } from "../tables/MetricsTable";
-import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
@@ -40,7 +39,7 @@ export const GraphKnowledgeView = (props: {
     },
   });
 
-  const [addStructure] = useCreateStructureMutation({
+  const [addStructure] = useEnsureStructureMutation({
     onCompleted: () => refetch(),
   });
 
@@ -55,7 +54,8 @@ export const GraphKnowledgeView = (props: {
           addStructure({
             variables: {
               input: {
-                structure: `${props.identifier}:${props.object}`,
+                object: props.object,
+                identifier: props.identifier,
                 graph: props.graph.id,
               },
             },
@@ -66,18 +66,6 @@ export const GraphKnowledgeView = (props: {
       </Button></div>}
       {data?.structureByIdentifier &&
         <>
-          {data?.structureByIdentifier.bestView ? (
-            <div className="h-full w-full aspect-square">
-              <SelectiveNodeViewRenderer
-                view={data.structureByIdentifier.bestView}
-                options={{ minimal: true }}
-              />
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              No best view available for this structure.
-            </p>
-          )}
           <div className="flex flex-row gap-2 mt-4">
             <ObjectButton
               objects={[{ identifier: props.identifier, object: props.object }]}
@@ -117,7 +105,7 @@ export const GraphKnowledgeView = (props: {
 const KNOWLEDGE_SIDEBAR_KEY = "knowledge-sidebar-accordion";
 
 export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
-  const { data } = useListGraphsQuery({
+  const { data, error } = useListGraphsQuery({
     variables: {
       filters: {
         pinned: true,
@@ -143,14 +131,22 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
     localStorage.setItem(KNOWLEDGE_SIDEBAR_KEY, JSON.stringify(openItems));
   }, [openItems]);
 
+  if  (error) {
+    return <Empty>
+      <EmptyTitle>Error loading graphs</EmptyTitle>
+      <EmptyDescription>There was an error loading your pinned graphs.</EmptyDescription>
+      <EmptyContent>{error.message}</EmptyContent>
+    </Empty>;
+  }
+
   if (!data || data.graphs.length === 0) {
     return <Empty>
       <EmptyTitle>No pinned graphs</EmptyTitle>
       <EmptyDescription>There are no graphs that you have pinned for quick access.</EmptyDescription>
       <EmptyContent>Go to the graphs page to pin some graphs to your knowledge sidebar.</EmptyContent>
-      <KraphGraph.ListLink className="mt-4">
-        <Button variant="outline">View Graphs</Button>
-      </KraphGraph.ListLink>
+      <Button asChild variant="outline" className="mt-4">
+        <NavLink to="/kraph/graphs">View Graphs</NavLink>
+      </Button>
 
     </Empty>;
   }

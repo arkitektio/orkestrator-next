@@ -1,16 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { AlpakaCollection } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListChromaCollectionFragment } from "../../api/graphql";
 
 interface Props {
   item: ListChromaCollectionFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaCollection.Smart object={item?.id} mates={mates}>
+    <AlpakaCollection.Smart object={item?.id} >
       <Card className="w-full h-20 relative">
         <AlpakaCollection.DetailLink object={item.id}>
           {item.name}

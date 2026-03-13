@@ -1,16 +1,15 @@
 import { Card, CardTitle } from "@/components/ui/card";
 import { MikroMesh } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListMeshFragment } from "../../api/graphql";
 
 interface Props {
   mesh: ListMeshFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ mesh, mates }: Props) => {
+const TheCard = ({ mesh }: Props) => {
   return (
-    <MikroMesh.Smart object={mesh?.id} mates={mates}>
+    <MikroMesh.Smart object={mesh?.id} >
       <Card className="px-2 py-2 aspect-[5/3]">
         <CardTitle className="line-clamp-2 break-words">
           <MikroMesh.DetailLink object={mesh.id}>

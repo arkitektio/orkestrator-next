@@ -24,7 +24,7 @@ const List = ({ filters, pagination }: Props) => {
       title={<LokUser.ListLink className="flex-0">Users</LokUser.ListLink>}
       refetch={refetch}
     >
-      {(ex, index) => <UserCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <UserCard key={index} item={ex} />}
     </ListRender>
   );
 };

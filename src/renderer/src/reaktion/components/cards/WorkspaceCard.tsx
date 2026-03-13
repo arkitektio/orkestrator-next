@@ -5,16 +5,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FlussWorkspace } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListWorkspaceFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
 interface Props {
   workspace: ListWorkspaceFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ workspace, mates }: Props) => {
+const TheCard = ({ workspace }: Props) => {
   return (
     <FlussWorkspace.Smart object={workspace?.id}>
       <Card className="aspect-square">

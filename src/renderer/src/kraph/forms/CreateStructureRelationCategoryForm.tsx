@@ -11,19 +11,13 @@ import { useForm } from "react-hook-form";
 import {
   CreateRelationCategoryMutationVariables,
   useCreateInlineGraphMutation,
-  useCreateRelationCategoryMutation,
   useCreateStructureRelationCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
+
 
 export const TForm = (props: { graph?: string }) => {
   const [add] = useCreateStructureRelationCategoryMutation({

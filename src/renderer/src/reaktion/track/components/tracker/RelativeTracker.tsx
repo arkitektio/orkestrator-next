@@ -33,9 +33,9 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
   const [fetchInbetweenEvents] = useEventsBetweenLazyQuery();
 
   useEffect(() => {
-    let newEvents = rangeEvents?.reduce((prev, event) => {
+    const newEvents = rangeEvents?.reduce((prev, event) => {
       if (t && event && new Date(event.createdAt) <= t) {
-        let prev_node = prev?.find((i) => i.source === event?.source);
+        const prev_node = prev?.find((i) => i.source === event?.source);
         if (prev_node) {
           if (prev_node.t <= event.t) {
             return prev.map((i) => (i.source === event.source ? event : i));
@@ -61,7 +61,7 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
   }, [play, range]);
 
   useEffect(() => {
-    let array = run?.snapshots
+    const array = run?.snapshots
       ?.map((snapshot) => new Date(snapshot.createdAt))
       .sort((a, b) => (a > b ? 1 : 0)) || [0, 100];
     console.log("Snapshots", array);

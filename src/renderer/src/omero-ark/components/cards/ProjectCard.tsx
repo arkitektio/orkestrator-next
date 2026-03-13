@@ -1,14 +1,14 @@
 import { OmeroArkProject } from "@/linkers";
-import { MateFinder } from "@/mates/types";
-import { ListProjectFragment } from "../../api/graphql";
+
 import { Card } from "@/components/ui/card";
+import { ListProjectFragment } from "../../api/graphql";
 
 interface Props {
   project: ListProjectFragment;
-  mates?: MateFinder[];
+
 }
 
-const TCard = ({ project, mates }: Props) => {
+const TCard = ({ project }: Props) => {
   return (
     <OmeroArkProject.Smart
       object={project?.id}

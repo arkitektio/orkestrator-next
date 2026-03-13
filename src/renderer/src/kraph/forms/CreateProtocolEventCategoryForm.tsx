@@ -1,4 +1,4 @@
-import { ChoicesField } from "@/components/fields/ChoicesField";
+import { useDialog } from "@/app/dialog";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { StringField } from "@/components/fields/StringField";
@@ -29,14 +29,11 @@ import { editor } from "@/plate/plugins";
 import { Plate, usePlateEditor } from "@udecode/plate-common/react";
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useDialog } from "@/app/dialog";
 import {
   CreateProtocolEventCategoryMutationVariables,
-  MetricKind,
   useCreateProtocolEventCategoryMutation,
   useSearchEntityCategoryLazyQuery,
-  useSearchReagentCategoryLazyQuery,
-  useSearchTagsLazyQuery,
+  useSearchTagsLazyQuery
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
 
@@ -74,80 +71,44 @@ export const TForm = (props: { graph: string }) => {
         graph: props.graph,
         label: "No Label",
         description: "Description",
-        sourceEntityRoles: [],
-        targetEntityRoles: [],
-        sourceReagentRoles: [],
-        targetReagentRoles: [],
-        variableDefinitions: [],
+        inputs: [],
+        outputs: [],
       },
-    },
+    }
   );
 
-  const sourceEntityRoles = myform.watch("sourceEntityRoles");
-  const targetEntityRoles = myform.watch("targetEntityRoles");
-  const sourceReagentRoles = myform.watch("sourceReagentRoles");
-  const targetReagentRoles = myform.watch("targetReagentRoles");
-  const variableDefinitions = myform.watch("variableDefinitions");
+  const inputs = myform.watch("inputs");
+  const outputs = myform.watch("outputs");
 
   const roles = useMemo(() => {
     return [
-      ...(sourceEntityRoles?.map((role) => ({
+      ...(inputs?.map((role) => ({
         label: role.role,
         value: role.role,
       })) || []),
-      ...(targetEntityRoles?.map((role) => ({
+      ...(outputs?.map((role) => ({
         label: role.role,
         value: role.role,
-      })) || []),
-      ...(sourceReagentRoles?.map((role) => ({
-        label: role.role,
-        value: role.role,
-      })) || []),
-      ...(targetReagentRoles?.map((role) => ({
-        label: role.role,
-        value: role.role,
-      })) || []),
-      ...(variableDefinitions?.map((role) => ({
-        label: role.param,
-        value: role.param,
       })) || []),
     ];
   }, [
-    sourceEntityRoles,
-    targetEntityRoles,
-    sourceReagentRoles,
-    targetReagentRoles,
-    variableDefinitions,
+    inputs,
+    outputs,
   ]);
 
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
-  const [searchReagentCategory] = useSearchReagentCategoryLazyQuery();
 
   const sourceArray = useFieldArray({
     control: myform.control,
-    name: "sourceEntityRoles",
+    name: "inputs",
   });
 
   const targetArray = useFieldArray({
     control: myform.control,
-    name: "targetEntityRoles",
+    name: "outputs",
   });
 
-  const targetReagentArray = useFieldArray({
-    control: myform.control,
-    name: "targetReagentRoles",
-  });
-
-  const sourceReagentArray = useFieldArray({
-    control: myform.control,
-    name: "sourceReagentRoles",
-  });
-
-  const variableDefinitionsArray = useFieldArray({
-    control: myform.control,
-    name: "variableDefinitions",
-  });
 
   return (
     <Form {...myform}>
@@ -282,10 +243,10 @@ export const TForm = (props: { graph: string }) => {
                                   type="button"
                                   onClick={() =>
                                     sourceArray.append({
-                                      role: "new_source",
-                                      categoryDefinition: {
-                                        tagFilters: [],
-                                        categoryFilters: [],
+                                      key: "new_target",
+                                      role: "new_target",
+                                      descriptor: {
+                                        tags: [],
                                       },
                                     })
                                   }
@@ -356,10 +317,10 @@ export const TForm = (props: { graph: string }) => {
                                   type="button"
                                   onClick={() =>
                                     targetArray.append({
+                                      key: "new_target",
                                       role: "new_target",
-                                      categoryDefinition: {
-                                        tagFilters: [],
-                                        categoryFilters: [],
+                                      descriptor: {
+                                        tags: [],
                                       },
                                     })
                                   }
@@ -373,227 +334,7 @@ export const TForm = (props: { graph: string }) => {
                           </Accordion>
                         </TabsContent>
 
-                        <TabsContent value="reagents" className="mt-0">
-                          <Accordion
-                            type="multiple"
-                            defaultValue={["source", "target"]}
-                          >
-                            <AccordionItem value="source">
-                              <AccordionTrigger>Source Reagents</AccordionTrigger>
-                              <AccordionContent className="flex flex-col gap-2">
-                                {sourceReagentArray.fields.map((item, index) => (
-                                  <Card key={item.id} className="p-3">
-                                    <div className="flex flex-col gap-2">
-                                      <StringField
-                                        name={`sourceReagentRoles.${index}.role`}
-                                        label="Role"
-                                        description="Role name"
-                                      />
-                                      <Accordion type="single" collapsible>
-                                        <AccordionItem value="details" className="border-none">
-                                          <AccordionTrigger className="py-2 text-xs">
-                                            Details
-                                          </AccordionTrigger>
-                                          <AccordionContent className="flex flex-col gap-2 pt-2">
-                                            <StringField
-                                              name={`sourceReagentRoles.${index}.label`}
-                                              label="Label"
-                                            />
-                                            <StringField
-                                              name={`sourceReagentRoles.${index}.description`}
-                                              label="Description"
-                                            />
-                                            <GraphQLListSearchField
-                                              name={`sourceReagentRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
-                                              name={`sourceReagentRoles.${index}.categoryDefinition.categoryFilters`}
-                                              label="Category Filters"
-                                              searchQuery={searchReagentCategory}
-                                            />
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                      </Accordion>
-                                      <Button
-                                        type="button"
-                                        onClick={() =>
-                                          sourceReagentArray.remove(index)
-                                        }
-                                        variant="destructive"
-                                        size="sm"
-                                      >
-                                        Remove
-                                      </Button>
-                                    </div>
-                                  </Card>
-                                ))}
-                                <Button
-                                  type="button"
-                                  onClick={() =>
-                                    sourceReagentArray.append({
-                                      role: "new_source_reagent",
-                                      categoryDefinition: {
-                                        tagFilters: [],
-                                        categoryFilters: [],
-                                      },
-                                    })
-                                  }
-                                  variant="outline"
-                                  size="sm"
-                                >
-                                  Add Source Reagent
-                                </Button>
-                              </AccordionContent>
-                            </AccordionItem>
 
-                            <AccordionItem value="target">
-                              <AccordionTrigger>Target Reagents</AccordionTrigger>
-                              <AccordionContent className="flex flex-col gap-2">
-                                {targetReagentArray.fields.map((item, index) => (
-                                  <Card key={item.id} className="p-3">
-                                    <div className="flex flex-col gap-2">
-                                      <StringField
-                                        name={`targetReagentRoles.${index}.role`}
-                                        label="Role"
-                                        description="Role name"
-                                      />
-                                      <Accordion type="single" collapsible>
-                                        <AccordionItem value="details" className="border-none">
-                                          <AccordionTrigger className="py-2 text-xs">
-                                            Details
-                                          </AccordionTrigger>
-                                          <AccordionContent className="flex flex-col gap-2 pt-2">
-                                            <StringField
-                                              name={`targetReagentRoles.${index}.label`}
-                                              label="Label"
-                                            />
-                                            <StringField
-                                              name={`targetReagentRoles.${index}.description`}
-                                              label="Description"
-                                            />
-                                            <GraphQLListSearchField
-                                              name={`targetReagentRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
-                                              name={`targetReagentRoles.${index}.categoryDefinition.categoryFilters`}
-                                              label="Category Filters"
-                                              searchQuery={searchReagentCategory}
-                                            />
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                      </Accordion>
-                                      <Button
-                                        type="button"
-                                        onClick={() =>
-                                          targetReagentArray.remove(index)
-                                        }
-                                        variant="destructive"
-                                        size="sm"
-                                      >
-                                        Remove
-                                      </Button>
-                                    </div>
-                                  </Card>
-                                ))}
-                                <Button
-                                  type="button"
-                                  onClick={() =>
-                                    targetReagentArray.append({
-                                      role: "new_target_reagent",
-                                      categoryDefinition: {
-                                        tagFilters: [],
-                                        categoryFilters: [],
-                                      },
-                                    })
-                                  }
-                                  variant="outline"
-                                  size="sm"
-                                >
-                                  Add Target Reagent
-                                </Button>
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
-                        </TabsContent>
-
-                        <TabsContent value="variables" className="mt-0">
-                          <div className="flex flex-col gap-2">
-                            {variableDefinitionsArray.fields.map((item, index) => (
-                              <Card key={item.id} className="p-3">
-                                <div className="flex flex-col gap-2">
-                                  <StringField
-                                    name={`variableDefinitions.${index}.param`}
-                                    label="Parameter Name"
-                                  />
-                                  <ChoicesField
-                                    name={`variableDefinitions.${index}.valueKind`}
-                                    label="Type"
-                                    options={[
-                                      {
-                                        label: "String",
-                                        value: MetricKind.String,
-                                      },
-                                      {
-                                        label: "Int",
-                                        value: MetricKind.Int,
-                                      },
-                                      {
-                                        label: "Float",
-                                        value: MetricKind.Float,
-                                      },
-                                    ]}
-                                  />
-                                  <Accordion type="single" collapsible>
-                                    <AccordionItem value="details" className="border-none">
-                                      <AccordionTrigger className="py-2 text-xs">
-                                        Details
-                                      </AccordionTrigger>
-                                      <AccordionContent className="flex flex-col gap-2 pt-2">
-                                        <StringField
-                                          name={`variableDefinitions.${index}.label`}
-                                          label="Label"
-                                        />
-                                        <StringField
-                                          name={`variableDefinitions.${index}.description`}
-                                          label="Description"
-                                        />
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  </Accordion>
-                                  <Button
-                                    type="button"
-                                    onClick={() =>
-                                      variableDefinitionsArray.remove(index)
-                                    }
-                                    variant="destructive"
-                                    size="sm"
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              </Card>
-                            ))}
-                            <Button
-                              type="button"
-                              onClick={() =>
-                                variableDefinitionsArray.append({
-                                  param: "new_param",
-                                  valueKind: MetricKind.String,
-                                  label: "",
-                                  description: "",
-                                })
-                              }
-                              variant="outline"
-                              size="sm"
-                            >
-                              Add Variable
-                            </Button>
-                          </div>
-                        </TabsContent>
                       </div>
                     </ScrollArea>
                   </Tabs>

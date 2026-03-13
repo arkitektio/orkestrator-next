@@ -1,18 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { KraphGraphQuery, KraphNodeQuery } from "@/linkers";
-import {
-  BaseCategoryFragment,
-  EntityFragment,
-  ListGraphQueryFragment,
-  ListNodeQueryFragment,
-  usePinGraphQueryMutation,
-  usePinNodeQueryMutation,
-} from "../api/graphql";
-import { Badge } from "@/components/ui/badge";
-import { Pin, UnplugIcon } from "lucide-react";
+import { KraphNodeQuery } from "@/linkers";
 import { TbPin, TbPinned } from "react-icons/tb";
+import {
+  EntityFragment,
+  usePinNodeQueryMutation
+} from "../api/graphql";
 
 export const NodeQueriesPlanner = ({ entity }: { entity: EntityFragment }) => {
   const [pin] = usePinNodeQueryMutation();

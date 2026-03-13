@@ -1,5 +1,5 @@
-import { LokUser } from "@/linkers";
 import { Badge } from "@/components/ui/badge";
+import { LokUser } from "@/linkers";
 import { MentionType } from "../types";
 
 export const Mention = ({ element }: { element: MentionType }) => {
@@ -9,9 +9,8 @@ export const Mention = ({ element }: { element: MentionType }) => {
         <LokUser.Smart
           object={element?.user?.id}
           className="inline-flex"
-          dropClassName={() => "inline"}
           containerClassName="inline"
-          mates={[]}
+
         >
           <LokUser.DetailLink
             object={element?.user?.id}

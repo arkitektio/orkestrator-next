@@ -17,3 +17,6 @@ generates:
   src/renderer/src/lok-next/graphql.schema.json:
     plugins:
       - "introspection"
+  graphql/schemas/lok-next.graphql:
+    plugins:
+      - schema-ast

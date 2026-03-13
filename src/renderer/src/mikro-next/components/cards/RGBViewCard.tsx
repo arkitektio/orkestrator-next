@@ -20,9 +20,9 @@ import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
-import { MateFinder } from "@/mates/types";
-import { Edit2, Scale3DIcon, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+
+import { ChevronDown, Edit2, Scale3DIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { RgbColorPicker } from "react-colorful";
 import {
   ColorMap,
@@ -35,7 +35,7 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: RgbViewFragment;
-  mates?: MateFinder[];
+
 }
 
 export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
@@ -47,7 +47,7 @@ export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
 
 export const baseColorToName = (baseColor: number[] | undefined | null) => {
   const rgb = baseColorToRGB(baseColor);
-  return closest(rgb).name;
+  return rgb
 };
 
 // Convert baseColor array to react-colorful RGB format

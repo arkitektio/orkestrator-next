@@ -1,0 +1,9 @@
+mutation CreateScatterPlot($input: CreateScatterPlotInput!) {
+  createScatterPlot(input: $input) {
+    ...ScatterPlot
+  }
+}
+
+mutation DeleteScatterPlot($input: DeleteScatterPlotInput!) {
+  deleteScatterPlot(input: $input)
+}

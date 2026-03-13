@@ -1,8 +1,7 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { MikroStage } from "@/linkers";
 import React from "react";
 import StageList from "../components/lists/StageList";
-import { MikroMesh, MikroStage } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 

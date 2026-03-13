@@ -5,12 +5,6 @@ fragment BaseNode on Node {
     id
   }
   label
-  bestView {
-    ...NodeQueryView
-  }
-  relevantQueries {
-    ...ListNodeQuery
-  }
 }
 
 fragment Node on Node {
@@ -18,7 +12,6 @@ fragment Node on Node {
   ...Entity
   ...Structure
   ...Metric
-  ...Reagent
 }
 
 fragment DetailNode on Node {
@@ -29,13 +22,51 @@ fragment DetailNode on Node {
   }
 }
 
+
+fragment PathRelationShadowLink on RelationShadowLink {
+  id
+  label
+}
+
+fragment PathStructureRelationShadowLink on StructureRelationShadowLink {
+  id
+  label
+}
+
+fragment PathMeasurementRelationShadowLink on MeasurementShadowLink {
+  id
+  label
+}
+fragment PathActivity on Activity {
+  id
+  label
+}
+fragment PathStructure on Structure {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+
+
 fragment PathNode on Node {
   id
+
+  ...PathActivity
   ...PathStructure
   ...PathEntity
-  ...PathReagent
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
-  ...PathEditEvent
+  ...PathRelationShadowLink
+  ...PathStructureRelationShadowLink
+  ...PathMeasurementRelationShadowLink
+}
+
+
+fragment ListNode on Node {
+  id
+  label
 }

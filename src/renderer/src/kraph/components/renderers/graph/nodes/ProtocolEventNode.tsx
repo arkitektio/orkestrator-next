@@ -7,7 +7,7 @@ import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { ProtocolEventNode } from "../types";
 
-export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
+const TNode = memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
   const resolve = useResolve();
 
   return (
@@ -25,9 +25,9 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
             }`}
           style={{ zIndex: 10 }}
         >
-          {data.category.store?.presignedUrl && (
+          {data.category.image?.presignedUrl && (
             <Image
-              src={resolve(data.category.store.presignedUrl)}
+              src={resolve(data.category.image.presignedUrl)}
               style={{ filter: "brightness(0.5)" }}
               className="object-cover h-full w-full"
             />
@@ -40,19 +40,7 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
               >
                 {data.category.label}
               </KraphProtocolEvent.DetailLink>
-              {data.variables.length > 0 && (
-                <div className="flex flex-wrap gap-1 justify-center max-w-full">
-                  {data.variables.map((variable) => (
-                    <div
-                      key={variable.role + variable.value}
-                      className="px-2 py-1 bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100 rounded text-xs font-medium border border-rose-200 dark:border-rose-800"
-                    >
-                      <span className="font-bold">{variable.role}:</span>{" "}
-                      {variable.value}
-                    </div>
-                  ))}
-                </div>
-              )}
+
             </div>
           </div>
         </Card>
@@ -60,3 +48,6 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
     </>
   );
 });
+
+
+export default TNode;

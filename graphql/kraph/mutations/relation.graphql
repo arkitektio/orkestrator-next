@@ -1,5 +1,21 @@
-mutation CreateRelation($input: RelationInput!) {
+mutation CreateRelation($input: CreateRelationInput!) {
   createRelation(input: $input) {
+    ...Relation
+  }
+}
+
+mutation DeleteRelation($id: GraphID!) {
+  deleteRelation(input: { id: $id })
+}
+
+mutation ArchiveRelation($id: GraphID!) {
+  archiveRelation(input: { id: $id }) {
+    ...Relation
+  }
+}
+
+mutation UpdateRelation($input: UpdateRelationInput!) {
+  updateRelation(input: $input) {
     ...Relation
   }
 }

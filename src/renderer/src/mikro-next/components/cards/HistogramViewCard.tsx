@@ -11,7 +11,6 @@ import {
   LineChart,
   XAxis
 } from "recharts";
-import { MateFinder } from "../../../mates/types";
 import {
   HistogramViewFragment,
   useDeleteHistogramViewMutation,
@@ -20,7 +19,7 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: HistogramViewFragment;
-  mates?: MateFinder[];
+
 }
 
 const histogramViewToChartData = (view: HistogramViewFragment) => {
@@ -39,11 +38,11 @@ const chartConfig = {
   },
 };
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   const [deleteHistogram] = useDeleteHistogramViewMutation();
 
   return (
-    <MikroHistogramView.Smart object={view?.id} mates={mates}>
+    <MikroHistogramView.Smart object={view?.id} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>

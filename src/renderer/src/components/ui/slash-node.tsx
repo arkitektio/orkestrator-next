@@ -16,14 +16,13 @@ import {
   LightbulbIcon,
   ListIcon,
   ListOrdered,
-  PenToolIcon,
   PilcrowIcon,
   Quote,
   RadicalIcon,
   SparklesIcon,
   Square,
   Table,
-  TableOfContentsIcon,
+  TableOfContentsIcon
 } from 'lucide-react';
 import { type TComboboxInputElement, KEYS } from 'platejs';
 import { PlateElement } from 'platejs/react';

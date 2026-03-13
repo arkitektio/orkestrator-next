@@ -36,7 +36,7 @@ export const ArgsContainer = ({
   bound,
   path,
 }: ArgsContainerProps) => {
-  let hash = portHash(ports.filter(notEmpty));
+  const hash = portHash(ports.filter(notEmpty));
 
   const filledGroups = useMemo(() => {
     if (!groups || groups.length === 0) {
@@ -48,7 +48,7 @@ export const ArgsContainer = ({
       ];
     }
 
-    let argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
+    const argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
       ...g,
       filledPorts: ports
         .filter(notEmpty)

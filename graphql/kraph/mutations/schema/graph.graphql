@@ -1,0 +1,31 @@
+mutation CreateGraph($input: CreateGraphInput!) {
+  createGraph(input: $input) {
+    ...Graph
+  }
+}
+
+mutation CreateInlineGraph($input: String!) {
+  result: createGraph(input: { name: $input }) {
+    value: id
+    label: name
+  }
+}
+
+
+
+mutation DeleteGraph($id: String!) {
+  deleteGraph(input: { id: $id })
+
+}
+mutation ArchiveGraph($id: String!) {
+  archiveGraph(input: { id: $id }) {
+    ...Graph
+  }
+
+}
+
+mutation UpdateGraph($input: UpdateGraphInput!) {
+  updateGraph(input: $input) {
+    ...Graph
+  }
+}

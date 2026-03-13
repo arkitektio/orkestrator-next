@@ -17,3 +17,7 @@ generates:
   src/renderer/src/kabinet/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/kabinet.graphql:
+    plugins:
+      - schema-ast

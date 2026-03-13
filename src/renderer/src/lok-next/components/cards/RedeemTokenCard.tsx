@@ -1,17 +1,16 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LokRedeemToken } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
-import { ListRedeemTokenFragment } from "../../api/graphql";
 import { Card } from "@/components/ui/card";
+import { LokRedeemToken } from "@/linkers";
+import { ListRedeemTokenFragment } from "../../api/graphql";
 
 interface Props {
   item: ListRedeemTokenFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <LokRedeemToken.Smart object={item?.id} mates={mates}>
+    <LokRedeemToken.Smart object={item?.id} >
       <Card>
         <LokRedeemToken.DetailLink
           object={item.id}

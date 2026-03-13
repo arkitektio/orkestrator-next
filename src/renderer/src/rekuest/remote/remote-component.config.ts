@@ -2,14 +2,14 @@
  * Dependencies for Remote Components
  */
 
-import * as react from "react";
-import * as reactDom from "react-dom";
+import * as react from 'react'
+import * as reactDom from 'react-dom'
 
 const libs = {
   react: react,
-  "react-dom": reactDom,
-};
+  'react-dom': reactDom
+}
 
-const resolve = () => libs;
+const resolve = () => libs
 
-export { resolve };
+export { resolve }

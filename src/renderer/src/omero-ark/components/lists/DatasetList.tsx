@@ -1,8 +1,8 @@
 import { MikroDataset } from "@/linkers";
 
 import { createList } from "@/components/layout/createList";
-import DatasetCard from "../cards/DatasetCard";
 import { useListDatasetsQuery } from "@/omero-ark/api/graphql";
+import DatasetCard from "../cards/DatasetCard";
 
 const TList = createList({
   useHook: useListDatasetsQuery,

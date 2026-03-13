@@ -1,15 +1,12 @@
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import { Action } from "@/lib/localactions/LocalActionProvider";
 import {
-  DeleteEdgeDocument,
   DeleteEntityCategoryDocument,
+  DeleteEntityDocument,
   DeleteGraphDocument,
-  DeleteGraphQueryDocument,
   DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
-  DeleteNodeDocument,
   DeleteProtocolEventCategoryDocument,
-  DetachDeleteNodeDocument,
 } from "./api/graphql";
 
 export const NewEntityAction: Action = {
@@ -81,53 +78,14 @@ export const KRAPH_ACTIONS = {
     typename: "MeasurementCategory",
     mutation: DeleteMeasurementCategoryDocument,
   }),
-  "delete-edge": buildDeleteAction({
-    title: "Delete Edge",
-    identifier: "@kraph/edge",
-    description: "Delete the Edge",
-    service: "kraph",
-    typename: "Edge",
-    mutation: DeleteEdgeDocument,
-  }),
+
   "delete-entity": buildDeleteAction({
     title: "Delete Entity",
     identifier: "@kraph/entity",
     description: "Delete the Entity",
     service: "kraph",
     typename: ["Entity", "Node"],
-    mutation: DeleteNodeDocument,
-  }),
-  "detach-delete-entity": buildDeleteAction({
-    title: "Detach and Delete Entity",
-    identifier: "@kraph/entity",
-    description: "will also delete all connected edges",
-    service: "kraph",
-    typename: ["Entity", "Node"],
-    mutation: DetachDeleteNodeDocument,
-  }),
-  "delete-measurement": buildDeleteAction({
-    title: "Delete Measurment",
-    identifier: "@kraph/measurement",
-    description: "Delete the Measurment",
-    service: "kraph",
-    typename: "Measurement",
-    mutation: DeleteEdgeDocument,
-  }),
-  "delete-node": buildDeleteAction({
-    title: "Delete Node",
-    identifier: "@kraph/node",
-    description: "Delete the Node",
-    service: "kraph",
-    typename: "Node",
-    mutation: DeleteNodeDocument,
-  }),
-  "delete-graph-query": buildDeleteAction({
-    title: "Delete Graph Query",
-    identifier: "@kraph/graphquery",
-    description: "Delete the Graph Query",
-    service: "kraph",
-    typename: "GraphQuery",
-    mutation: DeleteGraphQueryDocument,
+    mutation: DeleteEntityDocument,
   }),
 
   // Custom Actions

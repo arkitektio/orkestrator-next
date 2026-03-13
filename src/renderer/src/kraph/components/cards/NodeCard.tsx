@@ -1,17 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ActionFragment } from "@/kraph/api/graphql";
+import { ListNodeFragment } from "@/kraph/api/graphql";
 import { KraphNode } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 
 interface Props {
-  item: ActionFragment;
-  mates?: MateFinder[];
+  item: ListNodeFragment;
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <KraphNode.Smart object={item?.id} mates={mates}>
+    <KraphNode.Smart object={item?.id}>
       <Card className="px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate">
         <KraphNode.DetailLink
           className={({ isActive } /*  */) =>
@@ -20,19 +17,8 @@ const TheCard = ({ item, mates }: Props) => {
           }
           object={item.id}
         >
-          {item.__typename == "Structure" && (
-            <>
-              {item.identifier}
-              {item.object}
-            </>
-          )}
+
           {item.label}
-          {item.__typename == "Entity" && <>{item.category.label}</>}
-          {item.__typename == "Structure" && (
-            <Button variant="outline" size="sm">
-              View
-            </Button>
-          )}
         </KraphNode.DetailLink>
       </Card>
     </KraphNode.Smart>

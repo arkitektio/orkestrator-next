@@ -76,7 +76,7 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
               }
             >
               {(ex, index) => (
-                <ReagentCategoryCard key={index} item={ex} mates={[]} />
+                <ReagentCategoryCard key={index} item={ex} />
               )}
             </ListRender>
           )}

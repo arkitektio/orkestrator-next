@@ -1,11 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import { Card } from "@/components/ui/card";
 import { KabinetResource } from "@/linkers";
 import { useGetResourceQuery } from "../api/graphql";
 import PodCard from "../components/cards/PodCard";
-import { ResponsiveContainer } from "recharts";
-import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(
   useGetResourceQuery,

@@ -1,4 +1,6 @@
-import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Arkitekt } from "@/app/Arkitekt";
+import { ConnectingFallback } from "@/app/components/fallbacks/Connecting";
+import { NotConnected } from "@/app/components/fallbacks/NotConnected";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +18,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
-import { Arkitekt } from "@/app/Arkitekt";
 import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -208,10 +209,10 @@ export const ServerHealthInfo = () => {
       </div>
 
       <div className="h-0.5 bg-border my-4" >
-      <pre className="text-xs text-muted-foreground">
-        {JSON.stringify(fakts, null, 2)}
+        <pre className="text-xs text-muted-foreground">
+          {JSON.stringify(fakts, null, 2)}
 
-      </pre>
+        </pre>
       </div>
 
       {/* Services Section */}
@@ -233,13 +234,13 @@ export const ServicesInfo = () => {
 
   const listedServices = fakts
     ? Object.keys(fakts.instances)
-        .map((key) => {
-          return {
-            serviceKey: key,
-            value: fakts.instances[key as keyof typeof fakts],
-          };
-        })
-        .filter((e) => e.serviceKey)
+      .map((key) => {
+        return {
+          serviceKey: key,
+          value: fakts.instances[key as keyof typeof fakts],
+        };
+      })
+      .filter((e) => e.serviceKey)
     : [];
 
   return (
@@ -361,9 +362,13 @@ export const Home = () => {
  */
 function Page() {
   return (
-
     <div className="min-h-screen w-full">
-      <Home />
+      <Arkitekt.Guard
+        notConnectedFallback={<NotConnected />}
+        connectingFallback={<ConnectingFallback />}
+      >
+        <Home />
+      </Arkitekt.Guard>
     </div>
   );
 }

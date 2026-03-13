@@ -6,17 +6,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KabinetResource } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListResourceFragment } from "../../api/graphql";
 
 interface Props {
   item: ListResourceFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <KabinetResource.Smart object={item?.id} mates={mates}>
+    <KabinetResource.Smart object={item?.id} >
       <Card className="group">
         <CardHeader className="flex flex-row justify-between">
           <div>

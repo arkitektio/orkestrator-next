@@ -1,0 +1,72 @@
+
+
+fragment ListMaterializedEdge on MaterializedEdge {
+  id
+  source {
+    id
+  }
+  target {
+    id
+    label
+  }
+  edge {
+    id
+    label
+    description
+  }
+  graph {
+    id
+    name
+  }
+}
+
+fragment Graph on Graph {
+  id
+  name
+  description
+  ageName
+  structureCategories {
+    ...ListStructureCategory
+  }
+  entityCategories {
+    ...ListEntityCategory
+  }
+  metricCategories {
+    ...ListMetricCategory
+  }
+  protocolEventCategories {
+    ...ListProtocolEventCategory
+  }
+  naturalEventCategories {
+    ...ListNaturalEventCategory
+  }
+  relationCategories {
+    ...ListRelationCategory
+  }
+  measurementCategories {
+    ...ListMeasurementCategory
+  }
+  structureRelationCategories {
+    ...ListStructureRelationCategory
+  }
+  queries {
+    ...ListGraphQuery
+  }
+  pinned
+  image {
+    ...MediaStore
+  }
+  materializedEdges {
+    ...ListMaterializedEdge
+  }
+}
+
+fragment ListGraph on Graph {
+  id
+  name
+  description
+  pinned
+  image {
+    ...MediaStore
+  }
+}

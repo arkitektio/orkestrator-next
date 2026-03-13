@@ -4,13 +4,13 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { DetailClientFragment, useClientQuery } from "@/lok-next/api/graphql";
 import { DetailAssignationFragment, PortKind, PostmanAssignationFragment, useDetailAssignationQuery } from "@/rekuest/api/graphql";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useEffect } from "react";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { WidgetRegistryType } from "@/rekuest/widgets/types";
-import { DetailClientFragment, useClientQuery } from "@/lok-next/api/graphql";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 type ReportBugFormData = {
   title: string;

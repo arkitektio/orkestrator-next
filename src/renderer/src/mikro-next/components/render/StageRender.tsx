@@ -188,7 +188,7 @@ export const AsyncStageRender = ({
           stage.affineViews = [];
         }
 
-        let newView = subscriptionData.data.affineTransformationViews.create;
+        const newView = subscriptionData.data.affineTransformationViews.create;
 
         if (!subscriptionData.data.affineTransformationViews.create)
           return prev;

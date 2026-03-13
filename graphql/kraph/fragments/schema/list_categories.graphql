@@ -1,0 +1,25 @@
+fragment BaseListCategory on Category {
+  id
+  description
+  image {
+    presignedUrl
+  }
+  tags {
+    id
+    name
+  }
+  ageName
+
+}
+
+fragment BaseListNodeCategory on NodeCategory {
+  id
+  positionX
+  positionY
+  width
+  height
+}
+
+fragment BaseListEdgeCategory on EdgeCategory {
+  id
+}

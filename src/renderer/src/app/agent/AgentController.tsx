@@ -1,15 +1,26 @@
-import { Button } from "@/components/ui/button";
-import { useSettings } from "@/providers/settings/SettingsContext"
-import { useAgent } from "./AgentProvider";
-import { AgentCodeDisplay } from "./AgentCodeDisplay";
-import { Badge } from "@/components/ui/badge";
-import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useSettings } from "@/providers/settings/SettingsContext";
+import { Activity, AlertCircle, ChevronDown, ChevronUp, Power, Wifi, WifiOff } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
+import { AgentCodeDisplay } from "./AgentCodeDisplay";
+import { useAgent } from "./AgentProvider";
+import { useAgentState } from "./store";
 
-export const AgentController = (props: any) => {
+export const AgentController = (_) => {
   const { settings, setSettings } = useSettings();
-  const { assignments, errors, connected, lastCode, lastReason } = useAgent();
+  const { disabled } = useAgent();
+  const { assignments, errors, connected, lastCode, lastReason } = useAgentState(
+    useShallow((state) => ({
+      assignments: state.assignments,
+      errors: state.errors,
+      connected: state.connected,
+      lastCode: state.lastCode,
+      lastReason: state.lastReason,
+    })),
+  );
 
   const toggleAgent = () => {
     setSettings({ ...settings, startAgent: !settings.startAgent })
@@ -17,6 +28,18 @@ export const AgentController = (props: any) => {
 
   const toggleExpanded = () => {
     setSettings({ ...settings, agentExpanded: !settings.agentExpanded })
+  }
+
+  if (disabled) {
+    return (
+      <div className="w-full bg-foreground/5 p-4 rounded-t-lg border-t border-border">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <div className="text-xs text-muted-foreground text-center">
+            Agent support is currently disabled for this build.
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!settings.startAgent) {
@@ -58,7 +81,7 @@ export const AgentController = (props: any) => {
             Agent Status
           </div>
         </div>
-        <Badge variant={connected ? "active" : "destructive"} className="gap-1 h-5 px-2">
+        <Badge variant={connected ? "secondary" : "destructive"} className="gap-1 h-5 px-2">
           {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
           {connected ? "Online" : "Offline"}
         </Badge>
@@ -66,12 +89,12 @@ export const AgentController = (props: any) => {
 
       <CollapsibleContent>
         <div className="p-4 space-y-4">
-          {!connected && lastCode && (
+          {!connected && (lastCode || lastReason) && (
             <Alert variant="destructive" className="py-2 text-xs [&>svg]:top-2.5 [&>svg]:left-3 pl-9 bg-red-900/70 border-red-900/20 text-white">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Connection Error {lastCode && <span className="font-mono text-[10px] opacity-80">({lastCode})</span>}</AlertTitle>
               <AlertDescription>
-                <AgentCodeDisplay code={lastCode} />
+                {lastCode && <AgentCodeDisplay code={lastCode} />}
                 {lastReason && <div className="mt-1 text-[10px] opacity-80">{lastReason}</div>}
               </AlertDescription>
             </Alert>

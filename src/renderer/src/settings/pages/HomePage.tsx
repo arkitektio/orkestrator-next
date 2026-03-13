@@ -44,8 +44,7 @@ import {
 import deepEqual from "deep-equal";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Service, ServiceDefinition } from "@/lib/arkitekt/types";
-import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
+import { ServiceRuntimeState } from "@/lib/arkitekt/types";
 
 export type IRepresentationScreenProps = Record<string, never>;
 
@@ -159,18 +158,18 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
         <div className="space-y-3">
           {filteredFakts && typeof filteredFakts === "object"
             ? Object.entries(filteredFakts as Record<string, unknown>).map(
-                ([key, value]) => (
-                  <Card key={key}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Settings className="w-4 h-4" />
-                        {key}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>{renderValue(value)}</CardContent>
-                  </Card>
-                ),
-              )
+              ([key, value]) => (
+                <Card key={key}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      {key}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>{renderValue(value)}</CardContent>
+                </Card>
+              ),
+            )
             : null}
         </div>
       </ScrollArea>
@@ -180,12 +179,9 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
 
 // Component to display services in a nice card layout
 const ServiceCard: React.FC<{
-  serviceKey: string;
-  service: Service;
-  definition: ServiceDefinition;
-  instance: Instance
-  isUnresolved?: boolean;
-}> = ({ serviceKey, service, isUnresolved = false, definition, instance }) => {
+  service: ServiceRuntimeState;
+}> = ({ service }) => {
+  const isUnresolved = service.status === "invalid";
   return (
     <Card
       className={
@@ -196,32 +192,44 @@ const ServiceCard: React.FC<{
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Server className="w-5 h-5" />
-            {serviceKey}
+            {service.key}
           </div>
-          <Badge variant={isUnresolved ? "destructive" : "default"}>
+          <Badge variant={isUnresolved ? "destructive" : service.status === "checking" ? "secondary" : "default"}>
             {isUnresolved ? (
               <XCircle className="w-3 h-3 mr-1" />
+            ) : service.status === "checking" ? (
+              <Search className="w-3 h-3 mr-1" />
             ) : (
               <CheckCircle className="w-3 h-3 mr-1" />
             )}
-            {isUnresolved ? "Unresolved" : "Active"}
+            {isUnresolved ? "Invalid" : service.status === "checking" ? "Checking" : "Active"}
           </Badge>
         </CardTitle>
-        {typeof definition.description === "string" ? (
-          <CardDescription>{definition.description}</CardDescription>
+        {typeof service.definition.description === "string" ? (
+          <CardDescription>{service.definition.description}</CardDescription>
         ) : null}
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {instance.identifier}
+          {service.instance?.identifier || "No instance available"}
         </div>
+
+        {service.errors.length > 0 && (
+          <div className="mt-3 space-y-1">
+            {service.errors.map((error) => (
+              <div key={error} className="rounded border border-destructive/30 bg-destructive/10 p-2 text-xs">
+                {error}
+              </div>
+            ))}
+          </div>
+        )}
 
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
             View Raw Configuration
           </summary>
           <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto">
-            {JSON.stringify(instance, null, 2)}
+            {JSON.stringify(service.instance, null, 2)}
           </pre>
         </details>
       </CardContent>
@@ -232,8 +240,8 @@ const ServiceCard: React.FC<{
 const Page: React.FC<IRepresentationScreenProps> = () => {
   const { setSettings, settings } = useSettings();
   const fakts = Arkitekt.useFakts();
-
   const services = Arkitekt.useAvailableServices();
+  const configurationIssues = Arkitekt.useConfigurationIssues();
 
 
   const form = useForm({
@@ -283,10 +291,10 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     >
       <div className="space-y-8">
 
-       {/* App Updates Section */}
+        {/* App Updates Section */}
         <Card>
           <CardHeader>
-             <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
               Appearance
             </CardTitle>
@@ -408,6 +416,27 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         {/* Services Section */}
         <div className="space-y-4">
+          {configurationIssues.length > 0 && (
+            <Card className="border-amber-500/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <XCircle className="w-5 h-5" />
+                  Configuration Issues
+                </CardTitle>
+                <CardDescription>
+                  Fakts was retrieved, but some expected services or module dependencies are missing or invalid.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {configurationIssues.map((issue) => (
+                  <div key={issue} className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-sm">
+                    {issue}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Server className="w-6 h-6" />
@@ -422,12 +451,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           {services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {services.map((service) => (
-                <ServiceCard
-                  key={service.key}
-                  service={service}
-                  instance={service.instance}
-                  definition={service.definition}
-                />
+                <ServiceCard key={service.key} service={service} />
               ))}
             </div>
           ) : (

@@ -1,3 +1,4 @@
+import { useRekuest } from "@/app/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -14,7 +15,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRekuest } from "@/app/Arkitekt";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
   FlussPortFragment,
@@ -284,7 +284,7 @@ export const TargetDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -447,7 +447,7 @@ export const SourceDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            let flownode = rekuestActionToMatchingNode(event.data?.action, {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });

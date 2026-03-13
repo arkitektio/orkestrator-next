@@ -5,16 +5,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FlussRun } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListRunFragment } from "@/reaktion/api/graphql";
 import Timestamp from "react-timestamp";
 
 interface Props {
   item: ListRunFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <FlussRun.Smart object={item?.id}>
       <Card className="aspect-square">

@@ -6,8 +6,7 @@ import {
   FilePlugin,
   ImagePlugin,
   MediaEmbedPlugin,
-  PlaceholderPlugin,
-  VideoPlugin,
+  VideoPlugin
 } from '@platejs/media/react';
 import { KEYS } from 'platejs';
 

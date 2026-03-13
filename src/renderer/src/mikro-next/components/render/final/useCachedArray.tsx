@@ -114,10 +114,10 @@ export const useCachedArray = (props: { store: ZarrStoreFragment }) => {
           throw Error("No credentials loadable");
         }
 
-        let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
-        let path =
+        const endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
+        const path =
           endpoint_url + "/" + props.store.bucket + "/" + props.store.key;
-        let aws = new AwsClient({
+        const aws = new AwsClient({
           accessKeyId: response.data.requestAccess.accessKey,
           secretAccessKey: response.data.requestAccess.secretKey,
           sessionToken: response.data.requestAccess.sessionToken,
@@ -125,8 +125,8 @@ export const useCachedArray = (props: { store: ZarrStoreFragment }) => {
         });
 
         console.log("Path", path);
-        let store = new S3Store(path, aws);
-        let zarrArray = await open.v3(store, { kind: "array" });
+        const store = new S3Store(path, aws);
+        const zarrArray = await open.v3(store, { kind: "array" });
         setArray(zarrArray);
         console.log("Zarr array initialized");
       } catch (error) {
@@ -195,8 +195,8 @@ export const useCachedArray = (props: { store: ZarrStoreFragment }) => {
     chunks.sort((a, b) => a.timestamp - b.timestamp);
 
     // Delete oldest chunks until we're under 80% of max size
-    let currentSize = (await db.get("metadata", "cacheInfo"))?.totalSize || 0;
-    let targetSize = MAX_CACHE_SIZE * 0.8;
+    const currentSize = (await db.get("metadata", "cacheInfo"))?.totalSize || 0;
+    const targetSize = MAX_CACHE_SIZE * 0.8;
     let freedSize = 0;
 
     for (const chunk of chunks) {

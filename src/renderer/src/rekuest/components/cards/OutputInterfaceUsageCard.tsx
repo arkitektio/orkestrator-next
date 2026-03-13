@@ -1,15 +1,15 @@
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestOutputInterfaceUsage } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListOutputInterfaceUsageFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListOutputInterfaceUsageFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestOutputInterfaceUsage.Smart object={item?.id}>
       <Card className={cn("aspect-square flex flex-col")}>

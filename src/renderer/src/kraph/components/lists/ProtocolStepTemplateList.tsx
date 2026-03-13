@@ -29,7 +29,7 @@ const List = ({ filters, pagination }: Props) => {
       refetch={refetch}
     >
       {(ex, index) => (
-        <ProtocolStepTemplateCard key={index} item={ex} mates={[]} />
+        <ProtocolStepTemplateCard key={index} item={ex} />
       )}
     </ListRender>
   );

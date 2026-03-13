@@ -1,0 +1,43 @@
+fragment BaseCategory on Category {
+  id
+  graph {
+    id
+  }
+  tags {
+    id
+    name
+    description
+  }
+  purl
+  relevantQueries {
+    ...ListGraphQuery
+  }
+  image {
+    presignedUrl
+  }
+  ageName
+}
+
+fragment BaseNodeCategory on NodeCategory {
+  id
+  positionX
+  positionY
+  width
+  label
+  height
+  relevantNodeQueries {
+    ...ListNodeQuery
+  }
+}
+
+fragment BaseEdgeCategory on EdgeCategory {
+  id
+}
+
+fragment NodeCategory on NodeCategory {
+  ...StructureCategory
+  ...EntityCategory
+  ...ProtocolEventCategory
+  ...NaturalEventCategory
+  ...MetricCategory
+}

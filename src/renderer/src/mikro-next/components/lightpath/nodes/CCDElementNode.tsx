@@ -1,7 +1,7 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { CCDElementNode, DetectorElementNode } from "../types";
+import { CCDElementNode } from "../types";
 
 export default memo(({ data, selected }: NodeProps<CCDElementNode>) => {
   return (

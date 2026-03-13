@@ -7,10 +7,8 @@ import React from "react";
 import { useDetailAnalogSignalQuery } from "../api/graphql";
 import {
   AnalogSignalRender,
-  channelToLabel,
-  getColorForChannel,
+  channelToLabel
 } from "../components/AnalogSignalRender";
-import { recordingViewToLabel } from "../components/ExperimentRender";
 
 export type IRepresentationScreenProps = {};
 

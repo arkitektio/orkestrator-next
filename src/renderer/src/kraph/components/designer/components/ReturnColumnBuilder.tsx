@@ -35,7 +35,7 @@ const NODE_PROPERTIES: Record<string, Array<{ property: string; label: string; i
     { property: "id", label: "ID", isId: true },
     { property: "value", label: "Value", type: "number" },
     { property: "label", label: "Label" },
-    { property: "metricKind", label: "Metric Kind" },
+    { property: "ValueKind", label: "Metric Kind" },
     { property: "description", label: "Description" },
   ],
   entitycategory: [

@@ -1,9 +1,5 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { MikroROI } from "@/linkers";
-import { UserAvatar } from "@/lok-next/components/UserAvatar";
 import { useGetRoiQuery } from "@/mikro-next/api/graphql";
-import Timestamp from "react-timestamp";
-import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 import { FinalRender } from "../components/render/FInalRender";
 
 export const RoiDisplay = (props: DisplayWidgetProps) => {

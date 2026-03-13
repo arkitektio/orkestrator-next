@@ -1,9 +1,9 @@
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,17 +12,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { Textarea } from "@/components/ui/textarea";
 import {
   EntityCategoryFragment,
-  MetricKind,
   PropertyDefinitionFragment,
+  PropertySet,
   useCreateEntityMutation,
+  ValueKind,
 } from "@/kraph/api/graphql";
-import { useForm, Controller } from "react-hook-form";
-import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 type PropertyValue = string | number | boolean | Date | null | undefined;
 
@@ -44,25 +45,25 @@ const validateProperty = (
   // Type-specific validation
   if (value !== null && value !== undefined && value !== "") {
     switch (definition.valueKind) {
-      case MetricKind.Int:
+      case ValueKind.Int:
         if (typeof value === "string" && isNaN(parseInt(value))) {
           return `${definition.label || definition.key} must be a valid integer`;
         }
         break;
 
-      case MetricKind.Float:
+      case ValueKind.Float:
         if (typeof value === "string" && isNaN(parseFloat(value))) {
           return `${definition.label || definition.key} must be a valid number`;
         }
         break;
 
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         if (typeof value !== "boolean") {
           return `${definition.label || definition.key} must be true or false`;
         }
         break;
 
-      case MetricKind.Category:
+      case ValueKind.Category:
         if (definition.options && definition.options.length > 0) {
           const validValues = definition.options.map((opt) => opt.value);
           if (!validValues.includes(String(value))) {
@@ -115,30 +116,30 @@ const useCreateEntityForm = (category: EntityCategoryFragment) => {
 
 const serializePropertyValue = (
   value: PropertyValue,
-  kind: MetricKind,
+  kind: ValueKind,
 ): string | number | boolean | null => {
   if (value === null || value === undefined || value === "") {
     return null;
   }
 
   switch (kind) {
-    case MetricKind.Int:
+    case ValueKind.Int:
       return typeof value === "string" ? parseInt(value) : Number(value);
 
-    case MetricKind.Float:
+    case ValueKind.Float:
       return typeof value === "string" ? parseFloat(value) : Number(value);
 
-    case MetricKind.Boolean:
+    case ValueKind.Boolean:
       return Boolean(value);
 
-    case MetricKind.Datetime:
+    case ValueKind.Datetime:
       if (value instanceof Date) {
         return value.toISOString();
       }
       return String(value);
 
-    case MetricKind.String:
-    case MetricKind.Category:
+    case ValueKind.String:
+    case ValueKind.Category:
     default:
       return String(value);
   }
@@ -190,7 +191,7 @@ const PropertyField = ({
     }
 
     switch (definition.valueKind) {
-      case MetricKind.Boolean:
+      case ValueKind.Boolean:
         return (
           <div className="flex items-center space-x-2">
             <Switch
@@ -203,7 +204,7 @@ const PropertyField = ({
           </div>
         );
 
-      case MetricKind.Int:
+      case ValueKind.Int:
         return (
           <Input
             type="number"
@@ -215,7 +216,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Float:
+      case ValueKind.Float:
         return (
           <Input
             type="number"
@@ -227,7 +228,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Datetime:
+      case ValueKind.Datetime:
         return (
           <DateTimePicker
             value={value instanceof Date ? value : value ? new Date(String(value)) : undefined}
@@ -236,7 +237,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.String:
+      case ValueKind.String:
         // Multi-line for longer descriptions
         if (definition.description && definition.description.length > 50) {
           return (
@@ -259,7 +260,7 @@ const PropertyField = ({
           />
         );
 
-      case MetricKind.Category:
+      case ValueKind.Category:
       default:
         return (
           <Input
@@ -326,18 +327,22 @@ export const CreateEntityWithPropertiesDialog = (props: {
     // Serialize properties for GraphQL
     const serializedProperties: Record<string, string | number | boolean | null> = {};
 
+    const properties: PropertySet[] = []
+
+
     props.category.propertyDefinitions?.forEach((def) => {
       const value = data.properties[def.key];
-      serializedProperties[def.key] = serializePropertyValue(value, def.valueKind);
+      properties.push({
+        key: def.key,
+        value: serializePropertyValue(value, def.valueKind) as string | number | boolean | null,
+      });
     });
 
     await createEntity({
       variables: {
         input: {
           entityCategory: props.category.id,
-          externalId: data.externalId || undefined,
-          name: data.name || undefined,
-          properties: serializedProperties,
+          stickyProperties: properties,
         },
       },
     });
@@ -361,26 +366,6 @@ export const CreateEntityWithPropertiesDialog = (props: {
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="externalId">External ID</Label>
-                <Input
-                  id="externalId"
-                  {...form.register("externalId")}
-                  placeholder="Optional external identifier"
-                />
-                <p className="text-xs text-muted-foreground">
-                  A unique external identifier (will upsert if exists)
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  {...form.register("name")}
-                  placeholder="Optional name for this entity"
-                />
-              </div>
               {props.category.propertyDefinitions.map((def) => (
                 <Controller
                   key={def.key}

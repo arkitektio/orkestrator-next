@@ -1,0 +1,15 @@
+mutation CreateEntityCategory($input: CreateEntityDefinitionInput!) {
+  createEntityCategory(input: $input) {
+    ...EntityCategory
+  }
+}
+
+mutation UpdateEntityCategory($input: UpdateEntityDefinitionInput!) {
+  updateEntityCategory(input: $input) {
+    ...EntityCategory
+  }
+}
+
+mutation DeleteEntityCategory($id: String!) {
+  deleteEntityCategory(input: {id: $id})
+}

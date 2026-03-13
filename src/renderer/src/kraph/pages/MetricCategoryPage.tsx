@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -12,11 +12,9 @@ import {
   useGetMetricCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateMetricCategoryForm from "../forms/UpdateMetricCategoryForm";
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetMetricCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -56,12 +54,7 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateGraphQueryForm category={data.metricCategory} />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}
@@ -81,9 +74,9 @@ export default asDetailQueryRoute(
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.metricCategory?.store?.presignedUrl && (
+            {data.metricCategory?.image?.presignedUrl && (
               <Image
-                src={resolve(data.metricCategory?.store.presignedUrl)}
+                src={resolve(data.metricCategory?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -91,27 +84,10 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-
-        <div className="flex flex-col p-6 h-full">
-          {data.metricCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.metricCategory.bestQuery}
-            />
-          ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Graph Query yet for this category
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.metricCategory} />
-              </FormDialog>
-            </div>
-          )}
-        </div>
       </KraphMetricCategory.ModelPage>
     );
   },
 );
+
+
+export default Page;

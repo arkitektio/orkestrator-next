@@ -1,9 +1,9 @@
-import { SubTree } from "@/components/explorer/SubTree";
-import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
 import { Tree } from "@/components/explorer/Tree";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { DroppableNavLink } from "@/components/ui/link";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
+import { useDebounce } from "@/hooks/use-debounce";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { Home, LineChartIcon, Network } from "lucide-react";
 import * as React from "react";
@@ -13,10 +13,6 @@ import {
   useGlobalSearchQuery,
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { FancyInput } from "@/components/ui/fancy-input";
-import { useDebounce } from "@/hooks/use-debounce";
-import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 interface IDataSidebarProps { }
 

@@ -1,16 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { AlpakaRoom } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListRoomFragment } from "../../api/graphql";
 
 interface Props {
   item: ListRoomFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaRoom.Smart object={item?.id} mates={mates}>
+    <AlpakaRoom.Smart object={item?.id} >
       <Card className="w-full h-20 relative">
         <AlpakaRoom.DetailLink object={item.id}>
           {item.title}

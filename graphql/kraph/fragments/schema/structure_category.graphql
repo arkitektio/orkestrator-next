@@ -1,0 +1,33 @@
+fragment StructureCategory on StructureCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  identifier
+  graph {
+    id
+    name
+  }
+  ageName
+  description
+  image {
+    presignedUrl
+  }
+  pinned
+  tags {
+    id
+    name
+  }
+}
+
+fragment ListStructureCategory on StructureCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  identifier
+  description
+  image {
+    presignedUrl
+  }
+  tags {
+    id
+    name
+  }
+}

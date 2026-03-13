@@ -4,11 +4,11 @@ import { DeleteRoomDocument } from "@/dokuments/api/graphql";
 
 export const DOKUMENTS_ACTIONS: Action[] = [
   buildDeleteAction({
-    title: "Delete File",
-    identifier: "@dokuments/file",
-    description: "Delete the File",
-    service: "dokuments",
-    typename: "File",
-    mutation: DeleteRoomDocument,
-  }),
-];
+    title: 'Delete File',
+    identifier: '@dokuments/file',
+    description: 'Delete the File',
+    service: 'dokuments',
+    typename: 'File',
+    mutation: DeleteRoomDocument
+  })
+]

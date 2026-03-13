@@ -33,13 +33,13 @@ export const ReturnsContainer: OutputContainer = ({
   showKeys = false,
   className,
 }) => {
-  let len = ports.length;
+  const len = ports.length;
 
-  let lg_size = len < 2 ? len : 2;
-  let xl_size = len < 3 ? len : 3;
-  let xxl_size = len < 4 ? len : 4;
-  let xxxl_size = len < 5 ? len : 5;
-  let xxxxl_size = len < 6 ? len : 6;
+  const lg_size = len < 2 ? len : 2;
+  const xl_size = len < 3 ? len : 3;
+  const xxl_size = len < 4 ? len : 4;
+  const xxxl_size = len < 5 ? len : 5;
+  const xxxxl_size = len < 6 ? len : 6;
 
   return (
     <div
@@ -49,7 +49,7 @@ export const ReturnsContainer: OutputContainer = ({
       )}
     >
       {Object.keys(values).map((key, index) => {
-        let port = ports.find((p) => p.key === key);
+        const port = ports.find((p) => p.key === key);
         if (!port) return <>No Port</>;
 
         const Widget = registry.getReturnWidgetForPort(port);
@@ -165,17 +165,17 @@ export const ArgsContainer: InputContainer = ({
   const [filledGroups, setFilledGroups] = useState<FilledGroup[]>([]);
 
   useEffect(() => {
-    let argGroups: FilledGroup[] = [
+    const argGroups: FilledGroup[] = [
       { key: "default", hidden: false, ports: [] },
     ].concat(groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []);
-    let defaultGroup = argGroups.find((g) => g.key === "default");
-    for (let port of ports) {
+    const defaultGroup = argGroups.find((g) => g.key === "default");
+    for (const port of ports) {
       if (!port) continue;
       if (!port?.groups) {
         argGroups.find((g) => g.key === "default")?.ports.push(port);
       } else {
-        for (let group of port.groups) {
-          let renderGroup = argGroups.find((g) => g.key === group);
+        for (const group of port.groups) {
+          const renderGroup = argGroups.find((g) => g.key === group);
           if (renderGroup) {
             renderGroup.ports.push(port);
           } else if (defaultGroup) {
@@ -187,13 +187,13 @@ export const ArgsContainer: InputContainer = ({
     setFilledGroups(filledGroups);
   }, [ports]);
 
-  let len = ports.length;
+  const len = ports.length;
 
-  let lg_size = len < 2 ? len : 2;
-  let xl_size = len < 3 ? len : 3;
-  let xxl_size = len < 4 ? len : 4;
-  let xxxl_size = len < 5 ? len : 5;
-  let xxxxl_size = len < 6 ? len : 6;
+  const lg_size = len < 2 ? len : 2;
+  const xl_size = len < 3 ? len : 3;
+  const xxl_size = len < 4 ? len : 4;
+  const xxxl_size = len < 5 ? len : 5;
+  const xxxxl_size = len < 6 ? len : 6;
 
   return (
     <div

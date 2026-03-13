@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ToolbarButton } from '@/components/ui/toolbar';
 import {
   Tooltip,
   TooltipContent,
@@ -38,7 +39,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ToolbarButton } from '@/components/ui/toolbar';
 
 export function EmojiToolbarButton({
   options,
@@ -509,7 +509,7 @@ function EmojiPickerNavigation({
                     className={cn(
                       'h-fit rounded-full fill-current p-1.5 text-muted-foreground hover:bg-muted hover:text-muted-foreground',
                       id === focusedCategory &&
-                        'pointer-events-none bg-accent fill-current text-accent-foreground'
+                      'pointer-events-none bg-accent fill-current text-accent-foreground'
                     )}
                     onClick={() => {
                       onClick(id);

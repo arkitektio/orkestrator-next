@@ -1,7 +1,4 @@
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { useState } from "react";
-import { PortKind } from "../api/graphql";
-import { WidgetRegistry } from "./Registry";
 import { WidgetRegistryContext } from "./WidgetsContext";
 import {
   EffectWidgetProps,

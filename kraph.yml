@@ -1,7 +1,10 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/kraph/graphql"
+schema:
+  "http://jhnnsrs-lab/kraph/schema":
+    handleAsSDL: true
 documents: "graphql/kraph/**/*.graphql"
 generates:
+
   src/renderer/src/kraph/api/fragments.ts:
     plugins:
       - "fragment-matcher"
@@ -14,7 +17,14 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/kraph/funcs"
+      scalars:
+        GraphID: string
+        LocalID: string
 
   src/renderer/src/kraph/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/kraph.graphql:
+    plugins:
+      - schema-ast

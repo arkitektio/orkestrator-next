@@ -4,20 +4,19 @@ import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import { Form } from "@/components/ui/form";
 import {
   CreateEntityCategoryMutationVariables,
   CreateStructureCategoryMutationVariables,
   GraphFragment
 } from "@/kraph/api/graphql";
-import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
 import { ContextualContainer } from "@/reaktion/edit/components/ContextualContainer";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
-import { DialogButton } from "@/components/ui/dialogbutton";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry

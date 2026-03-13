@@ -1,11 +1,12 @@
-query GetRelation($id: ID!) {
+query GetRelation($id: GraphID!) {
   relation(id: $id) {
     ...Relation
   }
 }
 
-query SearchRelations($search: String, $values: [ID!]) {
+query SearchRelations($category: ID!, $search: String, $values: [GraphID!]) {
   options: relations(
+    relationCategoryId: $category,
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {

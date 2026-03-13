@@ -1,6 +1,6 @@
 // Constants used in the app
 
-import { BrowserRouter, HashRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import { Manifest } from "./lib/arkitekt/fakts/manifestSchema";
 
 declare global {
@@ -12,6 +12,10 @@ declare global {
 export const Router = HashRouter
 
 export const baseName = window.electron ? "" : "orkestrator";
+
+export const DEFAULT_COORDINATION_SERVER_HOST = "go.arkitekt.live";
+export const DEFAULT_COORDINATION_SERVER_URL =
+  `https://${DEFAULT_COORDINATION_SERVER_HOST}`;
 
 export const manifest: Manifest = {
   version: "0.0.1",

@@ -1,14 +1,14 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestDashboard } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListDashboardFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListDashboardFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestDashboard.Smart object={item?.id}>
       <Card>

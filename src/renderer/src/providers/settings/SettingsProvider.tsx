@@ -93,7 +93,7 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     const loadValidateSettings = async () => {
       let localSettings;
       try {
-        let l = localStorage.getItem("wasser-settings");
+        const l = localStorage.getItem("wasser-settings");
         console.log("Loaded Settings", l);
         if (l) {
           localSettings = await settingsValidator.parseAsync(JSON.parse(l));

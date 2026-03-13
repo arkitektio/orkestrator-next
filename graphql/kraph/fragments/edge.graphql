@@ -1,12 +1,10 @@
 fragment BaseEdge on Edge {
   id
-  leftId
-  rightId
+  sourceId
+  targetId
 }
 
 fragment Measurement on Measurement {
-  validFrom
-  validTo
   category {
     id
     label
@@ -22,13 +20,13 @@ fragment Relation on Relation {
 
 fragment StructureRelation on StructureRelation {
   id
-  leftId
-  rightId
-  left {
+  sourceId
+  targetId
+  source {
     id
     label
   }
-  right {
+  target {
     id
     label
   }
@@ -38,15 +36,66 @@ fragment StructureRelation on StructureRelation {
   }
 }
 
-fragment Edited on Edited {
-  ...BaseEdge
-}
 
 fragment Edge on Edge {
+  sourceId
+  targetId
   ...BaseEdge
   ...Measurement
   ...Relation
-  ...Edited
-  ...Participant
   ...StructureRelation
+}
+
+
+fragment PathMeasurement on Measurement {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathStructureRelation on StructureRelation {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathRelation on Relation {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+fragment PathAssertion on Assertion {
+  id
+  label
+}
+fragment PathDescription on Description {
+  id
+  label
+}
+fragment PathInputParticipation on InputParticipation {
+  id
+  label
+}
+fragment PathOutputParticipation on OutputParticipation {
+  id
+  label
+}
+fragment PathEdge on Edge {
+  sourceId
+  targetId
+  ...BaseEdge
+  ...PathMeasurement
+  ...PathRelation
+  ...PathStructureRelation
+  ...PathAssertion
+  ...PathDescription
+  ...PathInputParticipation
+  ...PathOutputParticipation
 }

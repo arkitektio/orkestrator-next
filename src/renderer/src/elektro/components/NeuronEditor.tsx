@@ -1,17 +1,17 @@
-import { OrbitControls, Html, useCursor } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useState, useRef } from "react";
-import * as THREE from "three";
-import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
-import { v4 as uuidv4 } from 'uuid';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Trash2, GitBranch, X } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Html, OrbitControls, useCursor } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { GitBranch, Trash2, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import * as THREE from "three";
+import { v4 as uuidv4 } from 'uuid';
+import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 
 // --- Types & Helpers ---
 

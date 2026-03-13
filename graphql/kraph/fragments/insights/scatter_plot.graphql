@@ -1,0 +1,23 @@
+fragment ScatterPlot on ScatterPlot {
+  id
+  label
+  description
+  xColumn
+  yColumn
+  idColumn
+  colorColumn
+  sizeColumn
+  shapeColumn
+  query {
+    ...GraphTableQuery
+    ...NodeTableQuery
+    ...EdgeTableQuery
+  }
+}
+
+fragment ListScatterPlot on ScatterPlot {
+  id
+  label
+  xColumn
+  yColumn
+}

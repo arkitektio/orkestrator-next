@@ -1,22 +1,22 @@
 import { Structure } from "../../types";
+import { SelectionState, SelectionStore } from "./store";
 
-export type Selectable = {
-  structure: Structure;
-  item: HTMLElement;
-};
+export type SelectionContextType = SelectionStore | null;
 
-export type SelectionContextType = {
-  selection: Structure[];
-  isMultiSelecting: boolean;
+export type SelectionSnapshot = Pick<
+  SelectionState,
+  | "selection"
+  | "bselection"
+  | "isMultiSelecting"
+  | "setSelection"
+  | "setBSelection"
+  | "unselect"
+  | "setIsMultiSelecting"
+  | "registerSelectables"
+  | "toggleSelection"
+  | "toggleBSelection"
+  | "unregisterSelectables"
+> & {
   focus?: Structure;
-  bselection: Structure[];
   removeSelection: () => void;
-  setBSelection: (selection: Structure[]) => void;
-  setSelection: (selection: Structure[]) => void;
-  unselect: (identifier: Structure[]) => void;
-  setIsMultiSelecting: (state: boolean) => void;
-  registerSelectables: (selectable: Selectable[]) => void;
-  toggleSelection: (structure: Structure) => void;
-  toggleBSelection: (structure: Structure) => void;
-  unregisterSelectables: (selectables: Selectable[]) => void;
 };

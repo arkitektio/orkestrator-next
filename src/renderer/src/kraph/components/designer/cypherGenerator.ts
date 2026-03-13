@@ -1,59 +1,47 @@
-import { MyEdge, MyNode } from "./types";
-import {
-  Path,
-  WhereCondition,
-  ReturnColumn,
-  NodeWhereClause,
-} from "./OntologyGraphProvider";
+import { MyEdge, MyNode } from './types'
+import { Path, WhereCondition, ReturnColumn, NodeWhereClause } from './OntologyGraphProvider'
 import {
   ColumnInput,
   ColumnKind,
-  MetricKind,
-  ViewKind,
-  GraphQueryInput,
+  ValueKind,
   MatchPathInput,
   WhereClauseInput,
-  WhereOperator,
-  ReturnInput,
-} from "@/kraph/api/graphql";
+  WhereOperator
+} from '@/kraph/api/graphql'
 
 export interface EnrichedPath {
-  path: Path;
-  nodeDetails: MyNode[];
-  edgeDetails: MyEdge[];
+  path: Path
+  nodeDetails: MyNode[]
+  edgeDetails: MyEdge[]
 }
 
 export interface NodeMapping {
-  nodeId: string;
-  variable: string;
-  type: string;
-  label: string;
-  name: string;
-  pathIndices: number[]; // Which paths use this node
-  positionInPath?: number; // Position of this occurrence in the path
+  nodeId: string
+  variable: string
+  type: string
+  label: string
+  name: string
+  pathIndices: number[] // Which paths use this node
+  positionInPath?: number // Position of this occurrence in the path
 }
 
 /**
  * Enriches a path with full node and edge data
  */
-export function enrichPath(
-  path: Path,
-  allNodes: MyNode[],
-  allEdges: MyEdge[],
-): EnrichedPath {
+export function enrichPath(path: Path, allNodes: MyNode[], allEdges: MyEdge[]): EnrichedPath {
   const nodeDetails = path.nodes
     .map((nodeId) => allNodes.find((n) => n.id === nodeId))
-    .filter((n): n is MyNode => n !== undefined);
+    .filter((n): n is MyNode => n !== undefined)
 
   const edgeDetails = path.relations
     .map((edgeId) => allEdges.find((e) => e.id === edgeId))
-    .filter((e): e is MyEdge => e !== undefined);
+    .filter((e): e is MyEdge => e !== undefined)
 
   return {
     path,
     nodeDetails,
-    edgeDetails,
-  };
+    edgeDetails
+  }
 }
 
 /**
@@ -61,15 +49,15 @@ export function enrichPath(
  */
 function getRelationshipVariable(index: number, relationType: string): string {
   // Create friendly variable names like: rel0, measurement1, relation2
-  const baseType = relationType.toLowerCase();
-  return `${baseType}${index}`;
+  const baseType = relationType.toLowerCase()
+  return `${baseType}${index}`
 }
 
 /**
  * Generates a Cypher label from node type
  */
 function getNodeLabel(node: MyNode): string {
-  return node.data.ageName;
+  return node.data.ageName
 }
 
 /**
@@ -77,20 +65,20 @@ function getNodeLabel(node: MyNode): string {
  */
 function getRelationshipType(edge: MyEdge): string {
   switch (edge.type) {
-    case "measurement":
-      return edge.data?.ageName || "MEASURED_BY";
-    case "relation":
-      return edge.data?.ageName || "RELATED_TO";
-    case "structure_relation":
-      return "STRUCTURE_RELATION";
-    case "reagentrole":
-      return edge.data?.role || "PARTICIPATES";
-    case "entityrole":
-      return edge.data?.role || "PARTICIPATES";
-    case "describe":
-      return "DESCRIBES";
+    case 'measurement':
+      return edge.data?.ageName || 'MEASURED_BY'
+    case 'relation':
+      return edge.data?.ageName || 'RELATED_TO'
+    case 'structure_relation':
+      return 'STRUCTURE_RELATION'
+    case 'reagentrole':
+      return edge.data?.role || 'PARTICIPATES'
+    case 'entityrole':
+      return edge.data?.role || 'PARTICIPATES'
+    case 'describe':
+      return 'DESCRIBES'
     default:
-      return edge.data?.ageName || "CONNECTED_TO";
+      return edge.data?.ageName || 'CONNECTED_TO'
   }
 }
 
@@ -108,55 +96,55 @@ function getRelationshipType(edge: MyEdge): string {
  */
 function buildNodeMapping(
   enrichedPaths: EnrichedPath[],
-  allNodes: MyNode[],
+  allNodes: MyNode[]
 ): Map<string, NodeMapping> {
-  const nodeMap = new Map<string, NodeMapping>();
-  const nodeTypeCounters = new Map<string, number>();
+  const nodeMap = new Map<string, NodeMapping>()
+  const nodeTypeCounters = new Map<string, number>()
 
   enrichedPaths.forEach((ep, pathIndex) => {
     ep.path.nodes.forEach((nodeId, positionInPath) => {
       // Create a unique key for this occurrence: pathIndex + nodeId + position
-      const occurrenceKey = `${pathIndex}:${nodeId}:${positionInPath}`;
+      const occurrenceKey = `${pathIndex}:${nodeId}:${positionInPath}`
 
       if (!nodeMap.has(occurrenceKey)) {
-        const node = allNodes.find((n) => n.id === nodeId);
+        const node = allNodes.find((n) => n.id === nodeId)
         if (node) {
-          const nodeType = node.type || "node";
-          const baseType = nodeType.toLowerCase().replace("category", "");
+          const nodeType = node.type || 'node'
+          const baseType = nodeType.toLowerCase().replace('category', '')
 
           // Check if this is the first node and the path starts from another path
           // If so, reuse the variable from the source path
-          let variable: string;
+          let variable: string
           if (
             positionInPath === 0 &&
             ep.path.startsFromPath !== undefined &&
             ep.path.startsFromNodePosition !== undefined
           ) {
             // Reuse the variable from the source path node
-            const sourceKey = `${ep.path.startsFromPath}:${nodeId}:${ep.path.startsFromNodePosition}`;
-            const sourceMapping = nodeMap.get(sourceKey);
+            const sourceKey = `${ep.path.startsFromPath}:${nodeId}:${ep.path.startsFromNodePosition}`
+            const sourceMapping = nodeMap.get(sourceKey)
             if (sourceMapping) {
-              variable = sourceMapping.variable;
+              variable = sourceMapping.variable
             } else {
               // Fallback: create new variable if source not found
-              const currentCount = nodeTypeCounters.get(baseType) || 0;
-              nodeTypeCounters.set(baseType, currentCount + 1);
-              variable = `${baseType}${currentCount}`;
+              const currentCount = nodeTypeCounters.get(baseType) || 0
+              nodeTypeCounters.set(baseType, currentCount + 1)
+              variable = `${baseType}${currentCount}`
             }
           } else {
             // Get next index for this node type
-            const currentCount = nodeTypeCounters.get(baseType) || 0;
-            nodeTypeCounters.set(baseType, currentCount + 1);
-            variable = `${baseType}${currentCount}`;
+            const currentCount = nodeTypeCounters.get(baseType) || 0
+            nodeTypeCounters.set(baseType, currentCount + 1)
+            variable = `${baseType}${currentCount}`
           }
 
-          const nodeLabel = getNodeLabel(node);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const nodeLabel = getNodeLabel(node)
+
           const nodeName =
             (node.data as any).ageName ||
             (node.data as any).label ||
             (node.data as any).identifier ||
-            node.id;
+            node.id
 
           nodeMap.set(occurrenceKey, {
             nodeId,
@@ -165,59 +153,56 @@ function buildNodeMapping(
             label: nodeLabel,
             name: nodeName,
             pathIndices: [pathIndex],
-            positionInPath,
-          });
+            positionInPath
+          })
         }
       }
-    });
-  });
+    })
+  })
 
-  return nodeMap;
+  return nodeMap
 }
 
 /**
  * Formats a WHERE condition value for Cypher
  */
 function formatWhereValue(value: string | number | boolean | string[]): string {
-  if (typeof value === "string") {
-    return `"${value}"`;
+  if (typeof value === 'string') {
+    return `"${value}"`
   } else if (Array.isArray(value)) {
-    return `[${value.map((v) => `"${v}"`).join(", ")}]`;
+    return `[${value.map((v) => `"${v}"`).join(', ')}]`
   }
-  return String(value);
+  return String(value)
 }
 
 /**
  * Generates WHERE clause conditions for a node
  */
-function generateWhereConditions(
-  variable: string,
-  conditions: WhereCondition[],
-): string[] {
+function generateWhereConditions(variable: string, conditions: WhereCondition[]): string[] {
   return conditions.map((cond) => {
-    const { property, operator, value } = cond;
-    const formattedValue = formatWhereValue(value);
+    const { property, operator, value } = cond
+    const formattedValue = formatWhereValue(value)
 
     switch (operator) {
-      case "=":
-      case "!=":
-      case ">":
-      case "<":
-      case ">=":
-      case "<=":
-        return `${variable}.${property} ${operator} ${formattedValue}`;
-      case "CONTAINS":
-        return `${variable}.${property} CONTAINS ${formattedValue}`;
-      case "STARTS WITH":
-        return `${variable}.${property} STARTS WITH ${formattedValue}`;
-      case "ENDS WITH":
-        return `${variable}.${property} ENDS WITH ${formattedValue}`;
-      case "IN":
-        return `${variable}.${property} IN ${formattedValue}`;
+      case '=':
+      case '!=':
+      case '>':
+      case '<':
+      case '>=':
+      case '<=':
+        return `${variable}.${property} ${operator} ${formattedValue}`
+      case 'CONTAINS':
+        return `${variable}.${property} CONTAINS ${formattedValue}`
+      case 'STARTS WITH':
+        return `${variable}.${property} STARTS WITH ${formattedValue}`
+      case 'ENDS WITH':
+        return `${variable}.${property} ENDS WITH ${formattedValue}`
+      case 'IN':
+        return `${variable}.${property} IN ${formattedValue}`
       default:
-        return `${variable}.${property} = ${formattedValue}`;
+        return `${variable}.${property} = ${formattedValue}`
     }
-  });
+  })
 }
 
 /**
@@ -227,59 +212,56 @@ function generateUnifiedPathMatchClause(
   enrichedPath: EnrichedPath,
   nodeMap: Map<string, NodeMapping>,
   relCounterStart: number,
-  pathIndex: number,
+  pathIndex: number
 ): { matchClause: string; relCount: number } {
-  const { edgeDetails, path } = enrichedPath;
+  const { edgeDetails, path } = enrichedPath
 
   if (path.nodes.length === 0) {
-    return { matchClause: "", relCount: 0 };
+    return { matchClause: '', relCount: 0 }
   }
 
-  const parts: string[] = [];
-  let relCounter = relCounterStart;
+  const parts: string[] = []
+  let relCounter = relCounterStart
 
   // Interleave nodes and relationships
   for (let i = 0; i < path.nodes.length; i++) {
-    const nodeId = path.nodes[i];
+    const nodeId = path.nodes[i]
     // Use occurrence-based key to get the right variable for this position
-    const occurrenceKey = `${pathIndex}:${nodeId}:${i}`;
-    const mapping = nodeMap.get(occurrenceKey);
+    const occurrenceKey = `${pathIndex}:${nodeId}:${i}`
+    const mapping = nodeMap.get(occurrenceKey)
 
-    if (!mapping) continue; // Add node pattern with variable only (no properties in MATCH)
-    parts.push(`(${mapping.variable}:${mapping.label})`);
+    if (!mapping) continue // Add node pattern with variable only (no properties in MATCH)
+    parts.push(`(${mapping.variable}:${mapping.label})`)
 
     // Add relationship pattern if there's a next node
     if (i < path.nodes.length - 1 && edgeDetails[i]) {
-      const edge = edgeDetails[i];
-      const relVar = getRelationshipVariable(relCounter, edge.type || "rel");
-      const relType = getRelationshipType(edge);
-      relCounter++;
+      const edge = edgeDetails[i]
+      const relVar = getRelationshipVariable(relCounter, edge.type || 'rel')
+      const relType = getRelationshipType(edge)
+      relCounter++
 
       // Use stored direction if available, otherwise fall back to source/target comparison
-      let isForward = true;
+      let isForward = true
       if (path.relationDirections && path.relationDirections[i] !== undefined) {
-        isForward = path.relationDirections[i];
+        isForward = path.relationDirections[i]
       } else {
         // Fallback: determine direction based on source/target
-        const sourceNodeId = path.nodes[i];
-        const targetNodeId = path.nodes[i + 1];
-        isForward =
-          edge.source === sourceNodeId && edge.target === targetNodeId;
+        const sourceNodeId = path.nodes[i]
+        const targetNodeId = path.nodes[i + 1]
+        isForward = edge.source === sourceNodeId && edge.target === targetNodeId
       }
 
       if (isForward) {
-        parts.push(`-[${relVar}:${relType}]->`);
+        parts.push(`-[${relVar}:${relType}]->`)
       } else {
-        parts.push(`<-[${relVar}:${relType}]-`);
+        parts.push(`<-[${relVar}:${relType}]-`)
       }
     }
   }
 
-  const matchClause = path.optional
-    ? `OPTIONAL MATCH ${parts.join("")}`
-    : `MATCH ${parts.join("")}`;
+  const matchClause = path.optional ? `OPTIONAL MATCH ${parts.join('')}` : `MATCH ${parts.join('')}`
 
-  return { matchClause, relCount: relCounter };
+  return { matchClause, relCount: relCounter }
 }
 
 /**
@@ -287,74 +269,69 @@ function generateUnifiedPathMatchClause(
  */
 export function generateUnifiedCypherQuery(
   enrichedPaths: EnrichedPath[],
-  allNodes: MyNode[],
+  allNodes: MyNode[]
 ): string {
   if (enrichedPaths.length === 0) {
-    return "// No paths defined yet\n// Click nodes and relationships to build a path";
+    return '// No paths defined yet\n// Click nodes and relationships to build a path'
   }
 
-  const lines: string[] = [];
+  const lines: string[] = []
 
   // Build unified node mapping
-  const nodeMap = buildNodeMapping(enrichedPaths, allNodes);
+  const nodeMap = buildNodeMapping(enrichedPaths, allNodes)
 
   // Generate MATCH clauses
-  let relCounter = 0;
+  let relCounter = 0
   enrichedPaths.forEach((ep, pathIndex) => {
-    if (pathIndex > 0) lines.push("");
-    lines.push(
-      `// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`,
-    );
+    if (pathIndex > 0) lines.push('')
+    lines.push(`// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`)
 
     const { matchClause, relCount } = generateUnifiedPathMatchClause(
       ep,
       nodeMap,
       relCounter,
-      pathIndex,
-    );
-    relCounter = relCount;
+      pathIndex
+    )
+    relCounter = relCount
 
     if (matchClause) {
-      lines.push(matchClause);
+      lines.push(matchClause)
     }
-  });
+  })
 
   // Generate WHERE clauses
-  const allWhereConditions: string[] = [];
+  const allWhereConditions: string[] = []
 
   // Collect WHERE conditions from all paths
   enrichedPaths.forEach((ep) => {
     if (ep.path.whereClauses && ep.path.whereClauses.length > 0) {
       ep.path.whereClauses.forEach((whereClause) => {
-        const mapping = nodeMap.get(whereClause.nodeId);
+        const mapping = nodeMap.get(whereClause.nodeId)
         if (mapping && whereClause.conditions.length > 0) {
-          const conditions = generateWhereConditions(
-            mapping.variable,
-            whereClause.conditions,
-          );
-          allWhereConditions.push(...conditions);
+          const conditions = generateWhereConditions(mapping.variable, whereClause.conditions)
+          allWhereConditions.push(...conditions)
         }
-      });
+      })
     }
-  });
+  })
 
   // Add WHERE clause if there are conditions
   if (allWhereConditions.length > 0) {
-    lines.push("");
-    lines.push("// Filter conditions");
-    lines.push(`WHERE ${allWhereConditions.join(" AND ")}`);
+    lines.push('')
+    lines.push('// Filter conditions')
+    lines.push(`WHERE ${allWhereConditions.join(' AND ')}`)
   }
 
   // Generate RETURN clause
   const allNodeVars = Array.from(nodeMap.values())
     .map((mapping) => mapping.variable)
-    .sort();
+    .sort()
 
-  lines.push("");
-  lines.push("// Return all matched nodes");
-  lines.push(`RETURN ${allNodeVars.join(", ")}`);
+  lines.push('')
+  lines.push('// Return all matched nodes')
+  lines.push(`RETURN ${allNodeVars.join(', ')}`)
 
-  return lines.join("\n");
+  return lines.join('\n')
 }
 
 /**
@@ -365,60 +342,55 @@ export function generateUnifiedCypherQueryWithColumns(
   allNodes: MyNode[],
   returnColumns: ReturnColumn[],
   globalWhereClauses?: NodeWhereClause[],
-  useDistinct?: boolean,
+  useDistinct?: boolean
 ): string {
   if (enrichedPaths.length === 0) {
-    return "// No paths defined yet\n// Click nodes and relationships to build a path";
+    return '// No paths defined yet\n// Click nodes and relationships to build a path'
   }
 
-  const lines: string[] = [];
+  const lines: string[] = []
 
   // Build unified node mapping
-  const nodeMap = buildNodeMapping(enrichedPaths, allNodes);
+  const nodeMap = buildNodeMapping(enrichedPaths, allNodes)
 
   // Generate MATCH clauses
-  let relCounter = 0;
+  let relCounter = 0
   enrichedPaths.forEach((ep, pathIndex) => {
-    if (pathIndex > 0) lines.push("");
-    lines.push(
-      `// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`,
-    );
+    if (pathIndex > 0) lines.push('')
+    lines.push(`// Path ${pathIndex + 1}: ${ep.path.title || `Path ${pathIndex + 1}`}`)
 
     const { matchClause, relCount } = generateUnifiedPathMatchClause(
       ep,
       nodeMap,
       relCounter,
-      pathIndex,
-    );
-    relCounter = relCount;
+      pathIndex
+    )
+    relCounter = relCount
 
     if (matchClause) {
-      lines.push(matchClause);
+      lines.push(matchClause)
     }
-  });
+  })
 
   // Generate WHERE clauses
-  const allWhereConditions: string[] = [];
+  const allWhereConditions: string[] = []
 
   // Use global WHERE clauses if provided, otherwise use path-specific ones
   if (globalWhereClauses && globalWhereClauses.length > 0) {
     globalWhereClauses.forEach((whereClause) => {
       // Find all occurrences of this nodeId in the node map
       const matchingMappings = Array.from(nodeMap.values()).filter(
-        (mapping) => mapping.nodeId === whereClause.nodeId,
-      );
+        (mapping) => mapping.nodeId === whereClause.nodeId
+      )
 
       // Apply WHERE clause to all occurrences of this node
       matchingMappings.forEach((mapping) => {
         if (whereClause.conditions.length > 0) {
-          const conditions = generateWhereConditions(
-            mapping.variable,
-            whereClause.conditions,
-          );
-          allWhereConditions.push(...conditions);
+          const conditions = generateWhereConditions(mapping.variable, whereClause.conditions)
+          allWhereConditions.push(...conditions)
         }
-      });
-    });
+      })
+    })
   } else {
     // Fallback to path-specific WHERE clauses
     enrichedPaths.forEach((ep) => {
@@ -426,99 +398,87 @@ export function generateUnifiedCypherQueryWithColumns(
         ep.path.whereClauses.forEach((whereClause) => {
           // Find all occurrences of this nodeId in the node map
           const matchingMappings = Array.from(nodeMap.values()).filter(
-            (mapping) => mapping.nodeId === whereClause.nodeId,
-          );
+            (mapping) => mapping.nodeId === whereClause.nodeId
+          )
 
           // Apply WHERE clause to all occurrences of this node
           matchingMappings.forEach((mapping) => {
             if (whereClause.conditions.length > 0) {
-              const conditions = generateWhereConditions(
-                mapping.variable,
-                whereClause.conditions,
-              );
-              allWhereConditions.push(...conditions);
+              const conditions = generateWhereConditions(mapping.variable, whereClause.conditions)
+              allWhereConditions.push(...conditions)
             }
-          });
-        });
+          })
+        })
       }
-    });
+    })
   }
 
   // Add WHERE clause if there are conditions
   if (allWhereConditions.length > 0) {
-    lines.push("");
-    lines.push("// Filter conditions");
-    lines.push(`WHERE ${allWhereConditions.join(" AND ")}`);
+    lines.push('')
+    lines.push('// Filter conditions')
+    lines.push(`WHERE ${allWhereConditions.join(' AND ')}`)
   }
 
   // Generate RETURN clause with custom columns
-  lines.push("");
+  lines.push('')
 
   if (returnColumns.length > 0) {
-    lines.push("// Return selected columns");
-    const returnParts: string[] = [];
-    const seenVariableProperties = new Set<string>(); // Track variable+property to avoid duplicates
+    lines.push('// Return selected columns')
+    const returnParts: string[] = []
+    const seenVariableProperties = new Set<string>() // Track variable+property to avoid duplicates
 
     returnColumns.forEach((col) => {
       // Find all occurrences of this nodeId in the node map
       const matchingMappings = Array.from(nodeMap.values()).filter(
-        (mapping) => mapping.nodeId === col.nodeId,
-      );
+        (mapping) => mapping.nodeId === col.nodeId
+      )
 
       // Generate return for each occurrence, but avoid duplicates
       matchingMappings.forEach((mapping) => {
-        const variablePropertyKey = `${mapping.variable}:${col.property}`;
+        const variablePropertyKey = `${mapping.variable}:${col.property}`
 
         // Skip if we've already added this variable+property combination
         if (seenVariableProperties.has(variablePropertyKey)) {
-          return;
+          return
         }
-        seenVariableProperties.add(variablePropertyKey);
+        seenVariableProperties.add(variablePropertyKey)
 
         if (col.cypherExpression) {
           // Custom Cypher expression - replace any node reference with the specific variable
-          const expression = col.cypherExpression.replace(
-            /\$node/g,
-            mapping.variable,
-          );
+          const expression = col.cypherExpression.replace(/\$node/g, mapping.variable)
           // Use variable name when multiple occurrences, otherwise use alias
           const alias =
-            matchingMappings.length > 1
-              ? `${mapping.variable}_${col.property}`
-              : col.alias;
-          const part = alias ? `${expression} AS ${alias}` : expression;
-          returnParts.push(part);
+            matchingMappings.length > 1 ? `${mapping.variable}_${col.property}` : col.alias
+          const part = alias ? `${expression} AS ${alias}` : expression
+          returnParts.push(part)
         } else {
           // Node property
           // Use variable name when multiple occurrences, otherwise use alias
           const alias =
-            matchingMappings.length > 1
-              ? `${mapping.variable}_${col.property}`
-              : col.alias;
+            matchingMappings.length > 1 ? `${mapping.variable}_${col.property}` : col.alias
           const propertyExpression =
-            col.property === "id"
+            col.property === 'id'
               ? `id(${mapping.variable})`
-              : `${mapping.variable}.${col.property}`;
-          const part = alias
-            ? `${propertyExpression} AS ${alias}`
-            : propertyExpression;
-          returnParts.push(part);
+              : `${mapping.variable}.${col.property}`
+          const part = alias ? `${propertyExpression} AS ${alias}` : propertyExpression
+          returnParts.push(part)
         }
-      });
-    });
+      })
+    })
 
-    const distinctKeyword = useDistinct !== false ? "DISTINCT " : "";
-    lines.push(`RETURN ${distinctKeyword}${returnParts.join(", ")}`);
+    const distinctKeyword = useDistinct !== false ? 'DISTINCT ' : ''
+    lines.push(`RETURN ${distinctKeyword}${returnParts.join(', ')}`)
   } else {
     // Default: return all nodes
-    lines.push("// Return all matched nodes");
+    lines.push('// Return all matched nodes')
     const allNodeVars = Array.from(nodeMap.values())
       .map((mapping) => mapping.variable)
-      .sort();
-    lines.push(`RETURN ${allNodeVars.join(", ")}`);
+      .sort()
+    lines.push(`RETURN ${allNodeVars.join(', ')}`)
   }
 
-  return lines.join("\n");
+  return lines.join('\n')
 }
 
 /**
@@ -526,44 +486,42 @@ export function generateUnifiedCypherQueryWithColumns(
  */
 function mapWhereOperator(operator: string): WhereOperator {
   switch (operator) {
-    case "=":
-      return WhereOperator.Equals;
-    case "!=":
-      return WhereOperator.NotEquals;
-    case ">":
-      return WhereOperator.GreaterThan;
-    case "<":
-      return WhereOperator.LessThan;
-    case ">=":
-      return WhereOperator.GreaterThanOrEqual;
-    case "<=":
-      return WhereOperator.LessThanOrEqual;
-    case "CONTAINS":
-      return WhereOperator.Contains;
-    case "STARTS WITH":
-      return WhereOperator.StartsWith;
-    case "ENDS WITH":
-      return WhereOperator.EndsWith;
+    case '=':
+      return WhereOperator.Equals
+    case '!=':
+      return WhereOperator.NotEquals
+    case '>':
+      return WhereOperator.GreaterThan
+    case '<':
+      return WhereOperator.LessThan
+    case '>=':
+      return WhereOperator.GreaterThanOrEqual
+    case '<=':
+      return WhereOperator.LessThanOrEqual
+    case 'CONTAINS':
+      return WhereOperator.Contains
+    case 'STARTS WITH':
+      return WhereOperator.StartsWith
+    case 'ENDS WITH':
+      return WhereOperator.EndsWith
     default:
-      return WhereOperator.Equals;
+      return WhereOperator.Equals
   }
 }
 
 /**
  * Generates MatchPathInput array from paths
  */
-function generateMatchPathInputs(
-  enrichedPaths: EnrichedPath[],
-): MatchPathInput[] {
+function generateMatchPathInputs(enrichedPaths: EnrichedPath[]): MatchPathInput[] {
   return enrichedPaths.map((ep) => {
-    const { path } = ep;
+    const { path } = ep
 
     // Build the full path by interleaving nodes and relations
-    const fullPath: string[] = [];
+    const fullPath: string[] = []
     for (let i = 0; i < path.nodes.length; i++) {
-      fullPath.push(path.nodes[i]);
+      fullPath.push(path.nodes[i])
       if (i < path.relations.length) {
-        fullPath.push(path.relations[i]);
+        fullPath.push(path.relations[i])
       }
     }
 
@@ -573,9 +531,9 @@ function generateMatchPathInputs(
       relationDirections: path.relationDirections || [],
       optional: path.optional || false,
       title: path.title,
-      color: path.color, // Already in RGB format
-    };
-  });
+      color: path.color // Already in RGB format
+    }
+  })
 }
 
 /**
@@ -583,19 +541,17 @@ function generateMatchPathInputs(
  */
 function generateWhereClauseInputs(
   globalWhereClauses: NodeWhereClause[] | undefined,
-  enrichedPaths: EnrichedPath[],
+  enrichedPaths: EnrichedPath[]
 ): WhereClauseInput[] {
-  const whereInputs: WhereClauseInput[] = [];
-  const nodeMap = buildNodeMapping(enrichedPaths, [] as MyNode[]);
+  const whereInputs: WhereClauseInput[] = []
+  const nodeMap = buildNodeMapping(enrichedPaths, [] as MyNode[])
 
   // Use global WHERE clauses if provided
   if (globalWhereClauses && globalWhereClauses.length > 0) {
     globalWhereClauses.forEach((whereClause) => {
       whereClause.conditions.forEach((condition) => {
         // Find first occurrence of this node
-        const mapping = Array.from(nodeMap.values()).find(
-          (m) => m.nodeId === whereClause.nodeId,
-        );
+        const mapping = Array.from(nodeMap.values()).find((m) => m.nodeId === whereClause.nodeId)
 
         if (mapping) {
           whereInputs.push({
@@ -603,11 +559,11 @@ function generateWhereClauseInputs(
             node: whereClause.nodeId,
             property: condition.property,
             operator: mapWhereOperator(condition.operator),
-            value: String(condition.value),
-          });
+            value: String(condition.value)
+          })
         }
-      });
-    });
+      })
+    })
   } else {
     // Fallback to path-specific WHERE clauses
     enrichedPaths.forEach((ep) => {
@@ -619,15 +575,15 @@ function generateWhereClauseInputs(
               node: whereClause.nodeId,
               property: condition.property,
               operator: mapWhereOperator(condition.operator),
-              value: String(condition.value),
-            });
-          });
-        });
+              value: String(condition.value)
+            })
+          })
+        })
       }
-    });
+    })
   }
 
-  return whereInputs;
+  return whereInputs
 }
 
 /**
@@ -637,8 +593,8 @@ function generateReturnInputs(returnColumns: ReturnColumn[]): ReturnInput[] {
   return returnColumns.map((col) => ({
     path: col.nodeId,
     node: col.nodeId,
-    property: col.property,
-  }));
+    property: col.property
+  }))
 }
 
 /**
@@ -651,73 +607,73 @@ export function generateGraphQueryInput(
   graphId: string,
   name: string,
   description?: string,
-  globalWhereClauses?: NodeWhereClause[],
+  globalWhereClauses?: NodeWhereClause[]
 ): GraphQueryInput {
   // Generate the Cypher query
   const query = generateUnifiedCypherQueryWithColumns(
     enrichedPaths,
     allNodes,
     returnColumns,
-    globalWhereClauses,
-  );
+    globalWhereClauses
+  )
 
   // Build node mapping for column generation
-  const nodeMap = buildNodeMapping(enrichedPaths, allNodes);
+  const nodeMap = buildNodeMapping(enrichedPaths, allNodes)
 
   // Generate columns from return columns
-  const columns: ColumnInput[] = [];
+  const columns: ColumnInput[] = []
 
   returnColumns.forEach((col) => {
     // Find all occurrences of this nodeId
     const matchingMappings = Array.from(nodeMap.values()).filter(
-      (mapping) => mapping.nodeId === col.nodeId,
-    );
-    const node = allNodes.find((n) => n.id === col.nodeId);
+      (mapping) => mapping.nodeId === col.nodeId
+    )
+    const node = allNodes.find((n) => n.id === col.nodeId)
 
     if (!node) {
       columns.push({
         name: col.alias || col.property,
         kind: ColumnKind.Value,
-        label: col.alias || col.property,
-      });
-      return;
+        label: col.alias || col.property
+      })
+      return
     }
 
     // Generate a column for each occurrence
     matchingMappings.forEach((mapping) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodeData = node.data as any;
+      const nodeData = node.data as any
 
       // Determine column kind based on property
-      let columnKind = ColumnKind.Value;
-      let valueKind: MetricKind | undefined = undefined;
-      let idfor: string[] | undefined = undefined;
+      let columnKind = ColumnKind.Value
+      let valueKind: ValueKind | undefined = undefined
+      let idfor: string[] | undefined = undefined
 
-      if (col.property === "id") {
-        columnKind = ColumnKind.Node;
+      if (col.property === 'id') {
+        columnKind = ColumnKind.Node
         // Use idfor from column if provided, otherwise default to nodeId
-        idfor = col.idfor || [col.nodeId];
-      } else if (col.property === "metricKind") {
-        columnKind = ColumnKind.Value;
-      } else if (col.property === "label" || col.property === "identifier") {
-        columnKind = ColumnKind.Value;
+        idfor = col.idfor || [col.nodeId]
+      } else if (col.property === 'ValueKind') {
+        columnKind = ColumnKind.Value
+      } else if (col.property === 'label' || col.property === 'identifier') {
+        columnKind = ColumnKind.Value
       }
 
-      // Try to infer MetricKind if it's a metric node
-      if (node.type === "metriccategory" && nodeData?.metricKind) {
-        valueKind = nodeData.metricKind as MetricKind;
+      // Try to infer ValueKind if it's a metric node
+      if (node.type === 'metriccategory' && nodeData?.ValueKind) {
+        valueKind = nodeData.ValueKind as ValueKind
       }
 
       // Use variable name when multiple occurrences, otherwise use alias or variable_property
       const name =
         matchingMappings.length > 1
           ? `${mapping.variable}_${col.property}`
-          : col.alias || `${mapping.variable}_${col.property}`;
+          : col.alias || `${mapping.variable}_${col.property}`
 
       const label =
         matchingMappings.length > 1
           ? `${mapping.variable}.${col.property}`
-          : col.alias || col.property;
+          : col.alias || col.property
 
       columns.push({
         name,
@@ -726,21 +682,21 @@ export function generateGraphQueryInput(
         description: `${col.property} from ${mapping.name} (${mapping.variable})`,
         valueKind,
         idfor,
-        searchable: col.property === "label" || col.property === "identifier",
-      });
-    });
-  });
+        searchable: col.property === 'label' || col.property === 'identifier'
+      })
+    })
+  })
 
   // Determine view kind based on columns
-  let kind = ViewKind.Table;
+  let kind = ViewKind.Table
   if (returnColumns.length === 0) {
-    kind = ViewKind.NodeList;
+    kind = ViewKind.NodeList
   }
 
   // Generate matches, wheres, and returns
-  const matches = generateMatchPathInputs(enrichedPaths);
-  const wheres = generateWhereClauseInputs(globalWhereClauses, enrichedPaths);
-  const returns = generateReturnInputs(returnColumns);
+  const matches = generateMatchPathInputs(enrichedPaths)
+  const wheres = generateWhereClauseInputs(globalWhereClauses, enrichedPaths)
+  const returns = generateReturnInputs(returnColumns)
 
   return {
     graph: graphId,
@@ -751,27 +707,23 @@ export function generateGraphQueryInput(
     columns: columns.length > 0 ? columns : undefined,
     matches: matches.length > 0 ? matches : undefined,
     wheres: wheres.length > 0 ? wheres : undefined,
-    returns: returns.length > 0 ? returns : undefined,
-  };
+    returns: returns.length > 0 ? returns : undefined
+  }
 }
 
 /**
  * Legacy function for backward compatibility
  * Now calls the unified version
  */
-export function generateCypherQueryWithComments(
-  enrichedPaths: EnrichedPath[],
-): string {
+export function generateCypherQueryWithComments(enrichedPaths: EnrichedPath[]): string {
   // Extract all unique nodes from paths
-  const allNodeIds = new Set<string>();
+  const allNodeIds = new Set<string>()
   enrichedPaths.forEach((ep) => {
-    ep.nodeDetails.forEach((node) => allNodeIds.add(node.id));
-  });
+    ep.nodeDetails.forEach((node) => allNodeIds.add(node.id))
+  })
 
-  const allNodes = enrichedPaths.flatMap((ep) => ep.nodeDetails);
-  const uniqueNodes = Array.from(
-    new Map(allNodes.map((node) => [node.id, node])).values(),
-  );
+  const allNodes = enrichedPaths.flatMap((ep) => ep.nodeDetails)
+  const uniqueNodes = Array.from(new Map(allNodes.map((node) => [node.id, node])).values())
 
-  return generateUnifiedCypherQuery(enrichedPaths, uniqueNodes);
+  return generateUnifiedCypherQuery(enrichedPaths, uniqueNodes)
 }

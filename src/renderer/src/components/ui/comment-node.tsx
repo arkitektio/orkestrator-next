@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 
 import type { TCommentText } from 'platejs';
 import type { PlateLeafProps } from 'platejs/react';
@@ -8,8 +7,8 @@ import type { PlateLeafProps } from 'platejs/react';
 import { getCommentCount } from '@platejs/comment';
 import { PlateLeaf, useEditorPlugin, usePluginOption } from 'platejs/react';
 
-import { cn } from '@/lib/utils';
 import { commentPlugin } from '@/components/editor/plugins/comment-kit';
+import { cn } from '@/lib/utils';
 
 export function CommentLeaf(props: PlateLeafProps<TCommentText>) {
   const { children, leaf } = props;
@@ -31,8 +30,8 @@ export function CommentLeaf(props: PlateLeafProps<TCommentText>) {
         (isHover || isActive) && 'border-b-highlight bg-highlight/25',
         isOverlapping && 'border-b-2 border-b-highlight/[.7] bg-highlight/25',
         (isHover || isActive) &&
-          isOverlapping &&
-          'border-b-highlight bg-highlight/45'
+        isOverlapping &&
+        'border-b-highlight bg-highlight/45'
       )}
       attributes={{
         ...props.attributes,

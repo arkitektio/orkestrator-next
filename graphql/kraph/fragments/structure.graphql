@@ -4,9 +4,7 @@ fragment Structure on Structure {
   object
   identifier
   category {
-    id
-    identifier
-    description
+    ...StructureCategory
   }
   metrics {
     id
@@ -19,22 +17,17 @@ fragment Structure on Structure {
 
 fragment ListStructure on Structure {
   id
+  label
+  object
+  identifier
   category {
     identifier
     id
+    label
+    ageName
   }
 }
 
-fragment PathStructure on Structure {
-  ...ListStructure
-  category {
-    identifier
-    store {
-      presignedUrl
-    }
-  }
-  object
-}
 
 fragment InformedStructure on Structure {
   ...BaseNode
@@ -53,8 +46,5 @@ fragment InformedStructure on Structure {
       label
     }
     value
-    createdBy
-    createdThrough
-    createdApp
   }
 }

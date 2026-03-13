@@ -78,31 +78,31 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
 
         <div className="flex h-7">
           <div className="flex-1 flex items-center gap-2">
-          <LokUser.DetailLink object={comment?.user?.id}>
-            <span className="font-light text-sm hover:underline">
-              {comment?.user?.username}
-            </span>
-          </LokUser.DetailLink>
-          {comment?.createdAt && (
-            <Timestamp
-              date={comment?.createdAt}
-              relative
-              className="text-xs text-muted-foreground my-auto ml-2"
-            />
-          )}
+            <LokUser.DetailLink object={comment?.user?.id}>
+              <span className="font-light text-sm hover:underline">
+                {comment?.user?.username}
+              </span>
+            </LokUser.DetailLink>
+            {comment?.createdAt && (
+              <Timestamp
+                date={comment?.createdAt}
+                relative
+                className="text-xs text-muted-foreground my-auto ml-2"
+              />
+            )}
           </div>
 
-        <div className="flex items-center gap-2 group-hover:block hidden">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowReply(!showReply)}
-            className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Reply className="h-3 w-3 mr-1" />
-            Reply
-          </Button>
-        </div>
+          <div className="flex items-center gap-2 group-hover:block hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReply(!showReply)}
+              className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Reply className="h-3 w-3 mr-1" />
+              Reply
+            </Button>
+          </div>
         </div>
 
 
@@ -159,7 +159,7 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
               <X className="h-4 w-4" />
             </Button>
             <div className="flex-1">
-                <CommentEdit parent={comment?.id} />
+              <CommentEdit parent={comment?.id} />
             </div>
           </div>
         )}

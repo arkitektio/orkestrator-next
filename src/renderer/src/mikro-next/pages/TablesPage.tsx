@@ -1,5 +1,4 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { MikroTable } from "@/linkers";
 import React from "react";
 import TableList from "../components/lists/TableList";

@@ -1,0 +1,25 @@
+fragment NaturalEventCategory on NaturalEventCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  label
+  ageName
+  description
+  inputs {
+    ...EventRole
+  }
+  outputs {
+    ...EventRole
+  }
+}
+
+fragment ListNaturalEventCategory on NaturalEventCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  label
+  inputs {
+    ...EventRole
+  }
+  outputs {
+    ...EventRole
+  }
+}

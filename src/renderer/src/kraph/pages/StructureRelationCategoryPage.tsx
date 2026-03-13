@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -7,18 +7,15 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphGraphQuery,
   KraphStructureRelationCategory
 } from "@/linkers";
 import {
   useGetStructureRelationCategoryQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import CreateStructureRelationGraphQueryForm from "../forms/CreateStructureRelationGraphQueryForm";
 import UpdateStructureRelationCategoryForm from "../forms/UpdateStructureRelationCategoryForm";
 
-export default asDetailQueryRoute(
+const Page = asDetailQueryRoute(
   useGetStructureRelationCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -58,14 +55,7 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateStructureRelationGraphQueryForm
-                category={data.structureRelationCategory}
-              />
-            </FormDialog>
+
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}
@@ -87,10 +77,10 @@ export default asDetailQueryRoute(
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.structureRelationCategory?.store?.presignedUrl && (
+            {data.structureRelationCategory?.image?.presignedUrl && (
               <Image
                 src={resolve(
-                  data.structureRelationCategory?.store.presignedUrl,
+                  data.structureRelationCategory?.image.presignedUrl,
                 )}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
@@ -100,33 +90,9 @@ export default asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        <div className="flex flex-col p-6 h-full">
-          {data.structureRelationCategory.bestQuery ? (
-            <>
-              <KraphGraphQuery.ObjectButton
-                object={data.structureRelationCategory.bestQuery.id}
-              />
-              <SelectiveGraphQueryRenderer
-                graphQuery={data.structureRelationCategory.bestQuery}
-              />
-            </>
-          ) : (
-            <div className="h-full w-full flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Graph Query yet for this category
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateStructureRelationGraphQueryForm
-                  category={data.structureRelationCategory}
-                />
-              </FormDialog>
-            </div>
-          )}
-        </div>
       </KraphStructureRelationCategory.ModelPage>
     );
   },
 );
+
+export default Page;

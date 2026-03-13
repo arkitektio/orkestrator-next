@@ -1,52 +1,26 @@
-query GetGraphQuery($id: ID!) {
-  graphQuery(id: $id) {
+query GetGraphTableQuery($id: ID!) {
+  graphTableQuery(id: $id) {
     ...GraphQuery
   }
 }
 
-query RenderGraphQuery(
-  $id: ID!
-  $filters: GraphQueryFilters
-  $pagination: GraphQueryPagination
-  $order: GraphQueryOrder
-) {
-  renderGraphQuery(
-    id: $id
-    filters: $filters
-    pagination: $pagination
-    order: $order
-  ) {
-    ...Pairs
-    ...Path
-    ...Table
-    ...NodeList
-  }
-}
 
-query SearchGraphQueries($search: String, $values: [ID!]) {
-  options: graphQueries(
+
+query SearchGraphTableQueries($search: String, $values: [ID!]) {
+  options: graphTableQueries(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
     value: id
-    label: name
+    label: label
   }
 }
 
-query ListGraphQueries(
-  $filters: GraphQueryFilter
+query ListGraphTableQueries(
+  $filters: GraphTableQueryFilter
   $pagination: OffsetPaginationInput
 ) {
-  graphQueries(filters: $filters, pagination: $pagination) {
-    ...ListGraphQuery
-  }
-}
-
-query ListPrerenderedGraphQueries(
-  $filters: GraphQueryFilter
-  $pagination: OffsetPaginationInput
-) {
-  graphQueries(filters: $filters, pagination: $pagination) {
-    ...GraphQuery
+  graphTableQueries(filters: $filters, pagination: $pagination) {
+    ...ListGraphTableQuery
   }
 }

@@ -26,8 +26,8 @@ import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
-import React from "react";
 import { useUpdateNodeInternals } from "@xyflow/react";
+import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { useEditRiver } from "../context";
 
@@ -233,8 +233,8 @@ export const BufferCount = ({ data, id }: ShapeProps) => {
 };
 
 export const ToList = ({ data }: ShapeProps) => {
-  let firstItem = data?.ins?.at(0)?.at(0);
-  let outItem = data?.outs?.at(0)?.at(0);
+  const firstItem = data?.ins?.at(0)?.at(0);
+  const outItem = data?.outs?.at(0)?.at(0);
   return (
     <>
       <Card className="rounded-md">

@@ -1,7 +1,3 @@
-import {
-  ColorMap
-} from "@/mikro-next/api/graphql";
-import c from "colormap";
 import { NestedArray, TypedArray } from "zarr";
 import { ArraySelection, Slice } from "zarr/types/core/types";
 import { DataType } from "zarrita";

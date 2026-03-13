@@ -1,20 +1,13 @@
 "use client";
 
 import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
+  ChartConfig
 } from "@/components/ui/chart";
-import { useGetNodeQuery } from "@/kraph/api/graphql";
 import {
-  ScatterPlotFragment,
-  TableFragment,
-  useDeleteScatterPlotMutation,
+  ScatterPlotFragment
 } from "@/kraph/api/graphql";
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
-import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts";
-import { calculateColumns, calculateRows } from "../../renderers/utils";
 import { MiniWidget } from "../MiniWidget";
 
 const chartConfig = {
@@ -54,7 +47,7 @@ export const ScatterPlotTooltip: React.FC<
 
   return (
     <div className="grid min-w-[10rem] gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
-      <div className="font-medium">{scatterPlot.name}</div>
+      <div className="font-medium">{scatterPlot.label}</div>
       <div className="grid gap-1">
         <div className="text-muted-foreground">{scatterPlot.xColumn}</div>
         <div className="font-mono font-medium">{xVal ?? "—"}</div>

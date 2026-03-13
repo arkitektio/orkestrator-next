@@ -10,17 +10,16 @@ import { MikroHistory, RekuestAssignation } from "@/linkers";
 import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
-import { MateFinder } from "../../../mates/types";
 import { HistoryKind, ProvenanceEntry } from "../../api/graphql";
 
 interface HistoryCardProps {
   history: ProvenanceEntry;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ history, mates }: HistoryCardProps) => {
+const TheCard = ({ history }: HistoryCardProps) => {
   return (
-    <MikroHistory.Smart object={history?.id} mates={mates} key={history.id}>
+    <MikroHistory.Smart object={history?.id} key={history.id}>
       <Card key={history.id}>
         <CardHeader className="flex flex-row gap-1">
           <div className="my-auto">

@@ -1,29 +1,25 @@
+import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
+import { DialogButton } from "@/components/ui/dialogbutton";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphEntityCategory } from "@/linkers";
-import { Plus } from "lucide-react";
+import { Plus, Settings2 } from "lucide-react";
+import { useNavigate as useNavigateRouter } from "react-router-dom";
 import {
   EntityNodesDocument,
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
-import GraphQueryList from "../components/lists/GraphQueryList";
-import { EntityList } from "../components/renderers/node_list/EntityList";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import { EntityList } from "../components/renderers/lists/EntityList";
 import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
-import { DialogButton } from "@/components/ui/dialogbutton";
-import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
-import { Settings2 } from "lucide-react";
-import { useNavigate as useNavigateRouter } from "react-router-dom";
 
-export const Page =  asDetailQueryRoute(
+export const Page = asDetailQueryRoute(
   useGetEntityCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphUpload();
@@ -81,9 +77,7 @@ export const Page =  asDetailQueryRoute(
               Comments: (
                 <KraphEntityCategory.Komments object={data.entityCategory.id} />
               ),
-              Queries: <>
-                <GraphQueryList filters={{ relevantFor: data.entityCategory.id }} />
-              </>
+
             }}
           />
         }
@@ -105,12 +99,7 @@ export const Page =  asDetailQueryRoute(
             >
               {data.entityCategory.pinned ? "Unpin" : "Pin"}
             </Button>
-            <FormDialog
-              trigger={<Button variant="outline">Create</Button>}
-              onSubmit={() => refetch()}
-            >
-              <CreateGraphQueryForm category={data.entityCategory} />
-            </FormDialog>
+
             <DialogButton
               variant="outline"
               name="editentitycategory"
@@ -155,9 +144,9 @@ export const Page =  asDetailQueryRoute(
               </p>
             </div>
             <div className="w-full h-full flex-row relative">
-              {data.entityCategory?.store?.presignedUrl && (
+              {data.entityCategory?.image?.presignedUrl && (
                 <img
-                  src={resolve(data.entityCategory?.store.presignedUrl)}
+                  src={resolve(data.entityCategory?.image.presignedUrl)}
                   style={{ filter: "brightness(0.7)" }}
                   className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
                 />

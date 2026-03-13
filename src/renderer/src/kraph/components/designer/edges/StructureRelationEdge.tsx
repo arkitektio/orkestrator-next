@@ -10,7 +10,6 @@ import {
 } from "@xyflow/react";
 import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { useIsEdgePossible } from "../OntologyGraphProvider";
 
 export type GetSpecialPathParams = {
   sourceX: number;

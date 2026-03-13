@@ -17,10 +17,10 @@ export const rekuestNodeToMapNode = (
   node: GraphNodeNodeFragment,
   position: { x: number; y: number },
 ): FlowNode<RekuestMapActionNodeFragment> => {
-  let nodeId = "ark-" + uuidv4();
+  const nodeId = "ark-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<RekuestMapActionNodeFragment> = {
+  const node_: FlowNode<RekuestMapActionNodeFragment> = {
     id: nodeId,
     type: "RekuestMapActionNode",
     dragHandle: ".custom-drag-handle",
@@ -68,10 +68,10 @@ export const rekuestNodeToFilterNode = (
   node: GraphNodeActionFragment,
   position: { x: number; y: number },
 ): FlowNode<RekuesFilterActionNodeFragment> => {
-  let nodeId = "arkfilter-" + uuidv4();
+  const nodeId = "arkfilter-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<RekuesFilterActionNodeFragment> = {
+  const node_: FlowNode<RekuesFilterActionNodeFragment> = {
     id: nodeId,
     type: "RekuestFilterActionNode",
     dragHandle: ".custom-drag-handle",

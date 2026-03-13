@@ -1,15 +1,15 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestShortcut } from "@/linkers";
-import { MateFinder } from "@/mates/types";
+
 import { ListShortcutFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListShortcutFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestShortcut.Smart object={item?.id}>
       <Card className={cn("aspect-square flex flex-col")}>

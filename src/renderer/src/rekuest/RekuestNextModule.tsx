@@ -40,8 +40,9 @@ import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage
  */
 const Module: React.FC = () => {
   return (
+      <ModuleLayout pane={<Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}><Standardpane /></Guard.Rekuest>}>
+
     <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
-      <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="home" element={<Home />} />
@@ -75,8 +76,9 @@ const Module: React.FC = () => {
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
           <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />
         </Routes>
+
+      </Guard.Rekuest>
       </ModuleLayout>
-    </Guard.Rekuest>
   );
 };
 

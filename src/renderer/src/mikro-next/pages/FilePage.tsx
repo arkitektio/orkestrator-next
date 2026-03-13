@@ -1,16 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { DownloadButton } from "@/components/ui/download-button";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
-import { DownloadIcon, FileIcon, FolderIcon, ImageIcon, UserIcon } from "lucide-react";
+import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
   const resolve = useResolve();

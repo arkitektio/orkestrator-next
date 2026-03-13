@@ -1,6 +1,5 @@
-import { PageLayout } from "@/components/layout/PageLayout";
-import ShortcutList from "../components/lists/ShortcutList";
 import { RekuestShortcut } from "@/linkers";
+import ShortcutList from "../components/lists/ShortcutList";
 
 const Page = () => {
   return (

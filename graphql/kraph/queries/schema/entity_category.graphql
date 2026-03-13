@@ -1,0 +1,50 @@
+query GetEntityCategory($id: ID!) {
+  entityCategory(id: $id) {
+    ...EntityCategory
+  }
+}
+
+query SearchEntityCategory($search: String, $values: [ID!], $graph: ID) {
+  options: entityCategories(
+    filters: { search: $search, ids: $values, graph: {id: $graph}}
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+
+  }
+}
+
+query ListEntityCategory(
+  $filters: EntityCategoryFilter
+  $pagination: OffsetPaginationInput
+) {
+  entityCategories(filters: $filters, pagination: $pagination) {
+    ...ListEntityCategory
+  }
+}
+
+query EntityNodes(
+  $category: ID!
+  $filters: EntityFilter
+  $pagination: EntityPaginationInput
+  $ordering: [EntityOrder!]
+) {
+  entities(
+    entityCategoryId: $category
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    __typename
+    id
+    label
+    properties
+  }
+}
+
+query EntityCategoryStats($id: ID!) {
+  entityCategoryStats(filters: { id: $id }) {
+    count
+  }
+}

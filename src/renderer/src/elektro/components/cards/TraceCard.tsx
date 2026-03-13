@@ -1,17 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ElektroTrace } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
 import { ListTraceFragment } from "../../api/graphql";
 interface Props {
   item: ListTraceFragment;
-  mates?: MateFinder[];
+
   className?: string;
 }
 
-const TheCard = ({ item, mates, className }: Props) => {
+const TheCard = ({ item, className }: Props) => {
   return (
-    <ElektroTrace.Smart object={item?.id} mates={mates}>
+    <ElektroTrace.Smart object={item?.id} >
       <Card
         className={cn(
           "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",

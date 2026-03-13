@@ -66,20 +66,20 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
         </CardTitle>
         <CardDescription></CardDescription>
         {expanded && <div className="flex-groww-full h-full bg-green-200">{latestEvent && ins && latestEvent.kind === RunEventKind.Next && (
-              <ReturnsContainer
-                ports={outs.at(0) || []}
-                values={
-                  outs.at(0)?.reduce(
-                    (acc, curr, index) => {
-                      acc[curr.key] = latestEvent.value[index];
-                      return acc;
-                    },
-                    {} as { [key: string]: any },
-                  ) || {}
-                }
-                registry={registry}
-              />
-            )}</div>}
+          <ReturnsContainer
+            ports={outs.at(0) || []}
+            values={
+              outs.at(0)?.reduce(
+                (acc, curr, index) => {
+                  acc[curr.key] = latestEvent.value[index];
+                  return acc;
+                },
+                {} as { [key: string]: any },
+              ) || {}
+            }
+            registry={registry}
+          />
+        )}</div>}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

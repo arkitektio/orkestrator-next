@@ -1,5 +1,5 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
-import { useDetailBlockQuery, useDetailSimulationQuery } from "../api/graphql";
+import { useDetailBlockQuery } from "../api/graphql";
 
 export const BlockDisplay = (props: DisplayWidgetProps) => {
   const { data } = useDetailBlockQuery({

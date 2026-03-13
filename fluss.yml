@@ -17,3 +17,7 @@ generates:
   src/renderer/src/reaktion/graphql.schema.json:
     plugins:
       - "introspection"
+
+  graphql/schemas/fluss.graphql:
+    plugins:
+      - schema-ast

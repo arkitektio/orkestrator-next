@@ -16,7 +16,7 @@ export type NodeWhereClause = {
 
 export type ReturnColumn = {
   nodeId: string; // The node this column is for
-  property: string; // The property to return (e.g., "label", "id", "metricKind")
+  property: string; // The property to return (e.g., "label", "id", "ValueKind")
   alias?: string; // Optional alias for the column
   cypherExpression?: string; // Optional custom Cypher expression (e.g., "count(n)")
   idfor?: string[]; // Array of node IDs this column serves as an identifier for

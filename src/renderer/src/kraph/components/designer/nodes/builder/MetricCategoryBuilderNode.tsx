@@ -1,7 +1,7 @@
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
-import { PathNodePresentation } from "../../components/PathNodePresentation";
 import { Handles } from "../../components/Handles";
+import { PathNodePresentation } from "../../components/PathNodePresentation";
 import { MetricNode } from "../../types";
 
 export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
@@ -20,7 +20,7 @@ export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
         tags={data.tags}
       >
         <div className="font-semibold">{data.label}</div>
-        <div className="text-sm text-muted-foreground">{data.metricKind}</div>
+        <div className="text-sm text-muted-foreground">{data.ValueKind}</div>
       </PathNodePresentation>
     </>
   );

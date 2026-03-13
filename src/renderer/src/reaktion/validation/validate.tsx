@@ -7,8 +7,8 @@ import { SolvedError, ValidationError, ValidationResult } from "./types";
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
 ): Partial<ValidationResult> => {
-  let validatedEdges: FlowEdge[] = [];
-  let solvedErrors: SolvedError[] = [];
+  const validatedEdges: FlowEdge[] = [];
+  const solvedErrors: SolvedError[] = [];
 
   for (const edge of previous.edges) {
     if (edge.source == edge.target) {
@@ -40,11 +40,11 @@ const handleToStream = (sourceHandle: string | null | undefined): number => {
 const validateMatchingPorts = (
   previous: ValidationResult,
 ): Partial<ValidationResult> => {
-  let validatedEdges: FlowEdge[] = [];
-  let solvedErrors: SolvedError[] = previous.solvedErrors;
-  let remain: ValidationError[] = [];
+  const validatedEdges: FlowEdge[] = [];
+  const solvedErrors: SolvedError[] = previous.solvedErrors;
+  const remain: ValidationError[] = [];
 
-  for (let edge of previous.edges) {
+  for (const edge of previous.edges) {
     const sourceNode = previous.nodes.find((n) => n.id == edge.source);
     const targetNode = previous.nodes.find((n) => n.id == edge.target);
 
@@ -137,9 +137,9 @@ const validateMatchingPorts = (
 const validateNoUnconnectedNodes = (
   previous: ValidationResult,
 ): Partial<ValidationResult> => {
-  let remain: ValidationError[] = previous.remainingErrors;
+  const remain: ValidationError[] = previous.remainingErrors;
 
-  for (let node of previous.nodes) {
+  for (const node of previous.nodes) {
     const targetEdge = previous.edges.find((n) => n.target == node.id);
     const sourceEdge = previous.edges.find((n) => n.source == node.id);
 
@@ -162,7 +162,7 @@ const validateNoUnconnectedNodes = (
 };
 
 function validateGraphIsConnected(previous: ValidationResult) {
-  let remain: ValidationError[] = previous.remainingErrors;
+  const remain: ValidationError[] = previous.remainingErrors;
   const nodes = previous.nodes;
   const edges = previous.edges;
 
@@ -211,7 +211,7 @@ function validateGraphIsConnected(previous: ValidationResult) {
 }
 
 function atLeastOneNode(previous: ValidationResult) {
-  let remain: ValidationError[] = previous.remainingErrors;
+  const remain: ValidationError[] = previous.remainingErrors;
   const nodes = previous.nodes;
   // If the number of visited nodes is the same as the number of nodes, the graph is connected
   if (!nodes.find((n) => n.data.kind == GraphNodeKind.Args)) {
@@ -317,9 +317,9 @@ export const validateNodeConstants = (
     return state;
   } catch (e) {
     console.log("Validation error", e, node.data.constantsMap);
-    let validationError = e as ZodError;
+    const validationError = e as ZodError;
 
-    let newRemainingErrors: ValidationError[] = [];
+    const newRemainingErrors: ValidationError[] = [];
 
     validationError.issues.forEach((element) => {
       const path = element.path;
@@ -354,14 +354,14 @@ export const validateState = (
     options = { validateNodeDefaults: true, validateNoUnconnectedNodes: true };
 
   console.log("Validation initial", initial);
-  for (let validator of validators) {
-    let validated = validator(initial);
+  for (const validator of validators) {
+    const validated = validator(initial);
     initial = { ...initial, ...validated };
   }
 
   if (options.validateNodeDefaults) {
-    for (let node of initial.nodes) {
-      let validated = validateNodeConstants(initial, node);
+    for (const node of initial.nodes) {
+      const validated = validateNodeConstants(initial, node);
       initial = { ...initial, ...validated };
     }
   }

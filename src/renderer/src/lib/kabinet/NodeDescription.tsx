@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 function replaceVariablesWithNames(template: string) {
   // This regular expression captures Handlebars expressions {{ variable }}
-  let regex = /\{\{([^\{\}]+)\}\}/g;
+  const regex = /\{\{([^\{\}]+)\}\}/g;
 
   return template.replace(regex, function (match, variableName) {
     // Remove any whitespace and return the variable name
@@ -12,7 +12,7 @@ function replaceVariablesWithNames(template: string) {
 }
 
 function replaceUndefinedValuesWithKeyName(obj: any) {
-  for (let key in obj) {
+  for (const key in obj) {
     if (obj[key] === undefined || obj[key] === null) {
       obj[key] = key;
     }

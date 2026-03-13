@@ -1,11 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
-import SimulationCard from "../components/cards/SimulationCard";
-import { NeuronVisualizer } from "../components/NeuronRenderer";
 import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
+import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export type IRepresentationScreenProps = {};
 

@@ -1,12 +1,11 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { RekuestStructure, RekuestToolbox } from "@/linkers";
+import { RekuestStructure } from "@/linkers";
 import {
-  ListInputStructureUsageFragmentDoc,
-  useGetStructureQuery,
+  useGetStructureQuery
 } from "@/rekuest/api/graphql";
-import OutputStructureUsageCard from "../components/cards/OutputStructureUsageCard";
 import InputStructureUsageCard from "../components/cards/InputStructureUsageCard";
+import OutputStructureUsageCard from "../components/cards/OutputStructureUsageCard";
 
 export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   return (

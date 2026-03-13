@@ -1,8 +1,8 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
-import { DroppableNavLink } from "@/components/ui/link";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { KabinetBackend } from "@/linkers";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { Popover } from "@radix-ui/react-popover";
@@ -16,7 +16,6 @@ import {
 } from "../api/graphql";
 import DefinitionCard from "../components/cards/DefinitionCard";
 import { IconForBackendKind } from "../components/IconForBackendKind";
-import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 
 export const NavigationPane = () => {
   const { data } = useListBackendsQuery();
@@ -55,7 +54,7 @@ export const NavigationPane = () => {
           <Popover>
             <PopoverTrigger className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary items-center uppercase">
 
-            Backends
+              Backends
               <HelpCircle className="h-3 w-3 cursor-pointer" />
             </PopoverTrigger>
             <PopoverContent>

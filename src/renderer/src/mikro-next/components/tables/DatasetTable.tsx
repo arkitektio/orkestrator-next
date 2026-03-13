@@ -130,7 +130,7 @@ const initialVariables: ListEntitiesQueryVariables = {
 };
 
 const calculateColumns = () => {
-  let calculated_columns = columns;
+  const calculated_columns = columns;
 
   return calculated_columns;
 };

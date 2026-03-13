@@ -1,35 +1,31 @@
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { DialogButton } from "@/components/ui/dialogbutton";
+import { Progress } from "@/components/ui/progress";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
-import { MateFinder } from "@/mates/types";
+
+
 import {
   ListImplementationFragment,
   useDeleteImplementationMutation,
 } from "@/rekuest/api/graphql";
-import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { PlayCircle } from "lucide-react";
 
 interface Props {
   item: ListImplementationFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
-  const reserveMate = useReserveMate();
-  const [deleteImplementation, _] = useDeleteImplementationMutation({
+const TheCard = ({ item }: Props) => {
+    const [deleteImplementation, _] = useDeleteImplementationMutation({
     variables: {
       id: item.id,
     },
@@ -44,7 +40,7 @@ const TheCard = ({ item, mates }: Props) => {
   });
 
   return (
-    <RekuestImplementation.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestImplementation.Smart object={item?.id}>
       <Card className="group hover:shadow-md transition-shadow overflow-hidden">
         {progress && progress.progress > 0 && (
           <Progress value={progress.progress} className="h-1 rounded-none" />

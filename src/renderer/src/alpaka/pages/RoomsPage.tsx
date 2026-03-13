@@ -1,7 +1,6 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { AlpakaRoom, LokOrganization } from "@/linkers";
+import { AlpakaRoom } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import RoomList from "../components/lists/RoomList";

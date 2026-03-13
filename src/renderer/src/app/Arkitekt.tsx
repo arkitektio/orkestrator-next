@@ -7,7 +7,7 @@ import kraphResult from "@/kraph/api/fragments";
 import { buildArkitekt } from "@/lib/arkitekt";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { createGraphQLServiceBuilder } from "@/lib/arkitekt/builders/graphQlServiceBuidler";
-import { ServiceBuilderMap } from "@/lib/arkitekt/provider";
+import { ModuleRegistry, ServiceBuilderMap } from "@/lib/arkitekt/types";
 import { createLivekitClient } from "@/lib/livekit/client";
 import lokResult from "@/lok-next/api/fragments";
 import lovekitResult from "@/lovekit/api/fragments";
@@ -18,7 +18,7 @@ import rekuestResult from "@/rekuest/api/fragments";
 
 export const electronRedirect = async (
   url: string,
-  abortController: AbortController,
+  _abortController: AbortController,
 ) => {
   return await window.api.authenticate(url);
 };
@@ -29,13 +29,17 @@ export const serviceMap = {
     key: "mikro",
     service: "live.arkitekt.mikro",
     optional: true,
-    builder: createGraphQLServiceBuilder(mikroResult.possibleTypes),
+    wardKey: "mikro",
+    describe: true,
+    builder: createGraphQLServiceBuilder(mikroResult.possibleTypes, { describe: true }),
   },
   rekuest: {
     key: "rekuest",
     service: "live.arkitekt.rekuest",
     optional: true,
-    builder: createGraphQLServiceBuilder(rekuestResult.possibleTypes),
+    wardKey: "rekuest",
+    describe: true,
+    builder: createGraphQLServiceBuilder(rekuestResult.possibleTypes, { describe: true }),
   },
   lovekit: {
     key: "lovekit",
@@ -47,30 +51,35 @@ export const serviceMap = {
     key: "fluss",
     service: "live.arkitekt.fluss",
     optional: true,
+    wardKey: "fluss",
     builder: createGraphQLServiceBuilder(flussResult.possibleTypes),
   },
   kabinet: {
     key: "kabinet",
     service: "live.arkitekt.kabinet",
     optional: true,
+    wardKey: "kabinet",
     builder: createGraphQLServiceBuilder(kabinetResult.possibleTypes),
   },
   omero_ark: {
     key: "omero_ark",
     service: "live.arkitekt.omero_ark",
     optional: true,
+    wardKey: "omero_ark",
     builder: createGraphQLServiceBuilder(omeroArkResult.possibleTypes),
   },
   kraph: {
     key: "kraph",
     service: "live.arkitekt.kraph",
     optional: true,
+    wardKey: "kraph",
     builder: createGraphQLServiceBuilder(kraphResult.possibleTypes),
   },
   alpaka: {
     key: "alpaka",
     service: "live.arkitekt.alpaka",
     optional: true,
+    wardKey: "alpaka",
     builder: createGraphQLServiceBuilder(alpakaResult.possibleTypes),
   },
   dokuments: {
@@ -83,6 +92,7 @@ export const serviceMap = {
     key: "elektro",
     service: "live.arkitekt.elektro",
     optional: true,
+    wardKey: "elektro",
     builder: createGraphQLServiceBuilder(elektroResult.possibleTypes),
   },
   livekit: {
@@ -91,7 +101,7 @@ export const serviceMap = {
     optional: true,
     omitchallenge: true,
     forceinsecure: true,
-    builder:  ({ alias }) => {
+    builder: ({ alias }) => {
       return {
         client: createLivekitClient({
           url: aliasToHttpPath(alias, ""),
@@ -114,8 +124,71 @@ export const serviceMap = {
   },
 } as const satisfies ServiceBuilderMap;
 
+export const moduleRegistry = {
+  mikro: {
+    key: "mikro",
+    route: "/mikro",
+    label: "Mikro",
+    requirement: { serviceKey: "mikro" },
+  },
+  rekuest: {
+    key: "rekuest",
+    route: "/rekuest",
+    label: "Rekuest",
+    requirement: { serviceKey: "rekuest" },
+  },
+  fluss: {
+    key: "fluss",
+    route: "/fluss",
+    label: "Fluss",
+    requirement: { serviceKey: "fluss" },
+  },
+  kabinet: {
+    key: "kabinet",
+    route: "/kabinet",
+    label: "Kabinet",
+    requirement: { serviceKey: "kabinet" },
+  },
+  omero_ark: {
+    key: "omero_ark",
+    route: "/omero_ark",
+    label: "Omero Ark",
+    requirement: { serviceKey: "omero_ark" },
+  },
+  kraph: {
+    key: "kraph",
+    route: "/kraph",
+    label: "Kraph",
+    requirement: { serviceKey: "kraph" },
+  },
+  alpaka: {
+    key: "alpaka",
+    route: "/alpaka",
+    label: "Alpaka",
+    requirement: { serviceKey: "alpaka" },
+  },
+  elektro: {
+    key: "elektro",
+    route: "/elektro",
+    label: "Elektro",
+    requirement: { serviceKey: "elektro" },
+  },
+  lovekit: {
+    key: "lovekit",
+    route: "/lovekit",
+    label: "Lovekit",
+    requirement: { serviceKey: "lovekit" },
+  },
+  dokuments: {
+    key: "dokuments",
+    route: "/dokuments",
+    label: "Dokuments",
+    requirement: { serviceKey: "dokuments" },
+  },
+} as const satisfies ModuleRegistry;
+
 // Check if running in tauri
-export const Arkitekt = buildArkitekt({ manifest, serviceBuilderMap: serviceMap, selfServiceBuilder: createGraphQLServiceBuilder(lokResult.possibleTypes) });
+export const Arkitekt = buildArkitekt({ manifest, serviceBuilderMap: serviceMap, moduleRegistry, selfServiceBuilder: createGraphQLServiceBuilder(lokResult.possibleTypes) });
 
 export const Guard = {
   Lok: Arkitekt.Guard,
@@ -146,7 +219,7 @@ export const useRekuest = () => {
 };
 
 export const useLok = () => {
-  return Arkitekt.useService("lok").client;
+  return Arkitekt.useSelfService()?.client;
 };
 
 export const useFluss = () => {
@@ -161,7 +234,7 @@ export const useKraph = () => {
   return Arkitekt.useService("kraph").client;
 }
 
-export const useAlpaka = ()=> {
+export const useAlpaka = () => {
   return Arkitekt.useService("alpaka").client;
 };
 
@@ -178,7 +251,7 @@ export const useLivekit = () => {
 };
 
 export const useFake = () => {
-  return Arkitekt.useService("fake").client;
+  return Arkitekt.usePotentialService("mikro")?.client;
 }
 
 export const useDokuments = () => {

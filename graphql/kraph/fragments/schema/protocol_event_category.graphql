@@ -1,0 +1,35 @@
+fragment ProtocolEventCategory on ProtocolEventCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  label
+  ageName
+  label
+  description
+  image {
+    presignedUrl
+  }
+  inputs {
+    ...EventRole
+  }
+  outputs {
+    ...EventRole
+  }
+  propertyDefinitions {
+     ...PropertyDefinition
+  }
+}
+
+fragment ListProtocolEventCategory on ProtocolEventCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  label
+  inputs {
+    ...EventRole
+  }
+  outputs {
+    ...EventRole
+  }
+  propertyDefinitions {
+     ...PropertyDefinition
+  }
+}

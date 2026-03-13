@@ -1,8 +1,5 @@
 
-import { Assign } from "@/app/agent/message";
 import { useListAssignationsQuery } from "../api/graphql";
-import AssignationCard from "../components/cards/AssignationCard";
-import MinimalAssignationCard from "../components/cards/MinimalAssignationCard";
 import ListAssignationCard from "../components/cards/ListAssignationCard";
 
 export const RunsSidebar = (props: { object: string, identifier: str }) => {

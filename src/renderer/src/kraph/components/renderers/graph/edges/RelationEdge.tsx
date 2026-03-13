@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { KraphRelation } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -9,7 +10,6 @@ import {
 } from "@xyflow/react";
 import { RelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { KraphRelation } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -29,7 +29,7 @@ export const getSpecialPath = (
     } ${targetX} ${targetY}`;
 };
 
-export default ({
+const TEdge = ({
   id,
   data,
   source,
@@ -101,3 +101,6 @@ export default ({
     </>
   );
 };
+
+
+export default TEdge;

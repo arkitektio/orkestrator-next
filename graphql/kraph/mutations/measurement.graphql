@@ -1,4 +1,4 @@
-mutation CreateMeasurement($input: MeasurementInput!) {
+mutation CreateMeasurement($input: CreateMeasurementInput!) {
   createMeasurement(input: $input) {
     ...Measurement
   }

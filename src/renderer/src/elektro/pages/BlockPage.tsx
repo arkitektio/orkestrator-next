@@ -1,8 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Card } from "@/components/ui/card";
 import { ElektroAnalogSignal, ElektroBlock } from "@/linkers";
 import { useDetailBlockQuery } from "../api/graphql";
-import { Card } from "@/components/ui/card";
 
 export type IRepresentationScreenProps = Record<string, never>;
 

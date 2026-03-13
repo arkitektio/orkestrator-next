@@ -1,9 +1,9 @@
 import { notEmpty } from "@/lib/utils";
+import { ApolloClient, gql, NormalizedCache } from "@apollo/client";
 import ShadowRealm from "shadowrealm-api";
 import { z } from "zod"; // Add new import
 import { PortKind } from "../api/graphql";
 import { LabellablePort, PortablePort } from "./types";
-import { ApolloClient, gql, NormalizedCache } from "@apollo/client";
 
 export const pathToName = (path: string[]): string => {
   return path.join(".");
@@ -82,7 +82,7 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.coerce.number({ message: "Please enter a valid integer" });
       break;
     case PortKind.MemoryStructure:
-      baseType = z.string({ message: "Please enter a valid memory structure" });
+      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
       break;
     case PortKind.Float:
       baseType = z.coerce
@@ -92,21 +92,17 @@ export const portToZod = (port: LabellablePort): any => {
         });
       break;
     case PortKind.Structure:
-      baseType = z.string({ message: "Please enter a valid structure" });
+      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
       break;
     case PortKind.Union:
-      let variants = port.children?.filter(notEmpty);
+      const variants = port.children?.filter(notEmpty);
       if (!variants) {
         throw new Error("Union port is not defined");
         break;
       }
-      baseType = z.discriminatedUnion(
-        "__use",
+      baseType = z.union(
         variants.map((v, index) =>
-          z.object({
-            __value: portToZod(v),
-            __use: z.literal(index.toString()),
-          }),
+          portToZod(v)
         ) || [],
       );
       break;
@@ -114,7 +110,7 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.boolean({ message: "Please enter a valid boolean" });
       break;
     case PortKind.Dict:
-      let dictChild = port.children?.at(0);
+      const dictChild = port.children?.at(0);
       if (!dictChild) {
         throw new Error("Dict port is not defined");
         break;
@@ -124,7 +120,7 @@ export const portToZod = (port: LabellablePort): any => {
       );
       break;
     case PortKind.List:
-      let child = port.children?.at(0);
+      const child = port.children?.at(0);
       if (!child) {
         throw new Error("List port is not defined");
         break;
@@ -184,25 +180,34 @@ export type ValidatorFunction = (
   x: { [key: string]: any },
 ) => string | undefined;
 
-let ream = new ShadowRealm();
+const ream = new ShadowRealm();
 
-export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
-  let schema = z.object(
-    ports.reduce(
+export const buildZodSchema = (ports: PortablePort[], path: string[] = [], __identifier?: string) => {
+
+  let portSchemas =  ports.reduce(
       (prev, curr) => {
         prev[curr.key] = portToZod(curr);
         return prev;
       },
       {} as { [key: string]: any },
-    ),
+    )
+
+  if (__identifier) {
+    portSchemas = {
+      ...portSchemas,
+      __identifier: z.literal(__identifier),
+    }
+  }
+  const schema = z.object(
+    portSchemas
   );
 
   ports.forEach((port) => {
     // do somethin
     if (port.validators) {
-      for (let validator of port.validators) {
+      for (const validator of port.validators) {
         const wrappedValidator = (v: any, values: any) => {
-          let wrappedValidatorFunc = `(v, values) => {
+          const wrappedValidatorFunc = `(v, values) => {
                 const func = ${validator.function};
 
                 let json_values = JSON.parse(values);
@@ -210,15 +215,15 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
                 return func(v, ...json_values);
             }`;
 
-          let func = ream.evaluate(wrappedValidatorFunc) as (
+          const func = ream.evaluate(wrappedValidatorFunc) as (
             v: any,
             ...value: any
           ) => boolean;
 
-          let params = validator.dependencies?.map((dep) => values[dep]);
+          const params = validator.dependencies?.map((dep) => values[dep]);
           if (params?.every((predicate) => predicate != undefined)) {
-            let serialized_values = JSON.stringify(params);
-            let x = func(v, serialized_values);
+            const serialized_values = JSON.stringify(params);
+            const x = func(v, serialized_values);
             console.log(x);
             return x;
           } else {
@@ -304,7 +309,7 @@ export const recursiveSet = (data: any, port: PortablePort): any => {
   if (!port) throw new Error("Port is not defined");
 
   if (port.kind == PortKind.List) {
-    let childPort = port.children?.at(0);
+    const childPort = port.children?.at(0);
     if (!childPort) throw new Error("List port is not defined");
     return data.map((item: any) => ({
       __value: recursiveSet(item, childPort),
@@ -312,7 +317,7 @@ export const recursiveSet = (data: any, port: PortablePort): any => {
   }
 
   if (port.kind == PortKind.Dict) {
-    let childPort = port.children?.at(0);
+    const childPort = port.children?.at(0);
     if (!childPort) throw new Error("Dict port is not defined");
 
     return Object.entries(data).map(([key, value]) => ({

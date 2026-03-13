@@ -1,11 +1,10 @@
 import { useHomePageStatsQuery } from "@/mikro-next/api/graphql";
 import {
-  Images,
-  TrendingUp,
+  Activity,
   Calendar,
-  Activity
+  Images,
+  TrendingUp
 } from "lucide-react";
-import { UploadProgress } from "@/components/upload/UploadProgress";
 
 export const StatisticsSidebar = () => {
   const { data, error, loading } = useHomePageStatsQuery();

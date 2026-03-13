@@ -31,7 +31,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <CollectionCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <CollectionCard key={index} item={ex} />}
     </ListRender>
   );
 };

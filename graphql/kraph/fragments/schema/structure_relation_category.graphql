@@ -1,0 +1,44 @@
+fragment StructureRelationCategory on StructureRelationCategory {
+  ...BaseEdgeCategory
+  ...BaseCategory
+  sourceDescriptor {
+    ...StructureDescriptor
+  }
+  targetDescriptor {
+    ...StructureDescriptor
+  }
+   propertyDefinitions {
+     ...PropertyDefinition
+   }
+  ageName
+  label
+  description
+  image {
+    presignedUrl
+  }
+  pinned
+}
+
+fragment ListStructureRelationCategory on StructureRelationCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+  sourceDescriptor {
+    ...StructureDescriptor
+  }
+  targetDescriptor {
+    ...StructureDescriptor
+  }
+  propertyDefinitions {
+     ...PropertyDefinition
+   }
+  label
+}
+
+fragment ListStructureRelationCategoryWithGraph on StructureRelationCategory {
+  ...ListStructureRelationCategory
+  graph {
+    id
+    name
+    description
+  }
+}

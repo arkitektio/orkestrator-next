@@ -1,18 +1,17 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroFluorophore, MikroMultiPositionView } from "@/linkers";
 import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
-import { MateFinder } from "../../../mates/types";
 import { WellPositionViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: WellPositionViewFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ view, mates }: Props) => {
+const TheCard = ({ view }: Props) => {
   return (
-    <MikroMultiPositionView.Smart object={view?.id} mates={mates}>
+    <MikroMultiPositionView.Smart object={view?.id} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>

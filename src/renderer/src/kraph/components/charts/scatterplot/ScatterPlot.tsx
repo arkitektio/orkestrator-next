@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   ChartConfig,
   ChartContainer,
@@ -7,15 +8,13 @@ import {
 } from "@/components/ui/chart";
 import {
   ScatterPlotFragment,
-  TableFragment,
-  useDeleteScatterPlotMutation,
+  useDeleteScatterPlotMutation
 } from "@/kraph/api/graphql";
 import * as React from "react";
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts";
 import { calculateColumns, calculateRows } from "../../renderers/utils";
-import { ScatterPlotTooltip } from "./ScatterPlotTooltip";
 import { MiniWidget } from "../MiniWidget";
-import { Button } from "@/components/ui/button";
+import { ScatterPlotTooltip } from "./ScatterPlotTooltip";
 
 const chartConfig = {
   visitors: {
@@ -31,8 +30,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default (props: {
-  table: TableFragment;
+const ScatterPlot = (props: {
   scatterPlot: ScatterPlotFragment;
   enableMultiselect?: boolean;
 }) => {
@@ -349,3 +347,6 @@ export default (props: {
     </div>
   );
 };
+
+
+export default ScatterPlot;

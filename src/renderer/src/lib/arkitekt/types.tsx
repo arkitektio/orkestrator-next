@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 
-import { ApolloClient } from "@apollo/client";
 import { FaktsEndpoint } from "./fakts/endpointSchema";
 import { ActiveFakts, Alias, Instance } from "./fakts/faktsSchema";
 import { Manifest } from "./fakts/manifestSchema";
+import { StoredArkitektSession } from "./fakts/sessionStorageSchema";
 import { TokenResponse } from "./fakts/tokenSchema";
+import type { Ward } from "@/rekuest/widgets/types";
 
 export type AvailableService = {
   key: string;
@@ -20,17 +22,17 @@ export type UnresolvedService = {
 export type Service<T = unknown> = {
   alias?: Alias;
   client: T;
+  clearCache?: () => Promise<void>;
+  type?: string;
+  ward?: Ward;
 };
 
-
-
-export type ServiceBuilder<T = unknown> = (options: {
+export type ServiceBuilder<T extends Service = Service> = (options: {
   manifest: Manifest;
   alias: Alias;
   fakts: ActiveFakts;
-  token: TokenResponse;
+  getToken: () => Promise<TokenResponse>;
 }) => T;
-
 
 export type ServiceDefinition<T extends Service = Service> = {
   builder: ServiceBuilder<T>;
@@ -39,18 +41,22 @@ export type ServiceDefinition<T extends Service = Service> = {
   omitchallenge?: boolean;
   forceinsecure?: boolean;
   optional: boolean;
+  timeout?: number;
+  wardKey?: string;
+  describe?: boolean;
   description?: string;
   name?: string;
-  logo?: () => React.ReactNode;
+  logo?: () => ReactNode;
 };
 
-export type ServiceBuilderMap<T extends Record<string, ServiceDefinition> = Record<string, ServiceDefinition>> = {
+export type ServiceBuilderMap<
+  T extends Record<string, ServiceDefinition> = Record<string, ServiceDefinition>,
+> = {
   [K in keyof T]: T[K];
 };
 
-
 export type InferedServiceMap<T extends ServiceBuilderMap> = {
-  [K in keyof T]: T[K] extends ServiceDefinition<infer R> ? R : never;
+  [K in keyof T]?: T[K] extends ServiceDefinition<infer R> ? R : never;
 };
 
 export type AliasReport = {
@@ -65,23 +71,71 @@ export type ReportRequest = {
   functional: boolean;
 };
 
-
-
 export type EnhancedManifest = Manifest & {
-  node_id: string;
+  node_id?: string;
 };
 
+export type ModuleRequirement = {
+  serviceKey: string;
+  optional?: boolean;
+};
 
+export type ModuleDefinition = {
+  key: string;
+  route: string;
+  label?: string;
+  description?: string;
+  requirement: ModuleRequirement;
+  hidden?: boolean;
+};
 
+export type ModuleRegistry = Record<string, ModuleDefinition>;
 
-// Context Types
+export type ServiceHealthStatus =
+  | "unconfigured"
+  | "configured"
+  | "checking"
+  | "ready"
+  | "invalid";
 
-export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap, S extends ServiceBuilder = ServiceBuilder> = {
+export type ModuleHealthStatus =
+  | "hidden"
+  | "configured"
+  | "checking"
+  | "ready"
+  | "invalid";
+
+export type ServiceRuntimeState = {
+  key: string;
+  configured: boolean;
+  definition: ServiceDefinition;
+  instance?: Instance;
+  alias?: Alias;
+  service?: Service;
+  status: ServiceHealthStatus;
+  errors: string[];
+  lastCheckedAt?: number;
+};
+
+export type ModuleRuntimeState = {
+  key: string;
+  definition: ModuleDefinition;
+  configured: boolean;
+  status: ModuleHealthStatus;
+  route: string;
+  errors: string[];
+  unmetRequirements: string[];
+};
+
+export type ConnectedContext<
+  T extends ServiceBuilderMap = ServiceBuilderMap,
+  S extends ServiceBuilder = ServiceBuilder,
+> = {
   fakts: ActiveFakts;
   manifest: EnhancedManifest;
   serviceMap: InferedServiceMap<T>;
-  aliasMap: { [K in keyof T]: Alias };
-  serviceInstanceMap: { [K in keyof T]: Instance };
+  aliasMap: { [K in keyof T]?: Alias };
+  serviceInstanceMap: { [key: string]: Instance };
   serviceBuilderMap: T;
   selfService: ReturnType<S>;
   token: TokenResponse;
@@ -91,22 +145,37 @@ export type ConnectedContext<T extends ServiceBuilderMap = ServiceBuilderMap, S 
 export type ConnectFunction = (options: {
   endpoint: FaktsEndpoint;
   controller: AbortController;
-}) => Promise<AppContext>;
+}) => Promise<void>;
 
 export type DisconnectFunction = () => Promise<void>;
 
-export type AppContext<T extends ServiceBuilderMap = ServiceBuilderMap, S extends ServiceBuilder = ServiceBuilder> = {
+export type AppContext<
+  T extends ServiceBuilderMap = ServiceBuilderMap,
+  S extends ServiceBuilder = ServiceBuilder,
+> = {
   manifest: EnhancedManifest;
-  connection?: ConnectedContext<T,S>;
+  connection?: ConnectedContext<T, S>;
   autoLoginError?: string;
+  connecting: boolean;
+  hasBootstrapped: boolean;
+  configurationIssues: string[];
+  serviceStates: Record<string, ServiceRuntimeState>;
+  moduleStates: Record<string, ModuleRuntimeState>;
+  storedSession: StoredArkitektSession | null;
 };
 
 export type AppFunctions = {
   connect: ConnectFunction;
   disconnect: DisconnectFunction;
   reconnect: () => Promise<void>;
-  connecting?: boolean;
   cancelConnection: () => void;
+  retryService: (serviceKey: string) => Promise<void>;
+  retryModule: (moduleKey: string) => Promise<void>;
+  clearServiceCache: (serviceKey: string) => Promise<void>;
+  clearAllServiceCaches: () => Promise<void>;
 };
 
-export type ArkitektContextType<T extends ServiceBuilderMap, S extends ServiceBuilder> = AppContext<T, S>;
+export type ArkitektContextType<
+  T extends ServiceBuilderMap = ServiceBuilderMap,
+  S extends ServiceBuilder = ServiceBuilder,
+> = AppContext<T, S> & AppFunctions;

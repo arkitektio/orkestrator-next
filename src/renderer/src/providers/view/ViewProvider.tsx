@@ -21,7 +21,7 @@ export const ViewProvider: React.FC<ViewProviderProps> = ({
 
   useEffect(() => {
     if (props.persistKey) {
-      let view = localStorage.getItem(props.persistKey);
+      const view = localStorage.getItem(props.persistKey);
       if (view) {
         setActiveView(JSON.parse(view));
       }

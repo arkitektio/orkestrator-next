@@ -8,7 +8,7 @@ import { PlateElement, useElement } from "@udecode/plate-common/react";
 import { useFocused, useSelected } from "slate-react";
 
 import { useMounted } from "@/hooks/use-mounted";
-import { useGetNodeQuery } from "@/kraph/api/graphql";
+import { useGetEntityQuery } from "@/kraph/api/graphql";
 import { useRoleValue } from "./ValueProvider";
 
 
@@ -17,7 +17,7 @@ export const ValueDisplay = (props: {
   value: string
 }) => {
 
-  const { data, error, loading } = useGetNodeQuery({
+  const { data, error, loading } = useGetEntityQuery({
     variables: {
       id: props.value,
     },
@@ -32,7 +32,7 @@ export const ValueDisplay = (props: {
   }
 
 
-  return <span>{data.node.label}</span>;
+  return <span>{data.entity.label}</span>;
 }
 
 export const RoleValueElement = withRef<

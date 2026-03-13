@@ -1,4 +1,6 @@
+import { Arkitekt } from "@/app/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
@@ -9,14 +11,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Arkitekt } from "@/app/Arkitekt";
 import { discover } from "@/lib/arkitekt/fakts/discover";
+import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { storeProbe } from "./storage";
-import { DiscoveryProbe } from "./types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 export const CustomEndpointSheet = () => {
   const connect = Arkitekt.useConnect();
@@ -36,14 +34,6 @@ export const CustomEndpointSheet = () => {
 
     discover({ url: data.url, timeout: 2000, controller })
       .then((endpoint) => {
-        const probe: DiscoveryProbe = {
-          name: endpoint.name || "Custom endpoint",
-          base_url: data.url,
-          description: endpoint.description || "Custom endpoint",
-          source: "stored",
-        };
-        storeProbe(probe);
-
         connect({
           endpoint,
           controller,
@@ -59,13 +49,13 @@ export const CustomEndpointSheet = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="secondary">Custom Endpoint</Button>
+        <Button variant="secondary">Connect to Custom Coordination Server</Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Connect to Custom Server</SheetTitle>
+          <SheetTitle>Connect to Custom Coordination Server</SheetTitle>
           <SheetDescription>
-            Enter the address of your server to connect.
+            Enter the address of your coordination server to connect.
           </SheetDescription>
         </SheetHeader>
         <div className="mt-6 space-y-4">
@@ -81,7 +71,7 @@ export const CustomEndpointSheet = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <StringField
                 name="url"
-                description="The local server URL (e.g., http://localhost:8000)"
+                description="The coordination server URL (for example https://go.arkitekt.live or http://localhost:8000)"
               />
               <Button className="w-full" type="submit" variant="secondary">
                 Connect

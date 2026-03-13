@@ -13,14 +13,8 @@ import {
   useUpdateRelationCategoryMutation
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
-export default (props: { relationCategory: RelationCategoryFragment }) => {
+const TForm = (props: { relationCategory: RelationCategoryFragment }) => {
   const [update] = useUpdateRelationCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -32,8 +26,7 @@ export default (props: { relationCategory: RelationCategoryFragment }) => {
       id: props.relationCategory.id,
       label: props.relationCategory.label,
       description: props.relationCategory.description,
-      purl: props.relationCategory.purl || "",
-      tags: props.relationCategory.tags.map((tag) => tag.value),
+      tags: props.relationCategory.tags.map((tag) => tag.id),
     },
   });
 
@@ -87,3 +80,5 @@ export default (props: { relationCategory: RelationCategoryFragment }) => {
     </>
   );
 };
+
+export default TForm;

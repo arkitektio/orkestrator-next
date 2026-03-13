@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,15 +11,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -29,10 +22,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpDown, ChevronDown } from "lucide-react";
 import { LokUser, RekuestAssignation } from "@/linkers";
-import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { JustClientName } from "@/lok-next/components/ClientAvatar";
+import { JustUsername } from "@/lok-next/components/UserAvatar";
+import { ArrowUpDown } from "lucide-react";
 
 export type MetricsTableItem = {
   id: string;
@@ -89,7 +82,7 @@ const columns: ColumnDef<MetricsTableItem>[] = [
           object={row.original.createdThrough}
           className="text-xs text-scroll font-light"
         >
-          View 
+          View
         </RekuestAssignation.DetailLink>
       ) : (
         <div className="text-muted-foreground"></div>
@@ -102,7 +95,7 @@ const columns: ColumnDef<MetricsTableItem>[] = [
     cell: ({ row }) =>
       row.original.createdBy ? (
         <LokUser.DetailLink object={row.original.createdBy}>
-        <JustUsername sub={row.original.createdBy} />
+          <JustUsername sub={row.original.createdBy} />
         </LokUser.DetailLink>
       ) : (
         <div className="text-muted-foreground"></div>
@@ -154,9 +147,9 @@ export const MetricsTable: React.FC<MetricsTableProps> = ({ metrics, className }
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>

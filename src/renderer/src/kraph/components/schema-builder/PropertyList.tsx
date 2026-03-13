@@ -1,9 +1,9 @@
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import { PropertyListItem } from "./PropertyListItem";
 import { PropertyDefinition } from "./utils";
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PropertyListProps {
   properties: PropertyDefinition[];

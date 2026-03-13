@@ -8,6 +8,7 @@ import {
 } from "@/linkers";
 import { cn } from "@udecode/cn";
 import React from "react";
+import Timestamp from "react-timestamp";
 import { useDetailExperimentQuery } from "../api/graphql";
 import {
   ExperimentRender,
@@ -16,7 +17,6 @@ import {
   recordingViewToLabel,
   stimulusViewToLabel,
 } from "../components/ExperimentRender";
-import Timestamp from "react-timestamp";
 
 export type IRepresentationScreenProps = {};
 

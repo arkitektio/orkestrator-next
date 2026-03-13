@@ -2,17 +2,15 @@ import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { AgentPill } from "@/lok-next/components/AgentPill";
-import { ClientAvatar } from "@/lok-next/components/ClientAvatar";
-import { UserAvatarUsername } from "@/lok-next/components/UserAvatar";
-import { MateFinder } from "@/mates/types";
+
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListAgentFragment;
-  mates?: MateFinder[];
+
 }
 
-const TheCard = ({ item, mates }: Props) => {
+const TheCard = ({ item }: Props) => {
   return (
     <RekuestAgent.Smart object={item?.id}>
       <Card

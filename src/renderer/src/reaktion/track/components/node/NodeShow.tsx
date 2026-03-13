@@ -4,9 +4,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { NodeResizeControl } from "@xyflow/react";
 import { motion } from "framer-motion";
 import React from "react";
-import { NodeResizeControl } from "@xyflow/react";
 import { useLatestNodeEvent } from "../../hooks/useLatestNodeEvent";
 
 type NodeProps = {

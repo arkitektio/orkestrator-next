@@ -17,12 +17,6 @@ import {
   useSearchTagsLazyQuery
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
 export const TForm = (props: { graph?: string }) => {
   const [add] = useCreateRelationCategoryMutation({

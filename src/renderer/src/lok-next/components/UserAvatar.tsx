@@ -19,8 +19,8 @@ export const UserAvatar = (props: { sub: string }) => {
       <AvatarImage
         src={
           resolve(data?.user?.profile.avatar?.presignedUrl) as
-            | string
-            | undefined
+          | string
+          | undefined
         }
         alt={data?.user?.username}
       />
@@ -77,8 +77,8 @@ export const UserAvatarUsername = (props: { sub: string }) => {
               className="rounded-md"
               src={
                 resolve(data?.user?.profile.avatar?.presignedUrl) as
-                  | string
-                  | undefined
+                | string
+                | undefined
               }
               alt={data?.user?.username}
             />

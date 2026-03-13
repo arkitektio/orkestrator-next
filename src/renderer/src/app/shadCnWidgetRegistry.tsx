@@ -25,7 +25,7 @@ import { ListReturnWidget } from "@/components/widgets/returns/fallbacks/ListRet
 import { ModelReturnWidget } from "@/components/widgets/returns/fallbacks/ModelReturnWidget";
 import { StringReturnWidget } from "@/components/widgets/returns/fallbacks/StringReturnWidget";
 import { UnionReturnWidget } from "@/components/widgets/returns/fallbacks/UnionReturnWidget";
-import { PortFragment, PortKind } from "@/rekuest/api/graphql";
+import { PortKind } from "@/rekuest/api/graphql";
 import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import {
   EffectWidgetProps,

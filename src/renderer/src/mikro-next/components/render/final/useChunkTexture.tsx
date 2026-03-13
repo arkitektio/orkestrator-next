@@ -107,8 +107,8 @@ export const useAsyncChunk = (props: {
         );
 
         // Set filtering for smooth interpolation when zooming
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.magFilter = THREE.NearestFilter;
         tex.wrapS = THREE.ClampToEdgeWrapping;
         tex.wrapT = THREE.ClampToEdgeWrapping;
         tex.flipY = false; // Disable Y-flipping to match image orientation

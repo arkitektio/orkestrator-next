@@ -1,16 +1,9 @@
 fragment Entity on Entity {
   ...BaseNode
-  ... on Node {
-    pinnedBy {
-      sub
-    }
-    pinned
-  }
   id
   graph {
     id
   }
-  externalId
   category {
     id
     label
@@ -20,17 +13,11 @@ fragment Entity on Entity {
     }
   }
   label
-  subjectableTo {
-    role
-    category {
-      id
-      label
-    }
-  }
-  propertyList {
+  richProperties {
     key
     value
   }
+  properties
   measuredBy {
     id
     category {
@@ -43,68 +30,52 @@ fragment Entity on Entity {
       }
     }
   }
-  subjectedTo {
+  participatedIn {
     id
     role
     target {
-      ... on ProtocolEvent {
-        id
+      ... on NaturalEvent {
+         id
         label
-        validFrom
-        validTo
+        measuredFrom
+        measuredTo
         category {
           label
         }
       }
+      ... on ProtocolEvent {
+         id
+        label
+        measuredFrom
+        measuredTo
+        category {
+          label
+        }
+      }
+
+      }
     }
-  }
-  targetedBy {
+  resultedOut {
     id
     role
     source {
-      ... on ProtocolEvent {
         id
         label
-        validFrom
-        validTo
+        measuredFrom
+        measuredTo
         category {
           label
         }
       }
     }
-  }
-  tags {
-    id
-    value
-  }
-  targetableBy {
-    role
-    category {
-      id
-      label
-    }
-  }
-  editedIn {
-    id
-    event {
-      id
-      timestamp
-      editor {
-        sub
-      }
-    }
-    propertyName
-    changeKind
-    previousValue
-    newValue
-  }
+
 }
 
 fragment PathEntity on Entity {
   ...ListEntity
   category {
     label
-    store {
+    image {
       presignedUrl
     }
   }

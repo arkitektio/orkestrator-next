@@ -1,0 +1,28 @@
+fragment EntityCategory on EntityCategory {
+  ...BaseCategory
+  ...BaseNodeCategory
+  ageName
+  label
+  description
+  image {
+    presignedUrl
+  }
+  latest: entities(ordering: [ {
+     createdAt: DESC
+  }], pagination:  {
+     limit: 3
+  }) {
+    ...Entity
+  }
+  pinned
+  propertyDefinitions {
+    ...PropertyDefinition
+  }
+}
+
+fragment ListEntityCategory on EntityCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  instanceKind
+  label
+}

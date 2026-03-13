@@ -1,6 +1,5 @@
-import { PageLayout } from "@/components/layout/PageLayout";
-import StructurePackageList from "../components/lists/StructurePackageList";
 import { RekuestStructurePackage } from "@/linkers";
+import StructurePackageList from "../components/lists/StructurePackageList";
 const Page = () => {
   return (
     <RekuestStructurePackage.ListPage title={"Actions"}>

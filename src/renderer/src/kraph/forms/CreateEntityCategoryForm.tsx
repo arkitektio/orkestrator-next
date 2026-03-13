@@ -39,16 +39,21 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import { useState } from "react";
-import { useFieldArray, useForm, useFormContext } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import {
+  AggregationFunction,
   CreateEntityCategoryMutationVariables,
+  DerivationType,
   GetGraphDocument,
   ListEntitiesDocument,
-  MetricKind,
+  ValueKind,
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
+import { keyify } from "./utils";
+
+type CreateEntityCategoryFormValues = CreateEntityCategoryMutationVariables["input"];
 
 const PropertyItem = ({
   index,
@@ -57,9 +62,33 @@ const PropertyItem = ({
   index: number;
   remove: (index: number) => void;
 }) => {
-  const { watch, control } = useFormContext();
+  const { watch, control, getFieldState, setValue } = useFormContext<CreateEntityCategoryFormValues>();
   const key = watch(`propertyDefinitions.${index}.key`);
   const kind = watch(`propertyDefinitions.${index}.valueKind`);
+
+
+  // 1. Watch the source field (title)
+  const titleValue = useWatch({
+    control,
+    name: `propertyDefinitions.${index}.label`,
+  });
+
+
+
+  // 3. Effect with Dirty Check
+  useEffect(() => {
+    const keyPath = `propertyDefinitions.${index}.key` as const;
+    const { isDirty } = getFieldState(keyPath);
+
+    // Only update if the user hasn't manually edited the key field
+    if (!isDirty && titleValue !== undefined) {
+      setValue(keyPath, keyify(titleValue), {
+        shouldValidate: true,
+        // We do NOT set shouldDirty: true here, because we want
+        // the field to stay "pristine" so it keeps following the title.
+      });
+    }
+  }, [titleValue, setValue, getFieldState, index]);
 
   return (
     <AccordionItem value={`item-${index}`}>
@@ -108,7 +137,7 @@ const PropertyItem = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(MetricKind).map((kind) => (
+                      {Object.values(ValueKind).map((kind) => (
                         <SelectItem key={kind} value={kind}>
                           {kind}
                         </SelectItem>
@@ -148,7 +177,7 @@ const PropertyItem = ({
           <div className="col-span-2 flex gap-4 items-center border p-2 rounded-md bg-muted/20">
             <FormField
               control={control}
-              name={`propertyDefinitions.${index}.optional`}
+              name={`propertyDefinitions.${index}.index`}
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
@@ -158,7 +187,7 @@ const PropertyItem = ({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Optional</FormLabel>
+                    <FormLabel>Index</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -180,23 +209,6 @@ const PropertyItem = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={control}
-              name={`propertyDefinitions.${index}.useAsLabel`}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Use as Label</FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
           </div>
           <div className="col-span-2 flex justify-end mt-2">
             <Button
@@ -214,9 +226,9 @@ const PropertyItem = ({
   );
 };
 
-const PropertyDefinitions = () => {
-  const { control } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
+export const PropertyDefinitions = () => {
+  const { control } = useFormContext<CreateEntityCategoryFormValues>();
+  const { fields, append, remove } = useFieldArray<CreateEntityCategoryFormValues, "propertyDefinitions">({
     control,
     name: "propertyDefinitions",
   });
@@ -234,7 +246,16 @@ const PropertyDefinitions = () => {
           variant="outline"
           size="sm"
           onClick={() => {
-            append({ key: "new_property", valueKind: MetricKind.String });
+            append({
+              key: "new_property",
+              valueKind: ValueKind.String,
+              index: false,
+              searchable: false,
+              derivation: DerivationType.Latest,
+              rule: {
+                aggregation: AggregationFunction.Latest,
+              },
+            });
             setExpanded(`item-${fields.length}`);
           }}
         >
@@ -263,7 +284,7 @@ const PropertyDefinitions = () => {
 
 
 
-export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) => {
+const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
   const [add] = useCreateEntityCategoryMutation({
     refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
 
@@ -271,7 +292,7 @@ export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) 
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
+  const form = useForm<CreateEntityCategoryFormValues>({
     defaultValues: {
       ...props,
     },
@@ -279,15 +300,50 @@ export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) 
 
   const [search] = useSearchGraphsLazyQuery();
 
+
+
+  // 1. Watch the source field (title)
+  const titleValue = useWatch({
+    control: form.control,
+    name: "label",
+  });
+
+
+
+  // 3. Effect with Dirty Check
+  useEffect(() => {
+    const { isDirty } = form.getFieldState("key");
+
+    // Only update if the user hasn't manually edited the key field
+    if (!isDirty && titleValue !== undefined) {
+      form.setValue("key", keyify(titleValue), {
+        shouldValidate: true,
+        // We do NOT set shouldDirty: true here, because we want
+        // the field to stay "pristine" so it keeps following the title.
+      });
+    }
+  }, [titleValue, form]);
+
   return (
     <>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
+            const propertyDefinitions = data.propertyDefinitions?.map((definition) => ({
+              ...definition,
+              derivation: definition.derivation || DerivationType.Latest,
+              rule: {
+                ...definition.rule,
+                aggregation:
+                  definition.rule?.aggregation || AggregationFunction.Latest,
+              },
+            }));
+
             dialog({
               variables: {
                 input: {
                   ...data,
+                  propertyDefinitions,
                 },
               },
             });
@@ -309,6 +365,11 @@ export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) 
                 label="Label"
                 name="label"
                 description="Whats the expression? (e.g. 'Person' or 'Connected to')"
+              />
+              <StringField
+                label="Key"
+                name="key"
+                description="What is the key of this expression? (e.g. 'person' or 'connected_to')"
               />
               <ParagraphField
                 label="Description"
@@ -334,3 +395,6 @@ export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) 
     </>
   );
 };
+
+
+export default TForm;

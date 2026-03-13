@@ -1,0 +1,37 @@
+fragment MeasurementCategory on MeasurementCategory {
+  ...BaseEdgeCategory
+  ...BaseCategory
+  sourceDescriptor {
+    ...StructureDescriptor
+  }
+  targetDescriptor {
+    ...EntityDescriptor
+  }
+  ageName
+  label
+  description
+  image {
+    presignedUrl
+  }
+  pinned
+}
+
+fragment ListMeasurementCategory on MeasurementCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+  sourceDescriptor {
+    ...StructureDescriptor
+  }
+  targetDescriptor {
+    ...EntityDescriptor
+  }
+  label
+}
+
+fragment ListMeasurementCategoryWithGraph on MeasurementCategory {
+  ...ListMeasurementCategory
+  graph {
+    id
+    name
+  }
+}

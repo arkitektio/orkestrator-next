@@ -1,15 +1,21 @@
 import { Manifest, Requirement } from "./fakts/manifestSchema";
-import {
+import type {
   AppContext,
-  buildArkitektProvider,
-  ConnectedGuard,
+  ModuleRegistry,
   ServiceBuilder,
   ServiceBuilderMap,
+} from "@/lib/arkitekt/provider";
+import {
+  buildArkitektProvider,
+  ConnectedGuard,
+  useAvailableModules,
   useArkitekt,
   useAvailableServices,
+  useConfigurationIssues,
   usePotentialService,
   useService
-} from "./provider";
+} from "@/lib/arkitekt/provider";
+import { useSelfService } from "./hooks";
 // When using the Tauri API npm package:
 
 export const buildGuard =
@@ -26,13 +32,13 @@ export const buildGuard =
 
 export const buildWith =
   (key: string) =>
-    <T extends (options: any) => any>(func: T): T => {
-      const Wrapped = (nana: any) => {
+    <T extends (options: Record<string, unknown>) => unknown>(func: T): T => {
+      const Wrapped = (options: Record<string, unknown>) => {
         const service = useService(key);
 
-        return func({ ...nana, client: service.client });
+        return func({ ...options, client: service.client });
       };
-      return Wrapped as T;
+      return Wrapped as unknown as T;
     };
 
 
@@ -42,10 +48,14 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
   manifest,
   serviceBuilderMap,
   selfServiceBuilder,
+  moduleRegistry,
+  storageProvider,
 }: {
   manifest: Manifest;
   serviceBuilderMap: T;
   selfServiceBuilder: S;
+  moduleRegistry?: ModuleRegistry;
+  storageProvider?: () => Promise<Storage>;
 }) => {
 
   const requirements: Requirement[] = serviceBuilderMap
@@ -66,6 +76,8 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
       manifest: realManifest,
       serviceBuilderMap,
       selfServiceBuilder: selfServiceBuilder,
+      moduleRegistry,
+      storageProvider,
     }),
     buildServiceGuard: <K extends keyof T>(serviceKey: K) => buildGuard(serviceKey as string),
     Guard: ConnectedGuard,
@@ -75,19 +87,24 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
     useCancelConnection: () => useArkitekt().cancelConnection,
     useManifest: () => realManifest,
     useConnectedManifest: () => useArkitekt().connection?.manifest,
-    useConnection: (): AppContext<T>["connection"] => useArkitekt().connection,
+    useConnection: (): AppContext<T>["connection"] => useArkitekt().connection as AppContext<T>["connection"],
     useFakts: () => useArkitekt().connection?.fakts,
     useAlias: <K extends keyof T>(serviceKey: K) => {
       const service = useService(serviceKey as string);
       return service?.alias;
     },
-    useSelfService: (): ReturnType<S> | undefined => useArkitekt().connection?.selfService,
+    useSelfService: () => useSelfService(),
     useSelf: () => useArkitekt().connection?.fakts.self,
     useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
     useAvailableServices: useAvailableServices,
-    useService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]>  => useService(service as string) as ReturnType<T[K]["builder"]>,
-    usePotentialService: <K extends keyof T, >(service: K): ReturnType<T[K]["builder"]> | undefined  => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
-    useToken: () => useArkitekt().connection?.token || null,
+    useAvailableModules: useAvailableModules,
+    useConfigurationIssues: useConfigurationIssues,
+    useService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> => useService(service as string) as ReturnType<T[K]["builder"]>,
+    usePotentialService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> | undefined => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
+    useToken: () => {
+      const arkitekt = useArkitekt();
+      return arkitekt.connection?.token?.access_token || arkitekt.storedSession?.token?.access_token || null;
+    },
     useArkitekt: useArkitekt,
   };
 };

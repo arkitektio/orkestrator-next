@@ -13,7 +13,7 @@ import {
   CreateMeasurementCategoryMutationVariables,
   CreateRelationCategoryMutationVariables,
   GraphFragment,
-  MetricKind,
+  ValueKind,
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
@@ -120,9 +120,9 @@ export const MeasurmentForm = (props: {
                 name="dataKind"
                 description="Select a data kind"
                 options={[
-                  { label: "Float", value: MetricKind.Float },
-                  { label: "Integer", value: MetricKind.Int },
-                  { label: "String", value: MetricKind.String },
+                  { label: "Float", value: ValueKind.Float },
+                  { label: "Integer", value: ValueKind.Int },
+                  { label: "String", value: ValueKind.String },
                 ]}
               />
 

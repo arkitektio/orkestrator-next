@@ -3,11 +3,8 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useDrop } from "react-dnd";
 import {
-  LinkProps,
   NavLink,
-  NavLinkProps,
-  Link as RouterLink,
-  useNavigate,
+  useNavigate
 } from "react-router-dom";
 
 export type PaneLinkProps = {
@@ -52,11 +49,11 @@ export const PaneLink = (props: PaneLinkProps) => {
   return (
     <div ref={drop} className={`${isOver && "animate-pulse"}`}>
       <NavLink to={props.to}>
-      {({isActive}) => (
-        <div className={cn(props.className, isActive ? "text-primary " : "text-foreground")}>
-          {props.children}
-        </div>
-      )}
+        {({ isActive }) => (
+          <div className={cn(props.className, isActive ? "text-primary " : "text-foreground")}>
+            {props.children}
+          </div>
+        )}
       </NavLink>
     </div>
   );

@@ -24,6 +24,7 @@ import { machineIdSync } from "node-machine-id";
 const store = new Store();
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
+app.commandLine.appendSwitch('origin-to-force-quic-on', 'jhnnsrs-lab:4433');
 
 let mainWindow: BrowserWindow | null = null;
 let electronAgent: AgentGateway | null = null;
@@ -104,21 +105,6 @@ function setupAutoUpdater() {
   setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000);
 }
 
-ipcMain.handle("discover-beacons", async () => {
-  // Placeholder for mDNS/Bonjour beacon discovery
-  // In a real implementation, this would use libraries like 'bonjour-service' or 'mdns'
-  // to discover Arkitekt instances on the local network
-
-  try {
-    // For now, return some example local network probes
-    // In the future, this could discover actual services via mDNS
-    return [];
-  } catch (error) {
-    console.error("Beacon discovery failed:", error);
-    return [];
-  }
-});
-
 ipcMain.handle("check-for-updates", async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
@@ -159,6 +145,22 @@ function handleOrkestratorUrl(url: string) {
       `The URL '${url}' could not be processed.`,
     );
   }
+}
+
+function maybeInstallReactDevTools() {
+  if (!is.dev || process.env.ENABLE_ELECTRON_REACT_DEVTOOLS !== "1") {
+    return;
+  }
+
+  import("electron-devtools-installer")
+    .then((installer) => {
+      const install = installer.default?.installExtension || installer.installExtension || installer.default;
+      return install(installer.REACT_DEVELOPER_TOOLS, {
+        loadExtensionOptions: { allowFileAccess: true },
+      });
+    })
+    .then((name) => console.log(`Added Extension: ${name}`))
+    .catch((err) => console.log("Failed to install React DevTools", err));
 }
 
 function createWindow(): BrowserWindow {
@@ -210,10 +212,15 @@ function createWindow(): BrowserWindow {
     mainWindow?.show();
     // Set initial zoom level (1.0 = 100%)
     mainWindow?.webContents.setZoomFactor(1.0);
+
+    if (is.dev) {
+      mainWindow?.webContents.openDevTools({ mode: 'right' });
+    }
   });
 
   mainWindow.webContents.on('devtools-opened', () => {
     // This updates the position without closing/reopening the tools
+    // But setting it on ready-to-show ensures the first open is correct.
     mainWindow?.webContents.openDevTools({ mode: 'right' });
   });
 
@@ -413,6 +420,8 @@ app.on("certificate-error", (event, _, __, ___, ____, callback) => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  maybeInstallReactDevTools();
+
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron");
 

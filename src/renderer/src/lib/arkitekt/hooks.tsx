@@ -1,63 +1,93 @@
 import { useContext, useMemo } from "react";
+import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+
 import { ArkitektContext } from "./context";
-import { ArkitektContextType, Service, ServiceMap } from "./types";
+import {
+  AppContext,
+  AppFunctions,
+  ArkitektContextType,
+  ModuleRuntimeState,
+  Service,
+  ServiceRuntimeState,
+} from "./types";
 
-export const useArkitekt = () =>
-  useContext(ArkitektContext) as ArkitektContextType<any, any>;
+const useArkitektContext = () => {
+  const context = useContext(ArkitektContext);
 
-
-export type IsOptional<T, K extends keyof T> = undefined extends T[K] ? true : false;
-
-
-export const useService = (key: string): Service=> {
-  const { connection } = useArkitekt();
-
-  if (!connection) {
-    throw new Error("Arkitekt not connected");
+  if (!context) {
+    throw new Error("Arkitekt provider missing");
   }
 
-  const service = connection.serviceMap[key];
+  return context;
+};
+
+const useArkitektStore = <T,>(selector: (state: AppContext) => T) => {
+  const { store } = useArkitektContext();
+
+  return useStore(store, selector);
+};
+
+const useArkitektActions = (): AppFunctions => useArkitektContext().actions;
+
+export const useArkitekt = () => {
+  const state = useArkitektStore((currentState) => currentState) as AppContext;
+  const actions = useArkitektActions();
+
+  return useMemo(
+    () => ({
+      ...state,
+      ...actions,
+    }),
+    [actions, state],
+  ) as ArkitektContextType;
+};
+
+export const useService = (key: string): Service => {
+  const service = useArkitektStore((state) => state.connection?.serviceMap[key]);
+
   if (!service) {
     throw new Error(`Service ${key} not found`);
   }
-  return service;
+
+  return service as Service;
 };
 
-export const useSelfService = (key: string): Service=> {
-  const { connection } = useArkitekt();
+export const useSelfService = (): Service => {
+  const service = useArkitektStore((state) => {
+    const selfService = state.connection?.selfService;
+    return selfService;
+  });
 
-  if (!connection) {
-    throw new Error("Arkitekt not connected");
-  }
-
-  const service = connection.selfService[key];
   if (!service) {
-    throw new Error(`Service ${key} not found`);
+    throw new Error(`Self service not found`);
   }
+
   return service;
 };
 
+export const useAvailableServices = (): ServiceRuntimeState[] =>
+  useArkitektStore(
+    useShallow((state) => Object.values(state.serviceStates).filter((entry) => entry.configured)),
+  );
 
-export const useAvailableServices = () => {
-  const { connection } = useArkitekt();
+export const useAvailableModules = (): ModuleRuntimeState[] =>
+  useArkitektStore(
+    useShallow((state) => Object.values(state.moduleStates).filter((entry) => entry.status !== "hidden")),
+  );
 
-  if (!connection) {
-    throw new Error("Arkitekt not connected");
-  }
+export const useServiceState = (key: string): ServiceRuntimeState | undefined =>
+  useArkitektStore((state) => state.serviceStates[key]);
 
-  return Object.keys(connection.serviceMap).map(key =>({key: key, definition: connection.serviceBuilderMap[key], service: connection.serviceMap[key], instance: connection.serviceInstanceMap[key]}));
-}
-
-export const usePotentialService = (key: string): Service | undefined => {
-  const { connection } = useArkitekt();
-  const service = connection?.serviceMap?.[key];
-  return service;
-};
+export const usePotentialService = (key: string): Service | undefined =>
+  useArkitektStore((state) => state.connection?.serviceMap?.[key] as Service | undefined);
 
 export const useToken = () => {
-  return useArkitekt().connection?.token || null;
+  const token = useArkitektStore((state) => state.connection?.token ?? state.storedSession?.token ?? null);
+  return token?.access_token || null;
 };
 
-export const useManifest = () => {
-  return useArkitekt().manifest;
-}
+export const useManifest = () => useArkitektStore((state) => state.manifest);
+
+export const useConfigurationIssues = (): string[] =>
+  useArkitektStore((state) => state.configurationIssues);

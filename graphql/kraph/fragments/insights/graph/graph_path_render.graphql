@@ -1,0 +1,17 @@
+fragment GraphPathRender on GraphPathRender {
+  query  {
+    graph {
+      id
+      ageName
+    }
+
+  }
+  nodes {
+    ...PathNode
+  }
+  edges {
+    ...PathEdge
+  }
+}
+
+

@@ -1,65 +1,69 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-import * as ApolloReactHooks from '@/lib/mikro/funcs';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-const defaultOptions = {} as const;
+import * as ApolloReactHooks from '@/lib/mikro/funcs'
+import * as Apollo from '@apollo/client'
+import { gql } from '@apollo/client'
+export type Maybe<T> = T | null
+export type InputMaybe<T> = Maybe<T>
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] }
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> }
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> }
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = {
+  [_ in K]?: never
+}
+export type Incremental<T> =
+  | T
+  | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never }
+const defaultOptions = {} as const
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  Any: { input: any; output: any; }
-  ArrayLike: { input: any; output: any; }
-  DateTime: { input: any; output: any; }
-  FileLike: { input: any; output: any; }
-  FiveDVector: { input: any; output: any; }
-  FourByFourMatrix: { input: any; output: any; }
-  ImageFileLike: { input: any; output: any; }
-  JSON: { input: any; output: any; }
-  LabelsLike: { input: any; output: any; }
-  MeshLike: { input: any; output: any; }
-  MetricMap: { input: any; output: any; }
-  Micrometers: { input: any; output: any; }
-  Milliseconds: { input: any; output: any; }
-  ParquetLike: { input: any; output: any; }
-  ThreeDVector: { input: any; output: any; }
-  _Any: { input: any; output: any; }
-};
+  ID: { input: string; output: string }
+  String: { input: string; output: string }
+  Boolean: { input: boolean; output: boolean }
+  Int: { input: number; output: number }
+  Float: { input: number; output: number }
+  Any: { input: any; output: any }
+  ArrayLike: { input: any; output: any }
+  DateTime: { input: any; output: any }
+  FileLike: { input: any; output: any }
+  FiveDVector: { input: any; output: any }
+  FourByFourMatrix: { input: any; output: any }
+  ImageFileLike: { input: any; output: any }
+  JSON: { input: any; output: any }
+  LabelsLike: { input: any; output: any }
+  MeshLike: { input: any; output: any }
+  MetricMap: { input: any; output: any }
+  Micrometers: { input: any; output: any }
+  Milliseconds: { input: any; output: any }
+  ParquetLike: { input: any; output: any }
+  ThreeDVector: { input: any; output: any }
+  _Any: { input: any; output: any }
+}
 
 /** Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer) */
 export type AccessCredentials = {
-  __typename?: 'AccessCredentials';
-  accessKey: Scalars['String']['output'];
-  bucket: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  secretKey: Scalars['String']['output'];
-  sessionToken: Scalars['String']['output'];
-};
+  __typename?: 'AccessCredentials'
+  accessKey: Scalars['String']['output']
+  bucket: Scalars['String']['output']
+  key: Scalars['String']['output']
+  path: Scalars['String']['output']
+  secretKey: Scalars['String']['output']
+  sessionToken: Scalars['String']['output']
+}
 
 export type Accessor = {
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
-  table: Table;
-};
+  id: Scalars['ID']['output']
+  keys: Array<Scalars['String']['output']>
+  maxIndex?: Maybe<Scalars['Int']['output']>
+  minIndex?: Maybe<Scalars['Int']['output']>
+  table: Table
+}
 
 export type AccessorFilter = {
-  AND?: InputMaybe<AccessorFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<AccessorFilter>;
-  OR?: InputMaybe<AccessorFilter>;
-  keys?: InputMaybe<Scalars['JSON']['input']>;
-};
+  AND?: InputMaybe<AccessorFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<AccessorFilter>
+  OR?: InputMaybe<AccessorFilter>
+  keys?: InputMaybe<Scalars['JSON']['input']>
+}
 
 export enum AccessorKind {
   Image = 'IMAGE',
@@ -67,173 +71,171 @@ export enum AccessorKind {
 }
 
 export type AcquisitionView = View & {
-  __typename?: 'AcquisitionView';
+  __typename?: 'AcquisitionView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  acquiredAt?: Maybe<Scalars['DateTime']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  acquiredAt?: Maybe<Scalars['DateTime']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  operator?: Maybe<User>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  description?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  operator?: Maybe<User>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type AcquisitionViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type AffineTransformationView = View & {
-  __typename?: 'AffineTransformationView';
+  __typename?: 'AffineTransformationView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  affineMatrix: Scalars['FourByFourMatrix']['output'];
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  affineMatrix: Scalars['FourByFourMatrix']['output']
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  isotropic: Scalars['Boolean']['output'];
-  pixelSize: Scalars['ThreeDVector']['output'];
-  pixelSizeX: Scalars['Micrometers']['output'];
-  pixelSizeY: Scalars['Micrometers']['output'];
-  pixelSizeZ: Scalars['Micrometers']['output'];
-  position: Scalars['ThreeDVector']['output'];
-  stage: Stage;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  isotropic: Scalars['Boolean']['output']
+  pixelSize: Scalars['ThreeDVector']['output']
+  pixelSizeX: Scalars['Micrometers']['output']
+  pixelSizeY: Scalars['Micrometers']['output']
+  pixelSizeZ: Scalars['Micrometers']['output']
+  position: Scalars['ThreeDVector']['output']
+  stage: Stage
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type AffineTransformationViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type AffineTransformationViewEvent = {
-  __typename?: 'AffineTransformationViewEvent';
-  create?: Maybe<AffineTransformationView>;
-  delete?: Maybe<Scalars['ID']['output']>;
-  update?: Maybe<AffineTransformationView>;
-};
+  __typename?: 'AffineTransformationViewEvent'
+  create?: Maybe<AffineTransformationView>
+  delete?: Maybe<Scalars['ID']['output']>
+  update?: Maybe<AffineTransformationView>
+}
 
 export type AffineTransformationViewFilter = {
-  AND?: InputMaybe<AffineTransformationViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<AffineTransformationViewFilter>;
-  OR?: InputMaybe<AffineTransformationViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  pixelSize?: InputMaybe<FloatFilterLookup>;
-  stage?: InputMaybe<StageFilter>;
-};
+  AND?: InputMaybe<AffineTransformationViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<AffineTransformationViewFilter>
+  OR?: InputMaybe<AffineTransformationViewFilter>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+  pixelSize?: InputMaybe<FloatFilterLookup>
+  stage?: InputMaybe<StageFilter>
+}
 
 export type AffineTransformationViewInput = {
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
+  affineMatrix: Scalars['FourByFourMatrix']['input']
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  stage?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  stage?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type AssignUserPermissionInput = {
-  identifier: Scalars['String']['input'];
-  object: Scalars['ID']['input'];
-  permissions: Array<Scalars['String']['input']>;
-  user: Scalars['ID']['input'];
-};
+  identifier: Scalars['String']['input']
+  object: Scalars['ID']['input']
+  permissions: Array<Scalars['String']['input']>
+  user: Scalars['ID']['input']
+}
 
 export type AssociateInput = {
-  other: Scalars['ID']['input'];
-  selfs: Array<Scalars['ID']['input']>;
-};
+  other: Scalars['ID']['input']
+  selfs: Array<Scalars['ID']['input']>
+}
 
 /** Beam splitter */
 export type BeamSplitterElement = OpticalElement & {
-  __typename?: 'BeamSplitterElement';
-  band?: Maybe<Spectrum>;
-  id: Scalars['ID']['output'];
+  __typename?: 'BeamSplitterElement'
+  band?: Maybe<Spectrum>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  rFraction: Scalars['Float']['output'];
-  serialNumber?: Maybe<Scalars['String']['output']>;
-  tFraction: Scalars['Float']['output'];
-};
+  pose?: Maybe<Pose3D>
+  rFraction: Scalars['Float']['output']
+  serialNumber?: Maybe<Scalars['String']['output']>
+  tFraction: Scalars['Float']['output']
+}
 
 /** Beam properties carried on a light edge */
 export type BeamState = {
-  __typename?: 'BeamState';
-  modeHint?: Maybe<Scalars['String']['output']>;
-  polarization?: Maybe<Scalars['String']['output']>;
-  powerMw?: Maybe<Scalars['Float']['output']>;
-  wavelengthNm?: Maybe<Scalars['Float']['output']>;
-};
+  __typename?: 'BeamState'
+  modeHint?: Maybe<Scalars['String']['output']>
+  polarization?: Maybe<Scalars['String']['output']>
+  powerMw?: Maybe<Scalars['Float']['output']>
+  wavelengthNm?: Maybe<Scalars['Float']['output']>
+}
 
 /** State of the optical beam on a particular path segment. */
 export type BeamStateInput = {
-  modeHint?: InputMaybe<Scalars['String']['input']>;
-  polarization?: InputMaybe<Scalars['String']['input']>;
-  powerMw?: InputMaybe<Scalars['Float']['input']>;
-  wavelengthNm?: InputMaybe<Scalars['Float']['input']>;
-};
+  modeHint?: InputMaybe<Scalars['String']['input']>
+  polarization?: InputMaybe<Scalars['String']['input']>
+  powerMw?: InputMaybe<Scalars['Float']['input']>
+  wavelengthNm?: InputMaybe<Scalars['Float']['input']>
+}
 
 export type BigFileStore = {
-  __typename?: 'BigFileStore';
-  bucket: Scalars['String']['output'];
-  filename: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
-};
+  __typename?: 'BigFileStore'
+  bucket: Scalars['String']['output']
+  filename: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  key: Scalars['String']['output']
+  path: Scalars['String']['output']
+  presignedUrl: Scalars['String']['output']
+}
 
 export enum Blending {
   Additive = 'ADDITIVE',
@@ -242,96 +244,93 @@ export enum Blending {
 
 /** Detector */
 export type CcdElement = OpticalElement & {
-  __typename?: 'CCDElement';
-  id: Scalars['ID']['output'];
+  __typename?: 'CCDElement'
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  pixelSizeUm?: Maybe<Scalars['Float']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  pixelSizeUm?: Maybe<Scalars['Float']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  resolution?: Maybe<Array<Scalars['Int']['output']>>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  resolution?: Maybe<Array<Scalars['Int']['output']>>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type Camera = {
-  __typename?: 'Camera';
-  bitDepth?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  organization: DjangoModelType;
-  pixelSizeX?: Maybe<Scalars['Micrometers']['output']>;
-  pixelSizeY?: Maybe<Scalars['Micrometers']['output']>;
+  __typename?: 'Camera'
+  bitDepth?: Maybe<Scalars['Int']['output']>
+  id: Scalars['ID']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  name: Scalars['String']['output']
+  organization: DjangoModelType
+  pixelSizeX?: Maybe<Scalars['Micrometers']['output']>
+  pixelSizeY?: Maybe<Scalars['Micrometers']['output']>
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  sensorSizeX?: Maybe<Scalars['Int']['output']>;
-  sensorSizeY?: Maybe<Scalars['Int']['output']>;
-  serialNumber: Scalars['String']['output'];
-  views: Array<OpticsView>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  sensorSizeX?: Maybe<Scalars['Int']['output']>
+  sensorSizeY?: Maybe<Scalars['Int']['output']>
+  serialNumber: Scalars['String']['output']
+  views: Array<OpticsView>
+}
 
 export type CameraProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type CameraViewsArgs = {
-  filters?: InputMaybe<OpticsViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<OpticsViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type CameraFilter = {
-  AND?: InputMaybe<CameraFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<CameraFilter>;
-  OR?: InputMaybe<CameraFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<CameraFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<CameraFilter>
+  OR?: InputMaybe<CameraFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+}
 
 export type CameraInput = {
-  bitDepth?: InputMaybe<Scalars['Int']['input']>;
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
-  serialNumber: Scalars['String']['input'];
-};
+  bitDepth?: InputMaybe<Scalars['Int']['input']>
+  manufacturer?: InputMaybe<Scalars['String']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>
+  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>
+  sensorSizeX?: InputMaybe<Scalars['Int']['input']>
+  sensorSizeY?: InputMaybe<Scalars['Int']['input']>
+  serialNumber: Scalars['String']['input']
+}
 
 export type ChangeDatasetInput = {
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
-  parent?: InputMaybe<Scalars['ID']['input']>;
-};
+  id: Scalars['ID']['input']
+  name: Scalars['String']['input']
+  parent?: InputMaybe<Scalars['ID']['input']>
+}
 
 /** A channel descriptor */
 export type ChannelInfo = {
-  __typename?: 'ChannelInfo';
-  index: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-};
-
+  __typename?: 'ChannelInfo'
+  index: Scalars['Int']['output']
+  label: Scalars['String']['output']
+}
 
 /** A channel descriptor */
 export type ChannelInfoLabelArgs = {
-  withColorName?: Scalars['Boolean']['input'];
-};
+  withColorName?: Scalars['Boolean']['input']
+}
 
 export type ChannelInfoFilter = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export enum ChannelKind {
   FiberMm = 'FIBER_MM',
@@ -341,79 +340,78 @@ export enum ChannelKind {
 }
 
 export type ChannelView = View & {
-  __typename?: 'ChannelView';
+  __typename?: 'ChannelView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
+  accessor: Array<Scalars['String']['output']>
   /** The acquisition mode of the channel */
-  acquisitionMode?: Maybe<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  acquisitionMode?: Maybe<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
+  congruentViews: Array<View>
   /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: Maybe<Scalars['Float']['output']>;
+  emissionWavelength?: Maybe<Scalars['Float']['output']>
   /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
+  excitationWavelength?: Maybe<Scalars['Float']['output']>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
   /** The name of the channel  */
-  name?: Maybe<Scalars['String']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  name?: Maybe<Scalars['String']['output']>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type ChannelViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type ChannelViewInput = {
   /** The acquisition mode of the channel */
-  acquisitionMode?: InputMaybe<Scalars['String']['input']>;
+  acquisitionMode?: InputMaybe<Scalars['String']['input']>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
   /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: InputMaybe<Scalars['Float']['input']>;
+  emissionWavelength?: InputMaybe<Scalars['Float']['input']>
   /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: InputMaybe<Scalars['Float']['input']>;
+  excitationWavelength?: InputMaybe<Scalars['Float']['input']>
   /** The ID of the image this view is for */
-  image: Scalars['ID']['input'];
+  image: Scalars['ID']['input']
   /** The name of the channel */
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type ChildrenOrder = {
-  direction: ChildrenOrderDirection;
-  field: ChildrenOrderField;
-};
+  direction: ChildrenOrderDirection
+  field: ChildrenOrderField
+}
 
 export enum ChildrenOrderDirection {
   Asc = 'ASC',
@@ -427,15 +425,15 @@ export enum ChildrenOrderField {
 }
 
 export type ChildrenPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-};
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type Client = {
-  __typename?: 'Client';
-  clientId: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-};
+  __typename?: 'Client'
+  clientId: Scalars['String']['output']
+  name: Scalars['String']['output']
+}
 
 export enum ColorFormat {
   Hsl = 'HSL',
@@ -477,292 +475,286 @@ export enum ContinousScanDirection {
 }
 
 export type ContinousScanView = View & {
-  __typename?: 'ContinousScanView';
+  __typename?: 'ContinousScanView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  direction: ScanDirection;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  direction: ScanDirection
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type ContinousScanViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type ContinousScanViewFilter = {
-  AND?: InputMaybe<ContinousScanViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ContinousScanViewFilter>;
-  OR?: InputMaybe<ContinousScanViewFilter>;
-  direction?: InputMaybe<ContinousScanDirection>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-};
+  AND?: InputMaybe<ContinousScanViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ContinousScanViewFilter>
+  OR?: InputMaybe<ContinousScanViewFilter>
+  direction?: InputMaybe<ContinousScanDirection>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export type ContinousScanViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  direction: ScanDirection;
-  image: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  direction: ScanDirection
+  image: Scalars['ID']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type CreateDatasetInput = {
-  name: Scalars['String']['input'];
-  parent?: InputMaybe<Scalars['ID']['input']>;
-};
+  name: Scalars['String']['input']
+  parent?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type CreateRgbContextInput = {
-  c?: InputMaybe<Scalars['Int']['input']>;
-  image: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  t?: InputMaybe<Scalars['Int']['input']>;
-  thumbnail?: InputMaybe<Scalars['ID']['input']>;
-  views?: InputMaybe<Array<PartialRgbViewInput>>;
-  z?: InputMaybe<Scalars['Int']['input']>;
-};
+  c?: InputMaybe<Scalars['Int']['input']>
+  image: Scalars['ID']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  t?: InputMaybe<Scalars['Int']['input']>
+  thumbnail?: InputMaybe<Scalars['ID']['input']>
+  views?: InputMaybe<Array<PartialRgbViewInput>>
+  z?: InputMaybe<Scalars['Int']['input']>
+}
 
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type Credentials = {
-  __typename?: 'Credentials';
-  accessKey: Scalars['String']['output'];
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  secretKey: Scalars['String']['output'];
-  sessionToken: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-};
+  __typename?: 'Credentials'
+  accessKey: Scalars['String']['output']
+  bucket: Scalars['String']['output']
+  datalayer: Scalars['String']['output']
+  key: Scalars['String']['output']
+  secretKey: Scalars['String']['output']
+  sessionToken: Scalars['String']['output']
+  status: Scalars['String']['output']
+  store: Scalars['String']['output']
+}
 
 export type Dataset = {
-  __typename?: 'Dataset';
-  children: Array<Dataset>;
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
-  files: Array<File>;
-  id: Scalars['ID']['output'];
-  images: Array<Image>;
-  isDefault: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  parent?: Maybe<Dataset>;
-  pinned: Scalars['Boolean']['output'];
+  __typename?: 'Dataset'
+  children: Array<Dataset>
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+  description?: Maybe<Scalars['String']['output']>
+  files: Array<File>
+  id: Scalars['ID']['output']
+  images: Array<Image>
+  isDefault: Scalars['Boolean']['output']
+  name: Scalars['String']['output']
+  parent?: Maybe<Dataset>
+  pinned: Scalars['Boolean']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  tags: Array<Scalars['String']['output']>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  tags: Array<Scalars['String']['output']>
+}
 
 export type DatasetChildrenArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<DatasetFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type DatasetFilesArgs = {
-  filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<FileFilter>
+  order?: InputMaybe<FileOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type DatasetImagesArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ImageFilter>
+  order?: InputMaybe<ImageOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type DatasetProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type DatasetChildrenFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
-  showChildren?: InputMaybe<Scalars['Boolean']['input']>;
-};
+  search?: InputMaybe<Scalars['String']['input']>
+  showChildren?: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export type DatasetFilter = {
-  AND?: InputMaybe<DatasetFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<DatasetFilter>;
-  OR?: InputMaybe<DatasetFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
-  owner?: InputMaybe<Scalars['ID']['input']>;
-  parentless?: InputMaybe<Scalars['Boolean']['input']>;
-  scope?: InputMaybe<ScopeFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<DatasetFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<DatasetFilter>
+  OR?: InputMaybe<DatasetFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  name?: InputMaybe<StrFilterLookup>
+  owner?: InputMaybe<Scalars['ID']['input']>
+  parentless?: InputMaybe<Scalars['Boolean']['input']>
+  scope?: InputMaybe<ScopeFilter>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
-export type DatasetImageFile = Dataset | File | Image;
+export type DatasetImageFile = Dataset | File | Image
 
 export type DeleteCameraInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteDatasetInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteEraInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteFileInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteImageInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteInstrumentInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteMeshInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteMultiWellInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteObjectiveInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteRgbContextInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteRoiInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteSnaphotInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteStageInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteViewCollectionInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DeleteViewInput = {
-  id: Scalars['ID']['input'];
-};
+  id: Scalars['ID']['input']
+}
 
 export type DerivedView = View & {
-  __typename?: 'DerivedView';
+  __typename?: 'DerivedView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  operation?: Maybe<Scalars['String']['output']>;
-  originImage: Image;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  operation?: Maybe<Scalars['String']['output']>
+  originImage: Image
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type DerivedViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type Descriptor = {
-  __typename?: 'Descriptor';
-  description?: Maybe<Scalars['String']['output']>;
-  key: Scalars['String']['output'];
-  value: Scalars['Any']['output'];
-};
+  __typename?: 'Descriptor'
+  description?: Maybe<Scalars['String']['output']>
+  key: Scalars['String']['output']
+  value: Scalars['Any']['output']
+}
 
 export type DesociateInput = {
-  other: Scalars['ID']['input'];
-  selfs: Array<Scalars['ID']['input']>;
-};
+  other: Scalars['ID']['input']
+  selfs: Array<Scalars['ID']['input']>
+}
 
 /** Detector */
 export type DetectorElement = OpticalElement & {
-  __typename?: 'DetectorElement';
+  __typename?: 'DetectorElement'
   /** Amplifier gain (dB) */
-  amplifierGainDb?: Maybe<Scalars['Float']['output']>;
+  amplifierGainDb?: Maybe<Scalars['Float']['output']>
   /** Overall gain (unitless) */
-  gain?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
+  gain?: Maybe<Scalars['Float']['output']>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  nepdWPerSqrtHz?: Maybe<Scalars['Float']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  nepdWPerSqrtHz?: Maybe<Scalars['Float']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type DimSelector = {
-  end?: InputMaybe<Scalars['Int']['input']>;
-  index?: InputMaybe<Scalars['Int']['input']>;
-  indices?: InputMaybe<Array<Scalars['Int']['input']>>;
-  kind: DimSelectorKind;
-  start?: InputMaybe<Scalars['Int']['input']>;
-  step?: InputMaybe<Scalars['Int']['input']>;
-};
+  end?: InputMaybe<Scalars['Int']['input']>
+  index?: InputMaybe<Scalars['Int']['input']>
+  indices?: InputMaybe<Array<Scalars['Int']['input']>>
+  kind: DimSelectorKind
+  start?: InputMaybe<Scalars['Int']['input']>
+  step?: InputMaybe<Scalars['Int']['input']>
+}
 
 export enum DimSelectorKind {
   All = 'ALL',
@@ -772,9 +764,9 @@ export enum DimSelectorKind {
 }
 
 export type DjangoModelType = {
-  __typename?: 'DjangoModelType';
-  pk: Scalars['ID']['output'];
-};
+  __typename?: 'DjangoModelType'
+  pk: Scalars['ID']['output']
+}
 
 export enum DuckDbDataType {
   /** Large integer for large numeric values */
@@ -856,294 +848,288 @@ export enum ElementKind {
 }
 
 export type Era = {
-  __typename?: 'Era';
-  begin?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: 'Era'
+  begin?: Maybe<Scalars['DateTime']['output']>
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  views: Array<TimepointView>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  views: Array<TimepointView>
+}
 
 export type EraProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type EraViewsArgs = {
-  filters?: InputMaybe<TimepointViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<TimepointViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type EraFilter = {
-  AND?: InputMaybe<EraFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<EraFilter>;
-  OR?: InputMaybe<EraFilter>;
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
+  AND?: InputMaybe<EraFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<EraFilter>
+  OR?: InputMaybe<EraFilter>
+  begin?: InputMaybe<Scalars['DateTime']['input']>
+  id?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type EraInput = {
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
-  name: Scalars['String']['input'];
-};
+  begin?: InputMaybe<Scalars['DateTime']['input']>
+  name: Scalars['String']['input']
+}
 
 /** Euler angles for 3D orientation */
 export type Euler = {
-  __typename?: 'Euler';
-  rx?: Maybe<Scalars['Float']['output']>;
-  ry?: Maybe<Scalars['Float']['output']>;
-  rz?: Maybe<Scalars['Float']['output']>;
-};
+  __typename?: 'Euler'
+  rx?: Maybe<Scalars['Float']['output']>
+  ry?: Maybe<Scalars['Float']['output']>
+  rz?: Maybe<Scalars['Float']['output']>
+}
 
 /** Euler angles representing rotation in 3D space. */
 export type EulerInput = {
-  rx?: InputMaybe<Scalars['Float']['input']>;
-  ry?: InputMaybe<Scalars['Float']['input']>;
-  rz?: InputMaybe<Scalars['Float']['input']>;
-};
+  rx?: InputMaybe<Scalars['Float']['input']>
+  ry?: InputMaybe<Scalars['Float']['input']>
+  rz?: InputMaybe<Scalars['Float']['input']>
+}
 
 export type Experiment = {
-  __typename?: 'Experiment';
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: 'Experiment'
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+  description?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+}
 
 export type ExperimentProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ExperimentFilter = {
-  AND?: InputMaybe<ExperimentFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ExperimentFilter>;
-  OR?: InputMaybe<ExperimentFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<ExperimentFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ExperimentFilter>
+  OR?: InputMaybe<ExperimentFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type File = {
-  __typename?: 'File';
+  __typename?: 'File'
   /** The user who created this file */
-  creator: User;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  creator: User
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
   /** The organization this file belongs to */
-  organization: Organization;
-  origins: Array<Image>;
+  organization: Organization
+  origins: Array<Image>
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  store: BigFileStore;
-  views: Array<FileView>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  store: BigFileStore
+  views: Array<FileView>
+}
 
 export type FileOriginsArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ImageFilter>
+  order?: InputMaybe<ImageOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type FileProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type FileEvent = {
-  __typename?: 'FileEvent';
-  create?: Maybe<File>;
-  delete?: Maybe<Scalars['ID']['output']>;
-  moved?: Maybe<File>;
-  update?: Maybe<File>;
-};
+  __typename?: 'FileEvent'
+  create?: Maybe<File>
+  delete?: Maybe<Scalars['ID']['output']>
+  moved?: Maybe<File>
+  update?: Maybe<File>
+}
 
 export type FileFilter = {
-  AND?: InputMaybe<FileFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<FileFilter>;
-  OR?: InputMaybe<FileFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
-  owner?: InputMaybe<Scalars['ID']['input']>;
-  scope?: InputMaybe<ScopeKind>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<FileFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<FileFilter>
+  OR?: InputMaybe<FileFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  name?: InputMaybe<StrFilterLookup>
+  owner?: InputMaybe<Scalars['ID']['input']>
+  scope?: InputMaybe<ScopeKind>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type FileOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+  createdAt?: InputMaybe<Ordering>
+}
 
 export type FileView = View & {
-  __typename?: 'FileView';
+  __typename?: 'FileView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  file: File;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  seriesIdentifier?: Maybe<Scalars['String']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  file: File
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  seriesIdentifier?: Maybe<Scalars['String']['output']>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type FileViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type FileViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['ID']['input'];
-  image: Scalars['ID']['input'];
-  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  file: Scalars['ID']['input']
+  image: Scalars['ID']['input']
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 /** A filter */
 export type FilterElement = OpticalElement & {
-  __typename?: 'FilterElement';
-  id: Scalars['ID']['output'];
+  __typename?: 'FilterElement'
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type FloatFilterLookup = {
-  contains?: InputMaybe<Scalars['Float']['input']>;
-  endsWith?: InputMaybe<Scalars['Float']['input']>;
-  exact?: InputMaybe<Scalars['Float']['input']>;
-  gt?: InputMaybe<Scalars['Float']['input']>;
-  gte?: InputMaybe<Scalars['Float']['input']>;
-  iContains?: InputMaybe<Scalars['Float']['input']>;
-  iEndsWith?: InputMaybe<Scalars['Float']['input']>;
-  iExact?: InputMaybe<Scalars['Float']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['Float']['input']>;
-  inList?: InputMaybe<Array<Scalars['Float']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['Float']['input']>;
-  lte?: InputMaybe<Scalars['Float']['input']>;
-  range?: InputMaybe<Array<Scalars['Float']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['Float']['input']>;
-};
+  contains?: InputMaybe<Scalars['Float']['input']>
+  endsWith?: InputMaybe<Scalars['Float']['input']>
+  exact?: InputMaybe<Scalars['Float']['input']>
+  gt?: InputMaybe<Scalars['Float']['input']>
+  gte?: InputMaybe<Scalars['Float']['input']>
+  iContains?: InputMaybe<Scalars['Float']['input']>
+  iEndsWith?: InputMaybe<Scalars['Float']['input']>
+  iExact?: InputMaybe<Scalars['Float']['input']>
+  iRegex?: InputMaybe<Scalars['String']['input']>
+  iStartsWith?: InputMaybe<Scalars['Float']['input']>
+  inList?: InputMaybe<Array<Scalars['Float']['input']>>
+  isNull?: InputMaybe<Scalars['Boolean']['input']>
+  lt?: InputMaybe<Scalars['Float']['input']>
+  lte?: InputMaybe<Scalars['Float']['input']>
+  range?: InputMaybe<Array<Scalars['Float']['input']>>
+  regex?: InputMaybe<Scalars['String']['input']>
+  startsWith?: InputMaybe<Scalars['Float']['input']>
+}
 
 /** A channel descriptor */
 export type FrameInfo = {
-  __typename?: 'FrameInfo';
-  label: Scalars['String']['output'];
-};
+  __typename?: 'FrameInfo'
+  label: Scalars['String']['output']
+}
 
 /** Input type for creating an image from an array-like object */
 export type FromArrayLikeInput = {
   /** Optional list of acquisition views */
-  acquisitionViews?: InputMaybe<Array<PartialAcquisitionViewInput>>;
+  acquisitionViews?: InputMaybe<Array<PartialAcquisitionViewInput>>
   /** The array-like object to create the image from */
-  array: Scalars['ArrayLike']['input'];
+  array: Scalars['ArrayLike']['input']
   /** Optional list of channel views */
-  channelViews?: InputMaybe<Array<PartialChannelViewInput>>;
+  channelViews?: InputMaybe<Array<PartialChannelViewInput>>
   /** Optional dataset ID to associate the image with */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars['ID']['input']>
   /** Optional list of derived views */
-  derivedViews?: InputMaybe<Array<PartialDerivedViewInput>>;
+  derivedViews?: InputMaybe<Array<PartialDerivedViewInput>>
   /** Optional list of file views */
-  fileViews?: InputMaybe<Array<PartialFileViewInput>>;
+  fileViews?: InputMaybe<Array<PartialFileViewInput>>
   /** Optional list of instance mask views */
-  instanceMaskViews?: InputMaybe<Array<PartialInstanceMaskViewInput>>;
+  instanceMaskViews?: InputMaybe<Array<PartialInstanceMaskViewInput>>
   /** Optional list of lightpath views */
-  lightpathViews?: InputMaybe<Array<PartialLightpathViewInput>>;
+  lightpathViews?: InputMaybe<Array<PartialLightpathViewInput>>
   /** Optional list of mask views */
-  maskViews?: InputMaybe<Array<PartialMaskViewInput>>;
+  maskViews?: InputMaybe<Array<PartialMaskViewInput>>
   /** The name of the image */
-  name: Scalars['String']['input'];
+  name: Scalars['String']['input']
   /** Optional list of optics views */
-  opticsViews?: InputMaybe<Array<PartialOpticsViewInput>>;
+  opticsViews?: InputMaybe<Array<PartialOpticsViewInput>>
   /** Optional list of reference views */
-  referenceViews?: InputMaybe<Array<PartialReferenceViewInput>>;
+  referenceViews?: InputMaybe<Array<PartialReferenceViewInput>>
   /** Optional list of RGB views */
-  rgbViews?: InputMaybe<Array<PartialRgbViewInput>>;
+  rgbViews?: InputMaybe<Array<PartialRgbViewInput>>
   /** Optional list of ROI views */
-  roiViews?: InputMaybe<Array<PartialRoiViewInput>>;
+  roiViews?: InputMaybe<Array<PartialRoiViewInput>>
   /** Optional list of scale views */
-  scaleViews?: InputMaybe<Array<PartialScaleViewInput>>;
+  scaleViews?: InputMaybe<Array<PartialScaleViewInput>>
   /** Optional list of tags to associate with the image */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>
   /** Optional list of timepoint views */
-  timepointViews?: InputMaybe<Array<PartialTimepointViewInput>>;
+  timepointViews?: InputMaybe<Array<PartialTimepointViewInput>>
   /** Optional list of affine transformation views */
-  transformationViews?: InputMaybe<Array<PartialAffineTransformationViewInput>>;
-};
+  transformationViews?: InputMaybe<Array<PartialAffineTransformationViewInput>>
+}
 
 export type FromFileLike = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['FileLike']['input'];
-  fileName: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
-};
+  dataset?: InputMaybe<Scalars['ID']['input']>
+  file: Scalars['FileLike']['input']
+  fileName: Scalars['String']['input']
+  origins?: InputMaybe<Array<Scalars['ID']['input']>>
+}
 
 export type FromParquetLike = {
   /** The parquet dataframe to create the table from */
-  dataframe: Scalars['ParquetLike']['input'];
+  dataframe: Scalars['ParquetLike']['input']
   /** The dataset ID this table belongs to */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars['ID']['input']>
   /** Image accessors to create for this table */
-  imageAccessors?: InputMaybe<Array<PartialImageAccessorInput>>;
+  imageAccessors?: InputMaybe<Array<PartialImageAccessorInput>>
   /** Label accessors to create for this table */
-  labelAccessors?: InputMaybe<Array<PartialLabelAccessorInput>>;
+  labelAccessors?: InputMaybe<Array<PartialLabelAccessorInput>>
   /** The name of the table */
-  name: Scalars['String']['input'];
+  name: Scalars['String']['input']
   /** The IDs of tables this table was derived from */
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
-};
+  origins?: InputMaybe<Array<Scalars['ID']['input']>>
+}
 
 export enum Granularity {
   Day = 'DAY',
@@ -1155,65 +1141,64 @@ export enum Granularity {
 }
 
 export type HistogramView = View & {
-  __typename?: 'HistogramView';
+  __typename?: 'HistogramView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  bins: Array<Scalars['Float']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  bins: Array<Scalars['Float']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  histogram: Array<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  max: Scalars['Float']['output'];
-  min: Scalars['Float']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  histogram: Array<Scalars['Float']['output']>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  max: Scalars['Float']['output']
+  min: Scalars['Float']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type HistogramViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type HistogramViewInput = {
-  bins: Array<Scalars['Float']['input']>;
+  bins: Array<Scalars['Float']['input']>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  histogram: Array<Scalars['Float']['input']>;
-  image: Scalars['ID']['input'];
-  max: Scalars['Float']['input'];
-  min: Scalars['Float']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  histogram: Array<Scalars['Float']['input']>
+  image: Scalars['ID']['input']
+  max: Scalars['Float']['input']
+  min: Scalars['Float']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 /** The type of change that was made. */
 export enum HistoryKind {
@@ -1223,180 +1208,165 @@ export enum HistoryKind {
 }
 
 export type Image = {
-  __typename?: 'Image';
+  __typename?: 'Image'
   /** The affine transformation views describing position and scale */
-  affineTransformationViews: Array<AffineTransformationView>;
+  affineTransformationViews: Array<AffineTransformationView>
   /** Channel views relating to acquisition channels */
-  channelViews: Array<ChannelView>;
+  channelViews: Array<ChannelView>
   /** The channels of this image */
-  channels: Array<ChannelInfo>;
+  channels: Array<ChannelInfo>
   /** When this image was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars['DateTime']['output']
   /** Who created this image */
-  creator?: Maybe<User>;
+  creator?: Maybe<User>
   /** The dataset this image belongs to */
-  dataset?: Maybe<Dataset>;
+  dataset?: Maybe<Dataset>
   /** Views this image was derived from */
-  derivedFromViews: Array<DerivedView>;
+  derivedFromViews: Array<DerivedView>
   /** Instance mask views */
-  derivedInstanceMaskViews: Array<InstanceMaskView>;
+  derivedInstanceMaskViews: Array<InstanceMaskView>
   /** Scale views derived from this image */
-  derivedScaleViews: Array<ScaleView>;
+  derivedScaleViews: Array<ScaleView>
   /** Views derived from this image */
-  derivedViews: Array<DerivedView>;
+  derivedViews: Array<DerivedView>
   /** File views relating to source files */
-  fileViews: Array<FileView>;
+  fileViews: Array<FileView>
   /** The channels of this image */
-  frames: Array<FrameInfo>;
+  frames: Array<FrameInfo>
   /** Histogram views describing pixel value distribution */
-  histogramViews: Array<HistogramView>;
-  id: Scalars['ID']['output'];
+  histogramViews: Array<HistogramView>
+  id: Scalars['ID']['output']
   /** Instance mask views relating other Arkitekt types to a subsection of the image */
-  instanceMaskViews: Array<InstanceMaskView>;
+  instanceMaskViews: Array<InstanceMaskView>
   /** Label views mapping channels to labels */
-  labelViews: Array<LabelView>;
+  labelViews: Array<LabelView>
   /** The latest snapshot of this image */
-  latestSnapshot?: Maybe<Snapshot>;
+  latestSnapshot?: Maybe<Snapshot>
   /** Lightpath views describing the lightpath used to acquire this image */
-  lightpathViews: Array<LightpathView>;
+  lightpathViews: Array<LightpathView>
   /** Structure views relating other Arkitekt types to a subsection of the image */
-  maskViews: Array<MaskView>;
+  maskViews: Array<MaskView>
   /** The name of the image */
-  name: Scalars['String']['output'];
+  name: Scalars['String']['output']
   /** Optics views describing acquisition settings */
-  opticsViews: Array<OpticsView>;
+  opticsViews: Array<OpticsView>
   /** Is this image pinned by the current user */
-  pinned: Scalars['Boolean']['output'];
+  pinned: Scalars['Boolean']['output']
   /** The channels of this image */
-  planes: Array<PlaneInfo>;
+  planes: Array<PlaneInfo>
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
+  provenanceEntries: Array<ProvenanceEntry>
   /** Reference views describing relationships to other views */
-  referenceViews: Array<ReferenceView>;
-  renders: Array<Render>;
+  referenceViews: Array<ReferenceView>
+  renders: Array<Render>
   /** RGB rendering contexts */
-  rgbContexts: Array<RgbContext>;
+  rgbContexts: Array<RgbContext>
   /** Region of interest views */
-  roiViews: Array<RoiView>;
-  rois: Array<Roi>;
+  roiViews: Array<RoiView>
+  rois: Array<Roi>
   /** Scale views describing physical dimensions */
-  scaleViews: Array<ScaleView>;
+  scaleViews: Array<ScaleView>
   /** Associated snapshots */
-  snapshots: Array<Snapshot>;
+  snapshots: Array<Snapshot>
   /** The store where the image data is stored. */
-  store: ZarrStore;
+  store: ZarrStore
   /** The tags of this image */
-  tags: Array<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>
   /** Timepoint views describing temporal relationships */
-  timepointViews: Array<TimepointView>;
+  timepointViews: Array<TimepointView>
   /** Associated videos */
-  videos: Array<Video>;
+  videos: Array<Video>
   /** All views of this image */
-  views: Array<View>;
-};
-
+  views: Array<View>
+}
 
 export type ImageAffineTransformationViewsArgs = {
-  filters?: InputMaybe<AffineTransformationViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<AffineTransformationViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageDerivedInstanceMaskViewsArgs = {
-  filters?: InputMaybe<InstanceMaskViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<InstanceMaskViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageInstanceMaskViewsArgs = {
-  filters?: InputMaybe<InstanceMaskViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<InstanceMaskViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageLightpathViewsArgs = {
-  filters?: InputMaybe<OpticsViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<OpticsViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageMaskViewsArgs = {
-  filters?: InputMaybe<MaskViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<MaskViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageOpticsViewsArgs = {
-  filters?: InputMaybe<OpticsViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<OpticsViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageReferenceViewsArgs = {
-  filters?: InputMaybe<ReferenceViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ReferenceViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageRendersArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<RenderKind>>;
-};
-
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<RenderKind>>
+}
 
 export type ImageRgbContextsArgs = {
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RgbContextFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageRoisArgs = {
-  filters?: InputMaybe<RoiFilter>;
-};
-
+  filters?: InputMaybe<RoiFilter>
+}
 
 export type ImageSnapshotsArgs = {
-  filters?: InputMaybe<SnapshotFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<SnapshotFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageTimepointViewsArgs = {
-  filters?: InputMaybe<TimepointViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<TimepointViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageVideosArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ImageViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type ImageAccessor = Accessor & {
-  __typename?: 'ImageAccessor';
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
-  table: Table;
-};
+  __typename?: 'ImageAccessor'
+  id: Scalars['ID']['output']
+  keys: Array<Scalars['String']['output']>
+  maxIndex?: Maybe<Scalars['Int']['output']>
+  minIndex?: Maybe<Scalars['Int']['output']>
+  table: Table
+}
 
 export type ImageEvent = {
-  __typename?: 'ImageEvent';
-  create?: Maybe<Image>;
-  delete?: Maybe<Scalars['ID']['output']>;
-  update?: Maybe<Image>;
-};
+  __typename?: 'ImageEvent'
+  create?: Maybe<Image>
+  delete?: Maybe<Scalars['ID']['output']>
+  update?: Maybe<Image>
+}
 
 /** Numeric/aggregatable fields of Image */
 export enum ImageField {
@@ -1404,75 +1374,69 @@ export enum ImageField {
 }
 
 export type ImageFilter = {
-  AND?: InputMaybe<ImageFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ImageFilter>;
-  OR?: InputMaybe<ImageFilter>;
-  dataset?: InputMaybe<DatasetFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
-  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
-  owner?: InputMaybe<Scalars['ID']['input']>;
-  scope?: InputMaybe<ScopeFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  store?: InputMaybe<ZarrStoreFilter>;
-  timepointViews?: InputMaybe<TimepointViewFilter>;
-  transformationViews?: InputMaybe<AffineTransformationViewFilter>;
-};
+  AND?: InputMaybe<ImageFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ImageFilter>
+  OR?: InputMaybe<ImageFilter>
+  dataset?: InputMaybe<DatasetFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  name?: InputMaybe<StrFilterLookup>
+  notDerived?: InputMaybe<Scalars['Boolean']['input']>
+  owner?: InputMaybe<Scalars['ID']['input']>
+  scope?: InputMaybe<ScopeFilter>
+  search?: InputMaybe<Scalars['String']['input']>
+  store?: InputMaybe<ZarrStoreFilter>
+  timepointViews?: InputMaybe<TimepointViewFilter>
+  transformationViews?: InputMaybe<AffineTransformationViewFilter>
+}
 
 export type ImageOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+  createdAt?: InputMaybe<Ordering>
+}
 
 export type ImageStats = {
-  __typename?: 'ImageStats';
+  __typename?: 'ImageStats'
   /** Average */
-  avg?: Maybe<Scalars['Float']['output']>;
+  avg?: Maybe<Scalars['Float']['output']>
   /** Total number of items in the selection */
-  count: Scalars['Int']['output'];
+  count: Scalars['Int']['output']
   /** Number of distinct values for the field */
-  distinctCount: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output']
   /** Maximum */
-  max?: Maybe<Scalars['Float']['output']>;
+  max?: Maybe<Scalars['Float']['output']>
   /** Minimum */
-  min?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>
   /** Time-bucketed stats over a datetime field. */
-  series: Array<TimeBucket>;
+  series: Array<TimeBucket>
   /** Sum */
-  sum?: Maybe<Scalars['Float']['output']>;
-};
-
+  sum?: Maybe<Scalars['Float']['output']>
+}
 
 export type ImageStatsAvgArgs = {
-  field: ImageField;
-};
-
+  field: ImageField
+}
 
 export type ImageStatsDistinctCountArgs = {
-  field: ImageField;
-};
-
+  field: ImageField
+}
 
 export type ImageStatsMaxArgs = {
-  field: ImageField;
-};
-
+  field: ImageField
+}
 
 export type ImageStatsMinArgs = {
-  field: ImageField;
-};
-
+  field: ImageField
+}
 
 export type ImageStatsSeriesArgs = {
-  by: Granularity;
-  field: ImageField;
-  timestampField: ImageTimestampField;
-};
-
+  by: Granularity
+  field: ImageField
+  timestampField: ImageTimestampField
+}
 
 export type ImageStatsSumArgs = {
-  field: ImageField;
-};
+  field: ImageField
+}
 
 /** Datetime fields of Image for bucketing */
 export enum ImageTimestampField {
@@ -1480,1218 +1444,1116 @@ export enum ImageTimestampField {
 }
 
 export type InstanceMaskView = View & {
-  __typename?: 'InstanceMaskView';
+  __typename?: 'InstanceMaskView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  labels?: Maybe<ParquetStore>;
-  operation?: Maybe<Scalars['String']['output']>;
-  referenceView: ReferenceView;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  labels?: Maybe<ParquetStore>
+  operation?: Maybe<Scalars['String']['output']>
+  referenceView: ReferenceView
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type InstanceMaskViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type InstanceMaskViewFilter = {
-  AND?: InputMaybe<InstanceMaskViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<InstanceMaskViewFilter>;
-  OR?: InputMaybe<InstanceMaskViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<InstanceMaskViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<InstanceMaskViewFilter>
+  OR?: InputMaybe<InstanceMaskViewFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  image?: InputMaybe<Scalars['ID']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type InstanceMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  labels?: InputMaybe<Scalars['LabelsLike']['input']>;
-  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  labels?: InputMaybe<Scalars['LabelsLike']['input']>
+  referenceView?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type InstanceMaskViewLabel = {
-  __typename?: 'InstanceMaskViewLabel';
-  id: Scalars['String']['output'];
-  mask: InstanceMaskView;
-  values: Scalars['Any']['output'];
-};
+  __typename?: 'InstanceMaskViewLabel'
+  id: Scalars['String']['output']
+  mask: InstanceMaskView
+  values: Scalars['Any']['output']
+}
 
 export type Instrument = {
-  __typename?: 'Instrument';
-  id: Scalars['ID']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  organization: DjangoModelType;
-  serialNumber: Scalars['String']['output'];
-  views: Array<OpticsView>;
-};
-
+  __typename?: 'Instrument'
+  id: Scalars['ID']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  name: Scalars['String']['output']
+  organization: DjangoModelType
+  serialNumber: Scalars['String']['output']
+  views: Array<OpticsView>
+}
 
 export type InstrumentViewsArgs = {
-  filters?: InputMaybe<OpticsViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<OpticsViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type InstrumentFilter = {
-  AND?: InputMaybe<InstrumentFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<InstrumentFilter>;
-  OR?: InputMaybe<InstrumentFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<InstrumentFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<InstrumentFilter>
+  OR?: InputMaybe<InstrumentFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+}
 
 export type InstrumentInput = {
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  serialNumber: Scalars['String']['input'];
-};
+  manufacturer?: InputMaybe<Scalars['String']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+  serialNumber: Scalars['String']['input']
+}
 
 export type IntFilterLookup = {
-  contains?: InputMaybe<Scalars['Int']['input']>;
-  endsWith?: InputMaybe<Scalars['Int']['input']>;
-  exact?: InputMaybe<Scalars['Int']['input']>;
-  gt?: InputMaybe<Scalars['Int']['input']>;
-  gte?: InputMaybe<Scalars['Int']['input']>;
-  iContains?: InputMaybe<Scalars['Int']['input']>;
-  iEndsWith?: InputMaybe<Scalars['Int']['input']>;
-  iExact?: InputMaybe<Scalars['Int']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['Int']['input']>;
-  inList?: InputMaybe<Array<Scalars['Int']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['Int']['input']>;
-  lte?: InputMaybe<Scalars['Int']['input']>;
-  range?: InputMaybe<Array<Scalars['Int']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['Int']['input']>;
-};
+  contains?: InputMaybe<Scalars['Int']['input']>
+  endsWith?: InputMaybe<Scalars['Int']['input']>
+  exact?: InputMaybe<Scalars['Int']['input']>
+  gt?: InputMaybe<Scalars['Int']['input']>
+  gte?: InputMaybe<Scalars['Int']['input']>
+  iContains?: InputMaybe<Scalars['Int']['input']>
+  iEndsWith?: InputMaybe<Scalars['Int']['input']>
+  iExact?: InputMaybe<Scalars['Int']['input']>
+  iRegex?: InputMaybe<Scalars['String']['input']>
+  iStartsWith?: InputMaybe<Scalars['Int']['input']>
+  inList?: InputMaybe<Array<Scalars['Int']['input']>>
+  isNull?: InputMaybe<Scalars['Boolean']['input']>
+  lt?: InputMaybe<Scalars['Int']['input']>
+  lte?: InputMaybe<Scalars['Int']['input']>
+  range?: InputMaybe<Array<Scalars['Int']['input']>>
+  regex?: InputMaybe<Scalars['String']['input']>
+  startsWith?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type LabelAccessor = Accessor & {
-  __typename?: 'LabelAccessor';
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maskView: MaskView;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
-  table: Table;
-};
+  __typename?: 'LabelAccessor'
+  id: Scalars['ID']['output']
+  keys: Array<Scalars['String']['output']>
+  maskView: MaskView
+  maxIndex?: Maybe<Scalars['Int']['output']>
+  minIndex?: Maybe<Scalars['Int']['output']>
+  table: Table
+}
 
 export type LabelView = View & {
-  __typename?: 'LabelView';
+  __typename?: 'LabelView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  label: Scalars['String']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  label: Scalars['String']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type LabelViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type LabelViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  label: Scalars['String']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  label: Scalars['String']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 /** Light source */
 export type LampElement = OpticalElement & {
-  __typename?: 'LampElement';
-  channel?: Maybe<ChannelKind>;
-  id: Scalars['ID']['output'];
+  __typename?: 'LampElement'
+  channel?: Maybe<ChannelKind>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  lampType?: Maybe<Scalars['String']['output']>;
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  lampType?: Maybe<Scalars['String']['output']>
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** Light source */
 export type LaserElement = OpticalElement & {
-  __typename?: 'LaserElement';
-  channel?: Maybe<ChannelKind>;
-  hasPockelsCell?: Maybe<Scalars['Boolean']['output']>;
-  hasQSwitch?: Maybe<Scalars['Boolean']['output']>;
-  id: Scalars['ID']['output'];
+  __typename?: 'LaserElement'
+  channel?: Maybe<ChannelKind>
+  hasPockelsCell?: Maybe<Scalars['Boolean']['output']>
+  hasQSwitch?: Maybe<Scalars['Boolean']['output']>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  laserMedium?: Maybe<Scalars['String']['output']>;
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  nominalWavelengthNm?: Maybe<Scalars['Float']['output']>;
+  label: Scalars['String']['output']
+  laserMedium?: Maybe<Scalars['String']['output']>
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  nominalWavelengthNm?: Maybe<Scalars['Float']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  powerMw?: Maybe<Scalars['Float']['output']>;
-  pulseKind?: Maybe<PulseKind>;
-  repetitionRateHz?: Maybe<Scalars['Float']['output']>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  powerMw?: Maybe<Scalars['Float']['output']>
+  pulseKind?: Maybe<PulseKind>
+  repetitionRateHz?: Maybe<Scalars['Float']['output']>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** Thin lens */
 export type LensElement = OpticalElement & {
-  __typename?: 'LensElement';
-  focalLengthMm: Scalars['Float']['output'];
-  id: Scalars['ID']['output'];
+  __typename?: 'LensElement'
+  focalLengthMm: Scalars['Float']['output']
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** Directed edge connecting two ports */
 export type LightEdge = {
-  __typename?: 'LightEdge';
-  beam?: Maybe<BeamState>;
-  id: Scalars['ID']['output'];
-  lossDb?: Maybe<Scalars['Float']['output']>;
-  medium?: Maybe<Scalars['String']['output']>;
-  pathLengthMm?: Maybe<Scalars['Float']['output']>;
-  sourceElementId: Scalars['ID']['output'];
-  sourcePortId: Scalars['ID']['output'];
-  targetElementId: Scalars['ID']['output'];
-  targetPortId: Scalars['ID']['output'];
-};
+  __typename?: 'LightEdge'
+  beam?: Maybe<BeamState>
+  id: Scalars['ID']['output']
+  lossDb?: Maybe<Scalars['Float']['output']>
+  medium?: Maybe<Scalars['String']['output']>
+  pathLengthMm?: Maybe<Scalars['Float']['output']>
+  sourceElementId: Scalars['ID']['output']
+  sourcePortId: Scalars['ID']['output']
+  targetElementId: Scalars['ID']['output']
+  targetPortId: Scalars['ID']['output']
+}
 
 /** Input for connecting two optical ports. */
 export type LightEdgeInput = {
-  beam?: InputMaybe<BeamStateInput>;
-  id: Scalars['String']['input'];
-  lossDb?: InputMaybe<Scalars['Float']['input']>;
-  medium?: InputMaybe<Scalars['String']['input']>;
-  pathLengthMm?: InputMaybe<Scalars['Float']['input']>;
-  sourceElementId: Scalars['ID']['input'];
-  sourcePortId: Scalars['ID']['input'];
-  targetElementId: Scalars['ID']['input'];
-  targetPortId: Scalars['ID']['input'];
-};
+  beam?: InputMaybe<BeamStateInput>
+  id: Scalars['String']['input']
+  lossDb?: InputMaybe<Scalars['Float']['input']>
+  medium?: InputMaybe<Scalars['String']['input']>
+  pathLengthMm?: InputMaybe<Scalars['Float']['input']>
+  sourceElementId: Scalars['ID']['input']
+  sourcePortId: Scalars['ID']['input']
+  targetElementId: Scalars['ID']['input']
+  targetPortId: Scalars['ID']['input']
+}
 
 /** Optical port on an element */
 export type LightPort = {
-  __typename?: 'LightPort';
-  channel: ChannelKind;
-  id: Scalars['ID']['output'];
-  maxIncomingEdges?: Maybe<Scalars['Int']['output']>;
-  name: Scalars['String']['output'];
-  role: PortRole;
-  spectrum?: Maybe<Spectrum>;
-};
+  __typename?: 'LightPort'
+  channel: ChannelKind
+  id: Scalars['ID']['output']
+  maxIncomingEdges?: Maybe<Scalars['Int']['output']>
+  name: Scalars['String']['output']
+  role: PortRole
+  spectrum?: Maybe<Spectrum>
+}
 
 /** Input definition for an optical port on an element. */
 export type LightPortInput = {
-  channel?: ChannelKind;
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
-  role: PortRole;
-  spectrum?: InputMaybe<SpectrumInput>;
-};
+  channel?: ChannelKind
+  id: Scalars['ID']['input']
+  name: Scalars['String']['input']
+  role: PortRole
+  spectrum?: InputMaybe<SpectrumInput>
+}
 
 /** Graph of optical elements and edges */
 export type LightpathGraph = {
-  __typename?: 'LightpathGraph';
-  edges: Array<LightEdge>;
-  elements: Array<OpticalElement>;
-};
+  __typename?: 'LightpathGraph'
+  edges: Array<LightEdge>
+  elements: Array<OpticalElement>
+}
 
 /** Bulk input for a full lightpath graph, including elements and edges. */
 export type LightpathGraphInput = {
-  edges: Array<LightEdgeInput>;
-  elements: Array<OpticalElementInput>;
-};
+  edges: Array<LightEdgeInput>
+  elements: Array<OpticalElementInput>
+}
 
 export type LightpathView = View & {
-  __typename?: 'LightpathView';
+  __typename?: 'LightpathView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
+  congruentViews: Array<View>
   /** The lightpath graph describing the lightpath used to acquire this image */
-  graph: LightpathGraph;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  graph: LightpathGraph
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type LightpathViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type MaskView = View & {
-  __typename?: 'MaskView';
+  __typename?: 'MaskView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  labels?: Maybe<ParquetStore>;
-  referenceView: ReferenceView;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  labels?: Maybe<ParquetStore>
+  referenceView: ReferenceView
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type MaskViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type MaskViewFilter = {
-  AND?: InputMaybe<MaskViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<MaskViewFilter>;
-  OR?: InputMaybe<MaskViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<MaskViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<MaskViewFilter>
+  OR?: InputMaybe<MaskViewFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  image?: InputMaybe<Scalars['ID']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type MaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  labels?: InputMaybe<Scalars['LabelsLike']['input']>;
-  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  labels?: InputMaybe<Scalars['LabelsLike']['input']>
+  referenceView?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type MaskedPixelInfo = {
-  __typename?: 'MaskedPixelInfo';
-  color: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-};
+  __typename?: 'MaskedPixelInfo'
+  color: Scalars['String']['output']
+  label: Scalars['String']['output']
+}
 
 export type MediaStore = {
-  __typename?: 'MediaStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
-};
-
+  __typename?: 'MediaStore'
+  bucket: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  key: Scalars['String']['output']
+  path: Scalars['String']['output']
+  presignedUrl: Scalars['String']['output']
+}
 
 export type MediaStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
-};
+  host?: InputMaybe<Scalars['String']['input']>
+}
 
 export type Membership = {
-  __typename?: 'Membership';
-  datasets: Array<Dataset>;
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  organization: Organization;
-  roles: Array<Scalars['String']['output']>;
-  user: User;
-};
-
+  __typename?: 'Membership'
+  datasets: Array<Dataset>
+  id: Scalars['String']['output']
+  isActive: Scalars['Boolean']['output']
+  organization: Organization
+  roles: Array<Scalars['String']['output']>
+  user: User
+}
 
 export type MembershipDatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<DatasetFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type Mesh = {
-  __typename?: 'Mesh';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  store: MeshStore;
-};
+  __typename?: 'Mesh'
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  store: MeshStore
+}
 
 export type MeshFilter = {
-  AND?: InputMaybe<MeshFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<MeshFilter>;
-  OR?: InputMaybe<MeshFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<MeshFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<MeshFilter>
+  OR?: InputMaybe<MeshFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type MeshInput = {
-  mesh: Scalars['MeshLike']['input'];
-  name: Scalars['String']['input'];
-};
+  mesh: Scalars['MeshLike']['input']
+  name: Scalars['String']['input']
+}
 
 export type MeshStore = {
-  __typename?: 'MeshStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
-};
-
+  __typename?: 'MeshStore'
+  bucket: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  key: Scalars['String']['output']
+  path: Scalars['String']['output']
+  presignedUrl: Scalars['String']['output']
+}
 
 export type MeshStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
-};
+  host?: InputMaybe<Scalars['String']['input']>
+}
 
 /** Mirror */
 export type MirrorElement = OpticalElement & {
-  __typename?: 'MirrorElement';
-  angleDeg?: Maybe<Scalars['Float']['output']>;
-  band?: Maybe<Spectrum>;
-  id: Scalars['ID']['output'];
+  __typename?: 'MirrorElement'
+  angleDeg?: Maybe<Scalars['Float']['output']>
+  band?: Maybe<Spectrum>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** A change made to a model. */
 export type ModelChange = {
-  __typename?: 'ModelChange';
+  __typename?: 'ModelChange'
   /** The field that was changed. */
-  field: Scalars['String']['output'];
+  field: Scalars['String']['output']
   /** The new value of the field. */
-  newValue?: Maybe<Scalars['String']['output']>;
+  newValue?: Maybe<Scalars['String']['output']>
   /** The old value of the field. */
-  oldValue?: Maybe<Scalars['String']['output']>;
-};
+  oldValue?: Maybe<Scalars['String']['output']>
+}
 
 export type MultiWellPlate = {
-  __typename?: 'MultiWellPlate';
-  columns?: Maybe<Scalars['Int']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  rows?: Maybe<Scalars['Int']['output']>;
-  views: Array<WellPositionView>;
-};
-
+  __typename?: 'MultiWellPlate'
+  columns?: Maybe<Scalars['Int']['output']>
+  description?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
+  name?: Maybe<Scalars['String']['output']>
+  rows?: Maybe<Scalars['Int']['output']>
+  views: Array<WellPositionView>
+}
 
 export type MultiWellPlateViewsArgs = {
-  filters?: InputMaybe<WellPositionViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<WellPositionViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type MultiWellPlateFilter = {
-  AND?: InputMaybe<MultiWellPlateFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<MultiWellPlateFilter>;
-  OR?: InputMaybe<MultiWellPlateFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<MultiWellPlateFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<MultiWellPlateFilter>
+  OR?: InputMaybe<MultiWellPlateFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type MultiWellPlateInput = {
-  columns?: InputMaybe<Scalars['Int']['input']>;
-  name: Scalars['String']['input'];
-  rows?: InputMaybe<Scalars['Int']['input']>;
-};
+  columns?: InputMaybe<Scalars['Int']['input']>
+  name: Scalars['String']['input']
+  rows?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type Mutation = {
-  __typename?: 'Mutation';
+  __typename?: 'Mutation'
   /** Assign a user permission to an object */
-  assignUserPermission: Array<UserObjectPermission>;
+  assignUserPermission: Array<UserObjectPermission>
   /** Create a new view for affine transformation data */
-  createAffineTransformationView: AffineTransformationView;
+  createAffineTransformationView: AffineTransformationView
   /** Create a new camera configuration */
-  createCamera: Camera;
+  createCamera: Camera
   /** Create a new view for channel data */
-  createChannelView: ChannelView;
+  createChannelView: ChannelView
   /** Create a new view for continuous scan data */
-  createContinousScanView: ContinousScanView;
+  createContinousScanView: ContinousScanView
   /** Create a new dataset to organize data */
-  createDataset: Dataset;
+  createDataset: Dataset
   /** Create a new era for temporal organization */
-  createEra: Era;
+  createEra: Era
   /** Create a new view for file data */
-  createFileView: FileView;
+  createFileView: FileView
   /** Create a new view for histogram data */
-  createHistogramView: HistogramView;
+  createHistogramView: HistogramView
   /** Create a new view for instance mask data */
-  createInstanceMaskView: InstanceMaskView;
+  createInstanceMaskView: InstanceMaskView
   /** Create a new instrument configuration */
-  createInstrument: Instrument;
+  createInstrument: Instrument
   /** Create a new view for label data */
-  createLabelView: LabelView;
+  createLabelView: LabelView
   /** Create a new view for masked data */
-  createMaskView: MaskView;
+  createMaskView: MaskView
   /** Create a new mesh */
-  createMesh: Mesh;
+  createMesh: Mesh
   /** Create a new multi-well plate configuration */
-  createMultiWellPlate: MultiWellPlate;
+  createMultiWellPlate: MultiWellPlate
   /** Create a new microscope objective configuration */
-  createObjective: Objective;
+  createObjective: Objective
   /** Create a new view for optical settings */
-  createOpticsView: OpticsView;
+  createOpticsView: OpticsView
   /** Create a new reference view for image data */
-  createReferenceView: ReferenceView;
+  createReferenceView: ReferenceView
   /** Create a new render tree for image visualization */
-  createRenderTree: RenderTree;
+  createRenderTree: RenderTree
   /** Create a new RGB context for image visualization */
-  createRgbContext: RgbContext;
+  createRgbContext: RgbContext
   /** Create a new view for RGB image data */
-  createRgbView: RgbView;
+  createRgbView: RgbView
   /** Create a new region of interest */
-  createRoi: Roi;
+  createRoi: Roi
   /** Create a new view for region of interest data */
-  createRoiView: RoiView;
+  createRoiView: RoiView
   /** Create a new state snapshot */
-  createSnapshot: Snapshot;
+  createSnapshot: Snapshot
   /** Create a new stage for organizing data */
-  createStage: Stage;
+  createStage: Stage
   /** Create a new view for temporal data */
-  createTimepointView: TimepointView;
+  createTimepointView: TimepointView
   /** Create a new collection of views to organize related views */
-  createViewCollection: ViewCollection;
+  createViewCollection: ViewCollection
   /** Create a new view for well position data */
-  createWellPositionView: WellPositionView;
+  createWellPositionView: WellPositionView
   /** Delete an existing affine transformation view */
-  deleteAffineTransformationView: Scalars['ID']['output'];
+  deleteAffineTransformationView: Scalars['ID']['output']
   /** Delete an existing camera */
-  deleteCamera: Scalars['ID']['output'];
+  deleteCamera: Scalars['ID']['output']
   /** Delete an existing channel view */
-  deleteChannelView: Scalars['ID']['output'];
+  deleteChannelView: Scalars['ID']['output']
   /** Delete an existing dataset */
-  deleteDataset: Scalars['ID']['output'];
+  deleteDataset: Scalars['ID']['output']
   /** Delete an existing era */
-  deleteEra: Scalars['ID']['output'];
+  deleteEra: Scalars['ID']['output']
   /** Delete an existing file */
-  deleteFile: Scalars['ID']['output'];
+  deleteFile: Scalars['ID']['output']
   /** Delete an existing histogram view */
-  deleteHistogramView: Scalars['ID']['output'];
+  deleteHistogramView: Scalars['ID']['output']
   /** Delete an existing image */
-  deleteImage: Scalars['ID']['output'];
+  deleteImage: Scalars['ID']['output']
   /** Delete an existing instrument */
-  deleteInstrument: Scalars['ID']['output'];
+  deleteInstrument: Scalars['ID']['output']
   /** Delete an existing mesh */
-  deleteMesh: Scalars['ID']['output'];
+  deleteMesh: Scalars['ID']['output']
   /** Delete an existing multi-well plate configuration */
-  deleteMultiWellPlate: Scalars['ID']['output'];
+  deleteMultiWellPlate: Scalars['ID']['output']
   /** Delete an existing objective */
-  deleteObjective: Scalars['ID']['output'];
+  deleteObjective: Scalars['ID']['output']
   /** Delete an existing optics view */
-  deleteOpticsView: Scalars['ID']['output'];
+  deleteOpticsView: Scalars['ID']['output']
   /** Delete an existing RGB context */
-  deleteRgbContext: Scalars['ID']['output'];
+  deleteRgbContext: Scalars['ID']['output']
   /** Delete an existing RGB view */
-  deleteRgbView: Scalars['ID']['output'];
+  deleteRgbView: Scalars['ID']['output']
   /** Delete an existing region of interest */
-  deleteRoi: Scalars['ID']['output'];
+  deleteRoi: Scalars['ID']['output']
   /** Delete an existing snapshot */
-  deleteSnapshot: Scalars['ID']['output'];
+  deleteSnapshot: Scalars['ID']['output']
   /** Delete an existing stage */
-  deleteStage: Scalars['ID']['output'];
+  deleteStage: Scalars['ID']['output']
   /** Delete an existing timepoint view */
-  deleteTimepointView: Scalars['ID']['output'];
+  deleteTimepointView: Scalars['ID']['output']
   /** Delete any type of view */
-  deleteView: Scalars['ID']['output'];
+  deleteView: Scalars['ID']['output']
   /** Delete an existing view collection */
-  deleteViewCollection: Scalars['ID']['output'];
+  deleteViewCollection: Scalars['ID']['output']
   /** Ensure a camera exists, creating if needed */
-  ensureCamera: Camera;
+  ensureCamera: Camera
   /** Create a new dataset to organize data */
-  ensureDataset: Dataset;
+  ensureDataset: Dataset
   /** Ensure an instrument exists, creating if needed */
-  ensureInstrument: Instrument;
+  ensureInstrument: Instrument
   /** Ensure a multi-well plate exists, creating if needed */
-  ensureMultiWellPlate: MultiWellPlate;
+  ensureMultiWellPlate: MultiWellPlate
   /** Ensure an objective exists, creating if needed */
-  ensureObjective: Objective;
+  ensureObjective: Objective
   /** Create an image from array-like data */
-  fromArrayLike: Image;
+  fromArrayLike: Image
   /** Create a file from file-like data */
-  fromFileLike: File;
+  fromFileLike: File
   /** Create a table from parquet-like data */
-  fromParquetLike: Table;
+  fromParquetLike: Table
   /** Pin a camera for quick access */
-  pinCamera: Camera;
+  pinCamera: Camera
   /** Pin a dataset for quick access */
-  pinDataset: Dataset;
+  pinDataset: Dataset
   /** Pin an era for quick access */
-  pinEra: Era;
+  pinEra: Era
   /** Pin an image for quick access */
-  pinImage: Image;
+  pinImage: Image
   /** Pin an instrument for quick access */
-  pinInstrument: Instrument;
+  pinInstrument: Instrument
   /** Pin a mesh for quick access */
-  pinMesh: Snapshot;
+  pinMesh: Snapshot
   /** Pin a multi-well plate for quick access */
-  pinMultiWellPlate: MultiWellPlate;
+  pinMultiWellPlate: MultiWellPlate
   /** Pin an objective for quick access */
-  pinObjective: Objective;
+  pinObjective: Objective
   /** Pin a region of interest for quick access */
-  pinRoi: Roi;
+  pinRoi: Roi
   /** Pin a snapshot for quick access */
-  pinSnapshot: Snapshot;
+  pinSnapshot: Snapshot
   /** Pin a stage for quick access */
-  pinStage: Stage;
+  pinStage: Stage
   /** Pin a view for quick access */
-  pinView: View;
+  pinView: View
   /** Pin a view collection for quick access */
-  pinViewCollection: ViewCollection;
+  pinViewCollection: ViewCollection
   /** Add datasets as children of another dataset */
-  putDatasetsInDataset: Dataset;
+  putDatasetsInDataset: Dataset
   /** Add files to a dataset */
-  putFilesInDataset: Dataset;
+  putFilesInDataset: Dataset
   /** Add images to a dataset */
-  putImagesInDataset: Dataset;
+  putImagesInDataset: Dataset
   /** Relate an image to a dataset */
-  relateToDataset: Image;
+  relateToDataset: Image
   /** Remove datasets from being children of another dataset */
-  releaseDatasetsFromDataset: Dataset;
+  releaseDatasetsFromDataset: Dataset
   /** Remove files from a dataset */
-  releaseFilesFromDataset: Dataset;
+  releaseFilesFromDataset: Dataset
   /** Remove images from a dataset */
-  releaseImagesFromDataset: Dataset;
+  releaseImagesFromDataset: Dataset
   /** Request credentials to access an image */
-  requestAccess: AccessCredentials;
+  requestAccess: AccessCredentials
   /** Request credentials to access a file */
-  requestFileAccess: AccessCredentials;
+  requestFileAccess: AccessCredentials
   /** Request credentials to upload a new file */
-  requestFileUpload: Credentials;
+  requestFileUpload: Credentials
   /** Request presigned credentials for file upload */
-  requestFileUploadPresigned: PresignedPostCredentials;
+  requestFileUploadPresigned: PresignedPostCredentials
   /** Request credentials for media file upload */
-  requestMediaUpload: PresignedPostCredentials;
+  requestMediaUpload: PresignedPostCredentials
   /** Request presigned credentials for mesh upload */
-  requestMeshUpload: PresignedPostCredentials;
+  requestMeshUpload: PresignedPostCredentials
   /** Request credentials to access a table */
-  requestTableAccess: AccessCredentials;
+  requestTableAccess: AccessCredentials
   /** Request credentials to upload a new table */
-  requestTableUpload: Credentials;
+  requestTableUpload: Credentials
   /** Request credentials to upload a new image */
-  requestUpload: Credentials;
+  requestUpload: Credentials
   /** Revert dataset to a previous version */
-  revertDataset: Dataset;
+  revertDataset: Dataset
   /** Update dataset metadata */
-  updateDataset: Dataset;
+  updateDataset: Dataset
   /** Update an existing image's metadata */
-  updateImage: Image;
+  updateImage: Image
   /** Update settings of an existing RGB context */
-  updateRgbContext: RgbContext;
+  updateRgbContext: RgbContext
   /** Update an existing RGB view */
-  updateRgbView: RgbView;
+  updateRgbView: RgbView
   /** Update an existing region of interest */
-  updateRoi: Roi;
-};
-
+  updateRoi: Roi
+}
 
 export type MutationAssignUserPermissionArgs = {
-  input: AssignUserPermissionInput;
-};
-
+  input: AssignUserPermissionInput
+}
 
 export type MutationCreateAffineTransformationViewArgs = {
-  input: AffineTransformationViewInput;
-};
-
+  input: AffineTransformationViewInput
+}
 
 export type MutationCreateCameraArgs = {
-  input: CameraInput;
-};
-
+  input: CameraInput
+}
 
 export type MutationCreateChannelViewArgs = {
-  input: ChannelViewInput;
-};
-
+  input: ChannelViewInput
+}
 
 export type MutationCreateContinousScanViewArgs = {
-  input: ContinousScanViewInput;
-};
-
+  input: ContinousScanViewInput
+}
 
 export type MutationCreateDatasetArgs = {
-  input: CreateDatasetInput;
-};
-
+  input: CreateDatasetInput
+}
 
 export type MutationCreateEraArgs = {
-  input: EraInput;
-};
-
+  input: EraInput
+}
 
 export type MutationCreateFileViewArgs = {
-  input: FileViewInput;
-};
-
+  input: FileViewInput
+}
 
 export type MutationCreateHistogramViewArgs = {
-  input: HistogramViewInput;
-};
-
+  input: HistogramViewInput
+}
 
 export type MutationCreateInstanceMaskViewArgs = {
-  input: InstanceMaskViewInput;
-};
-
+  input: InstanceMaskViewInput
+}
 
 export type MutationCreateInstrumentArgs = {
-  input: InstrumentInput;
-};
-
+  input: InstrumentInput
+}
 
 export type MutationCreateLabelViewArgs = {
-  input: LabelViewInput;
-};
-
+  input: LabelViewInput
+}
 
 export type MutationCreateMaskViewArgs = {
-  input: MaskViewInput;
-};
-
+  input: MaskViewInput
+}
 
 export type MutationCreateMeshArgs = {
-  input: MeshInput;
-};
-
+  input: MeshInput
+}
 
 export type MutationCreateMultiWellPlateArgs = {
-  input: MultiWellPlateInput;
-};
-
+  input: MultiWellPlateInput
+}
 
 export type MutationCreateObjectiveArgs = {
-  input: ObjectiveInput;
-};
-
+  input: ObjectiveInput
+}
 
 export type MutationCreateOpticsViewArgs = {
-  input: OpticsViewInput;
-};
-
+  input: OpticsViewInput
+}
 
 export type MutationCreateReferenceViewArgs = {
-  input: ReferenceViewInput;
-};
-
+  input: ReferenceViewInput
+}
 
 export type MutationCreateRenderTreeArgs = {
-  input: RenderTreeInput;
-};
-
+  input: RenderTreeInput
+}
 
 export type MutationCreateRgbContextArgs = {
-  input: CreateRgbContextInput;
-};
-
+  input: CreateRgbContextInput
+}
 
 export type MutationCreateRgbViewArgs = {
-  input: RgbViewInput;
-};
-
+  input: RgbViewInput
+}
 
 export type MutationCreateRoiArgs = {
-  input: RoiInput;
-};
-
+  input: RoiInput
+}
 
 export type MutationCreateRoiViewArgs = {
-  input: RoiViewInput;
-};
-
+  input: RoiViewInput
+}
 
 export type MutationCreateSnapshotArgs = {
-  input: SnapshotInput;
-};
-
+  input: SnapshotInput
+}
 
 export type MutationCreateStageArgs = {
-  input: StageInput;
-};
-
+  input: StageInput
+}
 
 export type MutationCreateTimepointViewArgs = {
-  input: TimepointViewInput;
-};
-
+  input: TimepointViewInput
+}
 
 export type MutationCreateViewCollectionArgs = {
-  input: ViewCollectionInput;
-};
-
+  input: ViewCollectionInput
+}
 
 export type MutationCreateWellPositionViewArgs = {
-  input: WellPositionViewInput;
-};
-
+  input: WellPositionViewInput
+}
 
 export type MutationDeleteAffineTransformationViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteCameraArgs = {
-  input: DeleteCameraInput;
-};
-
+  input: DeleteCameraInput
+}
 
 export type MutationDeleteChannelViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteDatasetArgs = {
-  input: DeleteDatasetInput;
-};
-
+  input: DeleteDatasetInput
+}
 
 export type MutationDeleteEraArgs = {
-  input: DeleteEraInput;
-};
-
+  input: DeleteEraInput
+}
 
 export type MutationDeleteFileArgs = {
-  input: DeleteFileInput;
-};
-
+  input: DeleteFileInput
+}
 
 export type MutationDeleteHistogramViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteImageArgs = {
-  input: DeleteImageInput;
-};
-
+  input: DeleteImageInput
+}
 
 export type MutationDeleteInstrumentArgs = {
-  input: DeleteInstrumentInput;
-};
-
+  input: DeleteInstrumentInput
+}
 
 export type MutationDeleteMeshArgs = {
-  input: DeleteMeshInput;
-};
-
+  input: DeleteMeshInput
+}
 
 export type MutationDeleteMultiWellPlateArgs = {
-  input: DeleteMultiWellInput;
-};
-
+  input: DeleteMultiWellInput
+}
 
 export type MutationDeleteObjectiveArgs = {
-  input: DeleteObjectiveInput;
-};
-
+  input: DeleteObjectiveInput
+}
 
 export type MutationDeleteOpticsViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteRgbContextArgs = {
-  input: DeleteRgbContextInput;
-};
-
+  input: DeleteRgbContextInput
+}
 
 export type MutationDeleteRgbViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteRoiArgs = {
-  input: DeleteRoiInput;
-};
-
+  input: DeleteRoiInput
+}
 
 export type MutationDeleteSnapshotArgs = {
-  input: DeleteSnaphotInput;
-};
-
+  input: DeleteSnaphotInput
+}
 
 export type MutationDeleteStageArgs = {
-  input: DeleteStageInput;
-};
-
+  input: DeleteStageInput
+}
 
 export type MutationDeleteTimepointViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteViewArgs = {
-  input: DeleteViewInput;
-};
-
+  input: DeleteViewInput
+}
 
 export type MutationDeleteViewCollectionArgs = {
-  input: DeleteViewCollectionInput;
-};
-
+  input: DeleteViewCollectionInput
+}
 
 export type MutationEnsureCameraArgs = {
-  input: CameraInput;
-};
-
+  input: CameraInput
+}
 
 export type MutationEnsureDatasetArgs = {
-  input: CreateDatasetInput;
-};
-
+  input: CreateDatasetInput
+}
 
 export type MutationEnsureInstrumentArgs = {
-  input: InstrumentInput;
-};
-
+  input: InstrumentInput
+}
 
 export type MutationEnsureMultiWellPlateArgs = {
-  input: MultiWellPlateInput;
-};
-
+  input: MultiWellPlateInput
+}
 
 export type MutationEnsureObjectiveArgs = {
-  input: ObjectiveInput;
-};
-
+  input: ObjectiveInput
+}
 
 export type MutationFromArrayLikeArgs = {
-  input: FromArrayLikeInput;
-};
-
+  input: FromArrayLikeInput
+}
 
 export type MutationFromFileLikeArgs = {
-  input: FromFileLike;
-};
-
+  input: FromFileLike
+}
 
 export type MutationFromParquetLikeArgs = {
-  input: FromParquetLike;
-};
-
+  input: FromParquetLike
+}
 
 export type MutationPinCameraArgs = {
-  input: PinCameraInput;
-};
-
+  input: PinCameraInput
+}
 
 export type MutationPinDatasetArgs = {
-  input: PinDatasetInput;
-};
-
+  input: PinDatasetInput
+}
 
 export type MutationPinEraArgs = {
-  input: PinEraInput;
-};
-
+  input: PinEraInput
+}
 
 export type MutationPinImageArgs = {
-  input: PinImageInput;
-};
-
+  input: PinImageInput
+}
 
 export type MutationPinInstrumentArgs = {
-  input: PinInstrumentInput;
-};
-
+  input: PinInstrumentInput
+}
 
 export type MutationPinMeshArgs = {
-  input: DeleteMeshInput;
-};
-
+  input: DeleteMeshInput
+}
 
 export type MutationPinMultiWellPlateArgs = {
-  input: PintMultiWellPlateInput;
-};
-
+  input: PintMultiWellPlateInput
+}
 
 export type MutationPinObjectiveArgs = {
-  input: PinObjectiveInput;
-};
-
+  input: PinObjectiveInput
+}
 
 export type MutationPinRoiArgs = {
-  input: PinRoiInput;
-};
-
+  input: PinRoiInput
+}
 
 export type MutationPinSnapshotArgs = {
-  input: PinSnapshotInput;
-};
-
+  input: PinSnapshotInput
+}
 
 export type MutationPinStageArgs = {
-  input: PinStageInput;
-};
-
+  input: PinStageInput
+}
 
 export type MutationPinViewArgs = {
-  input: PinViewInput;
-};
-
+  input: PinViewInput
+}
 
 export type MutationPinViewCollectionArgs = {
-  input: PinViewCollectionInput;
-};
-
+  input: PinViewCollectionInput
+}
 
 export type MutationPutDatasetsInDatasetArgs = {
-  input: AssociateInput;
-};
-
+  input: AssociateInput
+}
 
 export type MutationPutFilesInDatasetArgs = {
-  input: AssociateInput;
-};
-
+  input: AssociateInput
+}
 
 export type MutationPutImagesInDatasetArgs = {
-  input: AssociateInput;
-};
-
+  input: AssociateInput
+}
 
 export type MutationRelateToDatasetArgs = {
-  id: Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}
 
 export type MutationReleaseDatasetsFromDatasetArgs = {
-  input: DesociateInput;
-};
-
+  input: DesociateInput
+}
 
 export type MutationReleaseFilesFromDatasetArgs = {
-  input: DesociateInput;
-};
-
+  input: DesociateInput
+}
 
 export type MutationReleaseImagesFromDatasetArgs = {
-  input: DesociateInput;
-};
-
+  input: DesociateInput
+}
 
 export type MutationRequestAccessArgs = {
-  input: RequestAccessInput;
-};
-
+  input: RequestAccessInput
+}
 
 export type MutationRequestFileAccessArgs = {
-  input: RequestFileAccessInput;
-};
-
+  input: RequestFileAccessInput
+}
 
 export type MutationRequestFileUploadArgs = {
-  input: RequestFileUploadInput;
-};
-
+  input: RequestFileUploadInput
+}
 
 export type MutationRequestFileUploadPresignedArgs = {
-  input: RequestFileUploadInput;
-};
-
+  input: RequestFileUploadInput
+}
 
 export type MutationRequestMediaUploadArgs = {
-  input: RequestMediaUploadInput;
-};
-
+  input: RequestMediaUploadInput
+}
 
 export type MutationRequestMeshUploadArgs = {
-  input: RequestMeshUploadInput;
-};
-
+  input: RequestMeshUploadInput
+}
 
 export type MutationRequestTableAccessArgs = {
-  input: RequestTableAccessInput;
-};
-
+  input: RequestTableAccessInput
+}
 
 export type MutationRequestTableUploadArgs = {
-  input: RequestTableUploadInput;
-};
-
+  input: RequestTableUploadInput
+}
 
 export type MutationRequestUploadArgs = {
-  input: RequestUploadInput;
-};
-
+  input: RequestUploadInput
+}
 
 export type MutationRevertDatasetArgs = {
-  input: RevertInput;
-};
-
+  input: RevertInput
+}
 
 export type MutationUpdateDatasetArgs = {
-  input: ChangeDatasetInput;
-};
-
+  input: ChangeDatasetInput
+}
 
 export type MutationUpdateImageArgs = {
-  input: UpdateImageInput;
-};
-
+  input: UpdateImageInput
+}
 
 export type MutationUpdateRgbContextArgs = {
-  input: UpdateRgbContextInput;
-};
-
+  input: UpdateRgbContextInput
+}
 
 export type MutationUpdateRgbViewArgs = {
-  input: UpdateRgbViewInput;
-};
-
+  input: UpdateRgbViewInput
+}
 
 export type MutationUpdateRoiArgs = {
-  input: UpdateRoiInput;
-};
+  input: UpdateRoiInput
+}
 
 export type Objective = {
-  __typename?: 'Objective';
-  id: Scalars['ID']['output'];
-  immersion?: Maybe<Scalars['String']['output']>;
-  magnification?: Maybe<Scalars['Float']['output']>;
-  na?: Maybe<Scalars['Float']['output']>;
-  name: Scalars['String']['output'];
-  organization: DjangoModelType;
-  serialNumber: Scalars['String']['output'];
-  views: Array<OpticsView>;
-};
-
+  __typename?: 'Objective'
+  id: Scalars['ID']['output']
+  immersion?: Maybe<Scalars['String']['output']>
+  magnification?: Maybe<Scalars['Float']['output']>
+  na?: Maybe<Scalars['Float']['output']>
+  name: Scalars['String']['output']
+  organization: DjangoModelType
+  serialNumber: Scalars['String']['output']
+  views: Array<OpticsView>
+}
 
 export type ObjectiveViewsArgs = {
-  filters?: InputMaybe<OpticsViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<OpticsViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export enum ObjectiveCorrectionKind {
   Achro = 'ACHRO',
@@ -2713,36 +2575,36 @@ export enum ObjectiveCorrectionKind {
 
 /** Microscope objective */
 export type ObjectiveElement = OpticalElement & {
-  __typename?: 'ObjectiveElement';
-  correctionKind?: Maybe<ObjectiveCorrectionKind>;
-  id: Scalars['ID']['output'];
-  immersionMedium?: Maybe<ObjectiveImmersion>;
+  __typename?: 'ObjectiveElement'
+  correctionKind?: Maybe<ObjectiveCorrectionKind>
+  id: Scalars['ID']['output']
+  immersionMedium?: Maybe<ObjectiveImmersion>
   /** Has iris (aperture stop) */
-  iris: Scalars['Boolean']['output'];
+  iris: Scalars['Boolean']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  magnification?: Maybe<Scalars['Float']['output']>;
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  numericalAperture?: Maybe<Scalars['Float']['output']>;
+  label: Scalars['String']['output']
+  magnification?: Maybe<Scalars['Float']['output']>
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
+  numericalAperture?: Maybe<Scalars['Float']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-  workingDistanceMm?: Maybe<Scalars['Float']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+  workingDistanceMm?: Maybe<Scalars['Float']['output']>
+}
 
 export type ObjectiveFilter = {
-  AND?: InputMaybe<ObjectiveFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ObjectiveFilter>;
-  OR?: InputMaybe<ObjectiveFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<ObjectiveFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ObjectiveFilter>
+  OR?: InputMaybe<ObjectiveFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+}
 
 export enum ObjectiveImmersion {
   Air = 'AIR',
@@ -2755,142 +2617,141 @@ export enum ObjectiveImmersion {
 }
 
 export type ObjectiveInput = {
-  immersion?: InputMaybe<Scalars['String']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  serialNumber: Scalars['String']['input'];
-};
+  immersion?: InputMaybe<Scalars['String']['input']>
+  magnification?: InputMaybe<Scalars['Float']['input']>
+  na?: InputMaybe<Scalars['Float']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+  serialNumber: Scalars['String']['input']
+}
 
 export type OffsetPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: Scalars['Int']['input'];
-};
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: Scalars['Int']['input']
+}
 
 /** Common interface for all optical elements */
 export type OpticalElement = {
   /** Element UUID */
-  id: Scalars['ID']['output'];
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** Input for creating or updating any optical element. Fill only fields relevant to the chosen `kind`. */
 export type OpticalElementInput = {
-  amplifierGainDb?: InputMaybe<Scalars['Float']['input']>;
-  angleDeg?: InputMaybe<Scalars['Float']['input']>;
-  bandMaxNm?: InputMaybe<Scalars['Float']['input']>;
-  bandMinNm?: InputMaybe<Scalars['Float']['input']>;
-  brand?: InputMaybe<Scalars['String']['input']>;
-  channel?: InputMaybe<ChannelKind>;
-  diameterUm?: InputMaybe<Scalars['Float']['input']>;
-  focalLengthMm?: InputMaybe<Scalars['Float']['input']>;
-  gain?: InputMaybe<Scalars['Float']['input']>;
-  hasPockelsCell?: InputMaybe<Scalars['Boolean']['input']>;
-  hasQSwitch?: InputMaybe<Scalars['Boolean']['input']>;
-  id: Scalars['ID']['input'];
-  immersionMedium?: InputMaybe<ObjectiveImmersion>;
-  iris?: InputMaybe<Scalars['Boolean']['input']>;
-  kind: ElementKind;
-  label: Scalars['String']['input'];
-  laserMedium?: InputMaybe<Scalars['String']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  nepdWPerSqrtHz?: InputMaybe<Scalars['Float']['input']>;
-  nominalWavelengthNm?: InputMaybe<Scalars['Float']['input']>;
-  numericalAperture?: InputMaybe<Scalars['Float']['input']>;
-  pixelSizeUm?: InputMaybe<Scalars['Float']['input']>;
-  ports: Array<LightPortInput>;
-  pose?: InputMaybe<Pose3DInput>;
-  powerMw?: InputMaybe<Scalars['Float']['input']>;
-  pulseKind?: InputMaybe<PulseKind>;
-  rFraction?: InputMaybe<Scalars['Float']['input']>;
-  repetitionRateHz?: InputMaybe<Scalars['Float']['input']>;
-  resolution?: InputMaybe<Array<Scalars['Int']['input']>>;
-  serialNumber?: InputMaybe<Scalars['String']['input']>;
-  tFraction?: InputMaybe<Scalars['Float']['input']>;
-  workingDistanceMm?: InputMaybe<Scalars['Float']['input']>;
-};
+  amplifierGainDb?: InputMaybe<Scalars['Float']['input']>
+  angleDeg?: InputMaybe<Scalars['Float']['input']>
+  bandMaxNm?: InputMaybe<Scalars['Float']['input']>
+  bandMinNm?: InputMaybe<Scalars['Float']['input']>
+  brand?: InputMaybe<Scalars['String']['input']>
+  channel?: InputMaybe<ChannelKind>
+  diameterUm?: InputMaybe<Scalars['Float']['input']>
+  focalLengthMm?: InputMaybe<Scalars['Float']['input']>
+  gain?: InputMaybe<Scalars['Float']['input']>
+  hasPockelsCell?: InputMaybe<Scalars['Boolean']['input']>
+  hasQSwitch?: InputMaybe<Scalars['Boolean']['input']>
+  id: Scalars['ID']['input']
+  immersionMedium?: InputMaybe<ObjectiveImmersion>
+  iris?: InputMaybe<Scalars['Boolean']['input']>
+  kind: ElementKind
+  label: Scalars['String']['input']
+  laserMedium?: InputMaybe<Scalars['String']['input']>
+  magnification?: InputMaybe<Scalars['Float']['input']>
+  manufacturer?: InputMaybe<Scalars['String']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+  nepdWPerSqrtHz?: InputMaybe<Scalars['Float']['input']>
+  nominalWavelengthNm?: InputMaybe<Scalars['Float']['input']>
+  numericalAperture?: InputMaybe<Scalars['Float']['input']>
+  pixelSizeUm?: InputMaybe<Scalars['Float']['input']>
+  ports: Array<LightPortInput>
+  pose?: InputMaybe<Pose3DInput>
+  powerMw?: InputMaybe<Scalars['Float']['input']>
+  pulseKind?: InputMaybe<PulseKind>
+  rFraction?: InputMaybe<Scalars['Float']['input']>
+  repetitionRateHz?: InputMaybe<Scalars['Float']['input']>
+  resolution?: InputMaybe<Array<Scalars['Int']['input']>>
+  serialNumber?: InputMaybe<Scalars['String']['input']>
+  tFraction?: InputMaybe<Scalars['Float']['input']>
+  workingDistanceMm?: InputMaybe<Scalars['Float']['input']>
+}
 
 export type OpticsView = View & {
-  __typename?: 'OpticsView';
+  __typename?: 'OpticsView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  camera?: Maybe<Camera>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
+  camera?: Maybe<Camera>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  instrument?: Maybe<Instrument>;
-  isGlobal: Scalars['Boolean']['output'];
-  objective?: Maybe<Objective>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  instrument?: Maybe<Instrument>
+  isGlobal: Scalars['Boolean']['output']
+  objective?: Maybe<Objective>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type OpticsViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type OpticsViewFilter = {
-  AND?: InputMaybe<OpticsViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<OpticsViewFilter>;
-  OR?: InputMaybe<OpticsViewFilter>;
-  camera?: InputMaybe<CameraFilter>;
-  instrument?: InputMaybe<InstrumentFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  objective?: InputMaybe<ObjectiveFilter>;
-};
+  AND?: InputMaybe<OpticsViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<OpticsViewFilter>
+  OR?: InputMaybe<OpticsViewFilter>
+  camera?: InputMaybe<CameraFilter>
+  instrument?: InputMaybe<InstrumentFilter>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+  objective?: InputMaybe<ObjectiveFilter>
+}
 
 export type OpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
-  camera?: InputMaybe<Scalars['ID']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
+  camera?: InputMaybe<Scalars['ID']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  objective?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  instrument?: InputMaybe<Scalars['ID']['input']>
+  objective?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export enum Ordering {
   Asc = 'ASC',
@@ -2902,556 +2763,555 @@ export enum Ordering {
 }
 
 export type Organization = {
-  __typename?: 'Organization';
-  id: Scalars['String']['output'];
-  slug: Scalars['String']['output'];
-};
+  __typename?: 'Organization'
+  id: Scalars['String']['output']
+  slug: Scalars['String']['output']
+}
 
 /** The sample */
 export type OtherElement = OpticalElement & {
-  __typename?: 'OtherElement';
-  id: Scalars['ID']['output'];
-  kind: ElementKind;
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  __typename?: 'OtherElement'
+  id: Scalars['ID']['output']
+  kind: ElementKind
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 /** Light source */
 export type OtherSourceElement = OpticalElement & {
-  __typename?: 'OtherSourceElement';
-  channel?: Maybe<ChannelKind>;
-  id: Scalars['ID']['output'];
+  __typename?: 'OtherSourceElement'
+  channel?: Maybe<ChannelKind>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  lampType?: Maybe<Scalars['String']['output']>;
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  lampType?: Maybe<Scalars['String']['output']>
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type ParquetStore = {
-  __typename?: 'ParquetStore';
-  bucket: Scalars['String']['output'];
-  columns: Array<TableColumn>;
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
-};
-
+  __typename?: 'ParquetStore'
+  bucket: Scalars['String']['output']
+  columns: Array<TableColumn>
+  id: Scalars['ID']['output']
+  key: Scalars['String']['output']
+  path: Scalars['String']['output']
+  presignedUrl: Scalars['String']['output']
+}
 
 export type ParquetStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
-};
+  host?: InputMaybe<Scalars['String']['input']>
+}
 
 export type PartialAcquisitionViewInput = {
-  acquiredAt?: InputMaybe<Scalars['DateTime']['input']>;
+  acquiredAt?: InputMaybe<Scalars['DateTime']['input']>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  operator?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  description?: InputMaybe<Scalars['String']['input']>
+  operator?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialAffineTransformationViewInput = {
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
+  affineMatrix: Scalars['FourByFourMatrix']['input']
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  stage?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  stage?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialChannelViewInput = {
   /** The acquisition mode of the channel */
-  acquisitionMode?: InputMaybe<Scalars['String']['input']>;
+  acquisitionMode?: InputMaybe<Scalars['String']['input']>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
   /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: InputMaybe<Scalars['Float']['input']>;
+  emissionWavelength?: InputMaybe<Scalars['Float']['input']>
   /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: InputMaybe<Scalars['Float']['input']>;
+  excitationWavelength?: InputMaybe<Scalars['Float']['input']>
   /** The name of the channel */
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialDerivedViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  originImage: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  originImage: Scalars['ID']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialFileViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['ID']['input'];
-  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  file: Scalars['ID']['input']
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialImageAccessorInput = {
-  image: Scalars['ID']['input'];
-  keys: Array<Scalars['String']['input']>;
-  maxIndex?: InputMaybe<Scalars['Int']['input']>;
-  minIndex?: InputMaybe<Scalars['Int']['input']>;
-};
+  image: Scalars['ID']['input']
+  keys: Array<Scalars['String']['input']>
+  maxIndex?: InputMaybe<Scalars['Int']['input']>
+  minIndex?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialInstanceMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  labels?: InputMaybe<Scalars['LabelsLike']['input']>;
-  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  labels?: InputMaybe<Scalars['LabelsLike']['input']>
+  referenceView?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialLabelAccessorInput = {
-  keys: Array<Scalars['String']['input']>;
-  maxIndex?: InputMaybe<Scalars['Int']['input']>;
-  minIndex?: InputMaybe<Scalars['Int']['input']>;
-  pixelView: Scalars['ID']['input'];
-};
+  keys: Array<Scalars['String']['input']>
+  maxIndex?: InputMaybe<Scalars['Int']['input']>
+  minIndex?: InputMaybe<Scalars['Int']['input']>
+  pixelView: Scalars['ID']['input']
+}
 
 export type PartialLightpathViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  graph: LightpathGraphInput;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  graph: LightpathGraphInput
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  labels?: InputMaybe<Scalars['LabelsLike']['input']>;
-  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  labels?: InputMaybe<Scalars['LabelsLike']['input']>
+  referenceView?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialOpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
-  camera?: InputMaybe<Scalars['ID']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
+  camera?: InputMaybe<Scalars['ID']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  objective?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  instrument?: InputMaybe<Scalars['ID']['input']>
+  objective?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialRgbViewInput = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
+  active?: InputMaybe<Scalars['Boolean']['input']>
+  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  colorMap?: InputMaybe<ColorMap>;
-  context?: InputMaybe<Scalars['ID']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  scale?: InputMaybe<Scalars['Float']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  colorMap?: InputMaybe<ColorMap>
+  context?: InputMaybe<Scalars['ID']['input']>
+  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>
+  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>
+  gamma?: InputMaybe<Scalars['Float']['input']>
+  rescale?: InputMaybe<Scalars['Boolean']['input']>
+  scale?: InputMaybe<Scalars['Float']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialRoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  roi: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  roi: Scalars['ID']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialReferenceViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialScaleViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  scaleC?: InputMaybe<Scalars['Float']['input']>;
-  scaleT?: InputMaybe<Scalars['Float']['input']>;
-  scaleX?: InputMaybe<Scalars['Float']['input']>;
-  scaleY?: InputMaybe<Scalars['Float']['input']>;
-  scaleZ?: InputMaybe<Scalars['Float']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  parent?: InputMaybe<Scalars['ID']['input']>
+  scaleC?: InputMaybe<Scalars['Float']['input']>
+  scaleT?: InputMaybe<Scalars['Float']['input']>
+  scaleX?: InputMaybe<Scalars['Float']['input']>
+  scaleY?: InputMaybe<Scalars['Float']['input']>
+  scaleZ?: InputMaybe<Scalars['Float']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PartialTimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  era?: InputMaybe<Scalars['ID']['input']>;
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  era?: InputMaybe<Scalars['ID']['input']>
+  indexSinceStart?: InputMaybe<Scalars['Int']['input']>
+  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type PermissionOption = {
-  __typename?: 'PermissionOption';
-  label: Scalars['String']['output'];
-  value: Scalars['ID']['output'];
-};
+  __typename?: 'PermissionOption'
+  label: Scalars['String']['output']
+  value: Scalars['ID']['output']
+}
 
 export type PinCameraInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinDatasetInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinEraInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinImageInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinInstrumentInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinObjectiveInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinRoiInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinSnapshotInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinStageInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinViewCollectionInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 export type PinViewInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 /** Pinhole */
 export type PinholeElement = OpticalElement & {
-  __typename?: 'PinholeElement';
-  diameterUm?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
+  __typename?: 'PinholeElement'
+  diameterUm?: Maybe<Scalars['Float']['output']>
+  id: Scalars['ID']['output']
   /** Element kind */
-  kind: ElementKind;
+  kind: ElementKind
   /** Element label */
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type PintMultiWellPlateInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}
 
 /** A channel descriptor */
 export type PlaneInfo = {
-  __typename?: 'PlaneInfo';
-  label: Scalars['String']['output'];
-};
+  __typename?: 'PlaneInfo'
+  label: Scalars['String']['output']
+}
 
 export enum PortRole {
   Input = 'INPUT',
@@ -3460,48 +3320,48 @@ export enum PortRole {
 
 /** Optional 3D pose; position and/or orientation can be omitted */
 export type Pose3D = {
-  __typename?: 'Pose3D';
-  orientation?: Maybe<Euler>;
-  position?: Maybe<Vec3>;
-};
+  __typename?: 'Pose3D'
+  orientation?: Maybe<Euler>
+  position?: Maybe<Vec3>
+}
 
 /** A 3D pose consisting of position and orientation. */
 export type Pose3DInput = {
-  orientation?: InputMaybe<EulerInput>;
-  position?: InputMaybe<Vec3Input>;
-};
+  orientation?: InputMaybe<EulerInput>
+  position?: InputMaybe<Vec3Input>
+}
 
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type PresignedPostCredentials = {
-  __typename?: 'PresignedPostCredentials';
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  policy: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-  xAmzAlgorithm: Scalars['String']['output'];
-  xAmzCredential: Scalars['String']['output'];
-  xAmzDate: Scalars['String']['output'];
-  xAmzSignature: Scalars['String']['output'];
-};
+  __typename?: 'PresignedPostCredentials'
+  bucket: Scalars['String']['output']
+  datalayer: Scalars['String']['output']
+  key: Scalars['String']['output']
+  policy: Scalars['String']['output']
+  store: Scalars['String']['output']
+  xAmzAlgorithm: Scalars['String']['output']
+  xAmzCredential: Scalars['String']['output']
+  xAmzDate: Scalars['String']['output']
+  xAmzSignature: Scalars['String']['output']
+}
 
 /** A provenance event for a model. */
 export type ProvenanceEntry = {
-  __typename?: 'ProvenanceEntry';
-  client?: Maybe<Client>;
+  __typename?: 'ProvenanceEntry'
+  client?: Maybe<Client>
   /** The date of the change. */
-  date: Scalars['DateTime']['output'];
+  date: Scalars['DateTime']['output']
   /** The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None. */
-  during?: Maybe<Scalars['String']['output']>;
+  during?: Maybe<Scalars['String']['output']>
   /** The effective changes made to the model. */
-  effectiveChanges: Array<ModelChange>;
+  effectiveChanges: Array<ModelChange>
   /** The ID of the history entry. */
-  id: Scalars['ID']['output'];
+  id: Scalars['ID']['output']
   /** The type of change that was made. */
-  kind: HistoryKind;
+  kind: HistoryKind
   /** User who made the change. */
-  user?: Maybe<User>;
-};
+  user?: Maybe<User>
+}
 
 export enum PulseKind {
   Cw = 'CW',
@@ -3513,694 +3373,630 @@ export enum PulseKind {
 }
 
 export type Query = {
-  __typename?: 'Query';
-  _entities: Array<Maybe<_Entity>>;
-  _service: _Service;
-  acquisitionViews: Array<AcquisitionView>;
+  __typename?: 'Query'
+  _entities: Array<Maybe<_Entity>>
+  _service: _Service
+  acquisitionViews: Array<AcquisitionView>
   /** Get all active views for a specific image */
-  activeViews: Array<View>;
-  affineTransformationViews: Array<AffineTransformationView>;
+  activeViews: Array<View>
+  affineTransformationViews: Array<AffineTransformationView>
   /** Get available permissions for a specific identifier */
-  availablePermissions: Array<PermissionOption>;
-  camera: Camera;
-  channelViews: Array<ChannelView>;
-  channelsFor: Array<ChannelInfo>;
-  children: Array<DatasetImageFile>;
-  continousScanViews: Array<ContinousScanView>;
-  dataset: Dataset;
-  datasets: Array<Dataset>;
-  describe: Array<Descriptor>;
-  eras: Array<Era>;
-  experiment: Experiment;
-  experiments: Array<Experiment>;
-  file: File;
-  files: Array<File>;
+  availablePermissions: Array<PermissionOption>
+  camera: Camera
+  channelViews: Array<ChannelView>
+  channelsFor: Array<ChannelInfo>
+  children: Array<DatasetImageFile>
+  continousScanViews: Array<ContinousScanView>
+  dataset: Dataset
+  datasets: Array<Dataset>
+  describe: Array<Descriptor>
+  eras: Array<Era>
+  experiment: Experiment
+  experiments: Array<Experiment>
+  file: File
+  files: Array<File>
   /** Returns a single image by ID */
-  image: Image;
-  imageAccessors: Array<ImageAccessor>;
-  images: Array<Image>;
+  image: Image
+  imageAccessors: Array<ImageAccessor>
+  images: Array<Image>
   /** Get statistics about images */
-  imagesStats: ImageStats;
-  instanceMaskViewLabel: InstanceMaskViewLabel;
-  instrument: Instrument;
-  instruments: Array<Instrument>;
-  labelAccessors: Array<LabelAccessor>;
-  labelViews: Array<LabelView>;
+  imagesStats: ImageStats
+  instanceMaskViewLabel: InstanceMaskViewLabel
+  instrument: Instrument
+  instruments: Array<Instrument>
+  labelAccessors: Array<LabelAccessor>
+  labelViews: Array<LabelView>
   /** Returns a single image by ID */
-  lightpathView: LightpathView;
-  maskedPixelInfo: MaskedPixelInfo;
-  members: Array<Membership>;
-  mesh: Mesh;
-  meshes: Array<Mesh>;
-  multiWellPlate: MultiWellPlate;
-  multiWellPlates: Array<MultiWellPlate>;
-  mydatasets: Array<Dataset>;
-  myeras: Array<Era>;
-  myfiles: Array<File>;
-  myimages: Array<Image>;
-  myobjectives: Array<Objective>;
-  mysnapshots: Array<Snapshot>;
-  mytables: Array<Table>;
-  objective: Objective;
-  objectives: Array<Objective>;
+  lightpathView: LightpathView
+  maskedPixelInfo: MaskedPixelInfo
+  members: Array<Membership>
+  mesh: Mesh
+  meshes: Array<Mesh>
+  multiWellPlate: MultiWellPlate
+  multiWellPlates: Array<MultiWellPlate>
+  mydatasets: Array<Dataset>
+  myeras: Array<Era>
+  myfiles: Array<File>
+  myimages: Array<Image>
+  myobjectives: Array<Objective>
+  mysnapshots: Array<Snapshot>
+  mytables: Array<Table>
+  objective: Objective
+  objectives: Array<Objective>
   /** Get permissions for a specific object */
-  permissions: Array<UserObjectPermission>;
-  randomImage: Image;
-  renderTree: RenderTree;
-  renderTrees: Array<RenderTree>;
-  rgbView: RgbView;
-  rgbViews: Array<RgbView>;
-  rgbcontext: RgbContext;
-  rgbcontexts: Array<RgbContext>;
-  roi: Roi;
-  rois: Array<Roi>;
-  rows: Array<Scalars['MetricMap']['output']>;
-  scaleViews: Array<ScaleView>;
-  snapshot: Snapshot;
-  snapshots: Array<Snapshot>;
-  stage: Stage;
-  stages: Array<Stage>;
-  table: Table;
-  tableCell: TableCell;
-  tableCells: Array<TableCell>;
-  tableRow: TableRow;
-  tableRows: Array<TableRow>;
-  tables: Array<Table>;
-  timepointViews: Array<TimepointView>;
-  wellPositionViews: Array<WellPositionView>;
-};
-
+  permissions: Array<UserObjectPermission>
+  randomImage: Image
+  renderTree: RenderTree
+  renderTrees: Array<RenderTree>
+  rgbView: RgbView
+  rgbViews: Array<RgbView>
+  rgbcontext: RgbContext
+  rgbcontexts: Array<RgbContext>
+  roi: Roi
+  rois: Array<Roi>
+  rows: Array<Scalars['MetricMap']['output']>
+  scaleViews: Array<ScaleView>
+  snapshot: Snapshot
+  snapshots: Array<Snapshot>
+  stage: Stage
+  stages: Array<Stage>
+  table: Table
+  tableCell: TableCell
+  tableCells: Array<TableCell>
+  tableRow: TableRow
+  tableRows: Array<TableRow>
+  tables: Array<Table>
+  timepointViews: Array<TimepointView>
+  wellPositionViews: Array<WellPositionView>
+}
 
 export type Query_EntitiesArgs = {
-  representations: Array<Scalars['_Any']['input']>;
-};
-
+  representations: Array<Scalars['_Any']['input']>
+}
 
 export type QueryActiveViewsArgs = {
-  exclude?: InputMaybe<Array<ViewKind>>;
-  image: Scalars['ID']['input'];
-  include?: InputMaybe<Array<ViewKind>>;
-  selector?: InputMaybe<Selector>;
-};
-
+  exclude?: InputMaybe<Array<ViewKind>>
+  image: Scalars['ID']['input']
+  include?: InputMaybe<Array<ViewKind>>
+  selector?: InputMaybe<Selector>
+}
 
 export type QueryAffineTransformationViewsArgs = {
-  filters?: InputMaybe<AffineTransformationViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<AffineTransformationViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryAvailablePermissionsArgs = {
-  identifier: Scalars['String']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
-};
-
+  identifier: Scalars['String']['input']
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']>>
+}
 
 export type QueryCameraArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryChannelsForArgs = {
-  filters?: InputMaybe<ChannelInfoFilter>;
-  image: Scalars['ID']['input'];
-};
-
+  filters?: InputMaybe<ChannelInfoFilter>
+  image: Scalars['ID']['input']
+}
 
 export type QueryChildrenArgs = {
-  filters?: InputMaybe<DatasetChildrenFilter>;
-  order?: InputMaybe<ChildrenOrder>;
-  pagination?: InputMaybe<ChildrenPaginationInput>;
-  parent: Scalars['ID']['input'];
-};
-
+  filters?: InputMaybe<DatasetChildrenFilter>
+  order?: InputMaybe<ChildrenOrder>
+  pagination?: InputMaybe<ChildrenPaginationInput>
+  parent: Scalars['ID']['input']
+}
 
 export type QueryContinousScanViewsArgs = {
-  filters?: InputMaybe<ContinousScanViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ContinousScanViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryDatasetArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryDatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<DatasetFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryDescribeArgs = {
-  id: Scalars['ID']['input'];
-  identifier: Scalars['String']['input'];
-};
-
+  id: Scalars['ID']['input']
+  identifier: Scalars['String']['input']
+}
 
 export type QueryErasArgs = {
-  filters?: InputMaybe<EraFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<EraFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryExperimentArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryExperimentsArgs = {
-  filters?: InputMaybe<ExperimentFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ExperimentFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryFileArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryFilesArgs = {
-  filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<FileFilter>
+  order?: InputMaybe<FileOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryImageArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryImagesArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ImageFilter>
+  order?: InputMaybe<ImageOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryImagesStatsArgs = {
-  filters?: InputMaybe<ImageFilter>;
-};
-
+  filters?: InputMaybe<ImageFilter>
+}
 
 export type QueryInstanceMaskViewLabelArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryInstrumentArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryLightpathViewArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryMaskedPixelInfoArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryMeshArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryMeshesArgs = {
-  filters?: InputMaybe<MeshFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<MeshFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMultiWellPlateArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryMultiWellPlatesArgs = {
-  filters?: InputMaybe<MultiWellPlateFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<MultiWellPlateFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMydatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<DatasetFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMyerasArgs = {
-  filters?: InputMaybe<EraFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<EraFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMyfilesArgs = {
-  filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<FileFilter>
+  order?: InputMaybe<FileOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMyimagesArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<ImageFilter>
+  order?: InputMaybe<ImageOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMysnapshotsArgs = {
-  filters?: InputMaybe<SnapshotFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<SnapshotFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryMytablesArgs = {
-  filters?: InputMaybe<TableFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<TableFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryObjectiveArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryPermissionsArgs = {
-  identifier: Scalars['String']['input'];
-  object: Scalars['ID']['input'];
-};
-
+  identifier: Scalars['String']['input']
+  object: Scalars['ID']['input']
+}
 
 export type QueryRenderTreeArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryRenderTreesArgs = {
-  filters?: InputMaybe<RenderTreeFilter>;
-  order?: InputMaybe<RenderTreeOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RenderTreeFilter>
+  order?: InputMaybe<RenderTreeOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryRgbViewArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryRgbViewsArgs = {
-  filters?: InputMaybe<RgbViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RgbViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryRgbcontextArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryRgbcontextsArgs = {
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RgbContextFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryRoiArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryRoisArgs = {
-  filters?: InputMaybe<RoiFilter>;
-  order?: InputMaybe<RoiOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RoiFilter>
+  order?: InputMaybe<RoiOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryRowsArgs = {
-  filters?: InputMaybe<RowFilter>;
-  pagination?: InputMaybe<TablePaginationInput>;
-  table: Scalars['ID']['input'];
-};
-
+  filters?: InputMaybe<RowFilter>
+  pagination?: InputMaybe<TablePaginationInput>
+  table: Scalars['ID']['input']
+}
 
 export type QuerySnapshotArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QuerySnapshotsArgs = {
-  filters?: InputMaybe<SnapshotFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<SnapshotFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryStageArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryStagesArgs = {
-  filters?: InputMaybe<StageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<StageFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryTableArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryTableCellArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryTableCellsArgs = {
-  filters: TableCellFilter;
-  pagination: OffsetPaginationInput;
-};
-
+  filters: TableCellFilter
+  pagination: OffsetPaginationInput
+}
 
 export type QueryTableRowArgs = {
-  id: Scalars['ID']['input'];
-};
-
+  id: Scalars['ID']['input']
+}
 
 export type QueryTableRowsArgs = {
-  filters: TableRowFilter;
-  pagination: OffsetPaginationInput;
-};
-
+  filters: TableRowFilter
+  pagination: OffsetPaginationInput
+}
 
 export type QueryTablesArgs = {
-  filters?: InputMaybe<TableFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<TableFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryTimepointViewsArgs = {
-  filters?: InputMaybe<TimepointViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<TimepointViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type QueryWellPositionViewsArgs = {
-  filters?: InputMaybe<WellPositionViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<WellPositionViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type RgbContext = {
-  __typename?: 'RGBContext';
-  blending: Blending;
-  c: Scalars['Int']['output'];
-  id: Scalars['ID']['output'];
-  image: Image;
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
-  snapshots: Array<Snapshot>;
-  t: Scalars['Int']['output'];
-  views: Array<RgbView>;
-  z: Scalars['Int']['output'];
-};
-
+  __typename?: 'RGBContext'
+  blending: Blending
+  c: Scalars['Int']['output']
+  id: Scalars['ID']['output']
+  image: Image
+  name: Scalars['String']['output']
+  pinned: Scalars['Boolean']['output']
+  snapshots: Array<Snapshot>
+  t: Scalars['Int']['output']
+  views: Array<RgbView>
+  z: Scalars['Int']['output']
+}
 
 export type RgbContextSnapshotsArgs = {
-  filters?: InputMaybe<SnapshotFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<SnapshotFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type RgbContextFilter = {
-  AND?: InputMaybe<RgbContextFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<RgbContextFilter>;
-  OR?: InputMaybe<RgbContextFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<RgbContextFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<RgbContextFilter>
+  OR?: InputMaybe<RgbContextFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type RgbView = View & {
-  __typename?: 'RGBView';
+  __typename?: 'RGBView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  active: Scalars['Boolean']['output'];
-  baseColor?: Maybe<Array<Scalars['Int']['output']>>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  colorMap: ColorMap;
+  accessor: Array<Scalars['String']['output']>
+  active: Scalars['Boolean']['output']
+  baseColor?: Maybe<Array<Scalars['Int']['output']>>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
+  colorMap: ColorMap
   /** All views of this image */
-  congruentViews: Array<View>;
-  contexts: Array<RgbContext>;
-  contrastLimitMax?: Maybe<Scalars['Float']['output']>;
-  contrastLimitMin?: Maybe<Scalars['Float']['output']>;
-  fullColour: Scalars['String']['output'];
-  gamma?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  contexts: Array<RgbContext>
+  contrastLimitMax?: Maybe<Scalars['Float']['output']>
+  contrastLimitMin?: Maybe<Scalars['Float']['output']>
+  fullColour: Scalars['String']['output']
+  gamma?: Maybe<Scalars['Float']['output']>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  name: Scalars['String']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type RgbViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
-
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type RgbViewContextsArgs = {
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<RgbContextFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type RgbViewFullColourArgs = {
-  format?: InputMaybe<ColorFormat>;
-};
-
+  format?: InputMaybe<ColorFormat>
+}
 
 export type RgbViewNameArgs = {
-  long?: Scalars['Boolean']['input'];
-};
+  long?: Scalars['Boolean']['input']
+}
 
 export type RgbViewFilter = {
-  AND?: InputMaybe<RgbViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<RgbViewFilter>;
-  OR?: InputMaybe<RgbViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<RgbViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<RgbViewFilter>
+  OR?: InputMaybe<RgbViewFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type RgbViewInput = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
+  active?: InputMaybe<Scalars['Boolean']['input']>
+  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  colorMap?: InputMaybe<ColorMap>;
-  context: Scalars['ID']['input'];
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  image: Scalars['ID']['input'];
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  scale?: InputMaybe<Scalars['Float']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  colorMap?: InputMaybe<ColorMap>
+  context: Scalars['ID']['input']
+  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>
+  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>
+  gamma?: InputMaybe<Scalars['Float']['input']>
+  image: Scalars['ID']['input']
+  rescale?: InputMaybe<Scalars['Boolean']['input']>
+  scale?: InputMaybe<Scalars['Float']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type Roi = {
-  __typename?: 'ROI';
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  kind: RoiKind;
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
+  __typename?: 'ROI'
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+  id: Scalars['ID']['output']
+  image: Image
+  kind: RoiKind
+  name: Scalars['String']['output']
+  pinned: Scalars['Boolean']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  vectors: Array<Scalars['FiveDVector']['output']>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  vectors: Array<Scalars['FiveDVector']['output']>
+}
 
 export type RoiProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type RoiFilter = {
-  AND?: InputMaybe<RoiFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<RoiFilter>;
-  OR?: InputMaybe<RoiFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
-  kind?: InputMaybe<RoiKindChoices>;
-  owner?: InputMaybe<Scalars['ID']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<RoiFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<RoiFilter>
+  OR?: InputMaybe<RoiFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  image?: InputMaybe<Scalars['ID']['input']>
+  kind?: InputMaybe<RoiKindChoices>
+  owner?: InputMaybe<Scalars['ID']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type RoiOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+  createdAt?: InputMaybe<Ordering>
+}
 
 export type RoiView = View & {
-  __typename?: 'ROIView';
+  __typename?: 'ROIView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  roi: Roi;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  roi: Roi
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type RoiViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type RoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  roi: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  roi: Scalars['ID']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type ReferenceView = View & {
-  __typename?: 'ReferenceView';
+  __typename?: 'ReferenceView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type ReferenceViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type ReferenceViewFilter = {
-  AND?: InputMaybe<ReferenceViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ReferenceViewFilter>;
-  OR?: InputMaybe<ReferenceViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<ReferenceViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ReferenceViewFilter>
+  OR?: InputMaybe<ReferenceViewFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  image?: InputMaybe<Scalars['ID']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type ReferenceViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type Render = {
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-};
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+}
 
 export enum RenderKind {
   Snapshot = 'SNAPSHOT',
@@ -4215,95 +4011,94 @@ export enum RenderNodeKind {
 }
 
 export type RenderTree = {
-  __typename?: 'RenderTree';
-  id: Scalars['ID']['output'];
-  linkedContexts: Array<RgbContext>;
-  name: Scalars['String']['output'];
-};
-
+  __typename?: 'RenderTree'
+  id: Scalars['ID']['output']
+  linkedContexts: Array<RgbContext>
+  name: Scalars['String']['output']
+}
 
 export type RenderTreeLinkedContextsArgs = {
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<RgbContextFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type RenderTreeFilter = {
-  AND?: InputMaybe<RenderTreeFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<RenderTreeFilter>;
-  OR?: InputMaybe<RenderTreeFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
+  AND?: InputMaybe<RenderTreeFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<RenderTreeFilter>
+  OR?: InputMaybe<RenderTreeFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type RenderTreeInput = {
-  name: Scalars['String']['input'];
-  tree: TreeInput;
-};
+  name: Scalars['String']['input']
+  tree: TreeInput
+}
 
 export type RenderTreeOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+  createdAt?: InputMaybe<Ordering>
+}
 
 export type RequestAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
-};
+  duration?: InputMaybe<Scalars['Int']['input']>
+  store: Scalars['ID']['input']
+}
 
 export type RequestFileAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
-};
+  duration?: InputMaybe<Scalars['Int']['input']>
+  store: Scalars['ID']['input']
+}
 
 export type RequestFileUploadInput = {
-  datalayer: Scalars['String']['input'];
-  fileName: Scalars['String']['input'];
-};
+  datalayer: Scalars['String']['input']
+  fileName: Scalars['String']['input']
+}
 
 export type RequestMediaUploadInput = {
-  datalayer: Scalars['String']['input'];
-  fileName: Scalars['String']['input'];
-};
+  datalayer: Scalars['String']['input']
+  fileName: Scalars['String']['input']
+}
 
 export type RequestMeshUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-};
+  datalayer: Scalars['String']['input']
+  key: Scalars['String']['input']
+}
 
 export type RequestTableAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
-};
+  duration?: InputMaybe<Scalars['Int']['input']>
+  store: Scalars['ID']['input']
+}
 
 export type RequestTableUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-};
+  datalayer: Scalars['String']['input']
+  key: Scalars['String']['input']
+}
 
 export type RequestUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-};
+  datalayer: Scalars['String']['input']
+  key: Scalars['String']['input']
+}
 
 export type RevertInput = {
-  historyId: Scalars['ID']['input'];
-  id: Scalars['ID']['input'];
-};
+  historyId: Scalars['ID']['input']
+  id: Scalars['ID']['input']
+}
 
 export type RoiEvent = {
-  __typename?: 'RoiEvent';
-  create?: Maybe<Roi>;
-  delete?: Maybe<Scalars['ID']['output']>;
-  update?: Maybe<Roi>;
-};
+  __typename?: 'RoiEvent'
+  create?: Maybe<Roi>
+  delete?: Maybe<Scalars['ID']['output']>
+  update?: Maybe<Roi>
+}
 
 export type RoiInput = {
   /** The image this ROI belongs to */
-  image: Scalars['ID']['input'];
+  image: Scalars['ID']['input']
   /** The type/kind of ROI */
-  kind: RoiKind;
+  kind: RoiKind
   /** The vector coordinates defining the ROI */
-  vectors: Array<Scalars['FiveDVector']['input']>;
-};
+  vectors: Array<Scalars['FiveDVector']['input']>
+}
 
 export enum RoiKind {
   Cube = 'CUBE',
@@ -4343,56 +4138,55 @@ export enum RoiKindChoices {
 }
 
 export type RowFilter = {
-  clause?: InputMaybe<Scalars['String']['input']>;
-};
+  clause?: InputMaybe<Scalars['String']['input']>
+}
 
 /** The sample */
 export type SampleElement = OpticalElement & {
-  __typename?: 'SampleElement';
-  id: Scalars['ID']['output'];
-  kind: ElementKind;
-  label: Scalars['String']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
+  __typename?: 'SampleElement'
+  id: Scalars['ID']['output']
+  kind: ElementKind
+  label: Scalars['String']['output']
+  manufacturer?: Maybe<Scalars['String']['output']>
+  model?: Maybe<Scalars['String']['output']>
   /** List of ports on the element */
-  ports: Array<LightPort>;
+  ports: Array<LightPort>
   /** 3D pose of the element */
-  pose?: Maybe<Pose3D>;
-  serialNumber?: Maybe<Scalars['String']['output']>;
-};
+  pose?: Maybe<Pose3D>
+  serialNumber?: Maybe<Scalars['String']['output']>
+}
 
 export type ScaleView = View & {
-  __typename?: 'ScaleView';
+  __typename?: 'ScaleView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  parent: Image;
-  scaleC: Scalars['Float']['output'];
-  scaleT: Scalars['Float']['output'];
-  scaleX: Scalars['Float']['output'];
-  scaleY: Scalars['Float']['output'];
-  scaleZ: Scalars['Float']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  parent: Image
+  scaleC: Scalars['Float']['output']
+  scaleT: Scalars['Float']['output']
+  scaleX: Scalars['Float']['output']
+  scaleY: Scalars['Float']['output']
+  scaleZ: Scalars['Float']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type ScaleViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export enum ScanDirection {
   ColumnRowSlice = 'COLUMN_ROW_SLICE',
@@ -4404,11 +4198,11 @@ export enum ScanDirection {
 }
 
 export type ScopeFilter = {
-  me?: InputMaybe<Scalars['Boolean']['input']>;
-  org?: InputMaybe<Scalars['Boolean']['input']>;
-  public?: InputMaybe<Scalars['Boolean']['input']>;
-  shared?: InputMaybe<Scalars['Boolean']['input']>;
-};
+  me?: InputMaybe<Scalars['Boolean']['input']>
+  org?: InputMaybe<Scalars['Boolean']['input']>
+  public?: InputMaybe<Scalars['Boolean']['input']>
+  shared?: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export enum ScopeKind {
   Me = 'ME',
@@ -4418,484 +4212,471 @@ export enum ScopeKind {
 }
 
 export type Selector = {
-  c?: InputMaybe<DimSelector>;
-  t?: InputMaybe<DimSelector>;
-  x?: InputMaybe<DimSelector>;
-  y?: InputMaybe<DimSelector>;
-  z?: InputMaybe<DimSelector>;
-};
+  c?: InputMaybe<DimSelector>
+  t?: InputMaybe<DimSelector>
+  x?: InputMaybe<DimSelector>
+  y?: InputMaybe<DimSelector>
+  z?: InputMaybe<DimSelector>
+}
 
 export type Snapshot = Render & {
-  __typename?: 'Snapshot';
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-  id: Scalars['ID']['output'];
-  majorColor?: Maybe<Array<Scalars['Float']['output']>>;
-  name: Scalars['String']['output'];
-  store: MediaStore;
-};
+  __typename?: 'Snapshot'
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+  id: Scalars['ID']['output']
+  majorColor?: Maybe<Array<Scalars['Float']['output']>>
+  name: Scalars['String']['output']
+  store: MediaStore
+}
 
 export type SnapshotFilter = {
-  AND?: InputMaybe<SnapshotFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<SnapshotFilter>;
-  OR?: InputMaybe<SnapshotFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
-};
+  AND?: InputMaybe<SnapshotFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<SnapshotFilter>
+  OR?: InputMaybe<SnapshotFilter>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  name?: InputMaybe<StrFilterLookup>
+}
 
 export type SnapshotInput = {
-  file: Scalars['ImageFileLike']['input'];
-  image: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-};
+  file: Scalars['ImageFileLike']['input']
+  image: Scalars['ID']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+}
 
 /** Spectral window in nanometers */
 export type Spectrum = {
-  __typename?: 'Spectrum';
-  maxNm: Scalars['Float']['output'];
-  minNm: Scalars['Float']['output'];
-};
+  __typename?: 'Spectrum'
+  maxNm: Scalars['Float']['output']
+  minNm: Scalars['Float']['output']
+}
 
 /** Spectral window in nanometers for wavelength-dependent components. */
 export type SpectrumInput = {
-  maxNm: Scalars['Float']['input'];
-  minNm: Scalars['Float']['input'];
-};
+  maxNm: Scalars['Float']['input']
+  minNm: Scalars['Float']['input']
+}
 
 export type Stage = {
-  __typename?: 'Stage';
-  affineViews: Array<AffineTransformationView>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
+  __typename?: 'Stage'
+  affineViews: Array<AffineTransformationView>
+  description?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  pinned: Scalars['Boolean']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+}
 
 export type StageAffineViewsArgs = {
-  filters?: InputMaybe<AffineTransformationViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<AffineTransformationViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type StageProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type StageFilter = {
-  AND?: InputMaybe<StageFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<StageFilter>;
-  OR?: InputMaybe<StageFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<StrFilterLookup>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<StageFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<StageFilter>
+  OR?: InputMaybe<StageFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  kind?: InputMaybe<Scalars['String']['input']>
+  name?: InputMaybe<StrFilterLookup>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type StageInput = {
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  name: Scalars['String']['input'];
-};
+  instrument?: InputMaybe<Scalars['ID']['input']>
+  name: Scalars['String']['input']
+}
 
 export type StrFilterLookup = {
-  contains?: InputMaybe<Scalars['String']['input']>;
-  endsWith?: InputMaybe<Scalars['String']['input']>;
-  exact?: InputMaybe<Scalars['String']['input']>;
-  gt?: InputMaybe<Scalars['String']['input']>;
-  gte?: InputMaybe<Scalars['String']['input']>;
-  iContains?: InputMaybe<Scalars['String']['input']>;
-  iEndsWith?: InputMaybe<Scalars['String']['input']>;
-  iExact?: InputMaybe<Scalars['String']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['String']['input']>;
-  inList?: InputMaybe<Array<Scalars['String']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['String']['input']>;
-  lte?: InputMaybe<Scalars['String']['input']>;
-  range?: InputMaybe<Array<Scalars['String']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['String']['input']>;
-};
+  contains?: InputMaybe<Scalars['String']['input']>
+  endsWith?: InputMaybe<Scalars['String']['input']>
+  exact?: InputMaybe<Scalars['String']['input']>
+  gt?: InputMaybe<Scalars['String']['input']>
+  gte?: InputMaybe<Scalars['String']['input']>
+  iContains?: InputMaybe<Scalars['String']['input']>
+  iEndsWith?: InputMaybe<Scalars['String']['input']>
+  iExact?: InputMaybe<Scalars['String']['input']>
+  iRegex?: InputMaybe<Scalars['String']['input']>
+  iStartsWith?: InputMaybe<Scalars['String']['input']>
+  inList?: InputMaybe<Array<Scalars['String']['input']>>
+  isNull?: InputMaybe<Scalars['Boolean']['input']>
+  lt?: InputMaybe<Scalars['String']['input']>
+  lte?: InputMaybe<Scalars['String']['input']>
+  range?: InputMaybe<Array<Scalars['String']['input']>>
+  regex?: InputMaybe<Scalars['String']['input']>
+  startsWith?: InputMaybe<Scalars['String']['input']>
+}
 
 export type Subscription = {
-  __typename?: 'Subscription';
+  __typename?: 'Subscription'
   /** Subscribe to real-time affine transformation view updatess */
-  affineTransformationViews: AffineTransformationViewEvent;
+  affineTransformationViews: AffineTransformationViewEvent
   /** Subscribe to real-time file updates */
-  files: FileEvent;
+  files: FileEvent
   /** Subscribe to real-time image updates */
-  images: ImageEvent;
+  images: ImageEvent
   /** Subscribe to real-time ROI updates */
-  rois: RoiEvent;
-};
-
+  rois: RoiEvent
+}
 
 export type SubscriptionAffineTransformationViewsArgs = {
-  stage: Scalars['ID']['input'];
-};
-
+  stage: Scalars['ID']['input']
+}
 
 export type SubscriptionFilesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-};
-
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type SubscriptionImagesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-};
-
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}
 
 export type SubscriptionRoisArgs = {
-  image: Scalars['ID']['input'];
-};
+  image: Scalars['ID']['input']
+}
 
 export type Table = {
-  __typename?: 'Table';
-  accessors: Array<Accessor>;
-  columns: Array<TableColumn>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  origins: Array<Image>;
-  rows: Array<Scalars['MetricMap']['output']>;
-  store: ParquetStore;
-};
-
+  __typename?: 'Table'
+  accessors: Array<Accessor>
+  columns: Array<TableColumn>
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  origins: Array<Image>
+  rows: Array<Scalars['MetricMap']['output']>
+  store: ParquetStore
+}
 
 export type TableAccessorsArgs = {
-  filters?: InputMaybe<AccessorFilter>;
-  types?: InputMaybe<Array<AccessorKind>>;
-};
-
+  filters?: InputMaybe<AccessorFilter>
+  types?: InputMaybe<Array<AccessorKind>>
+}
 
 export type TableOriginsArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  filters?: InputMaybe<ImageFilter>
+  order?: InputMaybe<ImageOrder>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 /** A cell of a table */
 export type TableCell = {
-  __typename?: 'TableCell';
-  column: TableColumn;
-  columnId: Scalars['Int']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  rowId: Scalars['Int']['output'];
-  table: Table;
-  value: Scalars['Any']['output'];
-};
+  __typename?: 'TableCell'
+  column: TableColumn
+  columnId: Scalars['Int']['output']
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  rowId: Scalars['Int']['output']
+  table: Table
+  value: Scalars['Any']['output']
+}
 
 export type TableCellFilter = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 /** A column descriptor */
 export type TableColumn = {
-  __typename?: 'TableColumn';
-  accessors: Array<Accessor>;
-  default?: Maybe<Scalars['String']['output']>;
-  key?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  nullable: Scalars['Boolean']['output'];
-  type: DuckDbDataType;
-};
-
+  __typename?: 'TableColumn'
+  accessors: Array<Accessor>
+  default?: Maybe<Scalars['String']['output']>
+  key?: Maybe<Scalars['String']['output']>
+  name: Scalars['String']['output']
+  nullable: Scalars['Boolean']['output']
+  type: DuckDbDataType
+}
 
 /** A column descriptor */
 export type TableColumnAccessorsArgs = {
-  filters?: InputMaybe<AccessorFilter>;
-  types?: InputMaybe<Array<AccessorKind>>;
-};
+  filters?: InputMaybe<AccessorFilter>
+  types?: InputMaybe<Array<AccessorKind>>
+}
 
 export type TableFilter = {
-  AND?: InputMaybe<TableFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<TableFilter>;
-  OR?: InputMaybe<TableFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  AND?: InputMaybe<TableFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<TableFilter>
+  OR?: InputMaybe<TableFilter>
+  id?: InputMaybe<Scalars['ID']['input']>
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type TablePaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-};
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: InputMaybe<Scalars['Int']['input']>
+}
 
 /** A cell of a table */
 export type TableRow = {
-  __typename?: 'TableRow';
-  columns: Array<TableColumn>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  rowId: Scalars['Int']['output'];
-  table: Table;
-  values: Array<Scalars['Any']['output']>;
-};
+  __typename?: 'TableRow'
+  columns: Array<TableColumn>
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  rowId: Scalars['Int']['output']
+  table: Table
+  values: Array<Scalars['Any']['output']>
+}
 
 export type TableRowFilter = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>
+  search?: InputMaybe<Scalars['String']['input']>
+}
 
 export type TimeBucket = {
-  __typename?: 'TimeBucket';
-  avg?: Maybe<Scalars['Float']['output']>;
-  count: Scalars['Int']['output'];
-  distinctCount: Scalars['Int']['output'];
-  max?: Maybe<Scalars['Float']['output']>;
-  min?: Maybe<Scalars['Float']['output']>;
-  sum?: Maybe<Scalars['Float']['output']>;
-  ts: Scalars['DateTime']['output'];
-};
+  __typename?: 'TimeBucket'
+  avg?: Maybe<Scalars['Float']['output']>
+  count: Scalars['Int']['output']
+  distinctCount: Scalars['Int']['output']
+  max?: Maybe<Scalars['Float']['output']>
+  min?: Maybe<Scalars['Float']['output']>
+  sum?: Maybe<Scalars['Float']['output']>
+  ts: Scalars['DateTime']['output']
+}
 
 export type TimepointView = View & {
-  __typename?: 'TimepointView';
+  __typename?: 'TimepointView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  era: Era;
-  id: Scalars['ID']['output'];
-  image: Image;
-  indexSinceStart?: Maybe<Scalars['Int']['output']>;
-  isGlobal: Scalars['Boolean']['output'];
-  msSinceStart?: Maybe<Scalars['Milliseconds']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  era: Era
+  id: Scalars['ID']['output']
+  image: Image
+  indexSinceStart?: Maybe<Scalars['Int']['output']>
+  isGlobal: Scalars['Boolean']['output']
+  msSinceStart?: Maybe<Scalars['Milliseconds']['output']>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type TimepointViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type TimepointViewFilter = {
-  AND?: InputMaybe<TimepointViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<TimepointViewFilter>;
-  OR?: InputMaybe<TimepointViewFilter>;
-  era?: InputMaybe<EraFilter>;
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Float']['input']>;
-};
+  AND?: InputMaybe<TimepointViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<TimepointViewFilter>
+  OR?: InputMaybe<TimepointViewFilter>
+  era?: InputMaybe<EraFilter>
+  indexSinceStart?: InputMaybe<Scalars['Int']['input']>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+  msSinceStart?: InputMaybe<Scalars['Float']['input']>
+}
 
 export type TimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  era?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  era?: InputMaybe<Scalars['ID']['input']>
+  image: Scalars['ID']['input']
+  indexSinceStart?: InputMaybe<Scalars['Int']['input']>
+  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type TreeInput = {
-  children: Array<TreeNodeInput>;
-  id?: InputMaybe<Scalars['String']['input']>;
-};
+  children: Array<TreeNodeInput>
+  id?: InputMaybe<Scalars['String']['input']>
+}
 
 export type TreeNodeInput = {
-  children?: InputMaybe<Array<TreeNodeInput>>;
-  context?: InputMaybe<Scalars['String']['input']>;
-  gap?: InputMaybe<Scalars['Int']['input']>;
-  kind: RenderNodeKind;
-  label?: InputMaybe<Scalars['String']['input']>;
-};
+  children?: InputMaybe<Array<TreeNodeInput>>
+  context?: InputMaybe<Scalars['String']['input']>
+  gap?: InputMaybe<Scalars['Int']['input']>
+  kind: RenderNodeKind
+  label?: InputMaybe<Scalars['String']['input']>
+}
 
 export type UpdateImageInput = {
-  id: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
+  id: Scalars['ID']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  tags?: InputMaybe<Array<Scalars['String']['input']>>
+}
 
 export type UpdateRgbContextInput = {
-  c?: InputMaybe<Scalars['Int']['input']>;
-  id: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  t?: InputMaybe<Scalars['Int']['input']>;
-  thumbnail?: InputMaybe<Scalars['ID']['input']>;
-  views?: InputMaybe<Array<PartialRgbViewInput>>;
-  z?: InputMaybe<Scalars['Int']['input']>;
-};
+  c?: InputMaybe<Scalars['Int']['input']>
+  id: Scalars['ID']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  t?: InputMaybe<Scalars['Int']['input']>
+  thumbnail?: InputMaybe<Scalars['ID']['input']>
+  views?: InputMaybe<Array<PartialRgbViewInput>>
+  z?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type UpdateRgbViewInput = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
+  active?: InputMaybe<Scalars['Boolean']['input']>
+  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  colorMap?: InputMaybe<ColorMap>;
-  context?: InputMaybe<Scalars['ID']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  gamma?: InputMaybe<Scalars['Float']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  colorMap?: InputMaybe<ColorMap>
+  context?: InputMaybe<Scalars['ID']['input']>
+  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>
+  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>
+  gamma?: InputMaybe<Scalars['Float']['input']>
   /** The ID of the RGB view to update */
-  id: Scalars['ID']['input'];
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  scale?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['ID']['input']
+  rescale?: InputMaybe<Scalars['Boolean']['input']>
+  scale?: InputMaybe<Scalars['Float']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type UpdateRoiInput = {
-  entity?: InputMaybe<Scalars['ID']['input']>;
-  entityGroup?: InputMaybe<Scalars['ID']['input']>;
-  entityKind?: InputMaybe<Scalars['ID']['input']>;
-  entityParent?: InputMaybe<Scalars['ID']['input']>;
-  kind?: InputMaybe<RoiKind>;
-  roi: Scalars['ID']['input'];
-  vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>;
-};
+  entity?: InputMaybe<Scalars['ID']['input']>
+  entityGroup?: InputMaybe<Scalars['ID']['input']>
+  entityKind?: InputMaybe<Scalars['ID']['input']>
+  entityParent?: InputMaybe<Scalars['ID']['input']>
+  kind?: InputMaybe<RoiKind>
+  roi: Scalars['ID']['input']
+  vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>
+}
 
 export type User = {
-  __typename?: 'User';
-  activeOrganization?: Maybe<Organization>;
-  preferredUsername: Scalars['String']['output'];
-  sub: Scalars['String']['output'];
-};
+  __typename?: 'User'
+  activeOrganization?: Maybe<Organization>
+  preferredUsername: Scalars['String']['output']
+  sub: Scalars['String']['output']
+}
 
 export type UserObjectPermission = {
-  __typename?: 'UserObjectPermission';
-  permission: Scalars['String']['output'];
-  user: User;
-};
+  __typename?: 'UserObjectPermission'
+  permission: Scalars['String']['output']
+  user: User
+}
 
 /** 3D vector or point in space */
 export type Vec3 = {
-  __typename?: 'Vec3';
-  x?: Maybe<Scalars['Float']['output']>;
-  y?: Maybe<Scalars['Float']['output']>;
-  z?: Maybe<Scalars['Float']['output']>;
-};
+  __typename?: 'Vec3'
+  x?: Maybe<Scalars['Float']['output']>
+  y?: Maybe<Scalars['Float']['output']>
+  z?: Maybe<Scalars['Float']['output']>
+}
 
 /** A 3D vector representing a point or offset in space. */
 export type Vec3Input = {
-  x?: InputMaybe<Scalars['Float']['input']>;
-  y?: InputMaybe<Scalars['Float']['input']>;
-  z?: InputMaybe<Scalars['Float']['input']>;
-};
+  x?: InputMaybe<Scalars['Float']['input']>
+  y?: InputMaybe<Scalars['Float']['input']>
+  z?: InputMaybe<Scalars['Float']['input']>
+}
 
 export type Video = Render & {
-  __typename?: 'Video';
-  createdAt: Scalars['DateTime']['output'];
-  creator?: Maybe<User>;
-  id: Scalars['ID']['output'];
-  store: MediaStore;
-  thumbnail: MediaStore;
-};
+  __typename?: 'Video'
+  createdAt: Scalars['DateTime']['output']
+  creator?: Maybe<User>
+  id: Scalars['ID']['output']
+  store: MediaStore
+  thumbnail: MediaStore
+}
 
 export type View = {
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type ViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type ViewCollection = {
-  __typename?: 'ViewCollection';
-  affineTransformationViews: Array<AffineTransformationView>;
-  channelViews: Array<ChannelView>;
-  id: Scalars['ID']['output'];
-  labelViews: Array<LabelView>;
-  name: Scalars['String']['output'];
+  __typename?: 'ViewCollection'
+  affineTransformationViews: Array<AffineTransformationView>
+  channelViews: Array<ChannelView>
+  id: Scalars['ID']['output']
+  labelViews: Array<LabelView>
+  name: Scalars['String']['output']
   /** Provenance entries for this camera */
-  provenanceEntries: Array<ProvenanceEntry>;
-  views: Array<View>;
-};
-
+  provenanceEntries: Array<ProvenanceEntry>
+  views: Array<View>
+}
 
 export type ViewCollectionAffineTransformationViewsArgs = {
-  filters?: InputMaybe<AffineTransformationViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
+  filters?: InputMaybe<AffineTransformationViewFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ViewCollectionProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
+  pagination?: InputMaybe<OffsetPaginationInput>
+}
 
 export type ViewCollectionInput = {
-  name: Scalars['String']['input'];
-};
+  name: Scalars['String']['input']
+}
 
 export type ViewFilter = {
-  AND?: InputMaybe<ViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ViewFilter>;
-  OR?: InputMaybe<ViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-};
+  AND?: InputMaybe<ViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ViewFilter>
+  OR?: InputMaybe<ViewFilter>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export enum ViewKind {
   AffineTransformation = 'AFFINE_TRANSFORMATION',
@@ -4912,2009 +4693,9769 @@ export enum ViewKind {
 }
 
 export type WellPositionView = View & {
-  __typename?: 'WellPositionView';
+  __typename?: 'WellPositionView'
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  column?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars['String']['output']>
+  cMax?: Maybe<Scalars['Int']['output']>
+  cMin?: Maybe<Scalars['Int']['output']>
+  column?: Maybe<Scalars['Int']['output']>
   /** All views of this image */
-  congruentViews: Array<View>;
-  id: Scalars['ID']['output'];
-  image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  row?: Maybe<Scalars['Int']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  well?: Maybe<MultiWellPlate>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
-};
-
+  congruentViews: Array<View>
+  id: Scalars['ID']['output']
+  image: Image
+  isGlobal: Scalars['Boolean']['output']
+  row?: Maybe<Scalars['Int']['output']>
+  tMax?: Maybe<Scalars['Int']['output']>
+  tMin?: Maybe<Scalars['Int']['output']>
+  well?: Maybe<MultiWellPlate>
+  xMax?: Maybe<Scalars['Int']['output']>
+  xMin?: Maybe<Scalars['Int']['output']>
+  yMax?: Maybe<Scalars['Int']['output']>
+  yMin?: Maybe<Scalars['Int']['output']>
+  zMax?: Maybe<Scalars['Int']['output']>
+  zMin?: Maybe<Scalars['Int']['output']>
+}
 
 export type WellPositionViewCongruentViewsArgs = {
-  filters?: InputMaybe<ViewFilter>;
-  types?: InputMaybe<Array<ViewKind>>;
-};
+  filters?: InputMaybe<ViewFilter>
+  types?: InputMaybe<Array<ViewKind>>
+}
 
 export type WellPositionViewFilter = {
-  AND?: InputMaybe<WellPositionViewFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<WellPositionViewFilter>;
-  OR?: InputMaybe<WellPositionViewFilter>;
-  column?: InputMaybe<Scalars['Int']['input']>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  row?: InputMaybe<Scalars['Int']['input']>;
-  well?: InputMaybe<MultiWellPlateFilter>;
-};
+  AND?: InputMaybe<WellPositionViewFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<WellPositionViewFilter>
+  OR?: InputMaybe<WellPositionViewFilter>
+  column?: InputMaybe<Scalars['Int']['input']>
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>
+  row?: InputMaybe<Scalars['Int']['input']>
+  well?: InputMaybe<MultiWellPlateFilter>
+}
 
 export type WellPositionViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  column?: InputMaybe<Scalars['Int']['input']>;
-  image: Scalars['ID']['input'];
-  row?: InputMaybe<Scalars['Int']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>
+  column?: InputMaybe<Scalars['Int']['input']>
+  image: Scalars['ID']['input']
+  row?: InputMaybe<Scalars['Int']['input']>
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
-  well?: InputMaybe<Scalars['ID']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>
+  well?: InputMaybe<Scalars['ID']['input']>
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
-};
+  zMin?: InputMaybe<Scalars['Int']['input']>
+}
 
 export type ZarrStore = {
-  __typename?: 'ZarrStore';
+  __typename?: 'ZarrStore'
   /** The bucket where the data is stored. */
-  bucket: Scalars['String']['output'];
+  bucket: Scalars['String']['output']
   /** The chunks of the data. */
-  chunks?: Maybe<Array<Scalars['Int']['output']>>;
+  chunks?: Maybe<Array<Scalars['Int']['output']>>
   /** The dtype of the data. */
-  dtype?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
+  dtype?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
   /** The key where the data is stored. */
-  key: Scalars['String']['output'];
+  key: Scalars['String']['output']
   /** The path to the data. Relative to the bucket. */
-  path?: Maybe<Scalars['String']['output']>;
+  path?: Maybe<Scalars['String']['output']>
   /** Whether the zarr store was populated (e.g. was a dataset created). */
-  populated: Scalars['Boolean']['output'];
+  populated: Scalars['Boolean']['output']
   /** The shape of the data. */
-  shape?: Maybe<Array<Scalars['Int']['output']>>;
+  shape?: Maybe<Array<Scalars['Int']['output']>>
   /** The version of the zarr store (e.g. the version of the dataset). */
-  version: Scalars['String']['output'];
-};
+  version: Scalars['String']['output']
+}
 
 export type ZarrStoreFilter = {
-  AND?: InputMaybe<ZarrStoreFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ZarrStoreFilter>;
-  OR?: InputMaybe<ZarrStoreFilter>;
-  shape?: InputMaybe<IntFilterLookup>;
-};
+  AND?: InputMaybe<ZarrStoreFilter>
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
+  NOT?: InputMaybe<ZarrStoreFilter>
+  OR?: InputMaybe<ZarrStoreFilter>
+  shape?: InputMaybe<IntFilterLookup>
+}
 
-export type _Entity = File | Image | Table;
+export type _Entity = File | Image | Table
 
 export type _Service = {
-  __typename?: '_Service';
-  sdl: Scalars['String']['output'];
-};
-
-type Accessor_ImageAccessor_Fragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-type Accessor_LabelAccessor_Fragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-export type AccessorFragment = Accessor_ImageAccessor_Fragment | Accessor_LabelAccessor_Fragment;
-
-export type LabelAccessorFragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } };
-
-export type ImageAccessorFragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-export type CameraFragment = { __typename?: 'Camera', sensorSizeX?: number | null, sensorSizeY?: number | null, pixelSizeX?: any | null, pixelSizeY?: any | null, name: string, serialNumber: string };
-
-export type CredentialsFragment = { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string };
-
-export type AccessCredentialsFragment = { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string };
-
-export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string };
-
-export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
-
-export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
-
-export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
-
-export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
-
-export type ListFileFragment = { __typename?: 'File', id: string, name: string };
-
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
-
-export type RgbImageFragment = { __typename?: 'Image', name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
-
-export type ListImageFragment = { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null };
-
-export type InstanceMaskViewLabelFragment = { __typename?: 'InstanceMaskViewLabel', id: string, values: any };
-
-export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
-
-type OpticalElement_BeamSplitterElement_Fragment = { __typename?: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_CcdElement_Fragment = { __typename?: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_DetectorElement_Fragment = { __typename?: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_FilterElement_Fragment = { __typename?: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_LampElement_Fragment = { __typename?: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_LaserElement_Fragment = { __typename?: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_LensElement_Fragment = { __typename?: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_MirrorElement_Fragment = { __typename?: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_ObjectiveElement_Fragment = { __typename?: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_OtherElement_Fragment = { __typename?: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_OtherSourceElement_Fragment = { __typename?: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_PinholeElement_Fragment = { __typename?: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-type OpticalElement_SampleElement_Fragment = { __typename?: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type OpticalElementFragment = OpticalElement_BeamSplitterElement_Fragment | OpticalElement_CcdElement_Fragment | OpticalElement_DetectorElement_Fragment | OpticalElement_FilterElement_Fragment | OpticalElement_LampElement_Fragment | OpticalElement_LaserElement_Fragment | OpticalElement_LensElement_Fragment | OpticalElement_MirrorElement_Fragment | OpticalElement_ObjectiveElement_Fragment | OpticalElement_OtherElement_Fragment | OpticalElement_OtherSourceElement_Fragment | OpticalElement_PinholeElement_Fragment | OpticalElement_SampleElement_Fragment;
-
-export type SpectrumFragment = { __typename?: 'Spectrum', minNm: number, maxNm: number };
-
-export type DetectorElementFragment = { __typename?: 'DetectorElement', nepdWPerSqrtHz?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type LaserElementFragment = { __typename?: 'LaserElement', nominalWavelengthNm?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type CcdElementFragment = { __typename?: 'CCDElement', pixelSizeUm?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type ObjectiveElementFragment = { __typename?: 'ObjectiveElement', magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type FilterElementFragment = { __typename?: 'FilterElement', label: string, id: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type OtherElementFragment = { __typename?: 'OtherElement', label: string, id: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type OtherSourceElementFragment = { __typename?: 'OtherSourceElement', channel?: ChannelKind | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type MirrorElementFragment = { __typename?: 'MirrorElement', angleDeg?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type BeamSplitterElementFragment = { __typename?: 'BeamSplitterElement', rFraction: number, tFraction: number, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type LensElementFragment = { __typename?: 'LensElement', focalLengthMm: number, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type PinholeElementFragment = { __typename?: 'PinholeElement', diameterUm?: number | null, id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type SampleElementFragment = { __typename?: 'SampleElement', label: string, id: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
-
-export type LightEdgeFragment = { __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null };
-
-export type LightpathGraphFragment = { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> };
-
-export type MeshFragment = { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } };
-
-export type ListMeshFragment = { __typename?: 'Mesh', id: string, name: string };
-
-export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
-
-export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
-
-export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
-
-export type ProvenanceEntryFragment = { __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> };
-
-export type RgbContextFragment = { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } };
-
-export type ListRgbContextFragment = { __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> };
-
-export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
-
-export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
-
-export type StageFragment = { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> };
-
-export type ListStageFragment = { __typename?: 'Stage', id: string, name: string };
-
-export type ZarrStoreFragment = { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string };
-
-export type ParquetStoreFragment = { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
-
-export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
-
-export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
-
-export type MeshStoreFragment = { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string };
-
-export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> };
-
-export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } };
-
-export type VideoFragment = { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
-
-type View_AcquisitionView_Fragment = { __typename?: 'AcquisitionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_AffineTransformationView_Fragment = { __typename?: 'AffineTransformationView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ChannelView_Fragment = { __typename?: 'ChannelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ContinousScanView_Fragment = { __typename?: 'ContinousScanView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_DerivedView_Fragment = { __typename?: 'DerivedView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_FileView_Fragment = { __typename?: 'FileView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_HistogramView_Fragment = { __typename?: 'HistogramView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_InstanceMaskView_Fragment = { __typename?: 'InstanceMaskView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_LabelView_Fragment = { __typename?: 'LabelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_LightpathView_Fragment = { __typename?: 'LightpathView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_MaskView_Fragment = { __typename?: 'MaskView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_OpticsView_Fragment = { __typename?: 'OpticsView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RgbView_Fragment = { __typename?: 'RGBView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RoiView_Fragment = { __typename?: 'ROIView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ReferenceView_Fragment = { __typename?: 'ReferenceView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ScaleView_Fragment = { __typename?: 'ScaleView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_TimepointView_Fragment = { __typename?: 'TimepointView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_WellPositionView_Fragment = { __typename?: 'WellPositionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_DerivedView_Fragment | View_FileView_Fragment | View_HistogramView_Fragment | View_InstanceMaskView_Fragment | View_LabelView_Fragment | View_LightpathView_Fragment | View_MaskView_Fragment | View_OpticsView_Fragment | View_RgbView_Fragment | View_RoiView_Fragment | View_ReferenceView_Fragment | View_ScaleView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
-
-export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null };
-
-export type LightpathViewFragment = { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } };
-
-export type DerivedViewFragment = { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiViewFragment = { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } };
-
-export type FileViewFragment = { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } };
-
-export type AffineTransformationViewFragment = { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } };
-
-export type RgbViewFragment = { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> };
-
-export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } };
-
-export type OpticsViewFragment = { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null };
-
-export type MaskViewFragment = { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } };
-
-export type ReferenceViewFragment = { __typename?: 'ReferenceView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type InstanceMaskViewFragment = { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } | null };
-
-export type AcquisitionViewFragment = { __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null };
-
-export type WellPositionViewFragment = { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null };
-
-export type ContinousScanViewFragment = { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type HistogramViewFragment = { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
+  __typename?: '_Service'
+  sdl: Scalars['String']['output']
+}
+
+type Accessor_ImageAccessor_Fragment = {
+  __typename?: 'ImageAccessor'
+  id: string
+  keys: Array<string>
+  minIndex?: number | null
+  maxIndex?: number | null
+}
+
+type Accessor_LabelAccessor_Fragment = {
+  __typename?: 'LabelAccessor'
+  id: string
+  keys: Array<string>
+  minIndex?: number | null
+  maxIndex?: number | null
+}
+
+export type AccessorFragment = Accessor_ImageAccessor_Fragment | Accessor_LabelAccessor_Fragment
+
+export type LabelAccessorFragment = {
+  __typename?: 'LabelAccessor'
+  id: string
+  keys: Array<string>
+  minIndex?: number | null
+  maxIndex?: number | null
+  maskView: { __typename?: 'MaskView'; id: string }
+}
+
+export type ImageAccessorFragment = {
+  __typename?: 'ImageAccessor'
+  id: string
+  keys: Array<string>
+  minIndex?: number | null
+  maxIndex?: number | null
+}
+
+export type CameraFragment = {
+  __typename?: 'Camera'
+  sensorSizeX?: number | null
+  sensorSizeY?: number | null
+  pixelSizeX?: any | null
+  pixelSizeY?: any | null
+  name: string
+  serialNumber: string
+}
+
+export type CredentialsFragment = {
+  __typename?: 'Credentials'
+  accessKey: string
+  status: string
+  secretKey: string
+  bucket: string
+  key: string
+  sessionToken: string
+  store: string
+}
+
+export type AccessCredentialsFragment = {
+  __typename?: 'AccessCredentials'
+  accessKey: string
+  secretKey: string
+  bucket: string
+  key: string
+  sessionToken: string
+  path: string
+}
+
+export type PresignedPostCredentialsFragment = {
+  __typename?: 'PresignedPostCredentials'
+  xAmzAlgorithm: string
+  xAmzCredential: string
+  xAmzDate: string
+  xAmzSignature: string
+  key: string
+  bucket: string
+  datalayer: string
+  policy: string
+  store: string
+}
+
+export type DatasetFragment = {
+  __typename?: 'Dataset'
+  id: string
+  name: string
+  description?: string | null
+  isDefault: boolean
+  pinned: boolean
+  createdAt: any
+  tags: Array<string>
+  provenanceEntries: Array<{
+    __typename?: 'ProvenanceEntry'
+    id: string
+    during?: string | null
+    kind: HistoryKind
+    date: any
+    user?: { __typename?: 'User'; sub: string } | null
+    client?: { __typename?: 'Client'; clientId: string } | null
+    effectiveChanges: Array<{
+      __typename?: 'ModelChange'
+      field: string
+      oldValue?: string | null
+      newValue?: string | null
+    }>
+  }>
+  images: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+  files: Array<{ __typename?: 'File'; id: string; name: string }>
+  children: Array<{
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+  }>
+  creator?: { __typename?: 'User'; sub: string } | null
+}
+
+export type ListDatasetFragment = {
+  __typename?: 'Dataset'
+  id: string
+  name: string
+  description?: string | null
+  isDefault: boolean
+}
+
+export type EraFragment = { __typename?: 'Era'; id: string; begin?: any | null; name: string }
+
+export type FileFragment = {
+  __typename?: 'File'
+  id: string
+  name: string
+  origins: Array<{ __typename?: 'Image'; id: string }>
+  store: {
+    __typename?: 'BigFileStore'
+    id: string
+    key: string
+    bucket: string
+    path: string
+    presignedUrl: string
+  }
+  views: Array<{
+    __typename?: 'FileView'
+    id: string
+    seriesIdentifier?: string | null
+    image: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }
+  }>
+  provenanceEntries: Array<{
+    __typename?: 'ProvenanceEntry'
+    id: string
+    during?: string | null
+    kind: HistoryKind
+    date: any
+    user?: { __typename?: 'User'; sub: string } | null
+    client?: { __typename?: 'Client'; clientId: string } | null
+    effectiveChanges: Array<{
+      __typename?: 'ModelChange'
+      field: string
+      oldValue?: string | null
+      newValue?: string | null
+    }>
+  }>
+  organization: { __typename?: 'Organization'; slug: string }
+}
+
+export type ListFileFragment = { __typename?: 'File'; id: string; name: string }
+
+export type ImageFragment = {
+  __typename?: 'Image'
+  id: string
+  name: string
+  pinned: boolean
+  createdAt: any
+  tags: Array<string>
+  store: {
+    __typename?: 'ZarrStore'
+    id: string
+    key: string
+    bucket: string
+    path?: string | null
+    shape?: Array<number> | null
+    dtype?: string | null
+    chunks?: Array<number> | null
+    version: string
+  }
+  derivedFromViews: Array<{
+    __typename?: 'DerivedView'
+    image: { __typename?: 'Image'; id: string; name: string }
+  }>
+  renders: Array<
+    | {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      }
+    | {
+        __typename?: 'Video'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      }
+  >
+  dataset?: { __typename?: 'Dataset'; name: string; id: string } | null
+  provenanceEntries: Array<{
+    __typename?: 'ProvenanceEntry'
+    id: string
+    during?: string | null
+    kind: HistoryKind
+    date: any
+    user?: { __typename?: 'User'; sub: string } | null
+    client?: { __typename?: 'Client'; clientId: string } | null
+    effectiveChanges: Array<{
+      __typename?: 'ModelChange'
+      field: string
+      oldValue?: string | null
+      newValue?: string | null
+    }>
+  }>
+  creator?: { __typename?: 'User'; sub: string } | null
+  rgbContexts: Array<{
+    __typename?: 'RGBContext'
+    id: string
+    name: string
+    blending: Blending
+    t: number
+    z: number
+    c: number
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+  }>
+  rois: Array<{
+    __typename?: 'ROI'
+    id: string
+    kind: RoiKind
+    vectors: Array<any>
+    image: { __typename?: 'Image'; id: string; name: string }
+  }>
+}
+
+export type RgbImageFragment = {
+  __typename?: 'Image'
+  name: string
+  rgbContexts: Array<{
+    __typename?: 'RGBContext'
+    id: string
+    name: string
+    blending: Blending
+    t: number
+    z: number
+    c: number
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+  }>
+}
+
+export type ListImageFragment = {
+  __typename?: 'Image'
+  id: string
+  name: string
+  latestSnapshot?: {
+    __typename?: 'Snapshot'
+    id: string
+    store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+  } | null
+}
+
+export type InstanceMaskViewLabelFragment = {
+  __typename?: 'InstanceMaskViewLabel'
+  id: string
+  values: any
+}
+
+export type InstrumentFragment = {
+  __typename?: 'Instrument'
+  model?: string | null
+  name: string
+  serialNumber: string
+}
+
+type OpticalElement_BeamSplitterElement_Fragment = {
+  __typename?: 'BeamSplitterElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_CcdElement_Fragment = {
+  __typename?: 'CCDElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_DetectorElement_Fragment = {
+  __typename?: 'DetectorElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_FilterElement_Fragment = {
+  __typename?: 'FilterElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_LampElement_Fragment = {
+  __typename?: 'LampElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_LaserElement_Fragment = {
+  __typename?: 'LaserElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_LensElement_Fragment = {
+  __typename?: 'LensElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_MirrorElement_Fragment = {
+  __typename?: 'MirrorElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_ObjectiveElement_Fragment = {
+  __typename?: 'ObjectiveElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_OtherElement_Fragment = {
+  __typename?: 'OtherElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_OtherSourceElement_Fragment = {
+  __typename?: 'OtherSourceElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_PinholeElement_Fragment = {
+  __typename?: 'PinholeElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+type OpticalElement_SampleElement_Fragment = {
+  __typename?: 'SampleElement'
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type OpticalElementFragment =
+  | OpticalElement_BeamSplitterElement_Fragment
+  | OpticalElement_CcdElement_Fragment
+  | OpticalElement_DetectorElement_Fragment
+  | OpticalElement_FilterElement_Fragment
+  | OpticalElement_LampElement_Fragment
+  | OpticalElement_LaserElement_Fragment
+  | OpticalElement_LensElement_Fragment
+  | OpticalElement_MirrorElement_Fragment
+  | OpticalElement_ObjectiveElement_Fragment
+  | OpticalElement_OtherElement_Fragment
+  | OpticalElement_OtherSourceElement_Fragment
+  | OpticalElement_PinholeElement_Fragment
+  | OpticalElement_SampleElement_Fragment
+
+export type SpectrumFragment = { __typename?: 'Spectrum'; minNm: number; maxNm: number }
+
+export type DetectorElementFragment = {
+  __typename?: 'DetectorElement'
+  nepdWPerSqrtHz?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type LaserElementFragment = {
+  __typename?: 'LaserElement'
+  nominalWavelengthNm?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type CcdElementFragment = {
+  __typename?: 'CCDElement'
+  pixelSizeUm?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type ObjectiveElementFragment = {
+  __typename?: 'ObjectiveElement'
+  magnification?: number | null
+  numericalAperture?: number | null
+  workingDistanceMm?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type FilterElementFragment = {
+  __typename?: 'FilterElement'
+  label: string
+  id: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type OtherElementFragment = {
+  __typename?: 'OtherElement'
+  label: string
+  id: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type OtherSourceElementFragment = {
+  __typename?: 'OtherSourceElement'
+  channel?: ChannelKind | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type MirrorElementFragment = {
+  __typename?: 'MirrorElement'
+  angleDeg?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type BeamSplitterElementFragment = {
+  __typename?: 'BeamSplitterElement'
+  rFraction: number
+  tFraction: number
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type LensElementFragment = {
+  __typename?: 'LensElement'
+  focalLengthMm: number
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type PinholeElementFragment = {
+  __typename?: 'PinholeElement'
+  diameterUm?: number | null
+  id: string
+  label: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type SampleElementFragment = {
+  __typename?: 'SampleElement'
+  label: string
+  id: string
+  kind: ElementKind
+  manufacturer?: string | null
+  model?: string | null
+  pose?: {
+    __typename?: 'Pose3D'
+    position?: {
+      __typename?: 'Vec3'
+      x?: number | null
+      y?: number | null
+      z?: number | null
+    } | null
+    orientation?: {
+      __typename?: 'Euler'
+      rx?: number | null
+      ry?: number | null
+      rz?: number | null
+    } | null
+  } | null
+  ports: Array<{
+    __typename?: 'LightPort'
+    id: string
+    name: string
+    role: PortRole
+    channel: ChannelKind
+  }>
+}
+
+export type LightEdgeFragment = {
+  __typename?: 'LightEdge'
+  id: string
+  sourceElementId: string
+  sourcePortId: string
+  targetElementId: string
+  targetPortId: string
+  medium?: string | null
+}
+
+export type LightpathGraphFragment = {
+  __typename?: 'LightpathGraph'
+  elements: Array<
+    | {
+        __typename: 'BeamSplitterElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        rFraction: number
+        tFraction: number
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+        band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+      }
+    | {
+        __typename: 'CCDElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'DetectorElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        nepdWPerSqrtHz?: number | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'FilterElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'LampElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'LaserElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        nominalWavelengthNm?: number | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'LensElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        focalLengthMm: number
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'MirrorElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        angleDeg?: number | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+        band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+      }
+    | {
+        __typename: 'ObjectiveElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        magnification?: number | null
+        numericalAperture?: number | null
+        workingDistanceMm?: number | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'OtherElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'OtherSourceElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        channel?: ChannelKind | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'PinholeElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        diameterUm?: number | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+    | {
+        __typename: 'SampleElement'
+        id: string
+        label: string
+        kind: ElementKind
+        manufacturer?: string | null
+        model?: string | null
+        pose?: {
+          __typename?: 'Pose3D'
+          position?: {
+            __typename?: 'Vec3'
+            x?: number | null
+            y?: number | null
+            z?: number | null
+          } | null
+          orientation?: {
+            __typename?: 'Euler'
+            rx?: number | null
+            ry?: number | null
+            rz?: number | null
+          } | null
+        } | null
+        ports: Array<{
+          __typename?: 'LightPort'
+          id: string
+          name: string
+          role: PortRole
+          channel: ChannelKind
+        }>
+      }
+  >
+  edges: Array<{
+    __typename?: 'LightEdge'
+    id: string
+    sourceElementId: string
+    sourcePortId: string
+    targetElementId: string
+    targetPortId: string
+    medium?: string | null
+  }>
+}
+
+export type MeshFragment = {
+  __typename?: 'Mesh'
+  id: string
+  name: string
+  store: { __typename?: 'MeshStore'; id: string; key: string; presignedUrl: string }
+}
+
+export type ListMeshFragment = { __typename?: 'Mesh'; id: string; name: string }
+
+export type MultiWellPlateFragment = {
+  __typename?: 'MultiWellPlate'
+  id: string
+  name?: string | null
+  views: Array<{
+    __typename?: 'WellPositionView'
+    id: string
+    column?: number | null
+    row?: number | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    well?: {
+      __typename?: 'MultiWellPlate'
+      id: string
+      rows?: number | null
+      columns?: number | null
+      name?: string | null
+    } | null
+  }>
+}
+
+export type ListMultiWellPlateFragment = {
+  __typename?: 'MultiWellPlate'
+  id: string
+  name?: string | null
+}
+
+export type ObjectiveFragment = {
+  __typename?: 'Objective'
+  na?: number | null
+  name: string
+  serialNumber: string
+}
+
+export type ProvenanceEntryFragment = {
+  __typename?: 'ProvenanceEntry'
+  id: string
+  during?: string | null
+  kind: HistoryKind
+  date: any
+  user?: { __typename?: 'User'; sub: string } | null
+  client?: { __typename?: 'Client'; clientId: string } | null
+  effectiveChanges: Array<{
+    __typename?: 'ModelChange'
+    field: string
+    oldValue?: string | null
+    newValue?: string | null
+  }>
+}
+
+export type RgbContextFragment = {
+  __typename?: 'RGBContext'
+  id: string
+  pinned: boolean
+  name: string
+  z: number
+  t: number
+  c: number
+  blending: Blending
+  views: Array<{
+    __typename?: 'RGBView'
+    id: string
+    name: string
+    colorMap: ColorMap
+    contrastLimitMin?: number | null
+    contrastLimitMax?: number | null
+    gamma?: number | null
+    active: boolean
+    fullColour: string
+    baseColor?: Array<number> | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    congruentViews: Array<
+      | { __typename?: 'AcquisitionView' }
+      | { __typename?: 'AffineTransformationView' }
+      | { __typename?: 'ChannelView' }
+      | { __typename?: 'ContinousScanView' }
+      | { __typename?: 'DerivedView' }
+      | { __typename?: 'FileView' }
+      | {
+          __typename?: 'HistogramView'
+          id: string
+          bins: Array<number>
+          min: number
+          max: number
+          histogram: Array<number>
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+        }
+      | { __typename?: 'InstanceMaskView' }
+      | { __typename?: 'LabelView' }
+      | { __typename?: 'LightpathView' }
+      | { __typename?: 'MaskView' }
+      | { __typename?: 'OpticsView' }
+      | { __typename?: 'RGBView' }
+      | { __typename?: 'ROIView' }
+      | { __typename?: 'ReferenceView' }
+      | { __typename?: 'ScaleView' }
+      | { __typename?: 'TimepointView' }
+      | { __typename?: 'WellPositionView' }
+    >
+  }>
+  image: {
+    __typename?: 'Image'
+    id: string
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedScaleViews: Array<{
+      __typename?: 'ScaleView'
+      id: string
+      scaleX: number
+      scaleY: number
+      scaleZ: number
+      scaleT: number
+      scaleC: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+      }
+    }>
+  }
+}
+
+export type ListRgbContextFragment = {
+  __typename?: 'RGBContext'
+  id: string
+  name: string
+  blending: Blending
+  t: number
+  z: number
+  c: number
+  image: {
+    __typename?: 'Image'
+    id: string
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedScaleViews: Array<{
+      __typename?: 'ScaleView'
+      id: string
+      scaleX: number
+      scaleY: number
+      scaleZ: number
+      scaleT: number
+      scaleC: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+      }
+    }>
+  }
+  views: Array<{
+    __typename?: 'RGBView'
+    id: string
+    name: string
+    colorMap: ColorMap
+    contrastLimitMin?: number | null
+    contrastLimitMax?: number | null
+    gamma?: number | null
+    active: boolean
+    fullColour: string
+    baseColor?: Array<number> | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    congruentViews: Array<
+      | { __typename?: 'AcquisitionView' }
+      | { __typename?: 'AffineTransformationView' }
+      | { __typename?: 'ChannelView' }
+      | { __typename?: 'ContinousScanView' }
+      | { __typename?: 'DerivedView' }
+      | { __typename?: 'FileView' }
+      | {
+          __typename?: 'HistogramView'
+          id: string
+          bins: Array<number>
+          min: number
+          max: number
+          histogram: Array<number>
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+        }
+      | { __typename?: 'InstanceMaskView' }
+      | { __typename?: 'LabelView' }
+      | { __typename?: 'LightpathView' }
+      | { __typename?: 'MaskView' }
+      | { __typename?: 'OpticsView' }
+      | { __typename?: 'RGBView' }
+      | { __typename?: 'ROIView' }
+      | { __typename?: 'ReferenceView' }
+      | { __typename?: 'ScaleView' }
+      | { __typename?: 'TimepointView' }
+      | { __typename?: 'WellPositionView' }
+    >
+  }>
+}
+
+export type ListRoiFragment = {
+  __typename?: 'ROI'
+  id: string
+  kind: RoiKind
+  vectors: Array<any>
+  image: { __typename?: 'Image'; id: string; name: string }
+}
+
+export type RoiFragment = {
+  __typename?: 'ROI'
+  id: string
+  pinned: boolean
+  createdAt: any
+  kind: RoiKind
+  vectors: Array<any>
+  image: {
+    __typename?: 'Image'
+    id: string
+    name: string
+    rgbContexts: Array<{
+      __typename?: 'RGBContext'
+      id: string
+      name: string
+      blending: Blending
+      t: number
+      z: number
+      c: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      views: Array<{
+        __typename?: 'RGBView'
+        id: string
+        name: string
+        colorMap: ColorMap
+        contrastLimitMin?: number | null
+        contrastLimitMax?: number | null
+        gamma?: number | null
+        active: boolean
+        fullColour: string
+        baseColor?: Array<number> | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        congruentViews: Array<
+          | { __typename?: 'AcquisitionView' }
+          | { __typename?: 'AffineTransformationView' }
+          | { __typename?: 'ChannelView' }
+          | { __typename?: 'ContinousScanView' }
+          | { __typename?: 'DerivedView' }
+          | { __typename?: 'FileView' }
+          | {
+              __typename?: 'HistogramView'
+              id: string
+              bins: Array<number>
+              min: number
+              max: number
+              histogram: Array<number>
+              xMin?: number | null
+              xMax?: number | null
+              yMin?: number | null
+              yMax?: number | null
+              tMin?: number | null
+              tMax?: number | null
+              cMin?: number | null
+              cMax?: number | null
+              zMin?: number | null
+              zMax?: number | null
+            }
+          | { __typename?: 'InstanceMaskView' }
+          | { __typename?: 'LabelView' }
+          | { __typename?: 'LightpathView' }
+          | { __typename?: 'MaskView' }
+          | { __typename?: 'OpticsView' }
+          | { __typename?: 'RGBView' }
+          | { __typename?: 'ROIView' }
+          | { __typename?: 'ReferenceView' }
+          | { __typename?: 'ScaleView' }
+          | { __typename?: 'TimepointView' }
+          | { __typename?: 'WellPositionView' }
+        >
+      }>
+    }>
+  }
+  creator?: { __typename?: 'User'; sub: string } | null
+  provenanceEntries: Array<{
+    __typename?: 'ProvenanceEntry'
+    id: string
+    during?: string | null
+    kind: HistoryKind
+    date: any
+    user?: { __typename?: 'User'; sub: string } | null
+    client?: { __typename?: 'Client'; clientId: string } | null
+    effectiveChanges: Array<{
+      __typename?: 'ModelChange'
+      field: string
+      oldValue?: string | null
+      newValue?: string | null
+    }>
+  }>
+}
+
+export type SnapshotFragment = {
+  __typename?: 'Snapshot'
+  id: string
+  store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+}
+
+export type StageFragment = {
+  __typename?: 'Stage'
+  id: string
+  pinned: boolean
+  name: string
+  affineViews: Array<{
+    __typename?: 'AffineTransformationView'
+    id: string
+    affineMatrix: any
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    image: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      store: { __typename?: 'ZarrStore'; shape?: Array<number> | null }
+    }
+    stage: { __typename?: 'Stage'; id: string; name: string }
+  }>
+}
+
+export type ListStageFragment = { __typename?: 'Stage'; id: string; name: string }
+
+export type ZarrStoreFragment = {
+  __typename?: 'ZarrStore'
+  id: string
+  key: string
+  bucket: string
+  path?: string | null
+  shape?: Array<number> | null
+  dtype?: string | null
+  chunks?: Array<number> | null
+  version: string
+}
+
+export type ParquetStoreFragment = {
+  __typename?: 'ParquetStore'
+  id: string
+  key: string
+  bucket: string
+  path: string
+  presignedUrl: string
+}
+
+export type BigFileStoreFragment = {
+  __typename?: 'BigFileStore'
+  id: string
+  key: string
+  bucket: string
+  path: string
+  presignedUrl: string
+}
+
+export type MediaStoreFragment = {
+  __typename?: 'MediaStore'
+  id: string
+  key: string
+  presignedUrl: string
+}
+
+export type MeshStoreFragment = {
+  __typename?: 'MeshStore'
+  id: string
+  key: string
+  presignedUrl: string
+}
+
+export type TableFragment = {
+  __typename?: 'Table'
+  id: string
+  name: string
+  origins: Array<{ __typename?: 'Image'; id: string }>
+  store: {
+    __typename?: 'ParquetStore'
+    id: string
+    key: string
+    bucket: string
+    path: string
+    presignedUrl: string
+  }
+  columns: Array<{
+    __typename?: 'TableColumn'
+    name: string
+    type: DuckDbDataType
+    accessors: Array<
+      | {
+          __typename?: 'ImageAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+        }
+      | {
+          __typename?: 'LabelAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+          maskView: { __typename?: 'MaskView'; id: string }
+        }
+    >
+  }>
+  accessors: Array<
+    | {
+        __typename?: 'ImageAccessor'
+        id: string
+        keys: Array<string>
+        minIndex?: number | null
+        maxIndex?: number | null
+      }
+    | {
+        __typename?: 'LabelAccessor'
+        id: string
+        keys: Array<string>
+        minIndex?: number | null
+        maxIndex?: number | null
+        maskView: { __typename?: 'MaskView'; id: string }
+      }
+  >
+}
+
+export type ListTableFragment = {
+  __typename?: 'Table'
+  id: string
+  name: string
+  origins: Array<{ __typename?: 'Image'; id: string }>
+  store: {
+    __typename?: 'ParquetStore'
+    id: string
+    key: string
+    bucket: string
+    path: string
+    presignedUrl: string
+  }
+}
+
+export type VideoFragment = {
+  __typename?: 'Video'
+  id: string
+  store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+}
+
+type View_AcquisitionView_Fragment = {
+  __typename?: 'AcquisitionView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_AffineTransformationView_Fragment = {
+  __typename?: 'AffineTransformationView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_ChannelView_Fragment = {
+  __typename?: 'ChannelView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_ContinousScanView_Fragment = {
+  __typename?: 'ContinousScanView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_DerivedView_Fragment = {
+  __typename?: 'DerivedView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_FileView_Fragment = {
+  __typename?: 'FileView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_HistogramView_Fragment = {
+  __typename?: 'HistogramView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_InstanceMaskView_Fragment = {
+  __typename?: 'InstanceMaskView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_LabelView_Fragment = {
+  __typename?: 'LabelView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_LightpathView_Fragment = {
+  __typename?: 'LightpathView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_MaskView_Fragment = {
+  __typename?: 'MaskView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_OpticsView_Fragment = {
+  __typename?: 'OpticsView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_RgbView_Fragment = {
+  __typename?: 'RGBView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_RoiView_Fragment = {
+  __typename?: 'ROIView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_ReferenceView_Fragment = {
+  __typename?: 'ReferenceView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_ScaleView_Fragment = {
+  __typename?: 'ScaleView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_TimepointView_Fragment = {
+  __typename?: 'TimepointView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+type View_WellPositionView_Fragment = {
+  __typename?: 'WellPositionView'
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+export type ViewFragment =
+  | View_AcquisitionView_Fragment
+  | View_AffineTransformationView_Fragment
+  | View_ChannelView_Fragment
+  | View_ContinousScanView_Fragment
+  | View_DerivedView_Fragment
+  | View_FileView_Fragment
+  | View_HistogramView_Fragment
+  | View_InstanceMaskView_Fragment
+  | View_LabelView_Fragment
+  | View_LightpathView_Fragment
+  | View_MaskView_Fragment
+  | View_OpticsView_Fragment
+  | View_RgbView_Fragment
+  | View_RoiView_Fragment
+  | View_ReferenceView_Fragment
+  | View_ScaleView_Fragment
+  | View_TimepointView_Fragment
+  | View_WellPositionView_Fragment
+
+export type ChannelViewFragment = {
+  __typename?: 'ChannelView'
+  id: string
+  excitationWavelength?: number | null
+  emissionWavelength?: number | null
+  acquisitionMode?: string | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  channelName?: string | null
+}
+
+export type LightpathViewFragment = {
+  __typename?: 'LightpathView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  graph: {
+    __typename?: 'LightpathGraph'
+    elements: Array<
+      | {
+          __typename: 'BeamSplitterElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          rFraction: number
+          tFraction: number
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+          band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+        }
+      | {
+          __typename: 'CCDElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'DetectorElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          nepdWPerSqrtHz?: number | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'FilterElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'LampElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'LaserElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          nominalWavelengthNm?: number | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'LensElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          focalLengthMm: number
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'MirrorElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          angleDeg?: number | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+          band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+        }
+      | {
+          __typename: 'ObjectiveElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          magnification?: number | null
+          numericalAperture?: number | null
+          workingDistanceMm?: number | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'OtherElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'OtherSourceElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          channel?: ChannelKind | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'PinholeElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          diameterUm?: number | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+      | {
+          __typename: 'SampleElement'
+          id: string
+          label: string
+          kind: ElementKind
+          manufacturer?: string | null
+          model?: string | null
+          pose?: {
+            __typename?: 'Pose3D'
+            position?: {
+              __typename?: 'Vec3'
+              x?: number | null
+              y?: number | null
+              z?: number | null
+            } | null
+            orientation?: {
+              __typename?: 'Euler'
+              rx?: number | null
+              ry?: number | null
+              rz?: number | null
+            } | null
+          } | null
+          ports: Array<{
+            __typename?: 'LightPort'
+            id: string
+            name: string
+            role: PortRole
+            channel: ChannelKind
+          }>
+        }
+    >
+    edges: Array<{
+      __typename?: 'LightEdge'
+      id: string
+      sourceElementId: string
+      sourcePortId: string
+      targetElementId: string
+      targetPortId: string
+      medium?: string | null
+    }>
+  }
+}
+
+export type DerivedViewFragment = {
+  __typename?: 'DerivedView'
+  id: string
+  operation?: string | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  originImage: { __typename?: 'Image'; id: string; name: string }
+}
+
+export type RoiViewFragment = {
+  __typename?: 'ROIView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  roi: { __typename?: 'ROI'; id: string; name: string }
+}
+
+export type FileViewFragment = {
+  __typename?: 'FileView'
+  id: string
+  seriesIdentifier?: string | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  file: { __typename?: 'File'; id: string; name: string }
+}
+
+export type AffineTransformationViewFragment = {
+  __typename?: 'AffineTransformationView'
+  id: string
+  affineMatrix: any
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  stage: { __typename?: 'Stage'; id: string; name: string }
+}
+
+export type RgbViewFragment = {
+  __typename?: 'RGBView'
+  id: string
+  name: string
+  colorMap: ColorMap
+  contrastLimitMin?: number | null
+  contrastLimitMax?: number | null
+  gamma?: number | null
+  active: boolean
+  fullColour: string
+  baseColor?: Array<number> | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+  image: {
+    __typename?: 'Image'
+    id: string
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedScaleViews: Array<{
+      __typename?: 'ScaleView'
+      id: string
+      scaleX: number
+      scaleY: number
+      scaleZ: number
+      scaleT: number
+      scaleC: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+      }
+    }>
+  }
+  congruentViews: Array<
+    | { __typename?: 'AcquisitionView' }
+    | { __typename?: 'AffineTransformationView' }
+    | { __typename?: 'ChannelView' }
+    | { __typename?: 'ContinousScanView' }
+    | { __typename?: 'DerivedView' }
+    | { __typename?: 'FileView' }
+    | {
+        __typename?: 'HistogramView'
+        id: string
+        bins: Array<number>
+        min: number
+        max: number
+        histogram: Array<number>
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+      }
+    | { __typename?: 'InstanceMaskView' }
+    | { __typename?: 'LabelView' }
+    | { __typename?: 'LightpathView' }
+    | { __typename?: 'MaskView' }
+    | { __typename?: 'OpticsView' }
+    | { __typename?: 'RGBView' }
+    | { __typename?: 'ROIView' }
+    | { __typename?: 'ReferenceView' }
+    | { __typename?: 'ScaleView' }
+    | { __typename?: 'TimepointView' }
+    | { __typename?: 'WellPositionView' }
+  >
+}
+
+export type TimepointViewFragment = {
+  __typename?: 'TimepointView'
+  id: string
+  msSinceStart?: any | null
+  indexSinceStart?: number | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  era: { __typename?: 'Era'; id: string; begin?: any | null; name: string }
+}
+
+export type OpticsViewFragment = {
+  __typename?: 'OpticsView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  objective?: { __typename?: 'Objective'; id: string; name: string; serialNumber: string } | null
+  camera?: { __typename?: 'Camera'; id: string; name: string; serialNumber: string } | null
+  instrument?: { __typename?: 'Instrument'; id: string; name: string; serialNumber: string } | null
+}
+
+export type MaskViewFragment = {
+  __typename?: 'MaskView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  referenceView: {
+    __typename?: 'ReferenceView'
+    id: string
+    image: { __typename?: 'Image'; id: string; name: string }
+  }
+}
+
+export type ReferenceViewFragment = {
+  __typename?: 'ReferenceView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+export type InstanceMaskViewFragment = {
+  __typename?: 'InstanceMaskView'
+  id: string
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  referenceView: {
+    __typename?: 'ReferenceView'
+    id: string
+    image: { __typename?: 'Image'; id: string; name: string }
+  }
+  labels?: {
+    __typename?: 'ParquetStore'
+    id: string
+    key: string
+    bucket: string
+    path: string
+    presignedUrl: string
+  } | null
+}
+
+export type AcquisitionViewFragment = {
+  __typename?: 'AcquisitionView'
+  id: string
+  description?: string | null
+  acquiredAt?: any | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  operator?: { __typename?: 'User'; sub: string } | null
+}
+
+export type WellPositionViewFragment = {
+  __typename?: 'WellPositionView'
+  id: string
+  column?: number | null
+  row?: number | null
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+  well?: {
+    __typename?: 'MultiWellPlate'
+    id: string
+    rows?: number | null
+    columns?: number | null
+    name?: string | null
+  } | null
+}
+
+export type ContinousScanViewFragment = {
+  __typename?: 'ContinousScanView'
+  id: string
+  direction: ScanDirection
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
+
+export type HistogramViewFragment = {
+  __typename?: 'HistogramView'
+  id: string
+  bins: Array<number>
+  min: number
+  max: number
+  histogram: Array<number>
+  xMin?: number | null
+  xMax?: number | null
+  yMin?: number | null
+  yMax?: number | null
+  tMin?: number | null
+  tMax?: number | null
+  cMin?: number | null
+  cMax?: number | null
+  zMin?: number | null
+  zMax?: number | null
+}
 
 export type CreateCameraMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>
+  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>
+  sensorSizeX?: InputMaybe<Scalars['Int']['input']>
+  sensorSizeY?: InputMaybe<Scalars['Int']['input']>
+}>
 
-
-export type CreateCameraMutation = { __typename?: 'Mutation', createCamera: { __typename?: 'Camera', id: string, name: string } };
+export type CreateCameraMutation = {
+  __typename?: 'Mutation'
+  createCamera: { __typename?: 'Camera'; id: string; name: string }
+}
 
 export type EnsureCameraMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>
+  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>
+  sensorSizeX?: InputMaybe<Scalars['Int']['input']>
+  sensorSizeY?: InputMaybe<Scalars['Int']['input']>
+}>
 
-
-export type EnsureCameraMutation = { __typename?: 'Mutation', ensureCamera: { __typename?: 'Camera', id: string, name: string } };
+export type EnsureCameraMutation = {
+  __typename?: 'Mutation'
+  ensureCamera: { __typename?: 'Camera'; id: string; name: string }
+}
 
 export type CreateDatasetMutationVariables = Exact<{
-  input: CreateDatasetInput;
-}>;
+  input: CreateDatasetInput
+}>
 
-
-export type CreateDatasetMutation = { __typename?: 'Mutation', createDataset: { __typename?: 'Dataset', id: string, name: string } };
+export type CreateDatasetMutation = {
+  __typename?: 'Mutation'
+  createDataset: { __typename?: 'Dataset'; id: string; name: string }
+}
 
 export type UpdateDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
-}>;
+  id: Scalars['ID']['input']
+  name: Scalars['String']['input']
+}>
 
-
-export type UpdateDatasetMutation = { __typename?: 'Mutation', updateDataset: { __typename?: 'Dataset', id: string, name: string } };
+export type UpdateDatasetMutation = {
+  __typename?: 'Mutation'
+  updateDataset: { __typename?: 'Dataset'; id: string; name: string }
+}
 
 export type PinDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}>
 
-
-export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PinDatasetMutation = {
+  __typename?: 'Mutation'
+  pinDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type PutDatasetsInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutDatasetsInDatasetMutation = {
+  __typename?: 'Mutation'
+  putDatasetsInDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseDatasetsFromDatasetMutation = {
+  __typename?: 'Mutation'
+  releaseDatasetsFromDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type PutImagesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutImagesInDatasetMutation = {
+  __typename?: 'Mutation'
+  putImagesInDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type ReleaseImagesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseImagesFromDatasetMutation = {
+  __typename?: 'Mutation'
+  releaseImagesFromDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type PutFilesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutFilesInDatasetMutation = {
+  __typename?: 'Mutation'
+  putFilesInDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type ReleaseFilesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input']
+  other: Scalars['ID']['input']
+}>
 
-
-export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseFilesFromDatasetMutation = {
+  __typename?: 'Mutation'
+  releaseFilesFromDataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type RevertDatasetMutationVariables = Exact<{
-  dataset: Scalars['ID']['input'];
-  history: Scalars['ID']['input'];
-}>;
+  dataset: Scalars['ID']['input']
+  history: Scalars['ID']['input']
+}>
 
-
-export type RevertDatasetMutation = { __typename?: 'Mutation', revertDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null } };
+export type RevertDatasetMutation = {
+  __typename?: 'Mutation'
+  revertDataset: { __typename?: 'Dataset'; id: string; name: string; description?: string | null }
+}
 
 export type DeleteDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteDatasetMutation = { __typename?: 'Mutation', deleteDataset: string };
+export type DeleteDatasetMutation = { __typename?: 'Mutation'; deleteDataset: string }
 
 export type CreateEraMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
-}>;
+  name: Scalars['String']['input']
+  begin?: InputMaybe<Scalars['DateTime']['input']>
+}>
 
-
-export type CreateEraMutation = { __typename?: 'Mutation', createEra: { __typename?: 'Era', id: string, begin?: any | null } };
+export type CreateEraMutation = {
+  __typename?: 'Mutation'
+  createEra: { __typename?: 'Era'; id: string; begin?: any | null }
+}
 
 export type From_File_LikeMutationVariables = Exact<{
-  file: Scalars['FileLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-}>;
+  file: Scalars['FileLike']['input']
+  name: Scalars['String']['input']
+  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}>
 
-
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type From_File_LikeMutation = {
+  __typename?: 'Mutation'
+  fromFileLike: {
+    __typename?: 'File'
+    id: string
+    name: string
+    origins: Array<{ __typename?: 'Image'; id: string }>
+    store: {
+      __typename?: 'BigFileStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    }
+    views: Array<{
+      __typename?: 'FileView'
+      id: string
+      seriesIdentifier?: string | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        latestSnapshot?: {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        } | null
+      }
+    }>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    organization: { __typename?: 'Organization'; slug: string }
+  }
+}
 
 export type RequestFileUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
-}>;
+  key: Scalars['String']['input']
+  datalayer: Scalars['String']['input']
+}>
 
-
-export type RequestFileUploadMutation = { __typename?: 'Mutation', requestFileUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestFileUploadMutation = {
+  __typename?: 'Mutation'
+  requestFileUpload: {
+    __typename?: 'Credentials'
+    accessKey: string
+    status: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    store: string
+  }
+}
 
 export type RequestFileUploadPresignedMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
-}>;
+  key: Scalars['String']['input']
+  datalayer: Scalars['String']['input']
+}>
 
-
-export type RequestFileUploadPresignedMutation = { __typename?: 'Mutation', requestFileUploadPresigned: { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string } };
+export type RequestFileUploadPresignedMutation = {
+  __typename?: 'Mutation'
+  requestFileUploadPresigned: {
+    __typename?: 'PresignedPostCredentials'
+    xAmzAlgorithm: string
+    xAmzCredential: string
+    xAmzDate: string
+    xAmzSignature: string
+    key: string
+    bucket: string
+    datalayer: string
+    policy: string
+    store: string
+  }
+}
 
 export type RequestFileAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
-}>;
+  store: Scalars['ID']['input']
+  duration?: InputMaybe<Scalars['Int']['input']>
+}>
 
-
-export type RequestFileAccessMutation = { __typename?: 'Mutation', requestFileAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestFileAccessMutation = {
+  __typename?: 'Mutation'
+  requestFileAccess: {
+    __typename?: 'AccessCredentials'
+    accessKey: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    path: string
+  }
+}
 
 export type DeleteFileMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
+export type DeleteFileMutation = { __typename?: 'Mutation'; deleteFile: string }
 
 export type RequestUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
-}>;
+  key: Scalars['String']['input']
+  datalayer: Scalars['String']['input']
+}>
 
-
-export type RequestUploadMutation = { __typename?: 'Mutation', requestUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestUploadMutation = {
+  __typename?: 'Mutation'
+  requestUpload: {
+    __typename?: 'Credentials'
+    accessKey: string
+    status: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    store: string
+  }
+}
 
 export type RequestAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
-}>;
+  store: Scalars['ID']['input']
+  duration?: InputMaybe<Scalars['Int']['input']>
+}>
 
-
-export type RequestAccessMutation = { __typename?: 'Mutation', requestAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestAccessMutation = {
+  __typename?: 'Mutation'
+  requestAccess: {
+    __typename?: 'AccessCredentials'
+    accessKey: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    path: string
+  }
+}
 
 export type PinImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}>
 
-
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinImageMutation = {
+  __typename?: 'Mutation'
+  pinImage: {
+    __typename?: 'Image'
+    id: string
+    name: string
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedFromViews: Array<{
+      __typename?: 'DerivedView'
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+    renders: Array<
+      | {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+      | {
+          __typename?: 'Video'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+    >
+    dataset?: { __typename?: 'Dataset'; name: string; id: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+    rgbContexts: Array<{
+      __typename?: 'RGBContext'
+      id: string
+      name: string
+      blending: Blending
+      t: number
+      z: number
+      c: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      views: Array<{
+        __typename?: 'RGBView'
+        id: string
+        name: string
+        colorMap: ColorMap
+        contrastLimitMin?: number | null
+        contrastLimitMax?: number | null
+        gamma?: number | null
+        active: boolean
+        fullColour: string
+        baseColor?: Array<number> | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        congruentViews: Array<
+          | { __typename?: 'AcquisitionView' }
+          | { __typename?: 'AffineTransformationView' }
+          | { __typename?: 'ChannelView' }
+          | { __typename?: 'ContinousScanView' }
+          | { __typename?: 'DerivedView' }
+          | { __typename?: 'FileView' }
+          | {
+              __typename?: 'HistogramView'
+              id: string
+              bins: Array<number>
+              min: number
+              max: number
+              histogram: Array<number>
+              xMin?: number | null
+              xMax?: number | null
+              yMin?: number | null
+              yMax?: number | null
+              tMin?: number | null
+              tMax?: number | null
+              cMin?: number | null
+              cMax?: number | null
+              zMin?: number | null
+              zMax?: number | null
+            }
+          | { __typename?: 'InstanceMaskView' }
+          | { __typename?: 'LabelView' }
+          | { __typename?: 'LightpathView' }
+          | { __typename?: 'MaskView' }
+          | { __typename?: 'OpticsView' }
+          | { __typename?: 'RGBView' }
+          | { __typename?: 'ROIView' }
+          | { __typename?: 'ReferenceView' }
+          | { __typename?: 'ScaleView' }
+          | { __typename?: 'TimepointView' }
+          | { __typename?: 'WellPositionView' }
+        >
+      }>
+    }>
+    rois: Array<{
+      __typename?: 'ROI'
+      id: string
+      kind: RoiKind
+      vectors: Array<any>
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+  }
+}
 
 export type UpdateImageMutationVariables = Exact<{
-  input: UpdateImageInput;
-}>;
+  input: UpdateImageInput
+}>
 
-
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type UpdateImageMutation = {
+  __typename?: 'Mutation'
+  updateImage: {
+    __typename?: 'Image'
+    id: string
+    name: string
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedFromViews: Array<{
+      __typename?: 'DerivedView'
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+    renders: Array<
+      | {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+      | {
+          __typename?: 'Video'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+    >
+    dataset?: { __typename?: 'Dataset'; name: string; id: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+    rgbContexts: Array<{
+      __typename?: 'RGBContext'
+      id: string
+      name: string
+      blending: Blending
+      t: number
+      z: number
+      c: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      views: Array<{
+        __typename?: 'RGBView'
+        id: string
+        name: string
+        colorMap: ColorMap
+        contrastLimitMin?: number | null
+        contrastLimitMax?: number | null
+        gamma?: number | null
+        active: boolean
+        fullColour: string
+        baseColor?: Array<number> | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        congruentViews: Array<
+          | { __typename?: 'AcquisitionView' }
+          | { __typename?: 'AffineTransformationView' }
+          | { __typename?: 'ChannelView' }
+          | { __typename?: 'ContinousScanView' }
+          | { __typename?: 'DerivedView' }
+          | { __typename?: 'FileView' }
+          | {
+              __typename?: 'HistogramView'
+              id: string
+              bins: Array<number>
+              min: number
+              max: number
+              histogram: Array<number>
+              xMin?: number | null
+              xMax?: number | null
+              yMin?: number | null
+              yMax?: number | null
+              tMin?: number | null
+              tMax?: number | null
+              cMin?: number | null
+              cMax?: number | null
+              zMin?: number | null
+              zMax?: number | null
+            }
+          | { __typename?: 'InstanceMaskView' }
+          | { __typename?: 'LabelView' }
+          | { __typename?: 'LightpathView' }
+          | { __typename?: 'MaskView' }
+          | { __typename?: 'OpticsView' }
+          | { __typename?: 'RGBView' }
+          | { __typename?: 'ROIView' }
+          | { __typename?: 'ReferenceView' }
+          | { __typename?: 'ScaleView' }
+          | { __typename?: 'TimepointView' }
+          | { __typename?: 'WellPositionView' }
+        >
+      }>
+    }>
+    rois: Array<{
+      __typename?: 'ROI'
+      id: string
+      kind: RoiKind
+      vectors: Array<any>
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+  }
+}
 
 export type DeleteImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: string };
+export type DeleteImageMutation = { __typename?: 'Mutation'; deleteImage: string }
 
 export type CreateInstrumentMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+}>
 
-
-export type CreateInstrumentMutation = { __typename?: 'Mutation', createInstrument: { __typename?: 'Instrument', id: string, name: string } };
+export type CreateInstrumentMutation = {
+  __typename?: 'Mutation'
+  createInstrument: { __typename?: 'Instrument'; id: string; name: string }
+}
 
 export type EnsureInstrumentMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+}>
 
-
-export type EnsureInstrumentMutation = { __typename?: 'Mutation', ensureInstrument: { __typename?: 'Instrument', id: string, name: string } };
+export type EnsureInstrumentMutation = {
+  __typename?: 'Mutation'
+  ensureInstrument: { __typename?: 'Instrument'; id: string; name: string }
+}
 
 export type RequestMediaUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
-}>;
+  key: Scalars['String']['input']
+  datalayer: Scalars['String']['input']
+}>
 
-
-export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string } };
+export type RequestMediaUploadMutation = {
+  __typename?: 'Mutation'
+  requestMediaUpload: {
+    __typename?: 'PresignedPostCredentials'
+    xAmzAlgorithm: string
+    xAmzCredential: string
+    xAmzDate: string
+    xAmzSignature: string
+    key: string
+    bucket: string
+    datalayer: string
+    policy: string
+    store: string
+  }
+}
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
-  input: MultiWellPlateInput;
-}>;
+  input: MultiWellPlateInput
+}>
 
-
-export type CreateMultiWellPlateMutation = { __typename?: 'Mutation', createMultiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type CreateMultiWellPlateMutation = {
+  __typename?: 'Mutation'
+  createMultiWellPlate: {
+    __typename?: 'MultiWellPlate'
+    id: string
+    name?: string | null
+    views: Array<{
+      __typename?: 'WellPositionView'
+      id: string
+      column?: number | null
+      row?: number | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      well?: {
+        __typename?: 'MultiWellPlate'
+        id: string
+        rows?: number | null
+        columns?: number | null
+        name?: string | null
+      } | null
+    }>
+  }
+}
 
 export type AutoCreateMultiWellPlateMutationVariables = Exact<{
-  input: Scalars['String']['input'];
-}>;
+  input: Scalars['String']['input']
+}>
 
-
-export type AutoCreateMultiWellPlateMutation = { __typename?: 'Mutation', result: { __typename?: 'MultiWellPlate', label?: string | null, value: string } };
+export type AutoCreateMultiWellPlateMutation = {
+  __typename?: 'Mutation'
+  result: { __typename?: 'MultiWellPlate'; label?: string | null; value: string }
+}
 
 export type CreateObjectiveMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  na?: InputMaybe<Scalars['Float']['input']>
+  magnification?: InputMaybe<Scalars['Float']['input']>
+}>
 
-
-export type CreateObjectiveMutation = { __typename?: 'Mutation', createObjective: { __typename?: 'Objective', id: string, name: string } };
+export type CreateObjectiveMutation = {
+  __typename?: 'Mutation'
+  createObjective: { __typename?: 'Objective'; id: string; name: string }
+}
 
 export type EnsureObjectiveMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
-}>;
+  serialNumber: Scalars['String']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  na?: InputMaybe<Scalars['Float']['input']>
+  magnification?: InputMaybe<Scalars['Float']['input']>
+}>
 
-
-export type EnsureObjectiveMutation = { __typename?: 'Mutation', ensureObjective: { __typename?: 'Objective', id: string, name: string } };
+export type EnsureObjectiveMutation = {
+  __typename?: 'Mutation'
+  ensureObjective: { __typename?: 'Objective'; id: string; name: string }
+}
 
 export type AssignUserPermissionsMutationVariables = Exact<{
-  input: AssignUserPermissionInput;
-}>;
+  input: AssignUserPermissionInput
+}>
 
-
-export type AssignUserPermissionsMutation = { __typename?: 'Mutation', assignUserPermission: Array<{ __typename?: 'UserObjectPermission', permission: string, user: { __typename?: 'User', sub: string } }> };
+export type AssignUserPermissionsMutation = {
+  __typename?: 'Mutation'
+  assignUserPermission: Array<{
+    __typename?: 'UserObjectPermission'
+    permission: string
+    user: { __typename?: 'User'; sub: string }
+  }>
+}
 
 export type CreateRgbContextMutationVariables = Exact<{
-  input: CreateRgbContextInput;
-}>;
+  input: CreateRgbContextInput
+}>
 
-
-export type CreateRgbContextMutation = { __typename?: 'Mutation', createRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type CreateRgbContextMutation = {
+  __typename?: 'Mutation'
+  createRgbContext: {
+    __typename?: 'RGBContext'
+    id: string
+    pinned: boolean
+    name: string
+    z: number
+    t: number
+    c: number
+    blending: Blending
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+  }
+}
 
 export type UpdateRgbContextMutationVariables = Exact<{
-  input: UpdateRgbContextInput;
-}>;
+  input: UpdateRgbContextInput
+}>
 
-
-export type UpdateRgbContextMutation = { __typename?: 'Mutation', updateRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type UpdateRgbContextMutation = {
+  __typename?: 'Mutation'
+  updateRgbContext: {
+    __typename?: 'RGBContext'
+    id: string
+    pinned: boolean
+    name: string
+    z: number
+    t: number
+    c: number
+    blending: Blending
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+  }
+}
 
 export type PinRoiMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}>
 
-
-export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type PinRoiMutation = {
+  __typename?: 'Mutation'
+  pinRoi: {
+    __typename?: 'ROI'
+    id: string
+    pinned: boolean
+    createdAt: any
+    kind: RoiKind
+    vectors: Array<any>
+    image: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      rgbContexts: Array<{
+        __typename?: 'RGBContext'
+        id: string
+        name: string
+        blending: Blending
+        t: number
+        z: number
+        c: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        views: Array<{
+          __typename?: 'RGBView'
+          id: string
+          name: string
+          colorMap: ColorMap
+          contrastLimitMin?: number | null
+          contrastLimitMax?: number | null
+          gamma?: number | null
+          active: boolean
+          fullColour: string
+          baseColor?: Array<number> | null
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+          contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+            derivedScaleViews: Array<{
+              __typename?: 'ScaleView'
+              id: string
+              scaleX: number
+              scaleY: number
+              scaleZ: number
+              scaleT: number
+              scaleC: number
+              image: {
+                __typename?: 'Image'
+                id: string
+                store: {
+                  __typename?: 'ZarrStore'
+                  id: string
+                  key: string
+                  bucket: string
+                  path?: string | null
+                  shape?: Array<number> | null
+                  dtype?: string | null
+                  chunks?: Array<number> | null
+                  version: string
+                }
+              }
+            }>
+          }
+          congruentViews: Array<
+            | { __typename?: 'AcquisitionView' }
+            | { __typename?: 'AffineTransformationView' }
+            | { __typename?: 'ChannelView' }
+            | { __typename?: 'ContinousScanView' }
+            | { __typename?: 'DerivedView' }
+            | { __typename?: 'FileView' }
+            | {
+                __typename?: 'HistogramView'
+                id: string
+                bins: Array<number>
+                min: number
+                max: number
+                histogram: Array<number>
+                xMin?: number | null
+                xMax?: number | null
+                yMin?: number | null
+                yMax?: number | null
+                tMin?: number | null
+                tMax?: number | null
+                cMin?: number | null
+                cMax?: number | null
+                zMin?: number | null
+                zMax?: number | null
+              }
+            | { __typename?: 'InstanceMaskView' }
+            | { __typename?: 'LabelView' }
+            | { __typename?: 'LightpathView' }
+            | { __typename?: 'MaskView' }
+            | { __typename?: 'OpticsView' }
+            | { __typename?: 'RGBView' }
+            | { __typename?: 'ROIView' }
+            | { __typename?: 'ReferenceView' }
+            | { __typename?: 'ScaleView' }
+            | { __typename?: 'TimepointView' }
+            | { __typename?: 'WellPositionView' }
+          >
+        }>
+      }>
+    }
+    creator?: { __typename?: 'User'; sub: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+  }
+}
 
 export type CreateRoiMutationVariables = Exact<{
-  input: RoiInput;
-}>;
+  input: RoiInput
+}>
 
-
-export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type CreateRoiMutation = {
+  __typename?: 'Mutation'
+  createRoi: {
+    __typename?: 'ROI'
+    id: string
+    pinned: boolean
+    createdAt: any
+    kind: RoiKind
+    vectors: Array<any>
+    image: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      rgbContexts: Array<{
+        __typename?: 'RGBContext'
+        id: string
+        name: string
+        blending: Blending
+        t: number
+        z: number
+        c: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        views: Array<{
+          __typename?: 'RGBView'
+          id: string
+          name: string
+          colorMap: ColorMap
+          contrastLimitMin?: number | null
+          contrastLimitMax?: number | null
+          gamma?: number | null
+          active: boolean
+          fullColour: string
+          baseColor?: Array<number> | null
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+          contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+            derivedScaleViews: Array<{
+              __typename?: 'ScaleView'
+              id: string
+              scaleX: number
+              scaleY: number
+              scaleZ: number
+              scaleT: number
+              scaleC: number
+              image: {
+                __typename?: 'Image'
+                id: string
+                store: {
+                  __typename?: 'ZarrStore'
+                  id: string
+                  key: string
+                  bucket: string
+                  path?: string | null
+                  shape?: Array<number> | null
+                  dtype?: string | null
+                  chunks?: Array<number> | null
+                  version: string
+                }
+              }
+            }>
+          }
+          congruentViews: Array<
+            | { __typename?: 'AcquisitionView' }
+            | { __typename?: 'AffineTransformationView' }
+            | { __typename?: 'ChannelView' }
+            | { __typename?: 'ContinousScanView' }
+            | { __typename?: 'DerivedView' }
+            | { __typename?: 'FileView' }
+            | {
+                __typename?: 'HistogramView'
+                id: string
+                bins: Array<number>
+                min: number
+                max: number
+                histogram: Array<number>
+                xMin?: number | null
+                xMax?: number | null
+                yMin?: number | null
+                yMax?: number | null
+                tMin?: number | null
+                tMax?: number | null
+                cMin?: number | null
+                cMax?: number | null
+                zMin?: number | null
+                zMax?: number | null
+              }
+            | { __typename?: 'InstanceMaskView' }
+            | { __typename?: 'LabelView' }
+            | { __typename?: 'LightpathView' }
+            | { __typename?: 'MaskView' }
+            | { __typename?: 'OpticsView' }
+            | { __typename?: 'RGBView' }
+            | { __typename?: 'ROIView' }
+            | { __typename?: 'ReferenceView' }
+            | { __typename?: 'ScaleView' }
+            | { __typename?: 'TimepointView' }
+            | { __typename?: 'WellPositionView' }
+          >
+        }>
+      }>
+    }
+    creator?: { __typename?: 'User'; sub: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+  }
+}
 
 export type DeleteRoiMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteRoiMutation = { __typename?: 'Mutation', deleteRoi: string };
+export type DeleteRoiMutation = { __typename?: 'Mutation'; deleteRoi: string }
 
 export type CreateSnapshotMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  file: Scalars['ImageFileLike']['input'];
-}>;
+  image: Scalars['ID']['input']
+  file: Scalars['ImageFileLike']['input']
+}>
 
-
-export type CreateSnapshotMutation = { __typename?: 'Mutation', createSnapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } };
+export type CreateSnapshotMutation = {
+  __typename?: 'Mutation'
+  createSnapshot: {
+    __typename?: 'Snapshot'
+    id: string
+    store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+  }
+}
 
 export type CreateStageMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
+  name: Scalars['String']['input']
+}>
 
-
-export type CreateStageMutation = { __typename?: 'Mutation', createStage: { __typename?: 'Stage', id: string, name: string } };
+export type CreateStageMutation = {
+  __typename?: 'Mutation'
+  createStage: { __typename?: 'Stage'; id: string; name: string }
+}
 
 export type PinStageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
+  id: Scalars['ID']['input']
+  pin: Scalars['Boolean']['input']
+}>
 
-
-export type PinStageMutation = { __typename?: 'Mutation', pinStage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
+export type PinStageMutation = {
+  __typename?: 'Mutation'
+  pinStage: {
+    __typename?: 'Stage'
+    id: string
+    pinned: boolean
+    name: string
+    affineViews: Array<{
+      __typename?: 'AffineTransformationView'
+      id: string
+      affineMatrix: any
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        store: { __typename?: 'ZarrStore'; shape?: Array<number> | null }
+      }
+      stage: { __typename?: 'Stage'; id: string; name: string }
+    }>
+  }
+}
 
 export type From_Parquet_LikeMutationVariables = Exact<{
-  dataframe: Scalars['ParquetLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-}>;
+  dataframe: Scalars['ParquetLike']['input']
+  name: Scalars['String']['input']
+  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}>
 
-
-export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type From_Parquet_LikeMutation = {
+  __typename?: 'Mutation'
+  fromParquetLike: {
+    __typename?: 'Table'
+    id: string
+    name: string
+    origins: Array<{ __typename?: 'Image'; id: string }>
+    store: {
+      __typename?: 'ParquetStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    }
+    columns: Array<{
+      __typename?: 'TableColumn'
+      name: string
+      type: DuckDbDataType
+      accessors: Array<
+        | {
+            __typename?: 'ImageAccessor'
+            id: string
+            keys: Array<string>
+            minIndex?: number | null
+            maxIndex?: number | null
+          }
+        | {
+            __typename?: 'LabelAccessor'
+            id: string
+            keys: Array<string>
+            minIndex?: number | null
+            maxIndex?: number | null
+            maskView: { __typename?: 'MaskView'; id: string }
+          }
+      >
+    }>
+    accessors: Array<
+      | {
+          __typename?: 'ImageAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+        }
+      | {
+          __typename?: 'LabelAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+          maskView: { __typename?: 'MaskView'; id: string }
+        }
+    >
+  }
+}
 
 export type RequestTableUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
-}>;
+  key: Scalars['String']['input']
+  datalayer: Scalars['String']['input']
+}>
 
-
-export type RequestTableUploadMutation = { __typename?: 'Mutation', requestTableUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestTableUploadMutation = {
+  __typename?: 'Mutation'
+  requestTableUpload: {
+    __typename?: 'Credentials'
+    accessKey: string
+    status: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    store: string
+  }
+}
 
 export type RequestTableAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
-}>;
+  store: Scalars['ID']['input']
+  duration?: InputMaybe<Scalars['Int']['input']>
+}>
 
-
-export type RequestTableAccessMutation = { __typename?: 'Mutation', requestTableAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestTableAccessMutation = {
+  __typename?: 'Mutation'
+  requestTableAccess: {
+    __typename?: 'AccessCredentials'
+    accessKey: string
+    secretKey: string
+    bucket: string
+    key: string
+    sessionToken: string
+    path: string
+  }
+}
 
 export type CreateAffineTransformationViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
-  stage?: InputMaybe<Scalars['ID']['input']>;
-}>;
+  image: Scalars['ID']['input']
+  affineMatrix: Scalars['FourByFourMatrix']['input']
+  stage?: InputMaybe<Scalars['ID']['input']>
+}>
 
-
-export type CreateAffineTransformationViewMutation = { __typename?: 'Mutation', createAffineTransformationView: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } };
+export type CreateAffineTransformationViewMutation = {
+  __typename?: 'Mutation'
+  createAffineTransformationView: {
+    __typename?: 'AffineTransformationView'
+    id: string
+    affineMatrix: any
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    stage: { __typename?: 'Stage'; id: string; name: string }
+  }
+}
 
 export type DeleteAffineTransformationViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteAffineTransformationViewMutation = { __typename?: 'Mutation', deleteAffineTransformationView: string };
+export type DeleteAffineTransformationViewMutation = {
+  __typename?: 'Mutation'
+  deleteAffineTransformationView: string
+}
 
 export type DeleteRgbViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteRgbViewMutation = { __typename?: 'Mutation', deleteRgbView: string };
+export type DeleteRgbViewMutation = { __typename?: 'Mutation'; deleteRgbView: string }
 
 export type DeleteChannelViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteChannelViewMutation = { __typename?: 'Mutation', deleteChannelView: string };
+export type DeleteChannelViewMutation = { __typename?: 'Mutation'; deleteChannelView: string }
 
 export type DeleteHistogramViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DeleteHistogramViewMutation = { __typename?: 'Mutation', deleteHistogramView: string };
+export type DeleteHistogramViewMutation = { __typename?: 'Mutation'; deleteHistogramView: string }
 
 export type CreateRgbViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  context: Scalars['ID']['input'];
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  colorMap?: InputMaybe<ColorMap>;
-}>;
+  image: Scalars['ID']['input']
+  context: Scalars['ID']['input']
+  gamma?: InputMaybe<Scalars['Float']['input']>
+  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>
+  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>
+  rescale?: InputMaybe<Scalars['Boolean']['input']>
+  active?: InputMaybe<Scalars['Boolean']['input']>
+  colorMap?: InputMaybe<ColorMap>
+}>
 
-
-export type CreateRgbViewMutation = { __typename?: 'Mutation', createRgbView: { __typename?: 'RGBView', id: string } };
+export type CreateRgbViewMutation = {
+  __typename?: 'Mutation'
+  createRgbView: { __typename?: 'RGBView'; id: string }
+}
 
 export type CreateWellPositionViewMutationVariables = Exact<{
-  input: WellPositionViewInput;
-}>;
+  input: WellPositionViewInput
+}>
 
-
-export type CreateWellPositionViewMutation = { __typename?: 'Mutation', createWellPositionView: { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null } };
+export type CreateWellPositionViewMutation = {
+  __typename?: 'Mutation'
+  createWellPositionView: {
+    __typename?: 'WellPositionView'
+    id: string
+    column?: number | null
+    row?: number | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    well?: {
+      __typename?: 'MultiWellPlate'
+      id: string
+      rows?: number | null
+      columns?: number | null
+      name?: string | null
+    } | null
+  }
+}
 
 export type CreateContinousScanViewMutationVariables = Exact<{
-  input: ContinousScanViewInput;
-}>;
+  input: ContinousScanViewInput
+}>
 
-
-export type CreateContinousScanViewMutation = { __typename?: 'Mutation', createContinousScanView: { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } };
+export type CreateContinousScanViewMutation = {
+  __typename?: 'Mutation'
+  createContinousScanView: {
+    __typename?: 'ContinousScanView'
+    id: string
+    direction: ScanDirection
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+  }
+}
 
 export type CreateMaskViewMutationVariables = Exact<{
-  input: MaskViewInput;
-}>;
+  input: MaskViewInput
+}>
 
-
-export type CreateMaskViewMutation = { __typename?: 'Mutation', createMaskView: { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } };
+export type CreateMaskViewMutation = {
+  __typename?: 'Mutation'
+  createMaskView: {
+    __typename?: 'MaskView'
+    id: string
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    referenceView: {
+      __typename?: 'ReferenceView'
+      id: string
+      image: { __typename?: 'Image'; id: string; name: string }
+    }
+  }
+}
 
 export type CreateInstanceMaskViewMutationVariables = Exact<{
-  input: InstanceMaskViewInput;
-}>;
+  input: InstanceMaskViewInput
+}>
 
-
-export type CreateInstanceMaskViewMutation = { __typename?: 'Mutation', createInstanceMaskView: { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } | null } };
+export type CreateInstanceMaskViewMutation = {
+  __typename?: 'Mutation'
+  createInstanceMaskView: {
+    __typename?: 'InstanceMaskView'
+    id: string
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    referenceView: {
+      __typename?: 'ReferenceView'
+      id: string
+      image: { __typename?: 'Image'; id: string; name: string }
+    }
+    labels?: {
+      __typename?: 'ParquetStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    } | null
+  }
+}
 
 export type UpdateRgbViewMutationVariables = Exact<{
-  input: UpdateRgbViewInput;
-}>;
+  input: UpdateRgbViewInput
+}>
 
-
-export type UpdateRgbViewMutation = { __typename?: 'Mutation', updateRgbView: { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } };
+export type UpdateRgbViewMutation = {
+  __typename?: 'Mutation'
+  updateRgbView: {
+    __typename?: 'RGBView'
+    id: string
+    name: string
+    colorMap: ColorMap
+    contrastLimitMin?: number | null
+    contrastLimitMax?: number | null
+    gamma?: number | null
+    active: boolean
+    fullColour: string
+    baseColor?: Array<number> | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    congruentViews: Array<
+      | { __typename?: 'AcquisitionView' }
+      | { __typename?: 'AffineTransformationView' }
+      | { __typename?: 'ChannelView' }
+      | { __typename?: 'ContinousScanView' }
+      | { __typename?: 'DerivedView' }
+      | { __typename?: 'FileView' }
+      | {
+          __typename?: 'HistogramView'
+          id: string
+          bins: Array<number>
+          min: number
+          max: number
+          histogram: Array<number>
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+        }
+      | { __typename?: 'InstanceMaskView' }
+      | { __typename?: 'LabelView' }
+      | { __typename?: 'LightpathView' }
+      | { __typename?: 'MaskView' }
+      | { __typename?: 'OpticsView' }
+      | { __typename?: 'RGBView' }
+      | { __typename?: 'ROIView' }
+      | { __typename?: 'ReferenceView' }
+      | { __typename?: 'ScaleView' }
+      | { __typename?: 'TimepointView' }
+      | { __typename?: 'WellPositionView' }
+    >
+  }
+}
 
 export type CreateViewCollectionMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
+  name: Scalars['String']['input']
+}>
 
-
-export type CreateViewCollectionMutation = { __typename?: 'Mutation', createViewCollection: { __typename?: 'ViewCollection', id: string, name: string } };
+export type CreateViewCollectionMutation = {
+  __typename?: 'Mutation'
+  createViewCollection: { __typename?: 'ViewCollection'; id: string; name: string }
+}
 
 export type GetCameraQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetCameraQuery = { __typename?: 'Query', camera: { __typename?: 'Camera', sensorSizeX?: number | null, sensorSizeY?: number | null, pixelSizeX?: any | null, pixelSizeY?: any | null, name: string, serialNumber: string } };
+export type GetCameraQuery = {
+  __typename?: 'Query'
+  camera: {
+    __typename?: 'Camera'
+    sensorSizeX?: number | null
+    sensorSizeY?: number | null
+    pixelSizeX?: any | null
+    pixelSizeY?: any | null
+    name: string
+    serialNumber: string
+  }
+}
 
 export type ChildrenQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pagination?: InputMaybe<ChildrenPaginationInput>;
-  filters?: InputMaybe<DatasetChildrenFilter>;
-}>;
+  id: Scalars['ID']['input']
+  pagination?: InputMaybe<ChildrenPaginationInput>
+  filters?: InputMaybe<DatasetChildrenFilter>
+}>
 
-
-export type ChildrenQuery = { __typename?: 'Query', children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean } | { __typename?: 'File', id: string, name: string } | { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+export type ChildrenQuery = {
+  __typename?: 'Query'
+  children: Array<
+    | {
+        __typename?: 'Dataset'
+        id: string
+        name: string
+        description?: string | null
+        isDefault: boolean
+      }
+    | { __typename?: 'File'; id: string; name: string }
+    | {
+        __typename?: 'Image'
+        id: string
+        name: string
+        latestSnapshot?: {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        } | null
+      }
+  >
+}
 
 export type GetDatasetQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type GetDatasetQuery = {
+  __typename?: 'Query'
+  dataset: {
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    images: Array<{
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    }>
+    files: Array<{ __typename?: 'File'; id: string; name: string }>
+    children: Array<{
+      __typename?: 'Dataset'
+      id: string
+      name: string
+      description?: string | null
+      isDefault: boolean
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+  }
+}
 
 export type GetDatasetsQueryVariables = Exact<{
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<DatasetFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type GetDatasetsQuery = { __typename?: 'Query', datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
+export type GetDatasetsQuery = {
+  __typename?: 'Query'
+  datasets: Array<{
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+  }>
+}
 
 export type GetFileQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type GetFileQuery = {
+  __typename?: 'Query'
+  file: {
+    __typename?: 'File'
+    id: string
+    name: string
+    origins: Array<{ __typename?: 'Image'; id: string }>
+    store: {
+      __typename?: 'BigFileStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    }
+    views: Array<{
+      __typename?: 'FileView'
+      id: string
+      seriesIdentifier?: string | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        latestSnapshot?: {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        } | null
+      }
+    }>
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    organization: { __typename?: 'Organization'; slug: string }
+  }
+}
 
 export type GetFilesQueryVariables = Exact<{
-  filters?: InputMaybe<FileFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<FileOrder>;
-}>;
+  filters?: InputMaybe<FileFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+  order?: InputMaybe<FileOrder>
+}>
 
-
-export type GetFilesQuery = { __typename?: 'Query', files: Array<{ __typename?: 'File', id: string, name: string }> };
+export type GetFilesQuery = {
+  __typename?: 'Query'
+  files: Array<{ __typename?: 'File'; id: string; name: string }>
+}
 
 export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  noImages: Scalars['Boolean']['input'];
-  noFiles: Scalars['Boolean']['input'];
-  noDatasets: Scalars['Boolean']['input'];
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  noImages: Scalars['Boolean']['input']
+  noFiles: Scalars['Boolean']['input']
+  noDatasets: Scalars['Boolean']['input']
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
+export type GlobalSearchQuery = {
+  __typename?: 'Query'
+  images?: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+  files?: Array<{ __typename?: 'File'; id: string; name: string }>
+  datasets?: Array<{
+    __typename?: 'Dataset'
+    id: string
+    name: string
+    description?: string | null
+    isDefault: boolean
+  }>
+}
 
-export type GlobalSearchQuery = { __typename?: 'Query', images?: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files?: Array<{ __typename?: 'File', id: string, name: string }>, datasets?: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
+export type ImagesQueryVariables = Exact<{ [key: string]: never }>
 
-export type ImagesQueryVariables = Exact<{ [key: string]: never; }>;
+export type ImagesQuery = {
+  __typename?: 'Query'
+  images: Array<{ __typename?: 'Image'; id: string }>
+}
 
+export type HomePageQueryVariables = Exact<{ [key: string]: never }>
 
-export type ImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string }> };
-
-export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }> };
+export type HomePageQuery = {
+  __typename?: 'Query'
+  images: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+  files: Array<{ __typename?: 'File'; id: string; name: string }>
+}
 
 export type PeerHomePageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
+export type PeerHomePageQuery = {
+  __typename?: 'Query'
+  images: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+  files: Array<{ __typename?: 'File'; id: string; name: string }>
+}
 
-export type PeerHomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }> };
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never }>
 
-export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HomePageStatsQuery = { __typename?: 'Query', imagesStats: { __typename?: 'ImageStats', count: number, series: Array<{ __typename?: 'TimeBucket', count: number }> } };
+export type HomePageStatsQuery = {
+  __typename?: 'Query'
+  imagesStats: {
+    __typename?: 'ImageStats'
+    count: number
+    series: Array<{ __typename?: 'TimeBucket'; count: number }>
+  }
+}
 
 export type PeerHomePageStatsQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type PeerHomePageStatsQuery = { __typename?: 'Query', imagesStats: { __typename?: 'ImageStats', count: number, series: Array<{ __typename?: 'TimeBucket', count: number }> } };
+export type PeerHomePageStatsQuery = {
+  __typename?: 'Query'
+  imagesStats: {
+    __typename?: 'ImageStats'
+    count: number
+    series: Array<{ __typename?: 'TimeBucket'; count: number }>
+  }
+}
 
 export type GetImageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type GetImageQuery = {
+  __typename?: 'Query'
+  image: {
+    __typename?: 'Image'
+    id: string
+    name: string
+    pinned: boolean
+    createdAt: any
+    tags: Array<string>
+    store: {
+      __typename?: 'ZarrStore'
+      id: string
+      key: string
+      bucket: string
+      path?: string | null
+      shape?: Array<number> | null
+      dtype?: string | null
+      chunks?: Array<number> | null
+      version: string
+    }
+    derivedFromViews: Array<{
+      __typename?: 'DerivedView'
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+    renders: Array<
+      | {
+          __typename?: 'Snapshot'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+      | {
+          __typename?: 'Video'
+          id: string
+          store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+        }
+    >
+    dataset?: { __typename?: 'Dataset'; name: string; id: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+    creator?: { __typename?: 'User'; sub: string } | null
+    rgbContexts: Array<{
+      __typename?: 'RGBContext'
+      id: string
+      name: string
+      blending: Blending
+      t: number
+      z: number
+      c: number
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      views: Array<{
+        __typename?: 'RGBView'
+        id: string
+        name: string
+        colorMap: ColorMap
+        contrastLimitMin?: number | null
+        contrastLimitMax?: number | null
+        gamma?: number | null
+        active: boolean
+        fullColour: string
+        baseColor?: Array<number> | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        congruentViews: Array<
+          | { __typename?: 'AcquisitionView' }
+          | { __typename?: 'AffineTransformationView' }
+          | { __typename?: 'ChannelView' }
+          | { __typename?: 'ContinousScanView' }
+          | { __typename?: 'DerivedView' }
+          | { __typename?: 'FileView' }
+          | {
+              __typename?: 'HistogramView'
+              id: string
+              bins: Array<number>
+              min: number
+              max: number
+              histogram: Array<number>
+              xMin?: number | null
+              xMax?: number | null
+              yMin?: number | null
+              yMax?: number | null
+              tMin?: number | null
+              tMax?: number | null
+              cMin?: number | null
+              cMax?: number | null
+              zMin?: number | null
+              zMax?: number | null
+            }
+          | { __typename?: 'InstanceMaskView' }
+          | { __typename?: 'LabelView' }
+          | { __typename?: 'LightpathView' }
+          | { __typename?: 'MaskView' }
+          | { __typename?: 'OpticsView' }
+          | { __typename?: 'RGBView' }
+          | { __typename?: 'ROIView' }
+          | { __typename?: 'ReferenceView' }
+          | { __typename?: 'ScaleView' }
+          | { __typename?: 'TimepointView' }
+          | { __typename?: 'WellPositionView' }
+        >
+      }>
+    }>
+    rois: Array<{
+      __typename?: 'ROI'
+      id: string
+      kind: RoiKind
+      vectors: Array<any>
+      image: { __typename?: 'Image'; id: string; name: string }
+    }>
+  }
+}
 
 export type GetImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<ImageOrder>;
-}>;
+  filters?: InputMaybe<ImageFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+  order?: InputMaybe<ImageOrder>
+}>
 
-
-export type GetImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+export type GetImagesQuery = {
+  __typename?: 'Query'
+  images: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+}
 
 export type ListImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<ImageOrder>;
-}>;
+  filters?: InputMaybe<ImageFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+  order?: InputMaybe<ImageOrder>
+}>
 
-
-export type ListImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+export type ListImagesQuery = {
+  __typename?: 'Query'
+  images: Array<{
+    __typename?: 'Image'
+    id: string
+    name: string
+    latestSnapshot?: {
+      __typename?: 'Snapshot'
+      id: string
+      store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+    } | null
+  }>
+}
 
 export type GetInstanceMaskViewLabelQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetInstanceMaskViewLabelQuery = { __typename?: 'Query', instanceMaskViewLabel: { __typename?: 'InstanceMaskViewLabel', id: string, values: any } };
+export type GetInstanceMaskViewLabelQuery = {
+  __typename?: 'Query'
+  instanceMaskViewLabel: { __typename?: 'InstanceMaskViewLabel'; id: string; values: any }
+}
 
 export type GetInstrumentQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetInstrumentQuery = { __typename?: 'Query', instrument: { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string } };
+export type GetInstrumentQuery = {
+  __typename?: 'Query'
+  instrument: {
+    __typename?: 'Instrument'
+    model?: string | null
+    name: string
+    serialNumber: string
+  }
+}
 
 export type GetLightpathViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
+export type GetLightpathViewQuery = {
+  __typename?: 'Query'
+  lightpathView: {
+    __typename?: 'LightpathView'
+    id: string
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    graph: {
+      __typename?: 'LightpathGraph'
+      elements: Array<
+        | {
+            __typename: 'BeamSplitterElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            rFraction: number
+            tFraction: number
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+            band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+          }
+        | {
+            __typename: 'CCDElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'DetectorElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            nepdWPerSqrtHz?: number | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'FilterElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'LampElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'LaserElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            nominalWavelengthNm?: number | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'LensElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            focalLengthMm: number
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'MirrorElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            angleDeg?: number | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+            band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+          }
+        | {
+            __typename: 'ObjectiveElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            magnification?: number | null
+            numericalAperture?: number | null
+            workingDistanceMm?: number | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'OtherElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'OtherSourceElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            channel?: ChannelKind | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'PinholeElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            diameterUm?: number | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+        | {
+            __typename: 'SampleElement'
+            id: string
+            label: string
+            kind: ElementKind
+            manufacturer?: string | null
+            model?: string | null
+            pose?: {
+              __typename?: 'Pose3D'
+              position?: {
+                __typename?: 'Vec3'
+                x?: number | null
+                y?: number | null
+                z?: number | null
+              } | null
+              orientation?: {
+                __typename?: 'Euler'
+                rx?: number | null
+                ry?: number | null
+                rz?: number | null
+              } | null
+            } | null
+            ports: Array<{
+              __typename?: 'LightPort'
+              id: string
+              name: string
+              role: PortRole
+              channel: ChannelKind
+            }>
+          }
+      >
+      edges: Array<{
+        __typename?: 'LightEdge'
+        id: string
+        sourceElementId: string
+        sourcePortId: string
+        targetElementId: string
+        targetPortId: string
+        medium?: string | null
+      }>
+    }
+  }
+}
 
-export type GetLightpathViewQuery = { __typename?: 'Query', lightpathView: { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } };
+export type MembersQueryVariables = Exact<{ [key: string]: never }>
 
-export type MembersQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type MembersQuery = { __typename?: 'Query', members: Array<{ __typename?: 'Membership', user: { __typename?: 'User', sub: string }, datasets: Array<{ __typename?: 'Dataset', id: string, name: string }> }> };
+export type MembersQuery = {
+  __typename?: 'Query'
+  members: Array<{
+    __typename?: 'Membership'
+    user: { __typename?: 'User'; sub: string }
+    datasets: Array<{ __typename?: 'Dataset'; id: string; name: string }>
+  }>
+}
 
 export type DetailMeshQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type DetailMeshQuery = { __typename?: 'Query', mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } } };
+export type DetailMeshQuery = {
+  __typename?: 'Query'
+  mesh: {
+    __typename?: 'Mesh'
+    id: string
+    name: string
+    store: { __typename?: 'MeshStore'; id: string; key: string; presignedUrl: string }
+  }
+}
 
 export type ListMeshesQueryVariables = Exact<{
-  filters?: InputMaybe<MeshFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<MeshFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type ListMeshesQuery = { __typename?: 'Query', meshes: Array<{ __typename?: 'Mesh', id: string, name: string }> };
+export type ListMeshesQuery = {
+  __typename?: 'Query'
+  meshes: Array<{ __typename?: 'Mesh'; id: string; name: string }>
+}
 
 export type GetMultiWellPlateQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetMultiWellPlateQuery = { __typename?: 'Query', multiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type GetMultiWellPlateQuery = {
+  __typename?: 'Query'
+  multiWellPlate: {
+    __typename?: 'MultiWellPlate'
+    id: string
+    name?: string | null
+    views: Array<{
+      __typename?: 'WellPositionView'
+      id: string
+      column?: number | null
+      row?: number | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      well?: {
+        __typename?: 'MultiWellPlate'
+        id: string
+        rows?: number | null
+        columns?: number | null
+        name?: string | null
+      } | null
+    }>
+  }
+}
 
 export type GetMultiWellPlatesQueryVariables = Exact<{
-  filters?: InputMaybe<MultiWellPlateFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<MultiWellPlateFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type GetMultiWellPlatesQuery = { __typename?: 'Query', multiWellPlates: Array<{ __typename?: 'MultiWellPlate', id: string, name?: string | null }> };
+export type GetMultiWellPlatesQuery = {
+  __typename?: 'Query'
+  multiWellPlates: Array<{ __typename?: 'MultiWellPlate'; id: string; name?: string | null }>
+}
 
 export type MultiWellPlateOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type MultiWellPlateOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'MultiWellPlate', value: string, label?: string | null }> };
+export type MultiWellPlateOptionsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'MultiWellPlate'; value: string; label?: string | null }>
+}
 
 export type GetObjectiveQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetObjectiveQuery = { __typename?: 'Query', objective: { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string } };
+export type GetObjectiveQuery = {
+  __typename?: 'Query'
+  objective: { __typename?: 'Objective'; na?: number | null; name: string; serialNumber: string }
+}
 
 export type GetPermissionsQueryVariables = Exact<{
-  identifier: Scalars['String']['input'];
-  object: Scalars['ID']['input'];
-}>;
+  identifier: Scalars['String']['input']
+  object: Scalars['ID']['input']
+}>
 
-
-export type GetPermissionsQuery = { __typename?: 'Query', permissions: Array<{ __typename?: 'UserObjectPermission', permission: string, user: { __typename?: 'User', sub: string } }> };
+export type GetPermissionsQuery = {
+  __typename?: 'Query'
+  permissions: Array<{
+    __typename?: 'UserObjectPermission'
+    permission: string
+    user: { __typename?: 'User'; sub: string }
+  }>
+}
 
 export type PermissionOptionsQueryVariables = Exact<{
-  identifier: Scalars['String']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  identifier: Scalars['String']['input']
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type PermissionOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'PermissionOption', value: string, label: string }> };
+export type PermissionOptionsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'PermissionOption'; value: string; label: string }>
+}
 
 export type GetMaskedPixelInfoQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetMaskedPixelInfoQuery = { __typename?: 'Query', maskedPixelInfo: { __typename?: 'MaskedPixelInfo', label: string } };
+export type GetMaskedPixelInfoQuery = {
+  __typename?: 'Query'
+  maskedPixelInfo: { __typename?: 'MaskedPixelInfo'; label: string }
+}
 
 export type GetRgbContextQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetRgbContextQuery = { __typename?: 'Query', rgbcontext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type GetRgbContextQuery = {
+  __typename?: 'Query'
+  rgbcontext: {
+    __typename?: 'RGBContext'
+    id: string
+    pinned: boolean
+    name: string
+    z: number
+    t: number
+    c: number
+    blending: Blending
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+  }
+}
 
 export type GetRgbContextsQueryVariables = Exact<{
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<RgbContextFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type GetRgbContextsQuery = { __typename?: 'Query', rgbcontexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
+export type GetRgbContextsQuery = {
+  __typename?: 'Query'
+  rgbcontexts: Array<{
+    __typename?: 'RGBContext'
+    id: string
+    name: string
+    blending: Blending
+    t: number
+    z: number
+    c: number
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    views: Array<{
+      __typename?: 'RGBView'
+      id: string
+      name: string
+      colorMap: ColorMap
+      contrastLimitMin?: number | null
+      contrastLimitMax?: number | null
+      gamma?: number | null
+      active: boolean
+      fullColour: string
+      baseColor?: Array<number> | null
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+      image: {
+        __typename?: 'Image'
+        id: string
+        store: {
+          __typename?: 'ZarrStore'
+          id: string
+          key: string
+          bucket: string
+          path?: string | null
+          shape?: Array<number> | null
+          dtype?: string | null
+          chunks?: Array<number> | null
+          version: string
+        }
+        derivedScaleViews: Array<{
+          __typename?: 'ScaleView'
+          id: string
+          scaleX: number
+          scaleY: number
+          scaleZ: number
+          scaleT: number
+          scaleC: number
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+          }
+        }>
+      }
+      congruentViews: Array<
+        | { __typename?: 'AcquisitionView' }
+        | { __typename?: 'AffineTransformationView' }
+        | { __typename?: 'ChannelView' }
+        | { __typename?: 'ContinousScanView' }
+        | { __typename?: 'DerivedView' }
+        | { __typename?: 'FileView' }
+        | {
+            __typename?: 'HistogramView'
+            id: string
+            bins: Array<number>
+            min: number
+            max: number
+            histogram: Array<number>
+            xMin?: number | null
+            xMax?: number | null
+            yMin?: number | null
+            yMax?: number | null
+            tMin?: number | null
+            tMax?: number | null
+            cMin?: number | null
+            cMax?: number | null
+            zMin?: number | null
+            zMax?: number | null
+          }
+        | { __typename?: 'InstanceMaskView' }
+        | { __typename?: 'LabelView' }
+        | { __typename?: 'LightpathView' }
+        | { __typename?: 'MaskView' }
+        | { __typename?: 'OpticsView' }
+        | { __typename?: 'RGBView' }
+        | { __typename?: 'ROIView' }
+        | { __typename?: 'ReferenceView' }
+        | { __typename?: 'ScaleView' }
+        | { __typename?: 'TimepointView' }
+        | { __typename?: 'WellPositionView' }
+      >
+    }>
+  }>
+}
 
 export type RgbContextOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type RgbContextOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBContext', value: string, label: string }> };
+export type RgbContextOptionsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'RGBContext'; value: string; label: string }>
+}
 
 export type GetRoiQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type GetRoiQuery = {
+  __typename?: 'Query'
+  roi: {
+    __typename?: 'ROI'
+    id: string
+    pinned: boolean
+    createdAt: any
+    kind: RoiKind
+    vectors: Array<any>
+    image: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      rgbContexts: Array<{
+        __typename?: 'RGBContext'
+        id: string
+        name: string
+        blending: Blending
+        t: number
+        z: number
+        c: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        views: Array<{
+          __typename?: 'RGBView'
+          id: string
+          name: string
+          colorMap: ColorMap
+          contrastLimitMin?: number | null
+          contrastLimitMax?: number | null
+          gamma?: number | null
+          active: boolean
+          fullColour: string
+          baseColor?: Array<number> | null
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+          contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+          image: {
+            __typename?: 'Image'
+            id: string
+            store: {
+              __typename?: 'ZarrStore'
+              id: string
+              key: string
+              bucket: string
+              path?: string | null
+              shape?: Array<number> | null
+              dtype?: string | null
+              chunks?: Array<number> | null
+              version: string
+            }
+            derivedScaleViews: Array<{
+              __typename?: 'ScaleView'
+              id: string
+              scaleX: number
+              scaleY: number
+              scaleZ: number
+              scaleT: number
+              scaleC: number
+              image: {
+                __typename?: 'Image'
+                id: string
+                store: {
+                  __typename?: 'ZarrStore'
+                  id: string
+                  key: string
+                  bucket: string
+                  path?: string | null
+                  shape?: Array<number> | null
+                  dtype?: string | null
+                  chunks?: Array<number> | null
+                  version: string
+                }
+              }
+            }>
+          }
+          congruentViews: Array<
+            | { __typename?: 'AcquisitionView' }
+            | { __typename?: 'AffineTransformationView' }
+            | { __typename?: 'ChannelView' }
+            | { __typename?: 'ContinousScanView' }
+            | { __typename?: 'DerivedView' }
+            | { __typename?: 'FileView' }
+            | {
+                __typename?: 'HistogramView'
+                id: string
+                bins: Array<number>
+                min: number
+                max: number
+                histogram: Array<number>
+                xMin?: number | null
+                xMax?: number | null
+                yMin?: number | null
+                yMax?: number | null
+                tMin?: number | null
+                tMax?: number | null
+                cMin?: number | null
+                cMax?: number | null
+                zMin?: number | null
+                zMax?: number | null
+              }
+            | { __typename?: 'InstanceMaskView' }
+            | { __typename?: 'LabelView' }
+            | { __typename?: 'LightpathView' }
+            | { __typename?: 'MaskView' }
+            | { __typename?: 'OpticsView' }
+            | { __typename?: 'RGBView' }
+            | { __typename?: 'ROIView' }
+            | { __typename?: 'ReferenceView' }
+            | { __typename?: 'ScaleView' }
+            | { __typename?: 'TimepointView' }
+            | { __typename?: 'WellPositionView' }
+          >
+        }>
+      }>
+    }
+    creator?: { __typename?: 'User'; sub: string } | null
+    provenanceEntries: Array<{
+      __typename?: 'ProvenanceEntry'
+      id: string
+      during?: string | null
+      kind: HistoryKind
+      date: any
+      user?: { __typename?: 'User'; sub: string } | null
+      client?: { __typename?: 'Client'; clientId: string } | null
+      effectiveChanges: Array<{
+        __typename?: 'ModelChange'
+        field: string
+        oldValue?: string | null
+        newValue?: string | null
+      }>
+    }>
+  }
+}
 
 export type GetRoIsQueryVariables = Exact<{
-  filters?: InputMaybe<RoiFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<RoiOrder>;
-}>;
+  filters?: InputMaybe<RoiFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+  order?: InputMaybe<RoiOrder>
+}>
 
-
-export type GetRoIsQuery = { __typename?: 'Query', rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type GetRoIsQuery = {
+  __typename?: 'Query'
+  rois: Array<{
+    __typename?: 'ROI'
+    id: string
+    kind: RoiKind
+    vectors: Array<any>
+    image: { __typename?: 'Image'; id: string; name: string }
+  }>
+}
 
 export type RowsQueryVariables = Exact<{
-  table: Scalars['ID']['input'];
-  filters?: InputMaybe<RowFilter>;
-  pagination?: InputMaybe<TablePaginationInput>;
-}>;
+  table: Scalars['ID']['input']
+  filters?: InputMaybe<RowFilter>
+  pagination?: InputMaybe<TablePaginationInput>
+}>
 
-
-export type RowsQuery = { __typename?: 'Query', rows: Array<any> };
+export type RowsQuery = { __typename?: 'Query'; rows: Array<any> }
 
 export type GetSnapshotQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetSnapshotQuery = { __typename?: 'Query', snapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', presignedUrl: string } } };
+export type GetSnapshotQuery = {
+  __typename?: 'Query'
+  snapshot: {
+    __typename?: 'Snapshot'
+    id: string
+    store: { __typename?: 'MediaStore'; presignedUrl: string }
+  }
+}
 
 export type GetStageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetStageQuery = { __typename?: 'Query', stage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
+export type GetStageQuery = {
+  __typename?: 'Query'
+  stage: {
+    __typename?: 'Stage'
+    id: string
+    pinned: boolean
+    name: string
+    affineViews: Array<{
+      __typename?: 'AffineTransformationView'
+      id: string
+      affineMatrix: any
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        store: { __typename?: 'ZarrStore'; shape?: Array<number> | null }
+      }
+      stage: { __typename?: 'Stage'; id: string; name: string }
+    }>
+  }
+}
 
 export type GetStagesQueryVariables = Exact<{
-  filters?: InputMaybe<StageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<StageFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type GetStagesQuery = { __typename?: 'Query', stages: Array<{ __typename?: 'Stage', id: string, name: string }> };
+export type GetStagesQuery = {
+  __typename?: 'Query'
+  stages: Array<{ __typename?: 'Stage'; id: string; name: string }>
+}
 
 export type StageOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type StageOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Stage', value: string, label: string }> };
+export type StageOptionsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'Stage'; value: string; label: string }>
+}
 
 export type GetTableQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type GetTableQuery = {
+  __typename?: 'Query'
+  table: {
+    __typename?: 'Table'
+    id: string
+    name: string
+    origins: Array<{ __typename?: 'Image'; id: string }>
+    store: {
+      __typename?: 'ParquetStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    }
+    columns: Array<{
+      __typename?: 'TableColumn'
+      name: string
+      type: DuckDbDataType
+      accessors: Array<
+        | {
+            __typename?: 'ImageAccessor'
+            id: string
+            keys: Array<string>
+            minIndex?: number | null
+            maxIndex?: number | null
+          }
+        | {
+            __typename?: 'LabelAccessor'
+            id: string
+            keys: Array<string>
+            minIndex?: number | null
+            maxIndex?: number | null
+            maskView: { __typename?: 'MaskView'; id: string }
+          }
+      >
+    }>
+    accessors: Array<
+      | {
+          __typename?: 'ImageAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+        }
+      | {
+          __typename?: 'LabelAccessor'
+          id: string
+          keys: Array<string>
+          minIndex?: number | null
+          maxIndex?: number | null
+          maskView: { __typename?: 'MaskView'; id: string }
+        }
+    >
+  }
+}
 
 export type GetTablesQueryVariables = Exact<{
-  filters?: InputMaybe<TableFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
+  filters?: InputMaybe<TableFilter>
+  pagination?: InputMaybe<OffsetPaginationInput>
+}>
 
-
-export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } }> };
+export type GetTablesQuery = {
+  __typename?: 'Query'
+  tables: Array<{
+    __typename?: 'Table'
+    id: string
+    name: string
+    origins: Array<{ __typename?: 'Image'; id: string }>
+    store: {
+      __typename?: 'ParquetStore'
+      id: string
+      key: string
+      bucket: string
+      path: string
+      presignedUrl: string
+    }
+  }>
+}
 
 export type GetRgbViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
+  id: Scalars['ID']['input']
+}>
 
-
-export type GetRgbViewQuery = { __typename?: 'Query', rgbView: { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } };
+export type GetRgbViewQuery = {
+  __typename?: 'Query'
+  rgbView: {
+    __typename?: 'RGBView'
+    id: string
+    name: string
+    colorMap: ColorMap
+    contrastLimitMin?: number | null
+    contrastLimitMax?: number | null
+    gamma?: number | null
+    active: boolean
+    fullColour: string
+    baseColor?: Array<number> | null
+    xMin?: number | null
+    xMax?: number | null
+    yMin?: number | null
+    yMax?: number | null
+    tMin?: number | null
+    tMax?: number | null
+    cMin?: number | null
+    cMax?: number | null
+    zMin?: number | null
+    zMax?: number | null
+    contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+    image: {
+      __typename?: 'Image'
+      id: string
+      store: {
+        __typename?: 'ZarrStore'
+        id: string
+        key: string
+        bucket: string
+        path?: string | null
+        shape?: Array<number> | null
+        dtype?: string | null
+        chunks?: Array<number> | null
+        version: string
+      }
+      derivedScaleViews: Array<{
+        __typename?: 'ScaleView'
+        id: string
+        scaleX: number
+        scaleY: number
+        scaleZ: number
+        scaleT: number
+        scaleC: number
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+        }
+      }>
+    }
+    congruentViews: Array<
+      | { __typename?: 'AcquisitionView' }
+      | { __typename?: 'AffineTransformationView' }
+      | { __typename?: 'ChannelView' }
+      | { __typename?: 'ContinousScanView' }
+      | { __typename?: 'DerivedView' }
+      | { __typename?: 'FileView' }
+      | {
+          __typename?: 'HistogramView'
+          id: string
+          bins: Array<number>
+          min: number
+          max: number
+          histogram: Array<number>
+          xMin?: number | null
+          xMax?: number | null
+          yMin?: number | null
+          yMax?: number | null
+          tMin?: number | null
+          tMax?: number | null
+          cMin?: number | null
+          cMax?: number | null
+          zMin?: number | null
+          zMax?: number | null
+        }
+      | { __typename?: 'InstanceMaskView' }
+      | { __typename?: 'LabelView' }
+      | { __typename?: 'LightpathView' }
+      | { __typename?: 'MaskView' }
+      | { __typename?: 'OpticsView' }
+      | { __typename?: 'RGBView' }
+      | { __typename?: 'ROIView' }
+      | { __typename?: 'ReferenceView' }
+      | { __typename?: 'ScaleView' }
+      | { __typename?: 'TimepointView' }
+      | { __typename?: 'WellPositionView' }
+    >
+  }
+}
 
 export type SearchRgbViewsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
+  search?: InputMaybe<Scalars['String']['input']>
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>
+}>
 
-
-export type SearchRgbViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBView', value: string, label: string }> };
+export type SearchRgbViewsQuery = {
+  __typename?: 'Query'
+  options: Array<{ __typename?: 'RGBView'; value: string; label: string }>
+}
 
 export type ActiveImageViewsQueryVariables = Exact<{
-  image: Scalars['ID']['input'];
-  selector?: InputMaybe<Selector>;
-  exclude?: InputMaybe<Array<ViewKind> | ViewKind>;
-}>;
+  image: Scalars['ID']['input']
+  selector?: InputMaybe<Selector>
+  exclude?: InputMaybe<Array<ViewKind> | ViewKind>
+}>
 
-
-export type ActiveImageViewsQuery = { __typename?: 'Query', activeViews: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } | null } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
+export type ActiveImageViewsQuery = {
+  __typename?: 'Query'
+  activeViews: Array<
+    | {
+        __typename?: 'AcquisitionView'
+        id: string
+        description?: string | null
+        acquiredAt?: any | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        operator?: { __typename?: 'User'; sub: string } | null
+      }
+    | {
+        __typename?: 'AffineTransformationView'
+        id: string
+        affineMatrix: any
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        stage: { __typename?: 'Stage'; id: string; name: string }
+      }
+    | {
+        __typename?: 'ChannelView'
+        id: string
+        excitationWavelength?: number | null
+        emissionWavelength?: number | null
+        acquisitionMode?: string | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        channelName?: string | null
+      }
+    | { __typename?: 'ContinousScanView' }
+    | {
+        __typename?: 'DerivedView'
+        id: string
+        operation?: string | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        originImage: { __typename?: 'Image'; id: string; name: string }
+      }
+    | {
+        __typename?: 'FileView'
+        id: string
+        seriesIdentifier?: string | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        file: { __typename?: 'File'; id: string; name: string }
+      }
+    | {
+        __typename?: 'HistogramView'
+        id: string
+        bins: Array<number>
+        min: number
+        max: number
+        histogram: Array<number>
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+      }
+    | {
+        __typename?: 'InstanceMaskView'
+        id: string
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        referenceView: {
+          __typename?: 'ReferenceView'
+          id: string
+          image: { __typename?: 'Image'; id: string; name: string }
+        }
+        labels?: {
+          __typename?: 'ParquetStore'
+          id: string
+          key: string
+          bucket: string
+          path: string
+          presignedUrl: string
+        } | null
+      }
+    | { __typename?: 'LabelView' }
+    | {
+        __typename?: 'LightpathView'
+        id: string
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        graph: {
+          __typename?: 'LightpathGraph'
+          elements: Array<
+            | {
+                __typename: 'BeamSplitterElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                rFraction: number
+                tFraction: number
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+                band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+              }
+            | {
+                __typename: 'CCDElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'DetectorElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                nepdWPerSqrtHz?: number | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'FilterElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'LampElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'LaserElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                nominalWavelengthNm?: number | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'LensElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                focalLengthMm: number
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'MirrorElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                angleDeg?: number | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+                band?: { __typename?: 'Spectrum'; minNm: number; maxNm: number } | null
+              }
+            | {
+                __typename: 'ObjectiveElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                magnification?: number | null
+                numericalAperture?: number | null
+                workingDistanceMm?: number | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'OtherElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'OtherSourceElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                channel?: ChannelKind | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'PinholeElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                diameterUm?: number | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+            | {
+                __typename: 'SampleElement'
+                id: string
+                label: string
+                kind: ElementKind
+                manufacturer?: string | null
+                model?: string | null
+                pose?: {
+                  __typename?: 'Pose3D'
+                  position?: {
+                    __typename?: 'Vec3'
+                    x?: number | null
+                    y?: number | null
+                    z?: number | null
+                  } | null
+                  orientation?: {
+                    __typename?: 'Euler'
+                    rx?: number | null
+                    ry?: number | null
+                    rz?: number | null
+                  } | null
+                } | null
+                ports: Array<{
+                  __typename?: 'LightPort'
+                  id: string
+                  name: string
+                  role: PortRole
+                  channel: ChannelKind
+                }>
+              }
+          >
+          edges: Array<{
+            __typename?: 'LightEdge'
+            id: string
+            sourceElementId: string
+            sourcePortId: string
+            targetElementId: string
+            targetPortId: string
+            medium?: string | null
+          }>
+        }
+      }
+    | {
+        __typename?: 'MaskView'
+        id: string
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        referenceView: {
+          __typename?: 'ReferenceView'
+          id: string
+          image: { __typename?: 'Image'; id: string; name: string }
+        }
+      }
+    | {
+        __typename?: 'OpticsView'
+        id: string
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        objective?: {
+          __typename?: 'Objective'
+          id: string
+          name: string
+          serialNumber: string
+        } | null
+        camera?: { __typename?: 'Camera'; id: string; name: string; serialNumber: string } | null
+        instrument?: {
+          __typename?: 'Instrument'
+          id: string
+          name: string
+          serialNumber: string
+        } | null
+      }
+    | {
+        __typename?: 'RGBView'
+        id: string
+        name: string
+        colorMap: ColorMap
+        contrastLimitMin?: number | null
+        contrastLimitMax?: number | null
+        gamma?: number | null
+        active: boolean
+        fullColour: string
+        baseColor?: Array<number> | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        contexts: Array<{ __typename?: 'RGBContext'; id: string; name: string }>
+        image: {
+          __typename?: 'Image'
+          id: string
+          store: {
+            __typename?: 'ZarrStore'
+            id: string
+            key: string
+            bucket: string
+            path?: string | null
+            shape?: Array<number> | null
+            dtype?: string | null
+            chunks?: Array<number> | null
+            version: string
+          }
+          derivedScaleViews: Array<{
+            __typename?: 'ScaleView'
+            id: string
+            scaleX: number
+            scaleY: number
+            scaleZ: number
+            scaleT: number
+            scaleC: number
+            image: {
+              __typename?: 'Image'
+              id: string
+              store: {
+                __typename?: 'ZarrStore'
+                id: string
+                key: string
+                bucket: string
+                path?: string | null
+                shape?: Array<number> | null
+                dtype?: string | null
+                chunks?: Array<number> | null
+                version: string
+              }
+            }
+          }>
+        }
+        congruentViews: Array<
+          | { __typename?: 'AcquisitionView' }
+          | { __typename?: 'AffineTransformationView' }
+          | { __typename?: 'ChannelView' }
+          | { __typename?: 'ContinousScanView' }
+          | { __typename?: 'DerivedView' }
+          | { __typename?: 'FileView' }
+          | {
+              __typename?: 'HistogramView'
+              id: string
+              bins: Array<number>
+              min: number
+              max: number
+              histogram: Array<number>
+              xMin?: number | null
+              xMax?: number | null
+              yMin?: number | null
+              yMax?: number | null
+              tMin?: number | null
+              tMax?: number | null
+              cMin?: number | null
+              cMax?: number | null
+              zMin?: number | null
+              zMax?: number | null
+            }
+          | { __typename?: 'InstanceMaskView' }
+          | { __typename?: 'LabelView' }
+          | { __typename?: 'LightpathView' }
+          | { __typename?: 'MaskView' }
+          | { __typename?: 'OpticsView' }
+          | { __typename?: 'RGBView' }
+          | { __typename?: 'ROIView' }
+          | { __typename?: 'ReferenceView' }
+          | { __typename?: 'ScaleView' }
+          | { __typename?: 'TimepointView' }
+          | { __typename?: 'WellPositionView' }
+        >
+      }
+    | {
+        __typename?: 'ROIView'
+        id: string
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        roi: { __typename?: 'ROI'; id: string; name: string }
+      }
+    | { __typename?: 'ReferenceView' }
+    | { __typename?: 'ScaleView' }
+    | {
+        __typename?: 'TimepointView'
+        id: string
+        msSinceStart?: any | null
+        indexSinceStart?: number | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        era: { __typename?: 'Era'; id: string; begin?: any | null; name: string }
+      }
+    | {
+        __typename?: 'WellPositionView'
+        id: string
+        column?: number | null
+        row?: number | null
+        xMin?: number | null
+        xMax?: number | null
+        yMin?: number | null
+        yMax?: number | null
+        tMin?: number | null
+        tMax?: number | null
+        cMin?: number | null
+        cMax?: number | null
+        zMin?: number | null
+        zMax?: number | null
+        well?: {
+          __typename?: 'MultiWellPlate'
+          id: string
+          rows?: number | null
+          columns?: number | null
+          name?: string | null
+        } | null
+      }
+  >
+}
 
 export type WatchImagesSubscriptionVariables = Exact<{
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-}>;
+  dataset?: InputMaybe<Scalars['ID']['input']>
+}>
 
-
-export type WatchImagesSubscription = { __typename?: 'Subscription', images: { __typename?: 'ImageEvent', delete?: string | null, create?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } | null, update?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } | null } };
+export type WatchImagesSubscription = {
+  __typename?: 'Subscription'
+  images: {
+    __typename?: 'ImageEvent'
+    delete?: string | null
+    create?: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    } | null
+    update?: {
+      __typename?: 'Image'
+      id: string
+      name: string
+      latestSnapshot?: {
+        __typename?: 'Snapshot'
+        id: string
+        store: { __typename?: 'MediaStore'; key: string; presignedUrl: string }
+      } | null
+    } | null
+  }
+}
 
 export type WatchRoisSubscriptionVariables = Exact<{
-  image: Scalars['ID']['input'];
-}>;
+  image: Scalars['ID']['input']
+}>
 
-
-export type WatchRoisSubscription = { __typename?: 'Subscription', rois: { __typename?: 'RoiEvent', delete?: string | null, create?: { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } } | null, update?: { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } } | null } };
+export type WatchRoisSubscription = {
+  __typename?: 'Subscription'
+  rois: {
+    __typename?: 'RoiEvent'
+    delete?: string | null
+    create?: {
+      __typename?: 'ROI'
+      id: string
+      kind: RoiKind
+      vectors: Array<any>
+      image: { __typename?: 'Image'; id: string; name: string }
+    } | null
+    update?: {
+      __typename?: 'ROI'
+      id: string
+      kind: RoiKind
+      vectors: Array<any>
+      image: { __typename?: 'Image'; id: string; name: string }
+    } | null
+  }
+}
 
 export type WatchTransformationViewsSubscriptionVariables = Exact<{
-  stage: Scalars['ID']['input'];
-}>;
+  stage: Scalars['ID']['input']
+}>
 
-
-export type WatchTransformationViewsSubscription = { __typename?: 'Subscription', affineTransformationViews: { __typename?: 'AffineTransformationViewEvent', delete?: string | null, create?: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } } | null, update?: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } } | null } };
+export type WatchTransformationViewsSubscription = {
+  __typename?: 'Subscription'
+  affineTransformationViews: {
+    __typename?: 'AffineTransformationViewEvent'
+    delete?: string | null
+    create?: {
+      __typename?: 'AffineTransformationView'
+      id: string
+      affineMatrix: any
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        store: { __typename?: 'ZarrStore'; shape?: Array<number> | null }
+      }
+      stage: { __typename?: 'Stage'; id: string; name: string }
+    } | null
+    update?: {
+      __typename?: 'AffineTransformationView'
+      id: string
+      affineMatrix: any
+      xMin?: number | null
+      xMax?: number | null
+      yMin?: number | null
+      yMax?: number | null
+      tMin?: number | null
+      tMax?: number | null
+      cMin?: number | null
+      cMax?: number | null
+      zMin?: number | null
+      zMax?: number | null
+      image: {
+        __typename?: 'Image'
+        id: string
+        name: string
+        store: { __typename?: 'ZarrStore'; shape?: Array<number> | null }
+      }
+      stage: { __typename?: 'Stage'; id: string; name: string }
+    } | null
+  }
+}
 
 export const CameraFragmentDoc = gql`
-    fragment Camera on Camera {
-  sensorSizeX
-  sensorSizeY
-  pixelSizeX
-  pixelSizeY
-  name
-  serialNumber
-}
-    `;
+  fragment Camera on Camera {
+    sensorSizeX
+    sensorSizeY
+    pixelSizeX
+    pixelSizeY
+    name
+    serialNumber
+  }
+`
 export const CredentialsFragmentDoc = gql`
-    fragment Credentials on Credentials {
-  accessKey
-  status
-  secretKey
-  bucket
-  key
-  sessionToken
-  store
-}
-    `;
+  fragment Credentials on Credentials {
+    accessKey
+    status
+    secretKey
+    bucket
+    key
+    sessionToken
+    store
+  }
+`
 export const AccessCredentialsFragmentDoc = gql`
-    fragment AccessCredentials on AccessCredentials {
-  accessKey
-  secretKey
-  bucket
-  key
-  sessionToken
-  path
-}
-    `;
+  fragment AccessCredentials on AccessCredentials {
+    accessKey
+    secretKey
+    bucket
+    key
+    sessionToken
+    path
+  }
+`
 export const PresignedPostCredentialsFragmentDoc = gql`
-    fragment PresignedPostCredentials on PresignedPostCredentials {
-  xAmzAlgorithm
-  xAmzCredential
-  xAmzDate
-  xAmzSignature
-  key
-  bucket
-  datalayer
-  policy
-  store
-}
-    `;
+  fragment PresignedPostCredentials on PresignedPostCredentials {
+    xAmzAlgorithm
+    xAmzCredential
+    xAmzDate
+    xAmzSignature
+    key
+    bucket
+    datalayer
+    policy
+    store
+  }
+`
 export const ProvenanceEntryFragmentDoc = gql`
-    fragment ProvenanceEntry on ProvenanceEntry {
-  id
-  during
-  kind
-  user {
-    sub
+  fragment ProvenanceEntry on ProvenanceEntry {
+    id
+    during
+    kind
+    user {
+      sub
+    }
+    client {
+      clientId
+    }
+    date
+    effectiveChanges {
+      field
+      oldValue
+      newValue
+    }
   }
-  client {
-    clientId
-  }
-  date
-  effectiveChanges {
-    field
-    oldValue
-    newValue
-  }
-}
-    `;
+`
 export const ListImageFragmentDoc = gql`
-    fragment ListImage on Image {
-  latestSnapshot {
+  fragment ListImage on Image {
+    latestSnapshot {
+      id
+      store {
+        key
+        presignedUrl
+      }
+    }
+    id
+    name
+  }
+`
+export const ListFileFragmentDoc = gql`
+  fragment ListFile on File {
+    id
+    name
+  }
+`
+export const ListDatasetFragmentDoc = gql`
+  fragment ListDataset on Dataset {
+    id
+    name
+    description
+    isDefault
+  }
+`
+export const DatasetFragmentDoc = gql`
+  fragment Dataset on Dataset {
+    id
+    name
+    description
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    images {
+      ...ListImage
+    }
+    files {
+      ...ListFile
+    }
+    children {
+      ...ListDataset
+    }
+    isDefault
+    pinned
+    createdAt
+    creator {
+      sub
+    }
+    tags
+  }
+  ${ProvenanceEntryFragmentDoc}
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+  ${ListDatasetFragmentDoc}
+`
+export const BigFileStoreFragmentDoc = gql`
+  fragment BigFileStore on BigFileStore {
+    id
+    key
+    bucket
+    path
+    presignedUrl
+  }
+`
+export const FileFragmentDoc = gql`
+  fragment File on File {
+    origins {
+      id
+    }
+    id
+    name
+    store {
+      ...BigFileStore
+    }
+    views {
+      id
+      seriesIdentifier
+      image {
+        ...ListImage
+      }
+    }
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    organization {
+      slug
+    }
+  }
+  ${BigFileStoreFragmentDoc}
+  ${ListImageFragmentDoc}
+  ${ProvenanceEntryFragmentDoc}
+`
+export const ZarrStoreFragmentDoc = gql`
+  fragment ZarrStore on ZarrStore {
+    id
+    key
+    bucket
+    path
+    shape
+    dtype
+    chunks
+    version
+  }
+`
+export const SnapshotFragmentDoc = gql`
+  fragment Snapshot on Snapshot {
     id
     store {
       key
       presignedUrl
     }
   }
-  id
-  name
-}
-    `;
-export const ListFileFragmentDoc = gql`
-    fragment ListFile on File {
-  id
-  name
-}
-    `;
-export const ListDatasetFragmentDoc = gql`
-    fragment ListDataset on Dataset {
-  id
-  name
-  description
-  isDefault
-}
-    `;
-export const DatasetFragmentDoc = gql`
-    fragment Dataset on Dataset {
-  id
-  name
-  description
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  images {
-    ...ListImage
-  }
-  files {
-    ...ListFile
-  }
-  children {
-    ...ListDataset
-  }
-  isDefault
-  pinned
-  createdAt
-  creator {
-    sub
-  }
-  tags
-}
-    ${ProvenanceEntryFragmentDoc}
-${ListImageFragmentDoc}
-${ListFileFragmentDoc}
-${ListDatasetFragmentDoc}`;
-export const BigFileStoreFragmentDoc = gql`
-    fragment BigFileStore on BigFileStore {
-  id
-  key
-  bucket
-  path
-  presignedUrl
-}
-    `;
-export const FileFragmentDoc = gql`
-    fragment File on File {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...BigFileStore
-  }
-  views {
-    id
-    seriesIdentifier
-    image {
-      ...ListImage
-    }
-  }
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  organization {
-    slug
-  }
-}
-    ${BigFileStoreFragmentDoc}
-${ListImageFragmentDoc}
-${ProvenanceEntryFragmentDoc}`;
-export const ZarrStoreFragmentDoc = gql`
-    fragment ZarrStore on ZarrStore {
-  id
-  key
-  bucket
-  path
-  shape
-  dtype
-  chunks
-  version
-}
-    `;
-export const SnapshotFragmentDoc = gql`
-    fragment Snapshot on Snapshot {
-  id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
+`
 export const VideoFragmentDoc = gql`
-    fragment Video on Video {
-  id
-  store {
-    key
-    presignedUrl
+  fragment Video on Video {
+    id
+    store {
+      key
+      presignedUrl
+    }
   }
-}
-    `;
+`
 export const ViewFragmentDoc = gql`
-    fragment View on View {
-  xMin
-  xMax
-  yMin
-  yMax
-  tMin
-  tMax
-  cMin
-  cMax
-  zMin
-  zMax
-}
-    `;
+  fragment View on View {
+    xMin
+    xMax
+    yMin
+    yMax
+    tMin
+    tMax
+    cMin
+    cMax
+    zMin
+    zMax
+  }
+`
 export const HistogramViewFragmentDoc = gql`
-    fragment HistogramView on HistogramView {
-  ...View
-  id
-  bins
-  min
-  max
-  histogram
-}
-    ${ViewFragmentDoc}`;
+  fragment HistogramView on HistogramView {
+    ...View
+    id
+    bins
+    min
+    max
+    histogram
+  }
+  ${ViewFragmentDoc}
+`
 export const RgbViewFragmentDoc = gql`
-    fragment RGBView on RGBView {
-  ...View
-  id
-  contexts {
+  fragment RGBView on RGBView {
+    ...View
     id
-    name
-  }
-  name
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  congruentViews(types: [HISTOGRAM]) {
-    ...HistogramView
-  }
-  colorMap
-  contrastLimitMin
-  contrastLimitMax
-  gamma
-  active
-  fullColour
-  baseColor
-}
-    ${ViewFragmentDoc}
-${ZarrStoreFragmentDoc}
-${HistogramViewFragmentDoc}`;
-export const ListRgbContextFragmentDoc = gql`
-    fragment ListRGBContext on RGBContext {
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  id
-  name
-  views {
-    ...RGBView
-  }
-  blending
-  t
-  z
-  c
-}
-    ${ZarrStoreFragmentDoc}
-${RgbViewFragmentDoc}`;
-export const ListRoiFragmentDoc = gql`
-    fragment ListROI on ROI {
-  id
-  image {
-    id
-    name
-  }
-  kind
-  vectors
-}
-    `;
-export const ImageFragmentDoc = gql`
-    fragment Image on Image {
-  id
-  name
-  store {
-    ...ZarrStore
-  }
-  derivedFromViews {
-    image {
+    contexts {
       id
       name
     }
-  }
-  pinned
-  renders {
-    ...Snapshot
-    ...Video
-  }
-  dataset {
     name
-    id
-  }
-  createdAt
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  creator {
-    sub
-  }
-  tags
-  rgbContexts {
-    ...ListRGBContext
-  }
-  rois {
-    ...ListROI
-  }
-}
-    ${ZarrStoreFragmentDoc}
-${SnapshotFragmentDoc}
-${VideoFragmentDoc}
-${ProvenanceEntryFragmentDoc}
-${ListRgbContextFragmentDoc}
-${ListRoiFragmentDoc}`;
-export const InstanceMaskViewLabelFragmentDoc = gql`
-    fragment InstanceMaskViewLabel on InstanceMaskViewLabel {
-  id
-  values
-}
-    `;
-export const InstrumentFragmentDoc = gql`
-    fragment Instrument on Instrument {
-  model
-  name
-  serialNumber
-}
-    `;
-export const OpticalElementFragmentDoc = gql`
-    fragment OpticalElement on OpticalElement {
-  id
-  label
-  kind
-  manufacturer
-  model
-  pose {
-    position {
-      x
-      y
-      z
-    }
-    orientation {
-      rx
-      ry
-      rz
-    }
-  }
-  ports {
-    id
-    name
-    role
-    channel
-  }
-}
-    `;
-export const CcdElementFragmentDoc = gql`
-    fragment CCDElement on CCDElement {
-  ...OpticalElement
-  pixelSizeUm
-}
-    ${OpticalElementFragmentDoc}`;
-export const MeshStoreFragmentDoc = gql`
-    fragment MeshStore on MeshStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const MeshFragmentDoc = gql`
-    fragment Mesh on Mesh {
-  id
-  name
-  store {
-    ...MeshStore
-  }
-}
-    ${MeshStoreFragmentDoc}`;
-export const ListMeshFragmentDoc = gql`
-    fragment ListMesh on Mesh {
-  id
-  name
-}
-    `;
-export const WellPositionViewFragmentDoc = gql`
-    fragment WellPositionView on WellPositionView {
-  ...View
-  id
-  column
-  row
-  well {
-    id
-    rows
-    columns
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const MultiWellPlateFragmentDoc = gql`
-    fragment MultiWellPlate on MultiWellPlate {
-  id
-  views {
-    ...WellPositionView
-  }
-  name
-}
-    ${WellPositionViewFragmentDoc}`;
-export const ListMultiWellPlateFragmentDoc = gql`
-    fragment ListMultiWellPlate on MultiWellPlate {
-  id
-  name
-}
-    `;
-export const ObjectiveFragmentDoc = gql`
-    fragment Objective on Objective {
-  na
-  name
-  serialNumber
-}
-    `;
-export const RgbContextFragmentDoc = gql`
-    fragment RGBContext on RGBContext {
-  id
-  views {
-    ...RGBView
-  }
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  pinned
-  name
-  z
-  t
-  c
-  blending
-}
-    ${RgbViewFragmentDoc}
-${ZarrStoreFragmentDoc}`;
-export const RgbImageFragmentDoc = gql`
-    fragment RGBImage on Image {
-  name
-  rgbContexts {
-    ...ListRGBContext
-  }
-}
-    ${ListRgbContextFragmentDoc}`;
-export const RoiFragmentDoc = gql`
-    fragment ROI on ROI {
-  id
-  pinned
-  image {
-    id
-    ...RGBImage
-  }
-  createdAt
-  creator {
-    sub
-  }
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  kind
-  vectors
-}
-    ${RgbImageFragmentDoc}
-${ProvenanceEntryFragmentDoc}`;
-export const AffineTransformationViewFragmentDoc = gql`
-    fragment AffineTransformationView on AffineTransformationView {
-  ...View
-  id
-  affineMatrix
-  stage {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const StageFragmentDoc = gql`
-    fragment Stage on Stage {
-  id
-  affineViews {
-    ...AffineTransformationView
     image {
       id
       store {
-        shape
+        ...ZarrStore
       }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+        scaleX
+        scaleY
+        scaleZ
+        scaleT
+        scaleC
+      }
+    }
+    congruentViews(types: [HISTOGRAM]) {
+      ...HistogramView
+    }
+    colorMap
+    contrastLimitMin
+    contrastLimitMax
+    gamma
+    active
+    fullColour
+    baseColor
+  }
+  ${ViewFragmentDoc}
+  ${ZarrStoreFragmentDoc}
+  ${HistogramViewFragmentDoc}
+`
+export const ListRgbContextFragmentDoc = gql`
+  fragment ListRGBContext on RGBContext {
+    image {
+      id
+      store {
+        ...ZarrStore
+      }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+        scaleX
+        scaleY
+        scaleZ
+        scaleT
+        scaleC
+      }
+    }
+    id
+    name
+    views {
+      ...RGBView
+    }
+    blending
+    t
+    z
+    c
+  }
+  ${ZarrStoreFragmentDoc}
+  ${RgbViewFragmentDoc}
+`
+export const ListRoiFragmentDoc = gql`
+  fragment ListROI on ROI {
+    id
+    image {
+      id
+      name
+    }
+    kind
+    vectors
+  }
+`
+export const ImageFragmentDoc = gql`
+  fragment Image on Image {
+    id
+    name
+    store {
+      ...ZarrStore
+    }
+    derivedFromViews {
+      image {
+        id
+        name
+      }
+    }
+    pinned
+    renders {
+      ...Snapshot
+      ...Video
+    }
+    dataset {
+      name
+      id
+    }
+    createdAt
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    creator {
+      sub
+    }
+    tags
+    rgbContexts {
+      ...ListRGBContext
+    }
+    rois {
+      ...ListROI
+    }
+  }
+  ${ZarrStoreFragmentDoc}
+  ${SnapshotFragmentDoc}
+  ${VideoFragmentDoc}
+  ${ProvenanceEntryFragmentDoc}
+  ${ListRgbContextFragmentDoc}
+  ${ListRoiFragmentDoc}
+`
+export const InstanceMaskViewLabelFragmentDoc = gql`
+  fragment InstanceMaskViewLabel on InstanceMaskViewLabel {
+    id
+    values
+  }
+`
+export const InstrumentFragmentDoc = gql`
+  fragment Instrument on Instrument {
+    model
+    name
+    serialNumber
+  }
+`
+export const OpticalElementFragmentDoc = gql`
+  fragment OpticalElement on OpticalElement {
+    id
+    label
+    kind
+    manufacturer
+    model
+    pose {
+      position {
+        x
+        y
+        z
+      }
+      orientation {
+        rx
+        ry
+        rz
+      }
+    }
+    ports {
+      id
+      name
+      role
+      channel
+    }
+  }
+`
+export const CcdElementFragmentDoc = gql`
+  fragment CCDElement on CCDElement {
+    ...OpticalElement
+    pixelSizeUm
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const MeshStoreFragmentDoc = gql`
+  fragment MeshStore on MeshStore {
+    id
+    key
+    presignedUrl
+  }
+`
+export const MeshFragmentDoc = gql`
+  fragment Mesh on Mesh {
+    id
+    name
+    store {
+      ...MeshStore
+    }
+  }
+  ${MeshStoreFragmentDoc}
+`
+export const ListMeshFragmentDoc = gql`
+  fragment ListMesh on Mesh {
+    id
+    name
+  }
+`
+export const WellPositionViewFragmentDoc = gql`
+  fragment WellPositionView on WellPositionView {
+    ...View
+    id
+    column
+    row
+    well {
+      id
+      rows
+      columns
       name
     }
   }
-  pinned
-  name
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const ListStageFragmentDoc = gql`
-    fragment ListStage on Stage {
-  id
-  name
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const ParquetStoreFragmentDoc = gql`
-    fragment ParquetStore on ParquetStore {
-  id
-  key
-  bucket
-  path
-  presignedUrl
-}
-    `;
-export const AccessorFragmentDoc = gql`
-    fragment Accessor on Accessor {
-  id
-  keys
-  minIndex
-  maxIndex
-}
-    `;
-export const ImageAccessorFragmentDoc = gql`
-    fragment ImageAccessor on ImageAccessor {
-  ...Accessor
-  id
-}
-    ${AccessorFragmentDoc}`;
-export const LabelAccessorFragmentDoc = gql`
-    fragment LabelAccessor on LabelAccessor {
-  ...Accessor
-  maskView {
+  ${ViewFragmentDoc}
+`
+export const MultiWellPlateFragmentDoc = gql`
+  fragment MultiWellPlate on MultiWellPlate {
     id
-  }
-}
-    ${AccessorFragmentDoc}`;
-export const TableFragmentDoc = gql`
-    fragment Table on Table {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-  columns {
+    views {
+      ...WellPositionView
+    }
     name
-    type
+  }
+  ${WellPositionViewFragmentDoc}
+`
+export const ListMultiWellPlateFragmentDoc = gql`
+  fragment ListMultiWellPlate on MultiWellPlate {
+    id
+    name
+  }
+`
+export const ObjectiveFragmentDoc = gql`
+  fragment Objective on Objective {
+    na
+    name
+    serialNumber
+  }
+`
+export const RgbContextFragmentDoc = gql`
+  fragment RGBContext on RGBContext {
+    id
+    views {
+      ...RGBView
+    }
+    image {
+      id
+      store {
+        ...ZarrStore
+      }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+        scaleX
+        scaleY
+        scaleZ
+        scaleT
+        scaleC
+      }
+    }
+    pinned
+    name
+    z
+    t
+    c
+    blending
+  }
+  ${RgbViewFragmentDoc}
+  ${ZarrStoreFragmentDoc}
+`
+export const RgbImageFragmentDoc = gql`
+  fragment RGBImage on Image {
+    name
+    rgbContexts {
+      ...ListRGBContext
+    }
+  }
+  ${ListRgbContextFragmentDoc}
+`
+export const RoiFragmentDoc = gql`
+  fragment ROI on ROI {
+    id
+    pinned
+    image {
+      id
+      ...RGBImage
+    }
+    createdAt
+    creator {
+      sub
+    }
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    kind
+    vectors
+  }
+  ${RgbImageFragmentDoc}
+  ${ProvenanceEntryFragmentDoc}
+`
+export const AffineTransformationViewFragmentDoc = gql`
+  fragment AffineTransformationView on AffineTransformationView {
+    ...View
+    id
+    affineMatrix
+    stage {
+      id
+      name
+    }
+  }
+  ${ViewFragmentDoc}
+`
+export const StageFragmentDoc = gql`
+  fragment Stage on Stage {
+    id
+    affineViews {
+      ...AffineTransformationView
+      image {
+        id
+        store {
+          shape
+        }
+        name
+      }
+    }
+    pinned
+    name
+  }
+  ${AffineTransformationViewFragmentDoc}
+`
+export const ListStageFragmentDoc = gql`
+  fragment ListStage on Stage {
+    id
+    name
+  }
+`
+export const MediaStoreFragmentDoc = gql`
+  fragment MediaStore on MediaStore {
+    id
+    key
+    presignedUrl
+  }
+`
+export const ParquetStoreFragmentDoc = gql`
+  fragment ParquetStore on ParquetStore {
+    id
+    key
+    bucket
+    path
+    presignedUrl
+  }
+`
+export const AccessorFragmentDoc = gql`
+  fragment Accessor on Accessor {
+    id
+    keys
+    minIndex
+    maxIndex
+  }
+`
+export const ImageAccessorFragmentDoc = gql`
+  fragment ImageAccessor on ImageAccessor {
+    ...Accessor
+    id
+  }
+  ${AccessorFragmentDoc}
+`
+export const LabelAccessorFragmentDoc = gql`
+  fragment LabelAccessor on LabelAccessor {
+    ...Accessor
+    maskView {
+      id
+    }
+  }
+  ${AccessorFragmentDoc}
+`
+export const TableFragmentDoc = gql`
+  fragment Table on Table {
+    origins {
+      id
+    }
+    id
+    name
+    store {
+      ...ParquetStore
+    }
+    columns {
+      name
+      type
+      accessors {
+        ...Accessor
+        ...ImageAccessor
+        ...LabelAccessor
+      }
+    }
     accessors {
-      ...Accessor
       ...ImageAccessor
       ...LabelAccessor
     }
   }
-  accessors {
-    ...ImageAccessor
-    ...LabelAccessor
-  }
-}
-    ${ParquetStoreFragmentDoc}
-${AccessorFragmentDoc}
-${ImageAccessorFragmentDoc}
-${LabelAccessorFragmentDoc}`;
+  ${ParquetStoreFragmentDoc}
+  ${AccessorFragmentDoc}
+  ${ImageAccessorFragmentDoc}
+  ${LabelAccessorFragmentDoc}
+`
 export const ListTableFragmentDoc = gql`
-    fragment ListTable on Table {
-  origins {
+  fragment ListTable on Table {
+    origins {
+      id
+    }
     id
+    name
+    store {
+      ...ParquetStore
+    }
   }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-}
-    ${ParquetStoreFragmentDoc}`;
+  ${ParquetStoreFragmentDoc}
+`
 export const ChannelViewFragmentDoc = gql`
-    fragment ChannelView on ChannelView {
-  ...View
-  id
-  channelName: name
-  excitationWavelength
-  emissionWavelength
-  acquisitionMode
-}
-    ${ViewFragmentDoc}`;
+  fragment ChannelView on ChannelView {
+    ...View
+    id
+    channelName: name
+    excitationWavelength
+    emissionWavelength
+    acquisitionMode
+  }
+  ${ViewFragmentDoc}
+`
 export const SampleElementFragmentDoc = gql`
-    fragment SampleElement on SampleElement {
-  ...OpticalElement
-  label
-}
-    ${OpticalElementFragmentDoc}`;
-export const OtherSourceElementFragmentDoc = gql`
-    fragment OtherSourceElement on OtherSourceElement {
-  ...OpticalElement
-  channel
-}
-    ${OpticalElementFragmentDoc}`;
-export const DetectorElementFragmentDoc = gql`
-    fragment DetectorElement on DetectorElement {
-  ...OpticalElement
-  nepdWPerSqrtHz
-}
-    ${OpticalElementFragmentDoc}`;
-export const SpectrumFragmentDoc = gql`
-    fragment Spectrum on Spectrum {
-  minNm
-  maxNm
-}
-    `;
-export const MirrorElementFragmentDoc = gql`
-    fragment MirrorElement on MirrorElement {
-  ...OpticalElement
-  angleDeg
-  band {
-    ...Spectrum
-  }
-}
-    ${OpticalElementFragmentDoc}
-${SpectrumFragmentDoc}`;
-export const BeamSplitterElementFragmentDoc = gql`
-    fragment BeamSplitterElement on BeamSplitterElement {
-  ...OpticalElement
-  rFraction
-  tFraction
-  band {
-    ...Spectrum
-  }
-}
-    ${OpticalElementFragmentDoc}
-${SpectrumFragmentDoc}`;
-export const LensElementFragmentDoc = gql`
-    fragment LensElement on LensElement {
-  ...OpticalElement
-  focalLengthMm
-}
-    ${OpticalElementFragmentDoc}`;
-export const ObjectiveElementFragmentDoc = gql`
-    fragment ObjectiveElement on ObjectiveElement {
-  ...OpticalElement
-  magnification
-  numericalAperture
-  workingDistanceMm
-}
-    ${OpticalElementFragmentDoc}`;
-export const LaserElementFragmentDoc = gql`
-    fragment LaserElement on LaserElement {
-  ...OpticalElement
-  nominalWavelengthNm
-}
-    ${OpticalElementFragmentDoc}`;
-export const FilterElementFragmentDoc = gql`
-    fragment FilterElement on FilterElement {
-  ...OpticalElement
-  label
-}
-    ${OpticalElementFragmentDoc}`;
-export const OtherElementFragmentDoc = gql`
-    fragment OtherElement on OtherElement {
-  ...OpticalElement
-  label
-}
-    ${OpticalElementFragmentDoc}`;
-export const PinholeElementFragmentDoc = gql`
-    fragment PinholeElement on PinholeElement {
-  ...OpticalElement
-  diameterUm
-}
-    ${OpticalElementFragmentDoc}`;
-export const LightEdgeFragmentDoc = gql`
-    fragment LightEdge on LightEdge {
-  id
-  sourceElementId
-  sourcePortId
-  targetElementId
-  targetPortId
-  medium
-}
-    `;
-export const LightpathGraphFragmentDoc = gql`
-    fragment LightpathGraph on LightpathGraph {
-  elements {
-    __typename
+  fragment SampleElement on SampleElement {
     ...OpticalElement
-    ...SampleElement
-    ...OtherSourceElement
-    ...DetectorElement
-    ...MirrorElement
-    ...BeamSplitterElement
-    ...LensElement
-    ...ObjectiveElement
-    ...LaserElement
-    ...FilterElement
-    ...OtherElement
-    ...PinholeElement
+    label
   }
-  edges {
-    ...LightEdge
+  ${OpticalElementFragmentDoc}
+`
+export const OtherSourceElementFragmentDoc = gql`
+  fragment OtherSourceElement on OtherSourceElement {
+    ...OpticalElement
+    channel
   }
-}
-    ${OpticalElementFragmentDoc}
-${SampleElementFragmentDoc}
-${OtherSourceElementFragmentDoc}
-${DetectorElementFragmentDoc}
-${MirrorElementFragmentDoc}
-${BeamSplitterElementFragmentDoc}
-${LensElementFragmentDoc}
-${ObjectiveElementFragmentDoc}
-${LaserElementFragmentDoc}
-${FilterElementFragmentDoc}
-${OtherElementFragmentDoc}
-${PinholeElementFragmentDoc}
-${LightEdgeFragmentDoc}`;
+  ${OpticalElementFragmentDoc}
+`
+export const DetectorElementFragmentDoc = gql`
+  fragment DetectorElement on DetectorElement {
+    ...OpticalElement
+    nepdWPerSqrtHz
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const SpectrumFragmentDoc = gql`
+  fragment Spectrum on Spectrum {
+    minNm
+    maxNm
+  }
+`
+export const MirrorElementFragmentDoc = gql`
+  fragment MirrorElement on MirrorElement {
+    ...OpticalElement
+    angleDeg
+    band {
+      ...Spectrum
+    }
+  }
+  ${OpticalElementFragmentDoc}
+  ${SpectrumFragmentDoc}
+`
+export const BeamSplitterElementFragmentDoc = gql`
+  fragment BeamSplitterElement on BeamSplitterElement {
+    ...OpticalElement
+    rFraction
+    tFraction
+    band {
+      ...Spectrum
+    }
+  }
+  ${OpticalElementFragmentDoc}
+  ${SpectrumFragmentDoc}
+`
+export const LensElementFragmentDoc = gql`
+  fragment LensElement on LensElement {
+    ...OpticalElement
+    focalLengthMm
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const ObjectiveElementFragmentDoc = gql`
+  fragment ObjectiveElement on ObjectiveElement {
+    ...OpticalElement
+    magnification
+    numericalAperture
+    workingDistanceMm
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const LaserElementFragmentDoc = gql`
+  fragment LaserElement on LaserElement {
+    ...OpticalElement
+    nominalWavelengthNm
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const FilterElementFragmentDoc = gql`
+  fragment FilterElement on FilterElement {
+    ...OpticalElement
+    label
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const OtherElementFragmentDoc = gql`
+  fragment OtherElement on OtherElement {
+    ...OpticalElement
+    label
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const PinholeElementFragmentDoc = gql`
+  fragment PinholeElement on PinholeElement {
+    ...OpticalElement
+    diameterUm
+  }
+  ${OpticalElementFragmentDoc}
+`
+export const LightEdgeFragmentDoc = gql`
+  fragment LightEdge on LightEdge {
+    id
+    sourceElementId
+    sourcePortId
+    targetElementId
+    targetPortId
+    medium
+  }
+`
+export const LightpathGraphFragmentDoc = gql`
+  fragment LightpathGraph on LightpathGraph {
+    elements {
+      __typename
+      ...OpticalElement
+      ...SampleElement
+      ...OtherSourceElement
+      ...DetectorElement
+      ...MirrorElement
+      ...BeamSplitterElement
+      ...LensElement
+      ...ObjectiveElement
+      ...LaserElement
+      ...FilterElement
+      ...OtherElement
+      ...PinholeElement
+    }
+    edges {
+      ...LightEdge
+    }
+  }
+  ${OpticalElementFragmentDoc}
+  ${SampleElementFragmentDoc}
+  ${OtherSourceElementFragmentDoc}
+  ${DetectorElementFragmentDoc}
+  ${MirrorElementFragmentDoc}
+  ${BeamSplitterElementFragmentDoc}
+  ${LensElementFragmentDoc}
+  ${ObjectiveElementFragmentDoc}
+  ${LaserElementFragmentDoc}
+  ${FilterElementFragmentDoc}
+  ${OtherElementFragmentDoc}
+  ${PinholeElementFragmentDoc}
+  ${LightEdgeFragmentDoc}
+`
 export const LightpathViewFragmentDoc = gql`
-    fragment LightpathView on LightpathView {
-  ...View
-  id
-  graph {
-    ...LightpathGraph
+  fragment LightpathView on LightpathView {
+    ...View
+    id
+    graph {
+      ...LightpathGraph
+    }
   }
-}
-    ${ViewFragmentDoc}
-${LightpathGraphFragmentDoc}`;
+  ${ViewFragmentDoc}
+  ${LightpathGraphFragmentDoc}
+`
 export const DerivedViewFragmentDoc = gql`
-    fragment DerivedView on DerivedView {
-  ...View
-  id
-  originImage {
+  fragment DerivedView on DerivedView {
+    ...View
     id
-    name
+    originImage {
+      id
+      name
+    }
+    operation
   }
-  operation
-}
-    ${ViewFragmentDoc}`;
+  ${ViewFragmentDoc}
+`
 export const RoiViewFragmentDoc = gql`
-    fragment ROIView on ROIView {
-  ...View
-  id
-  roi {
+  fragment ROIView on ROIView {
+    ...View
     id
-    name
+    roi {
+      id
+      name
+    }
   }
-}
-    ${ViewFragmentDoc}`;
+  ${ViewFragmentDoc}
+`
 export const FileViewFragmentDoc = gql`
-    fragment FileView on FileView {
-  ...View
-  id
-  seriesIdentifier
-  file {
+  fragment FileView on FileView {
+    ...View
     id
-    name
+    seriesIdentifier
+    file {
+      id
+      name
+    }
   }
-}
-    ${ViewFragmentDoc}`;
+  ${ViewFragmentDoc}
+`
 export const EraFragmentDoc = gql`
-    fragment Era on Era {
-  id
-  begin
-  name
-}
-    `;
+  fragment Era on Era {
+    id
+    begin
+    name
+  }
+`
 export const TimepointViewFragmentDoc = gql`
-    fragment TimepointView on TimepointView {
-  ...View
-  id
-  msSinceStart
-  indexSinceStart
-  era {
-    ...Era
+  fragment TimepointView on TimepointView {
+    ...View
+    id
+    msSinceStart
+    indexSinceStart
+    era {
+      ...Era
+    }
   }
-}
-    ${ViewFragmentDoc}
-${EraFragmentDoc}`;
+  ${ViewFragmentDoc}
+  ${EraFragmentDoc}
+`
 export const OpticsViewFragmentDoc = gql`
-    fragment OpticsView on OpticsView {
-  ...View
-  id
-  objective {
+  fragment OpticsView on OpticsView {
+    ...View
     id
-    name
-    serialNumber
+    objective {
+      id
+      name
+      serialNumber
+    }
+    camera {
+      id
+      name
+      serialNumber
+    }
+    instrument {
+      id
+      name
+      serialNumber
+    }
   }
-  camera {
-    id
-    name
-    serialNumber
-  }
-  instrument {
-    id
-    name
-    serialNumber
-  }
-}
-    ${ViewFragmentDoc}`;
+  ${ViewFragmentDoc}
+`
 export const MaskViewFragmentDoc = gql`
-    fragment MaskView on MaskView {
-  ...View
-  id
-  referenceView {
+  fragment MaskView on MaskView {
+    ...View
     id
-    image {
+    referenceView {
       id
-      name
+      image {
+        id
+        name
+      }
     }
   }
-}
-    ${ViewFragmentDoc}`;
+  ${ViewFragmentDoc}
+`
 export const ReferenceViewFragmentDoc = gql`
-    fragment ReferenceView on ReferenceView {
-  ...View
-  id
-}
-    ${ViewFragmentDoc}`;
-export const InstanceMaskViewFragmentDoc = gql`
-    fragment InstanceMaskView on InstanceMaskView {
-  ...View
-  id
-  referenceView {
+  fragment ReferenceView on ReferenceView {
+    ...View
     id
-    image {
+  }
+  ${ViewFragmentDoc}
+`
+export const InstanceMaskViewFragmentDoc = gql`
+  fragment InstanceMaskView on InstanceMaskView {
+    ...View
+    id
+    referenceView {
+      id
+      image {
+        id
+        name
+      }
+    }
+    labels {
+      ...ParquetStore
+    }
+  }
+  ${ViewFragmentDoc}
+  ${ParquetStoreFragmentDoc}
+`
+export const AcquisitionViewFragmentDoc = gql`
+  fragment AcquisitionView on AcquisitionView {
+    ...View
+    id
+    description
+    acquiredAt
+    operator {
+      sub
+    }
+  }
+  ${ViewFragmentDoc}
+`
+export const ContinousScanViewFragmentDoc = gql`
+  fragment ContinousScanView on ContinousScanView {
+    ...View
+    id
+    direction
+  }
+  ${ViewFragmentDoc}
+`
+export const CreateCameraDocument = gql`
+  mutation CreateCamera(
+    $serialNumber: String!
+    $name: String
+    $pixelSizeX: Micrometers
+    $pixelSizeY: Micrometers
+    $sensorSizeX: Int
+    $sensorSizeY: Int
+  ) {
+    createCamera(
+      input: {
+        name: $name
+        pixelSizeX: $pixelSizeX
+        serialNumber: $serialNumber
+        pixelSizeY: $pixelSizeY
+        sensorSizeX: $sensorSizeX
+        sensorSizeY: $sensorSizeY
+      }
+    ) {
       id
       name
     }
   }
-  labels {
-    ...ParquetStore
-  }
-}
-    ${ViewFragmentDoc}
-${ParquetStoreFragmentDoc}`;
-export const AcquisitionViewFragmentDoc = gql`
-    fragment AcquisitionView on AcquisitionView {
-  ...View
-  id
-  description
-  acquiredAt
-  operator {
-    sub
-  }
-}
-    ${ViewFragmentDoc}`;
-export const ContinousScanViewFragmentDoc = gql`
-    fragment ContinousScanView on ContinousScanView {
-  ...View
-  id
-  direction
-}
-    ${ViewFragmentDoc}`;
-export const CreateCameraDocument = gql`
-    mutation CreateCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
-  createCamera(
-    input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
-  ) {
-    id
-    name
-  }
-}
-    `;
-export type CreateCameraMutationFn = Apollo.MutationFunction<CreateCameraMutation, CreateCameraMutationVariables>;
+`
+export type CreateCameraMutationFn = Apollo.MutationFunction<
+  CreateCameraMutation,
+  CreateCameraMutationVariables
+>
 
 /**
  * __useCreateCameraMutation__
@@ -6938,24 +14479,52 @@ export type CreateCameraMutationFn = Apollo.MutationFunction<CreateCameraMutatio
  *   },
  * });
  */
-export function useCreateCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateCameraMutation, CreateCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateCameraMutation, CreateCameraMutationVariables>(CreateCameraDocument, options);
-      }
-export type CreateCameraMutationHookResult = ReturnType<typeof useCreateCameraMutation>;
-export type CreateCameraMutationResult = Apollo.MutationResult<CreateCameraMutation>;
-export type CreateCameraMutationOptions = Apollo.BaseMutationOptions<CreateCameraMutation, CreateCameraMutationVariables>;
-export const EnsureCameraDocument = gql`
-    mutation EnsureCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
-  ensureCamera(
-    input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
-  ) {
-    id
-    name
-  }
+export function useCreateCameraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateCameraMutation,
+    CreateCameraMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateCameraMutation, CreateCameraMutationVariables>(
+    CreateCameraDocument,
+    options
+  )
 }
-    `;
-export type EnsureCameraMutationFn = Apollo.MutationFunction<EnsureCameraMutation, EnsureCameraMutationVariables>;
+export type CreateCameraMutationHookResult = ReturnType<typeof useCreateCameraMutation>
+export type CreateCameraMutationResult = Apollo.MutationResult<CreateCameraMutation>
+export type CreateCameraMutationOptions = Apollo.BaseMutationOptions<
+  CreateCameraMutation,
+  CreateCameraMutationVariables
+>
+export const EnsureCameraDocument = gql`
+  mutation EnsureCamera(
+    $serialNumber: String!
+    $name: String
+    $pixelSizeX: Micrometers
+    $pixelSizeY: Micrometers
+    $sensorSizeX: Int
+    $sensorSizeY: Int
+  ) {
+    ensureCamera(
+      input: {
+        name: $name
+        pixelSizeX: $pixelSizeX
+        serialNumber: $serialNumber
+        pixelSizeY: $pixelSizeY
+        sensorSizeX: $sensorSizeX
+        sensorSizeY: $sensorSizeY
+      }
+    ) {
+      id
+      name
+    }
+  }
+`
+export type EnsureCameraMutationFn = Apollo.MutationFunction<
+  EnsureCameraMutation,
+  EnsureCameraMutationVariables
+>
 
 /**
  * __useEnsureCameraMutation__
@@ -6979,22 +14548,36 @@ export type EnsureCameraMutationFn = Apollo.MutationFunction<EnsureCameraMutatio
  *   },
  * });
  */
-export function useEnsureCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureCameraMutation, EnsureCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureCameraMutation, EnsureCameraMutationVariables>(EnsureCameraDocument, options);
-      }
-export type EnsureCameraMutationHookResult = ReturnType<typeof useEnsureCameraMutation>;
-export type EnsureCameraMutationResult = Apollo.MutationResult<EnsureCameraMutation>;
-export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<EnsureCameraMutation, EnsureCameraMutationVariables>;
-export const CreateDatasetDocument = gql`
-    mutation CreateDataset($input: CreateDatasetInput!) {
-  createDataset(input: $input) {
-    id
-    name
-  }
+export function useEnsureCameraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureCameraMutation,
+    EnsureCameraMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureCameraMutation, EnsureCameraMutationVariables>(
+    EnsureCameraDocument,
+    options
+  )
 }
-    `;
-export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutation, CreateDatasetMutationVariables>;
+export type EnsureCameraMutationHookResult = ReturnType<typeof useEnsureCameraMutation>
+export type EnsureCameraMutationResult = Apollo.MutationResult<EnsureCameraMutation>
+export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<
+  EnsureCameraMutation,
+  EnsureCameraMutationVariables
+>
+export const CreateDatasetDocument = gql`
+  mutation CreateDataset($input: CreateDatasetInput!) {
+    createDataset(input: $input) {
+      id
+      name
+    }
+  }
+`
+export type CreateDatasetMutationFn = Apollo.MutationFunction<
+  CreateDatasetMutation,
+  CreateDatasetMutationVariables
+>
 
 /**
  * __useCreateDatasetMutation__
@@ -7013,22 +14596,36 @@ export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutat
  *   },
  * });
  */
-export function useCreateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDatasetMutation, CreateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
-      }
-export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>;
-export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>;
-export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<CreateDatasetMutation, CreateDatasetMutationVariables>;
-export const UpdateDatasetDocument = gql`
-    mutation UpdateDataset($id: ID!, $name: String!) {
-  updateDataset(input: {id: $id, name: $name}) {
-    id
-    name
-  }
+export function useCreateDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateDatasetMutation,
+    CreateDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(
+    CreateDatasetDocument,
+    options
+  )
 }
-    `;
-export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
+export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>
+export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>
+export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<
+  CreateDatasetMutation,
+  CreateDatasetMutationVariables
+>
+export const UpdateDatasetDocument = gql`
+  mutation UpdateDataset($id: ID!, $name: String!) {
+    updateDataset(input: { id: $id, name: $name }) {
+      id
+      name
+    }
+  }
+`
+export type UpdateDatasetMutationFn = Apollo.MutationFunction<
+  UpdateDatasetMutation,
+  UpdateDatasetMutationVariables
+>
 
 /**
  * __useUpdateDatasetMutation__
@@ -7048,21 +14645,36 @@ export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutat
  *   },
  * });
  */
-export function useUpdateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(UpdateDatasetDocument, options);
-      }
-export type UpdateDatasetMutationHookResult = ReturnType<typeof useUpdateDatasetMutation>;
-export type UpdateDatasetMutationResult = Apollo.MutationResult<UpdateDatasetMutation>;
-export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
-export const PinDatasetDocument = gql`
-    mutation PinDataset($id: ID!, $pin: Boolean!) {
-  pinDataset(input: {id: $id, pin: $pin}) {
-    ...Dataset
-  }
+export function useUpdateDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateDatasetMutation,
+    UpdateDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(
+    UpdateDatasetDocument,
+    options
+  )
 }
-    ${DatasetFragmentDoc}`;
-export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, PinDatasetMutationVariables>;
+export type UpdateDatasetMutationHookResult = ReturnType<typeof useUpdateDatasetMutation>
+export type UpdateDatasetMutationResult = Apollo.MutationResult<UpdateDatasetMutation>
+export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<
+  UpdateDatasetMutation,
+  UpdateDatasetMutationVariables
+>
+export const PinDatasetDocument = gql`
+  mutation PinDataset($id: ID!, $pin: Boolean!) {
+    pinDataset(input: { id: $id, pin: $pin }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type PinDatasetMutationFn = Apollo.MutationFunction<
+  PinDatasetMutation,
+  PinDatasetMutationVariables
+>
 
 /**
  * __usePinDatasetMutation__
@@ -7082,21 +14694,36 @@ export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, P
  *   },
  * });
  */
-export function usePinDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinDatasetMutation, PinDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(PinDatasetDocument, options);
-      }
-export type PinDatasetMutationHookResult = ReturnType<typeof usePinDatasetMutation>;
-export type PinDatasetMutationResult = Apollo.MutationResult<PinDatasetMutation>;
-export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<PinDatasetMutation, PinDatasetMutationVariables>;
-export const PutDatasetsInDatasetDocument = gql`
-    mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
-  putDatasetsInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePinDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinDatasetMutation,
+    PinDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(
+    PinDatasetDocument,
+    options
+  )
 }
-    ${DatasetFragmentDoc}`;
-export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
+export type PinDatasetMutationHookResult = ReturnType<typeof usePinDatasetMutation>
+export type PinDatasetMutationResult = Apollo.MutationResult<PinDatasetMutation>
+export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PinDatasetMutation,
+  PinDatasetMutationVariables
+>
+export const PutDatasetsInDatasetDocument = gql`
+  mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
+    putDatasetsInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<
+  PutDatasetsInDatasetMutation,
+  PutDatasetsInDatasetMutationVariables
+>
 
 /**
  * __usePutDatasetsInDatasetMutation__
@@ -7116,21 +14743,38 @@ export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasets
  *   },
  * });
  */
-export function usePutDatasetsInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>(PutDatasetsInDatasetDocument, options);
-      }
-export type PutDatasetsInDatasetMutationHookResult = ReturnType<typeof usePutDatasetsInDatasetMutation>;
-export type PutDatasetsInDatasetMutationResult = Apollo.MutationResult<PutDatasetsInDatasetMutation>;
-export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
-export const ReleaseDatasetsFromDatasetDocument = gql`
-    mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseDatasetsFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutDatasetsInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutDatasetsInDatasetMutation,
+    PutDatasetsInDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    PutDatasetsInDatasetMutation,
+    PutDatasetsInDatasetMutationVariables
+  >(PutDatasetsInDatasetDocument, options)
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
+export type PutDatasetsInDatasetMutationHookResult = ReturnType<
+  typeof usePutDatasetsInDatasetMutation
+>
+export type PutDatasetsInDatasetMutationResult = Apollo.MutationResult<PutDatasetsInDatasetMutation>
+export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutDatasetsInDatasetMutation,
+  PutDatasetsInDatasetMutationVariables
+>
+export const ReleaseDatasetsFromDatasetDocument = gql`
+  mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseDatasetsFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseDatasetsFromDatasetMutation,
+  ReleaseDatasetsFromDatasetMutationVariables
+>
 
 /**
  * __useReleaseDatasetsFromDatasetMutation__
@@ -7150,21 +14794,39 @@ export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<Relea
  *   },
  * });
  */
-export function useReleaseDatasetsFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>(ReleaseDatasetsFromDatasetDocument, options);
-      }
-export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<typeof useReleaseDatasetsFromDatasetMutation>;
-export type ReleaseDatasetsFromDatasetMutationResult = Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>;
-export type ReleaseDatasetsFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
-export const PutImagesInDatasetDocument = gql`
-    mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
-  putImagesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function useReleaseDatasetsFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseDatasetsFromDatasetMutation,
+    ReleaseDatasetsFromDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    ReleaseDatasetsFromDatasetMutation,
+    ReleaseDatasetsFromDatasetMutationVariables
+  >(ReleaseDatasetsFromDatasetDocument, options)
 }
-    ${DatasetFragmentDoc}`;
-export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
+export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseDatasetsFromDatasetMutation
+>
+export type ReleaseDatasetsFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>
+export type ReleaseDatasetsFromDatasetMutationOptions = Apollo.BaseMutationOptions<
+  ReleaseDatasetsFromDatasetMutation,
+  ReleaseDatasetsFromDatasetMutationVariables
+>
+export const PutImagesInDatasetDocument = gql`
+  mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
+    putImagesInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<
+  PutImagesInDatasetMutation,
+  PutImagesInDatasetMutationVariables
+>
 
 /**
  * __usePutImagesInDatasetMutation__
@@ -7184,21 +14846,36 @@ export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDa
  *   },
  * });
  */
-export function usePutImagesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>(PutImagesInDatasetDocument, options);
-      }
-export type PutImagesInDatasetMutationHookResult = ReturnType<typeof usePutImagesInDatasetMutation>;
-export type PutImagesInDatasetMutationResult = Apollo.MutationResult<PutImagesInDatasetMutation>;
-export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
-export const ReleaseImagesFromDatasetDocument = gql`
-    mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseImagesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutImagesInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutImagesInDatasetMutation,
+    PutImagesInDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    PutImagesInDatasetMutation,
+    PutImagesInDatasetMutationVariables
+  >(PutImagesInDatasetDocument, options)
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
+export type PutImagesInDatasetMutationHookResult = ReturnType<typeof usePutImagesInDatasetMutation>
+export type PutImagesInDatasetMutationResult = Apollo.MutationResult<PutImagesInDatasetMutation>
+export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutImagesInDatasetMutation,
+  PutImagesInDatasetMutationVariables
+>
+export const ReleaseImagesFromDatasetDocument = gql`
+  mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseImagesFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseImagesFromDatasetMutation,
+  ReleaseImagesFromDatasetMutationVariables
+>
 
 /**
  * __useReleaseImagesFromDatasetMutation__
@@ -7218,21 +14895,39 @@ export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<Release
  *   },
  * });
  */
-export function useReleaseImagesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>(ReleaseImagesFromDatasetDocument, options);
-      }
-export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<typeof useReleaseImagesFromDatasetMutation>;
-export type ReleaseImagesFromDatasetMutationResult = Apollo.MutationResult<ReleaseImagesFromDatasetMutation>;
-export type ReleaseImagesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
-export const PutFilesInDatasetDocument = gql`
-    mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
-  putFilesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function useReleaseImagesFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseImagesFromDatasetMutation,
+    ReleaseImagesFromDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    ReleaseImagesFromDatasetMutation,
+    ReleaseImagesFromDatasetMutationVariables
+  >(ReleaseImagesFromDatasetDocument, options)
 }
-    ${DatasetFragmentDoc}`;
-export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
+export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseImagesFromDatasetMutation
+>
+export type ReleaseImagesFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseImagesFromDatasetMutation>
+export type ReleaseImagesFromDatasetMutationOptions = Apollo.BaseMutationOptions<
+  ReleaseImagesFromDatasetMutation,
+  ReleaseImagesFromDatasetMutationVariables
+>
+export const PutFilesInDatasetDocument = gql`
+  mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
+    putFilesInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<
+  PutFilesInDatasetMutation,
+  PutFilesInDatasetMutationVariables
+>
 
 /**
  * __usePutFilesInDatasetMutation__
@@ -7252,21 +14947,36 @@ export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInData
  *   },
  * });
  */
-export function usePutFilesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>(PutFilesInDatasetDocument, options);
-      }
-export type PutFilesInDatasetMutationHookResult = ReturnType<typeof usePutFilesInDatasetMutation>;
-export type PutFilesInDatasetMutationResult = Apollo.MutationResult<PutFilesInDatasetMutation>;
-export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
-export const ReleaseFilesFromDatasetDocument = gql`
-    mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseFilesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutFilesInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutFilesInDatasetMutation,
+    PutFilesInDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    PutFilesInDatasetMutation,
+    PutFilesInDatasetMutationVariables
+  >(PutFilesInDatasetDocument, options)
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
+export type PutFilesInDatasetMutationHookResult = ReturnType<typeof usePutFilesInDatasetMutation>
+export type PutFilesInDatasetMutationResult = Apollo.MutationResult<PutFilesInDatasetMutation>
+export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutFilesInDatasetMutation,
+  PutFilesInDatasetMutationVariables
+>
+export const ReleaseFilesFromDatasetDocument = gql`
+  mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseFilesFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
+export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseFilesFromDatasetMutation,
+  ReleaseFilesFromDatasetMutationVariables
+>
 
 /**
  * __useReleaseFilesFromDatasetMutation__
@@ -7286,23 +14996,40 @@ export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseF
  *   },
  * });
  */
-export function useReleaseFilesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>(ReleaseFilesFromDatasetDocument, options);
-      }
-export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<typeof useReleaseFilesFromDatasetMutation>;
-export type ReleaseFilesFromDatasetMutationResult = Apollo.MutationResult<ReleaseFilesFromDatasetMutation>;
-export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
-export const RevertDatasetDocument = gql`
-    mutation RevertDataset($dataset: ID!, $history: ID!) {
-  revertDataset(input: {id: $dataset, historyId: $history}) {
-    id
-    name
-    description
-  }
+export function useReleaseFilesFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseFilesFromDatasetMutation,
+    ReleaseFilesFromDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    ReleaseFilesFromDatasetMutation,
+    ReleaseFilesFromDatasetMutationVariables
+  >(ReleaseFilesFromDatasetDocument, options)
 }
-    `;
-export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutation, RevertDatasetMutationVariables>;
+export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseFilesFromDatasetMutation
+>
+export type ReleaseFilesFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseFilesFromDatasetMutation>
+export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<
+  ReleaseFilesFromDatasetMutation,
+  ReleaseFilesFromDatasetMutationVariables
+>
+export const RevertDatasetDocument = gql`
+  mutation RevertDataset($dataset: ID!, $history: ID!) {
+    revertDataset(input: { id: $dataset, historyId: $history }) {
+      id
+      name
+      description
+    }
+  }
+`
+export type RevertDatasetMutationFn = Apollo.MutationFunction<
+  RevertDatasetMutation,
+  RevertDatasetMutationVariables
+>
 
 /**
  * __useRevertDatasetMutation__
@@ -7322,19 +15049,33 @@ export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutat
  *   },
  * });
  */
-export function useRevertDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RevertDatasetMutation, RevertDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(RevertDatasetDocument, options);
-      }
-export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>;
-export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>;
-export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<RevertDatasetMutation, RevertDatasetMutationVariables>;
-export const DeleteDatasetDocument = gql`
-    mutation DeleteDataset($id: ID!) {
-  deleteDataset(input: {id: $id})
+export function useRevertDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RevertDatasetMutation,
+    RevertDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(
+    RevertDatasetDocument,
+    options
+  )
 }
-    `;
-export type DeleteDatasetMutationFn = Apollo.MutationFunction<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
+export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>
+export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>
+export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<
+  RevertDatasetMutation,
+  RevertDatasetMutationVariables
+>
+export const DeleteDatasetDocument = gql`
+  mutation DeleteDataset($id: ID!) {
+    deleteDataset(input: { id: $id })
+  }
+`
+export type DeleteDatasetMutationFn = Apollo.MutationFunction<
+  DeleteDatasetMutation,
+  DeleteDatasetMutationVariables
+>
 
 /**
  * __useDeleteDatasetMutation__
@@ -7353,22 +15094,36 @@ export type DeleteDatasetMutationFn = Apollo.MutationFunction<DeleteDatasetMutat
  *   },
  * });
  */
-export function useDeleteDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(DeleteDatasetDocument, options);
-      }
-export type DeleteDatasetMutationHookResult = ReturnType<typeof useDeleteDatasetMutation>;
-export type DeleteDatasetMutationResult = Apollo.MutationResult<DeleteDatasetMutation>;
-export type DeleteDatasetMutationOptions = Apollo.BaseMutationOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
-export const CreateEraDocument = gql`
-    mutation CreateEra($name: String!, $begin: DateTime) {
-  createEra(input: {name: $name, begin: $begin}) {
-    id
-    begin
-  }
+export function useDeleteDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteDatasetMutation,
+    DeleteDatasetMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(
+    DeleteDatasetDocument,
+    options
+  )
 }
-    `;
-export type CreateEraMutationFn = Apollo.MutationFunction<CreateEraMutation, CreateEraMutationVariables>;
+export type DeleteDatasetMutationHookResult = ReturnType<typeof useDeleteDatasetMutation>
+export type DeleteDatasetMutationResult = Apollo.MutationResult<DeleteDatasetMutation>
+export type DeleteDatasetMutationOptions = Apollo.BaseMutationOptions<
+  DeleteDatasetMutation,
+  DeleteDatasetMutationVariables
+>
+export const CreateEraDocument = gql`
+  mutation CreateEra($name: String!, $begin: DateTime) {
+    createEra(input: { name: $name, begin: $begin }) {
+      id
+      begin
+    }
+  }
+`
+export type CreateEraMutationFn = Apollo.MutationFunction<
+  CreateEraMutation,
+  CreateEraMutationVariables
+>
 
 /**
  * __useCreateEraMutation__
@@ -7388,23 +15143,33 @@ export type CreateEraMutationFn = Apollo.MutationFunction<CreateEraMutation, Cre
  *   },
  * });
  */
-export function useCreateEraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEraMutation, CreateEraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEraMutation, CreateEraMutationVariables>(CreateEraDocument, options);
-      }
-export type CreateEraMutationHookResult = ReturnType<typeof useCreateEraMutation>;
-export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>;
-export type CreateEraMutationOptions = Apollo.BaseMutationOptions<CreateEraMutation, CreateEraMutationVariables>;
-export const From_File_LikeDocument = gql`
-    mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
-  fromFileLike(
-    input: {file: $file, fileName: $name, origins: $origins, dataset: $dataset}
-  ) {
-    ...File
-  }
+export function useCreateEraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEraMutation, CreateEraMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateEraMutation, CreateEraMutationVariables>(
+    CreateEraDocument,
+    options
+  )
 }
-    ${FileFragmentDoc}`;
-export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMutation, From_File_LikeMutationVariables>;
+export type CreateEraMutationHookResult = ReturnType<typeof useCreateEraMutation>
+export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>
+export type CreateEraMutationOptions = Apollo.BaseMutationOptions<
+  CreateEraMutation,
+  CreateEraMutationVariables
+>
+export const From_File_LikeDocument = gql`
+  mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
+    fromFileLike(input: { file: $file, fileName: $name, origins: $origins, dataset: $dataset }) {
+      ...File
+    }
+  }
+  ${FileFragmentDoc}
+`
+export type From_File_LikeMutationFn = Apollo.MutationFunction<
+  From_File_LikeMutation,
+  From_File_LikeMutationVariables
+>
 
 /**
  * __useFrom_File_LikeMutation__
@@ -7426,21 +15191,36 @@ export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMut
  *   },
  * });
  */
-export function useFrom_File_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_File_LikeMutation, From_File_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(From_File_LikeDocument, options);
-      }
-export type From_File_LikeMutationHookResult = ReturnType<typeof useFrom_File_LikeMutation>;
-export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeMutation>;
-export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<From_File_LikeMutation, From_File_LikeMutationVariables>;
-export const RequestFileUploadDocument = gql`
-    mutation RequestFileUpload($key: String!, $datalayer: String!) {
-  requestFileUpload(input: {fileName: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useFrom_File_LikeMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    From_File_LikeMutation,
+    From_File_LikeMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(
+    From_File_LikeDocument,
+    options
+  )
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestFileUploadMutationFn = Apollo.MutationFunction<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
+export type From_File_LikeMutationHookResult = ReturnType<typeof useFrom_File_LikeMutation>
+export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeMutation>
+export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<
+  From_File_LikeMutation,
+  From_File_LikeMutationVariables
+>
+export const RequestFileUploadDocument = gql`
+  mutation RequestFileUpload($key: String!, $datalayer: String!) {
+    requestFileUpload(input: { fileName: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`
+export type RequestFileUploadMutationFn = Apollo.MutationFunction<
+  RequestFileUploadMutation,
+  RequestFileUploadMutationVariables
+>
 
 /**
  * __useRequestFileUploadMutation__
@@ -7460,21 +15240,36 @@ export type RequestFileUploadMutationFn = Apollo.MutationFunction<RequestFileUpl
  *   },
  * });
  */
-export function useRequestFileUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadMutation, RequestFileUploadMutationVariables>(RequestFileUploadDocument, options);
-      }
-export type RequestFileUploadMutationHookResult = ReturnType<typeof useRequestFileUploadMutation>;
-export type RequestFileUploadMutationResult = Apollo.MutationResult<RequestFileUploadMutation>;
-export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
-export const RequestFileUploadPresignedDocument = gql`
-    mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
-  requestFileUploadPresigned(input: {fileName: $key, datalayer: $datalayer}) {
-    ...PresignedPostCredentials
-  }
+export function useRequestFileUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileUploadMutation,
+    RequestFileUploadMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestFileUploadMutation,
+    RequestFileUploadMutationVariables
+  >(RequestFileUploadDocument, options)
 }
-    ${PresignedPostCredentialsFragmentDoc}`;
-export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>;
+export type RequestFileUploadMutationHookResult = ReturnType<typeof useRequestFileUploadMutation>
+export type RequestFileUploadMutationResult = Apollo.MutationResult<RequestFileUploadMutation>
+export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestFileUploadMutation,
+  RequestFileUploadMutationVariables
+>
+export const RequestFileUploadPresignedDocument = gql`
+  mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
+    requestFileUploadPresigned(input: { fileName: $key, datalayer: $datalayer }) {
+      ...PresignedPostCredentials
+    }
+  }
+  ${PresignedPostCredentialsFragmentDoc}
+`
+export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<
+  RequestFileUploadPresignedMutation,
+  RequestFileUploadPresignedMutationVariables
+>
 
 /**
  * __useRequestFileUploadPresignedMutation__
@@ -7494,21 +15289,39 @@ export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<Reque
  *   },
  * });
  */
-export function useRequestFileUploadPresignedMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>(RequestFileUploadPresignedDocument, options);
-      }
-export type RequestFileUploadPresignedMutationHookResult = ReturnType<typeof useRequestFileUploadPresignedMutation>;
-export type RequestFileUploadPresignedMutationResult = Apollo.MutationResult<RequestFileUploadPresignedMutation>;
-export type RequestFileUploadPresignedMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>;
-export const RequestFileAccessDocument = gql`
-    mutation RequestFileAccess($store: ID!, $duration: Int) {
-  requestFileAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestFileUploadPresignedMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileUploadPresignedMutation,
+    RequestFileUploadPresignedMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestFileUploadPresignedMutation,
+    RequestFileUploadPresignedMutationVariables
+  >(RequestFileUploadPresignedDocument, options)
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestFileAccessMutationFn = Apollo.MutationFunction<RequestFileAccessMutation, RequestFileAccessMutationVariables>;
+export type RequestFileUploadPresignedMutationHookResult = ReturnType<
+  typeof useRequestFileUploadPresignedMutation
+>
+export type RequestFileUploadPresignedMutationResult =
+  Apollo.MutationResult<RequestFileUploadPresignedMutation>
+export type RequestFileUploadPresignedMutationOptions = Apollo.BaseMutationOptions<
+  RequestFileUploadPresignedMutation,
+  RequestFileUploadPresignedMutationVariables
+>
+export const RequestFileAccessDocument = gql`
+  mutation RequestFileAccess($store: ID!, $duration: Int) {
+    requestFileAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`
+export type RequestFileAccessMutationFn = Apollo.MutationFunction<
+  RequestFileAccessMutation,
+  RequestFileAccessMutationVariables
+>
 
 /**
  * __useRequestFileAccessMutation__
@@ -7528,19 +15341,33 @@ export type RequestFileAccessMutationFn = Apollo.MutationFunction<RequestFileAcc
  *   },
  * });
  */
-export function useRequestFileAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileAccessMutation, RequestFileAccessMutationVariables>(RequestFileAccessDocument, options);
-      }
-export type RequestFileAccessMutationHookResult = ReturnType<typeof useRequestFileAccessMutation>;
-export type RequestFileAccessMutationResult = Apollo.MutationResult<RequestFileAccessMutation>;
-export type RequestFileAccessMutationOptions = Apollo.BaseMutationOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>;
-export const DeleteFileDocument = gql`
-    mutation DeleteFile($id: ID!) {
-  deleteFile(input: {id: $id})
+export function useRequestFileAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileAccessMutation,
+    RequestFileAccessMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestFileAccessMutation,
+    RequestFileAccessMutationVariables
+  >(RequestFileAccessDocument, options)
 }
-    `;
-export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, DeleteFileMutationVariables>;
+export type RequestFileAccessMutationHookResult = ReturnType<typeof useRequestFileAccessMutation>
+export type RequestFileAccessMutationResult = Apollo.MutationResult<RequestFileAccessMutation>
+export type RequestFileAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestFileAccessMutation,
+  RequestFileAccessMutationVariables
+>
+export const DeleteFileDocument = gql`
+  mutation DeleteFile($id: ID!) {
+    deleteFile(input: { id: $id })
+  }
+`
+export type DeleteFileMutationFn = Apollo.MutationFunction<
+  DeleteFileMutation,
+  DeleteFileMutationVariables
+>
 
 /**
  * __useDeleteFileMutation__
@@ -7559,21 +15386,36 @@ export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, D
  *   },
  * });
  */
-export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteFileMutation, DeleteFileMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(DeleteFileDocument, options);
-      }
-export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
-export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
-export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
-export const RequestUploadDocument = gql`
-    mutation RequestUpload($key: String!, $datalayer: String!) {
-  requestUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useDeleteFileMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteFileMutation,
+    DeleteFileMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(
+    DeleteFileDocument,
+    options
+  )
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutation, RequestUploadMutationVariables>;
+export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>
+export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>
+export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<
+  DeleteFileMutation,
+  DeleteFileMutationVariables
+>
+export const RequestUploadDocument = gql`
+  mutation RequestUpload($key: String!, $datalayer: String!) {
+    requestUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`
+export type RequestUploadMutationFn = Apollo.MutationFunction<
+  RequestUploadMutation,
+  RequestUploadMutationVariables
+>
 
 /**
  * __useRequestUploadMutation__
@@ -7593,21 +15435,36 @@ export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutat
  *   },
  * });
  */
-export function useRequestUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestUploadMutation, RequestUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
-      }
-export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>;
-export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>;
-export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<RequestUploadMutation, RequestUploadMutationVariables>;
-export const RequestAccessDocument = gql`
-    mutation RequestAccess($store: ID!, $duration: Int) {
-  requestAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestUploadMutation,
+    RequestUploadMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(
+    RequestUploadDocument,
+    options
+  )
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutation, RequestAccessMutationVariables>;
+export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>
+export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>
+export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestUploadMutation,
+  RequestUploadMutationVariables
+>
+export const RequestAccessDocument = gql`
+  mutation RequestAccess($store: ID!, $duration: Int) {
+    requestAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`
+export type RequestAccessMutationFn = Apollo.MutationFunction<
+  RequestAccessMutation,
+  RequestAccessMutationVariables
+>
 
 /**
  * __useRequestAccessMutation__
@@ -7627,21 +15484,36 @@ export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutat
  *   },
  * });
  */
-export function useRequestAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestAccessMutation, RequestAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
-      }
-export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>;
-export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>;
-export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<RequestAccessMutation, RequestAccessMutationVariables>;
-export const PinImageDocument = gql`
-    mutation PinImage($id: ID!, $pin: Boolean!) {
-  pinImage(input: {id: $id, pin: $pin}) {
-    ...Image
-  }
+export function useRequestAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestAccessMutation,
+    RequestAccessMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(
+    RequestAccessDocument,
+    options
+  )
 }
-    ${ImageFragmentDoc}`;
-export type PinImageMutationFn = Apollo.MutationFunction<PinImageMutation, PinImageMutationVariables>;
+export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>
+export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>
+export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestAccessMutation,
+  RequestAccessMutationVariables
+>
+export const PinImageDocument = gql`
+  mutation PinImage($id: ID!, $pin: Boolean!) {
+    pinImage(input: { id: $id, pin: $pin }) {
+      ...Image
+    }
+  }
+  ${ImageFragmentDoc}
+`
+export type PinImageMutationFn = Apollo.MutationFunction<
+  PinImageMutation,
+  PinImageMutationVariables
+>
 
 /**
  * __usePinImageMutation__
@@ -7661,21 +15533,33 @@ export type PinImageMutationFn = Apollo.MutationFunction<PinImageMutation, PinIm
  *   },
  * });
  */
-export function usePinImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinImageMutation, PinImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinImageMutation, PinImageMutationVariables>(PinImageDocument, options);
-      }
-export type PinImageMutationHookResult = ReturnType<typeof usePinImageMutation>;
-export type PinImageMutationResult = Apollo.MutationResult<PinImageMutation>;
-export type PinImageMutationOptions = Apollo.BaseMutationOptions<PinImageMutation, PinImageMutationVariables>;
-export const UpdateImageDocument = gql`
-    mutation UpdateImage($input: UpdateImageInput!) {
-  updateImage(input: $input) {
-    ...Image
-  }
+export function usePinImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<PinImageMutation, PinImageMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinImageMutation, PinImageMutationVariables>(
+    PinImageDocument,
+    options
+  )
 }
-    ${ImageFragmentDoc}`;
-export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation, UpdateImageMutationVariables>;
+export type PinImageMutationHookResult = ReturnType<typeof usePinImageMutation>
+export type PinImageMutationResult = Apollo.MutationResult<PinImageMutation>
+export type PinImageMutationOptions = Apollo.BaseMutationOptions<
+  PinImageMutation,
+  PinImageMutationVariables
+>
+export const UpdateImageDocument = gql`
+  mutation UpdateImage($input: UpdateImageInput!) {
+    updateImage(input: $input) {
+      ...Image
+    }
+  }
+  ${ImageFragmentDoc}
+`
+export type UpdateImageMutationFn = Apollo.MutationFunction<
+  UpdateImageMutation,
+  UpdateImageMutationVariables
+>
 
 /**
  * __useUpdateImageMutation__
@@ -7694,19 +15578,33 @@ export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation,
  *   },
  * });
  */
-export function useUpdateImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
-      }
-export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
-export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
-export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
-export const DeleteImageDocument = gql`
-    mutation DeleteImage($id: ID!) {
-  deleteImage(input: {id: $id})
+export function useUpdateImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateImageMutation,
+    UpdateImageMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(
+    UpdateImageDocument,
+    options
+  )
 }
-    `;
-export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation, DeleteImageMutationVariables>;
+export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>
+export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>
+export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<
+  UpdateImageMutation,
+  UpdateImageMutationVariables
+>
+export const DeleteImageDocument = gql`
+  mutation DeleteImage($id: ID!) {
+    deleteImage(input: { id: $id })
+  }
+`
+export type DeleteImageMutationFn = Apollo.MutationFunction<
+  DeleteImageMutation,
+  DeleteImageMutationVariables
+>
 
 /**
  * __useDeleteImageMutation__
@@ -7725,24 +15623,36 @@ export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation,
  *   },
  * });
  */
-export function useDeleteImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteImageMutation, DeleteImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
-      }
-export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
-export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
-export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
-export const CreateInstrumentDocument = gql`
-    mutation CreateInstrument($serialNumber: String!, $name: String, $model: String) {
-  createInstrument(
-    input: {name: $name, model: $model, serialNumber: $serialNumber}
-  ) {
-    id
-    name
-  }
+export function useDeleteImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteImageMutation,
+    DeleteImageMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(
+    DeleteImageDocument,
+    options
+  )
 }
-    `;
-export type CreateInstrumentMutationFn = Apollo.MutationFunction<CreateInstrumentMutation, CreateInstrumentMutationVariables>;
+export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>
+export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>
+export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<
+  DeleteImageMutation,
+  DeleteImageMutationVariables
+>
+export const CreateInstrumentDocument = gql`
+  mutation CreateInstrument($serialNumber: String!, $name: String, $model: String) {
+    createInstrument(input: { name: $name, model: $model, serialNumber: $serialNumber }) {
+      id
+      name
+    }
+  }
+`
+export type CreateInstrumentMutationFn = Apollo.MutationFunction<
+  CreateInstrumentMutation,
+  CreateInstrumentMutationVariables
+>
 
 /**
  * __useCreateInstrumentMutation__
@@ -7763,24 +15673,36 @@ export type CreateInstrumentMutationFn = Apollo.MutationFunction<CreateInstrumen
  *   },
  * });
  */
-export function useCreateInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateInstrumentMutation, CreateInstrumentMutationVariables>(CreateInstrumentDocument, options);
-      }
-export type CreateInstrumentMutationHookResult = ReturnType<typeof useCreateInstrumentMutation>;
-export type CreateInstrumentMutationResult = Apollo.MutationResult<CreateInstrumentMutation>;
-export type CreateInstrumentMutationOptions = Apollo.BaseMutationOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>;
-export const EnsureInstrumentDocument = gql`
-    mutation EnsureInstrument($serialNumber: String!, $name: String, $model: String) {
-  ensureInstrument(
-    input: {name: $name, model: $model, serialNumber: $serialNumber}
-  ) {
-    id
-    name
-  }
+export function useCreateInstrumentMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateInstrumentMutation,
+    CreateInstrumentMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateInstrumentMutation, CreateInstrumentMutationVariables>(
+    CreateInstrumentDocument,
+    options
+  )
 }
-    `;
-export type EnsureInstrumentMutationFn = Apollo.MutationFunction<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
+export type CreateInstrumentMutationHookResult = ReturnType<typeof useCreateInstrumentMutation>
+export type CreateInstrumentMutationResult = Apollo.MutationResult<CreateInstrumentMutation>
+export type CreateInstrumentMutationOptions = Apollo.BaseMutationOptions<
+  CreateInstrumentMutation,
+  CreateInstrumentMutationVariables
+>
+export const EnsureInstrumentDocument = gql`
+  mutation EnsureInstrument($serialNumber: String!, $name: String, $model: String) {
+    ensureInstrument(input: { name: $name, model: $model, serialNumber: $serialNumber }) {
+      id
+      name
+    }
+  }
+`
+export type EnsureInstrumentMutationFn = Apollo.MutationFunction<
+  EnsureInstrumentMutation,
+  EnsureInstrumentMutationVariables
+>
 
 /**
  * __useEnsureInstrumentMutation__
@@ -7801,21 +15723,36 @@ export type EnsureInstrumentMutationFn = Apollo.MutationFunction<EnsureInstrumen
  *   },
  * });
  */
-export function useEnsureInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>(EnsureInstrumentDocument, options);
-      }
-export type EnsureInstrumentMutationHookResult = ReturnType<typeof useEnsureInstrumentMutation>;
-export type EnsureInstrumentMutationResult = Apollo.MutationResult<EnsureInstrumentMutation>;
-export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
-export const RequestMediaUploadDocument = gql`
-    mutation RequestMediaUpload($key: String!, $datalayer: String!) {
-  requestMediaUpload(input: {fileName: $key, datalayer: $datalayer}) {
-    ...PresignedPostCredentials
-  }
+export function useEnsureInstrumentMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureInstrumentMutation,
+    EnsureInstrumentMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>(
+    EnsureInstrumentDocument,
+    options
+  )
 }
-    ${PresignedPostCredentialsFragmentDoc}`;
-export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
+export type EnsureInstrumentMutationHookResult = ReturnType<typeof useEnsureInstrumentMutation>
+export type EnsureInstrumentMutationResult = Apollo.MutationResult<EnsureInstrumentMutation>
+export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<
+  EnsureInstrumentMutation,
+  EnsureInstrumentMutationVariables
+>
+export const RequestMediaUploadDocument = gql`
+  mutation RequestMediaUpload($key: String!, $datalayer: String!) {
+    requestMediaUpload(input: { fileName: $key, datalayer: $datalayer }) {
+      ...PresignedPostCredentials
+    }
+  }
+  ${PresignedPostCredentialsFragmentDoc}
+`
+export type RequestMediaUploadMutationFn = Apollo.MutationFunction<
+  RequestMediaUploadMutation,
+  RequestMediaUploadMutationVariables
+>
 
 /**
  * __useRequestMediaUploadMutation__
@@ -7835,21 +15772,36 @@ export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaU
  *   },
  * });
  */
-export function useRequestMediaUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>(RequestMediaUploadDocument, options);
-      }
-export type RequestMediaUploadMutationHookResult = ReturnType<typeof useRequestMediaUploadMutation>;
-export type RequestMediaUploadMutationResult = Apollo.MutationResult<RequestMediaUploadMutation>;
-export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
-export const CreateMultiWellPlateDocument = gql`
-    mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
-  createMultiWellPlate(input: $input) {
-    ...MultiWellPlate
-  }
+export function useRequestMediaUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestMediaUploadMutation,
+    RequestMediaUploadMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestMediaUploadMutation,
+    RequestMediaUploadMutationVariables
+  >(RequestMediaUploadDocument, options)
 }
-    ${MultiWellPlateFragmentDoc}`;
-export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>;
+export type RequestMediaUploadMutationHookResult = ReturnType<typeof useRequestMediaUploadMutation>
+export type RequestMediaUploadMutationResult = Apollo.MutationResult<RequestMediaUploadMutation>
+export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestMediaUploadMutation,
+  RequestMediaUploadMutationVariables
+>
+export const CreateMultiWellPlateDocument = gql`
+  mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
+    createMultiWellPlate(input: $input) {
+      ...MultiWellPlate
+    }
+  }
+  ${MultiWellPlateFragmentDoc}
+`
+export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<
+  CreateMultiWellPlateMutation,
+  CreateMultiWellPlateMutationVariables
+>
 
 /**
  * __useCreateMultiWellPlateMutation__
@@ -7868,22 +15820,38 @@ export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<CreateMulti
  *   },
  * });
  */
-export function useCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>(CreateMultiWellPlateDocument, options);
-      }
-export type CreateMultiWellPlateMutationHookResult = ReturnType<typeof useCreateMultiWellPlateMutation>;
-export type CreateMultiWellPlateMutationResult = Apollo.MutationResult<CreateMultiWellPlateMutation>;
-export type CreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>;
-export const AutoCreateMultiWellPlateDocument = gql`
-    mutation AutoCreateMultiWellPlate($input: String!) {
-  result: createMultiWellPlate(input: {name: $input}) {
-    label: name
-    value: id
-  }
+export function useCreateMultiWellPlateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateMultiWellPlateMutation,
+    CreateMultiWellPlateMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateMultiWellPlateMutation,
+    CreateMultiWellPlateMutationVariables
+  >(CreateMultiWellPlateDocument, options)
 }
-    `;
-export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>;
+export type CreateMultiWellPlateMutationHookResult = ReturnType<
+  typeof useCreateMultiWellPlateMutation
+>
+export type CreateMultiWellPlateMutationResult = Apollo.MutationResult<CreateMultiWellPlateMutation>
+export type CreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<
+  CreateMultiWellPlateMutation,
+  CreateMultiWellPlateMutationVariables
+>
+export const AutoCreateMultiWellPlateDocument = gql`
+  mutation AutoCreateMultiWellPlate($input: String!) {
+    result: createMultiWellPlate(input: { name: $input }) {
+      label: name
+      value: id
+    }
+  }
+`
+export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<
+  AutoCreateMultiWellPlateMutation,
+  AutoCreateMultiWellPlateMutationVariables
+>
 
 /**
  * __useAutoCreateMultiWellPlateMutation__
@@ -7902,24 +15870,46 @@ export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<AutoCre
  *   },
  * });
  */
-export function useAutoCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>(AutoCreateMultiWellPlateDocument, options);
-      }
-export type AutoCreateMultiWellPlateMutationHookResult = ReturnType<typeof useAutoCreateMultiWellPlateMutation>;
-export type AutoCreateMultiWellPlateMutationResult = Apollo.MutationResult<AutoCreateMultiWellPlateMutation>;
-export type AutoCreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>;
-export const CreateObjectiveDocument = gql`
-    mutation CreateObjective($serialNumber: String!, $name: String, $na: Float, $magnification: Float) {
-  createObjective(
-    input: {name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification}
-  ) {
-    id
-    name
-  }
+export function useAutoCreateMultiWellPlateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    AutoCreateMultiWellPlateMutation,
+    AutoCreateMultiWellPlateMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    AutoCreateMultiWellPlateMutation,
+    AutoCreateMultiWellPlateMutationVariables
+  >(AutoCreateMultiWellPlateDocument, options)
 }
-    `;
-export type CreateObjectiveMutationFn = Apollo.MutationFunction<CreateObjectiveMutation, CreateObjectiveMutationVariables>;
+export type AutoCreateMultiWellPlateMutationHookResult = ReturnType<
+  typeof useAutoCreateMultiWellPlateMutation
+>
+export type AutoCreateMultiWellPlateMutationResult =
+  Apollo.MutationResult<AutoCreateMultiWellPlateMutation>
+export type AutoCreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<
+  AutoCreateMultiWellPlateMutation,
+  AutoCreateMultiWellPlateMutationVariables
+>
+export const CreateObjectiveDocument = gql`
+  mutation CreateObjective(
+    $serialNumber: String!
+    $name: String
+    $na: Float
+    $magnification: Float
+  ) {
+    createObjective(
+      input: { name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification }
+    ) {
+      id
+      name
+    }
+  }
+`
+export type CreateObjectiveMutationFn = Apollo.MutationFunction<
+  CreateObjectiveMutation,
+  CreateObjectiveMutationVariables
+>
 
 /**
  * __useCreateObjectiveMutation__
@@ -7941,24 +15931,43 @@ export type CreateObjectiveMutationFn = Apollo.MutationFunction<CreateObjectiveM
  *   },
  * });
  */
-export function useCreateObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateObjectiveMutation, CreateObjectiveMutationVariables>(CreateObjectiveDocument, options);
-      }
-export type CreateObjectiveMutationHookResult = ReturnType<typeof useCreateObjectiveMutation>;
-export type CreateObjectiveMutationResult = Apollo.MutationResult<CreateObjectiveMutation>;
-export type CreateObjectiveMutationOptions = Apollo.BaseMutationOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>;
-export const EnsureObjectiveDocument = gql`
-    mutation EnsureObjective($serialNumber: String!, $name: String, $na: Float, $magnification: Float) {
-  ensureObjective(
-    input: {name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification}
-  ) {
-    id
-    name
-  }
+export function useCreateObjectiveMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateObjectiveMutation,
+    CreateObjectiveMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateObjectiveMutation, CreateObjectiveMutationVariables>(
+    CreateObjectiveDocument,
+    options
+  )
 }
-    `;
-export type EnsureObjectiveMutationFn = Apollo.MutationFunction<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
+export type CreateObjectiveMutationHookResult = ReturnType<typeof useCreateObjectiveMutation>
+export type CreateObjectiveMutationResult = Apollo.MutationResult<CreateObjectiveMutation>
+export type CreateObjectiveMutationOptions = Apollo.BaseMutationOptions<
+  CreateObjectiveMutation,
+  CreateObjectiveMutationVariables
+>
+export const EnsureObjectiveDocument = gql`
+  mutation EnsureObjective(
+    $serialNumber: String!
+    $name: String
+    $na: Float
+    $magnification: Float
+  ) {
+    ensureObjective(
+      input: { name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification }
+    ) {
+      id
+      name
+    }
+  }
+`
+export type EnsureObjectiveMutationFn = Apollo.MutationFunction<
+  EnsureObjectiveMutation,
+  EnsureObjectiveMutationVariables
+>
 
 /**
  * __useEnsureObjectiveMutation__
@@ -7980,24 +15989,38 @@ export type EnsureObjectiveMutationFn = Apollo.MutationFunction<EnsureObjectiveM
  *   },
  * });
  */
-export function useEnsureObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>(EnsureObjectiveDocument, options);
-      }
-export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>;
-export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>;
-export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
-export const AssignUserPermissionsDocument = gql`
-    mutation AssignUserPermissions($input: AssignUserPermissionInput!) {
-  assignUserPermission(input: $input) {
-    user {
-      sub
-    }
-    permission
-  }
+export function useEnsureObjectiveMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureObjectiveMutation,
+    EnsureObjectiveMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>(
+    EnsureObjectiveDocument,
+    options
+  )
 }
-    `;
-export type AssignUserPermissionsMutationFn = Apollo.MutationFunction<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>;
+export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>
+export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>
+export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<
+  EnsureObjectiveMutation,
+  EnsureObjectiveMutationVariables
+>
+export const AssignUserPermissionsDocument = gql`
+  mutation AssignUserPermissions($input: AssignUserPermissionInput!) {
+    assignUserPermission(input: $input) {
+      user {
+        sub
+      }
+      permission
+    }
+  }
+`
+export type AssignUserPermissionsMutationFn = Apollo.MutationFunction<
+  AssignUserPermissionsMutation,
+  AssignUserPermissionsMutationVariables
+>
 
 /**
  * __useAssignUserPermissionsMutation__
@@ -8016,21 +16039,39 @@ export type AssignUserPermissionsMutationFn = Apollo.MutationFunction<AssignUser
  *   },
  * });
  */
-export function useAssignUserPermissionsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>(AssignUserPermissionsDocument, options);
-      }
-export type AssignUserPermissionsMutationHookResult = ReturnType<typeof useAssignUserPermissionsMutation>;
-export type AssignUserPermissionsMutationResult = Apollo.MutationResult<AssignUserPermissionsMutation>;
-export type AssignUserPermissionsMutationOptions = Apollo.BaseMutationOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>;
-export const CreateRgbContextDocument = gql`
-    mutation CreateRGBContext($input: CreateRGBContextInput!) {
-  createRgbContext(input: $input) {
-    ...RGBContext
-  }
+export function useAssignUserPermissionsMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    AssignUserPermissionsMutation,
+    AssignUserPermissionsMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    AssignUserPermissionsMutation,
+    AssignUserPermissionsMutationVariables
+  >(AssignUserPermissionsDocument, options)
 }
-    ${RgbContextFragmentDoc}`;
-export type CreateRgbContextMutationFn = Apollo.MutationFunction<CreateRgbContextMutation, CreateRgbContextMutationVariables>;
+export type AssignUserPermissionsMutationHookResult = ReturnType<
+  typeof useAssignUserPermissionsMutation
+>
+export type AssignUserPermissionsMutationResult =
+  Apollo.MutationResult<AssignUserPermissionsMutation>
+export type AssignUserPermissionsMutationOptions = Apollo.BaseMutationOptions<
+  AssignUserPermissionsMutation,
+  AssignUserPermissionsMutationVariables
+>
+export const CreateRgbContextDocument = gql`
+  mutation CreateRGBContext($input: CreateRGBContextInput!) {
+    createRgbContext(input: $input) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`
+export type CreateRgbContextMutationFn = Apollo.MutationFunction<
+  CreateRgbContextMutation,
+  CreateRgbContextMutationVariables
+>
 
 /**
  * __useCreateRgbContextMutation__
@@ -8049,21 +16090,36 @@ export type CreateRgbContextMutationFn = Apollo.MutationFunction<CreateRgbContex
  *   },
  * });
  */
-export function useCreateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbContextMutation, CreateRgbContextMutationVariables>(CreateRgbContextDocument, options);
-      }
-export type CreateRgbContextMutationHookResult = ReturnType<typeof useCreateRgbContextMutation>;
-export type CreateRgbContextMutationResult = Apollo.MutationResult<CreateRgbContextMutation>;
-export type CreateRgbContextMutationOptions = Apollo.BaseMutationOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>;
-export const UpdateRgbContextDocument = gql`
-    mutation UpdateRGBContext($input: UpdateRGBContextInput!) {
-  updateRgbContext(input: $input) {
-    ...RGBContext
-  }
+export function useCreateRgbContextMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRgbContextMutation,
+    CreateRgbContextMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRgbContextMutation, CreateRgbContextMutationVariables>(
+    CreateRgbContextDocument,
+    options
+  )
 }
-    ${RgbContextFragmentDoc}`;
-export type UpdateRgbContextMutationFn = Apollo.MutationFunction<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>;
+export type CreateRgbContextMutationHookResult = ReturnType<typeof useCreateRgbContextMutation>
+export type CreateRgbContextMutationResult = Apollo.MutationResult<CreateRgbContextMutation>
+export type CreateRgbContextMutationOptions = Apollo.BaseMutationOptions<
+  CreateRgbContextMutation,
+  CreateRgbContextMutationVariables
+>
+export const UpdateRgbContextDocument = gql`
+  mutation UpdateRGBContext($input: UpdateRGBContextInput!) {
+    updateRgbContext(input: $input) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`
+export type UpdateRgbContextMutationFn = Apollo.MutationFunction<
+  UpdateRgbContextMutation,
+  UpdateRgbContextMutationVariables
+>
 
 /**
  * __useUpdateRgbContextMutation__
@@ -8082,21 +16138,33 @@ export type UpdateRgbContextMutationFn = Apollo.MutationFunction<UpdateRgbContex
  *   },
  * });
  */
-export function useUpdateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>(UpdateRgbContextDocument, options);
-      }
-export type UpdateRgbContextMutationHookResult = ReturnType<typeof useUpdateRgbContextMutation>;
-export type UpdateRgbContextMutationResult = Apollo.MutationResult<UpdateRgbContextMutation>;
-export type UpdateRgbContextMutationOptions = Apollo.BaseMutationOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>;
-export const PinRoiDocument = gql`
-    mutation PinROI($id: ID!, $pin: Boolean!) {
-  pinRoi(input: {id: $id, pin: $pin}) {
-    ...ROI
-  }
+export function useUpdateRgbContextMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateRgbContextMutation,
+    UpdateRgbContextMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>(
+    UpdateRgbContextDocument,
+    options
+  )
 }
-    ${RoiFragmentDoc}`;
-export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMutationVariables>;
+export type UpdateRgbContextMutationHookResult = ReturnType<typeof useUpdateRgbContextMutation>
+export type UpdateRgbContextMutationResult = Apollo.MutationResult<UpdateRgbContextMutation>
+export type UpdateRgbContextMutationOptions = Apollo.BaseMutationOptions<
+  UpdateRgbContextMutation,
+  UpdateRgbContextMutationVariables
+>
+export const PinRoiDocument = gql`
+  mutation PinROI($id: ID!, $pin: Boolean!) {
+    pinRoi(input: { id: $id, pin: $pin }) {
+      ...ROI
+    }
+  }
+  ${RoiFragmentDoc}
+`
+export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMutationVariables>
 
 /**
  * __usePinRoiMutation__
@@ -8116,21 +16184,33 @@ export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMut
  *   },
  * });
  */
-export function usePinRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinRoiMutation, PinRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(PinRoiDocument, options);
-      }
-export type PinRoiMutationHookResult = ReturnType<typeof usePinRoiMutation>;
-export type PinRoiMutationResult = Apollo.MutationResult<PinRoiMutation>;
-export type PinRoiMutationOptions = Apollo.BaseMutationOptions<PinRoiMutation, PinRoiMutationVariables>;
-export const CreateRoiDocument = gql`
-    mutation CreateROI($input: RoiInput!) {
-  createRoi(input: $input) {
-    ...ROI
-  }
+export function usePinRoiMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<PinRoiMutation, PinRoiMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(
+    PinRoiDocument,
+    options
+  )
 }
-    ${RoiFragmentDoc}`;
-export type CreateRoiMutationFn = Apollo.MutationFunction<CreateRoiMutation, CreateRoiMutationVariables>;
+export type PinRoiMutationHookResult = ReturnType<typeof usePinRoiMutation>
+export type PinRoiMutationResult = Apollo.MutationResult<PinRoiMutation>
+export type PinRoiMutationOptions = Apollo.BaseMutationOptions<
+  PinRoiMutation,
+  PinRoiMutationVariables
+>
+export const CreateRoiDocument = gql`
+  mutation CreateROI($input: RoiInput!) {
+    createRoi(input: $input) {
+      ...ROI
+    }
+  }
+  ${RoiFragmentDoc}
+`
+export type CreateRoiMutationFn = Apollo.MutationFunction<
+  CreateRoiMutation,
+  CreateRoiMutationVariables
+>
 
 /**
  * __useCreateRoiMutation__
@@ -8149,19 +16229,30 @@ export type CreateRoiMutationFn = Apollo.MutationFunction<CreateRoiMutation, Cre
  *   },
  * });
  */
-export function useCreateRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRoiMutation, CreateRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRoiMutation, CreateRoiMutationVariables>(CreateRoiDocument, options);
-      }
-export type CreateRoiMutationHookResult = ReturnType<typeof useCreateRoiMutation>;
-export type CreateRoiMutationResult = Apollo.MutationResult<CreateRoiMutation>;
-export type CreateRoiMutationOptions = Apollo.BaseMutationOptions<CreateRoiMutation, CreateRoiMutationVariables>;
-export const DeleteRoiDocument = gql`
-    mutation DeleteROI($id: ID!) {
-  deleteRoi(input: {id: $id})
+export function useCreateRoiMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRoiMutation, CreateRoiMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRoiMutation, CreateRoiMutationVariables>(
+    CreateRoiDocument,
+    options
+  )
 }
-    `;
-export type DeleteRoiMutationFn = Apollo.MutationFunction<DeleteRoiMutation, DeleteRoiMutationVariables>;
+export type CreateRoiMutationHookResult = ReturnType<typeof useCreateRoiMutation>
+export type CreateRoiMutationResult = Apollo.MutationResult<CreateRoiMutation>
+export type CreateRoiMutationOptions = Apollo.BaseMutationOptions<
+  CreateRoiMutation,
+  CreateRoiMutationVariables
+>
+export const DeleteRoiDocument = gql`
+  mutation DeleteROI($id: ID!) {
+    deleteRoi(input: { id: $id })
+  }
+`
+export type DeleteRoiMutationFn = Apollo.MutationFunction<
+  DeleteRoiMutation,
+  DeleteRoiMutationVariables
+>
 
 /**
  * __useDeleteRoiMutation__
@@ -8180,21 +16271,33 @@ export type DeleteRoiMutationFn = Apollo.MutationFunction<DeleteRoiMutation, Del
  *   },
  * });
  */
-export function useDeleteRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRoiMutation, DeleteRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteRoiMutation, DeleteRoiMutationVariables>(DeleteRoiDocument, options);
-      }
-export type DeleteRoiMutationHookResult = ReturnType<typeof useDeleteRoiMutation>;
-export type DeleteRoiMutationResult = Apollo.MutationResult<DeleteRoiMutation>;
-export type DeleteRoiMutationOptions = Apollo.BaseMutationOptions<DeleteRoiMutation, DeleteRoiMutationVariables>;
-export const CreateSnapshotDocument = gql`
-    mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
-  createSnapshot(input: {file: $file, image: $image}) {
-    ...Snapshot
-  }
+export function useDeleteRoiMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRoiMutation, DeleteRoiMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteRoiMutation, DeleteRoiMutationVariables>(
+    DeleteRoiDocument,
+    options
+  )
 }
-    ${SnapshotFragmentDoc}`;
-export type CreateSnapshotMutationFn = Apollo.MutationFunction<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
+export type DeleteRoiMutationHookResult = ReturnType<typeof useDeleteRoiMutation>
+export type DeleteRoiMutationResult = Apollo.MutationResult<DeleteRoiMutation>
+export type DeleteRoiMutationOptions = Apollo.BaseMutationOptions<
+  DeleteRoiMutation,
+  DeleteRoiMutationVariables
+>
+export const CreateSnapshotDocument = gql`
+  mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
+    createSnapshot(input: { file: $file, image: $image }) {
+      ...Snapshot
+    }
+  }
+  ${SnapshotFragmentDoc}
+`
+export type CreateSnapshotMutationFn = Apollo.MutationFunction<
+  CreateSnapshotMutation,
+  CreateSnapshotMutationVariables
+>
 
 /**
  * __useCreateSnapshotMutation__
@@ -8214,22 +16317,36 @@ export type CreateSnapshotMutationFn = Apollo.MutationFunction<CreateSnapshotMut
  *   },
  * });
  */
-export function useCreateSnapshotMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateSnapshotMutation, CreateSnapshotMutationVariables>(CreateSnapshotDocument, options);
-      }
-export type CreateSnapshotMutationHookResult = ReturnType<typeof useCreateSnapshotMutation>;
-export type CreateSnapshotMutationResult = Apollo.MutationResult<CreateSnapshotMutation>;
-export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
-export const CreateStageDocument = gql`
-    mutation CreateStage($name: String!) {
-  createStage(input: {name: $name}) {
-    id
-    name
-  }
+export function useCreateSnapshotMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateSnapshotMutation,
+    CreateSnapshotMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateSnapshotMutation, CreateSnapshotMutationVariables>(
+    CreateSnapshotDocument,
+    options
+  )
 }
-    `;
-export type CreateStageMutationFn = Apollo.MutationFunction<CreateStageMutation, CreateStageMutationVariables>;
+export type CreateSnapshotMutationHookResult = ReturnType<typeof useCreateSnapshotMutation>
+export type CreateSnapshotMutationResult = Apollo.MutationResult<CreateSnapshotMutation>
+export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<
+  CreateSnapshotMutation,
+  CreateSnapshotMutationVariables
+>
+export const CreateStageDocument = gql`
+  mutation CreateStage($name: String!) {
+    createStage(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`
+export type CreateStageMutationFn = Apollo.MutationFunction<
+  CreateStageMutation,
+  CreateStageMutationVariables
+>
 
 /**
  * __useCreateStageMutation__
@@ -8248,21 +16365,36 @@ export type CreateStageMutationFn = Apollo.MutationFunction<CreateStageMutation,
  *   },
  * });
  */
-export function useCreateStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStageMutation, CreateStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStageMutation, CreateStageMutationVariables>(CreateStageDocument, options);
-      }
-export type CreateStageMutationHookResult = ReturnType<typeof useCreateStageMutation>;
-export type CreateStageMutationResult = Apollo.MutationResult<CreateStageMutation>;
-export type CreateStageMutationOptions = Apollo.BaseMutationOptions<CreateStageMutation, CreateStageMutationVariables>;
-export const PinStageDocument = gql`
-    mutation PinStage($id: ID!, $pin: Boolean!) {
-  pinStage(input: {id: $id, pin: $pin}) {
-    ...Stage
-  }
+export function useCreateStageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateStageMutation,
+    CreateStageMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateStageMutation, CreateStageMutationVariables>(
+    CreateStageDocument,
+    options
+  )
 }
-    ${StageFragmentDoc}`;
-export type PinStageMutationFn = Apollo.MutationFunction<PinStageMutation, PinStageMutationVariables>;
+export type CreateStageMutationHookResult = ReturnType<typeof useCreateStageMutation>
+export type CreateStageMutationResult = Apollo.MutationResult<CreateStageMutation>
+export type CreateStageMutationOptions = Apollo.BaseMutationOptions<
+  CreateStageMutation,
+  CreateStageMutationVariables
+>
+export const PinStageDocument = gql`
+  mutation PinStage($id: ID!, $pin: Boolean!) {
+    pinStage(input: { id: $id, pin: $pin }) {
+      ...Stage
+    }
+  }
+  ${StageFragmentDoc}
+`
+export type PinStageMutationFn = Apollo.MutationFunction<
+  PinStageMutation,
+  PinStageMutationVariables
+>
 
 /**
  * __usePinStageMutation__
@@ -8282,23 +16414,40 @@ export type PinStageMutationFn = Apollo.MutationFunction<PinStageMutation, PinSt
  *   },
  * });
  */
-export function usePinStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinStageMutation, PinStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinStageMutation, PinStageMutationVariables>(PinStageDocument, options);
-      }
-export type PinStageMutationHookResult = ReturnType<typeof usePinStageMutation>;
-export type PinStageMutationResult = Apollo.MutationResult<PinStageMutation>;
-export type PinStageMutationOptions = Apollo.BaseMutationOptions<PinStageMutation, PinStageMutationVariables>;
-export const From_Parquet_LikeDocument = gql`
-    mutation from_parquet_like($dataframe: ParquetLike!, $name: String!, $origins: [ID!], $dataset: ID) {
-  fromParquetLike(
-    input: {dataframe: $dataframe, name: $name, origins: $origins, dataset: $dataset}
-  ) {
-    ...Table
-  }
+export function usePinStageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<PinStageMutation, PinStageMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinStageMutation, PinStageMutationVariables>(
+    PinStageDocument,
+    options
+  )
 }
-    ${TableFragmentDoc}`;
-export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>;
+export type PinStageMutationHookResult = ReturnType<typeof usePinStageMutation>
+export type PinStageMutationResult = Apollo.MutationResult<PinStageMutation>
+export type PinStageMutationOptions = Apollo.BaseMutationOptions<
+  PinStageMutation,
+  PinStageMutationVariables
+>
+export const From_Parquet_LikeDocument = gql`
+  mutation from_parquet_like(
+    $dataframe: ParquetLike!
+    $name: String!
+    $origins: [ID!]
+    $dataset: ID
+  ) {
+    fromParquetLike(
+      input: { dataframe: $dataframe, name: $name, origins: $origins, dataset: $dataset }
+    ) {
+      ...Table
+    }
+  }
+  ${TableFragmentDoc}
+`
+export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<
+  From_Parquet_LikeMutation,
+  From_Parquet_LikeMutationVariables
+>
 
 /**
  * __useFrom_Parquet_LikeMutation__
@@ -8320,21 +16469,36 @@ export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<From_Parquet_L
  *   },
  * });
  */
-export function useFrom_Parquet_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>(From_Parquet_LikeDocument, options);
-      }
-export type From_Parquet_LikeMutationHookResult = ReturnType<typeof useFrom_Parquet_LikeMutation>;
-export type From_Parquet_LikeMutationResult = Apollo.MutationResult<From_Parquet_LikeMutation>;
-export type From_Parquet_LikeMutationOptions = Apollo.BaseMutationOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>;
-export const RequestTableUploadDocument = gql`
-    mutation RequestTableUpload($key: String!, $datalayer: String!) {
-  requestTableUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useFrom_Parquet_LikeMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    From_Parquet_LikeMutation,
+    From_Parquet_LikeMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    From_Parquet_LikeMutation,
+    From_Parquet_LikeMutationVariables
+  >(From_Parquet_LikeDocument, options)
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestTableUploadMutationFn = Apollo.MutationFunction<RequestTableUploadMutation, RequestTableUploadMutationVariables>;
+export type From_Parquet_LikeMutationHookResult = ReturnType<typeof useFrom_Parquet_LikeMutation>
+export type From_Parquet_LikeMutationResult = Apollo.MutationResult<From_Parquet_LikeMutation>
+export type From_Parquet_LikeMutationOptions = Apollo.BaseMutationOptions<
+  From_Parquet_LikeMutation,
+  From_Parquet_LikeMutationVariables
+>
+export const RequestTableUploadDocument = gql`
+  mutation RequestTableUpload($key: String!, $datalayer: String!) {
+    requestTableUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`
+export type RequestTableUploadMutationFn = Apollo.MutationFunction<
+  RequestTableUploadMutation,
+  RequestTableUploadMutationVariables
+>
 
 /**
  * __useRequestTableUploadMutation__
@@ -8354,21 +16518,36 @@ export type RequestTableUploadMutationFn = Apollo.MutationFunction<RequestTableU
  *   },
  * });
  */
-export function useRequestTableUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableUploadMutation, RequestTableUploadMutationVariables>(RequestTableUploadDocument, options);
-      }
-export type RequestTableUploadMutationHookResult = ReturnType<typeof useRequestTableUploadMutation>;
-export type RequestTableUploadMutationResult = Apollo.MutationResult<RequestTableUploadMutation>;
-export type RequestTableUploadMutationOptions = Apollo.BaseMutationOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>;
-export const RequestTableAccessDocument = gql`
-    mutation RequestTableAccess($store: ID!, $duration: Int) {
-  requestTableAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestTableUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestTableUploadMutation,
+    RequestTableUploadMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestTableUploadMutation,
+    RequestTableUploadMutationVariables
+  >(RequestTableUploadDocument, options)
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestTableAccessMutationFn = Apollo.MutationFunction<RequestTableAccessMutation, RequestTableAccessMutationVariables>;
+export type RequestTableUploadMutationHookResult = ReturnType<typeof useRequestTableUploadMutation>
+export type RequestTableUploadMutationResult = Apollo.MutationResult<RequestTableUploadMutation>
+export type RequestTableUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestTableUploadMutation,
+  RequestTableUploadMutationVariables
+>
+export const RequestTableAccessDocument = gql`
+  mutation RequestTableAccess($store: ID!, $duration: Int) {
+    requestTableAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`
+export type RequestTableAccessMutationFn = Apollo.MutationFunction<
+  RequestTableAccessMutation,
+  RequestTableAccessMutationVariables
+>
 
 /**
  * __useRequestTableAccessMutation__
@@ -8388,23 +16567,42 @@ export type RequestTableAccessMutationFn = Apollo.MutationFunction<RequestTableA
  *   },
  * });
  */
-export function useRequestTableAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableAccessMutation, RequestTableAccessMutationVariables>(RequestTableAccessDocument, options);
-      }
-export type RequestTableAccessMutationHookResult = ReturnType<typeof useRequestTableAccessMutation>;
-export type RequestTableAccessMutationResult = Apollo.MutationResult<RequestTableAccessMutation>;
-export type RequestTableAccessMutationOptions = Apollo.BaseMutationOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>;
-export const CreateAffineTransformationViewDocument = gql`
-    mutation CreateAffineTransformationView($image: ID!, $affineMatrix: FourByFourMatrix!, $stage: ID) {
-  createAffineTransformationView(
-    input: {image: $image, affineMatrix: $affineMatrix, stage: $stage}
-  ) {
-    ...AffineTransformationView
-  }
+export function useRequestTableAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestTableAccessMutation,
+    RequestTableAccessMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    RequestTableAccessMutation,
+    RequestTableAccessMutationVariables
+  >(RequestTableAccessDocument, options)
 }
-    ${AffineTransformationViewFragmentDoc}`;
-export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>;
+export type RequestTableAccessMutationHookResult = ReturnType<typeof useRequestTableAccessMutation>
+export type RequestTableAccessMutationResult = Apollo.MutationResult<RequestTableAccessMutation>
+export type RequestTableAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestTableAccessMutation,
+  RequestTableAccessMutationVariables
+>
+export const CreateAffineTransformationViewDocument = gql`
+  mutation CreateAffineTransformationView(
+    $image: ID!
+    $affineMatrix: FourByFourMatrix!
+    $stage: ID
+  ) {
+    createAffineTransformationView(
+      input: { image: $image, affineMatrix: $affineMatrix, stage: $stage }
+    ) {
+      ...AffineTransformationView
+    }
+  }
+  ${AffineTransformationViewFragmentDoc}
+`
+export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<
+  CreateAffineTransformationViewMutation,
+  CreateAffineTransformationViewMutationVariables
+>
 
 /**
  * __useCreateAffineTransformationViewMutation__
@@ -8425,19 +16623,36 @@ export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<C
  *   },
  * });
  */
-export function useCreateAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>(CreateAffineTransformationViewDocument, options);
-      }
-export type CreateAffineTransformationViewMutationHookResult = ReturnType<typeof useCreateAffineTransformationViewMutation>;
-export type CreateAffineTransformationViewMutationResult = Apollo.MutationResult<CreateAffineTransformationViewMutation>;
-export type CreateAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>;
-export const DeleteAffineTransformationViewDocument = gql`
-    mutation DeleteAffineTransformationView($id: ID!) {
-  deleteAffineTransformationView(input: {id: $id})
+export function useCreateAffineTransformationViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateAffineTransformationViewMutation,
+    CreateAffineTransformationViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateAffineTransformationViewMutation,
+    CreateAffineTransformationViewMutationVariables
+  >(CreateAffineTransformationViewDocument, options)
 }
-    `;
-export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>;
+export type CreateAffineTransformationViewMutationHookResult = ReturnType<
+  typeof useCreateAffineTransformationViewMutation
+>
+export type CreateAffineTransformationViewMutationResult =
+  Apollo.MutationResult<CreateAffineTransformationViewMutation>
+export type CreateAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateAffineTransformationViewMutation,
+  CreateAffineTransformationViewMutationVariables
+>
+export const DeleteAffineTransformationViewDocument = gql`
+  mutation DeleteAffineTransformationView($id: ID!) {
+    deleteAffineTransformationView(input: { id: $id })
+  }
+`
+export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<
+  DeleteAffineTransformationViewMutation,
+  DeleteAffineTransformationViewMutationVariables
+>
 
 /**
  * __useDeleteAffineTransformationViewMutation__
@@ -8456,19 +16671,36 @@ export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<D
  *   },
  * });
  */
-export function useDeleteAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>(DeleteAffineTransformationViewDocument, options);
-      }
-export type DeleteAffineTransformationViewMutationHookResult = ReturnType<typeof useDeleteAffineTransformationViewMutation>;
-export type DeleteAffineTransformationViewMutationResult = Apollo.MutationResult<DeleteAffineTransformationViewMutation>;
-export type DeleteAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>;
-export const DeleteRgbViewDocument = gql`
-    mutation DeleteRGBView($id: ID!) {
-  deleteRgbView(input: {id: $id})
+export function useDeleteAffineTransformationViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteAffineTransformationViewMutation,
+    DeleteAffineTransformationViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    DeleteAffineTransformationViewMutation,
+    DeleteAffineTransformationViewMutationVariables
+  >(DeleteAffineTransformationViewDocument, options)
 }
-    `;
-export type DeleteRgbViewMutationFn = Apollo.MutationFunction<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>;
+export type DeleteAffineTransformationViewMutationHookResult = ReturnType<
+  typeof useDeleteAffineTransformationViewMutation
+>
+export type DeleteAffineTransformationViewMutationResult =
+  Apollo.MutationResult<DeleteAffineTransformationViewMutation>
+export type DeleteAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteAffineTransformationViewMutation,
+  DeleteAffineTransformationViewMutationVariables
+>
+export const DeleteRgbViewDocument = gql`
+  mutation DeleteRGBView($id: ID!) {
+    deleteRgbView(input: { id: $id })
+  }
+`
+export type DeleteRgbViewMutationFn = Apollo.MutationFunction<
+  DeleteRgbViewMutation,
+  DeleteRgbViewMutationVariables
+>
 
 /**
  * __useDeleteRgbViewMutation__
@@ -8487,19 +16719,33 @@ export type DeleteRgbViewMutationFn = Apollo.MutationFunction<DeleteRgbViewMutat
  *   },
  * });
  */
-export function useDeleteRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>(DeleteRgbViewDocument, options);
-      }
-export type DeleteRgbViewMutationHookResult = ReturnType<typeof useDeleteRgbViewMutation>;
-export type DeleteRgbViewMutationResult = Apollo.MutationResult<DeleteRgbViewMutation>;
-export type DeleteRgbViewMutationOptions = Apollo.BaseMutationOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>;
-export const DeleteChannelViewDocument = gql`
-    mutation DeleteChannelView($id: ID!) {
-  deleteChannelView(input: {id: $id})
+export function useDeleteRgbViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteRgbViewMutation,
+    DeleteRgbViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>(
+    DeleteRgbViewDocument,
+    options
+  )
 }
-    `;
-export type DeleteChannelViewMutationFn = Apollo.MutationFunction<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>;
+export type DeleteRgbViewMutationHookResult = ReturnType<typeof useDeleteRgbViewMutation>
+export type DeleteRgbViewMutationResult = Apollo.MutationResult<DeleteRgbViewMutation>
+export type DeleteRgbViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteRgbViewMutation,
+  DeleteRgbViewMutationVariables
+>
+export const DeleteChannelViewDocument = gql`
+  mutation DeleteChannelView($id: ID!) {
+    deleteChannelView(input: { id: $id })
+  }
+`
+export type DeleteChannelViewMutationFn = Apollo.MutationFunction<
+  DeleteChannelViewMutation,
+  DeleteChannelViewMutationVariables
+>
 
 /**
  * __useDeleteChannelViewMutation__
@@ -8518,19 +16764,33 @@ export type DeleteChannelViewMutationFn = Apollo.MutationFunction<DeleteChannelV
  *   },
  * });
  */
-export function useDeleteChannelViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>(DeleteChannelViewDocument, options);
-      }
-export type DeleteChannelViewMutationHookResult = ReturnType<typeof useDeleteChannelViewMutation>;
-export type DeleteChannelViewMutationResult = Apollo.MutationResult<DeleteChannelViewMutation>;
-export type DeleteChannelViewMutationOptions = Apollo.BaseMutationOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>;
-export const DeleteHistogramViewDocument = gql`
-    mutation DeleteHistogramView($id: ID!) {
-  deleteHistogramView(input: {id: $id})
+export function useDeleteChannelViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteChannelViewMutation,
+    DeleteChannelViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    DeleteChannelViewMutation,
+    DeleteChannelViewMutationVariables
+  >(DeleteChannelViewDocument, options)
 }
-    `;
-export type DeleteHistogramViewMutationFn = Apollo.MutationFunction<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>;
+export type DeleteChannelViewMutationHookResult = ReturnType<typeof useDeleteChannelViewMutation>
+export type DeleteChannelViewMutationResult = Apollo.MutationResult<DeleteChannelViewMutation>
+export type DeleteChannelViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteChannelViewMutation,
+  DeleteChannelViewMutationVariables
+>
+export const DeleteHistogramViewDocument = gql`
+  mutation DeleteHistogramView($id: ID!) {
+    deleteHistogramView(input: { id: $id })
+  }
+`
+export type DeleteHistogramViewMutationFn = Apollo.MutationFunction<
+  DeleteHistogramViewMutation,
+  DeleteHistogramViewMutationVariables
+>
 
 /**
  * __useDeleteHistogramViewMutation__
@@ -8549,23 +16809,57 @@ export type DeleteHistogramViewMutationFn = Apollo.MutationFunction<DeleteHistog
  *   },
  * });
  */
-export function useDeleteHistogramViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>(DeleteHistogramViewDocument, options);
-      }
-export type DeleteHistogramViewMutationHookResult = ReturnType<typeof useDeleteHistogramViewMutation>;
-export type DeleteHistogramViewMutationResult = Apollo.MutationResult<DeleteHistogramViewMutation>;
-export type DeleteHistogramViewMutationOptions = Apollo.BaseMutationOptions<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>;
-export const CreateRgbViewDocument = gql`
-    mutation CreateRgbView($image: ID!, $context: ID!, $gamma: Float, $contrastLimitMax: Float, $contrastLimitMin: Float, $rescale: Boolean, $active: Boolean, $colorMap: ColorMap) {
-  createRgbView(
-    input: {image: $image, context: $context, gamma: $gamma, contrastLimitMax: $contrastLimitMax, contrastLimitMin: $contrastLimitMin, rescale: $rescale, active: $active, colorMap: $colorMap}
-  ) {
-    id
-  }
+export function useDeleteHistogramViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteHistogramViewMutation,
+    DeleteHistogramViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    DeleteHistogramViewMutation,
+    DeleteHistogramViewMutationVariables
+  >(DeleteHistogramViewDocument, options)
 }
-    `;
-export type CreateRgbViewMutationFn = Apollo.MutationFunction<CreateRgbViewMutation, CreateRgbViewMutationVariables>;
+export type DeleteHistogramViewMutationHookResult = ReturnType<
+  typeof useDeleteHistogramViewMutation
+>
+export type DeleteHistogramViewMutationResult = Apollo.MutationResult<DeleteHistogramViewMutation>
+export type DeleteHistogramViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteHistogramViewMutation,
+  DeleteHistogramViewMutationVariables
+>
+export const CreateRgbViewDocument = gql`
+  mutation CreateRgbView(
+    $image: ID!
+    $context: ID!
+    $gamma: Float
+    $contrastLimitMax: Float
+    $contrastLimitMin: Float
+    $rescale: Boolean
+    $active: Boolean
+    $colorMap: ColorMap
+  ) {
+    createRgbView(
+      input: {
+        image: $image
+        context: $context
+        gamma: $gamma
+        contrastLimitMax: $contrastLimitMax
+        contrastLimitMin: $contrastLimitMin
+        rescale: $rescale
+        active: $active
+        colorMap: $colorMap
+      }
+    ) {
+      id
+    }
+  }
+`
+export type CreateRgbViewMutationFn = Apollo.MutationFunction<
+  CreateRgbViewMutation,
+  CreateRgbViewMutationVariables
+>
 
 /**
  * __useCreateRgbViewMutation__
@@ -8591,21 +16885,36 @@ export type CreateRgbViewMutationFn = Apollo.MutationFunction<CreateRgbViewMutat
  *   },
  * });
  */
-export function useCreateRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbViewMutation, CreateRgbViewMutationVariables>(CreateRgbViewDocument, options);
-      }
-export type CreateRgbViewMutationHookResult = ReturnType<typeof useCreateRgbViewMutation>;
-export type CreateRgbViewMutationResult = Apollo.MutationResult<CreateRgbViewMutation>;
-export type CreateRgbViewMutationOptions = Apollo.BaseMutationOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>;
-export const CreateWellPositionViewDocument = gql`
-    mutation CreateWellPositionView($input: WellPositionViewInput!) {
-  createWellPositionView(input: $input) {
-    ...WellPositionView
-  }
+export function useCreateRgbViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRgbViewMutation,
+    CreateRgbViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRgbViewMutation, CreateRgbViewMutationVariables>(
+    CreateRgbViewDocument,
+    options
+  )
 }
-    ${WellPositionViewFragmentDoc}`;
-export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>;
+export type CreateRgbViewMutationHookResult = ReturnType<typeof useCreateRgbViewMutation>
+export type CreateRgbViewMutationResult = Apollo.MutationResult<CreateRgbViewMutation>
+export type CreateRgbViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateRgbViewMutation,
+  CreateRgbViewMutationVariables
+>
+export const CreateWellPositionViewDocument = gql`
+  mutation CreateWellPositionView($input: WellPositionViewInput!) {
+    createWellPositionView(input: $input) {
+      ...WellPositionView
+    }
+  }
+  ${WellPositionViewFragmentDoc}
+`
+export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<
+  CreateWellPositionViewMutation,
+  CreateWellPositionViewMutationVariables
+>
 
 /**
  * __useCreateWellPositionViewMutation__
@@ -8624,21 +16933,39 @@ export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<CreateWel
  *   },
  * });
  */
-export function useCreateWellPositionViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>(CreateWellPositionViewDocument, options);
-      }
-export type CreateWellPositionViewMutationHookResult = ReturnType<typeof useCreateWellPositionViewMutation>;
-export type CreateWellPositionViewMutationResult = Apollo.MutationResult<CreateWellPositionViewMutation>;
-export type CreateWellPositionViewMutationOptions = Apollo.BaseMutationOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>;
-export const CreateContinousScanViewDocument = gql`
-    mutation CreateContinousScanView($input: ContinousScanViewInput!) {
-  createContinousScanView(input: $input) {
-    ...ContinousScanView
-  }
+export function useCreateWellPositionViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateWellPositionViewMutation,
+    CreateWellPositionViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateWellPositionViewMutation,
+    CreateWellPositionViewMutationVariables
+  >(CreateWellPositionViewDocument, options)
 }
-    ${ContinousScanViewFragmentDoc}`;
-export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>;
+export type CreateWellPositionViewMutationHookResult = ReturnType<
+  typeof useCreateWellPositionViewMutation
+>
+export type CreateWellPositionViewMutationResult =
+  Apollo.MutationResult<CreateWellPositionViewMutation>
+export type CreateWellPositionViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateWellPositionViewMutation,
+  CreateWellPositionViewMutationVariables
+>
+export const CreateContinousScanViewDocument = gql`
+  mutation CreateContinousScanView($input: ContinousScanViewInput!) {
+    createContinousScanView(input: $input) {
+      ...ContinousScanView
+    }
+  }
+  ${ContinousScanViewFragmentDoc}
+`
+export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<
+  CreateContinousScanViewMutation,
+  CreateContinousScanViewMutationVariables
+>
 
 /**
  * __useCreateContinousScanViewMutation__
@@ -8657,21 +16984,39 @@ export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<CreateCo
  *   },
  * });
  */
-export function useCreateContinousScanViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>(CreateContinousScanViewDocument, options);
-      }
-export type CreateContinousScanViewMutationHookResult = ReturnType<typeof useCreateContinousScanViewMutation>;
-export type CreateContinousScanViewMutationResult = Apollo.MutationResult<CreateContinousScanViewMutation>;
-export type CreateContinousScanViewMutationOptions = Apollo.BaseMutationOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>;
-export const CreateMaskViewDocument = gql`
-    mutation CreateMaskView($input: MaskViewInput!) {
-  createMaskView(input: $input) {
-    ...MaskView
-  }
+export function useCreateContinousScanViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateContinousScanViewMutation,
+    CreateContinousScanViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateContinousScanViewMutation,
+    CreateContinousScanViewMutationVariables
+  >(CreateContinousScanViewDocument, options)
 }
-    ${MaskViewFragmentDoc}`;
-export type CreateMaskViewMutationFn = Apollo.MutationFunction<CreateMaskViewMutation, CreateMaskViewMutationVariables>;
+export type CreateContinousScanViewMutationHookResult = ReturnType<
+  typeof useCreateContinousScanViewMutation
+>
+export type CreateContinousScanViewMutationResult =
+  Apollo.MutationResult<CreateContinousScanViewMutation>
+export type CreateContinousScanViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateContinousScanViewMutation,
+  CreateContinousScanViewMutationVariables
+>
+export const CreateMaskViewDocument = gql`
+  mutation CreateMaskView($input: MaskViewInput!) {
+    createMaskView(input: $input) {
+      ...MaskView
+    }
+  }
+  ${MaskViewFragmentDoc}
+`
+export type CreateMaskViewMutationFn = Apollo.MutationFunction<
+  CreateMaskViewMutation,
+  CreateMaskViewMutationVariables
+>
 
 /**
  * __useCreateMaskViewMutation__
@@ -8690,21 +17035,36 @@ export type CreateMaskViewMutationFn = Apollo.MutationFunction<CreateMaskViewMut
  *   },
  * });
  */
-export function useCreateMaskViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMaskViewMutation, CreateMaskViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMaskViewMutation, CreateMaskViewMutationVariables>(CreateMaskViewDocument, options);
-      }
-export type CreateMaskViewMutationHookResult = ReturnType<typeof useCreateMaskViewMutation>;
-export type CreateMaskViewMutationResult = Apollo.MutationResult<CreateMaskViewMutation>;
-export type CreateMaskViewMutationOptions = Apollo.BaseMutationOptions<CreateMaskViewMutation, CreateMaskViewMutationVariables>;
-export const CreateInstanceMaskViewDocument = gql`
-    mutation CreateInstanceMaskView($input: InstanceMaskViewInput!) {
-  createInstanceMaskView(input: $input) {
-    ...InstanceMaskView
-  }
+export function useCreateMaskViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateMaskViewMutation,
+    CreateMaskViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateMaskViewMutation, CreateMaskViewMutationVariables>(
+    CreateMaskViewDocument,
+    options
+  )
 }
-    ${InstanceMaskViewFragmentDoc}`;
-export type CreateInstanceMaskViewMutationFn = Apollo.MutationFunction<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>;
+export type CreateMaskViewMutationHookResult = ReturnType<typeof useCreateMaskViewMutation>
+export type CreateMaskViewMutationResult = Apollo.MutationResult<CreateMaskViewMutation>
+export type CreateMaskViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateMaskViewMutation,
+  CreateMaskViewMutationVariables
+>
+export const CreateInstanceMaskViewDocument = gql`
+  mutation CreateInstanceMaskView($input: InstanceMaskViewInput!) {
+    createInstanceMaskView(input: $input) {
+      ...InstanceMaskView
+    }
+  }
+  ${InstanceMaskViewFragmentDoc}
+`
+export type CreateInstanceMaskViewMutationFn = Apollo.MutationFunction<
+  CreateInstanceMaskViewMutation,
+  CreateInstanceMaskViewMutationVariables
+>
 
 /**
  * __useCreateInstanceMaskViewMutation__
@@ -8723,21 +17083,39 @@ export type CreateInstanceMaskViewMutationFn = Apollo.MutationFunction<CreateIns
  *   },
  * });
  */
-export function useCreateInstanceMaskViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>(CreateInstanceMaskViewDocument, options);
-      }
-export type CreateInstanceMaskViewMutationHookResult = ReturnType<typeof useCreateInstanceMaskViewMutation>;
-export type CreateInstanceMaskViewMutationResult = Apollo.MutationResult<CreateInstanceMaskViewMutation>;
-export type CreateInstanceMaskViewMutationOptions = Apollo.BaseMutationOptions<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>;
-export const UpdateRgbViewDocument = gql`
-    mutation UpdateRGBView($input: UpdateRGBViewInput!) {
-  updateRgbView(input: $input) {
-    ...RGBView
-  }
+export function useCreateInstanceMaskViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateInstanceMaskViewMutation,
+    CreateInstanceMaskViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateInstanceMaskViewMutation,
+    CreateInstanceMaskViewMutationVariables
+  >(CreateInstanceMaskViewDocument, options)
 }
-    ${RgbViewFragmentDoc}`;
-export type UpdateRgbViewMutationFn = Apollo.MutationFunction<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>;
+export type CreateInstanceMaskViewMutationHookResult = ReturnType<
+  typeof useCreateInstanceMaskViewMutation
+>
+export type CreateInstanceMaskViewMutationResult =
+  Apollo.MutationResult<CreateInstanceMaskViewMutation>
+export type CreateInstanceMaskViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateInstanceMaskViewMutation,
+  CreateInstanceMaskViewMutationVariables
+>
+export const UpdateRgbViewDocument = gql`
+  mutation UpdateRGBView($input: UpdateRGBViewInput!) {
+    updateRgbView(input: $input) {
+      ...RGBView
+    }
+  }
+  ${RgbViewFragmentDoc}
+`
+export type UpdateRgbViewMutationFn = Apollo.MutationFunction<
+  UpdateRgbViewMutation,
+  UpdateRgbViewMutationVariables
+>
 
 /**
  * __useUpdateRgbViewMutation__
@@ -8756,22 +17134,36 @@ export type UpdateRgbViewMutationFn = Apollo.MutationFunction<UpdateRgbViewMutat
  *   },
  * });
  */
-export function useUpdateRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>(UpdateRgbViewDocument, options);
-      }
-export type UpdateRgbViewMutationHookResult = ReturnType<typeof useUpdateRgbViewMutation>;
-export type UpdateRgbViewMutationResult = Apollo.MutationResult<UpdateRgbViewMutation>;
-export type UpdateRgbViewMutationOptions = Apollo.BaseMutationOptions<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>;
-export const CreateViewCollectionDocument = gql`
-    mutation CreateViewCollection($name: String!) {
-  createViewCollection(input: {name: $name}) {
-    id
-    name
-  }
+export function useUpdateRgbViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateRgbViewMutation,
+    UpdateRgbViewMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>(
+    UpdateRgbViewDocument,
+    options
+  )
 }
-    `;
-export type CreateViewCollectionMutationFn = Apollo.MutationFunction<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>;
+export type UpdateRgbViewMutationHookResult = ReturnType<typeof useUpdateRgbViewMutation>
+export type UpdateRgbViewMutationResult = Apollo.MutationResult<UpdateRgbViewMutation>
+export type UpdateRgbViewMutationOptions = Apollo.BaseMutationOptions<
+  UpdateRgbViewMutation,
+  UpdateRgbViewMutationVariables
+>
+export const CreateViewCollectionDocument = gql`
+  mutation CreateViewCollection($name: String!) {
+    createViewCollection(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`
+export type CreateViewCollectionMutationFn = Apollo.MutationFunction<
+  CreateViewCollectionMutation,
+  CreateViewCollectionMutationVariables
+>
 
 /**
  * __useCreateViewCollectionMutation__
@@ -8790,20 +17182,34 @@ export type CreateViewCollectionMutationFn = Apollo.MutationFunction<CreateViewC
  *   },
  * });
  */
-export function useCreateViewCollectionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>(CreateViewCollectionDocument, options);
-      }
-export type CreateViewCollectionMutationHookResult = ReturnType<typeof useCreateViewCollectionMutation>;
-export type CreateViewCollectionMutationResult = Apollo.MutationResult<CreateViewCollectionMutation>;
-export type CreateViewCollectionMutationOptions = Apollo.BaseMutationOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>;
-export const GetCameraDocument = gql`
-    query GetCamera($id: ID!) {
-  camera(id: $id) {
-    ...Camera
-  }
+export function useCreateViewCollectionMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateViewCollectionMutation,
+    CreateViewCollectionMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<
+    CreateViewCollectionMutation,
+    CreateViewCollectionMutationVariables
+  >(CreateViewCollectionDocument, options)
 }
-    ${CameraFragmentDoc}`;
+export type CreateViewCollectionMutationHookResult = ReturnType<
+  typeof useCreateViewCollectionMutation
+>
+export type CreateViewCollectionMutationResult = Apollo.MutationResult<CreateViewCollectionMutation>
+export type CreateViewCollectionMutationOptions = Apollo.BaseMutationOptions<
+  CreateViewCollectionMutation,
+  CreateViewCollectionMutationVariables
+>
+export const GetCameraDocument = gql`
+  query GetCamera($id: ID!) {
+    camera(id: $id) {
+      ...Camera
+    }
+  }
+  ${CameraFragmentDoc}
+`
 
 /**
  * __useGetCameraQuery__
@@ -8821,28 +17227,39 @@ export const GetCameraDocument = gql`
  *   },
  * });
  */
-export function useGetCameraQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-      }
-export function useGetCameraLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-        }
-export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>;
-export type GetCameraLazyQueryHookResult = ReturnType<typeof useGetCameraLazyQuery>;
-export type GetCameraQueryResult = Apollo.QueryResult<GetCameraQuery, GetCameraQueryVariables>;
-export const ChildrenDocument = gql`
-    query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
-  children(parent: $id, pagination: $pagination, filters: $filters) {
-    ...ListFile
-    ...ListImage
-    ...ListDataset
-  }
+export function useGetCameraQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetCameraQuery, GetCameraQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(
+    GetCameraDocument,
+    options
+  )
 }
-    ${ListFileFragmentDoc}
-${ListImageFragmentDoc}
-${ListDatasetFragmentDoc}`;
+export function useGetCameraLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCameraQuery, GetCameraQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(
+    GetCameraDocument,
+    options
+  )
+}
+export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>
+export type GetCameraLazyQueryHookResult = ReturnType<typeof useGetCameraLazyQuery>
+export type GetCameraQueryResult = Apollo.QueryResult<GetCameraQuery, GetCameraQueryVariables>
+export const ChildrenDocument = gql`
+  query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
+    children(parent: $id, pagination: $pagination, filters: $filters) {
+      ...ListFile
+      ...ListImage
+      ...ListDataset
+    }
+  }
+  ${ListFileFragmentDoc}
+  ${ListImageFragmentDoc}
+  ${ListDatasetFragmentDoc}
+`
 
 /**
  * __useChildrenQuery__
@@ -8862,24 +17279,32 @@ ${ListDatasetFragmentDoc}`;
  *   },
  * });
  */
-export function useChildrenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-      }
-export function useChildrenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-        }
-export type ChildrenQueryHookResult = ReturnType<typeof useChildrenQuery>;
-export type ChildrenLazyQueryHookResult = ReturnType<typeof useChildrenLazyQuery>;
-export type ChildrenQueryResult = Apollo.QueryResult<ChildrenQuery, ChildrenQueryVariables>;
-export const GetDatasetDocument = gql`
-    query GetDataset($id: ID!) {
-  dataset(id: $id) {
-    ...Dataset
-  }
+export function useChildrenQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<ChildrenQuery, ChildrenQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options)
 }
-    ${DatasetFragmentDoc}`;
+export function useChildrenLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ChildrenQuery, ChildrenQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(
+    ChildrenDocument,
+    options
+  )
+}
+export type ChildrenQueryHookResult = ReturnType<typeof useChildrenQuery>
+export type ChildrenLazyQueryHookResult = ReturnType<typeof useChildrenLazyQuery>
+export type ChildrenQueryResult = Apollo.QueryResult<ChildrenQuery, ChildrenQueryVariables>
+export const GetDatasetDocument = gql`
+  query GetDataset($id: ID!) {
+    dataset(id: $id) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`
 
 /**
  * __useGetDatasetQuery__
@@ -8897,24 +17322,35 @@ export const GetDatasetDocument = gql`
  *   },
  * });
  */
-export function useGetDatasetQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-      }
-export function useGetDatasetLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-        }
-export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>;
-export type GetDatasetLazyQueryHookResult = ReturnType<typeof useGetDatasetLazyQuery>;
-export type GetDatasetQueryResult = Apollo.QueryResult<GetDatasetQuery, GetDatasetQueryVariables>;
-export const GetDatasetsDocument = gql`
-    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput) {
-  datasets(filters: $filters, pagination: $pagination) {
-    ...ListDataset
-  }
+export function useGetDatasetQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(
+    GetDatasetDocument,
+    options
+  )
 }
-    ${ListDatasetFragmentDoc}`;
+export function useGetDatasetLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(
+    GetDatasetDocument,
+    options
+  )
+}
+export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>
+export type GetDatasetLazyQueryHookResult = ReturnType<typeof useGetDatasetLazyQuery>
+export type GetDatasetQueryResult = Apollo.QueryResult<GetDatasetQuery, GetDatasetQueryVariables>
+export const GetDatasetsDocument = gql`
+  query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput) {
+    datasets(filters: $filters, pagination: $pagination) {
+      ...ListDataset
+    }
+  }
+  ${ListDatasetFragmentDoc}
+`
 
 /**
  * __useGetDatasetsQuery__
@@ -8933,24 +17369,35 @@ export const GetDatasetsDocument = gql`
  *   },
  * });
  */
-export function useGetDatasetsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-      }
-export function useGetDatasetsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-        }
-export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
-export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>;
-export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>;
-export const GetFileDocument = gql`
-    query GetFile($id: ID!) {
-  file(id: $id) {
-    ...File
-  }
+export function useGetDatasetsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(
+    GetDatasetsDocument,
+    options
+  )
 }
-    ${FileFragmentDoc}`;
+export function useGetDatasetsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(
+    GetDatasetsDocument,
+    options
+  )
+}
+export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>
+export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>
+export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>
+export const GetFileDocument = gql`
+  query GetFile($id: ID!) {
+    file(id: $id) {
+      ...File
+    }
+  }
+  ${FileFragmentDoc}
+`
 
 /**
  * __useGetFileQuery__
@@ -8968,24 +17415,32 @@ export const GetFileDocument = gql`
  *   },
  * });
  */
-export function useGetFileQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-      }
-export function useGetFileLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-        }
-export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
-export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
-export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
-export const GetFilesDocument = gql`
-    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $order: FileOrder) {
-  files(filters: $filters, pagination: $pagination, order: $order) {
-    ...ListFile
-  }
+export function useGetFileQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options)
 }
-    ${ListFileFragmentDoc}`;
+export function useGetFileLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(
+    GetFileDocument,
+    options
+  )
+}
+export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>
+export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>
+export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>
+export const GetFilesDocument = gql`
+  query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $order: FileOrder) {
+    files(filters: $filters, pagination: $pagination, order: $order) {
+      ...ListFile
+    }
+  }
+  ${ListFileFragmentDoc}
+`
 
 /**
  * __useGetFilesQuery__
@@ -9005,32 +17460,47 @@ export const GetFilesDocument = gql`
  *   },
  * });
  */
-export function useGetFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-      }
-export function useGetFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-        }
-export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
-export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>;
-export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>;
-export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $noImages: Boolean!, $noFiles: Boolean!, $noDatasets: Boolean!, $pagination: OffsetPaginationInput) {
-  images: images(filters: {search: $search}, pagination: $pagination) @skip(if: $noImages) {
-    ...ListImage
-  }
-  files: files(filters: {search: $search}, pagination: $pagination) @skip(if: $noFiles) {
-    ...ListFile
-  }
-  datasets: datasets(filters: {search: $search}, pagination: $pagination) @skip(if: $noDatasets) {
-    ...ListDataset
-  }
+export function useGetFilesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetFilesQuery, GetFilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options)
 }
-    ${ListImageFragmentDoc}
-${ListFileFragmentDoc}
-${ListDatasetFragmentDoc}`;
+export function useGetFilesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFilesQuery, GetFilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(
+    GetFilesDocument,
+    options
+  )
+}
+export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>
+export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>
+export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>
+export const GlobalSearchDocument = gql`
+  query GlobalSearch(
+    $search: String
+    $noImages: Boolean!
+    $noFiles: Boolean!
+    $noDatasets: Boolean!
+    $pagination: OffsetPaginationInput
+  ) {
+    images: images(filters: { search: $search }, pagination: $pagination) @skip(if: $noImages) {
+      ...ListImage
+    }
+    files: files(filters: { search: $search }, pagination: $pagination) @skip(if: $noFiles) {
+      ...ListFile
+    }
+    datasets: datasets(filters: { search: $search }, pagination: $pagination)
+      @skip(if: $noDatasets) {
+      ...ListDataset
+    }
+  }
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+  ${ListDatasetFragmentDoc}
+`
 
 /**
  * __useGlobalSearchQuery__
@@ -9052,24 +17522,37 @@ ${ListDatasetFragmentDoc}`;
  *   },
  * });
  */
-export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
-export const ImagesDocument = gql`
-    query Images {
-  images {
-    id
-  }
+export function useGlobalSearchQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
+    GlobalSearchDocument,
+    options
+  )
 }
-    `;
+export function useGlobalSearchLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
+    GlobalSearchDocument,
+    options
+  )
+}
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>
+export type GlobalSearchQueryResult = Apollo.QueryResult<
+  GlobalSearchQuery,
+  GlobalSearchQueryVariables
+>
+export const ImagesDocument = gql`
+  query Images {
+    images {
+      id
+    }
+  }
+`
 
 /**
  * __useImagesQuery__
@@ -9086,28 +17569,33 @@ export const ImagesDocument = gql`
  *   },
  * });
  */
-export function useImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-      }
-export function useImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-        }
-export type ImagesQueryHookResult = ReturnType<typeof useImagesQuery>;
-export type ImagesLazyQueryHookResult = ReturnType<typeof useImagesLazyQuery>;
-export type ImagesQueryResult = Apollo.QueryResult<ImagesQuery, ImagesQueryVariables>;
-export const HomePageDocument = gql`
-    query HomePage {
-  images: images(pagination: {limit: 1}, order: {createdAt: DESC}) {
-    ...ListImage
-  }
-  files: files(pagination: {limit: 1}, order: {createdAt: DESC}) {
-    ...ListFile
-  }
+export function useImagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<ImagesQuery, ImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options)
 }
-    ${ListImageFragmentDoc}
-${ListFileFragmentDoc}`;
+export function useImagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImagesQuery, ImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options)
+}
+export type ImagesQueryHookResult = ReturnType<typeof useImagesQuery>
+export type ImagesLazyQueryHookResult = ReturnType<typeof useImagesLazyQuery>
+export type ImagesQueryResult = Apollo.QueryResult<ImagesQuery, ImagesQueryVariables>
+export const HomePageDocument = gql`
+  query HomePage {
+    images: images(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+      ...ListImage
+    }
+    files: files(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+      ...ListFile
+    }
+  }
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+`
 
 /**
  * __useHomePageQuery__
@@ -9124,36 +17612,36 @@ ${ListFileFragmentDoc}`;
  *   },
  * });
  */
-export function useHomePageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
-      }
-export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
-        }
-export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
-export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
-export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
-export const PeerHomePageDocument = gql`
-    query PeerHomePage($id: ID!) {
-  images: images(
-    pagination: {limit: 1}
-    filters: {owner: $id}
-    order: {createdAt: DESC}
-  ) {
-    ...ListImage
-  }
-  files: files(
-    pagination: {limit: 1}
-    filters: {owner: $id}
-    order: {createdAt: DESC}
-  ) {
-    ...ListFile
-  }
+export function useHomePageQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options)
 }
-    ${ListImageFragmentDoc}
-${ListFileFragmentDoc}`;
+export function useHomePageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(
+    HomePageDocument,
+    options
+  )
+}
+export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>
+export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>
+export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>
+export const PeerHomePageDocument = gql`
+  query PeerHomePage($id: ID!) {
+    images: images(pagination: { limit: 1 }, filters: { owner: $id }, order: { createdAt: DESC }) {
+      ...ListImage
+    }
+    files: files(pagination: { limit: 1 }, filters: { owner: $id }, order: { createdAt: DESC }) {
+      ...ListFile
+    }
+  }
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+`
 
 /**
  * __usePeerHomePageQuery__
@@ -9171,27 +17659,40 @@ ${ListFileFragmentDoc}`;
  *   },
  * });
  */
-export function usePeerHomePageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(PeerHomePageDocument, options);
-      }
-export function usePeerHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(PeerHomePageDocument, options);
-        }
-export type PeerHomePageQueryHookResult = ReturnType<typeof usePeerHomePageQuery>;
-export type PeerHomePageLazyQueryHookResult = ReturnType<typeof usePeerHomePageLazyQuery>;
-export type PeerHomePageQueryResult = Apollo.QueryResult<PeerHomePageQuery, PeerHomePageQueryVariables>;
+export function usePeerHomePageQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(
+    PeerHomePageDocument,
+    options
+  )
+}
+export function usePeerHomePageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(
+    PeerHomePageDocument,
+    options
+  )
+}
+export type PeerHomePageQueryHookResult = ReturnType<typeof usePeerHomePageQuery>
+export type PeerHomePageLazyQueryHookResult = ReturnType<typeof usePeerHomePageLazyQuery>
+export type PeerHomePageQueryResult = Apollo.QueryResult<
+  PeerHomePageQuery,
+  PeerHomePageQueryVariables
+>
 export const HomePageStatsDocument = gql`
-    query HomePageStats {
-  imagesStats(filters: {owner: null}) {
-    count
-    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+  query HomePageStats {
+    imagesStats(filters: { owner: null }) {
       count
+      series(by: DAY, field: PK, timestampField: CREATED_AT) {
+        count
+      }
     }
   }
-}
-    `;
+`
 
 /**
  * __useHomePageStatsQuery__
@@ -9208,27 +17709,43 @@ export const HomePageStatsDocument = gql`
  *   },
  * });
  */
-export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
-      }
-export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
-        }
-export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
-export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
-export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
+export function useHomePageStatsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(
+    HomePageStatsDocument,
+    options
+  )
+}
+export function useHomePageStatsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    HomePageStatsQuery,
+    HomePageStatsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(
+    HomePageStatsDocument,
+    options
+  )
+}
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>
+export type HomePageStatsQueryResult = Apollo.QueryResult<
+  HomePageStatsQuery,
+  HomePageStatsQueryVariables
+>
 export const PeerHomePageStatsDocument = gql`
-    query PeerHomePageStats($id: ID!) {
-  imagesStats(filters: {owner: $id}) {
-    count
-    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+  query PeerHomePageStats($id: ID!) {
+    imagesStats(filters: { owner: $id }) {
       count
+      series(by: DAY, field: PK, timestampField: CREATED_AT) {
+        count
+      }
     }
   }
-}
-    `;
+`
 
 /**
  * __usePeerHomePageStatsQuery__
@@ -9246,24 +17763,44 @@ export const PeerHomePageStatsDocument = gql`
  *   },
  * });
  */
-export function usePeerHomePageStatsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(PeerHomePageStatsDocument, options);
-      }
-export function usePeerHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(PeerHomePageStatsDocument, options);
-        }
-export type PeerHomePageStatsQueryHookResult = ReturnType<typeof usePeerHomePageStatsQuery>;
-export type PeerHomePageStatsLazyQueryHookResult = ReturnType<typeof usePeerHomePageStatsLazyQuery>;
-export type PeerHomePageStatsQueryResult = Apollo.QueryResult<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>;
-export const GetImageDocument = gql`
-    query GetImage($id: ID!) {
-  image(id: $id) {
-    ...Image
-  }
+export function usePeerHomePageStatsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    PeerHomePageStatsQuery,
+    PeerHomePageStatsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(
+    PeerHomePageStatsDocument,
+    options
+  )
 }
-    ${ImageFragmentDoc}`;
+export function usePeerHomePageStatsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    PeerHomePageStatsQuery,
+    PeerHomePageStatsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(
+    PeerHomePageStatsDocument,
+    options
+  )
+}
+export type PeerHomePageStatsQueryHookResult = ReturnType<typeof usePeerHomePageStatsQuery>
+export type PeerHomePageStatsLazyQueryHookResult = ReturnType<typeof usePeerHomePageStatsLazyQuery>
+export type PeerHomePageStatsQueryResult = Apollo.QueryResult<
+  PeerHomePageStatsQuery,
+  PeerHomePageStatsQueryVariables
+>
+export const GetImageDocument = gql`
+  query GetImage($id: ID!) {
+    image(id: $id) {
+      ...Image
+    }
+  }
+  ${ImageFragmentDoc}
+`
 
 /**
  * __useGetImageQuery__
@@ -9281,24 +17818,32 @@ export const GetImageDocument = gql`
  *   },
  * });
  */
-export function useGetImageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-      }
-export function useGetImageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
-export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>;
-export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>;
-export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
-    ...ListImage
-  }
+export function useGetImageQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetImageQuery, GetImageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options)
 }
-    ${ListImageFragmentDoc}`;
+export function useGetImageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(
+    GetImageDocument,
+    options
+  )
+}
+export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>
+export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>
+export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>
+export const GetImagesDocument = gql`
+  query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
+    images(filters: $filters, pagination: $pagination, order: $order) {
+      ...ListImage
+    }
+  }
+  ${ListImageFragmentDoc}
+`
 
 /**
  * __useGetImagesQuery__
@@ -9318,24 +17863,35 @@ export const GetImagesDocument = gql`
  *   },
  * });
  */
-export function useGetImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-      }
-export function useGetImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
-export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
-export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
-export const ListImagesDocument = gql`
-    query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
-    ...ListImage
-  }
+export function useGetImagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(
+    GetImagesDocument,
+    options
+  )
 }
-    ${ListImageFragmentDoc}`;
+export function useGetImagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(
+    GetImagesDocument,
+    options
+  )
+}
+export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>
+export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>
+export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>
+export const ListImagesDocument = gql`
+  query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
+    images(filters: $filters, pagination: $pagination, order: $order) {
+      ...ListImage
+    }
+  }
+  ${ListImageFragmentDoc}
+`
 
 /**
  * __useListImagesQuery__
@@ -9355,24 +17911,35 @@ export const ListImagesDocument = gql`
  *   },
  * });
  */
-export function useListImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListImagesQuery, ListImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListImagesQuery, ListImagesQueryVariables>(ListImagesDocument, options);
-      }
-export function useListImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListImagesQuery, ListImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListImagesQuery, ListImagesQueryVariables>(ListImagesDocument, options);
-        }
-export type ListImagesQueryHookResult = ReturnType<typeof useListImagesQuery>;
-export type ListImagesLazyQueryHookResult = ReturnType<typeof useListImagesLazyQuery>;
-export type ListImagesQueryResult = Apollo.QueryResult<ListImagesQuery, ListImagesQueryVariables>;
-export const GetInstanceMaskViewLabelDocument = gql`
-    query GetInstanceMaskViewLabel($id: ID!) {
-  instanceMaskViewLabel(id: $id) {
-    ...InstanceMaskViewLabel
-  }
+export function useListImagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<ListImagesQuery, ListImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListImagesQuery, ListImagesQueryVariables>(
+    ListImagesDocument,
+    options
+  )
 }
-    ${InstanceMaskViewLabelFragmentDoc}`;
+export function useListImagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListImagesQuery, ListImagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListImagesQuery, ListImagesQueryVariables>(
+    ListImagesDocument,
+    options
+  )
+}
+export type ListImagesQueryHookResult = ReturnType<typeof useListImagesQuery>
+export type ListImagesLazyQueryHookResult = ReturnType<typeof useListImagesLazyQuery>
+export type ListImagesQueryResult = Apollo.QueryResult<ListImagesQuery, ListImagesQueryVariables>
+export const GetInstanceMaskViewLabelDocument = gql`
+  query GetInstanceMaskViewLabel($id: ID!) {
+    instanceMaskViewLabel(id: $id) {
+      ...InstanceMaskViewLabel
+    }
+  }
+  ${InstanceMaskViewLabelFragmentDoc}
+`
 
 /**
  * __useGetInstanceMaskViewLabelQuery__
@@ -9390,24 +17957,48 @@ export const GetInstanceMaskViewLabelDocument = gql`
  *   },
  * });
  */
-export function useGetInstanceMaskViewLabelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetInstanceMaskViewLabelQuery, GetInstanceMaskViewLabelQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetInstanceMaskViewLabelQuery, GetInstanceMaskViewLabelQueryVariables>(GetInstanceMaskViewLabelDocument, options);
-      }
-export function useGetInstanceMaskViewLabelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetInstanceMaskViewLabelQuery, GetInstanceMaskViewLabelQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetInstanceMaskViewLabelQuery, GetInstanceMaskViewLabelQueryVariables>(GetInstanceMaskViewLabelDocument, options);
-        }
-export type GetInstanceMaskViewLabelQueryHookResult = ReturnType<typeof useGetInstanceMaskViewLabelQuery>;
-export type GetInstanceMaskViewLabelLazyQueryHookResult = ReturnType<typeof useGetInstanceMaskViewLabelLazyQuery>;
-export type GetInstanceMaskViewLabelQueryResult = Apollo.QueryResult<GetInstanceMaskViewLabelQuery, GetInstanceMaskViewLabelQueryVariables>;
-export const GetInstrumentDocument = gql`
-    query GetInstrument($id: ID!) {
-  instrument(id: $id) {
-    ...Instrument
-  }
+export function useGetInstanceMaskViewLabelQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetInstanceMaskViewLabelQuery,
+    GetInstanceMaskViewLabelQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<
+    GetInstanceMaskViewLabelQuery,
+    GetInstanceMaskViewLabelQueryVariables
+  >(GetInstanceMaskViewLabelDocument, options)
 }
-    ${InstrumentFragmentDoc}`;
+export function useGetInstanceMaskViewLabelLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetInstanceMaskViewLabelQuery,
+    GetInstanceMaskViewLabelQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<
+    GetInstanceMaskViewLabelQuery,
+    GetInstanceMaskViewLabelQueryVariables
+  >(GetInstanceMaskViewLabelDocument, options)
+}
+export type GetInstanceMaskViewLabelQueryHookResult = ReturnType<
+  typeof useGetInstanceMaskViewLabelQuery
+>
+export type GetInstanceMaskViewLabelLazyQueryHookResult = ReturnType<
+  typeof useGetInstanceMaskViewLabelLazyQuery
+>
+export type GetInstanceMaskViewLabelQueryResult = Apollo.QueryResult<
+  GetInstanceMaskViewLabelQuery,
+  GetInstanceMaskViewLabelQueryVariables
+>
+export const GetInstrumentDocument = gql`
+  query GetInstrument($id: ID!) {
+    instrument(id: $id) {
+      ...Instrument
+    }
+  }
+  ${InstrumentFragmentDoc}
+`
 
 /**
  * __useGetInstrumentQuery__
@@ -9425,24 +18016,41 @@ export const GetInstrumentDocument = gql`
  *   },
  * });
  */
-export function useGetInstrumentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-      }
-export function useGetInstrumentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-        }
-export type GetInstrumentQueryHookResult = ReturnType<typeof useGetInstrumentQuery>;
-export type GetInstrumentLazyQueryHookResult = ReturnType<typeof useGetInstrumentLazyQuery>;
-export type GetInstrumentQueryResult = Apollo.QueryResult<GetInstrumentQuery, GetInstrumentQueryVariables>;
-export const GetLightpathViewDocument = gql`
-    query GetLightpathView($id: ID!) {
-  lightpathView(id: $id) {
-    ...LightpathView
-  }
+export function useGetInstrumentQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(
+    GetInstrumentDocument,
+    options
+  )
 }
-    ${LightpathViewFragmentDoc}`;
+export function useGetInstrumentLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetInstrumentQuery,
+    GetInstrumentQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(
+    GetInstrumentDocument,
+    options
+  )
+}
+export type GetInstrumentQueryHookResult = ReturnType<typeof useGetInstrumentQuery>
+export type GetInstrumentLazyQueryHookResult = ReturnType<typeof useGetInstrumentLazyQuery>
+export type GetInstrumentQueryResult = Apollo.QueryResult<
+  GetInstrumentQuery,
+  GetInstrumentQueryVariables
+>
+export const GetLightpathViewDocument = gql`
+  query GetLightpathView($id: ID!) {
+    lightpathView(id: $id) {
+      ...LightpathView
+    }
+  }
+  ${LightpathViewFragmentDoc}
+`
 
 /**
  * __useGetLightpathViewQuery__
@@ -9460,30 +18068,49 @@ export const GetLightpathViewDocument = gql`
  *   },
  * });
  */
-export function useGetLightpathViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetLightpathViewQuery, GetLightpathViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetLightpathViewQuery, GetLightpathViewQueryVariables>(GetLightpathViewDocument, options);
-      }
-export function useGetLightpathViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetLightpathViewQuery, GetLightpathViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetLightpathViewQuery, GetLightpathViewQueryVariables>(GetLightpathViewDocument, options);
-        }
-export type GetLightpathViewQueryHookResult = ReturnType<typeof useGetLightpathViewQuery>;
-export type GetLightpathViewLazyQueryHookResult = ReturnType<typeof useGetLightpathViewLazyQuery>;
-export type GetLightpathViewQueryResult = Apollo.QueryResult<GetLightpathViewQuery, GetLightpathViewQueryVariables>;
+export function useGetLightpathViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetLightpathViewQuery,
+    GetLightpathViewQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetLightpathViewQuery, GetLightpathViewQueryVariables>(
+    GetLightpathViewDocument,
+    options
+  )
+}
+export function useGetLightpathViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetLightpathViewQuery,
+    GetLightpathViewQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetLightpathViewQuery, GetLightpathViewQueryVariables>(
+    GetLightpathViewDocument,
+    options
+  )
+}
+export type GetLightpathViewQueryHookResult = ReturnType<typeof useGetLightpathViewQuery>
+export type GetLightpathViewLazyQueryHookResult = ReturnType<typeof useGetLightpathViewLazyQuery>
+export type GetLightpathViewQueryResult = Apollo.QueryResult<
+  GetLightpathViewQuery,
+  GetLightpathViewQueryVariables
+>
 export const MembersDocument = gql`
-    query Members {
-  members {
-    user {
-      sub
-    }
-    datasets(pagination: {limit: 3}, filters: {parentless: true}) {
-      id
-      name
+  query Members {
+    members {
+      user {
+        sub
+      }
+      datasets(pagination: { limit: 3 }, filters: { parentless: true }) {
+        id
+        name
+      }
     }
   }
-}
-    `;
+`
 
 /**
  * __useMembersQuery__
@@ -9500,24 +18127,32 @@ export const MembersDocument = gql`
  *   },
  * });
  */
-export function useMembersQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MembersQuery, MembersQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MembersQuery, MembersQueryVariables>(MembersDocument, options);
-      }
-export function useMembersLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MembersQuery, MembersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MembersQuery, MembersQueryVariables>(MembersDocument, options);
-        }
-export type MembersQueryHookResult = ReturnType<typeof useMembersQuery>;
-export type MembersLazyQueryHookResult = ReturnType<typeof useMembersLazyQuery>;
-export type MembersQueryResult = Apollo.QueryResult<MembersQuery, MembersQueryVariables>;
-export const DetailMeshDocument = gql`
-    query DetailMesh($id: ID!) {
-  mesh(id: $id) {
-    ...Mesh
-  }
+export function useMembersQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<MembersQuery, MembersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MembersQuery, MembersQueryVariables>(MembersDocument, options)
 }
-    ${MeshFragmentDoc}`;
+export function useMembersLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MembersQuery, MembersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<MembersQuery, MembersQueryVariables>(
+    MembersDocument,
+    options
+  )
+}
+export type MembersQueryHookResult = ReturnType<typeof useMembersQuery>
+export type MembersLazyQueryHookResult = ReturnType<typeof useMembersLazyQuery>
+export type MembersQueryResult = Apollo.QueryResult<MembersQuery, MembersQueryVariables>
+export const DetailMeshDocument = gql`
+  query DetailMesh($id: ID!) {
+    mesh(id: $id) {
+      ...Mesh
+    }
+  }
+  ${MeshFragmentDoc}
+`
 
 /**
  * __useDetailMeshQuery__
@@ -9535,24 +18170,35 @@ export const DetailMeshDocument = gql`
  *   },
  * });
  */
-export function useDetailMeshQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-      }
-export function useDetailMeshLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-        }
-export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>;
-export type DetailMeshLazyQueryHookResult = ReturnType<typeof useDetailMeshLazyQuery>;
-export type DetailMeshQueryResult = Apollo.QueryResult<DetailMeshQuery, DetailMeshQueryVariables>;
-export const ListMeshesDocument = gql`
-    query ListMeshes($filters: MeshFilter, $pagination: OffsetPaginationInput) {
-  meshes(filters: $filters, pagination: $pagination) {
-    ...ListMesh
-  }
+export function useDetailMeshQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(
+    DetailMeshDocument,
+    options
+  )
 }
-    ${ListMeshFragmentDoc}`;
+export function useDetailMeshLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(
+    DetailMeshDocument,
+    options
+  )
+}
+export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>
+export type DetailMeshLazyQueryHookResult = ReturnType<typeof useDetailMeshLazyQuery>
+export type DetailMeshQueryResult = Apollo.QueryResult<DetailMeshQuery, DetailMeshQueryVariables>
+export const ListMeshesDocument = gql`
+  query ListMeshes($filters: MeshFilter, $pagination: OffsetPaginationInput) {
+    meshes(filters: $filters, pagination: $pagination) {
+      ...ListMesh
+    }
+  }
+  ${ListMeshFragmentDoc}
+`
 
 /**
  * __useListMeshesQuery__
@@ -9571,24 +18217,35 @@ export const ListMeshesDocument = gql`
  *   },
  * });
  */
-export function useListMeshesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-      }
-export function useListMeshesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-        }
-export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>;
-export type ListMeshesLazyQueryHookResult = ReturnType<typeof useListMeshesLazyQuery>;
-export type ListMeshesQueryResult = Apollo.QueryResult<ListMeshesQuery, ListMeshesQueryVariables>;
-export const GetMultiWellPlateDocument = gql`
-    query GetMultiWellPlate($id: ID!) {
-  multiWellPlate(id: $id) {
-    ...MultiWellPlate
-  }
+export function useListMeshesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(
+    ListMeshesDocument,
+    options
+  )
 }
-    ${MultiWellPlateFragmentDoc}`;
+export function useListMeshesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(
+    ListMeshesDocument,
+    options
+  )
+}
+export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>
+export type ListMeshesLazyQueryHookResult = ReturnType<typeof useListMeshesLazyQuery>
+export type ListMeshesQueryResult = Apollo.QueryResult<ListMeshesQuery, ListMeshesQueryVariables>
+export const GetMultiWellPlateDocument = gql`
+  query GetMultiWellPlate($id: ID!) {
+    multiWellPlate(id: $id) {
+      ...MultiWellPlate
+    }
+  }
+  ${MultiWellPlateFragmentDoc}
+`
 
 /**
  * __useGetMultiWellPlateQuery__
@@ -9606,24 +18263,44 @@ export const GetMultiWellPlateDocument = gql`
  *   },
  * });
  */
-export function useGetMultiWellPlateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-      }
-export function useGetMultiWellPlateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-        }
-export type GetMultiWellPlateQueryHookResult = ReturnType<typeof useGetMultiWellPlateQuery>;
-export type GetMultiWellPlateLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlateLazyQuery>;
-export type GetMultiWellPlateQueryResult = Apollo.QueryResult<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>;
-export const GetMultiWellPlatesDocument = gql`
-    query GetMultiWellPlates($filters: MultiWellPlateFilter, $pagination: OffsetPaginationInput) {
-  multiWellPlates(filters: $filters, pagination: $pagination) {
-    ...ListMultiWellPlate
-  }
+export function useGetMultiWellPlateQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(
+    GetMultiWellPlateDocument,
+    options
+  )
 }
-    ${ListMultiWellPlateFragmentDoc}`;
+export function useGetMultiWellPlateLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(
+    GetMultiWellPlateDocument,
+    options
+  )
+}
+export type GetMultiWellPlateQueryHookResult = ReturnType<typeof useGetMultiWellPlateQuery>
+export type GetMultiWellPlateLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlateLazyQuery>
+export type GetMultiWellPlateQueryResult = Apollo.QueryResult<
+  GetMultiWellPlateQuery,
+  GetMultiWellPlateQueryVariables
+>
+export const GetMultiWellPlatesDocument = gql`
+  query GetMultiWellPlates($filters: MultiWellPlateFilter, $pagination: OffsetPaginationInput) {
+    multiWellPlates(filters: $filters, pagination: $pagination) {
+      ...ListMultiWellPlate
+    }
+  }
+  ${ListMultiWellPlateFragmentDoc}
+`
 
 /**
  * __useGetMultiWellPlatesQuery__
@@ -9642,28 +18319,49 @@ export const GetMultiWellPlatesDocument = gql`
  *   },
  * });
  */
-export function useGetMultiWellPlatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-      }
-export function useGetMultiWellPlatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-        }
-export type GetMultiWellPlatesQueryHookResult = ReturnType<typeof useGetMultiWellPlatesQuery>;
-export type GetMultiWellPlatesLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlatesLazyQuery>;
-export type GetMultiWellPlatesQueryResult = Apollo.QueryResult<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>;
-export const MultiWellPlateOptionsDocument = gql`
-    query MultiWellPlateOptions($search: String, $values: [ID!]) {
-  options: multiWellPlates(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetMultiWellPlatesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(
+    GetMultiWellPlatesDocument,
+    options
+  )
 }
-    `;
+export function useGetMultiWellPlatesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(
+    GetMultiWellPlatesDocument,
+    options
+  )
+}
+export type GetMultiWellPlatesQueryHookResult = ReturnType<typeof useGetMultiWellPlatesQuery>
+export type GetMultiWellPlatesLazyQueryHookResult = ReturnType<
+  typeof useGetMultiWellPlatesLazyQuery
+>
+export type GetMultiWellPlatesQueryResult = Apollo.QueryResult<
+  GetMultiWellPlatesQuery,
+  GetMultiWellPlatesQueryVariables
+>
+export const MultiWellPlateOptionsDocument = gql`
+  query MultiWellPlateOptions($search: String, $values: [ID!]) {
+    options: multiWellPlates(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`
 
 /**
  * __useMultiWellPlateOptionsQuery__
@@ -9682,24 +18380,46 @@ export const MultiWellPlateOptionsDocument = gql`
  *   },
  * });
  */
-export function useMultiWellPlateOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-      }
-export function useMultiWellPlateOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-        }
-export type MultiWellPlateOptionsQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsQuery>;
-export type MultiWellPlateOptionsLazyQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsLazyQuery>;
-export type MultiWellPlateOptionsQueryResult = Apollo.QueryResult<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>;
-export const GetObjectiveDocument = gql`
-    query GetObjective($id: ID!) {
-  objective(id: $id) {
-    ...Objective
-  }
+export function useMultiWellPlateOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(
+    MultiWellPlateOptionsDocument,
+    options
+  )
 }
-    ${ObjectiveFragmentDoc}`;
+export function useMultiWellPlateOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >(MultiWellPlateOptionsDocument, options)
+}
+export type MultiWellPlateOptionsQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsQuery>
+export type MultiWellPlateOptionsLazyQueryHookResult = ReturnType<
+  typeof useMultiWellPlateOptionsLazyQuery
+>
+export type MultiWellPlateOptionsQueryResult = Apollo.QueryResult<
+  MultiWellPlateOptionsQuery,
+  MultiWellPlateOptionsQueryVariables
+>
+export const GetObjectiveDocument = gql`
+  query GetObjective($id: ID!) {
+    objective(id: $id) {
+      ...Objective
+    }
+  }
+  ${ObjectiveFragmentDoc}
+`
 
 /**
  * __useGetObjectiveQuery__
@@ -9717,27 +18437,40 @@ export const GetObjectiveDocument = gql`
  *   },
  * });
  */
-export function useGetObjectiveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-      }
-export function useGetObjectiveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-        }
-export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>;
-export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>;
-export type GetObjectiveQueryResult = Apollo.QueryResult<GetObjectiveQuery, GetObjectiveQueryVariables>;
-export const GetPermissionsDocument = gql`
-    query GetPermissions($identifier: String!, $object: ID!) {
-  permissions(identifier: $identifier, object: $object) {
-    user {
-      sub
-    }
-    permission
-  }
+export function useGetObjectiveQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(
+    GetObjectiveDocument,
+    options
+  )
 }
-    `;
+export function useGetObjectiveLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(
+    GetObjectiveDocument,
+    options
+  )
+}
+export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>
+export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>
+export type GetObjectiveQueryResult = Apollo.QueryResult<
+  GetObjectiveQuery,
+  GetObjectiveQueryVariables
+>
+export const GetPermissionsDocument = gql`
+  query GetPermissions($identifier: String!, $object: ID!) {
+    permissions(identifier: $identifier, object: $object) {
+      user {
+        sub
+      }
+      permission
+    }
+  }
+`
 
 /**
  * __useGetPermissionsQuery__
@@ -9756,29 +18489,41 @@ export const GetPermissionsDocument = gql`
  *   },
  * });
  */
-export function useGetPermissionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
-      }
-export function useGetPermissionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
-        }
-export type GetPermissionsQueryHookResult = ReturnType<typeof useGetPermissionsQuery>;
-export type GetPermissionsLazyQueryHookResult = ReturnType<typeof useGetPermissionsLazyQuery>;
-export type GetPermissionsQueryResult = Apollo.QueryResult<GetPermissionsQuery, GetPermissionsQueryVariables>;
-export const PermissionOptionsDocument = gql`
-    query PermissionOptions($identifier: String!, $search: String, $values: [ID!]) {
-  options: availablePermissions(
-    identifier: $identifier
-    search: $search
-    values: $values
-  ) {
-    value
-    label
-  }
+export function useGetPermissionsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(
+    GetPermissionsDocument,
+    options
+  )
 }
-    `;
+export function useGetPermissionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetPermissionsQuery,
+    GetPermissionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(
+    GetPermissionsDocument,
+    options
+  )
+}
+export type GetPermissionsQueryHookResult = ReturnType<typeof useGetPermissionsQuery>
+export type GetPermissionsLazyQueryHookResult = ReturnType<typeof useGetPermissionsLazyQuery>
+export type GetPermissionsQueryResult = Apollo.QueryResult<
+  GetPermissionsQuery,
+  GetPermissionsQueryVariables
+>
+export const PermissionOptionsDocument = gql`
+  query PermissionOptions($identifier: String!, $search: String, $values: [ID!]) {
+    options: availablePermissions(identifier: $identifier, search: $search, values: $values) {
+      value
+      label
+    }
+  }
+`
 
 /**
  * __usePermissionOptionsQuery__
@@ -9798,24 +18543,43 @@ export const PermissionOptionsDocument = gql`
  *   },
  * });
  */
-export function usePermissionOptionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
-      }
-export function usePermissionOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
-        }
-export type PermissionOptionsQueryHookResult = ReturnType<typeof usePermissionOptionsQuery>;
-export type PermissionOptionsLazyQueryHookResult = ReturnType<typeof usePermissionOptionsLazyQuery>;
-export type PermissionOptionsQueryResult = Apollo.QueryResult<PermissionOptionsQuery, PermissionOptionsQueryVariables>;
-export const GetMaskedPixelInfoDocument = gql`
-    query GetMaskedPixelInfo($id: ID!) {
-  maskedPixelInfo(id: $id) {
-    label
-  }
+export function usePermissionOptionsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    PermissionOptionsQuery,
+    PermissionOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(
+    PermissionOptionsDocument,
+    options
+  )
 }
-    `;
+export function usePermissionOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    PermissionOptionsQuery,
+    PermissionOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(
+    PermissionOptionsDocument,
+    options
+  )
+}
+export type PermissionOptionsQueryHookResult = ReturnType<typeof usePermissionOptionsQuery>
+export type PermissionOptionsLazyQueryHookResult = ReturnType<typeof usePermissionOptionsLazyQuery>
+export type PermissionOptionsQueryResult = Apollo.QueryResult<
+  PermissionOptionsQuery,
+  PermissionOptionsQueryVariables
+>
+export const GetMaskedPixelInfoDocument = gql`
+  query GetMaskedPixelInfo($id: ID!) {
+    maskedPixelInfo(id: $id) {
+      label
+    }
+  }
+`
 
 /**
  * __useGetMaskedPixelInfoQuery__
@@ -9833,24 +18597,46 @@ export const GetMaskedPixelInfoDocument = gql`
  *   },
  * });
  */
-export function useGetMaskedPixelInfoQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
-      }
-export function useGetMaskedPixelInfoLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
-        }
-export type GetMaskedPixelInfoQueryHookResult = ReturnType<typeof useGetMaskedPixelInfoQuery>;
-export type GetMaskedPixelInfoLazyQueryHookResult = ReturnType<typeof useGetMaskedPixelInfoLazyQuery>;
-export type GetMaskedPixelInfoQueryResult = Apollo.QueryResult<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>;
-export const GetRgbContextDocument = gql`
-    query GetRGBContext($id: ID!) {
-  rgbcontext(id: $id) {
-    ...RGBContext
-  }
+export function useGetMaskedPixelInfoQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetMaskedPixelInfoQuery,
+    GetMaskedPixelInfoQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(
+    GetMaskedPixelInfoDocument,
+    options
+  )
 }
-    ${RgbContextFragmentDoc}`;
+export function useGetMaskedPixelInfoLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMaskedPixelInfoQuery,
+    GetMaskedPixelInfoQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(
+    GetMaskedPixelInfoDocument,
+    options
+  )
+}
+export type GetMaskedPixelInfoQueryHookResult = ReturnType<typeof useGetMaskedPixelInfoQuery>
+export type GetMaskedPixelInfoLazyQueryHookResult = ReturnType<
+  typeof useGetMaskedPixelInfoLazyQuery
+>
+export type GetMaskedPixelInfoQueryResult = Apollo.QueryResult<
+  GetMaskedPixelInfoQuery,
+  GetMaskedPixelInfoQueryVariables
+>
+export const GetRgbContextDocument = gql`
+  query GetRGBContext($id: ID!) {
+    rgbcontext(id: $id) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`
 
 /**
  * __useGetRgbContextQuery__
@@ -9868,24 +18654,41 @@ export const GetRgbContextDocument = gql`
  *   },
  * });
  */
-export function useGetRgbContextQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-      }
-export function useGetRgbContextLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-        }
-export type GetRgbContextQueryHookResult = ReturnType<typeof useGetRgbContextQuery>;
-export type GetRgbContextLazyQueryHookResult = ReturnType<typeof useGetRgbContextLazyQuery>;
-export type GetRgbContextQueryResult = Apollo.QueryResult<GetRgbContextQuery, GetRgbContextQueryVariables>;
-export const GetRgbContextsDocument = gql`
-    query GetRGBContexts($filters: RGBContextFilter, $pagination: OffsetPaginationInput) {
-  rgbcontexts(filters: $filters, pagination: $pagination) {
-    ...ListRGBContext
-  }
+export function useGetRgbContextQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(
+    GetRgbContextDocument,
+    options
+  )
 }
-    ${ListRgbContextFragmentDoc}`;
+export function useGetRgbContextLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRgbContextQuery,
+    GetRgbContextQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(
+    GetRgbContextDocument,
+    options
+  )
+}
+export type GetRgbContextQueryHookResult = ReturnType<typeof useGetRgbContextQuery>
+export type GetRgbContextLazyQueryHookResult = ReturnType<typeof useGetRgbContextLazyQuery>
+export type GetRgbContextQueryResult = Apollo.QueryResult<
+  GetRgbContextQuery,
+  GetRgbContextQueryVariables
+>
+export const GetRgbContextsDocument = gql`
+  query GetRGBContexts($filters: RGBContextFilter, $pagination: OffsetPaginationInput) {
+    rgbcontexts(filters: $filters, pagination: $pagination) {
+      ...ListRGBContext
+    }
+  }
+  ${ListRgbContextFragmentDoc}
+`
 
 /**
  * __useGetRgbContextsQuery__
@@ -9904,28 +18707,41 @@ export const GetRgbContextsDocument = gql`
  *   },
  * });
  */
-export function useGetRgbContextsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-      }
-export function useGetRgbContextsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-        }
-export type GetRgbContextsQueryHookResult = ReturnType<typeof useGetRgbContextsQuery>;
-export type GetRgbContextsLazyQueryHookResult = ReturnType<typeof useGetRgbContextsLazyQuery>;
-export type GetRgbContextsQueryResult = Apollo.QueryResult<GetRgbContextsQuery, GetRgbContextsQueryVariables>;
-export const RgbContextOptionsDocument = gql`
-    query RGBContextOptions($search: String, $values: [ID!]) {
-  options: rgbcontexts(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetRgbContextsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(
+    GetRgbContextsDocument,
+    options
+  )
 }
-    `;
+export function useGetRgbContextsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRgbContextsQuery,
+    GetRgbContextsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(
+    GetRgbContextsDocument,
+    options
+  )
+}
+export type GetRgbContextsQueryHookResult = ReturnType<typeof useGetRgbContextsQuery>
+export type GetRgbContextsLazyQueryHookResult = ReturnType<typeof useGetRgbContextsLazyQuery>
+export type GetRgbContextsQueryResult = Apollo.QueryResult<
+  GetRgbContextsQuery,
+  GetRgbContextsQueryVariables
+>
+export const RgbContextOptionsDocument = gql`
+  query RGBContextOptions($search: String, $values: [ID!]) {
+    options: rgbcontexts(filters: { search: $search, ids: $values }, pagination: { limit: 10 }) {
+      value: id
+      label: name
+    }
+  }
+`
 
 /**
  * __useRgbContextOptionsQuery__
@@ -9944,24 +18760,44 @@ export const RgbContextOptionsDocument = gql`
  *   },
  * });
  */
-export function useRgbContextOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-      }
-export function useRgbContextOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-        }
-export type RgbContextOptionsQueryHookResult = ReturnType<typeof useRgbContextOptionsQuery>;
-export type RgbContextOptionsLazyQueryHookResult = ReturnType<typeof useRgbContextOptionsLazyQuery>;
-export type RgbContextOptionsQueryResult = Apollo.QueryResult<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>;
-export const GetRoiDocument = gql`
-    query GetROI($id: ID!) {
-  roi(id: $id) {
-    ...ROI
-  }
+export function useRgbContextOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(
+    RgbContextOptionsDocument,
+    options
+  )
 }
-    ${RoiFragmentDoc}`;
+export function useRgbContextOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(
+    RgbContextOptionsDocument,
+    options
+  )
+}
+export type RgbContextOptionsQueryHookResult = ReturnType<typeof useRgbContextOptionsQuery>
+export type RgbContextOptionsLazyQueryHookResult = ReturnType<typeof useRgbContextOptionsLazyQuery>
+export type RgbContextOptionsQueryResult = Apollo.QueryResult<
+  RgbContextOptionsQuery,
+  RgbContextOptionsQueryVariables
+>
+export const GetRoiDocument = gql`
+  query GetROI($id: ID!) {
+    roi(id: $id) {
+      ...ROI
+    }
+  }
+  ${RoiFragmentDoc}
+`
 
 /**
  * __useGetRoiQuery__
@@ -9979,24 +18815,29 @@ export const GetRoiDocument = gql`
  *   },
  * });
  */
-export function useGetRoiQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-      }
-export function useGetRoiLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-        }
-export type GetRoiQueryHookResult = ReturnType<typeof useGetRoiQuery>;
-export type GetRoiLazyQueryHookResult = ReturnType<typeof useGetRoiLazyQuery>;
-export type GetRoiQueryResult = Apollo.QueryResult<GetRoiQuery, GetRoiQueryVariables>;
-export const GetRoIsDocument = gql`
-    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $order: ROIOrder) {
-  rois(filters: $filters, pagination: $pagination, order: $order) {
-    ...ListROI
-  }
+export function useGetRoiQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetRoiQuery, GetRoiQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options)
 }
-    ${ListRoiFragmentDoc}`;
+export function useGetRoiLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoiQuery, GetRoiQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options)
+}
+export type GetRoiQueryHookResult = ReturnType<typeof useGetRoiQuery>
+export type GetRoiLazyQueryHookResult = ReturnType<typeof useGetRoiLazyQuery>
+export type GetRoiQueryResult = Apollo.QueryResult<GetRoiQuery, GetRoiQueryVariables>
+export const GetRoIsDocument = gql`
+  query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $order: ROIOrder) {
+    rois(filters: $filters, pagination: $pagination, order: $order) {
+      ...ListROI
+    }
+  }
+  ${ListRoiFragmentDoc}
+`
 
 /**
  * __useGetRoIsQuery__
@@ -10016,22 +18857,29 @@ export const GetRoIsDocument = gql`
  *   },
  * });
  */
-export function useGetRoIsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-      }
-export function useGetRoIsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-        }
-export type GetRoIsQueryHookResult = ReturnType<typeof useGetRoIsQuery>;
-export type GetRoIsLazyQueryHookResult = ReturnType<typeof useGetRoIsLazyQuery>;
-export type GetRoIsQueryResult = Apollo.QueryResult<GetRoIsQuery, GetRoIsQueryVariables>;
-export const RowsDocument = gql`
-    query Rows($table: ID!, $filters: RowFilter, $pagination: TablePaginationInput) {
-  rows(table: $table, filters: $filters, pagination: $pagination)
+export function useGetRoIsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options)
 }
-    `;
+export function useGetRoIsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(
+    GetRoIsDocument,
+    options
+  )
+}
+export type GetRoIsQueryHookResult = ReturnType<typeof useGetRoIsQuery>
+export type GetRoIsLazyQueryHookResult = ReturnType<typeof useGetRoIsLazyQuery>
+export type GetRoIsQueryResult = Apollo.QueryResult<GetRoIsQuery, GetRoIsQueryVariables>
+export const RowsDocument = gql`
+  query Rows($table: ID!, $filters: RowFilter, $pagination: TablePaginationInput) {
+    rows(table: $table, filters: $filters, pagination: $pagination)
+  }
+`
 
 /**
  * __useRowsQuery__
@@ -10051,27 +18899,31 @@ export const RowsDocument = gql`
  *   },
  * });
  */
-export function useRowsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-      }
-export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RowsQuery, RowsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-        }
-export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
-export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
-export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
+export function useRowsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options)
+}
+export function useRowsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RowsQuery, RowsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options)
+}
+export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>
+export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>
+export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>
 export const GetSnapshotDocument = gql`
-    query GetSnapshot($id: ID!) {
-  snapshot(id: $id) {
-    id
-    store {
-      presignedUrl
+  query GetSnapshot($id: ID!) {
+    snapshot(id: $id) {
+      id
+      store {
+        presignedUrl
+      }
     }
   }
-}
-    `;
+`
 
 /**
  * __useGetSnapshotQuery__
@@ -10089,24 +18941,35 @@ export const GetSnapshotDocument = gql`
  *   },
  * });
  */
-export function useGetSnapshotQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
-      }
-export function useGetSnapshotLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
-        }
-export type GetSnapshotQueryHookResult = ReturnType<typeof useGetSnapshotQuery>;
-export type GetSnapshotLazyQueryHookResult = ReturnType<typeof useGetSnapshotLazyQuery>;
-export type GetSnapshotQueryResult = Apollo.QueryResult<GetSnapshotQuery, GetSnapshotQueryVariables>;
-export const GetStageDocument = gql`
-    query GetStage($id: ID!) {
-  stage(id: $id) {
-    ...Stage
-  }
+export function useGetSnapshotQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(
+    GetSnapshotDocument,
+    options
+  )
 }
-    ${StageFragmentDoc}`;
+export function useGetSnapshotLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(
+    GetSnapshotDocument,
+    options
+  )
+}
+export type GetSnapshotQueryHookResult = ReturnType<typeof useGetSnapshotQuery>
+export type GetSnapshotLazyQueryHookResult = ReturnType<typeof useGetSnapshotLazyQuery>
+export type GetSnapshotQueryResult = Apollo.QueryResult<GetSnapshotQuery, GetSnapshotQueryVariables>
+export const GetStageDocument = gql`
+  query GetStage($id: ID!) {
+    stage(id: $id) {
+      ...Stage
+    }
+  }
+  ${StageFragmentDoc}
+`
 
 /**
  * __useGetStageQuery__
@@ -10124,24 +18987,32 @@ export const GetStageDocument = gql`
  *   },
  * });
  */
-export function useGetStageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-      }
-export function useGetStageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-        }
-export type GetStageQueryHookResult = ReturnType<typeof useGetStageQuery>;
-export type GetStageLazyQueryHookResult = ReturnType<typeof useGetStageLazyQuery>;
-export type GetStageQueryResult = Apollo.QueryResult<GetStageQuery, GetStageQueryVariables>;
-export const GetStagesDocument = gql`
-    query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
-  stages(filters: $filters, pagination: $pagination) {
-    ...ListStage
-  }
+export function useGetStageQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetStageQuery, GetStageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options)
 }
-    ${ListStageFragmentDoc}`;
+export function useGetStageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStageQuery, GetStageQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(
+    GetStageDocument,
+    options
+  )
+}
+export type GetStageQueryHookResult = ReturnType<typeof useGetStageQuery>
+export type GetStageLazyQueryHookResult = ReturnType<typeof useGetStageLazyQuery>
+export type GetStageQueryResult = Apollo.QueryResult<GetStageQuery, GetStageQueryVariables>
+export const GetStagesDocument = gql`
+  query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
+    stages(filters: $filters, pagination: $pagination) {
+      ...ListStage
+    }
+  }
+  ${ListStageFragmentDoc}
+`
 
 /**
  * __useGetStagesQuery__
@@ -10160,28 +19031,35 @@ export const GetStagesDocument = gql`
  *   },
  * });
  */
-export function useGetStagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-      }
-export function useGetStagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-        }
-export type GetStagesQueryHookResult = ReturnType<typeof useGetStagesQuery>;
-export type GetStagesLazyQueryHookResult = ReturnType<typeof useGetStagesLazyQuery>;
-export type GetStagesQueryResult = Apollo.QueryResult<GetStagesQuery, GetStagesQueryVariables>;
-export const StageOptionsDocument = gql`
-    query StageOptions($search: String, $values: [ID!]) {
-  options: stages(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetStagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetStagesQuery, GetStagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(
+    GetStagesDocument,
+    options
+  )
 }
-    `;
+export function useGetStagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStagesQuery, GetStagesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(
+    GetStagesDocument,
+    options
+  )
+}
+export type GetStagesQueryHookResult = ReturnType<typeof useGetStagesQuery>
+export type GetStagesLazyQueryHookResult = ReturnType<typeof useGetStagesLazyQuery>
+export type GetStagesQueryResult = Apollo.QueryResult<GetStagesQuery, GetStagesQueryVariables>
+export const StageOptionsDocument = gql`
+  query StageOptions($search: String, $values: [ID!]) {
+    options: stages(filters: { search: $search, ids: $values }, pagination: { limit: 10 }) {
+      value: id
+      label: name
+    }
+  }
+`
 
 /**
  * __useStageOptionsQuery__
@@ -10200,24 +19078,38 @@ export const StageOptionsDocument = gql`
  *   },
  * });
  */
-export function useStageOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-      }
-export function useStageOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-        }
-export type StageOptionsQueryHookResult = ReturnType<typeof useStageOptionsQuery>;
-export type StageOptionsLazyQueryHookResult = ReturnType<typeof useStageOptionsLazyQuery>;
-export type StageOptionsQueryResult = Apollo.QueryResult<StageOptionsQuery, StageOptionsQueryVariables>;
-export const GetTableDocument = gql`
-    query GetTable($id: ID!) {
-  table(id: $id) {
-    ...Table
-  }
+export function useStageOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<StageOptionsQuery, StageOptionsQueryVariables>(
+    StageOptionsDocument,
+    options
+  )
 }
-    ${TableFragmentDoc}`;
+export function useStageOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<StageOptionsQuery, StageOptionsQueryVariables>(
+    StageOptionsDocument,
+    options
+  )
+}
+export type StageOptionsQueryHookResult = ReturnType<typeof useStageOptionsQuery>
+export type StageOptionsLazyQueryHookResult = ReturnType<typeof useStageOptionsLazyQuery>
+export type StageOptionsQueryResult = Apollo.QueryResult<
+  StageOptionsQuery,
+  StageOptionsQueryVariables
+>
+export const GetTableDocument = gql`
+  query GetTable($id: ID!) {
+    table(id: $id) {
+      ...Table
+    }
+  }
+  ${TableFragmentDoc}
+`
 
 /**
  * __useGetTableQuery__
@@ -10235,24 +19127,32 @@ export const GetTableDocument = gql`
  *   },
  * });
  */
-export function useGetTableQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-      }
-export function useGetTableLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-        }
-export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>;
-export type GetTableLazyQueryHookResult = ReturnType<typeof useGetTableLazyQuery>;
-export type GetTableQueryResult = Apollo.QueryResult<GetTableQuery, GetTableQueryVariables>;
-export const GetTablesDocument = gql`
-    query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
-  tables(filters: $filters, pagination: $pagination) {
-    ...ListTable
-  }
+export function useGetTableQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetTableQuery, GetTableQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options)
 }
-    ${ListTableFragmentDoc}`;
+export function useGetTableLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTableQuery, GetTableQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(
+    GetTableDocument,
+    options
+  )
+}
+export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>
+export type GetTableLazyQueryHookResult = ReturnType<typeof useGetTableLazyQuery>
+export type GetTableQueryResult = Apollo.QueryResult<GetTableQuery, GetTableQueryVariables>
+export const GetTablesDocument = gql`
+  query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
+    tables(filters: $filters, pagination: $pagination) {
+      ...ListTable
+    }
+  }
+  ${ListTableFragmentDoc}
+`
 
 /**
  * __useGetTablesQuery__
@@ -10271,24 +19171,35 @@ export const GetTablesDocument = gql`
  *   },
  * });
  */
-export function useGetTablesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-      }
-export function useGetTablesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-        }
-export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>;
-export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>;
-export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>;
-export const GetRgbViewDocument = gql`
-    query GetRGBView($id: ID!) {
-  rgbView(id: $id) {
-    ...RGBView
-  }
+export function useGetTablesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetTablesQuery, GetTablesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(
+    GetTablesDocument,
+    options
+  )
 }
-    ${RgbViewFragmentDoc}`;
+export function useGetTablesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTablesQuery, GetTablesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(
+    GetTablesDocument,
+    options
+  )
+}
+export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>
+export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>
+export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>
+export const GetRgbViewDocument = gql`
+  query GetRGBView($id: ID!) {
+    rgbView(id: $id) {
+      ...RGBView
+    }
+  }
+  ${RgbViewFragmentDoc}
+`
 
 /**
  * __useGetRgbViewQuery__
@@ -10306,28 +19217,35 @@ export const GetRgbViewDocument = gql`
  *   },
  * });
  */
-export function useGetRgbViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
-      }
-export function useGetRgbViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
-        }
-export type GetRgbViewQueryHookResult = ReturnType<typeof useGetRgbViewQuery>;
-export type GetRgbViewLazyQueryHookResult = ReturnType<typeof useGetRgbViewLazyQuery>;
-export type GetRgbViewQueryResult = Apollo.QueryResult<GetRgbViewQuery, GetRgbViewQueryVariables>;
-export const SearchRgbViewsDocument = gql`
-    query SearchRGBViews($search: String, $values: [ID!]) {
-  options: rgbViews(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetRgbViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(
+    GetRgbViewDocument,
+    options
+  )
 }
-    `;
+export function useGetRgbViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(
+    GetRgbViewDocument,
+    options
+  )
+}
+export type GetRgbViewQueryHookResult = ReturnType<typeof useGetRgbViewQuery>
+export type GetRgbViewLazyQueryHookResult = ReturnType<typeof useGetRgbViewLazyQuery>
+export type GetRgbViewQueryResult = Apollo.QueryResult<GetRgbViewQuery, GetRgbViewQueryVariables>
+export const SearchRgbViewsDocument = gql`
+  query SearchRGBViews($search: String, $values: [ID!]) {
+    options: rgbViews(filters: { search: $search, ids: $values }, pagination: { limit: 10 }) {
+      value: id
+      label: name
+    }
+  }
+`
 
 /**
  * __useSearchRgbViewsQuery__
@@ -10346,50 +19264,67 @@ export const SearchRgbViewsDocument = gql`
  *   },
  * });
  */
-export function useSearchRgbViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
-      }
-export function useSearchRgbViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
-        }
-export type SearchRgbViewsQueryHookResult = ReturnType<typeof useSearchRgbViewsQuery>;
-export type SearchRgbViewsLazyQueryHookResult = ReturnType<typeof useSearchRgbViewsLazyQuery>;
-export type SearchRgbViewsQueryResult = Apollo.QueryResult<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>;
-export const ActiveImageViewsDocument = gql`
-    query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
-  activeViews(image: $image, selector: $selector, exclude: $exclude) {
-    ...ChannelView
-    ...AffineTransformationView
-    ...MaskView
-    ...InstanceMaskView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...HistogramView
-    ...LightpathView
-  }
+export function useSearchRgbViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(
+    SearchRgbViewsDocument,
+    options
+  )
 }
-    ${ChannelViewFragmentDoc}
-${AffineTransformationViewFragmentDoc}
-${MaskViewFragmentDoc}
-${InstanceMaskViewFragmentDoc}
-${TimepointViewFragmentDoc}
-${OpticsViewFragmentDoc}
-${AcquisitionViewFragmentDoc}
-${RgbViewFragmentDoc}
-${WellPositionViewFragmentDoc}
-${DerivedViewFragmentDoc}
-${RoiViewFragmentDoc}
-${FileViewFragmentDoc}
-${HistogramViewFragmentDoc}
-${LightpathViewFragmentDoc}`;
+export function useSearchRgbViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchRgbViewsQuery,
+    SearchRgbViewsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(
+    SearchRgbViewsDocument,
+    options
+  )
+}
+export type SearchRgbViewsQueryHookResult = ReturnType<typeof useSearchRgbViewsQuery>
+export type SearchRgbViewsLazyQueryHookResult = ReturnType<typeof useSearchRgbViewsLazyQuery>
+export type SearchRgbViewsQueryResult = Apollo.QueryResult<
+  SearchRgbViewsQuery,
+  SearchRgbViewsQueryVariables
+>
+export const ActiveImageViewsDocument = gql`
+  query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
+    activeViews(image: $image, selector: $selector, exclude: $exclude) {
+      ...ChannelView
+      ...AffineTransformationView
+      ...MaskView
+      ...InstanceMaskView
+      ...TimepointView
+      ...OpticsView
+      ...AcquisitionView
+      ...RGBView
+      ...WellPositionView
+      ...DerivedView
+      ...ROIView
+      ...FileView
+      ...HistogramView
+      ...LightpathView
+    }
+  }
+  ${ChannelViewFragmentDoc}
+  ${AffineTransformationViewFragmentDoc}
+  ${MaskViewFragmentDoc}
+  ${InstanceMaskViewFragmentDoc}
+  ${TimepointViewFragmentDoc}
+  ${OpticsViewFragmentDoc}
+  ${AcquisitionViewFragmentDoc}
+  ${RgbViewFragmentDoc}
+  ${WellPositionViewFragmentDoc}
+  ${DerivedViewFragmentDoc}
+  ${RoiViewFragmentDoc}
+  ${FileViewFragmentDoc}
+  ${HistogramViewFragmentDoc}
+  ${LightpathViewFragmentDoc}
+`
 
 /**
  * __useActiveImageViewsQuery__
@@ -10409,30 +19344,50 @@ ${LightpathViewFragmentDoc}`;
  *   },
  * });
  */
-export function useActiveImageViewsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>(ActiveImageViewsDocument, options);
-      }
-export function useActiveImageViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>(ActiveImageViewsDocument, options);
-        }
-export type ActiveImageViewsQueryHookResult = ReturnType<typeof useActiveImageViewsQuery>;
-export type ActiveImageViewsLazyQueryHookResult = ReturnType<typeof useActiveImageViewsLazyQuery>;
-export type ActiveImageViewsQueryResult = Apollo.QueryResult<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>;
+export function useActiveImageViewsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    ActiveImageViewsQuery,
+    ActiveImageViewsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>(
+    ActiveImageViewsDocument,
+    options
+  )
+}
+export function useActiveImageViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ActiveImageViewsQuery,
+    ActiveImageViewsQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ActiveImageViewsQuery, ActiveImageViewsQueryVariables>(
+    ActiveImageViewsDocument,
+    options
+  )
+}
+export type ActiveImageViewsQueryHookResult = ReturnType<typeof useActiveImageViewsQuery>
+export type ActiveImageViewsLazyQueryHookResult = ReturnType<typeof useActiveImageViewsLazyQuery>
+export type ActiveImageViewsQueryResult = Apollo.QueryResult<
+  ActiveImageViewsQuery,
+  ActiveImageViewsQueryVariables
+>
 export const WatchImagesDocument = gql`
-    subscription WatchImages($dataset: ID) {
-  images(dataset: $dataset) {
-    create {
-      ...ListImage
-    }
-    delete
-    update {
-      ...ListImage
+  subscription WatchImages($dataset: ID) {
+    images(dataset: $dataset) {
+      create {
+        ...ListImage
+      }
+      delete
+      update {
+        ...ListImage
+      }
     }
   }
-}
-    ${ListImageFragmentDoc}`;
+  ${ListImageFragmentDoc}
+`
 
 /**
  * __useWatchImagesSubscription__
@@ -10450,25 +19405,34 @@ export const WatchImagesDocument = gql`
  *   },
  * });
  */
-export function useWatchImagesSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<WatchImagesSubscription, WatchImagesSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImagesSubscription, WatchImagesSubscriptionVariables>(WatchImagesDocument, options);
-      }
-export type WatchImagesSubscriptionHookResult = ReturnType<typeof useWatchImagesSubscription>;
-export type WatchImagesSubscriptionResult = Apollo.SubscriptionResult<WatchImagesSubscription>;
+export function useWatchImagesSubscription(
+  baseOptions?: ApolloReactHooks.SubscriptionHookOptions<
+    WatchImagesSubscription,
+    WatchImagesSubscriptionVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<
+    WatchImagesSubscription,
+    WatchImagesSubscriptionVariables
+  >(WatchImagesDocument, options)
+}
+export type WatchImagesSubscriptionHookResult = ReturnType<typeof useWatchImagesSubscription>
+export type WatchImagesSubscriptionResult = Apollo.SubscriptionResult<WatchImagesSubscription>
 export const WatchRoisDocument = gql`
-    subscription WatchRois($image: ID!) {
-  rois(image: $image) {
-    create {
-      ...ListROI
-    }
-    delete
-    update {
-      ...ListROI
+  subscription WatchRois($image: ID!) {
+    rois(image: $image) {
+      create {
+        ...ListROI
+      }
+      delete
+      update {
+        ...ListROI
+      }
     }
   }
-}
-    ${ListRoiFragmentDoc}`;
+  ${ListRoiFragmentDoc}
+`
 
 /**
  * __useWatchRoisSubscription__
@@ -10486,39 +19450,48 @@ export const WatchRoisDocument = gql`
  *   },
  * });
  */
-export function useWatchRoisSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchRoisSubscription, WatchRoisSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchRoisSubscription, WatchRoisSubscriptionVariables>(WatchRoisDocument, options);
-      }
-export type WatchRoisSubscriptionHookResult = ReturnType<typeof useWatchRoisSubscription>;
-export type WatchRoisSubscriptionResult = Apollo.SubscriptionResult<WatchRoisSubscription>;
+export function useWatchRoisSubscription(
+  baseOptions: ApolloReactHooks.SubscriptionHookOptions<
+    WatchRoisSubscription,
+    WatchRoisSubscriptionVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchRoisSubscription, WatchRoisSubscriptionVariables>(
+    WatchRoisDocument,
+    options
+  )
+}
+export type WatchRoisSubscriptionHookResult = ReturnType<typeof useWatchRoisSubscription>
+export type WatchRoisSubscriptionResult = Apollo.SubscriptionResult<WatchRoisSubscription>
 export const WatchTransformationViewsDocument = gql`
-    subscription WatchTransformationViews($stage: ID!) {
-  affineTransformationViews(stage: $stage) {
-    create {
-      ...AffineTransformationView
-      image {
-        id
-        store {
-          shape
+  subscription WatchTransformationViews($stage: ID!) {
+    affineTransformationViews(stage: $stage) {
+      create {
+        ...AffineTransformationView
+        image {
+          id
+          store {
+            shape
+          }
+          name
         }
-        name
       }
-    }
-    delete
-    update {
-      ...AffineTransformationView
-      image {
-        id
-        store {
-          shape
+      delete
+      update {
+        ...AffineTransformationView
+        image {
+          id
+          store {
+            shape
+          }
+          name
         }
-        name
       }
     }
   }
-}
-    ${AffineTransformationViewFragmentDoc}`;
+  ${AffineTransformationViewFragmentDoc}
+`
 
 /**
  * __useWatchTransformationViewsSubscription__
@@ -10536,9 +19509,20 @@ export const WatchTransformationViewsDocument = gql`
  *   },
  * });
  */
-export function useWatchTransformationViewsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables>(WatchTransformationViewsDocument, options);
-      }
-export type WatchTransformationViewsSubscriptionHookResult = ReturnType<typeof useWatchTransformationViewsSubscription>;
-export type WatchTransformationViewsSubscriptionResult = Apollo.SubscriptionResult<WatchTransformationViewsSubscription>;
+export function useWatchTransformationViewsSubscription(
+  baseOptions: ApolloReactHooks.SubscriptionHookOptions<
+    WatchTransformationViewsSubscription,
+    WatchTransformationViewsSubscriptionVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<
+    WatchTransformationViewsSubscription,
+    WatchTransformationViewsSubscriptionVariables
+  >(WatchTransformationViewsDocument, options)
+}
+export type WatchTransformationViewsSubscriptionHookResult = ReturnType<
+  typeof useWatchTransformationViewsSubscription
+>
+export type WatchTransformationViewsSubscriptionResult =
+  Apollo.SubscriptionResult<WatchTransformationViewsSubscription>

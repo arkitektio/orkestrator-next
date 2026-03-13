@@ -13,14 +13,9 @@ import {
   useUpdateMetricCategoryMutation
 } from "../api/graphql";
 
-const enumToOptions = (e: any) => {
-  return Object.keys(e).map((key) => ({
-    label: key,
-    value: e[key],
-  }));
-};
 
-export default (props: { metricCategory: MetricCategoryFragment }) => {
+
+const TForm = (props: { metricCategory: MetricCategoryFragment }) => {
   const [update] = useUpdateMetricCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -32,8 +27,7 @@ export default (props: { metricCategory: MetricCategoryFragment }) => {
       id: props.metricCategory.id,
       label: props.metricCategory.label,
       description: props.metricCategory.description,
-      purl: props.metricCategory.purl || "",
-      tags: props.metricCategory.tags.map((tag) => tag.value),
+      tags: props.metricCategory.tags.map((tag) => tag.id),
     },
   });
 
@@ -87,3 +81,5 @@ export default (props: { metricCategory: MetricCategoryFragment }) => {
     </>
   );
 };
+
+export default TForm;

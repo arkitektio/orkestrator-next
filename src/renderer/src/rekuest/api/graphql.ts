@@ -16,14 +16,28 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   ActionHash: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   AnyDefault: { input: any; output: any; }
+  /** The `Arg` scalar type represents a an Argument in a Action assignment */
   Arg: { input: any; output: any; }
+  /** The `Args` scalar type represents a Dictionary of arguments */
   Args: { input: any; output: any; }
+  /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   Identifier: { input: any; output: any; }
+  /** The `InstanceID` scalar type represents a unique instance identifier */
   InstanceId: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   SearchQuery: { input: any; output: any; }
+  /**
+   *
+   *     The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)
+   *       to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.
+   *         The otherValues parameter is an object with the other values in the form {fieldName: value}.
+   */
   ValidatorFunction: { input: any; output: any; }
 };
 
@@ -386,6 +400,22 @@ export type AgentChangeEvent = {
   update?: Maybe<Agent>;
 };
 
+/**
+ * A dependency for a implementation. By defining dependencies, you can
+ *     create a dependency graph for your implementations and actions
+ */
+export type AgentDependencyInput = {
+  actionDemands?: InputMaybe<Array<ActionDependencyInput>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The identifier of the agent. This is used to identify the agent in the system. */
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  minViableInstances?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  optional?: Scalars['Boolean']['input'];
+  preferedInstances?: InputMaybe<Scalars['Int']['input']>;
+};
+
 /** A way to filter agents */
 export type AgentFilter = {
   AND?: InputMaybe<AgentFilter>;
@@ -397,6 +427,7 @@ export type AgentFilter = {
   appIdentifier?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by client ID of the app the agent is registered to */
   clientId?: InputMaybe<Scalars['String']['input']>;
+  dependency?: InputMaybe<Scalars['String']['input']>;
   /** Filter based on device */
   deviceId?: InputMaybe<Scalars['ID']['input']>;
   distinct?: InputMaybe<Scalars['Boolean']['input']>;
@@ -427,6 +458,8 @@ export type AgentInput = {
   extensions?: InputMaybe<Array<Scalars['String']['input']>>;
   /** The instance ID of the agent. This is used to identify the agent in the system. */
   instanceId: Scalars['InstanceId']['input'];
+  /** The locks of the agent. This is used to specify which resources the agent needs to run */
+  locks?: InputMaybe<Array<LockSchemaInput>>;
   /** The name of the agent. This is used to identify the agent in the system. */
   name?: InputMaybe<Scalars['String']['input']>;
 };
@@ -463,6 +496,7 @@ export type AssignInput = {
   cached?: Scalars['Boolean']['input'];
   capture?: Scalars['Boolean']['input'];
   dependencies?: InputMaybe<Scalars['Args']['input']>;
+  dependency?: InputMaybe<Scalars['String']['input']>;
   ephemeral?: Scalars['Boolean']['input'];
   hooks?: InputMaybe<Array<HookInput>>;
   implementation?: InputMaybe<Scalars['ID']['input']>;
@@ -470,11 +504,13 @@ export type AssignInput = {
   interface?: InputMaybe<Scalars['String']['input']>;
   isHook?: InputMaybe<Scalars['Boolean']['input']>;
   log?: Scalars['Boolean']['input'];
+  method?: InputMaybe<Scalars['String']['input']>;
   parent?: InputMaybe<Scalars['ID']['input']>;
   /** The policy for the assignation. This defines how the assignation should be handled. */
   policy?: InputMaybe<AssignPolicy>;
   reference?: InputMaybe<Scalars['String']['input']>;
   reservation?: InputMaybe<Scalars['ID']['input']>;
+  resolution?: InputMaybe<Scalars['ID']['input']>;
   step?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -562,6 +598,8 @@ export type Assignation = {
   reference?: Maybe<Scalars['String']['output']>;
   /** Reservation that caused this assignation. */
   reservation?: Maybe<Reservation>;
+  /** Resolution used to resolve dependencies for this assignation. */
+  resolution?: Maybe<Resolution>;
   /** Root assignation in the creation chain. */
   root?: Maybe<Assignation>;
   /** Current status message. */
@@ -777,6 +815,10 @@ export enum AssignationTimestampField {
   CreatedAt = 'CREATED_AT'
 }
 
+export type AutoResolveInput = {
+  implementation: Scalars['ID']['input'];
+};
+
 export type Binds = {
   __typename?: 'Binds';
   clients: Array<Scalars['ID']['output']>;
@@ -960,6 +1002,15 @@ export type CreateImplementationInput = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
+/** The input for creating a resolution. */
+export type CreateResolutionInput = {
+  /** The implementation ID of the resolution. This is used to identify the resolution in the system. */
+  implementation: Scalars['ID']['input'];
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  resolvedDependencies?: InputMaybe<Array<ResolvedDependencyInput>>;
+};
+
 /** The input for creating a shortcut. */
 export type CreateShortcutInput = {
   action: Scalars['ID']['input'];
@@ -1084,6 +1135,11 @@ export type DeleteAgentInput = {
 /** The input for deleting a implementation. */
 export type DeleteImplementationInput = {
   implementation: Scalars['ID']['input'];
+};
+
+/** The input for deleting a resolution. */
+export type DeleteResolutionInput = {
+  id: Scalars['ID']['input'];
 };
 
 /** The input for deleting a shortcut. */
@@ -1337,6 +1393,8 @@ export type Implementation = {
   params: Scalars['AnyDefault']['output'];
   /** Check if this implementation is pinned by the current user. */
   pinned: Scalars['Boolean']['output'];
+  /** The resolved dependencies */
+  resolutions: Array<Resolution>;
   /** Tests */
   tests: Array<Implementation>;
 };
@@ -1345,6 +1403,13 @@ export type Implementation = {
 /** Represents a concrete implementation of an action. */
 export type ImplementationDependenciesArgs = {
   filters?: InputMaybe<DependencyFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Represents a concrete implementation of an action. */
+export type ImplementationResolutionsArgs = {
+  filters?: InputMaybe<ResolutionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1380,6 +1445,7 @@ export type ImplementationFilter = {
   NOT?: InputMaybe<ImplementationFilter>;
   OR?: InputMaybe<ImplementationFilter>;
   action?: InputMaybe<ImplementationActionFilter>;
+  actionDemand?: InputMaybe<ActionDemandInput>;
   actionHash?: InputMaybe<Scalars['ActionHash']['input']>;
   agent?: InputMaybe<ImplementationAgentFilter>;
   extension?: InputMaybe<Scalars['String']['input']>;
@@ -1393,10 +1459,13 @@ export type ImplementationFilter = {
 /** A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params. */
 export type ImplementationInput = {
   definition: DefinitionInput;
-  dependencies: Array<ActionDependencyInput>;
+  dependencies?: Array<AgentDependencyInput>;
   dynamic?: Scalars['Boolean']['input'];
   interface?: InputMaybe<Scalars['String']['input']>;
+  locks?: InputMaybe<Array<Scalars['String']['input']>>;
   logo?: InputMaybe<Scalars['String']['input']>;
+  /** The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state */
+  optimistics?: InputMaybe<Array<OptimisticInput>>;
   params?: InputMaybe<Scalars['AnyDefault']['input']>;
 };
 
@@ -1511,6 +1580,12 @@ export type KickInput = {
   reason?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Which locks does the agent provide in general */
+export type LockSchemaInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+};
+
 export enum LogLevel {
   Critical = 'CRITICAL',
   Debug = 'DEBUG',
@@ -1623,6 +1698,8 @@ export type Mutation = {
   archiveState: State;
   /** Assign a task to an agent. */
   assign: Assignation;
+  /** Automatically resolve dependencies for an implementation. */
+  autoResolve: Resolution;
   /** Block an agent from connecting. */
   block: Agent;
   /** Bounce an agent so it reconnects. */
@@ -1641,6 +1718,8 @@ export type Mutation = {
   createForeignImplementation: Implementation;
   /** Create a new implementation entry. */
   createImplementation: Implementation;
+  /** Create sa resolution from */
+  createResolution: Resolution;
   /** Create a shortcut to an action. */
   createShortcut: Shortcut;
   /** Define a new state schema. */
@@ -1655,6 +1734,8 @@ export type Mutation = {
   deleteAgent: Scalars['ID']['output'];
   /** Delete a registered implementation. */
   deleteImplementation: Scalars['String']['output'];
+  /** Delete a resolution by ID. */
+  deleteResolution: Scalars['ID']['output'];
   /** Delete a shortcut. */
   deleteShortcut: Scalars['ID']['output'];
   /** Ensure agent record exists or is up to date. */
@@ -1693,6 +1774,8 @@ export type Mutation = {
   unreserve: Scalars['String']['output'];
   /** Unshelve data from a memory drawer. */
   unshelveMemoryDrawer: Scalars['ID']['output'];
+  /** Update an existing resolution. */
+  updateResolution: Resolution;
   /** Update fields in a state object. */
   updateState: State;
 };
@@ -1713,6 +1796,12 @@ export type MutationArchiveStateArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationAssignArgs = {
   input: AssignInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationAutoResolveArgs = {
+  input: AutoResolveInput;
 };
 
 
@@ -1771,6 +1860,12 @@ export type MutationCreateImplementationArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
+export type MutationCreateResolutionArgs = {
+  input: CreateResolutionInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
 export type MutationCreateShortcutArgs = {
   input: CreateShortcutInput;
 };
@@ -1809,6 +1904,12 @@ export type MutationDeleteAgentArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationDeleteImplementationArgs = {
   input: DeleteImplementationInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationDeleteResolutionArgs = {
+  input: DeleteResolutionInput;
 };
 
 
@@ -1927,6 +2028,12 @@ export type MutationUnshelveMemoryDrawerArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
+export type MutationUpdateResolutionArgs = {
+  input: UpdateResolutionInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
 export type MutationUpdateStateArgs = {
   input: UpdateStateInput;
 };
@@ -1934,6 +2041,17 @@ export type MutationUpdateStateArgs = {
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
+};
+
+/**
+ *  An optimistic is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state values when the action is assigned, instead of waiting for the action to be executed and the state to be updated. This will only ever happen on the frontend.
+ *
+ *
+ */
+export type OptimisticInput = {
+  accessor?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+  state: Scalars['String']['input'];
 };
 
 export enum Ordering {
@@ -2237,6 +2355,12 @@ export type Query = {
   reservation: Reservation;
   /** List of all reservations. */
   reservations: Array<Reservation>;
+  /** Fetch a client by ID. */
+  resolution: Resolution;
+  /** All resolutions. */
+  resolutions: Array<Resolution>;
+  /** Fetch resolved dependencies for a resolution. */
+  resolvedImplementations: Array<Implementation>;
   /** Retrieve shortcut by ID. */
   shortcut: Shortcut;
   /** List of shortcuts. */
@@ -2479,6 +2603,27 @@ export type QueryReservationsArgs = {
 
 
 /** Root query type for fetching entities in the system. */
+export type QueryResolutionArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryResolutionsArgs = {
+  filters?: InputMaybe<ResolutionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryResolvedImplementationsArgs = {
+  dependencyKey?: InputMaybe<Scalars['String']['input']>;
+  methodKey?: InputMaybe<Scalars['String']['input']>;
+  resolution: Scalars['ID']['input'];
+};
+
+
+/** Root query type for fetching entities in the system. */
 export type QueryShortcutArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2704,6 +2849,76 @@ export type ReserveInput = {
   instanceId?: Scalars['InstanceId']['input'];
   reference?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Represents a resolution for a blok. */
+export type Resolution = {
+  __typename?: 'Resolution';
+  /** User who created the resolution. */
+  creator: User;
+  /** Unique ID of the resolution. */
+  id: Scalars['ID']['output'];
+  implementation: Implementation;
+  /** Name of the resolution. */
+  name: Scalars['String']['output'];
+  /** Organization that owns this resolution. */
+  organization: Organization;
+  /** Timestamp when the resolution was created. */
+  resolvedAt: Scalars['DateTime']['output'];
+  /** List of resolved dependencies for this resolution. */
+  resolvedDependencies: Array<ResolvedDependency>;
+};
+
+
+/** Represents a resolution for a blok. */
+export type ResolutionResolvedDependenciesArgs = {
+  filters?: InputMaybe<ResolvedDependencyFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A way to filter test cases */
+export type ResolutionFilter = {
+  AND?: InputMaybe<ResolutionFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ResolutionFilter>;
+  OR?: InputMaybe<ResolutionFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+};
+
+/** Represents a dependency that has been resolved to a specific implementation. */
+export type ResolvedDependency = {
+  __typename?: 'ResolvedDependency';
+  /** The original dependency. */
+  dependency: Dependency;
+  /** Resolution for streaming data down to this dependency. */
+  downStreamResolution?: Maybe<Resolution>;
+  /** Unique ID of the resolved dependency. */
+  id: Scalars['ID']['output'];
+  /** The implementation that resolves the dependency. */
+  implementation: Implementation;
+  /** The key of the resolved dependency. */
+  key: Scalars['String']['output'];
+  /** The resolution key associated with this resolved dependency. */
+  resolutionKey: Scalars['String']['output'];
+};
+
+/** A way to filter resolved dependencies */
+export type ResolvedDependencyFilter = {
+  AND?: InputMaybe<ResolvedDependencyFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ResolvedDependencyFilter>;
+  OR?: InputMaybe<ResolvedDependencyFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+/** The input for mapping a dependency to an implementation. */
+export type ResolvedDependencyInput = {
+  dependency: Scalars['ID']['input'];
+  downStreamResolution?: InputMaybe<Scalars['ID']['input']>;
+  implementation: Scalars['ID']['input'];
+  key: Scalars['String']['input'];
+  resolutionKey?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for resuming an assignation. */
@@ -3314,6 +3529,13 @@ export type UnshelveMemoryDrawerInput = {
   id: Scalars['String']['input'];
   /** The instance ID of the agent. This is used to identify the agent in the system. */
   instanceId: Scalars['InstanceId']['input'];
+};
+
+/** The input for creating a resolution. */
+export type UpdateResolutionInput = {
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+  resolvedDependencies?: InputMaybe<Array<ResolvedDependencyInput>>;
 };
 
 /** The input for updating a state schema. */

@@ -1,6 +1,5 @@
-import { PageLayout } from "@/components/layout/PageLayout";
-import InterfaceList from "../components/lists/InterfaceList";
 import { RekuestInterface } from "@/linkers";
+import InterfaceList from "../components/lists/InterfaceList";
 const Page = () => {
   return (
     <RekuestInterface.ListPage title={"Interfaces"}>

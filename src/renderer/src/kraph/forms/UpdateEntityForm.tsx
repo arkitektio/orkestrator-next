@@ -13,7 +13,7 @@ export const UpdateEntityForm = (props: { entity: EntityFragment }) => {
 
   const form = useForm<UpdateEntityMutationVariables["input"]>({
     defaultValues: {
-      externalId: props.entity.externalId,
+
     },
   });
 

@@ -1,3 +1,28 @@
+## [1.53.1](https://github.com/arkitektio/orkestrator-next/compare/v1.53.0...v1.53.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* a little more ([74abcba](https://github.com/arkitektio/orkestrator-next/commit/74abcbaca6cf437309ebbeb90ddf8d417a88be34))
+* ad bit less bugs ([37ca518](https://github.com/arkitektio/orkestrator-next/commit/37ca518ebf37eeb1293e63a41a91be3c23b4a00f))
+* add more structure lists ([d428453](https://github.com/arkitektio/orkestrator-next/commit/d4284536466ec29abf60c19308353c474c814862))
+* bring up ([60c91c3](https://github.com/arkitektio/orkestrator-next/commit/60c91c324531f5896e4c7c11a3042461db5b1cbd))
+* little things ([199c7db](https://github.com/arkitektio/orkestrator-next/commit/199c7dbb9c1a86daecde483ccedccbc12f7b7716))
+* more ([27fcb8b](https://github.com/arkitektio/orkestrator-next/commit/27fcb8b4ec9c91c230ca95f366012d29b985d6fa))
+* new stuff ([da01cbb](https://github.com/arkitektio/orkestrator-next/commit/da01cbb8157254861bf423610a93998d262ab7bc))
+* object button assignment? ([f0b054f](https://github.com/arkitektio/orkestrator-next/commit/f0b054f11ffeb070458af7beb8b72cdc0bb1772e))
+* prettier run on whole directory ([b4a6b0b](https://github.com/arkitektio/orkestrator-next/commit/b4a6b0b468dcb233e21e83517645d712293f4796))
+* remove mates ([0ec3c8a](https://github.com/arkitektio/orkestrator-next/commit/0ec3c8a10b77ee512202d400e2fb6d9527ea81a8))
+* remove mates 2 ([48f5d4e](https://github.com/arkitektio/orkestrator-next/commit/48f5d4e4ce515f0c396b17dde84056b872bfbcfb))
+* selection ([7d71875](https://github.com/arkitektio/orkestrator-next/commit/7d71875311dbbdf2d06f8d13aff7029eb5410542))
+* some minor stuff ([f0543f7](https://github.com/arkitektio/orkestrator-next/commit/f0543f78f3cdea9889f5ccc2af401384db706d95))
+* stuff ([987ae71](https://github.com/arkitektio/orkestrator-next/commit/987ae71f1afea55d203825e077cc1b072c9a4277))
+* stuff ([a352aab](https://github.com/arkitektio/orkestrator-next/commit/a352aab495c2179540d605bc0640a6b4e9126ad4))
+* trying to do more ([48ad483](https://github.com/arkitektio/orkestrator-next/commit/48ad483f06ad468ed0116205c29c5a1bd54fa20d))
+* trying to make stuff happen again ([67ecea3](https://github.com/arkitektio/orkestrator-next/commit/67ecea3a03508da635848f9728a82e772bf458fb))
+* upp upp ([db0ac1b](https://github.com/arkitektio/orkestrator-next/commit/db0ac1bf41fe3ec52d301b06fe066a16a84a2f17))
+* wierd shit a bit better ([fa98e69](https://github.com/arkitektio/orkestrator-next/commit/fa98e6932dab4a76bd49ab1f0c226329f541c2f4))
+
 # [1.53.0](https://github.com/arkitektio/orkestrator-next/compare/v1.52.0...v1.53.0) (2026-02-02)
 
 

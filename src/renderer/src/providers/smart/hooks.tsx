@@ -3,6 +3,8 @@ import { Structure } from "@/types";
 import { DropTargetMonitor, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 
+import { resolveSmartDrop } from "./dropUtils";
+
 export const useSmartDrop = (
   callback: (
     structures: Structure[],
@@ -15,12 +17,11 @@ export const useSmartDrop = (
       accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT],
       drop: (item, monitor) => {
         console.log("drop", item);
-        const text = item.text;
+        const resolvedDrop = resolveSmartDrop(item, monitor.getItemType());
 
-        if (text) {
-          const structure: Structure = JSON.parse(text);
-          callback([structure], monitor);
-        } else callback(item, monitor);
+        if (resolvedDrop) {
+          callback(resolvedDrop.partners, monitor);
+        }
         return {};
       },
       collect: (monitor) => {

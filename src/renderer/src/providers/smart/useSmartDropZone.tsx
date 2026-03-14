@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 
+import { resolveSmartDrop } from "./dropUtils";
 import { SmartModelProps } from "./types";
 
 const syncAttribute = (
@@ -63,41 +64,14 @@ export const useSmartDropZone = ({
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
-      drop: (item: any, monitor) => {
-        if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
-          setPartners(item);
+      drop: (item: unknown, monitor) => {
+        const resolvedDrop = resolveSmartDrop(item, monitor.getItemType());
+        if (!resolvedDrop) {
+          alert(`Drop unkonwn ${String(item)}`);
           return {};
         }
 
-        if (monitor.getItemType() === NativeTypes.URL) {
-          const urls = item.urls;
-          const nextPartners: Structure[] = [];
-
-          for (let index = 0; index < urls.length; index++) {
-            const match = urls[index].match(/arkitekt:\/\/([^:]+):([^\/]+)/);
-            if (match) {
-              const [, nextIdentifier, nextObject] = match;
-              nextPartners.push({ identifier: nextIdentifier, object: nextObject });
-            }
-          }
-
-          if (nextPartners.length > 0) {
-            setPartners(nextPartners);
-            return {};
-          }
-        }
-
-        if (item.text) {
-          try {
-            const structure: Structure = JSON.parse(item.text);
-            setPartners([structure]);
-            return {};
-          } catch (error) {
-            console.error(error);
-          }
-        }
-
-        alert(`Drop unkonwn ${item}`);
+        setPartners(resolvedDrop.partners);
         return {};
       },
       collect: (monitor) => ({

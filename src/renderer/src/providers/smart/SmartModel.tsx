@@ -13,8 +13,6 @@ import { SmartModelProps } from "./types";
 import { useSmartModel } from "./useSmartModel";
 
 export const SmartModel = ({
-  showSelfMates = true,
-  hover = false,
   ...props
 }: SmartModelProps) => {
   const {
@@ -27,7 +25,7 @@ export const SmartModel = ({
     handleClick,
     handleDragStart,
     getCurrentSelection,
-  } = useSmartModel({ identifier: props.identifier, object: props.object });
+  } = useSmartModel({ identifier: props.identifier, object: props.object,  });
 
   const className = React.useMemo(
     () =>

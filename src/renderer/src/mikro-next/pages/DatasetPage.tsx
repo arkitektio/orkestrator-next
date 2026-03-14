@@ -8,10 +8,8 @@ import { useGetDatasetQuery } from "../api/graphql";
 import { DatasetExplorerToolbar, DatasetListExplorer, useDatasetExplorer } from "../components/explorer/DatasetListExplorer";
 import { DatasetTableExplorer } from "../components/explorer/DatasetTableExplorer";
 
-export type IRepresentationScreenProps = {};
 export type ViewType = "list" | "icons";
-
-export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
+ const TPage = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
   const [viewType, setViewType] = useState<ViewType>("icons");
   const { selection, bselection } = useSelection();
 
@@ -55,3 +53,6 @@ export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
     </MikroDataset.ModelPage>
   );
 });
+
+
+export default TPage;

@@ -1,0 +1,16 @@
+fragment ListMaterializedEdge on MaterializedEdge {
+  id
+  graph {
+    id
+    name
+  }
+}
+
+
+fragment MaterializedEdge on MaterializedEdge {
+  id
+  graph {
+    id
+    name
+  }
+}

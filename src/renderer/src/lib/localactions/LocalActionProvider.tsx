@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 
 import { useDialog } from "@/app/dialog";
+import type { InferedServiceMap, ServiceBuilderMap } from "../arkitekt/types";
 import type { ServiceMap } from "../arkitekt/provider";
 import { useNavigate } from "react-router-dom";
 
@@ -80,10 +81,23 @@ export type ActionState = {
   isCommand: boolean;
 };
 
-export type ActionParams = {
+export type ResolveActionServices<TAppOrServices = ServiceMap> =
+  TAppOrServices extends {
+    useConnection: () => infer TConnection;
+  }
+    ? NonNullable<TConnection> extends { serviceMap: infer TServices }
+      ? TServices
+      : ServiceMap
+    : TAppOrServices extends ServiceBuilderMap
+      ? InferedServiceMap<TAppOrServices>
+      : TAppOrServices extends Record<string, unknown>
+        ? TAppOrServices
+        : ServiceMap;
+
+export type ActionParams<TAppOrServices = ServiceMap> = {
   state: ActionState;
   location: Location;
-  services: ServiceMap;
+  services: ResolveActionServices<TAppOrServices>;
   onProgress: (progress: number) => void;
   abortSignal: AbortSignal;
   dialog: ReturnType<typeof useDialog>;
@@ -92,20 +106,20 @@ export type ActionParams = {
 
 export type SetAction = ActionState;
 
-export type Action = {
+export type Action<TAppOrServices = ServiceMap> = {
   title: string;
   description: string;
   conditions: readonly Condition[];
   collections?: readonly string[];
-  execute: (action: ActionParams) => Promise<ActionState | void>;
+  execute: (action: ActionParams<TAppOrServices>) => Promise<ActionState | void>;
 };
 
-export type ActionRegistry = Record<string, Action>;
+export type ActionRegistry<TAppOrServices = ServiceMap> = Record<string, Action<TAppOrServices>>;
 
-export const getActionsForState = (
-  registry: ActionRegistry,
+export const getActionsForState = <TAppOrServices = ServiceMap>(
+  registry: ActionRegistry<TAppOrServices>,
   state: ActionState,
-): Action[] => {
+): Action<TAppOrServices>[] => {
   return Object.values(registry).filter((action) => {
     return action.conditions.every((condition) => {
       if (condition.type === "identifier") {
@@ -173,7 +187,11 @@ export const getActionsForState = (
 
 // --- Factory Function Following Dialog Provider Pattern ---
 export function createLocalActionProvider<
-  const TRegistry extends Record<string, Action>,
+  TAppOrServices = ServiceMap,
+  const TRegistry extends Record<string, Action<TAppOrServices>> = Record<
+    string,
+    Action<TAppOrServices>
+  >,
 >(registry: TRegistry) {
   type LocalActionId = keyof TRegistry;
 

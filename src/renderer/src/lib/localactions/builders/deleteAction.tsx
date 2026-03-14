@@ -4,7 +4,7 @@ import {
   NormalizedCache,
   TypedDocumentNode,
 } from "@apollo/client";
-import { Action } from "../LocalActionProvider";
+import { Action, ResolveActionServices } from "../LocalActionProvider";
 
 export const identifierFromSmartOrString = (identifier: Smart | string) => {
   if (typeof identifier === "string") {
@@ -13,16 +13,29 @@ export const identifierFromSmartOrString = (identifier: Smart | string) => {
   return identifier.identifier;
 };
 
-export type DeleteActionParams = {
+type DeleteActionServiceKey<TAppOrServices> = Extract<
+  keyof ResolveActionServices<TAppOrServices>,
+  string
+>;
+
+export type DeleteActionParams<
+  TAppOrServices = never,
+  TServiceKey extends DeleteActionServiceKey<TAppOrServices> = DeleteActionServiceKey<TAppOrServices>,
+> = {
   identifier: Smart | string;
   title: string;
   mutation: TypedDocumentNode<any, { id: string }>;
   typename: string | string[];
-  service: string;
+  service: TServiceKey;
   description?: string;
 };
 
-export const buildDeleteAction = (params: DeleteActionParams): Action => ({
+export const buildDeleteAction = <
+  TAppOrServices = never,
+  TServiceKey extends DeleteActionServiceKey<TAppOrServices> = DeleteActionServiceKey<TAppOrServices>,
+>(
+  params: DeleteActionParams<TAppOrServices, TServiceKey>,
+): Action<TAppOrServices> => ({
   title: params.title,
   description: params.description || "Delete the structure",
   conditions: [

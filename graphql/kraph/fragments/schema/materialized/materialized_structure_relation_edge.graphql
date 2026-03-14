@@ -1,0 +1,42 @@
+fragment ListMaterializedStructureRelationEdge on MaterializedStructureRelationEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    identifier
+  }
+  target {
+    id
+    label
+    identifier
+  }
+  edge {
+    label
+    id
+  }
+}
+
+
+fragment MaterializedStructureRelationEdge on MaterializedStructureRelationEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    identifier
+  }
+  target {
+    id
+    label
+    identifier
+  }
+  edge {
+    label
+    id
+  }
+}

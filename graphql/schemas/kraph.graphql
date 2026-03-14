@@ -2666,9 +2666,85 @@ input MaterializedEdgeFilter {
 
   """Full-text search over connected category labels"""
   search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
 }
 
 input MaterializedEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A materialized edge representing a relationship in the graph"""
+type MaterializedRelationEdge {
+  edge: StructureRelationCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: EntityCategory!
+  target: EntityCategory!
+}
+
+input MaterializedRelationEdgeFilter {
+  AND: MaterializedRelationEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedRelationEdgeFilter
+  OR: MaterializedRelationEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
+}
+
+input MaterializedRelationEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A materialized edge representing a relationship in the graph"""
+type MaterializedStructureRelationEdge {
+  edge: StructureRelationCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: StructureCategory!
+  target: StructureCategory!
+}
+
+input MaterializedStructureRelationEdgeFilter {
+  AND: MaterializedStructureRelationEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedStructureRelationEdgeFilter
+  OR: MaterializedStructureRelationEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
+}
+
+input MaterializedStructureRelationEdgeOrder @oneOf {
   id: Ordering
 }
 
@@ -4513,6 +4589,18 @@ type Query {
 
   """List all materialized edges in the graph"""
   materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """Get a single materialized relation edge by ID"""
+  materializedRelationEdge(id: ID!): MaterializedRelationEdge!
+
+  """List all materialized relation edges in the graph"""
+  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
+
+  """Get a single materialized structure relation edge by ID"""
+  materializedStructureRelationEdge(id: ID!): MaterializedStructureRelationEdge!
+
+  """List all materialized structure relation edges in the graph"""
+  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
 
   """Get a measurement by composite graph ID"""
   measurement(id: GraphID!): Measurement!
@@ -6584,7 +6672,7 @@ enum WhereOperator {
 
 scalar _Any
 
-union _Entity = CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory
+union _Entity = CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory
 
 type _Service {
   sdl: String!

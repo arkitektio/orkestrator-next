@@ -6,8 +6,9 @@ import {
 import { cn } from "@/lib/utils";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
+import { Portal } from "@radix-ui/react-portal";
 import React from "react";
-
+import { motion } from "framer-motion";
 import { useSelectionSelector } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
 import { useSmartModel } from "./useSmartModel";
@@ -17,7 +18,8 @@ export const SmartModel = ({
 }: SmartModelProps) => {
   const {
     ref,
-    portalRef,
+    floatingRef,
+    floatingStyles,
     self,
     isOver,
     partners,
@@ -62,17 +64,15 @@ export const SmartModel = ({
           {isOver && <CombineButton />}
 
           {partners.length > 0 && (
-            <div
-              className="fixed inset-0 z-[9998] flex items-center justify-center"
-              ref={portalRef}
-            >
-              <div
-                className="fixed inset-0 bg-black bg-opacity-50"
-                onClick={clearPartners}
-              />
-              <div
-                className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
+            <Portal>
+              <motion.div
+                ref={floatingRef}
+                style={floatingStyles}
+                className="z-[10050] w-[320px] max-w-[min(90vw,320px)] shadow-2xl max-w-md rounded bg-popover border  rounded-lg p-1 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
+                initial={{ filter: "blur(2px)" }}
+  animate={{ filter: "none" }}
+
               >
                 <SmartContext
                   objects={
@@ -83,8 +83,8 @@ export const SmartModel = ({
                   partners={partners}
                   onDone={() => clearPartners()}
                 />
-              </div>
-            </div>
+              </motion.div>
+            </Portal>
           )}
         </div>
       </ContextMenuTrigger>

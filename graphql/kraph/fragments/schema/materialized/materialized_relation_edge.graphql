@@ -1,0 +1,32 @@
+fragment ListMaterializedRelationEdge on MaterializedRelationEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    label
+  }
+  target {
+    id
+    label
+  }
+}
+
+
+fragment MaterializedRelationEdge on MaterializedRelationEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    label
+  }
+  target {
+    id
+    label
+  }
+}

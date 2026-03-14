@@ -39,9 +39,12 @@ import {
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
   useListMaterializedEdgesQuery,
+  ListMaterializedStructureRelationEdgeFragment,
+  useListMaterializedStructureRelationEdgesQuery,
   useListMeasurmentCategoryQuery,
   useListRelationCategoryQuery,
   useListStructureRelationCategoryQuery,
+  useEnsureStructureMutation,
 } from "@/kraph/api/graphql";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { cn } from "@/lib/utils";
@@ -1242,17 +1245,15 @@ export const StructureRelationActions = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects?.at(0);
 
-  if (!firstPartner || !firstObject) {
-    return null;
-  }
+
 
   const dialog = useDialog();
 
-  const { data, error } = useListStructureRelationCategoryQuery({
+  const { data, error } = useListMaterializedStructureRelationEdgesQuery({
     variables: {
       filters: {
-        sourceIdentifier: firstObject.identifier,
-        targetIdentifier: firstPartner.identifier,
+        sourceIdentifier: firstObject?.identifier || "",
+        targetIdentifier: firstPartner?.identifier || "",
         search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
@@ -1267,14 +1268,14 @@ export const StructureRelationActions = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.structureRelationCategories.map((x) => (
+      {firstPartner && data?.materializedStructureRelationEdges.map((x) => (
         <StructureRelateButton
-          relation={x}
+          materializedEdge={x}
           right={firstPartner}
           left={props}
           key={x.id}
         >
-          {x.label}
+          {x.edge.label} - {x.target.label}
         </StructureRelateButton>
       ))}
       {error && (
@@ -1471,7 +1472,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
 };
 
 export const StructureRelateButton = (props: {
-  relation: ListStructureRelationCategoryWithGraphFragment;
+  materializedEdge: ListMaterializedStructureRelationEdgeFragment;
   left: PassDownProps;
   right: Structure;
   children: React.ReactNode;
@@ -1485,7 +1486,7 @@ export const StructureRelateButton = (props: {
     },
   });
 
-  const [createStructure] = useCreateStructureMutation({
+  const [createStructure] = useEnsureStructureMutation({
     onCompleted: (data) => {
       console.log("Structure created:", data);
     },
@@ -1495,18 +1496,17 @@ export const StructureRelateButton = (props: {
   });
 
   const handleRelationCreation = async (
-    category: ListStructureRelationCategoryWithGraphFragment,
+    edge: ListMaterializedStructureRelationEdgeFragment,
   ) => {
     for (const obj of props.left.objects) {
       try {
-        const leftStructureString = `${obj.identifier}:${obj.object}`;
-        const rightStructureString = `${props.right.identifier}:${props.right.object}`;
 
         const left = await createStructure({
           variables: {
             input: {
-              structure: leftStructureString,
-              graph: category.graph.id,
+              object: obj.identifier,
+              identifier: obj.identifier,
+              graph: edge.graph.id,
             },
           },
         });
@@ -1514,18 +1514,23 @@ export const StructureRelateButton = (props: {
         const right = await createStructure({
           variables: {
             input: {
-              structure: rightStructureString,
-              graph: category.graph.id,
+              object: props.right.identifier,
+              identifier: props.right.identifier,
+              graph: edge.graph.id,
             },
           },
         });
 
+        if (!left.data?.ensureStructure.id || !right.data?.ensureStructure.id) {
+          throw new Error("Failed to ensure structures for relation creation");
+        }
+
         await createSRelation({
           variables: {
             input: {
-              source: left.data?.createStructure.id,
-              target: right.data?.createStructure.id,
-              category: category.id,
+              sourceId: left.data?.ensureStructure.id,
+              targetId: right.data?.ensureStructure.id,
+              category: edge.edge.id,
             },
           },
         });
@@ -1542,24 +1547,24 @@ export const StructureRelateButton = (props: {
 
   return (
     <CommandItem
-      value={props.relation.label}
-      key={props.relation.id}
-      onSelect={() => handleRelationCreation(props.relation)}
+      value={props.materializedEdge.id}
+      key={props.materializedEdge.id}
+      onSelect={() => handleRelationCreation(props.materializedEdge)}
       className="flex-1 "
     >
       <Tooltip>
         <TooltipTrigger className="flex flex-row group w-full">
           <div className="flex-col">
             <div className="text-md text-gray-100 text-left">
-              {props.relation.label}
+              {props.materializedEdge.edge.label}
             </div>
             <div className="text-xs text-gray-400 text-left">
-              {props.relation.graph.name}
+              {props.materializedEdge.graph.id}
             </div>
           </div>
           <div className="flex-grow"></div>
         </TooltipTrigger>
-        <TooltipContent>{props.relation.description}</TooltipContent>
+        <TooltipContent>{props.materializedEdge.edge.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
   );
@@ -1881,19 +1886,19 @@ export const SmartContext = (props: SmartContextProps) => {
 
   return (
     <>
-      <div className="flex flex-row text-xs">
+      <>
         {props.objects && props.objects.length > 1 && (
-          <div className="p-2 text-xs">
+          <div className="flex flex-row text-xs bg-gray-800 rounded-md px-2 py-1">
             {props.objects.length} {props.objects.at(0)?.identifier}
           </div>
         )}
         {props.partners && props.partners.length >= 1 && (
-          <div className="p-2 text-xs">
+          <div className="flex flex-row text-xs bg-gray-800 rounded-md px-2 py-1">
             {" "}
             with {props.partners.length} {props.partners.at(0)?.identifier}
           </div>
         )}
-      </div>
+      </>
       <div className="h-2" />
 
       <Command shouldFilter={false}>

@@ -97,6 +97,8 @@
       "GraphPathQuery",
       "GraphTableQuery",
       "MaterializedEdge",
+      "MaterializedRelationEdge",
+      "MaterializedStructureRelationEdge",
       "MeasurementCategory",
       "MediaStore",
       "MetricCategory",

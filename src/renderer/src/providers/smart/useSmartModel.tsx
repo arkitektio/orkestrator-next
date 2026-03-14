@@ -1,5 +1,6 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { Structure } from "@/types";
+import { autoUpdate, flip, offset, shift, useFloating } from "@floating-ui/react";
 import { createSelector } from "reselect";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from "react-dnd";
@@ -64,7 +65,8 @@ const syncAttribute = (
 
 export type UseSmartModelResult = {
   ref: (node: HTMLDivElement | null) => void;
-  portalRef: React.RefObject<HTMLDivElement | null>;
+  floatingRef: (node: HTMLDivElement | null) => void;
+  floatingStyles: React.CSSProperties;
   self: Structure;
   isOver: boolean;
   isDragging: boolean;
@@ -88,14 +90,22 @@ export const useSmartModel = ({
   );
 
 
-  const portalRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const registeredNodeRef = useRef<HTMLDivElement | null>(null);
+  const floatingNodeRef = useRef<HTMLDivElement | null>(null);
   const latestSelectionRef = useRef<Structure[]>(selectionStore.getState().selection);
   const latestBSelectionRef = useRef<Structure[]>(selectionStore.getState().bselection);
   const latestSnapshotRef = useRef({ selectedIndex: 0, bselectedIndex: 0 });
   const omitDefaultDropBehaviourRef = useRef(false);
   const [partners, setPartners] = useState<Structure[]>([]);
+  const { refs, floatingStyles } = useFloating({
+    open: partners.length > 0,
+    placement: "right-start",
+    strategy: "fixed",
+    transform: true,
+    whileElementsMounted: autoUpdate,
+    middleware: [offset(12), flip(), shift({ padding: 12 })],
+  });
 
   const dropHandler = React.useCallback(async (
     item: unknown,
@@ -285,11 +295,13 @@ export const useSmartModel = ({
       if (!node) {
         drag(null);
         drop(null);
+        refs.setReference(null);
         return;
       }
 
       drag(node);
       drop(node);
+      refs.setReference(node);
 
       syncAttribute(node, "data-identifier", identifier);
       syncAttribute(node, "data-object", object);
@@ -320,6 +332,7 @@ export const useSmartModel = ({
       isDragging,
       isOver,
       object,
+      refs,
       selectionStore,
       self,
       syncSelectionState,
@@ -347,11 +360,18 @@ export const useSmartModel = ({
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        portalRef.current &&
-        !portalRef.current.contains(event.target as Node)
-      ) {
+    const handlePointerDownOutside = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      const isInsideFloating =
+        floatingNodeRef.current?.contains(target) ?? false;
+      const isInsideReference = nodeRef.current?.contains(target) ?? false;
+
+      if (!isInsideFloating && !isInsideReference) {
         clearPartners();
       }
     };
@@ -363,12 +383,12 @@ export const useSmartModel = ({
     };
 
     if (partners.length > 0) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("pointerdown", handlePointerDownOutside, true);
       document.addEventListener("keydown", handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handlePointerDownOutside, true);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [partners.length, clearPartners]);
@@ -403,7 +423,11 @@ export const useSmartModel = ({
 
   return {
     ref: registerNode,
-    portalRef,
+    floatingRef: (node) => {
+      floatingNodeRef.current = node;
+      refs.setFloating(node);
+    },
+    floatingStyles,
     self,
     isOver,
     isDragging,

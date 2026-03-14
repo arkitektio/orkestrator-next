@@ -12,7 +12,7 @@ import { KnowledgeEdge, KnowledgeNode } from "./types";
 type Props = {
   edgeTypes: EdgeTypes;
   nodeTypes: NodeTypes;
-  nodes: KnowledgeNode[];
+  nodes: KnowledgeNode<any>[];
   edges: KnowledgeEdge[];
   children?: React.ReactNode;
 } & ReactFlowProps;

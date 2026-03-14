@@ -86,8 +86,8 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           width: imageWidth,
           height: imageHeight,
           style: {
-            width: imageWidth,
-            height: imageHeight,
+            width: imageWidth.toString(),
+            height: imageHeight.toString(),
             transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
           },
         },

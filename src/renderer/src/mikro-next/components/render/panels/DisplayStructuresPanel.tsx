@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { SmartContext } from "@/providers/smart/extensions/context";
 import { Eye, EyeOff, List } from "lucide-react";
 import { ViewerPanelProps } from "./types";
 
@@ -7,9 +7,9 @@ export const DisplayStructuresPanel = ({
   showDisplayStructures,
   setShowDisplayStructures,
   displayStructures,
-  removeDisplayStructure,
+  removeDisplayStructure: _removeDisplayStructure,
   clearDisplayStructures,
-  rois,
+  rois: _rois,
 }: Pick<
   ViewerPanelProps,
   | "showDisplayStructures"

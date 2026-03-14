@@ -1,4 +1,4 @@
-import { ApplicableLocalActions } from "@/rekuest/buttons/ObjectButton";
+import { ApplicableLocalActions } from "@/providers/smart/extensions/local/localactions";
 import { useExtension } from "../ExtensionContext";
 
 export const LocalActionExtensions = () => {

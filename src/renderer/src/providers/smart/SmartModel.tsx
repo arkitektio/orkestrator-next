@@ -4,7 +4,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { SmartContext } from "@/providers/smart/extensions/context";
 import { Structure } from "@/types";
 import { Portal } from "@radix-ui/react-portal";
 import React from "react";

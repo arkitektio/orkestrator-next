@@ -1,6 +1,7 @@
 import { useArkitekt } from "@/lib/arkitekt/provider";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
-import { OnDone } from "@/rekuest/buttons/ObjectButton";
+import type { ServiceMap } from "@/lib/arkitekt/provider";
+import type { OnDone } from "@/providers/smart/extensions/types";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -32,7 +33,7 @@ export const usePerformAction = (props: {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: app.connection?.serviceMap || {},
+        services: (app.connection?.serviceMap || {}) as ServiceMap,
         dialog,
         navigate,
         location: window.location,
@@ -41,15 +42,19 @@ export const usePerformAction = (props: {
       setController(null);
       setProgress(undefined);
       if (props.onDone) {
-        props.onDone();
+        props.onDone({ kind: "local" });
       }
     } catch (e) {
       setProgress(undefined);
       setController(null);
       if (props.onDone) {
-        props.onDone();
+        props.onDone({ kind: "local" });
       }
-      toast.error(e.message || "An error occurred while performing the action");
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "An error occurred while performing the action",
+      );
     }
   };
 

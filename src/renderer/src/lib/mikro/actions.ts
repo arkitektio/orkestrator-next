@@ -85,7 +85,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
           selfs: datasets.map((i) => i.object),
           other: inside.object // Assuming 'inside' is the dataset where images will be moved
         },
-        refetchQueries: [GetDatasetsDocument]
+        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((d) => ({ typename: "Dataset", id: d.object })))
       })
     }
   },
@@ -127,8 +127,8 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
           selfs: images.map((i) => i.object),
           other: inside.object // Assuming 'inside' is the dataset where images will be moved
         },
-        refetchQueries: [GetDatasetsDocument]
-      })
+        refetchQueries: getRefetchableQueriesForEntities(client, images.map((f) => ({ typename: "Image", id: f.object })))
+     })
 
 
 

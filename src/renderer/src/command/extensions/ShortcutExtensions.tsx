@@ -1,4 +1,4 @@
-import { ApplicableShortcuts } from "@/rekuest/buttons/ObjectButton";
+import { ApplicableShortcuts } from "@/providers/smart/extensions/rekuest/shortcuts";
 import { useExtension } from "../ExtensionContext";
 
 export const ShortcutExtensions = () => {

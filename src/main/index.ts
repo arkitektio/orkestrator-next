@@ -12,15 +12,24 @@ import { IpcTransport } from "./modules/IpcTransport";
 import { WindowManager } from "./modules/WindowManager";
 import { AppUpdater } from "./modules/AppUpdater";
 import { DownloadManager } from "./modules/DownloadManager";
+import { AppManager } from "./modules/AppManager";
+import { UploadService } from "./modules/UploadService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 app.commandLine.appendSwitch("origin-to-force-quic-on", "jhnnsrs-lab:4433");
 
 // Core Services
+const appManager = new AppManager();
 const transport = new IpcTransport();
 const windowManager = new WindowManager(transport);
 const appUpdater = new AppUpdater(transport, windowManager);
 const downloadManager = new DownloadManager(transport);
+const uploadService = new UploadService(transport);
+
+appManager.register(windowManager);
+appManager.register(appUpdater);
+appManager.register(downloadManager);
+appManager.register(uploadService);
 
 let electronAgent: AgentGateway | null = null;
 
@@ -57,27 +66,11 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", (_, commandLine) => {
-    // Focus the main window
-    const mainWindow = windowManager.getMainWindow();
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-
-    // Handle deep link on Windows/Linux
-    const url = commandLine.find(arg => arg.startsWith('orkestrator://'));
-    if (url) {
-      windowManager.handleOrkestratorUrl(url);
-    }
-  });
+  // Let the AppManager handle the core initialization
+  appManager.setup();
 
   app.whenReady().then(() => {
     registerIssueIpc();
-    windowManager.setup();
-    appUpdater.setup();
-    downloadManager.setup();
-
     windowManager.createMainWindow(icon);
 
     if (!electronAgent) {
@@ -97,10 +90,8 @@ if (!gotTheLock) {
   });
 }
 
-// App event lifecycle
-app.on("window-all-closed", () => {
-  app.quit();
-});
+// App event lifecycle overrides
+// app.on("window-all-closed", ...) is handled by the AppManager.
 
 app.on("certificate-error", (event, _, __, ___, ____, callback) => {
   event.preventDefault();
@@ -116,7 +107,7 @@ app.whenReady().then(() => {
       if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
         return true;
       }
-      return true; 
+      return true;
     });
   });
 

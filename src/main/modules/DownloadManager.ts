@@ -1,8 +1,9 @@
 import { BrowserWindow } from 'electron';
 import { download } from 'electron-dl';
 import { IpcTransport } from './IpcTransport';
+import { AppModule } from './AppModule';
 
-export class DownloadManager {
+export class DownloadManager implements AppModule {
     constructor(private ipcTransport: IpcTransport) {}
 
     setup() {

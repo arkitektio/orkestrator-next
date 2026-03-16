@@ -4,8 +4,10 @@ import path from 'path';
 import log from 'electron-log';
 import { FaktsConfig } from './FaktsProvider';
 import { IpcTransport } from './IpcTransport';
+import { AppModule } from './AppModule';
+import { dialog, Event } from 'electron';
 
-export class UploadService {
+export class UploadService implements AppModule {
     private isUploading = false;
     private ipcTransport: IpcTransport;
     private currentConfig: FaktsConfig | null = null;
@@ -21,6 +23,23 @@ export class UploadService {
         // e.g. assign Django S3 API URLs, tokens
         this.currentConfig = config;
         log.info(`UploadService received a configuration update.`);
+    }
+
+    onBeforeQuit(event: Event) {
+        if (this.isUploading) {
+            const choice = dialog.showMessageBoxSync({
+                type: 'question',
+                buttons: ['Leave and Cancel Upload', 'Wait for Uploads'],
+                title: 'Upload in Progress',
+                message: 'An upload is still in progress. Quitting now will cancel the process. Do you want to quit?'
+            });
+
+            if (choice === 1) { // 1 maps to 'Wait for Uploads'
+                event.preventDefault();
+            } else {
+                this.cancel();
+            }
+        }
     }
 
     logToUI(webContents: Electron.WebContents | null, status: string, message: string) {

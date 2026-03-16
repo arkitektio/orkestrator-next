@@ -110,22 +110,6 @@ export const KRAPH_ACTIONS = {
     },
     collections: ["io"],
   },
-  "relate-structures": {
-    title: "Relate Structures",
-    description: "Delete the structure",
-    conditions: [
-      {
-        type: "haspartner",
-      },
-    ],
-    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
-      dialog.openDialog("relatestructure", {
-        left: state.left,
-        right: state.right,
-      });
-    },
-    collections: ["io"],
-  },
   "create-new-measurment-category": {
     title: "Create New Measurement Category",
     description:

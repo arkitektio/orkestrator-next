@@ -3,10 +3,14 @@ import { Position } from "@xyflow/react";
 import {
   BaseListCategoryFragment,
   CategoryDefintion,
+  EntityDescriptorFragment,
   GraphFragment,
   GraphNodeInput,
+  ListEntityCategoryFragment,
   ListStructureCategoryFragment,
-  StructureCategoryDefinition
+  StructureCategoryDefinition,
+  StructureDescriptorFragment,
+  StructureDescriptorInput
 } from "@/kraph/api/graphql";
 import { notEmpty } from "@/lib/utils";
 import {
@@ -131,20 +135,30 @@ const withCategoryFilter = (category: CategoryDefintion) => {
   };
 };
 
-const withStructureCategoryFilter = (category: StructureCategoryDefinition) => {
+const buildStructureFilter = (descriptor: StructureDescriptorFragment) => {
   return (cat: ListStructureCategoryFragment) => {
-    if (category.tagFilters && category.tagFilters.length > 0) {
-      return category.tagFilters.some((tag) =>
+    if (descriptor.tags && descriptor.tags.length > 0) {
+      return descriptor.tags.some((tag) =>
         cat.tags.find((t) => t.name == tag),
       );
     }
-    if (category.categoryFilters && category.categoryFilters.length > 0) {
-      return category.categoryFilters.some((id) => id == cat.id);
+    if (descriptor.keys && descriptor.keys.length > 0) {
+      return descriptor.keys.some(key => key == cat.key);
     }
-    if (category.identifierFilters && category.identifierFilters.length > 0) {
-      return category.identifierFilters.some(
-        (identifier) => identifier == cat.identifier,
+
+    return true;
+  };
+};
+
+const buildEntityFilter = (descriptor: EntityDescriptorFragment) => {
+  return (cat: ListEntityCategoryFragment) => {
+    if (descriptor.tags && descriptor.tags.length > 0) {
+      return descriptor.tags.some((tag) =>
+        cat.tags.find((t) => t.name == tag),
       );
+    }
+    if (descriptor.keys && descriptor.keys.length > 0) {
+      return descriptor.keys.some(key => key == cat.key);
     }
 
     return true;
@@ -156,20 +170,92 @@ export const ontologyToEdges = (graph: GraphFragment) => {
 
   console.log("Relations", graph.relationCategories);
 
-  graph.materializedEdges.forEach((cat) => {
-    const source_nodes = cat.source.id
-    const target_nodes = cat.target.id
+  graph.structureRelationCategories.forEach((cat) => {
+    const source_nodes = graph.structureCategories.filter(buildStructureFilter(cat.sourceDescriptor)).map((c) => c.id);
+    const target_nodes = graph.structureCategories.filter(buildStructureFilter(cat.targetDescriptor)).map((c) => c.id);
 
+    for (const source of source_nodes) {
+      for (const target of target_nodes) {
     edges.push({
-      id: `${cat.id}`,
-      source: source_nodes,
-      target: target_nodes,
-      data: cat,
-      type: "relation" as const,
+          id: `${cat.id}`,
+          source: source,
+          target: target,
+          data: cat,
+          type: "structure_relation" as const,
       markerEnd: {
         type: MarkerType.Arrow,
       },
     });
+  }
+}
+
+
+  });
+
+  graph.relationCategories.forEach((cat) => {
+    const source_nodes = graph.entityCategories.filter(buildEntityFilter(cat.sourceDescriptor)).map((c) => c.id);
+    const target_nodes = graph.entityCategories.filter(buildEntityFilter(cat.targetDescriptor)).map((c) => c.id);
+
+    for (const source of source_nodes) {
+      for (const target of target_nodes) {
+    edges.push({
+          id: `${cat.id}`,
+          source: source,
+          target: target,
+          data: cat,
+          type: "relation" as const,
+      markerEnd: {
+        type: MarkerType.Arrow,
+      },
+    });
+  }
+}
+
+
+  });
+
+  graph.measurementCategories.forEach((cat) => {
+    const source_nodes = graph.structureCategories.filter(buildStructureFilter(cat.sourceDescriptor)).map((c) => c.id);
+    const target_nodes = graph.entityCategories.filter(buildEntityFilter(cat.targetDescriptor)).map((c) => c.id);
+
+    for (const source of source_nodes) {
+      for (const target of target_nodes) {
+    edges.push({
+          id: `${cat.id}`,
+          source: source,
+          target: target,
+          data: cat,
+          type: "measurement" as const,
+      markerEnd: {
+        type: MarkerType.Arrow,
+      },
+    });
+  }
+}
+
+
+
+
+  });
+
+  graph.metricCategories.forEach((cat) => {
+    const source_nodes = cat.id
+    const target_nodes = cat.structureCategory.id
+
+    for (const source of source_nodes) {
+      for (const target of target_nodes) {
+    edges.push({
+          id: `${cat.id}`,
+          source: source,
+          target: target,
+          data: cat,
+          type: "describe" as const,
+      markerEnd: {
+        type: MarkerType.Arrow,
+      },
+    });
+  }
+}
   });
 
   return edges;

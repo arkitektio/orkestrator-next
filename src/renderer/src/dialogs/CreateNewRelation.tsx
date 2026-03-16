@@ -1,8 +1,7 @@
-import { Structure } from "@/actions/action-registry";
+import { CreatableListSearchField } from "@/components/fields/CreatableListSearchField";
 import { useDialog } from "@/app/dialog";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ListSearchField } from "@/components/fields/ListSearchField copy";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
@@ -17,13 +16,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   CreateStructureRelationCategoryMutationVariables,
   useCreateInlineGraphMutation,
-  useCreateStructureMutation,
   useCreateStructureRelationCategoryMutation,
-  useCreateStructureRelationMutation,
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery,
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
+import { Structure } from "@/types";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -46,6 +44,19 @@ const searchIdentifiers = async ({ search, values }: SearchOptions) => {
 export type FormData =
   CreateStructureRelationCategoryMutationVariables["input"];
 
+const uniqueIdentifiers = (structures: Structure[]) =>
+  Array.from(new Set(structures.map((structure) => structure.identifier)));
+
+const createIdentifier = async (input: string) => {
+  const trimmedInput = input.trim();
+
+  if (!trimmedInput) {
+    throw new Error("Identifier cannot be empty");
+  }
+
+  return trimmedInput;
+};
+
 export const CreateNewRelation = (props: {
   left: Structure[];
   right: Structure[];
@@ -54,13 +65,13 @@ export const CreateNewRelation = (props: {
 
   const form = useForm<FormData>({
     defaultValues: {
-      sourceDefinition: {
-        identifierFilters: props.left.map((s) => s.identifier),
-        tagFilters: [],
+      source: {
+        identifiers: uniqueIdentifiers(props.left),
+        tags: [],
       },
-      targetDefinition: {
-        identifierFilters: props.right.map((s) => s.identifier),
-        tagFilters: [],
+      target: {
+        identifiers: uniqueIdentifiers(props.right),
+        tags: [],
       },
     },
   });
@@ -68,15 +79,6 @@ export const CreateNewRelation = (props: {
   const [searchGraphs] = useSearchGraphsLazyQuery();
   const [createGraph] = useCreateInlineGraphMutation();
   const [searchTags] = useSearchTagsLazyQuery();
-
-  const [createStructure] = useCreateStructureMutation({
-    onCompleted: (data) => {
-      console.log("Structure created:", data);
-    },
-    onError: (error) => {
-      console.error("Error creating structure:", error);
-    },
-  });
 
   const [createStructureRelationCategory] =
     useCreateStructureRelationCategoryMutation({
@@ -87,82 +89,33 @@ export const CreateNewRelation = (props: {
         console.error("Error creating relation category:", error);
       },
     });
-
-  const [createSRelation] = useCreateStructureRelationMutation({
-    onCompleted: (data) => {
-      console.log("Relation created:", data);
-    },
-    onError: (error) => {
-      console.error("Error creating relation:", error);
-    },
-  });
-
-  const handleRelationCreation = async (formData: FormData) => {
+  const handleRelationCreation = async (categoryInput: FormData) => {
     try {
-      const result = await createStructureRelationCategory({
+      await createStructureRelationCategory({
         variables: {
           input: {
-            ...formData,
-          },
-        },
-      });
-
-      const categoryToUse = result.data?.createStructureRelationCategory;
-
-      if (!categoryToUse) {
-        throw new Error("No category available for relation creation");
-      }
-
-      // Create structures
-      const leftStructureString = `${props.left[0]?.identifier}:${props.left[0]?.object}`;
-      const rightStructureString = `${props.right[0]?.identifier}:${props.right[0]?.object}`;
-
-      const left = await createStructure({
-        variables: {
-          input: {
-            structure: leftStructureString,
-            graph: categoryToUse.graph.id,
-          },
-        },
-      });
-
-      const right = await createStructure({
-        variables: {
-          input: {
-            structure: rightStructureString,
-            graph: categoryToUse.graph.id,
-          },
-        },
-      });
-
-      // Create relation
-      await createSRelation({
-        variables: {
-          input: {
-            source: left.data?.createStructure.id,
-            target: right.data?.createStructure.id,
-            category: categoryToUse.id,
+            ...categoryInput,
           },
         },
       });
 
       closeDialog();
-      toast.success("Relation created successfully!");
+      toast.success("Structure relation category created successfully");
     } catch (error) {
       toast.error(
-        `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to create structure relation category: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      console.error("Failed to create relation:", error);
+      console.error("Failed to create structure relation category:", error);
     }
   };
 
   return (
     <div className="flex flex-col w-full h-full max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Create New Relation</h2>
+        <h2 className="text-2xl font-bold">Create New Structure Relation Category</h2>
         <p className="text-muted-foreground">
-          Relating {props.left[0]?.identifier}:{props.left[0]?.object} to{" "}
-          {props.right[0]?.identifier}:{props.right[0]?.object}
+          Seeded from the current self and partner identifiers. You can add more
+          identifiers before creating the category.
         </p>
       </div>
 
@@ -171,7 +124,7 @@ export const CreateNewRelation = (props: {
           onSubmit={form.handleSubmit(handleRelationCreation)}
           className="space-y-6"
         >
-          <GraphQLCreatableSearchField
+          <GraphQLSearchField
             label="Graph"
             name="graph"
             description="Select the graph for this relation"
@@ -180,7 +133,7 @@ export const CreateNewRelation = (props: {
           />
           <StringField
             label="Label"
-            name="label"
+            name="key"
             description="Name for the relation category (e.g., 'connects to', 'part of')"
           />
           <ParagraphField
@@ -188,6 +141,23 @@ export const CreateNewRelation = (props: {
             name="description"
             description="Describe what this relation represents"
           />
+
+          <div className="grid grid-cols-2 gap-4">
+            <CreatableListSearchField
+              label="Source Identifiers"
+              name="source.identifiers"
+              description="Prefilled from the current self selection. Add more structure identifiers if needed."
+              search={searchIdentifiers}
+              create={createIdentifier}
+            />
+            <CreatableListSearchField
+              label="Target Identifiers"
+              name="target.identifiers"
+              description="Prefilled from the current partner selection. Add more structure identifiers if needed."
+              search={searchIdentifiers}
+              create={createIdentifier}
+            />
+          </div>
 
           <Collapsible>
             <CollapsibleTrigger>Advanced</CollapsibleTrigger>
@@ -206,15 +176,9 @@ export const CreateNewRelation = (props: {
                   <div className="space-y-2">
                     <GraphQLSearchField
                       label="Tag Filters"
-                      name="sourceDefinition.tagFilters"
+                      name="source.tags"
                       description="Filter source structures by tags"
                       searchQuery={searchTags}
-                    />
-                    <ListSearchField
-                      label="Indentifier Filters"
-                      name="sourceDefinition.identifierFilters"
-                      description="Filter source structures by categories"
-                      search={searchIdentifiers}
                     />
                   </div>
                 </div>
@@ -224,15 +188,9 @@ export const CreateNewRelation = (props: {
                   <div className="space-y-2">
                     <GraphQLSearchField
                       label="Tag Filters"
-                      name="targetDefinition.tagFilters"
+                      name="target.tags"
                       description="Filter target structures by tags"
                       searchQuery={searchTags}
-                    />
-                    <ListSearchField
-                      label="Indentifier Filters"
-                      name="targetDefinition.identifierFilters"
-                      description="Filter target structures by categories"
-                      search={searchIdentifiers}
                     />
                   </div>
                 </div>
@@ -241,7 +199,7 @@ export const CreateNewRelation = (props: {
           </Collapsible>
 
           <Button type="submit" variant="outline">
-            Create New Relation Category
+            Create Structure Relation Category
           </Button>
         </form>
       </Form>

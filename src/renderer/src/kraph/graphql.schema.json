@@ -1450,6 +1450,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -6014,6 +6030,22 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "cardinality",
+            "description": "Relation cardinality",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "Cardinality",
+                "ofType": null
+              }
+            },
+            "defaultValue": "ONE_TO_ONE",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "Optional RGBA color for this node role (e.g. [255, 0, 0, 128])",
             "type": {
@@ -6074,20 +6106,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instanceKind",
-            "description": "Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.",
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "key",
-            "description": "The label of the node participating in the event",
+            "description": "Relation type name/key",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6150,8 +6170,8 @@
             "deprecationReason": null
           },
           {
-            "name": "propertyDefinitions",
-            "description": "Property definitions",
+            "name": "properties",
+            "description": "Derived property definitions",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6198,6 +6218,22 @@
             "deprecationReason": null
           },
           {
+            "name": "source",
+            "description": "Source entity type(s)",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "StructureDescriptorInput",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "tags",
             "description": "Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')",
             "type": {
@@ -6218,6 +6254,22 @@
               }
             },
             "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "target",
+            "description": "Target entity type(s)",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "StructureDescriptorInput",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -9312,6 +9364,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -10682,6 +10750,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -11716,6 +11800,152 @@
                   "ofType": {
                     "kind": "OBJECT",
                     "name": "MaterializedEdge",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "materializedRelationEdges",
+            "description": "List of materialized relation edges in the graph",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "MaterializedRelationEdgeFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "MaterializedRelationEdgeOrder",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "MaterializedRelationEdge",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "materializedStructureRelationEdges",
+            "description": "List of materialized structure relation edges in the graph",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "MaterializedStructureRelationEdgeFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "MaterializedStructureRelationEdgeOrder",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "MaterializedStructureRelationEdge",
                     "ofType": null
                   }
                 }
@@ -15895,6 +16125,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -17550,6 +17796,22 @@
               "kind": "OBJECT",
               "name": "MediaStore",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -22548,6 +22810,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -26613,6 +26891,22 @@
                     "ofType": null
                   }
                 }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               }
             },
             "isDeprecated": false,
@@ -32841,6 +33135,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -35803,6 +36113,22 @@
             "deprecationReason": null
           },
           {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -36501,6 +36827,110 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "StructureDescriptorInput",
+        "description": "Input for creating a new structure relation definition in the graph schema",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "defaultCategoryKey",
+            "description": "Default category to link to if no entities match the filters",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "identifiers",
+            "description": "Optional structure identifier to filter by (e.g. '@mikro/roi')",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "keys",
+            "description": "Filter by entity key/label",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ontotologyTerms",
+            "description": "Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "Filter by tags on the entity",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "StructureFilter",
         "description": "Filter options for querying structures",
         "isOneOf": false,
@@ -37081,6 +37511,22 @@
               "kind": "OBJECT",
               "name": "MediaStore",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": "The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -37917,7 +38363,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "EntityDescriptorInput",
+                "name": "StructureDescriptorInput",
                 "ofType": null
               }
             },
@@ -37957,7 +38403,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "EntityDescriptorInput",
+                "name": "StructureDescriptorInput",
                 "ofType": null
               }
             },

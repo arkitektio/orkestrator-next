@@ -4,6 +4,7 @@ fragment BaseListCategory on Category {
   image {
     presignedUrl
   }
+  key
   tags {
     id
     name

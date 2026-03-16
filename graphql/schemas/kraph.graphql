@@ -288,6 +288,11 @@ interface Category {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -1192,6 +1197,9 @@ input CreateStructureInput {
 Input for creating a new structure relation definition in the graph schema
 """
 input CreateStructureRelationDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -1204,12 +1212,7 @@ input CreateStructureRelationDefinitionInput {
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """
-  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
-  """
-  instanceKind: String = null
-
-  """The label of the node participating in the event"""
+  """Relation type name/key"""
   key: String!
 
   """
@@ -1223,16 +1226,22 @@ input CreateStructureRelationDefinitionInput {
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
 
-  """Property definitions"""
-  propertyDefinitions: [PropertyDefinitionInput!]! = []
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
 
   """Sequence mappings for this node"""
   sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: StructureDescriptorInput!
 }
 
 """Input for creating a new structure relation"""
@@ -1811,6 +1820,11 @@ type EntityCategory implements Category & NodeCategory {
   """
   instanceKind: String
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -2041,6 +2055,11 @@ interface EventCategory implements Category & NodeCategory {
   """The graph this category belongs to"""
   inputs: [EventRole!]!
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -2196,6 +2215,12 @@ type Graph {
 
   """List of materialized edges in the graph"""
   materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """List of materialized relation edges in the graph"""
+  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
+
+  """List of materialized structure relation edges in the graph"""
+  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
 
   """List of measurement categories/schemas defined in this graph"""
   measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
@@ -2807,6 +2832,11 @@ type MeasurementCategory implements Category & EdgeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -3085,6 +3115,11 @@ type MetricCategory implements Category & NodeCategory {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -3650,6 +3685,11 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
 
   """The graph this category belongs to"""
   inputs: [EventRole!]!
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -4350,6 +4390,11 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
   """The graph this category belongs to"""
   inputs: [EventRole!]!
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -4851,6 +4896,11 @@ type RelationCategory implements Category & EdgeCategory {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -5364,6 +5414,11 @@ type StructureCategory implements Category & NodeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -5458,6 +5513,26 @@ type StructureDescriptor {
 
   """Filter by tags on the entity"""
   tags: [String!]
+}
+
+"""
+Input for creating a new structure relation definition in the graph schema
+"""
+input StructureDescriptorInput {
+  """Default category to link to if no entities match the filters"""
+  defaultCategoryKey: String = null
+
+  """Optional structure identifier to filter by (e.g. '@mikro/roi')"""
+  identifiers: [String!] = null
+
+  """Filter by entity key/label"""
+  keys: [String!] = null
+
+  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  ontotologyTerms: [String!] = null
+
+  """Filter by tags on the entity"""
+  tags: [String!] = null
 }
 
 """Filter options for querying structures"""
@@ -5584,6 +5659,11 @@ type StructureRelationCategory implements Category & EdgeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -5700,7 +5780,7 @@ input StructureRelationDefinitionInput {
   sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
-  source: EntityDescriptorInput!
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
@@ -5708,7 +5788,7 @@ input StructureRelationDefinitionInput {
   tags: [String!]! = []
 
   """Target entity type(s)"""
-  target: EntityDescriptorInput!
+  target: StructureDescriptorInput!
 }
 
 """Filter options for querying structure relations"""

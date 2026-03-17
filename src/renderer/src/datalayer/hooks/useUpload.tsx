@@ -109,7 +109,7 @@ const uploadToStore = async (
   return `${z.store}`;
 };
 
-export const useKraphUpload = () => {
+export const useKraphMediaUpload = () => {
   const client = useKraph();
   const datalayerEndpoint = useDatalayerEndpoint();
 
@@ -148,8 +148,3 @@ export const useKraphUpload = () => {
   return upload;
 };
 
-
-const useMediaUpload = () => {
-  const upload = useKraphUpload();
-  return upload;
-}

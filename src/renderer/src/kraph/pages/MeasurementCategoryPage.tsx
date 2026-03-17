@@ -4,7 +4,7 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphMeasurementCategory,
@@ -20,7 +20,7 @@ import UpdateMeasurementCategoryForm from "../forms/UpdateMeasurementCategoryFor
 const Page = asDetailQueryRoute(
   useGetMeasurmentCategoryQuery,
   ({ data, refetch }) => {
-    const uploadFile = useKraphUpload();
+    const uploadFile = useKraphMediaUpload();
     const [update] = useUpdateEntityCategoryMutation();
 
     const resolve = useResolve();

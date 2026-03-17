@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import {
   GraphFragment,
   GraphNodeInput,
@@ -36,7 +36,7 @@ import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, lay
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();
-  const uploadFile = useKraphUpload();
+  const uploadFile =  useKraphMediaUpload();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 

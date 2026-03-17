@@ -108,7 +108,7 @@ const uploadToStore = async (
   return `${z.store}`;
 };
 
-export const useKraphUpload = () => {
+export const useKraphMediaUpload = () => {
   const client = useKraph();
   const datalayerEndpoint = useSeaweedfs();
 

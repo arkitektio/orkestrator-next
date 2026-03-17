@@ -5,8 +5,8 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { DragZone } from "@/components/upload/drag";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { useKraphResolve } from "@/datalayer/hooks/useKraphResolve";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
+import { useKraphMediaResolve } from "@/datalayer/hooks/useKraphMediaResolve";
 import { KraphEntityCategory } from "@/linkers";
 import { Plus, Settings2 } from "lucide-react";
 import { useNavigate as useNavigateRouter } from "react-router-dom";
@@ -22,7 +22,7 @@ import { EntityCategorySidebar } from "../sidebars/EntityCategorySidebar";
 export const Page = asDetailQueryRoute(
   useGetEntityCategoryQuery,
   ({ data, refetch }) => {
-    const uploadFile = useKraphUpload();
+    const uploadFile = useKraphMediaUpload();
     const [update] = useUpdateEntityCategoryMutation();
     const navigateRouter = useNavigateRouter();
 
@@ -35,7 +35,7 @@ export const Page = asDetailQueryRoute(
       refetchQueries: [{ query: EntityNodesDocument, }],
     });
 
-    const resolve = useKraphResolve();
+    const resolve = useKraphMediaResolve();
 
     const { openSheet } = useDialog();
 

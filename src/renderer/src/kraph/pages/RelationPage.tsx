@@ -1,13 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Badge } from "@/components/ui/badge";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphReagent, KraphRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetRelationQuery } from "../api/graphql";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
 export default asDetailQueryRoute(useGetRelationQuery, ({ data, refetch }) => {
-  const uploadFile = useMediaUpload();
+  const uploadFile = useKraphMediaUpload();
 
   return (
     <KraphRelation.ModelPage

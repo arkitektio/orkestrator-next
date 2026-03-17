@@ -3,15 +3,14 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { DisplayWidget } from "@/command/Menu";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
 const Page = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
-  const uploadFile = useMediaUpload();
+  const uploadFile = useKraphMediaUpload();
 
   const Widget = useDisplayComponent(data.structure.identifier || "");
 

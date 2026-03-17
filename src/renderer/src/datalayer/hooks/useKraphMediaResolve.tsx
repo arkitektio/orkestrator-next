@@ -15,7 +15,7 @@ const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
   return `${endpointUrl}/${key}`;
 };
 
-export const useKraphResolve = () => {
+export const useKraphMediaResolve = () => {
   const endpoint = useSeaweedfs();
 
   const s3resolve = useCallback(

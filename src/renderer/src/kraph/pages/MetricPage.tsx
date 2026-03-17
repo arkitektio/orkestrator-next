@@ -1,24 +1,17 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
-import { ListRender } from "@/components/layout/ListRender";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
-  KraphMetric,
-  KraphProtocolEventCategory,
+  KraphMetric
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useGetEntityQuery, useGetMetricQuery } from "../api/graphql";
-import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
-import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
-import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
+import { useGetMetricQuery } from "../api/graphql";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
 export default asDetailQueryRoute(useGetMetricQuery, ({ data, refetch }) => {
-  const uploadFile = useMediaUpload();
+  const uploadFile = useKraphMediaUpload();
 
   return (
     <KraphMetric.ModelPage

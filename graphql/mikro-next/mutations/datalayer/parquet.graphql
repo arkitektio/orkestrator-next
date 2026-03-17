@@ -10,3 +10,9 @@ mutation FinishParquetUpload($input: FinishParquetUploadInput!) {
       ...ParquetStore
   }
 }
+
+mutation RequestParquetAccess($input: RequestParquetAccessInput!) {
+  requestParquetAccess(input: $input) {
+    ...ParquetAccessGrant
+  }
+}

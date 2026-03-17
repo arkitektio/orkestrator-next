@@ -37,6 +37,22 @@ const api = {
   openFilePicker: () => ipcRenderer.invoke("dialog:openFile"),
   uploadBigFile: (opts: { uploadId: string; path: string; grant: any; endpointUrl: string }) => ipcRenderer.invoke("upload:bigFile", opts),
   cancelBigFile: (opts: { uploadId: string; }) => ipcRenderer.invoke("upload:cancel", opts),
+  downloadBigFile: (opts: { downloadId: string; grant: any; endpointUrl: string; fileName: string; savePath?: string; }) => ipcRenderer.invoke("download:bigFile", opts),
+  cancelBigFileDownload: (opts: { downloadId: string; }) => ipcRenderer.invoke("download:cancel", opts),
+  showItemInFolder: (path: string) => ipcRenderer.invoke("shell:showItemInFolder", { path }),
+  openPath: (path: string) => ipcRenderer.invoke("shell:openPath", { path }),
+  onDownloadProgress: (downloadId: string, cb: (data: any) => void) => {
+    const channel = `download-progress-${downloadId}`;
+    const listener = (_e: any, data: any) => cb(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+  onDownloadError: (downloadId: string, cb: (data: any) => void) => {
+    const channel = `download-error-${downloadId}`;
+    const listener = (_e: any, data: any) => cb(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
   onUploadProgress: (uploadId: string, cb: (data: any) => void) => {
     const channel = `upload-progress-${uploadId}`;
     const listener = (_e: any, data: any) => cb(data);

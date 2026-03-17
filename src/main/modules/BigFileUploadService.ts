@@ -8,7 +8,6 @@ import { BigFileUploadGrant } from '../schemas/mikro'; // or whatever the type i
 
 export class BigFileUploadService implements AppModule {
     private ipcTransport: IpcTransport;
-    private s3Clients: Map<string, S3Client> = new Map();
     private activeUploads: Map<string, Upload> = new Map();
 
     setup() {
@@ -22,7 +21,7 @@ export class BigFileUploadService implements AppModule {
             return this.handleUpload(event, args);
         });
 
-        ipcMain.handle("upload:cancel", async (event, args: { uploadId: string }) => {
+        ipcMain.handle("upload:cancel", async (_event, args: { uploadId: string }) => {
             const upload = this.activeUploads.get(args.uploadId);
             if (upload) {
                 await upload.abort();

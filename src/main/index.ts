@@ -15,6 +15,9 @@ import { DownloadManager } from "./modules/DownloadManager";
 import { AppManager } from "./modules/AppManager";
 import { UploadService } from "./modules/UploadService";
 import { BigFileUploadService } from "./modules/BigFileUploadService";
+import { BigFileDownloadService } from "./modules/BigFileDownloadService";
+
+import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 app.commandLine.appendSwitch("origin-to-force-quic-on", "jhnnsrs-lab:4433");
@@ -27,12 +30,16 @@ const appUpdater = new AppUpdater(transport, windowManager);
 const downloadManager = new DownloadManager(transport);
 const uploadService = new UploadService(transport);
 const bigFileUploadService = new BigFileUploadService(transport);
+const bigFileDownloadService = new BigFileDownloadService(transport);
+const shellService = new ShellService(transport);
 
 appManager.register(windowManager);
 appManager.register(appUpdater);
 appManager.register(downloadManager);
 appManager.register(uploadService);
 appManager.register(bigFileUploadService);
+appManager.register(bigFileDownloadService);
+appManager.register(shellService);
 
 let electronAgent: AgentGateway | null = null;
 

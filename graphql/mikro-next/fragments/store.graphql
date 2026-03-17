@@ -22,7 +22,9 @@ fragment BigFileStore on BigFileStore {
   key
   bucket
   path
-  presignedUrl
+  accessGrant {
+   ...BigFileAccessGrant
+  }
 }
 
 fragment MediaStore on MediaStore {

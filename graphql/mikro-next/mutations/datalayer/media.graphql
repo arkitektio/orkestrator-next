@@ -10,3 +10,10 @@ mutation FinishMediaUpload($input: FinishMediaUploadInput!) {
       ...MediaStore
   }
 }
+
+
+mutation RequestMediaAccess($input: RequestMediaAccessInput!) {
+  requestMediaAccess(input: $input) {
+     ...MediaAccessGrant
+  }
+}

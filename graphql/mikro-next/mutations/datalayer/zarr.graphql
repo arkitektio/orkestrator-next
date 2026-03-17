@@ -10,3 +10,10 @@ mutation FinishZarrUpload($input: FinishZarrUploadInput!) {
       ...ZarrStore
   }
 }
+
+
+mutation RequestZarrAccess($input: RequestZarrAccessInput!) {
+  requestZarrAccess(input: $input) {
+    ...ZarrAccessGrant
+  }
+}

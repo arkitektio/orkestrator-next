@@ -10,3 +10,10 @@ mutation FinishBigfileUpload($input: FinishBigFileUploadInput!) {
       ...BigFileStore
   }
 }
+
+
+mutation RequestBigfileAccess($input: RequestBigFileAccessInput!) {
+  requestBigfileAccess(input: $input) {
+    ...BigFileAccessGrant
+  }
+}

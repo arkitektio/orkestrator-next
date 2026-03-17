@@ -444,6 +444,7 @@ input ChildrenPaginationInput {
 
 type Client {
   clientId: String!
+  id: ID!
   name: String!
 }
 
@@ -1967,7 +1968,7 @@ type MediaUploadGrant {
 
 type Membership {
   datasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
-  id: String!
+  id: ID!
   isActive: Boolean!
   organization: Organization!
   roles: [String!]!
@@ -2324,14 +2325,26 @@ type Mutation {
   """Remove images from a dataset"""
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
 
+  """Request temporary S3 read credentials for a big file"""
+  requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
+
   """Request an upload grant for a big file store"""
   requestBigfileUpload(input: RequestBigFileUploadInput!): BigFileUploadGrant!
+
+  """Request temporary S3 read credentials for a media file"""
+  requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
 
   """Upload media and return a URL for access"""
   requestMediaUpload(input: RequestMediaUploadInput!): MediaUploadGrant!
 
+  """Request temporary S3 read credentials for a Parquet file"""
+  requestParquetAccess(input: RequestParquetAccessInput!): ParquetAccessGrant!
+
   """Request an upload grant for a Parquet store"""
   requestParquetUpload(input: RequestParquetUploadInput!): ParquetUploadGrant!
+
+  """Request temporary S3 read credentials for a Zarr store"""
+  requestZarrAccess(input: RequestZarrAccessInput!): ZarrAccessGrant!
 
   """Request an upload grant for a Zarr store"""
   requestZarrUpload(input: RequestZarrUploadInput!): ZarrUploadGrant!
@@ -2593,7 +2606,7 @@ enum Ordering {
 }
 
 type Organization {
-  id: String!
+  id: ID!
   slug: String!
 }
 
@@ -3854,10 +3867,18 @@ input RenderTreeOrder {
   createdAt: Ordering
 }
 
+input RequestBigFileAccessInput {
+  storeId: String!
+}
+
 input RequestBigFileUploadInput {
   contentType: String = null
   fileSize: Int = null
   originalFileName: String!
+}
+
+input RequestMediaAccessInput {
+  storeId: String!
 }
 
 input RequestMediaUploadInput {
@@ -3866,9 +3887,17 @@ input RequestMediaUploadInput {
   originalFileName: String!
 }
 
+input RequestParquetAccessInput {
+  storeId: String!
+}
+
 input RequestParquetUploadInput {
   contentType: String = null
   originalFileName: String!
+}
+
+input RequestZarrAccessInput {
+  storeId: String!
 }
 
 input RequestZarrUploadInput {
@@ -4377,6 +4406,7 @@ input UpdateRoiInput {
 
 type User {
   activeOrganization: Organization
+  id: ID!
   preferredUsername: String!
   sub: String!
 }
@@ -4565,15 +4595,19 @@ type ZarrAccessGrant {
 type ZarrStore {
   """Get temporary S3 read credentials for the Zarr object."""
   accessGrant(host: String = null): ZarrAccessGrant!
+  attributes: JSON
   bucket: String!
-  chunks: [Int!]
-  contentType: String
+  chunkKeyEncoding: JSON
+  chunks: [Int!]!
+  codecs: JSON
+  dimensionNames: [String]
   dtype: String
+  fillValue: JSON!
   id: ID!
   key: String!
-  originalFileName: String
   path: String!
-  shape: [Int!]
+  shape: [Int!]!
+  storageTransformers: JSON
   version: String
 }
 
@@ -4607,7 +4641,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = File | Image | Table
+union _Entity = AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Snapshot | Stage | Table | TimepointView | User | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

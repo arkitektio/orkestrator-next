@@ -86,6 +86,7 @@ export const BackNavigationErrorCatcher = ({
 };
 
 import { UploadProvider } from "@/providers/upload/UploadProvider";
+import { DownloadProvider } from "@/providers/download/DownloadProvider";
 
 // The AppProvider is the root component of the application.
 // It is responsible for providing all the context providers that are used in the application.
@@ -109,11 +110,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
       <UploadProvider>
-        <CommandProvider>
-          <DebugProvider>
-            <Router basename={baseName}>
-              <NuqsAdapter>
-                <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <DownloadProvider>
+          <CommandProvider>
+            <DebugProvider>
+              <Router basename={baseName}>
+                <NuqsAdapter>
+                  <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
                   {/* This is where we configure the application automatically based on facts */}
 
                   <Arkitekt.Provider>
@@ -148,7 +150,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             </Router>
           </DebugProvider>
         </CommandProvider>
-      </UploadProvider>
-    </SettingsProvider>
+      </DownloadProvider>
+    </UploadProvider>
+  </SettingsProvider>
   );
 };

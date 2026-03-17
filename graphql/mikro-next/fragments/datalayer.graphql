@@ -47,3 +47,49 @@ fragment ParquetUploadGrant on ParquetUploadGrant {
   maxBytes
   store
 }
+
+
+
+fragment BigFileAccessGrant on BigFileAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+fragment MediaAccessGrant on MediaAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+
+fragment ZarrAccessGrant on ZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+fragment ParquetAccessGrant on ParquetAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}

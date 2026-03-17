@@ -9,9 +9,13 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
 import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
+import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
+import { Button } from "@/components/ui/button";
+import { useDownload } from "@/providers/download/DownloadProvider";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
-  const resolve = useResolve();
+  const download = useMikroBigFileDownload();
+  const { startDownload } = useDownload();
 
   // Get file extension for icon display
   const getFileExtension = (filename: string) => {
@@ -27,14 +31,20 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       title={data.file.name}
       pageActions={
         <>
-          <DownloadButton
-            url={resolve(data.file.store.presignedUrl)}
+          <Button
+            onClick={() => {
+              startDownload(data.file.name, async ({ id, signal }) => {
+                return await download(data.file.store.id, data.file.name, { id, signal });
+              }).catch((e) => {
+                console.error("Download error:", e);
+              });
+            }}
             variant="outline"
             className="flex items-center gap-2"
           >
             <DownloadIcon className="h-4 w-4" />
             Download
-          </DownloadButton>
+          </Button>
 
           <MikroFile.ObjectButton object={data.file.id} />
         </>

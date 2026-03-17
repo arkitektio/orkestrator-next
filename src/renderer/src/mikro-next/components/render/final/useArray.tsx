@@ -1,6 +1,5 @@
 import { useDatalayerEndpoint } from "@/app/Arkitekt";
 import {
-  useRequestAccessMutation,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { AwsClient } from "aws4fetch";
@@ -16,9 +15,7 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
 
-  const [request] = useRequestAccessMutation({
-    variables: { store: props.store.id },
-  });
+
 
   // Promise to track the loading process and prevent multiple simultaneous loads
   const arrayLoadPromiseRef = useRef<Promise<Array<DataType, S3Store>> | null>(

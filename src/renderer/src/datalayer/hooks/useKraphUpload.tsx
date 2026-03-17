@@ -1,9 +1,10 @@
 import {
   useDatalayerEndpoint,
-  useKraph
+  useKraph,
+  useSeaweedfs
 } from "@/app/Arkitekt";
 import {
-  PresignedPostCredentialsFragment,
+  MediaUploadGrantFragment,
   RequestMediaUploadDocument,
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
@@ -78,7 +79,7 @@ export type UploadOptions = {
 const uploadToStore = async (
   file: File,
   endpointUrl: string,
-  z: PresignedPostCredentialsFragment,
+  z: MediaUploadGrantFragment,
   options?: UploadOptions,
 ) => {
   if (!z) {
@@ -88,32 +89,28 @@ const uploadToStore = async (
   console.log("uploadToStore", z);
 
   const data = new FormData();
-  data.append("key", z.key);
-  data.append("bucket", z.bucket);
-  data.append("X-Amz-Algorithm", z.xAmzAlgorithm);
-  data.append("X-Amz-Credential", z.xAmzCredential);
-  data.append("X-Amz-Date", z.xAmzDate);
-  data.append("X-Amz-Signature", z.xAmzSignature);
-  data.append("Policy", z.policy);
-
   data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
-  const x = customFetch(`${endpointUrl}/${z.bucket}`, {
+  const x = customFetch(`${endpointUrl}${z.path}`, {
     body: data,
     mode: "cors",
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${z.jwt}`,
+    },
     onProgress: options?.onProgress,
     signal: options?.signal,
   });
 
+
   await x;
-  console.log("done", x, z.store);
+  console.log("done", x, z.store.id);
   return `${z.store}`;
 };
 
 export const useKraphUpload = () => {
   const client = useKraph();
-  const datalayerEndpoint = useDatalayerEndpoint();
+  const datalayerEndpoint = useSeaweedfs();
 
   const upload = useCallback(
     async (file: File) => {
@@ -127,15 +124,17 @@ export const useKraphUpload = () => {
       >({
         mutation: RequestMediaUploadDocument,
         variables: {
-          input: { key: file.name, datalayer: "default" },
+          input: { originalFileName: file.name,  },
         },
       });
 
-      if (!data.data?.requestUpload) {
+      if (!data.data?.requestMediaUpload) {
         throw Error("Failed to request upload");
       }
 
-      const z = data.data.requestUpload;
+      const z = data.data.requestMediaUpload;
+
+      console.log("Got upload grant", z);
 
       return await uploadToStore(file, datalayerEndpoint, z, {});
     },

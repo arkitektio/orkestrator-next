@@ -1,13 +1,25 @@
 import {
   useKraph,
+  useMikro,
   useSeaweedfs
 } from "@/app/Arkitekt";
 import {
+  BigFileUploadGrantFragment,
+  FinishBigfileUploadDocument,
+  FinishBigfileUploadMutation,
+  FinishBigfileUploadMutationVariables,
+  FinishMediaUploadDocument,
+  FinishMediaUploadMutation,
+  FinishMediaUploadMutationVariables,
   MediaUploadGrantFragment,
+  RequestBigfileUploadDocument,
+  RequestBigFileUploadInput,
+  RequestBigfileUploadMutation,
+  RequestBigfileUploadMutationVariables,
   RequestMediaUploadDocument,
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
-} from "@/kraph/api/graphql";
+} from "@/mikro-next/api/graphql";
 import { useCallback } from "react";
 
 export const uploadFetch = (
@@ -78,7 +90,7 @@ export type UploadOptions = {
 const uploadToStore = async (
   file: File,
   endpointUrl: string,
-  z: MediaUploadGrantFragment,
+  z: BigFileUploadGrantFragment,
   options?: UploadOptions,
 ) => {
   if (!z) {
@@ -88,27 +100,33 @@ const uploadToStore = async (
   console.log("uploadToStore", z);
 
   const data = new FormData();
+  data.append("key", z.key);
+  data.append("bucket", z.bucket);
+  data.append("X-Amz-Algorithm", z.);
+  data.append("X-Amz-Credential", z.xAmzCredential);
+  data.append("X-Amz-Date", z.xAmzDate);
+  data.append("X-Amz-Signature", z.xAmzSignature);
+  data.append("Policy", z.policy);
+
   data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
-  const x = customFetch(`${endpointUrl}${z.path}`, {
+  const x = customFetch(`${endpointUrl}/${z.bucket}`, {
     body: data,
     mode: "cors",
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${z.jwt}`,
-    },
     onProgress: options?.onProgress,
     signal: options?.signal,
   });
 
-
   await x;
-  console.log("done", x, z.store.id);
+  console.log("done", x, z.store);
   return `${z.store}`;
+
+
 };
 
-export const useKraphUpload = () => {
-  const client = useKraph();
+export const useMikroBigFileUpload = () => {
+  const client = useMikro();
   const datalayerEndpoint = useSeaweedfs();
 
   const upload = useCallback(
@@ -118,24 +136,36 @@ export const useKraphUpload = () => {
       }
 
       const data = await client.mutate<
-        RequestMediaUploadMutation,
-        RequestMediaUploadMutationVariables
+        RequestBigfileUploadMutation,
+        RequestBigfileUploadMutationVariables
       >({
-        mutation: RequestMediaUploadDocument,
+        mutation: RequestBigfileUploadDocument,
         variables: {
           input: { originalFileName: file.name,  },
         },
       });
 
-      if (!data.data?.requestMediaUpload) {
-        throw Error("Failed to request upload");
-      }
+      if (!data.data?.requestBigfileUpload) {
+        throw Error(`Failed to get upload grant: ${JSON.stringify(data)}`);
+        }
 
-      const z = data.data.requestMediaUpload;
+      const z = data.data.requestBigfileUpload;
 
       console.log("Got upload grant", z);
 
-      return await uploadToStore(file, datalayerEndpoint, z, {});
+      let result = await uploadToStore(file, datalayerEndpoint, z, {});
+
+      const finishData = await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
+        mutation: FinishBigfileUploadDocument,
+        variables: {
+          input: {
+            storeId: z.store,
+          },
+        },
+      });
+
+      console.log("Finished upload", finishData);
+      return z.store;
     },
     [client, datalayerEndpoint],
   );

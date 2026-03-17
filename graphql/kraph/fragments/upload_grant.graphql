@@ -1,0 +1,10 @@
+fragment MediaUploadGrant on MediaUploadGrant {
+  jwt
+  path
+  method
+  action
+  bodyFormat
+  expiresIn
+  maxBytes
+  store
+}

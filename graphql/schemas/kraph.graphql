@@ -1264,6 +1264,17 @@ The `CypherLiteral` scalar type represents a raw Cypher query or fragment
 """
 scalar CypherLiteral
 
+"""A signed SeaweedFS grant for a specific object path."""
+type DatalayerAccessGrant {
+  action: String!
+  bodyFormat: String!
+  expiresIn: Int!
+  jwt: String!
+  maxBytes: Int!
+  method: String!
+  path: String!
+}
+
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -2182,6 +2193,11 @@ input EventRoleInput {
   role: String!
 }
 
+input FinishMediaUploadInput {
+  storeId: Int!
+  valid: Boolean! = true
+}
+
 scalar GlobalID
 
 """Base interface for graph schemas"""
@@ -3038,15 +3054,35 @@ type MeasurementShadowLink implements Node {
 }
 
 type MediaStore {
+  """Get a signed SeaweedFS read grant for the media object."""
+  accessGrant(host: String = null): DatalayerAccessGrant!
   bucket: String!
+  contentType: String
   id: ID!
   key: String!
+  originalFileName: String
   path: String!
 
-  """
-  Get a presigned URL for the media store. This is used to access the media store directly from the frontend without going through the backend. The URL is valid for 1 hour. If a host is provided, it will replace the AWS_S3_ENDPOINT_URL in the generated URL. This is useful for accessing the media store through a custom domain or a proxy.
-  """
+  """Compatibility field returning the signed SeaweedFS read URL."""
   presignedUrl(host: String = null): String!
+}
+
+"""A signed SeaweedFS upload grant tied to a media store."""
+type MediaUploadGrant {
+  action: String!
+  bodyFormat: String!
+  datalayer: String!
+  expiresIn: Int!
+  jwt: String!
+  key: String!
+  maxBytes: Int!
+  method: String!
+  originalFileName: String!
+  path: String!
+  store: ID!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
 }
 
 """A metric node representing computed values"""
@@ -3498,14 +3534,29 @@ type Mutation {
   """
   ensureStructure(input: EnsureStructureInput!): Structure!
 
+  """Finalize a big file upload after the client has written the object"""
+  finishBigfileUpload(input: FinishMediaUploadInput!): Void
+
+  """Finalize a media upload after the client has written the object"""
+  finishMediaUpload(input: FinishMediaUploadInput!): Void
+
+  """Finalize a Zarr upload after the client has written the object"""
+  finishZarrUpload(input: FinishMediaUploadInput!): Void
+
   """Pin a node in the UI for a user"""
   pinNode(input: PinNodeInput!): Node!
 
   """Record a metric, auto-creating structure when allowed"""
   recordMetric(input: RecordMetricInput!): Metric!
 
+  """Request an upload grant for a big file store"""
+  requestBigfileUpload(input: RequestMediaUploadInput!): StoreUploadGrant!
+
   """Upload media and return a URL for access"""
-  requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
+  requestMediaUpload(input: RequestMediaUploadInput!): MediaUploadGrant!
+
+  """Request an upload grant for a Zarr store"""
+  requestZarrUpload(input: RequestMediaUploadInput!): StoreUploadGrant!
 
   """Set a property on an existing entity in the graph"""
   setEntityProperty(input: SetEntityPropertyInput!): Entity!
@@ -4179,21 +4230,6 @@ input PrefixInput {
   The URI that the prefix maps to (e.g. 'http://purl.obolibrary.org/obo/OBI_')
   """
   uri: String!
-}
-
-"""
-Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)
-"""
-type PresignedPostCredentials {
-  bucket: String!
-  datalayer: String!
-  key: String!
-  policy: String!
-  store: String!
-  xAmzAlgorithm: String!
-  xAmzCredential: String!
-  xAmzDate: String!
-  xAmzSignature: String!
 }
 
 """A property definition from the graph schema"""
@@ -5164,9 +5200,8 @@ input RenderGraphTablePagination {
 
 input RequestMediaUploadInput {
   contentType: String = null
-  datalayer: String!
   fileSize: Int = null
-  key: String!
+  originalFileName: String!
 }
 
 """Input type for creating a new graph"""
@@ -5334,6 +5369,24 @@ input SetEntityPropertyInput {
 
   """The value to set for this property"""
   value: JSON!
+}
+
+"""A signed SeaweedFS upload grant tied to a datalayer-backed store."""
+type StoreUploadGrant {
+  action: String!
+  bodyFormat: String!
+  datalayer: String!
+  expiresIn: Int!
+  jwt: String!
+  key: String!
+  maxBytes: Int!
+  method: String!
+  originalFileName: String!
+  path: String!
+  store: ID!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
 }
 
 """A structure that provides evidence for entities"""
@@ -6705,6 +6758,9 @@ interface VersionedNode implements Node {
   """Tags associated with this node"""
   tags: [String!]!
 }
+
+"""Represents NULL values"""
+scalar Void
 
 """Input type for defining a graph schema"""
 type WhereClause {

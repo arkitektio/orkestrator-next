@@ -31,6 +31,8 @@ export type Scalars = {
   /** The `StructureObject` scalar type represents a structure object (e.g 1) on a specific identifier) */
   StructureObject: { input: any; output: any; }
   UnixMilliseconds: { input: any; output: any; }
+  /** Represents NULL values */
+  Void: { input: any; output: any; }
   _Any: { input: any; output: any; }
 };
 
@@ -986,6 +988,18 @@ export type CreateStructureRelationInput = {
   targetId: Scalars['String']['input'];
 };
 
+/** A signed SeaweedFS grant for a specific object path. */
+export type DatalayerAccessGrant = {
+  __typename?: 'DatalayerAccessGrant';
+  action: Scalars['String']['output'];
+  bodyFormat: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  jwt: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  method: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+};
+
 /** Input for deleting a category tag */
 export type DeleteCategoryTagInput = {
   /** The category tag ID */
@@ -1753,6 +1767,11 @@ export type EventRoleInput = {
   ontologyReferences?: Array<OntologyReferenceInput>;
   /** What type of role does this node play in the event */
   role: Scalars['String']['input'];
+};
+
+export type FinishMediaUploadInput = {
+  storeId: Scalars['Int']['input'];
+  valid?: Scalars['Boolean']['input'];
 };
 
 /** Base interface for graph schemas */
@@ -2559,17 +2578,45 @@ export type MeasurementShadowLink = Node & {
 
 export type MediaStore = {
   __typename?: 'MediaStore';
+  /** Get a signed SeaweedFS read grant for the media object. */
+  accessGrant: DatalayerAccessGrant;
   bucket: Scalars['String']['output'];
+  contentType?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   key: Scalars['String']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
   path: Scalars['String']['output'];
-  /** Get a presigned URL for the media store. This is used to access the media store directly from the frontend without going through the backend. The URL is valid for 1 hour. If a host is provided, it will replace the AWS_S3_ENDPOINT_URL in the generated URL. This is useful for accessing the media store through a custom domain or a proxy. */
+  /** Compatibility field returning the signed SeaweedFS read URL. */
   presignedUrl: Scalars['String']['output'];
+};
+
+
+export type MediaStoreAccessGrantArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** A signed SeaweedFS upload grant tied to a media store. */
+export type MediaUploadGrant = {
+  __typename?: 'MediaUploadGrant';
+  action: Scalars['String']['output'];
+  bodyFormat: Scalars['String']['output'];
+  datalayer: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  jwt: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  method: Scalars['String']['output'];
+  originalFileName: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  store: Scalars['ID']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
 };
 
 /** A metric node representing computed values */
@@ -2922,12 +2969,22 @@ export type Mutation = {
   deleteStructureRelationCategory: Scalars['ID']['output'];
   /** Ensure a structure exists in the graph, creating it if it does not exist */
   ensureStructure: Structure;
+  /** Finalize a big file upload after the client has written the object */
+  finishBigfileUpload?: Maybe<Scalars['Void']['output']>;
+  /** Finalize a media upload after the client has written the object */
+  finishMediaUpload?: Maybe<Scalars['Void']['output']>;
+  /** Finalize a Zarr upload after the client has written the object */
+  finishZarrUpload?: Maybe<Scalars['Void']['output']>;
   /** Pin a node in the UI for a user */
   pinNode: Node;
   /** Record a metric, auto-creating structure when allowed */
   recordMetric: Metric;
+  /** Request an upload grant for a big file store */
+  requestBigfileUpload: StoreUploadGrant;
   /** Upload media and return a URL for access */
-  requestMediaUpload: PresignedPostCredentials;
+  requestMediaUpload: MediaUploadGrant;
+  /** Request an upload grant for a Zarr store */
+  requestZarrUpload: StoreUploadGrant;
   /** Set a property on an existing entity in the graph */
   setEntityProperty: Entity;
   /** Update an existing category tag in the graph */
@@ -3458,6 +3515,24 @@ export type MutationEnsureStructureArgs = {
 
 
 /** Graph Engine Mutations */
+export type MutationFinishBigfileUploadArgs = {
+  input: FinishMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationFinishMediaUploadArgs = {
+  input: FinishMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationFinishZarrUploadArgs = {
+  input: FinishMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
 export type MutationPinNodeArgs = {
   input: PinNodeInput;
 };
@@ -3470,7 +3545,19 @@ export type MutationRecordMetricArgs = {
 
 
 /** Graph Engine Mutations */
+export type MutationRequestBigfileUploadArgs = {
+  input: RequestMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
 export type MutationRequestMediaUploadArgs = {
+  input: RequestMediaUploadInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRequestZarrUploadArgs = {
   input: RequestMediaUploadInput;
 };
 
@@ -4134,20 +4221,6 @@ export type PrefixInput = {
   prefix: Scalars['String']['input'];
   /** The URI that the prefix maps to (e.g. 'http://purl.obolibrary.org/obo/OBI_') */
   uri: Scalars['String']['input'];
-};
-
-/** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
-export type PresignedPostCredentials = {
-  __typename?: 'PresignedPostCredentials';
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  policy: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-  xAmzAlgorithm: Scalars['String']['output'];
-  xAmzCredential: Scalars['String']['output'];
-  xAmzDate: Scalars['String']['output'];
-  xAmzSignature: Scalars['String']['output'];
 };
 
 /** A property definition from the graph schema */
@@ -5494,9 +5567,8 @@ export type RenderGraphTablePagination = {
 
 export type RequestMediaUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
-  datalayer: Scalars['String']['input'];
   fileSize?: InputMaybe<Scalars['Int']['input']>;
-  key: Scalars['String']['input'];
+  originalFileName: Scalars['String']['input'];
 };
 
 /** Input type for creating a new graph */
@@ -5629,6 +5701,25 @@ export type SetEntityPropertyInput = {
   key: Scalars['String']['input'];
   /** The value to set for this property */
   value: Scalars['JSON']['input'];
+};
+
+/** A signed SeaweedFS upload grant tied to a datalayer-backed store. */
+export type StoreUploadGrant = {
+  __typename?: 'StoreUploadGrant';
+  action: Scalars['String']['output'];
+  bodyFormat: Scalars['String']['output'];
+  datalayer: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  jwt: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  method: Scalars['String']['output'];
+  originalFileName: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  store: Scalars['ID']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
 };
 
 /** A structure that provides evidence for entities */
@@ -6827,8 +6918,6 @@ type ListNode_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRe
 
 export type ListNodeFragment = ListNode_Activity_Fragment | ListNode_Entity_Fragment | ListNode_MeasurementShadowLink_Fragment | ListNode_Metric_Fragment | ListNode_NaturalEvent_Fragment | ListNode_ProtocolEvent_Fragment | ListNode_RelationShadowLink_Fragment | ListNode_Structure_Fragment | ListNode_StructureRelationShadowLink_Fragment;
 
-export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', key: string, xAmzCredential: string, xAmzAlgorithm: string, xAmzDate: string, xAmzSignature: string, policy: string, datalayer: string, bucket: string, store: string };
-
 type BaseEdge_Assertion_Fragment = { __typename?: 'Assertion', id: string, sourceId: string, targetId: string };
 
 type BaseEdge_Description_Fragment = { __typename?: 'Description', id: string, sourceId: string, targetId: string };
@@ -7182,6 +7271,8 @@ export type ListStructureFragment = { __typename?: 'Structure', id: string, labe
 export type InformedStructureFragment = { __typename?: 'Structure', id: string, label: string, category: { __typename?: 'StructureCategory', id: string, identifier: string }, graph: { __typename?: 'Graph', id: string, name: string }, metrics: Array<{ __typename?: 'Metric', id: string, value: any, category: { __typename?: 'MetricCategory', label: string } }> };
 
 export type DetailStructureRelationFragment = { __typename?: 'StructureRelation', id: string, measuredFrom?: any | null, measuredTo?: any | null, sourceId: string, targetId: string, category: { __typename?: 'StructureRelationCategory', id: string, label: string }, source: { __typename?: 'Structure', identifier: any, object: string }, target: { __typename?: 'Structure', identifier: any, object: string } };
+
+export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', jwt: string, path: string, method: string, action: string, bodyFormat: string, expiresIn: number, maxBytes: number, store: string };
 
 export type CreateEntityMutationVariables = Exact<{
   input: CreateEntityInput;
@@ -7651,7 +7742,7 @@ export type RequestMediaUploadMutationVariables = Exact<{
 }>;
 
 
-export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'PresignedPostCredentials', key: string, xAmzCredential: string, xAmzAlgorithm: string, xAmzDate: string, xAmzSignature: string, policy: string, datalayer: string, bucket: string, store: string } };
+export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'MediaUploadGrant', jwt: string, path: string, method: string, action: string, bodyFormat: string, expiresIn: number, maxBytes: number, store: string } };
 
 export type GetEntityQueryVariables = Exact<{
   id: Scalars['GraphID']['input'];
@@ -8443,19 +8534,6 @@ export const ListNodeFragmentDoc = gql`
     fragment ListNode on Node {
   id
   label
-}
-    `;
-export const PresignedPostCredentialsFragmentDoc = gql`
-    fragment PresignedPostCredentials on PresignedPostCredentials {
-  key
-  xAmzCredential
-  xAmzAlgorithm
-  xAmzDate
-  xAmzSignature
-  policy
-  datalayer
-  bucket
-  store
 }
     `;
 export const BaseEdgeFragmentDoc = gql`
@@ -9574,6 +9652,18 @@ export const DetailStructureRelationFragmentDoc = gql`
       object
     }
   }
+}
+    `;
+export const MediaUploadGrantFragmentDoc = gql`
+    fragment MediaUploadGrant on MediaUploadGrant {
+  jwt
+  path
+  method
+  action
+  bodyFormat
+  expiresIn
+  maxBytes
+  store
 }
     `;
 export const CreateEntityDocument = gql`
@@ -11727,10 +11817,10 @@ export type CreateGraphTagInlineMutationOptions = Apollo.BaseMutationOptions<Cre
 export const RequestMediaUploadDocument = gql`
     mutation RequestMediaUpload($input: RequestMediaUploadInput!) {
   requestMediaUpload(input: $input) {
-    ...PresignedPostCredentials
+    ...MediaUploadGrant
   }
 }
-    ${PresignedPostCredentialsFragmentDoc}`;
+    ${MediaUploadGrantFragmentDoc}`;
 export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
 
 /**

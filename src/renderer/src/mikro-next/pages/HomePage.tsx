@@ -22,13 +22,14 @@ import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 
 // 1. Import from nuqs
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
+import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 
 
 export interface IRepresentationScreenProps { }
 
 
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
-  const performDataLayerUpload = useBigFileUpload();
+  const performDataLayerUpload = useMikroBigFileUpload();
   const createFile = useCreateFile();
   const { startUpload } = useUpload();
 

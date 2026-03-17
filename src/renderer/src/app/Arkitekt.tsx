@@ -8,7 +8,7 @@ import { buildArkitekt } from "@/lib/arkitekt";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { createGraphQLServiceBuilder } from "@/lib/arkitekt/builders/graphQlServiceBuidler";
 import { ModuleRegistry, ServiceBuilderMap } from "@/lib/arkitekt/types";
-import { createLivekitClient } from "@/lib/livekit/client";
+import { createLivekitClient } from "@/lib/livekit copy/client";
 import lokResult from "@/lok-next/api/fragments";
 import lovekitResult from "@/lovekit/api/fragments";
 import mikroResult from "@/mikro-next/api/fragments";
@@ -114,6 +114,18 @@ export const serviceMap = {
     key: "datalayer",
     service: "live.arkitekt.s3",
     optional: true,
+    omitchallenge: true,
+    builder: ({ alias }) => {
+      return {
+        client: { url: aliasToHttpPath(alias, "") },
+        alias
+      };
+    },
+  },
+  seaweedfs: {
+    key: "seaweedfs",
+    service: "live.arkitekt.seaweedfs",
+    optional: false,
     omitchallenge: true,
     builder: ({ alias }) => {
       return {
@@ -259,5 +271,11 @@ export const useDokuments = () => {
 };
 export const useDatalayerEndpoint = (): string | undefined => {
   const url = Arkitekt.usePotentialService("datalayer")?.client?.url;
+  return url;
+};
+
+
+export const useSeaweedfs = (): string => {
+  const url = Arkitekt.useService("seaweedfs")?.client.url;
   return url;
 };

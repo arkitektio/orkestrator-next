@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { useResolve } from "@/datalayer/hooks/useResolve";
+import { useKraphResolve } from "@/datalayer/hooks/useKraphResolve";
 import { KraphEntityCategory } from "@/linkers";
 import { Plus, Settings2 } from "lucide-react";
 import { useNavigate as useNavigateRouter } from "react-router-dom";
@@ -35,7 +35,7 @@ export const Page = asDetailQueryRoute(
       refetchQueries: [{ query: EntityNodesDocument, }],
     });
 
-    const resolve = useResolve();
+    const resolve = useKraphResolve();
 
     const { openSheet } = useDialog();
 
@@ -151,7 +151,7 @@ export const Page = asDetailQueryRoute(
                   className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
                 />
               )}
-
+              {data.entityCategory?.image?.presignedUrl}
             </div>
 
             <DragZone uploadFile={uploadFile} createFile={createFile} />

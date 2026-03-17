@@ -31,8 +31,3 @@ fragment MediaStore on MediaStore {
   presignedUrl
 }
 
-fragment MeshStore on MeshStore {
-  id
-  key
-  presignedUrl
-}

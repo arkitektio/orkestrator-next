@@ -2,10 +2,19 @@ import { IpcTransport } from './IpcTransport';
 import { AppModule } from './AppModule';
 import { ipcMain, app } from 'electron';
 import fs from 'fs';
+import path from 'path';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { pipeline } from 'stream/promises';
 import { Readable, Transform } from 'stream';
 import { BigFileAccessGrant } from '../schemas/mikro';
+
+type DownloadArgs = {
+    downloadId: string;
+    grant: BigFileAccessGrant;
+    endpointUrl: string;
+    fileName: string;
+    savePath?: string;
+};
 
 export class BigFileDownloadService implements AppModule {
     private ipcTransport: IpcTransport;
@@ -18,7 +27,7 @@ export class BigFileDownloadService implements AppModule {
     constructor(ipcTransport: IpcTransport) {
         this.ipcTransport = ipcTransport;
 
-        ipcMain.handle("download:bigFile", async (event, args: { downloadId: string, grant: BigFileAccessGrant, endpointUrl: string, fileName: string, savePath?: string }) => {
+        ipcMain.handle("download:bigFile", async (event, args: DownloadArgs) => {
             return this.handleDownload(event, args);
         });
 
@@ -31,15 +40,39 @@ export class BigFileDownloadService implements AppModule {
         });
     }
 
-    async handleDownload(event: Electron.IpcMainInvokeEvent, args: { downloadId: string, grant: BigFileAccessGrant, endpointUrl: string, fileName: string, savePath?: string }) {
+    private toNodeReadable(body: unknown): Readable {
+        if (!body) {
+            throw new Error('No body stream in response');
+        }
+
+        if (body instanceof Readable) {
+            return body;
+        }
+
+        if (typeof (body as { transformToWebStream?: () => unknown }).transformToWebStream === 'function') {
+            return Readable.fromWeb((body as { transformToWebStream: () => unknown }).transformToWebStream() as any);
+        }
+
+        if (typeof Readable.fromWeb === 'function' && body instanceof ReadableStream) {
+            return Readable.fromWeb(body as any);
+        }
+
+        if (Buffer.isBuffer(body) || body instanceof Uint8Array || typeof body === 'string') {
+            return Readable.from([body]);
+        }
+
+        throw new Error('Unsupported download body type');
+    }
+
+    async handleDownload(event: Electron.IpcMainInvokeEvent, args: DownloadArgs) {
         const { downloadId, grant, fileName } = args;
-        const path = require('path');
+        const endpoint = grant.datalayer || args.endpointUrl || undefined;
         const savePath = args.savePath || path.join(app.getPath('downloads'), fileName || 'download');
-        console.log(args)
+        const partialPath = `${savePath}.part`;
 
         const s3Client = new S3Client({
             region: "us-east-1",
-            endpoint: args.endpointUrl || undefined,
+            endpoint,
             credentials: {
                 accessKeyId: grant.accessKey,
                 secretAccessKey: grant.secretKey,
@@ -57,13 +90,7 @@ export class BigFileDownloadService implements AppModule {
                 Key: grant.key,
             }), { abortSignal: abortController.signal });
 
-            const bodyStream = response.Body as Readable;
-
-            console.log("Starting download:", downloadId);
-
-            if (!bodyStream) {
-                throw new Error("No body stream in response");
-            }
+            const bodyStream = this.toNodeReadable(response.Body);
 
             const total = response.ContentLength || 0;
             let loaded = 0;
@@ -86,19 +113,30 @@ export class BigFileDownloadService implements AppModule {
                 }
             });
 
-            const fileStream = fs.createWriteStream(savePath);
+            await fs.promises.mkdir(path.dirname(savePath), { recursive: true });
+
+            const fileStream = fs.createWriteStream(partialPath, { flags: 'w' });
             await pipeline(bodyStream, progressStream, fileStream, { signal: abortController.signal });
+
+            const stats = await fs.promises.stat(partialPath);
+            if (total > 0 && stats.size === 0) {
+                throw new Error('Download completed with zero bytes written');
+            }
+
+            await fs.promises.rename(partialPath, savePath);
+            this.ipcTransport.sendTo(event.sender, `download-progress-${downloadId}`, {
+                loaded: total || stats.size,
+                total: total || stats.size,
+            });
 
             this.activeDownloads.delete(downloadId);
             return savePath;
         } catch (e: any) {
             this.activeDownloads.delete(downloadId);
             if (e.name === 'AbortError') {
-                console.log("Download aborted:", downloadId);
-                // Optionally clean up partial file
-                fs.unlink(savePath, () => {});
+                fs.unlink(partialPath, () => {});
             } else {
-                console.error("Download error:", e);
+                fs.unlink(partialPath, () => {});
                 this.ipcTransport.sendTo(event.sender, `download-error-${downloadId}`, { error: e.message });
             }
             throw e;

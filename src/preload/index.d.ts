@@ -7,6 +7,7 @@ declare global {
   interface Window {
     electron: ElectronAPI;
     api: {
+      getFilePath: (file: File) => string;
       assignElectronAgentFunction: (name: string, implementation: ImplementationInput) => Promise<void>;
       inspectElectronAgent: () => Promise<ImplementationInput[]>;
       startFakts: (url: string) => Promise<void>;

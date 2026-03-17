@@ -116,9 +116,13 @@ const uploadToStore = async (
        });
     }
 
+    // In Electron, File objects dragged into the app might fall back to web standards depending on version/handling.
+    // Use window.api.getFilePath(file) if available (via webUtils).
+    const filePath = window.api?.getFilePath ? window.api.getFilePath(file) : (file as any).path || file.name;
+
     window.api.uploadBigFile({
        uploadId,
-       path: (file as any).path || file.name, // Electron extends File with .path, fallback to name
+       path: filePath,
        grant: z,
        endpointUrl
     }).then((resultStore: string) => {

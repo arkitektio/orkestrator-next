@@ -1,9 +1,12 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 import { Assign } from "../main/message";
 
 // Custom APIs for renderer
 const api = {
+  getFilePath: (file: File) => {
+    return webUtils.getPathForFile(file);
+  },
   startFakts: async (url: string) => {
     return ipcRenderer.send("fakts-start", url);
   },

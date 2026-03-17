@@ -32,6 +32,20 @@ const api = {
     template?: string;
   }) => ipcRenderer.invoke("arkitekt.reportIssue", opts),
   openFilePicker: () => ipcRenderer.invoke("dialog:openFile"),
+  uploadBigFile: (opts: { uploadId: string; path: string; grant: any; endpointUrl: string }) => ipcRenderer.invoke("upload:bigFile", opts),
+  cancelBigFile: (opts: { uploadId: string; }) => ipcRenderer.invoke("upload:cancel", opts),
+  onUploadProgress: (uploadId: string, cb: (data: any) => void) => {
+    const channel = `upload-progress-${uploadId}`;
+    const listener = (_e: any, data: any) => cb(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+  onUploadError: (uploadId: string, cb: (data: any) => void) => {
+    const channel = `upload-error-${uploadId}`;
+    const listener = (_e: any, data: any) => cb(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
   initAgent: (context: any) => ipcRenderer.invoke("agent:init", context),
   executeElectron: (assignation: Assign) => ipcRenderer.invoke("agent:execute", assignation),
   onAgentYield: (cb: (data: any) => void) => ipcRenderer.on("agent:yield", (_e, data) => {console.log(data); cb(data)}),

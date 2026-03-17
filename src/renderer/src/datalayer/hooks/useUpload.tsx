@@ -1,4 +1,5 @@
 import {
+  useDatalayerEndpoint,
   useKraph,
   useSeaweedfs
 } from "@/app/Arkitekt";
@@ -73,6 +74,7 @@ const customFetch = (uri: any, options: ExtraRequest) => {
 export type UploadOptions = {
   signal?: AbortSignal;
   onProgress?: (ev: ProgressEvent) => void;
+  id?: string;
 };
 
 const uploadToStore = async (
@@ -109,7 +111,7 @@ const uploadToStore = async (
 
 export const useKraphUpload = () => {
   const client = useKraph();
-  const datalayerEndpoint = useSeaweedfs();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
@@ -130,6 +132,9 @@ export const useKraphUpload = () => {
       if (!data.data?.requestMediaUpload) {
         throw Error("Failed to request upload");
       }
+      if (!datalayerEndpoint) {
+        throw Error("No datalayer endpoint configured");
+      }
 
       const z = data.data.requestMediaUpload;
 
@@ -142,3 +147,9 @@ export const useKraphUpload = () => {
 
   return upload;
 };
+
+
+const useMediaUpload = () => {
+  const upload = useKraphUpload();
+  return upload;
+}

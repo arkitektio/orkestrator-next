@@ -1,4 +1,5 @@
 import {
+  useDatalayerEndpoint,
   useKraph,
   useMikro,
   useSeaweedfs
@@ -85,6 +86,7 @@ const customFetch = (uri: any, options: ExtraRequest) => {
 export type UploadOptions = {
   signal?: AbortSignal;
   onProgress?: (ev: ProgressEvent) => void;
+  id?: string;
 };
 
 const uploadToStore = async (
@@ -94,43 +96,45 @@ const uploadToStore = async (
   options?: UploadOptions,
 ) => {
   if (!z) {
-    throw Error("No client configured");
+    throw Error("No client configured",);
   }
 
-  console.log("uploadToStore", z);
+  console.log("uploadToStore (big file IPC)", z, file);
 
-  const data = new FormData();
-  data.append("key", z.key);
-  data.append("bucket", z.bucket);
-  data.append("X-Amz-Algorithm", z.);
-  data.append("X-Amz-Credential", z.xAmzCredential);
-  data.append("X-Amz-Date", z.xAmzDate);
-  data.append("X-Amz-Signature", z.xAmzSignature);
-  data.append("Policy", z.policy);
+  // Fallback if we are not in Electron (shouldn't happen in this app context, but good for safety)
+  if (!window.api?.uploadBigFile) {
+     throw Error("Big file upload is only supported in the Electron app");
+  }
 
-  data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
+  const uploadId = options?.id || crypto.randomUUID();
 
-  const x = customFetch(`${endpointUrl}/${z.bucket}`, {
-    body: data,
-    mode: "cors",
-    method: "POST",
-    onProgress: options?.onProgress,
-    signal: options?.signal,
+  return new Promise((resolve, reject) => {
+    if (options?.signal) {
+       options.signal.addEventListener("abort", () => {
+         window.api.cancelBigFile({ uploadId });
+         reject(new DOMException("Aborted", "AbortError"));
+       });
+    }
+
+    window.api.uploadBigFile({
+       uploadId,
+       path: (file as any).path || file.name, // Electron extends File with .path, fallback to name
+       grant: z,
+       endpointUrl
+    }).then((resultStore: string) => {
+       resolve(resultStore);
+    }).catch((err: any) => {
+       reject(err);
+    });
   });
-
-  await x;
-  console.log("done", x, z.store);
-  return `${z.store}`;
-
-
 };
 
 export const useMikroBigFileUpload = () => {
   const client = useMikro();
-  const datalayerEndpoint = useSeaweedfs();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
-    async (file: File) => {
+    async (file: File, options?: UploadOptions) => {
       if (!client) {
         throw Error("No client configured");
       }
@@ -149,11 +153,15 @@ export const useMikroBigFileUpload = () => {
         throw Error(`Failed to get upload grant: ${JSON.stringify(data)}`);
         }
 
+      if (!datalayerEndpoint) {
+        throw Error("No datalayer endpoint configured");
+      }
+
       const z = data.data.requestBigfileUpload;
 
       console.log("Got upload grant", z);
 
-      let result = await uploadToStore(file, datalayerEndpoint, z, {});
+      const result = await uploadToStore(file, datalayerEndpoint, z, options);
 
       const finishData = await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
         mutation: FinishBigfileUploadDocument,

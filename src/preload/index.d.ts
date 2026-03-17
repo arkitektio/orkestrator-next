@@ -29,6 +29,10 @@ declare global {
       }) => Promise<void>;
       getNodeId: () => Promise<string>;
       openFilePicker: () => Promise<string | undefined>;
+      uploadBigFile: (opts: { uploadId: string; path: string; grant: any; endpointUrl: string }) => Promise<string>;
+      cancelBigFile: (opts: { uploadId: string }) => Promise<void>;
+      onUploadProgress: (uploadId: string, cb: (data: any) => void) => () => void;
+      onUploadError: (uploadId: string, cb: (data: any) => void) => () => void;
       executeElectron: (assignation: Assign) => Promise<void>;
       onAgentYield: (cb: (data: any) => void) => void;
       onAgentDone: (cb: (data: any) => void) => void;

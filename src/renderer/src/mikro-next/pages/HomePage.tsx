@@ -52,8 +52,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
     files.forEach((file) => {
       startUpload(
         file,
-        async (file, { onProgress, signal }) => {
+        async (file, { id, onProgress, signal }) => {
           return await performDataLayerUpload(file, {
+            id,
             signal,
             onProgress,
           });

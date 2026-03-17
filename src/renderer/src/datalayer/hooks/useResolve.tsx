@@ -24,6 +24,8 @@ export const useResolve = () => {
         return "";
       }
 
+      console.log(key)
+
       const url = s3resolveWithEndpoint(endpoint, key);
       console.log("s3resolve", url);
       return url;

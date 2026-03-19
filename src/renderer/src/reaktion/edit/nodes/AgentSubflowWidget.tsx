@@ -4,123 +4,123 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Button } from "@/components/ui/button";
+import { FlowNode } from "@/reaktion/types";
 import React from "react";
-import { AgentSubFlowNode, AgentSubFlowNodeFragment } from "@/reaktion/api/graphql";
-import { AgentSubFlowNodeData } from "../../types";
-import { useImplementationsQuery, DetailImplementationFragment, ConstantActionQuery, ConstantActionDocument, AgentFragment } from "@/rekuest/api/graphql";
-import { useEditRiver } from "../context";
-import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
-import { useRekuest } from "@/app/Arkitekt";
+import { AgentSubFlowNodeFragment } from "@/reaktion/api/graphql";
+import { AgentSubFlownNodeProps, AgentSubFlowNodeData } from "../../types";
+import { PlusIcon } from "lucide-react";
+import { NodeResizeControl } from "@xyflow/react";
+import { useEditRiver, useSubflowChildCount } from "../context";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 
-const ImplementationSearch = ({ agentId, onSelect }: { agentId: string, onSelect: (impl: DetailImplementationFragment) => void }) => {
-  const { data } = useImplementationsQuery({
-    variables: {
-      filters: {
-        agent: agentId,
-      },
-    },
-  });
-
-  return (
-    <Command>
-      <CommandInput placeholder="Search implementations..." />
-      <CommandList>
-        <CommandEmpty>No implementations found.</CommandEmpty>
-        <CommandGroup heading="Implementations">
-          {data?.implementations.map((impl) => (
-            <CommandItem key={impl.id} onSelect={() => onSelect(impl)}>
-              {impl.action.name} ({impl.interface})
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  );
+type AgentSubflowNode = FlowNode<AgentSubFlowNodeFragment> & {
+  data: AgentSubFlowNodeData & {
+    agent?: {
+      id: string;
+    };
+  };
 };
 
-type AgentData = AgentSubFlowNodeData & {
-  agent?: AgentFragment
-};
+export const AgentSubflowWidget = ({ data, id, selected }: AgentSubFlownNodeProps & AgentSubflowNode) => {
+  const { setShowNodeContextual } = useEditRiver();
+  const subflowChildCount = useSubflowChildCount(id);
 
-export const AgentSubflowWidget = ({ data, id }: NodeProps<AgentData>) => {
-  const { addNode } = useEditRiver();
-  const client = useRekuest();
-  const [open , setOpen] = React.useState(false);
-
-  const onSelect = (impl: DetailImplementationFragment) => {
-    client &&
-      client
-        .query<ConstantActionQuery>({
-          query: ConstantActionDocument,
-          variables: { id: impl.action.id },
-        })
-        .then(async (event) => {
-          if (event.data?.action) {
-            const flownode = rekuestActionToMatchingNode(event.data?.action, {
-              x: 20, // Relative position inside group
-              y: 50, // Relative position inside group
-            });
-
-            flownode.parentId = id;
-            flownode.extent = "parent";
-            flownode.data.binds = {
-                ...flownode.data.binds,
-                templates: [impl.id],
-            }
-
-            addNode(flownode);
-          }
-        });
+  const onAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.agent) {
+      setShowNodeContextual({
+        nodeId: id,
+        action: {
+          type: "implementations",
+          agentId: data.agent.id,
+        },
+        position: { x: e.clientX, y: e.clientY },
+      });
+    }
   };
 
   return (
-    <NodeShowLayout id={id} selected={false}>
-    <Popover open={open} onOpenChange={setOpen}>
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <PopoverTrigger asChild>
-            <Card className="w-[300px] min-h-[150px] border-dashed border-2 bg-slate-50 dark:bg-slate-900/50" onClick={() => {console.log("Changing open"); setOpen(!open)}}>
-              <CardHeader className="p-4">
-                <CardTitle className="text-sm font-medium flex flex-row items-center gap-2">
-                    <span className="bg-primary/10 text-primary rounded px-1 py-0.5 text-xs">AGENT</span>
-                    {data.title}
-                </CardTitle>
-                <CardDescription className="text-xs truncate">
-                    {data.description}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </PopoverTrigger>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          {/* Optional: Add context menu items here */}
-        </ContextMenuContent>
-      </ContextMenu>
-      <PopoverContent className="w-[300px] h-[200px] p-0">
-          {data.agent && <ImplementationSearch agentId={data.agent.id} onSelect={onSelect} />}
-          {!data.agent && <div className="p-4 text-sm text-muted-foreground">Agent information not available. Valid for new nodes only.</div>}
-      </PopoverContent>
-    </Popover>
-    </NodeShowLayout>
+    <>
+      <NodeResizeControl
+        position="bottom-right"
+        minWidth={280}
+        minHeight={180}
+        maxWidth={1200}
+        maxHeight={900}
+        className="nodrag nopan nowheel z-40"
+      >
+        <div
+          className={[
+            "flex h-6 w-6 items-center justify-center rounded-md border border-amber-300/80 bg-background/95 text-amber-600 shadow-md backdrop-blur-sm",
+            "nodrag nopan nowheel",
+            selected ? "opacity-100" : "pointer-events-none opacity-0",
+          ].join(" ")}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 15 15"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.3536 11.3536C11.5488 11.1583 11.5488 10.8417 11.3536 10.6465L4.70711 4L9 4C9.27614 4 9.5 3.77614 9.5 3.5C9.5 3.22386 9.27614 3 9 3L3.5 3C3.36739 3 3.24021 3.05268 3.14645 3.14645C3.05268 3.24022 3 3.36739 3 3.5L3 9.00001C3 9.27615 3.22386 9.50001 3.5 9.50001C3.77614 9.50001 4 9.27615 4 9.00001V4.70711L10.6464 11.3536C10.8417 11.5488 11.1583 11.5488 11.3536 11.3536Z"
+              fill="currentColor"
+              fillRule="evenodd"
+              clipRule="evenodd"
+            ></path>
+          </svg>
+        </div>
+      </NodeResizeControl>
+      <NodeShowLayout
+        id={id}
+        selected={selected}
+        minWidth={280}
+        minHeight={180}
+        maxWidth={1200}
+        maxHeight={900}
+        showResizeControl={false}
+        className="overflow-hidden border-amber-300/70 bg-amber-50/50 shadow-amber-200/40 dark:border-amber-800/70 dark:bg-amber-950/20"
+      >
+        <div className="relative h-full min-h-[180px] w-full">
+          <Card className="h-full min-h-[180px] w-full border-0 bg-transparent shadow-none">
+            <CardHeader className="custom-drag-handle cursor-grab p-4 pr-14 active:cursor-grabbing">
+              <CardTitle className="text-sm font-medium flex flex-row items-center gap-2">
+                <span className="rounded bg-amber-500/10 px-1 py-0.5 text-xs text-amber-700 dark:text-amber-300">
+                  AGENT
+                </span>
+                {data.title}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {data.description}
+              </CardDescription>
+            </CardHeader>
+
+            {subflowChildCount === 0 && (
+              <div className="px-4 pb-4">
+                <div className="flex min-h-[92px] items-center justify-center rounded-lg border border-dashed border-amber-300/80 bg-background/70 text-center text-sm text-muted-foreground dark:border-amber-700/70 dark:bg-background/20">
+                  Use the + button to add an implementation to this subflow.
+                </div>
+              </div>
+            )}
+          </Card>
+
+          <div className="absolute right-3 top-3 z-20 nodrag nopan nowheel">
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              className="nodrag nopan nowheel pointer-events-auto h-8 w-8 rounded-full border border-border/60 bg-background/95 shadow-sm"
+              aria-label="Add implementation"
+              onClick={onAddClick}
+              onPointerDown={(e) => { e.stopPropagation() }}
+            >
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </NodeShowLayout>
+    </>
   );
-}
+};

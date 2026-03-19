@@ -1,52 +1,57 @@
-import { FlowFragment, GlobalArgFragment } from "@/reaktion/api/graphql";
-import React, { useContext, useRef } from "react";
-import {
-  ClickContextualParams,
-  ConnectContextualParams,
-  DropContextualParams,
-  EdgeContextualParams,
-  FlowNode,
-  NodeData,
-} from "../types";
-import { ValidationResult } from "../validation/types";
+import React, { useContext } from "react";
+import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { createEditFlowStore, EditFlowState } from "./store";
-import { useStore as useZustandStore } from "zustand";
 
-export type ShowRiverContextType = {
-  flow?: FlowFragment | null;
-  showEdgeLabels: boolean;
-  showNodeErrors: boolean;
-  addContextualNode: (node: FlowNode, params: DropContextualParams) => void;
-  addClickNode: (node: FlowNode, params: ClickContextualParams) => void;
-  addConnectContextualNode: (node: FlowNode, params: ConnectContextualParams) => void;
-  addEdgeContextualNode: (node: FlowNode, params: EdgeContextualParams) => void;
+export type EditFlowStoreApi = ReturnType<typeof createEditFlowStore>;
+
+export const EditFlowStoreContext =
+  React.createContext<EditFlowStoreApi | null>(null);
+
+export const useEditFlowStoreApi = () => {
+  const store = useContext(EditFlowStoreContext);
+
+  if (!store) {
+    throw new Error("useEditFlowStoreApi must be used within EditFlowStoreContext");
+  }
+
+  return store;
 };
 
-export const EditRiverContext = React.createContext<ShowRiverContextType | null>(null);
-
-export const EditFlowStoreContext = React.createContext<ReturnType<typeof createEditFlowStore> | null>(null);
+export const useEditFlowStore = <T,>(selector: (state: EditFlowState) => T) => {
+  const store = useEditFlowStoreApi();
+  return useStore(store, selector);
+};
 
 export const useEditRiver = () => {
-  const context = useContext(EditRiverContext);
-  if (!context) throw new Error("useEditRiver must be used within EditRiverContext");
+  const store = useEditFlowStoreApi();
 
-  const storeContext = useContext(EditFlowStoreContext);
-  if (!storeContext) throw new Error("useEditFlowStore must be used within EditFlowStoreContext");
-
-  const storeState = useZustandStore(storeContext);
+  const state = useStore(store, useShallow((currentState) => currentState));
+  const temporal = useStore(
+    store.temporal,
+    useShallow((temporalState) => ({
+      undo: temporalState.undo,
+      redo: temporalState.redo,
+      canUndo: temporalState.pastStates.length > 0,
+      canRedo: temporalState.futureStates.length > 0,
+    })),
+  );
 
   return {
-    ...context,
-    ...storeState,
-    state: storeState,
+    ...state,
+    ...temporal,
+    state,
   };
 };
 
 export const useEditNodeErrors = (id: string) => {
-  const storeContext = useContext(EditFlowStoreContext);
-  if (!storeContext) throw new Error("useEditNodeErrors must be used within EditFlowStoreContext");
+  const remainingErrors = useEditFlowStore((state) => state.remainingErrors);
+  return remainingErrors.filter((error) => error.id === id && error.type === "node");
+};
 
-  const remainingErrors = useZustandStore(storeContext, (state) => state.remainingErrors);
-  return remainingErrors.filter((e) => e.id == id && e.type == "node");
+export const useSubflowChildCount = (id: string) => {
+  return useEditFlowStore(
+    (state) => state.nodes.filter((node) => node.parentId === id).length,
+  );
 };
 

@@ -46,6 +46,7 @@
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.3",
     "electron-store": "^11.0.0",
+    "just-throttle": "^4.2.0",
     "nuqs": "^2.8.1",
     "reselect": "^5.1.1",
     "zundo": "^2.3.0",

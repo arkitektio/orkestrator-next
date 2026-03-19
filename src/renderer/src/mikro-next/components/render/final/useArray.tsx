@@ -49,7 +49,7 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
           throw new Error("No credentials loadable");
         }
 
-        let accessGrant = response.data.requestZarrAccess;
+        const accessGrant = response.data.requestZarrAccess;
 
         const path =
           datalayerEndpoint + "/" + accessGrant.bucket + "/" + accessGrant.key;

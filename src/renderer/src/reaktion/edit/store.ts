@@ -1,15 +1,75 @@
 import { GlobalArgFragment } from "@/reaktion/api/graphql";
-import { EdgeChange, NodeChange, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import {
+  ClickContextualParams,
+  ConnectContextualParams,
+  DropContextualParams,
+  EdgeContextualParams,
+  NodeContextualParams,
+  FlowEdge,
+  FlowNode,
+} from "@/reaktion/types";
+import {
+  createVanillaTransformEdge,
+  integrate,
+} from "@/reaktion/validation/integrate";
+import { ValidationResult } from "@/reaktion/validation/types";
+import { validateState } from "@/reaktion/validation/validate";
+import { handleToStream, nodeIdBuilder } from "@/reaktion/utils";
+import {
+  EdgeChange,
+  NodeChange,
+  OnConnectStartParams,
+  ReactFlowInstance,
+  applyEdgeChanges,
+  applyNodeChanges,
+} from "@xyflow/react";
+import { temporal } from "zundo";
 import { createStore } from "zustand";
-import { FlowEdge, FlowNode } from "../types";
-import { handleToStream } from "../utils";
-import { ValidationResult } from "../validation/types";
-import { validateState } from "../validation/validate";
-import { temporal } from 'zundo';
 
+type TemporalEditFlowState = Pick<
+  ValidationResult,
+  "nodes" | "edges" | "globals" | "remainingErrors" | "solvedErrors" | "valid"
+>;
+
+const getClientPoint = (event: MouseEvent | TouchEvent) => {
+  if ("touches" in event && event.touches.length > 0) {
+    return {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    };
+  }
+
+  if ("changedTouches" in event && event.changedTouches.length > 0) {
+    return {
+      x: event.changedTouches[0].clientX,
+      y: event.changedTouches[0].clientY,
+    };
+  }
+
+  if ("clientX" in event) {
+    return {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  return null;
+};
 
 export interface EditFlowState extends ValidationResult {
-  updateData: (data: Partial<any>, id: string) => void;
+  showEdgeLabels: boolean;
+  showNodeErrors: boolean;
+  showContextual?: DropContextualParams;
+  showClickContextual?: ClickContextualParams;
+  showEdgeContextual?: EdgeContextualParams;
+  showConnectContextual?: ConnectContextualParams;
+  showNodeContextual?: NodeContextualParams;
+  reactFlowInstance: ReactFlowInstance | null;
+  connectingStart?: OnConnectStartParams;
+  replaceValidationResult: (
+    next: ValidationResult | ((state: EditFlowState) => ValidationResult),
+  ) => void;
+  updateData: (data: Partial<FlowNode["data"]>, id: string) => void;
   setGlobals: (data: GlobalArgFragment[]) => void;
   removeGlobal: (key: string) => void;
   removeEdge: (id: string) => void;
@@ -41,329 +101,636 @@ export interface EditFlowState extends ValidationResult {
   ) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
-  setEdges: (edges: FlowEdge[]) => void;
-  setNodes: (nodes: FlowNode[]) => void;
-
+  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+  setConnectingStart: (params: OnConnectStartParams | undefined) => void;
+  setShowEdgeLabels: (value: boolean) => void;
+  setShowNodeErrors: (value: boolean) => void;
+  toggleShowEdgeLabels: () => void;
+  toggleShowNodeErrors: () => void;
+  setShowContextual: (params: DropContextualParams | undefined) => void;
+  setShowClickContextual: (params: ClickContextualParams | undefined) => void;
+  setShowEdgeContextual: (params: EdgeContextualParams | undefined) => void;
+  setShowConnectContextual: (params: ConnectContextualParams | undefined) => void;
+  setShowNodeContextual: (params: NodeContextualParams | undefined) => void;
+  clearPanels: () => void;
+  addClickNode: (node: FlowNode, params: ClickContextualParams) => void;
+  addConnectContextualNode: (
+    node: FlowNode,
+    params: ConnectContextualParams,
+  ) => void;
+  addEdgeContextualNode: (node: FlowNode, params: EdgeContextualParams) => void;
+  addContextualNode: (node: FlowNode, params: DropContextualParams) => void;
 }
 
-
-
-
 export const createEditFlowStore = (initialState: ValidationResult) =>
-  createStore<EditFlowState>()(temporal((set, get) => ({
+  createStore<EditFlowState>()(
+    temporal(
+      (set, get) => ({
+        ...initialState,
+        showEdgeLabels: false,
+        showNodeErrors: true,
+        showContextual: undefined,
+        showClickContextual: undefined,
+        showEdgeContextual: undefined,
+        showConnectContextual: undefined,
+        showNodeContextual: undefined,
+        reactFlowInstance: null,
+        connectingStart: undefined,
 
-    ...initialState,
+        replaceValidationResult: (next) => {
+          set((state) => (typeof next === "function" ? next(state) : next));
+        },
 
-    onNodesChange: (changes) => {
-      const state = get();
-      if (
-        changes.length == 1 &&
-        (changes[0].type == "position" || changes[0].type == "dimensions")
-      ) {
-        set({
-          nodes: applyNodeChanges(changes, state.nodes) as FlowNode[],
-        });
-      } else {
-        set(
-          validateState({
-            ...state,
-            nodes: applyNodeChanges(changes, state.nodes) as FlowNode[],
-          })
-        );
-      }
-    },
+        onNodesChange: (changes) => {
+          const state = get();
+          const nextNodes = applyNodeChanges(changes, state.nodes) as FlowNode[];
 
-    onEdgesChange: (changes) => {
-      const state = get();
-      set(
-        validateState({
-          ...state,
-          edges: applyEdgeChanges(changes, state.edges) as FlowEdge[],
-        })
-      );
-    },
+          if (
+            changes.length === 1 &&
+            (changes[0].type === "position" || changes[0].type === "dimensions")
+          ) {
+            set({ nodes: nextNodes });
+            return;
+          }
 
-    setNodes: (nodes) => {
-        set((state) => validateState({ ...state, nodes }));
-    },
+          set(
+            validateState({
+              ...state,
+              nodes: nextNodes,
+            }),
+          );
+        },
 
-    setEdges: (edges) => {
-        set((state) => validateState({ ...state, edges }));
-    },
+        onEdgesChange: (changes) => {
+          const state = get();
+          set(
+            validateState({
+              ...state,
+              edges: applyEdgeChanges(changes, state.edges) as FlowEdge[],
+            }),
+          );
+        },
 
-    updateData: (data, id) => {
-      set((state) =>
-        validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === id) {
-              return { ...n, data: { ...n.data, ...data } } as FlowNode;
+        updateData: (data, id) => {
+          set((state) =>
+            validateState({
+              ...state,
+              nodes: state.nodes.map((node) => {
+                if (node.id !== id) {
+                  return node;
+                }
+
+                return {
+                  ...node,
+                  data: { ...node.data, ...data },
+                } as FlowNode;
+              }),
+            }),
+          );
+        },
+
+        setGlobals: (globals) => {
+          set((state) =>
+            validateState({
+              ...state,
+              globals,
+            }),
+          );
+        },
+
+        removeGlobal: (globalkey) => {
+          set((state) => {
+            const nodes = state.nodes.map((node) => ({
+              ...node,
+              data: {
+                ...node.data,
+                globalsMap: Object.fromEntries(
+                  Object.entries(node.data.globalsMap ?? {}).filter(
+                    ([, value]) => value !== globalkey,
+                  ),
+                ),
+              },
+            })) as FlowNode[];
+
+            return validateState({
+              ...state,
+              nodes,
+              globals: state.globals.filter((globalArg) => globalArg.key !== globalkey),
+            });
+          });
+        },
+
+        removeEdge: (id) => {
+          set((state) =>
+            validateState({
+              ...state,
+              edges: state.edges.filter((edge) => edge.id !== id),
+            }),
+          );
+        },
+
+        addNode: (node) => {
+          set((state) =>
+            validateState({
+              ...state,
+              nodes: [...state.nodes, node],
+            }),
+          );
+        },
+
+        moveConstantToStream: (nodeId, conindex, instream) => {
+          set((state) => {
+            const node = state.nodes.find((candidate) => candidate.id === nodeId);
+            if (!node) {
+              return state;
             }
-            return n;
-          }),
-        })
-      );
-    },
 
-    setGlobals: (globals) => {
-      set((state) =>
-        validateState({
-          ...state,
-          globals: globals,
-        })
-      );
-    },
+            const constant = node.data.constants.at(conindex);
+            if (!constant) {
+              return state;
+            }
 
-    removeGlobal: (globalkey) => {
-      set((state) => {
-        const nodes = state.nodes.map((n) => {
-          const new_data = {
-            ...n.data,
-            globalsMap: Object.fromEntries(
-              Object.entries({...(n.data as any).globalsMap}).filter(
-                ([key, value]) => value != globalkey,
+            const newInstream = node.data.ins.map((stream, index) =>
+              index === instream ? [...stream, constant] : stream,
+            );
+
+            const newConstants = node.data.constants.filter(
+              (_, index) => index !== conindex,
+            );
+
+            const updatedEdges = state.edges.map((edge) => {
+              if (
+                edge.target === nodeId &&
+                handleToStream(edge.targetHandle) === instream &&
+                edge.data
+              ) {
+                const streamItems = newInstream[instream]?.map((port) => ({
+                  __typename: "StreamItem" as const,
+                  kind: port.kind,
+                  label: port.label ?? port.key,
+                }));
+
+                if (!streamItems) {
+                  return edge;
+                }
+
+                return {
+                  ...edge,
+                  data: {
+                    ...edge.data,
+                    stream: streamItems,
+                  },
+                };
+              }
+
+              return edge;
+            });
+
+            return validateState({
+              ...state,
+              nodes: state.nodes.map((candidate) => {
+                if (candidate.id !== nodeId) {
+                  return candidate;
+                }
+
+                return {
+                  ...candidate,
+                  data: {
+                    ...candidate.data,
+                    ins: newInstream,
+                    constants: newConstants,
+                    constantsMap: {
+                      ...candidate.data.constantsMap,
+                      [constant.key]: undefined,
+                    },
+                    globalsMap: {
+                      ...candidate.data.globalsMap,
+                      [constant.key]: undefined,
+                    },
+                  },
+                } as FlowNode;
+              }),
+              edges: updatedEdges,
+            });
+          });
+        },
+
+        moveVoidtoOutstream: (nodeId, voidindex, outstream) => {
+          set((state) => {
+            const node = state.nodes.find((candidate) => candidate.id === nodeId);
+            if (!node) {
+              return state;
+            }
+
+            const outputVoid = node.data.voids.at(voidindex);
+            if (!outputVoid) {
+              return state;
+            }
+
+            const newOutstream = node.data.outs.map((stream, index) =>
+              index === outstream ? [...stream, outputVoid] : stream,
+            );
+
+            const newVoids = node.data.voids.filter((_, index) => index !== voidindex);
+
+            return validateState({
+              ...state,
+              nodes: state.nodes.map((candidate) => {
+                if (candidate.id !== nodeId) {
+                  return candidate;
+                }
+
+                return {
+                  ...candidate,
+                  data: {
+                    ...candidate.data,
+                    outs: newOutstream,
+                    voids: newVoids,
+                  },
+                } as FlowNode;
+              }),
+            });
+          });
+        },
+
+        moveOutStreamToVoid: (nodeId, streamIndex, streamItem) => {
+          set((state) => {
+            const node = state.nodes.find((candidate) => candidate.id === nodeId);
+            if (!node) {
+              return state;
+            }
+
+            const output = node.data.outs.at(streamIndex)?.at(streamItem);
+            if (!output) {
+              return state;
+            }
+
+            const newOutstream = node.data.outs.map((stream, index) =>
+              index === streamIndex
+                ? stream.filter((_, itemIndex) => itemIndex !== streamItem)
+                : stream,
+            );
+
+            return validateState({
+              ...state,
+              nodes: state.nodes.map((candidate) => {
+                if (candidate.id !== nodeId) {
+                  return candidate;
+                }
+
+                return {
+                  ...candidate,
+                  data: {
+                    ...candidate.data,
+                    outs: newOutstream,
+                    voids: [...candidate.data.voids, output],
+                  },
+                } as FlowNode;
+              }),
+            });
+          });
+        },
+
+        moveStreamToConstants: (nodeId, streamIndex, streamItem) => {
+          set((state) => {
+            const node = state.nodes.find((candidate) => candidate.id === nodeId);
+            if (!node) {
+              return state;
+            }
+
+            const input = node.data.ins.at(streamIndex)?.at(streamItem);
+            if (!input) {
+              return state;
+            }
+
+            const newInstream = node.data.ins.map((stream, index) =>
+              index === streamIndex
+                ? stream.filter((_, itemIndex) => itemIndex !== streamItem)
+                : stream,
+            );
+
+            return validateState({
+              ...state,
+              nodes: state.nodes.map((candidate) => {
+                if (candidate.id !== nodeId) {
+                  return candidate;
+                }
+
+                return {
+                  ...candidate,
+                  data: {
+                    ...candidate.data,
+                    ins: newInstream,
+                    constants: [...candidate.data.constants, input],
+                    constantsMap: {
+                      ...candidate.data.constantsMap,
+                      [input.key]: input.default,
+                    },
+                  },
+                } as FlowNode;
+              }),
+            });
+          });
+        },
+
+        moveConstantToGlobals: (nodeId, conindex, globalkey) => {
+          set((state) => {
+            const node = state.nodes.find((candidate) => candidate.id === nodeId);
+            if (!node) {
+              return state;
+            }
+
+            const constant = node.data.constants.at(conindex);
+            if (!constant) {
+              return state;
+            }
+
+            let nextGlobalKey = globalkey;
+            let globals = state.globals;
+
+            if (!nextGlobalKey) {
+              nextGlobalKey = constant.key;
+              globals = [...state.globals, { key: constant.key, port: constant }];
+            } else {
+              globals = state.globals.map((globalArg) =>
+                globalArg.key === nextGlobalKey
+                  ? { ...globalArg, port: constant }
+                  : globalArg,
+              );
+            }
+
+            return validateState({
+              ...state,
+              nodes: state.nodes.map((candidate) => {
+                if (candidate.id !== nodeId) {
+                  return candidate;
+                }
+
+                return {
+                  ...candidate,
+                  data: {
+                    ...candidate.data,
+                    constantsMap: {
+                      ...candidate.data.constantsMap,
+                      [constant.key]: undefined,
+                    },
+                    globalsMap: {
+                      ...candidate.data.globalsMap,
+                      [constant.key]: nextGlobalKey,
+                    },
+                  },
+                } as FlowNode;
+              }),
+              globals,
+            });
+          });
+        },
+
+        setReactFlowInstance: (reactFlowInstance) => set({ reactFlowInstance }),
+        setConnectingStart: (connectingStart) => set({ connectingStart }),
+        setShowEdgeLabels: (showEdgeLabels) => set({ showEdgeLabels }),
+        setShowNodeErrors: (showNodeErrors) => set({ showNodeErrors }),
+        toggleShowEdgeLabels: () => {
+          set((state) => ({ showEdgeLabels: !state.showEdgeLabels }));
+        },
+        toggleShowNodeErrors: () => {
+          set((state) => ({ showNodeErrors: !state.showNodeErrors }));
+        },
+        setShowContextual: (showContextual) => set({ showContextual }),
+        setShowClickContextual: (showClickContextual) => set({ showClickContextual }),
+        setShowEdgeContextual: (showEdgeContextual) => set({ showEdgeContextual }),
+        setShowConnectContextual: (showConnectContextual) =>
+          set({ showConnectContextual }),
+        setShowNodeContextual: (showNodeContextual) => set({ showNodeContextual }),
+
+        clearPanels: () => {
+          set({
+            showContextual: undefined,
+            showClickContextual: undefined,
+            showEdgeContextual: undefined,
+            showConnectContextual: undefined,
+            showNodeContextual: undefined,
+          });
+        },
+
+        addClickNode: (stagingNode, params) => {
+          const state = get();
+          const point = getClientPoint(params.event);
+          if (!state.reactFlowInstance || !point) {
+            return;
+          }
+
+          const position = state.reactFlowInstance.screenToFlowPosition(point);
+
+          set(
+            validateState({
+              ...state,
+              nodes: state.nodes.concat({ ...stagingNode, position }),
+            }),
+          );
+
+          set({ showClickContextual: undefined });
+        },
+
+        addConnectContextualNode: (stagingNode, params) => {
+          const state = get();
+          if (!state.reactFlowInstance) {
+            return;
+          }
+
+          const oldNodeSourceId = params.connection.source;
+          const oldNodeSourceStreamId = handleToStream(params.connection.sourceHandle);
+          const targetNodeSourceStreamId = handleToStream(
+            params.connection.targetHandle,
+          );
+          const targetNodeSourceId = params.connection.target;
+
+          if (!oldNodeSourceId || !targetNodeSourceId) {
+            return;
+          }
+
+          const leftNodeDims = { width: 200, height: 100 };
+          const rightNodeDims = { width: 200, height: 100 };
+
+          const centerLeft = {
+            x: params.leftNode.position.x + leftNodeDims.width / 2,
+            y: params.leftNode.position.y + leftNodeDims.height / 2,
+          };
+          const centerRight = {
+            x: params.rightNode.position.x + rightNodeDims.width / 2,
+            y: params.rightNode.position.y + rightNodeDims.height / 2,
+          };
+
+          const position = {
+            x: (centerLeft.x + centerRight.x) / 2,
+            y: (centerLeft.y + centerRight.y) / 2,
+          };
+
+          const nextState = validateState({
+            ...state,
+            nodes: state.nodes.concat({ ...stagingNode, position }),
+            edges: state.edges.concat(
+              createVanillaTransformEdge(
+                nodeIdBuilder(),
+                oldNodeSourceId,
+                oldNodeSourceStreamId,
+                stagingNode.id,
+                0,
+              ),
+              createVanillaTransformEdge(
+                nodeIdBuilder(),
+                stagingNode.id,
+                0,
+                targetNodeSourceId,
+                targetNodeSourceStreamId,
               ),
             ),
-          };
-          return { ...n, data: new_data } as FlowNode;
-        });
-
-        return validateState({
-          ...state,
-          nodes: nodes,
-          globals: state.globals.filter((g) => g.key != globalkey),
-        });
-      });
-    },
-
-    removeEdge: (id) => {
-      set((state) =>
-        validateState({
-          ...state,
-          edges: state.edges.filter((e) => e.id !== id),
-        })
-      );
-    },
-
-    addNode: (node) => {
-      set((state) =>
-        validateState({ ...state, nodes: [...state.nodes, node] })
-      );
-    },
-
-    moveConstantToStream: (nodeId, conindex, instream) => {
-      set((state) => {
-        const node = state.nodes.find((n) => n.id == nodeId);
-        if (!node) return state;
-
-        const data: any = node.data;
-
-        const constant = data.constants.at(conindex);
-        if (!constant) return state;
-
-        const new_instream = data.ins.map((s: any, index: any) => {
-          if (index == instream) {
-            return [...s, constant];
-          }
-          return s;
-        });
-
-        const new_constants = data.constants.filter(
-          (i: any, index: any) => index != conindex,
-        );
-
-        const targetStreamIndex = instream;
-        const updatedEdges = state.edges.map((edge) => {
-          if (
-            edge.target === nodeId &&
-            handleToStream(edge.targetHandle) === targetStreamIndex &&
-            edge.data
-          ) {
-            const streamItems = new_instream[targetStreamIndex]?.map((port: any) => ({
-              __typename: "StreamItem" as const,
-              kind: port.kind,
-              label: port.label ?? port.key,
-            }));
-            if (!streamItems) return edge;
-            return {
-              ...edge,
-              data: {
-                ...edge.data,
-                stream: streamItems,
-              },
-            };
-          }
-          return edge;
-        });
-
-        const new_data = {
-          ...data,
-          ins: new_instream,
-          constants: new_constants,
-          constantsMap: { ...data.constantsMap, [constant.key]: undefined },
-          globalsMap: { ...data.globalsMap, [constant.key]: undefined },
-        };
-
-        return validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === nodeId) {
-              return { ...n, data: new_data } as FlowNode;
-            }
-            return n;
-          }),
-          edges: updatedEdges,
-        });
-      });
-    },
-
-    moveVoidtoOutstream: (nodeId, voidindex, outstream) => {
-      set((state) => {
-        const node = state.nodes.find((n) => n.id == nodeId);
-        if (!node) return state;
-        const data: any = node.data;
-
-        const thevoid = data.voids.at(voidindex);
-        if (!thevoid) return state;
-
-        const new_outstream = data.outs.map((s: any, index: any) => {
-          if (index == outstream) {
-            return [...s, thevoid];
-          }
-          return s;
-        });
-
-        const new_voids = data.voids.filter((i: any, index: any) => index != voidindex);
-
-        const new_data = {
-          ...data,
-          outs: new_outstream,
-          voids: new_voids,
-        };
-
-        return validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === nodeId) {
-              return { ...n, data: new_data } as FlowNode;
-            }
-            return n;
-          }),
-        });
-      });
-    },
-
-    moveOutStreamToVoid: (nodeId, streamIndex, streamItem) => {
-      set((state) => {
-        const node = state.nodes.find((n) => n.id == nodeId);
-        if (!node) return state;
-        const data: any = node.data;
-
-        const streamitem = data.outs.at(streamIndex)?.at(streamItem);
-        if (!streamitem) return state;
-
-        const new_outstream = data.outs.map((s: any, index: any) => {
-          if (index == streamIndex) {
-            return s.filter((i: any, index: any) => index != streamItem);
-          }
-          return s;
-        });
-
-        const new_data = {
-          ...data,
-          outs: new_outstream,
-          voids: [...data.voids, streamitem],
-        };
-
-        return validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === nodeId) {
-              return { ...n, data: new_data } as FlowNode;
-            }
-            return n;
-          }),
-        });
-      });
-    },
-
-    moveStreamToConstants: (nodeId, streamIndex, streamItem) => {
-      set((state) => {
-        const node = state.nodes.find((n) => n.id == nodeId);
-        if (!node) return state;
-        const data: any = node.data;
-
-        const streamitem = data.ins.at(streamIndex)?.at(streamItem);
-        if (!streamitem) return state;
-
-        const new_instream = data.ins.map((s: any, index: any) => {
-          if (index == streamIndex) {
-            return s.filter((i: any, index: any) => index != streamItem);
-          }
-          return s;
-        });
-
-        const new_data = {
-          ...data,
-          ins: new_instream,
-          constants: [...data.constants, streamitem],
-          constantsMap: {
-            ...data.constantsMap,
-            [streamitem.key]: streamitem.default,
-          },
-        };
-
-        return validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === nodeId) {
-              return { ...n, data: new_data } as FlowNode;
-            }
-            return n;
-          }),
-        });
-      });
-    },
-
-    moveConstantToGlobals: (nodeId, conindex, globalkey?) => {
-      set((state) => {
-        const node = state.nodes.find((n) => n.id == nodeId);
-        if (!node) return state;
-        const data: any = node.data;
-
-        const constant = data.constants.at(conindex);
-        if (!constant) return state;
-
-        let new_globals = state.globals;
-        if (!globalkey) {
-          new_globals = [...state.globals, { key: constant.key, port: constant }];
-          globalkey = constant.key;
-        } else {
-          new_globals = state.globals.map((g) => {
-            if (g.key == globalkey) {
-              return { ...g, port: constant };
-            }
-            return g;
           });
-        }
 
-        const new_data = {
-          ...data,
-          constants: data.constants,
-          constantsMap: { ...data.constantsMap, [constant.key]: undefined },
-          globalsMap: { ...data.globalsMap, [constant.key]: globalkey },
-        };
+          set(nextState);
+          set({ showConnectContextual: undefined });
+        },
 
-        return validateState({
-          ...state,
-          nodes: state.nodes.map((n) => {
-            if (n.id === nodeId) {
-              return { ...n, data: new_data } as FlowNode;
-            }
-            return n;
-          }),
-          globals: new_globals,
-        });
-      });
-    },
-  })));
+        addEdgeContextualNode: (stagingNode, params) => {
+          const state = get();
+          if (!state.reactFlowInstance) {
+            return;
+          }
+
+          const leftNodeDims = { width: 200, height: 100 };
+          const rightNodeDims = { width: 200, height: 100 };
+
+          const centerLeft = {
+            x: params.leftNode.position.x + leftNodeDims.width / 2,
+            y: params.leftNode.position.y + leftNodeDims.height / 2,
+          };
+          const centerRight = {
+            x: params.rightNode.position.x + rightNodeDims.width / 2,
+            y: params.rightNode.position.y + rightNodeDims.height / 2,
+          };
+
+          const position = {
+            x: (centerLeft.x + centerRight.x) / 2,
+            y: (centerLeft.y + centerRight.y) / 2,
+          };
+
+          const nextState = validateState({
+            ...state,
+            nodes: state.nodes.concat({ ...stagingNode, position }),
+            edges: state.edges
+              .filter((edge) => edge.id !== params.edgeId)
+              .concat(
+                createVanillaTransformEdge(
+                  nodeIdBuilder(),
+                  params.leftNode.id,
+                  params.leftStream,
+                  stagingNode.id,
+                  0,
+                ),
+                createVanillaTransformEdge(
+                  nodeIdBuilder(),
+                  stagingNode.id,
+                  0,
+                  params.rightNode.id,
+                  params.rightStream,
+                ),
+              ),
+          });
+
+          set(nextState);
+          set({ showEdgeContextual: undefined });
+        },
+
+        addContextualNode: (stagingNode, params) => {
+          const state = get();
+          if (!state.reactFlowInstance) {
+            return;
+          }
+
+          const connectionParams = params.connectionParams;
+          if (!connectionParams.nodeId || !connectionParams.handleId) {
+            return;
+          }
+
+          const oldNode = state.reactFlowInstance.getNode(connectionParams.nodeId);
+          const point = getClientPoint(params.event);
+
+          if (!oldNode || !point) {
+            return;
+          }
+
+          if (connectionParams.handleType === "source") {
+            const oldNodeSourceId = oldNode.id;
+            const oldNodeSourceStreamId = handleToStream(connectionParams.handleId);
+            const position = state.reactFlowInstance.screenToFlowPosition(point);
+
+            const stagedState = {
+              ...state,
+              nodes: state.nodes.concat({ ...stagingNode, position }),
+              edges: state.edges.concat(
+                createVanillaTransformEdge(
+                  nodeIdBuilder(),
+                  oldNodeSourceId,
+                  oldNodeSourceStreamId,
+                  stagingNode.id,
+                  0,
+                ),
+              ),
+            };
+
+            const integratedState = integrate(stagedState, {
+              source: oldNodeSourceId,
+              sourceHandle: connectionParams.handleId,
+              target: stagingNode.id,
+              targetHandle: "arg_0",
+            });
+
+            set(validateState(integratedState));
+            set({ showContextual: undefined });
+            return;
+          }
+
+          if (connectionParams.handleType === "target") {
+            const oldNodeTargetId = oldNode.id;
+            const oldNodeTargetStreamId = handleToStream(connectionParams.handleId);
+            const position = state.reactFlowInstance.screenToFlowPosition(point);
+
+            const stagedState = {
+              ...state,
+              nodes: state.nodes.concat({ ...stagingNode, position }),
+              edges: state.edges.concat(
+                createVanillaTransformEdge(
+                  nodeIdBuilder(),
+                  stagingNode.id,
+                  0,
+                  oldNodeTargetId,
+                  oldNodeTargetStreamId,
+                ),
+              ),
+            };
+
+            const integratedState = integrate(stagedState, {
+              source: stagingNode.id,
+              sourceHandle: "return_0",
+              target: oldNodeTargetId,
+              targetHandle: connectionParams.handleId,
+            });
+
+            set(validateState(integratedState));
+            set({ showContextual: undefined });
+          }
+        },
+      }),
+      {
+        limit: 100,
+        partialize: (state): TemporalEditFlowState => ({
+          nodes: state.nodes,
+          edges: state.edges,
+          globals: state.globals,
+          remainingErrors: state.remainingErrors,
+          solvedErrors: state.solvedErrors,
+          valid: state.valid,
+        }),
+      },
+    ),
+  );

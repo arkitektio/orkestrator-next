@@ -12,7 +12,6 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
   id,
   selected,
 }) => {
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   const errors = useEditNodeErrors(id);
@@ -40,7 +39,7 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
         </CardHeader>
 
         {ins.map((s, index) => (
-          <InStream stream={s} id={index} length={ins.length} />
+          <InStream key={index} stream={s as never} id={index} length={ins.length} />
         ))}
       </NodeShowLayout>
     </>

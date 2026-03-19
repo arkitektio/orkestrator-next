@@ -14,7 +14,7 @@ import {
   GraphNodeInput,
   LoggingEdgeFragment,
   ReactiveNodeFragment,
-  RekuesFilterActionNodeFragment,
+  RekuestFilterActionNodeFragment,
   RekuestMapActionNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
@@ -34,7 +34,7 @@ export type DataEnhancer<T, L = {}> = T & { extras?: L };
 export type ArgNodeData = DataEnhancer<ArgNodeFragment>;
 export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
 export type RekuestMapNodeData = DataEnhancer<RekuestMapActionNodeFragment>;
-export type RekuestFilterNodeData = DataEnhancer<RekuesFilterActionNodeFragment>;
+export type RekuestFilterNodeData = DataEnhancer<RekuestFilterActionNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 export type AgentSubFlowNodeData = DataEnhancer<AgentSubFlowNodeFragment>;
 
@@ -45,15 +45,6 @@ export type NodeData =
   | RekuestFilterNodeData
   | ReactiveNodeData
   | AgentSubFlowNodeData;
-
-export type ArgNodeProps = NodeProps<ArgNodeData>;
-export type ReturnNodeProps = NodeProps<ReturnNodeData>;
-export type IONodeProps = ArgNodeProps | ReturnNodeProps;
-
-export type RekuestMapNodeProps = NodeProps<RekuestMapNodeData>;
-export type RekuestFilterNodeProps = NodeProps<RekuestFilterNodeData>;
-export type ReactiveNodeProps = NodeProps<ReactiveNodeData>;
-export type AgentSubFlownNodeProps = NodeProps<AgentSubFlowNodeData>;
 
 export type Elements = Element[];
 
@@ -95,6 +86,17 @@ export type FlowEdgeData<T = GraphEdgeFragment> = Omit<
 export type FlowNode<T extends BaseGraphNodeFragment = BaseGraphNodeFragment> =
   Node<FlowNodeData<T>, NodeTypeUnion>;
 export type FlowEdge<T = GraphEdgeFragment> = Edge<FlowEdgeData<T>>;
+
+type TypedNodeProps<T extends BaseGraphNodeFragment> = NodeProps<FlowNode<T>>;
+
+export type ArgNodeProps = TypedNodeProps<ArgNodeFragment>;
+export type ReturnNodeProps = TypedNodeProps<ReturnNodeFragment>;
+export type IONodeProps = ArgNodeProps | ReturnNodeProps;
+
+export type RekuestMapNodeProps = TypedNodeProps<RekuestMapActionNodeFragment>;
+export type RekuestFilterNodeProps = TypedNodeProps<RekuestFilterActionNodeFragment>;
+export type ReactiveNodeProps = TypedNodeProps<ReactiveNodeFragment>;
+export type AgentSubFlownNodeProps = TypedNodeProps<AgentSubFlowNodeFragment>;
 
 export type VanillaEdgeProps = EdgeProps<VanillaEdgeFragment>;
 export type LoggingEdgeProps = EdgeProps<LoggingEdgeFragment>;
@@ -195,6 +197,15 @@ export type ConnectContextualParams = {
   leftStream: number;
   rightNode: FlowNode;
   rightStream: number;
+  position: { x: number; y: number };
+};
+
+export type NodeContextualAction =
+  | { type: "implementations"; agentId: string; }
+
+export type NodeContextualParams = {
+  nodeId: string;
+  action: NodeContextualAction;
   position: { x: number; y: number };
 };
 

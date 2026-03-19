@@ -374,7 +374,7 @@ const ClickAgents = (props: {
     addClickNode(
       {
         id: nodeIdBuilder(),
-        type: "AgentSubflowNode",
+        type: "AgentSubFlowNode",
         position: { x: 0, y: 0 },
         data: {
           kind: GraphNodeKind.AgentSubflow,

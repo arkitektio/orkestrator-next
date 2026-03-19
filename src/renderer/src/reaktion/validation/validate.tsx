@@ -3,6 +3,7 @@ import { buildZodSchema } from "@/rekuest/widgets/utils";
 import { ZodError } from "zod";
 import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
+import { PortKind } from "@/rekuest/api/graphql";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -139,7 +140,7 @@ const validateNoUnconnectedNodes = (
 ): Partial<ValidationResult> => {
   const remain: ValidationError[] = previous.remainingErrors;
 
-  for (const node of previous.nodes) {
+  for (const node of previous.nodes.filter(x => x.type != "AgentSubFlowNode")) {
     const targetEdge = previous.edges.find((n) => n.target == node.id);
     const sourceEdge = previous.edges.find((n) => n.source == node.id);
 
@@ -163,7 +164,7 @@ const validateNoUnconnectedNodes = (
 
 function validateGraphIsConnected(previous: ValidationResult) {
   const remain: ValidationError[] = previous.remainingErrors;
-  const nodes = previous.nodes;
+  const nodes = previous.nodes.filter(n => n.type != "AgentSubFlowNode");
   const edges = previous.edges;
 
   const adjacencyList: { [key: string]: string[] } = {};
@@ -294,7 +295,53 @@ function noDoubleEdgeForOutput(previous: ValidationResult) {
   };
 }
 
+function validateMemoryStructuresSameSubflow(previous: ValidationResult) {
+  const remain: ValidationError[] = previous.remainingErrors;
+  const nodes = previous.nodes.filter(n => n.parentId != null);
+  const edges = previous.edges;
+
+  const hasMemoryStructure = (node: FlowNode): boolean => {
+    return !!(
+      node.data.ins?.find((stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+      ) ||
+      node.data.outs?.find((stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+      ) ||
+      node.data.voids?.find((item) => item.kind === PortKind.MemoryStructure) ||
+      node.data.constants?.find(
+        (item) => item.kind === PortKind.MemoryStructure,
+      )
+    );
+  };
+
+  for (const edge of edges) {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    if (sourceNode && targetNode) {
+      if (hasMemoryStructure(sourceNode) && hasMemoryStructure(targetNode)) {
+        if (sourceNode.parentId !== targetNode.parentId) {
+          remain.push({
+            type: "edge",
+            id: edge.id,
+            level: "critical",
+            message:
+              "Nodes with memory structures must be in the same subflow.",
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
 const validators = [
+  validateMemoryStructuresSameSubflow,
   validateMatchingPorts,
   validateNoUnconnectedNodes,
   validateGraphIsConnected,

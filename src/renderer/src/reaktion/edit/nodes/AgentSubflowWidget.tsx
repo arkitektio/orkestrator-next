@@ -1,44 +1,26 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FlowNode } from "@/reaktion/types";
-import React from "react";
-import { AgentSubFlowNodeFragment } from "@/reaktion/api/graphql";
-import { AgentSubFlownNodeProps, AgentSubFlowNodeData } from "../../types";
-import { PlusIcon } from "lucide-react";
-import { NodeResizeControl } from "@xyflow/react";
-import { useEditRiver, useSubflowChildCount } from "../context";
-import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FlowNode } from '@/reaktion/types'
+
+import { AgentSubFlowNodeFragment } from '@/reaktion/api/graphql'
+import { AgentSubFlownNodeProps, AgentSubFlowNodeData } from '../../types'
+import { NodeResizeControl } from '@xyflow/react'
+import { useSubflowChildCount } from '../context'
+import { NodeShowLayout } from '@/reaktion/base/NodeShow'
 
 type AgentSubflowNode = FlowNode<AgentSubFlowNodeFragment> & {
   data: AgentSubFlowNodeData & {
     agent?: {
-      id: string;
-    };
-  };
-};
-
-export const AgentSubflowWidget = ({ data, id, selected }: AgentSubFlownNodeProps & AgentSubflowNode) => {
-  const { setShowNodeContextual } = useEditRiver();
-  const subflowChildCount = useSubflowChildCount(id);
-
-  const onAddClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (data.agent) {
-      setShowNodeContextual({
-        nodeId: id,
-        action: {
-          type: "implementations",
-          agentId: data.agent.id,
-        },
-        position: { x: e.clientX, y: e.clientY },
-      });
+      id: string
     }
-  };
+  }
+}
+
+export const AgentSubflowWidget = ({
+  data,
+  id,
+  selected
+}: AgentSubFlownNodeProps & AgentSubflowNode) => {
+  const subflowChildCount = useSubflowChildCount(id)
 
   return (
     <>
@@ -52,10 +34,10 @@ export const AgentSubflowWidget = ({ data, id, selected }: AgentSubFlownNodeProp
       >
         <div
           className={[
-            "flex h-6 w-6 items-center justify-center rounded-md border border-amber-300/80 bg-background/95 text-amber-600 shadow-md backdrop-blur-sm",
-            "nodrag nopan nowheel",
-            selected ? "opacity-100" : "pointer-events-none opacity-0",
-          ].join(" ")}
+            'flex h-6 w-6 items-center justify-center rounded-md border border-amber-300/80 bg-background/95 text-amber-600 shadow-md backdrop-blur-sm',
+            'nodrag nopan nowheel',
+            selected ? 'opacity-100' : 'pointer-events-none opacity-0'
+          ].join(' ')}
         >
           <svg
             width="14"
@@ -92,35 +74,19 @@ export const AgentSubflowWidget = ({ data, id, selected }: AgentSubFlownNodeProp
                 </span>
                 {data.title}
               </CardTitle>
-              <CardDescription className="text-xs">
-                {data.description}
-              </CardDescription>
+              <CardDescription className="text-xs">{data.description}</CardDescription>
             </CardHeader>
 
             {subflowChildCount === 0 && (
               <div className="px-4 pb-4">
                 <div className="flex min-h-[92px] items-center justify-center rounded-lg border border-dashed border-amber-300/80 bg-background/70 text-center text-sm text-muted-foreground dark:border-amber-700/70 dark:bg-background/20">
-                  Use the + button to add an implementation to this subflow.
+                  Click the node to add an implementation.
                 </div>
               </div>
             )}
           </Card>
-
-          <div className="absolute right-3 top-3 z-20 nodrag nopan nowheel">
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="nodrag nopan nowheel pointer-events-auto h-8 w-8 rounded-full border border-border/60 bg-background/95 shadow-sm"
-              aria-label="Add implementation"
-              onClick={onAddClick}
-              onPointerDown={(e) => { e.stopPropagation() }}
-            >
-              <PlusIcon className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </NodeShowLayout>
     </>
-  );
-};
+  )
+}

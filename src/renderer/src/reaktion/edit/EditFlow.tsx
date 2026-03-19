@@ -1,23 +1,17 @@
-import { useRekuest } from "@/app/Arkitekt";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRekuest } from '@/app/Arkitekt'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { toast } from "@/components/ui/use-toast";
-import { FlussReactiveTemplate, RekuestAction } from "@/linkers";
-import { useSmartDrop } from "@/providers/smart/hooks";
+  SheetTrigger
+} from '@/components/ui/sheet'
+import { toast } from '@/components/ui/use-toast'
+import { FlussReactiveTemplate, RekuestAction } from '@/linkers'
+import { useSmartDrop } from '@/providers/smart/hooks'
 import {
   BaseGraphNodeFragment,
   FlowFragment,
@@ -25,40 +19,27 @@ import {
   GraphNodeKind,
   ReactiveImplementation,
   ReactiveTemplateDocument,
-  ReactiveTemplateQuery,
-} from "@/reaktion/api/graphql";
-import { Graph } from "@/reaktion/base/Graph";
-import { Controls } from "@/reaktion/components/controls/Controls";
-import { ClickContextual } from "@/reaktion/edit/components/ClickContextual";
-import { NodeContextual } from "@/reaktion/edit/components/NodeContextual";
-import { ConnectContextual } from "@/reaktion/edit/components/ConnectContextual";
-import { DropContextual } from "@/reaktion/edit/components/DropContextual";
-import { EdgeContextual } from "@/reaktion/edit/components/EdgeContextual";
-import { BoundNodesBox } from "@/reaktion/edit/components/boxes/BoundNodesBox";
-import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
-import { SolvedErrorBox } from "@/reaktion/edit/components/boxes/SolvedErrorBox";
-import { DeployInterfaceButton } from "@/reaktion/edit/components/buttons/DeployButton";
-import { RunButton } from "@/reaktion/edit/components/buttons/RunButton";
-import {
-  EditFlowStoreContext,
-  useEditFlowStoreApi,
-} from "@/reaktion/edit/context";
-import { LabeledShowEdge } from "@/reaktion/edit/edges/LabeledShowEdge";
-import { RedoUndoHandler } from "@/reaktion/edit/keyboardhandlers/RedoUndo";
-import { AgentSubflowWidget } from "@/reaktion/edit/nodes/AgentSubflowWidget";
-import { ReactiveTrackNodeWidget } from "@/reaktion/edit/nodes/ReactiveWidget";
-import { RekuestFilterActionWidget } from "@/reaktion/edit/nodes/RekuestFilterActionWidget";
-import { RekuestMapActionWidget } from "@/reaktion/edit/nodes/RekuestMapActionWidget";
-import { ArgTrackNodeWidget } from "@/reaktion/edit/nodes/generic/ArgShowNodeWidget";
-import { ReturnTrackNodeWidget } from "@/reaktion/edit/nodes/generic/ReturnShowNodeWidget";
-import { createEditFlowStore } from "@/reaktion/edit/store";
-import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
-import {
-  EdgeTypes,
-  FlowNode,
-  NodeTypes,
-  RelativePosition,
-} from "@/reaktion/types";
+  ReactiveTemplateQuery
+} from '@/reaktion/api/graphql'
+import { Graph } from '@/reaktion/base/Graph'
+import { Controls } from '@/reaktion/components/controls/Controls'
+import { ClickContextual } from '@/reaktion/edit/components/ClickContextual'
+import { ConnectContextual } from '@/reaktion/edit/components/ConnectContextual'
+import { DropContextual } from '@/reaktion/edit/components/DropContextual'
+import { EdgeContextual } from '@/reaktion/edit/components/EdgeContextual'
+import { NodeContextual } from '@/reaktion/edit/components/NodeContextual'
+import { EditFlowStoreContext, useEditFlowStoreApi } from '@/reaktion/edit/context'
+import { LabeledShowEdge } from '@/reaktion/edit/edges/LabeledShowEdge'
+import { RedoUndoHandler } from '@/reaktion/edit/keyboardhandlers/RedoUndo'
+import { AgentSubflowWidget } from '@/reaktion/edit/nodes/AgentSubflowWidget'
+import { ReactiveTrackNodeWidget } from '@/reaktion/edit/nodes/ReactiveWidget'
+import { RekuestFilterActionWidget } from '@/reaktion/edit/nodes/RekuestFilterActionWidget'
+import { RekuestMapActionWidget } from '@/reaktion/edit/nodes/RekuestMapActionWidget'
+import { ArgTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ArgShowNodeWidget'
+import { ReturnTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ReturnShowNodeWidget'
+import { createEditFlowStore } from '@/reaktion/edit/store'
+import { rekuestActionToMatchingNode } from '@/reaktion/plugins/rekuest'
+import { EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
 import {
   edges_to_flowedges,
   flowEdgeToInput,
@@ -67,38 +48,31 @@ import {
   handleToStream,
   nodeIdBuilder,
   nodes_to_flownodes,
-  reactiveTemplateToFlowNode,
-} from "@/reaktion/utils";
+  reactiveTemplateToFlowNode
+} from '@/reaktion/utils'
 import {
   createVanillaTransformEdge,
   integrate,
-  istriviallyIntegratable,
-} from "@/reaktion/validation/integrate";
-import { ValidationResult } from "@/reaktion/validation/types";
-import { validateState } from "@/reaktion/validation/validate";
-import {
-  ConstantActionDocument,
-  ConstantActionQuery,
-  PortKind,
-} from "@/rekuest/api/graphql";
-import {
-  EyeOpenIcon,
-  LetterCaseToggleIcon,
-  QuestionMarkIcon,
-} from "@radix-ui/react-icons";
+  istriviallyIntegratable
+} from '@/reaktion/validation/integrate'
+import { ValidationResult } from '@/reaktion/validation/types'
+import { validateState } from '@/reaktion/validation/validate'
+import { ConstantActionDocument, ConstantActionQuery, PortKind } from '@/rekuest/api/graphql'
+import { EyeOpenIcon, LetterCaseToggleIcon, QuestionMarkIcon } from '@radix-ui/react-icons'
 import {
   Connection,
   Edge,
   EdgeProps,
   NodeProps,
   OnConnectEnd,
-  OnConnectStartParams,
-} from "@xyflow/react";
-import { AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronsLeft } from "lucide-react";
-import React, { useCallback, useMemo, useRef } from "react";
-import { useStore } from "zustand";
-import { useShallow } from "zustand/react/shallow";
+  OnConnectStartParams
+} from '@xyflow/react'
+import { AnimatePresence } from 'framer-motion'
+import { ChevronRight, ChevronsLeft } from 'lucide-react'
+import React, { useCallback, useMemo, useRef } from 'react'
+import { useStore } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
+import { ErrorOverlay } from './overlays/Error'
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget as React.FC<NodeProps>,
@@ -106,80 +80,73 @@ const nodeTypes: NodeTypes = {
   ReactiveNode: ReactiveTrackNodeWidget as React.FC<NodeProps>,
   ArgNode: ArgTrackNodeWidget as React.FC<NodeProps>,
   ReturnNode: ReturnTrackNodeWidget as React.FC<NodeProps>,
-  AgentSubFlowNode: AgentSubflowWidget as React.FC<NodeProps>,
-};
+  AgentSubFlowNode: AgentSubflowWidget as React.FC<NodeProps>
+}
 
 const edgeTypes: EdgeTypes = {
   VanillaEdge: LabeledShowEdge as React.FC<EdgeProps>,
-  LoggingEdge: LabeledShowEdge as React.FC<EdgeProps>,
-};
+  LoggingEdge: LabeledShowEdge as React.FC<EdgeProps>
+}
 
 export type Props = {
-  flow: FlowFragment;
-  onSave?: (graph: GraphInput) => void;
-};
+  flow: FlowFragment
+  onSave?: (graph: GraphInput) => void
+}
 
-const calculateMidpoint = (
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-) => ({
+const calculateMidpoint = (p1: { x: number; y: number }, p2: { x: number; y: number }) => ({
   x: (p1.x + p2.x) / 2,
-  y: (p1.y + p2.y) / 2,
-});
+  y: (p1.y + p2.y) / 2
+})
 
 const getClientPoint = (event: MouseEvent | TouchEvent) => {
-  if ("touches" in event && event.touches.length > 0) {
+  if ('touches' in event && event.touches.length > 0) {
     return {
       x: event.touches[0].clientX,
-      y: event.touches[0].clientY,
-    };
+      y: event.touches[0].clientY
+    }
   }
 
-  if ("changedTouches" in event && event.changedTouches.length > 0) {
+  if ('changedTouches' in event && event.changedTouches.length > 0) {
     return {
       x: event.changedTouches[0].clientX,
-      y: event.changedTouches[0].clientY,
-    };
+      y: event.changedTouches[0].clientY
+    }
   }
 
-  if ("clientX" in event) {
+  if ('clientX' in event) {
     return {
       x: event.clientX,
-      y: event.clientY,
-    };
+      y: event.clientY
+    }
   }
 
-  return null;
-};
+  return null
+}
 
 const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
   return !!(
     node.data.ins?.find(
       (stream) =>
-        stream &&
-        stream.length &&
-        stream.find((item) => item.kind === PortKind.MemoryStructure),
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure)
     ) ||
     node.data.outs?.find(
       (stream) =>
-        stream &&
-        stream.length &&
-        stream.find((item) => item.kind === PortKind.MemoryStructure),
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure)
     ) ||
     node.data.voids?.find((item) => item.kind === PortKind.MemoryStructure) ||
     node.data.constants?.find((item) => item.kind === PortKind.MemoryStructure)
-  );
-};
+  )
+}
 
 const checkFlowIsEqual = (a: ValidationResult, b: ValidationResult) => {
-  if (a.nodes.length !== b.nodes.length) return false;
-  if (a.edges.length !== b.edges.length) return false;
-  if (a.globals.length !== b.globals.length) return false;
-  if (a.valid !== b.valid) return false;
-  if (a.remainingErrors.length !== b.remainingErrors.length) return false;
-  if (a.solvedErrors.length !== b.solvedErrors.length) return false;
-  return true;
-};
+  if (a.nodes.length !== b.nodes.length) return false
+  if (a.edges.length !== b.edges.length) return false
+  if (a.globals.length !== b.globals.length) return false
+  if (a.valid !== b.valid) return false
+  if (a.remainingErrors.length !== b.remainingErrors.length) return false
+  if (a.solvedErrors.length !== b.solvedErrors.length) return false
+  return true
+}
 
 const createInitialState = (flow: FlowFragment): ValidationResult =>
   validateState({
@@ -188,36 +155,32 @@ const createInitialState = (flow: FlowFragment): ValidationResult =>
     globals: flow.graph.globals || [],
     remainingErrors: [],
     solvedErrors: [],
-    valid: true,
-  });
+    valid: true
+  })
 
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
-  const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null);
-  const [store] = React.useState(() => createEditFlowStore(createInitialState(flow)));
+  const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null)
+  const [store] = React.useState(() => createEditFlowStore(createInitialState(flow)))
 
   return (
     <EditFlowStoreContext.Provider value={store}>
       <RedoUndoHandler />
-      <EditFlowInner
-        flow={flow}
-        onSave={onSave}
-        reactFlowWrapperRef={reactFlowWrapperRef}
-      />
+      <EditFlowInner flow={flow} onSave={onSave} reactFlowWrapperRef={reactFlowWrapperRef} />
     </EditFlowStoreContext.Provider>
-  );
-};
+  )
+}
 
 const EditFlowInner = ({
   flow,
   onSave,
-  reactFlowWrapperRef,
+  reactFlowWrapperRef
 }: {
-  flow: FlowFragment;
-  onSave?: (graph: GraphInput) => void;
-  reactFlowWrapperRef: React.RefObject<HTMLDivElement | null>;
+  flow: FlowFragment
+  onSave?: (graph: GraphInput) => void
+  reactFlowWrapperRef: React.RefObject<HTMLDivElement | null>
 }) => {
-  const arkitektApi = useRekuest();
-  const store = useEditFlowStoreApi();
+  const arkitektApi = useRekuest()
+  const store = useEditFlowStoreApi()
 
   const {
     nodes,
@@ -238,7 +201,7 @@ const EditFlowInner = ({
     addNode,
     setShowEdgeLabels,
     setShowNodeErrors,
-    setReactFlowInstance,
+    setReactFlowInstance
   } = useStore(
     store,
     useShallow((state) => ({
@@ -260,9 +223,9 @@ const EditFlowInner = ({
       addNode: state.addNode,
       setShowEdgeLabels: state.setShowEdgeLabels,
       setShowNodeErrors: state.setShowNodeErrors,
-      setReactFlowInstance: state.setReactFlowInstance,
-    })),
-  );
+      setReactFlowInstance: state.setReactFlowInstance
+    }))
+  )
 
   const { undo, redo, canUndo, canRedo } = useStore(
     store.temporal,
@@ -270,9 +233,9 @@ const EditFlowInner = ({
       undo: state.undo,
       redo: state.redo,
       canUndo: state.pastStates.length > 0,
-      canRedo: state.futureStates.length > 0,
-    })),
-  );
+      canRedo: state.futureStates.length > 0
+    }))
+  )
 
   const currentState = useMemo<ValidationResult>(
     () => ({
@@ -281,99 +244,135 @@ const EditFlowInner = ({
       globals,
       remainingErrors,
       solvedErrors,
-      valid: remainingErrors.length === 0,
+      valid: remainingErrors.length === 0
     }),
-    [edges, globals, nodes, remainingErrors, solvedErrors],
-  );
+    [edges, globals, nodes, remainingErrors, solvedErrors]
+  )
 
-  const initialState = useMemo(() => createInitialState(flow), [flow]);
+  const initialState = useMemo(() => createInitialState(flow), [flow])
 
   const isEqual = useMemo(
     () => checkFlowIsEqual(currentState, initialState),
-    [currentState, initialState],
-  );
+    [currentState, initialState]
+  )
 
   const boundNodes = useMemo(
     () => nodes.filter((node) => hasBoundPort(node as FlowNode<BaseGraphNodeFragment>)),
-    [nodes],
-  );
+    [nodes]
+  )
 
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
-      const nativeEvent = event.nativeEvent;
-      const state = store.getState();
+      const nativeEvent = event.nativeEvent
+      const state = store.getState()
 
       if (state.showContextual) {
         if (Math.abs(state.showContextual.event.timeStamp - nativeEvent.timeStamp) > 0.001) {
-          state.setShowContextual(undefined);
-          return;
+          state.setShowContextual(undefined)
+          return
         }
 
-        return;
+        return
       }
 
       if (state.showConnectContextual) {
-        state.setShowConnectContextual(undefined);
+        state.setShowConnectContextual(undefined)
       }
 
       if (state.showEdgeContextual) {
-        state.setShowEdgeContextual(undefined);
+        state.setShowEdgeContextual(undefined)
+      }
+
+      if (state.showNodeContextual) {
+        state.setShowNodeContextual(undefined)
       }
 
       if (state.showClickContextual) {
-        state.setShowClickContextual(undefined);
-        return;
+        state.setShowClickContextual(undefined)
+        return
       }
 
-      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
       if (!state.reactFlowInstance || !reactFlowBounds) {
-        return;
+        return
       }
 
       state.setShowClickContextual({
         event: nativeEvent,
         position: {
           x: nativeEvent.clientX - reactFlowBounds.left,
-          y: nativeEvent.clientY - reactFlowBounds.top,
-        },
-      });
+          y: nativeEvent.clientY - reactFlowBounds.top
+        }
+      })
     },
-    [reactFlowWrapperRef, store],
-  );
+    [reactFlowWrapperRef, store]
+  )
+
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: any) => {
+      const nativeEvent = event.nativeEvent
+      const state = store.getState()
+
+      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
+      if (!state.reactFlowInstance || !reactFlowBounds) {
+        return
+      }
+
+      if (node.type === 'AgentSubFlowNode') {
+        if (state.showNodeContextual) {
+           state.setShowNodeContextual(undefined)
+           return
+        }
+
+
+        if (node.data && (node.data as any).agent) {
+          state.setShowNodeContextual({
+            nodeId: node.id,
+            action: { type: 'implementations', agentId: (node.data as any).agent.id },
+            position: {
+              x: nativeEvent.clientX - reactFlowBounds.left,
+              y: nativeEvent.clientY - reactFlowBounds.top
+            }
+          })
+        }
+      }
+    },
+    [reactFlowWrapperRef, store]
+  )
 
   const onEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
-      const nativeEvent = event.nativeEvent;
-      const state = store.getState();
+      const nativeEvent = event.nativeEvent
+      const state = store.getState()
 
       if (state.showContextual) {
         if (Math.abs(state.showContextual.event.timeStamp - nativeEvent.timeStamp) > 0.001) {
-          state.setShowContextual(undefined);
-          return;
+          state.setShowContextual(undefined)
+          return
         }
 
-        return;
+        return
       }
 
       if (state.showConnectContextual) {
-        state.setShowConnectContextual(undefined);
+        state.setShowConnectContextual(undefined)
       }
 
       if (state.showClickContextual) {
-        state.setShowClickContextual(undefined);
-        return;
+        state.setShowClickContextual(undefined)
+        return
       }
 
-      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
       if (!state.reactFlowInstance || !reactFlowBounds) {
-        return;
+        return
       }
 
-      const leftNode = state.reactFlowInstance.getNode(edge.source) as FlowNode | undefined;
-      const rightNode = state.reactFlowInstance.getNode(edge.target) as FlowNode | undefined;
+      const leftNode = state.reactFlowInstance.getNode(edge.source) as FlowNode | undefined
+      const rightNode = state.reactFlowInstance.getNode(edge.target) as FlowNode | undefined
 
       if (!leftNode || !rightNode) {
-        return;
+        return
       }
 
       state.setShowEdgeContextual({
@@ -381,76 +380,76 @@ const EditFlowInner = ({
         event: nativeEvent,
         position: {
           x: nativeEvent.clientX - reactFlowBounds.left,
-          y: nativeEvent.clientY - reactFlowBounds.top,
+          y: nativeEvent.clientY - reactFlowBounds.top
         },
         leftNode,
         leftStream: handleToStream(edge.sourceHandle),
         rightNode,
-        rightStream: handleToStream(edge.targetHandle),
-      });
+        rightStream: handleToStream(edge.targetHandle)
+      })
     },
-    [reactFlowWrapperRef, store],
-  );
+    [reactFlowWrapperRef, store]
+  )
 
   const save = useCallback(() => {
-    const state = store.getState();
+    const state = store.getState()
 
     if (state.remainingErrors.length === 0) {
       const graph: GraphInput = {
         nodes: state.nodes.map((node) => flowNodeToInput(node)),
         edges: state.edges.map((edge) => flowEdgeToInput(edge)),
-        globals: state.globals.map((globalArg) => globalToInput(globalArg)),
-      };
+        globals: state.globals.map((globalArg) => globalToInput(globalArg))
+      }
 
-      onSave?.(graph);
-      return;
+      onSave?.(graph)
+      return
     }
 
     toast({
-      title: "Workflow has errors",
-      description: "Resolve the remaining validation errors before saving.",
-    });
-  }, [onSave, store]);
+      title: 'Workflow has errors',
+      description: 'Resolve the remaining validation errors before saving.'
+    })
+  }, [onSave, store])
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const state = store.getState();
-      state.setConnectingStart(undefined);
+      const state = store.getState()
+      state.setConnectingStart(undefined)
 
       if (
         istriviallyIntegratable(
           { nodes: state.nodes, edges: state.edges, globals: state.globals },
-          connection,
+          connection
         )
       ) {
         const integratedState = integrate(
           { nodes: state.nodes, edges: state.edges, globals: state.globals },
-          connection,
-        );
+          connection
+        )
 
-        state.replaceValidationResult(validateState(integratedState));
-        return;
+        state.replaceValidationResult(validateState(integratedState))
+        return
       }
 
       if (!state.reactFlowInstance) {
-        return;
+        return
       }
 
-      const leftNode = state.nodes.find((node) => node.id === connection.source);
-      const rightNode = state.nodes.find((node) => node.id === connection.target);
+      const leftNode = state.nodes.find((node) => node.id === connection.source)
+      const rightNode = state.nodes.find((node) => node.id === connection.target)
 
       if (!leftNode || !rightNode) {
-        return;
+        return
       }
 
-      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
       if (!reactFlowBounds) {
-        return;
+        return
       }
 
       const screenPosition = state.reactFlowInstance.flowToScreenPosition(
-        calculateMidpoint(leftNode.position, rightNode.position),
-      );
+        calculateMidpoint(leftNode.position, rightNode.position)
+      )
 
       state.setShowConnectContextual({
         leftNode,
@@ -460,54 +459,54 @@ const EditFlowInner = ({
         connection,
         position: {
           x: screenPosition.x - reactFlowBounds.left,
-          y: screenPosition.y - reactFlowBounds.top,
-        },
-      });
+          y: screenPosition.y - reactFlowBounds.top
+        }
+      })
     },
-    [reactFlowWrapperRef, store],
-  );
+    [reactFlowWrapperRef, store]
+  )
 
   const onConnectStart = useCallback(
     (_event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
-      store.getState().setConnectingStart(params);
+      store.getState().setConnectingStart(params)
     },
-    [store],
-  );
+    [store]
+  )
 
   const onConnectEnd = useCallback<OnConnectEnd>(
     (event) => {
-      const state = store.getState();
-      const target = event.target as HTMLElement;
-      const targetEdgeId = target.dataset?.edgeid;
-      const targetIsPane = target.classList.contains("react-flow__pane");
-      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const state = store.getState()
+      const target = event.target as HTMLElement
+      const targetEdgeId = target.dataset?.edgeid
+      const targetIsPane = target.classList.contains('react-flow__pane')
+      const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
 
       if (targetIsPane && state.reactFlowInstance && state.connectingStart && reactFlowBounds) {
-        const connectionParams = state.connectingStart;
+        const connectionParams = state.connectingStart
 
         if (connectionParams.nodeId && connectionParams.handleId) {
           const node = state.reactFlowInstance.getNode(connectionParams.nodeId) as
             | FlowNode
-            | undefined;
-          const point = getClientPoint(event);
+            | undefined
+          const point = getClientPoint(event)
 
           if (!node || !point) {
-            return;
+            return
           }
 
           const position = {
             x: point.x - reactFlowBounds.left,
-            y: point.y - reactFlowBounds.top,
-          };
+            y: point.y - reactFlowBounds.top
+          }
 
-          const nodePosition = state.reactFlowInstance.flowToScreenPosition(node.position);
+          const nodePosition = state.reactFlowInstance.flowToScreenPosition(node.position)
 
-          let relativePosition: RelativePosition | null = null;
+          let relativePosition: RelativePosition | null = null
 
           if (nodePosition.x < position.x) {
-            relativePosition = nodePosition.y < position.y ? "bottomright" : "topright";
+            relativePosition = nodePosition.y < position.y ? 'bottomright' : 'topright'
           } else {
-            relativePosition = nodePosition.y < position.y ? "bottomleft" : "topleft";
+            relativePosition = nodePosition.y < position.y ? 'bottomleft' : 'topleft'
           }
 
           if (connectionParams.handleType && relativePosition) {
@@ -518,76 +517,74 @@ const EditFlowInner = ({
               connectionParams,
               position,
               relativePosition,
-              event,
-            });
+              event
+            })
           }
         }
       }
 
       if (state.reactFlowInstance && state.connectingStart && targetEdgeId) {
-        const connectionParams = state.connectingStart;
+        const connectionParams = state.connectingStart
 
         if (!connectionParams.nodeId || !connectionParams.handleId) {
-          return;
+          return
         }
 
         const node = state.reactFlowInstance.getNode(connectionParams.nodeId) as
           | FlowNode
-          | undefined;
-        const edge = state.reactFlowInstance.getEdge(targetEdgeId);
-        const point = getClientPoint(event);
+          | undefined
+        const edge = state.reactFlowInstance.getEdge(targetEdgeId)
+        const point = getClientPoint(event)
 
         if (!node || !edge || !point) {
-          return;
+          return
         }
 
-        if (connectionParams.handleType === "source") {
-          const stagingSourceId = node.id;
-          const stagingSourceStreamId = handleToStream(connectionParams.handleId);
-          const oldEdgeSourceId = edge.source;
-          const oldEdgeSourceHandle = edge.sourceHandle;
-          const oldEdgeTargetId = edge.target;
-          const oldEdgeTargetHandle = edge.targetHandle;
-          const oldEdgeSourceStreamId = handleToStream(oldEdgeSourceHandle);
-          const oldNode = state.reactFlowInstance.getNode(oldEdgeSourceId) as
-            | FlowNode
-            | undefined;
+        if (connectionParams.handleType === 'source') {
+          const stagingSourceId = node.id
+          const stagingSourceStreamId = handleToStream(connectionParams.handleId)
+          const oldEdgeSourceId = edge.source
+          const oldEdgeSourceHandle = edge.sourceHandle
+          const oldEdgeTargetId = edge.target
+          const oldEdgeTargetHandle = edge.targetHandle
+          const oldEdgeSourceStreamId = handleToStream(oldEdgeSourceHandle)
+          const oldNode = state.reactFlowInstance.getNode(oldEdgeSourceId) as FlowNode | undefined
 
           if (!oldNode) {
-            return;
+            return
           }
 
-          const stagingOutstream = node.data.outs.at(stagingSourceStreamId);
-          const oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamId);
+          const stagingOutstream = node.data.outs.at(stagingSourceStreamId)
+          const oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamId)
 
           if (!stagingOutstream || !oldOutstream) {
-            return;
+            return
           }
 
           const zipNodeInstream =
             node.position.x < oldNode.position.x
               ? [stagingOutstream, oldOutstream]
-              : [oldOutstream, stagingOutstream];
+              : [oldOutstream, stagingOutstream]
 
-          const position = state.reactFlowInstance.screenToFlowPosition(point);
+          const position = state.reactFlowInstance.screenToFlowPosition(point)
 
           const zipNode = {
             id: nodeIdBuilder(),
-            type: "ReactiveNode",
+            type: 'ReactiveNode',
             position,
             data: {
               globalsMap: {},
-              title: "Zip",
-              description: "Zips together two streams into one stream.",
+              title: 'Zip',
+              description: 'Zips together two streams into one stream.',
               kind: GraphNodeKind.Reactive,
               ins: zipNodeInstream,
               constantsMap: {},
               outs: [[...stagingOutstream, ...oldOutstream]],
               constants: [],
               voids: [],
-              implementation: ReactiveImplementation.Zip,
-            },
-          } as FlowNode;
+              implementation: ReactiveImplementation.Zip
+            }
+          } as FlowNode
 
           const stagedState = {
             ...state,
@@ -600,138 +597,97 @@ const EditFlowInner = ({
                   stagingSourceId,
                   stagingSourceStreamId,
                   zipNode.id,
-                  node.position.x < oldNode.position.x ? 0 : 1,
+                  node.position.x < oldNode.position.x ? 0 : 1
                 ),
                 createVanillaTransformEdge(
                   nodeIdBuilder(),
                   oldEdgeSourceId,
                   oldEdgeSourceStreamId,
                   zipNode.id,
-                  position.x < oldNode.position.x ? 1 : 0,
-                ),
-              ),
-          };
+                  position.x < oldNode.position.x ? 1 : 0
+                )
+              )
+          }
 
           const integratedState = integrate(stagedState, {
             source: zipNode.id,
-            sourceHandle: "return_0",
+            sourceHandle: 'return_0',
             target: oldEdgeTargetId,
-            targetHandle: oldEdgeTargetHandle ?? null,
-          });
+            targetHandle: oldEdgeTargetHandle ?? null
+          })
 
-          state.replaceValidationResult(validateState(integratedState));
+          state.replaceValidationResult(validateState(integratedState))
         }
       }
     },
-    [reactFlowWrapperRef, store],
-  );
+    [reactFlowWrapperRef, store]
+  )
 
   const [{ isOver }, dropRef] = useSmartDrop(
     (items, monitor) => {
       if (monitor.didDrop()) {
-        return {};
+        return {}
       }
 
-      const point = monitor.getClientOffset();
+      const point = monitor.getClientOffset()
       if (!reactFlowInstance || !point || !arkitektApi) {
-        return {};
+        return {}
       }
 
       items.forEach((item, index) => {
-        const id = item.object;
-        const type = item.identifier;
+        const id = item.object
+        const type = item.identifier
 
         if (!id || !type) {
-          return;
+          return
         }
 
         const position = reactFlowInstance.screenToFlowPosition({
           x: point.x,
-          y: point.y + index * 100,
-        });
+          y: point.y + index * 100
+        })
 
         if (type === RekuestAction.identifier) {
           arkitektApi
             .query({
               query: ConstantActionDocument,
-              variables: { id },
+              variables: { id }
             })
             .then((event: { data?: ConstantActionQuery }) => {
               if (event.data?.action) {
-                addNode(rekuestActionToMatchingNode(event.data.action, position));
+                addNode(rekuestActionToMatchingNode(event.data.action, position))
               }
-            });
+            })
         }
 
         if (type === FlussReactiveTemplate.identifier) {
           arkitektApi
             .query({
               query: ReactiveTemplateDocument,
-              variables: { id },
+              variables: { id }
             })
             .then((event: { data?: ReactiveTemplateQuery }) => {
               if (event.data?.reactiveTemplate) {
-                addNode(reactiveTemplateToFlowNode(event.data.reactiveTemplate, position));
+                addNode(reactiveTemplateToFlowNode(event.data.reactiveTemplate, position))
               }
-            });
+            })
         }
-      });
+      })
 
-      return {};
+      return {}
     },
-    [addNode, arkitektApi, reactFlowInstance],
-  );
+    [addNode, arkitektApi, reactFlowInstance]
+  )
 
   return (
-    <div
-      ref={reactFlowWrapperRef}
-      className="flex flex-grow h-full w-full"
-      data-disableselect
-    >
+    <div ref={reactFlowWrapperRef} className="flex flex-grow h-full w-full" data-disableselect>
       <div
         ref={dropRef as unknown as React.Ref<HTMLDivElement>}
         className="flex flex-grow h-full w-full relative"
       >
+
+        <ErrorOverlay/>
         <AnimatePresence>
-          {remainingErrors.length === 0 && (
-            <Card className="absolute bottom-0 right-0 mr-3 mb-5 z-50 flex flex-row gap-2 items-center px-4 py-2 border">
-              <Button onClick={save} size="lg">
-                Save
-              </Button>
-              {flow.id && isEqual && <DeployInterfaceButton flow={flow} />}
-              {flow.id && isEqual && <RunButton flow={flow} />}
-            </Card>
-          )}
-
-          {globals.length > 0 && (
-            <div className="absolute top-0 left-0 ml-3 mt-5 z-50">
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardDescription>Globals</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-xs text-muted-foreground">
-                    These are global variables that will be constants to the whole workflow.
-                  </CardDescription>
-                  {globals.map((globalArg) => (
-                    <div key={globalArg.key}>{globalArg.key}</div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <div className="absolute top-0 right-0 mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col">
-            {remainingErrors.length !== 0 && showNodeErrors && (
-              <ErrorBox errors={remainingErrors} />
-            )}
-            {solvedErrors.length !== 0 && showNodeErrors && (
-              <SolvedErrorBox errors={solvedErrors} />
-            )}
-            {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
-          </div>
-
-          {isOver && <div className="absolute w-full h-full bg-white opacity-10 z-10" />}
 
           {showContextual && <DropContextual params={showContextual} />}
           {showClickContextual && <ClickContextual params={showClickContextual} />}
@@ -749,6 +705,7 @@ const EditFlowInner = ({
           onConnectEnd={onConnectEnd}
           onConnect={onConnect}
           onPaneClick={onPaneClick}
+          onNodeClick={onNodeClick}
           onEdgeClick={onEdgeClick}
           elementsSelectable={true}
           nodeTypes={nodeTypes}
@@ -799,5 +756,5 @@ const EditFlowInner = ({
         </Graph>
       </div>
     </div>
-  );
-};
+  )
+}

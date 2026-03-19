@@ -6,6 +6,9 @@ input AckInput {
 
 """Represents an executable action in the system."""
 type Action {
+  """The app this action belongs to."""
+  app: App!
+
   """Input arguments (ports) for the action."""
   args: [Port!]!
 
@@ -17,6 +20,9 @@ type Action {
 
   """Timestamp when the action was defined."""
   definedAt: DateTime!
+
+  """Dependencies required by this action."""
+  dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
 
   """Optional description of the action."""
   description: String
@@ -38,6 +44,9 @@ type Action {
 
   """Actions for which this is a test."""
   isTestFor(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+
+  """Key of the action, used for grouping and identification."""
+  key: String!
 
   """The kind or category of the action."""
   kind: ActionKind!
@@ -77,6 +86,9 @@ type Action {
 
   """List of tests associated with the action."""
   tests(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+
+  """Version string of the action."""
+  version: String!
 }
 
 """Input model for action demand."""
@@ -1035,6 +1047,7 @@ input DefinitionInput {
   The collections of the definition. This is used to group definitions together in the UI
   """
   collections: [String!]! = []
+  dependencies: [AgentDependencyInput!]! = []
 
   """
   The description of the definition. This is the text that is displayed in the UI
@@ -1055,6 +1068,11 @@ input DefinitionInput {
   The tests for the definition. This is used to group definitions together in the UI
   """
   isTestFor: [String!]! = []
+
+  """
+  The key of the definition. This is used to uniquely identify the definition
+  """
+  key: String!
 
   """
   The kind of the definition. This is the type of the definition. Can be either a function or a generator
@@ -1084,6 +1102,11 @@ input DefinitionInput {
   """
   stateful: Boolean! = false
   tests: ActionDependencyInput = null
+
+  """
+  The version of the definition. This is used to differentiate if the underyling algorithm has changed, i.e we would expect different results for the same input
+  """
+  version: String!
 }
 
 input DeleteAgentInput {
@@ -1418,7 +1441,6 @@ A implementation is a blueprint for a action. It is composed of a definition, a 
 """
 input ImplementationInput {
   definition: DefinitionInput!
-  dependencies: [AgentDependencyInput!]! = []
   dynamic: Boolean! = false
   interface: String
   locks: [String!] = null
@@ -2362,7 +2384,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "b78672b2-13bb-4e19-ab7a-94c8f5432226"
+  reference: String = "442bdbde-f650-4461-8681-423626fbcb11"
   title: String = null
 }
 

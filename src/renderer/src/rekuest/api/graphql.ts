@@ -50,6 +50,8 @@ export type AckInput = {
 /** Represents an executable action in the system. */
 export type Action = {
   __typename?: 'Action';
+  /** The app this action belongs to. */
+  app: App;
   /** Input arguments (ports) for the action. */
   args: Array<Port>;
   /** Assignations created for this action. */
@@ -58,6 +60,8 @@ export type Action = {
   collections: Array<Collection>;
   /** Timestamp when the action was defined. */
   definedAt: Scalars['DateTime']['output'];
+  /** Dependencies required by this action. */
+  dependencies: Array<Dependency>;
   /** Optional description of the action. */
   description?: Maybe<Scalars['String']['output']>;
   /** Unique hash identifying the action definition. */
@@ -72,6 +76,8 @@ export type Action = {
   isDev: Scalars['Boolean']['output'];
   /** Actions for which this is a test. */
   isTestFor: Array<Action>;
+  /** Key of the action, used for grouping and identification. */
+  key: Scalars['String']['output'];
   /** The kind or category of the action. */
   kind: ActionKind;
   /** Name of the action. */
@@ -98,6 +104,8 @@ export type Action = {
   testCases?: Maybe<Array<TestCase>>;
   /** List of tests associated with the action. */
   tests: Array<Action>;
+  /** Version string of the action. */
+  version: Scalars['String']['output'];
 };
 
 
@@ -105,6 +113,13 @@ export type Action = {
 export type ActionAssignationsArgs = {
   filters?: InputMaybe<AssignationFilter>;
   order?: InputMaybe<AssignationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Represents an executable action in the system. */
+export type ActionDependenciesArgs = {
+  filters?: InputMaybe<DependencyFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1107,6 +1122,7 @@ export type DefinitionInput = {
   args?: Array<PortInput>;
   /** The collections of the definition. This is used to group definitions together in the UI */
   collections?: Array<Scalars['String']['input']>;
+  dependencies?: Array<AgentDependencyInput>;
   /** The description of the definition. This is the text that is displayed in the UI */
   description?: InputMaybe<Scalars['String']['input']>;
   /** The interfaces of the definition. This is used to group definitions together in the UI */
@@ -1115,6 +1131,8 @@ export type DefinitionInput = {
   isDev?: Scalars['Boolean']['input'];
   /** The tests for the definition. This is used to group definitions together in the UI */
   isTestFor?: Array<Scalars['String']['input']>;
+  /** The key of the definition. This is used to uniquely identify the definition */
+  key: Scalars['String']['input'];
   /** The kind of the definition. This is the type of the definition. Can be either a function or a generator */
   kind: ActionKind;
   /** The logo of the definition. This is used to display the logo in the UI */
@@ -1128,6 +1146,8 @@ export type DefinitionInput = {
   /** Whether the definition is stateful or not. If the definition is stateful, it can be used to create a stateful action. If the definition is not stateful, it cannot be used to create a stateful action */
   stateful?: Scalars['Boolean']['input'];
   tests?: InputMaybe<ActionDependencyInput>;
+  /** The version of the definition. This is used to differentiate if the underyling algorithm has changed, i.e we would expect different results for the same input */
+  version: Scalars['String']['input'];
 };
 
 export type DeleteAgentInput = {
@@ -1462,7 +1482,6 @@ export type ImplementationFilter = {
 /** A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params. */
 export type ImplementationInput = {
   definition: DefinitionInput;
-  dependencies?: Array<AgentDependencyInput>;
   dynamic?: Scalars['Boolean']['input'];
   interface?: InputMaybe<Scalars['String']['input']>;
   locks?: InputMaybe<Array<Scalars['String']['input']>>;

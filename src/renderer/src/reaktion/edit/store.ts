@@ -6,6 +6,8 @@ import {
   EdgeContextualParams,
   NodeContextualParams,
   FlowEdge,
+  ContextualParams,
+  ContextualParams,
   FlowNode,
 } from "@/reaktion/types";
 import {
@@ -59,11 +61,7 @@ const getClientPoint = (event: MouseEvent | TouchEvent) => {
 export interface EditFlowState extends ValidationResult {
   showEdgeLabels: boolean;
   showNodeErrors: boolean;
-  showContextual?: DropContextualParams;
-  showClickContextual?: ClickContextualParams;
-  showEdgeContextual?: EdgeContextualParams;
-  showConnectContextual?: ConnectContextualParams;
-  showNodeContextual?: NodeContextualParams;
+  contextuals: ContextualParams[];
   reactFlowInstance: ReactFlowInstance | null;
   connectingStart?: OnConnectStartParams;
   replaceValidationResult: (
@@ -107,11 +105,8 @@ export interface EditFlowState extends ValidationResult {
   setShowNodeErrors: (value: boolean) => void;
   toggleShowEdgeLabels: () => void;
   toggleShowNodeErrors: () => void;
-  setShowContextual: (params: DropContextualParams | undefined) => void;
-  setShowClickContextual: (params: ClickContextualParams | undefined) => void;
-  setShowEdgeContextual: (params: EdgeContextualParams | undefined) => void;
-  setShowConnectContextual: (params: ConnectContextualParams | undefined) => void;
-  setShowNodeContextual: (params: NodeContextualParams | undefined) => void;
+  addContextual: (contextual: ContextualParams) => void;
+  removeContextual: (id: string) => void;
   clearPanels: () => void;
   addClickNode: (node: FlowNode, params: ClickContextualParams) => void;
   addConnectContextualNode: (
@@ -129,11 +124,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
         ...initialState,
         showEdgeLabels: false,
         showNodeErrors: true,
-        showContextual: undefined,
-        showClickContextual: undefined,
-        showEdgeContextual: undefined,
-        showConnectContextual: undefined,
-        showNodeContextual: undefined,
+        contextuals: [],
         reactFlowInstance: null,
         connectingStart: undefined,
 
@@ -496,20 +487,13 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
         toggleShowNodeErrors: () => {
           set((state) => ({ showNodeErrors: !state.showNodeErrors }));
         },
-        setShowContextual: (showContextual) => set({ showContextual }),
-        setShowClickContextual: (showClickContextual) => set({ showClickContextual }),
-        setShowEdgeContextual: (showEdgeContextual) => set({ showEdgeContextual }),
-        setShowConnectContextual: (showConnectContextual) =>
-          set({ showConnectContextual }),
-        setShowNodeContextual: (showNodeContextual) => set({ showNodeContextual }),
+        addContextual: (contextual) => set((state) => ({ contextuals: [...state.contextuals, contextual] })),
+        removeContextual: (id) => set((state) => ({ contextuals: state.contextuals.filter(c => c.id !== id) })),
+
 
         clearPanels: () => {
           set({
-            showContextual: undefined,
-            showClickContextual: undefined,
-            showEdgeContextual: undefined,
-            showConnectContextual: undefined,
-            showNodeContextual: undefined,
+            contextuals: [],
           });
         },
 
@@ -529,7 +513,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             }),
           );
 
-          set({ showClickContextual: undefined });
+          set({ contextuals: [] });
         },
 
         addConnectContextualNode: (stagingNode, params) => {
@@ -588,7 +572,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
           });
 
           set(nextState);
-          set({ showConnectContextual: undefined });
+          set({ contextuals: [] });
         },
 
         addEdgeContextualNode: (stagingNode, params) => {
@@ -638,7 +622,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
           });
 
           set(nextState);
-          set({ showEdgeContextual: undefined });
+          set({ contextuals: [] });
         },
 
         addContextualNode: (stagingNode, params) => {
@@ -686,7 +670,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             });
 
             set(validateState(integratedState));
-            set({ showContextual: undefined });
+            set({ contextuals: [] });
             return;
           }
 
@@ -717,7 +701,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             });
 
             set(validateState(integratedState));
-            set({ showContextual: undefined });
+            set({ contextuals: [] });
           }
         },
       }),

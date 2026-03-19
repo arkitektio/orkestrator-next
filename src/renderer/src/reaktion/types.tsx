@@ -214,3 +214,17 @@ export type ReactiveNodeSuggestions = {
   title: string;
   description: string;
 };
+
+export type ContextualParams = 
+  | ({ kind: "drop"; id: string } & DropContextualParams)
+  | ({ kind: "click"; id: string } & ClickContextualParams)
+  | ({ kind: "edge"; id: string } & EdgeContextualParams)
+  | ({ kind: "connect"; id: string } & ConnectContextualParams)
+  | ({ kind: "node"; id: string } & NodeContextualParams);
+
+export type ContextualParams = 
+  | ({ kind: "drop"; id: string } & DropContextualParams)
+  | ({ kind: "click"; id: string } & ClickContextualParams)
+  | ({ kind: "edge"; id: string } & EdgeContextualParams)
+  | ({ kind: "connect"; id: string } & ConnectContextualParams)
+  | ({ kind: "node"; id: string } & NodeContextualParams);

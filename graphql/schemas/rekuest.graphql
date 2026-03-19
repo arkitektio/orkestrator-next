@@ -175,6 +175,7 @@ input ActionFilter {
   name: StrFilterLookup
   protocols: [String!]
   search: String
+  stateful: Boolean
   usedAfter: DateTime
   usedBefore: DateTime
 }
@@ -2361,7 +2362,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "3c33d73e-d273-4b5b-bd52-0b9505106c27"
+  reference: String = "b78672b2-13bb-4e19-ab7a-94c8f5432226"
   title: String = null
 }
 

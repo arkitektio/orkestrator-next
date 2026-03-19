@@ -17,20 +17,59 @@ import {
   DetailImplementationFragment,
   useImplementationsQuery
 } from '@/rekuest/api/graphql'
+import { FlussPortFragment } from '@/reaktion/api/graphql'
+
+const toPortMatches = (ports: FlussPortFragment[] | undefined) => {
+  return (
+    ports?.map((port, index) => ({
+      at: index,
+      kind: port.kind,
+      identifier: port.identifier,
+      nullable: port.nullable,
+      children: port.children?.map((child, childIndex) => ({
+        at: childIndex,
+        kind: child.kind,
+        identifier: child.identifier,
+        nullable: child.nullable,
+      }))
+    })) ?? []
+  )
+}
 
 const ImplementationSearch = ({
   agentId,
+  params,
   onSelect
 }: {
   agentId: string
+  params: SubflowDropContextualParams
   onSelect: (impl: DetailImplementationFragment) => void
 }) => {
+  const droppedPorts =
+    params.handleType === 'source'
+      ? params.causingNode.data.outs[params.causingStream]
+      : params.causingNode.data.ins[params.causingStream]
+
+  const actionDemand =
+    params.handleType === 'source'
+      ? {
+          key: `out-${params.causingStream}`,
+          argMatches: toPortMatches(droppedPorts),
+          forceArgLength: droppedPorts?.length ?? 0
+        }
+      : {
+          key: `in-${params.causingStream}`,
+          returnMatches: toPortMatches(droppedPorts),
+          forceReturnLength: droppedPorts?.length ?? 0
+        }
+
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
         agent: {
           ids: [agentId]
-        }
+        },
+        actionDemand
       }
     }
   })
@@ -101,7 +140,11 @@ export const SubflowDropContextual = (props: {
       <div className="mb-2 text-xs text-muted-foreground">
         Add implementation to {subflowTitle}
       </div>
-      <ImplementationSearch agentId={agentId} onSelect={handleImplementationSelect} />
+      <ImplementationSearch
+        agentId={agentId}
+        params={props.params}
+        onSelect={handleImplementationSelect}
+      />
     </ContextualContainer>
   )
 }

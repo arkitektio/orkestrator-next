@@ -235,6 +235,7 @@ const ClickArkitektNodes = (props: {
       filters: {
         search: props.search,
         protocols: [],
+        stateful: false,
       },
       pagination: {
         limit: displayLimit,

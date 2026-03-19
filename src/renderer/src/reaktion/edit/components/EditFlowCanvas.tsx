@@ -139,33 +139,6 @@ export const EditFlowCanvas: React.FC<Props> = ({
                 </Card>
               )}
 
-              {globals.length > 0 && (
-                <div className="absolute top-0 left-0 ml-3 mt-5 z-50">
-                  <Card className="max-w-md">
-                    <CardHeader>
-                      <CardDescription>Globals</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-xs text-muted-foreground">
-                        These are global variables that will be constants to the whole workflow.
-                      </CardDescription>
-                      {globals.map((globalArg) => (
-                        <div key={globalArg.key}>{globalArg.key}</div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              <div className="absolute top-0 right-0 mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col">
-                {remainingErrors.length !== 0 && showNodeErrors && (
-                  <ErrorBox errors={remainingErrors} />
-                )}
-                {solvedErrors.length !== 0 && showNodeErrors && (
-                  <SolvedErrorBox errors={solvedErrors} />
-                )}
-                {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
-              </div>
 
               {isOver && <div className="absolute w-full h-full bg-white opacity-10 z-10" />}
 

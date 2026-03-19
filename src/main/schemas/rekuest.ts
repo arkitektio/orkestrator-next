@@ -224,6 +224,7 @@ export type ActionFilter = {
   name?: InputMaybe<StrFilterLookup>;
   protocols?: InputMaybe<Array<Scalars['String']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  stateful?: InputMaybe<Scalars['Boolean']['input']>;
   usedAfter?: InputMaybe<Scalars['DateTime']['input']>;
   usedBefore?: InputMaybe<Scalars['DateTime']['input']>;
 };

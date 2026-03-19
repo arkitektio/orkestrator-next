@@ -17847,6 +17847,11 @@ zod@^4.1.5:
   resolved "https://registry.yarnpkg.com/zod/-/zod-4.3.6.tgz#89c56e0aa7d2b05107d894412227087885ab112a"
   integrity sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==
 
+zundo@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/zundo/-/zundo-2.3.0.tgz#423ccef59c92c7084c809a967a28f34d41d28a5f"
+  integrity sha512-4GXYxXA17SIKYhVbWHdSEU04P697IMyVGXrC2TnzoyohEAWytFNOKqOp5gTGvaW93F/PM5Y0evbGtOPF0PWQwQ==
+
 zustand-x@6.2.1:
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/zustand-x/-/zustand-x-6.2.1.tgz#c04299ad17ceec6dd832f7fdee6fd776911988f6"

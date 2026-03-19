@@ -210,7 +210,7 @@ const EditFlowInner = ({ flow, onSave, arkitektapi, reactFlowWrapper, showEdgeLa
   const storeContext = React.useContext(EditFlowStoreContext);
   if (!storeContext) throw new Error("Missing EditFlowStoreContext");
   const state = useZustandStore(storeContext);
-  const { updateData: updateNodeData, moveConstantToStream, moveVoidtoOutstream, moveOutStreamToVoid, moveStreamToConstants, moveConstantToGlobals, removeGlobal, removeEdge, setGlobals, addNode, setStateRaw, undo, redo } = state;
+  const { updateData: updateNodeData, moveConstantToStream, moveVoidtoOutstream, moveOutStreamToVoid, moveStreamToConstants, moveConstantToGlobals, removeGlobal, removeEdge, setGlobals, addNode, setStateRaw, undo, redo, canUndo, canRedo } = state;
 
   const triggerNodeUpdate = useCallback(
     (changes: NodeChange[]) => {
@@ -266,23 +266,7 @@ const EditFlowInner = ({ flow, onSave, arkitektapi, reactFlowWrapper, showEdgeLa
   // it to the triggerUpdate function so that it alone can
   // handle the state updates.
 
-  useEffect(() => {
-    const keyUpListener = (event: KeyboardEvent) => {
-      console.log("keyUpListener", event);
-      if (event.key == "z" && event.ctrlKey) {
-        undo();
-      }
-      if (event.key == "y" && event.ctrlKey) {
-        redo();
-      }
-    };
 
-    document.addEventListener("keyup", keyUpListener);
-
-    return () => {
-      document.removeEventListener("keyup", keyUpListener);
-    };
-  }, [undo, redo]);
 
   const onPaneClick = (event: React.MouseEvent) => {
     console.log("onPaneClick", event);

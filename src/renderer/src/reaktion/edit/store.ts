@@ -1,11 +1,12 @@
-import { createStore } from "zustand";
-import { FlowNode, FlowEdge, ClickContextualParams } from "../types";
 import { GlobalArgFragment } from "@/reaktion/api/graphql";
+import { EdgeChange, NodeChange, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import { createStore } from "zustand";
+import { FlowEdge, FlowNode } from "../types";
+import { handleToStream } from "../utils";
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
-import { flowNodeToInput, flowEdgeToInput, globalToInput, handleToStream, nodeIdBuilder } from "../utils";
-import { createVanillaTransformEdge, integrate } from "../validation/integrate";
-import { NodeChange, EdgeChange, applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
+import { temporal } from 'zundo';
+
 
 export interface EditFlowState extends ValidationResult {
   updateData: (data: Partial<any>, id: string) => void;
@@ -42,22 +43,16 @@ export interface EditFlowState extends ValidationResult {
   onEdgesChange: (changes: EdgeChange[]) => void;
   setEdges: (edges: FlowEdge[]) => void;
   setNodes: (nodes: FlowNode[]) => void;
-  setStateRaw: (state: ValidationResult | ((prev: ValidationResult) => ValidationResult)) => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
+
 }
 
-export const createEditFlowStore = (initialState: ValidationResult) =>
-  createStore<EditFlowState>()((set, get) => ({
-    ...initialState,
 
-    setStateRaw: (state) => set(state),
-    undo: () => {},
-    redo: () => {},
-    canUndo: false,
-    canRedo: false,
+
+
+export const createEditFlowStore = (initialState: ValidationResult) =>
+  createStore<EditFlowState>()(temporal((set, get) => ({
+
+    ...initialState,
 
     onNodesChange: (changes) => {
       const state = get();
@@ -371,4 +366,4 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
         });
       });
     },
-  }));
+  })));

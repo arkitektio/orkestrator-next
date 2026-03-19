@@ -1515,6 +1515,26 @@ input InterruptInput {
   assignation: ID!
 }
 
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+type JSONPatch {
+  op: JSONPatchOperation!
+  path: String!
+  value: Args!
+}
+
+enum JSONPatchOperation {
+  add
+  copy
+  move
+  remove
+  replace
+  test
+}
+
 """The input for bouncing an agent."""
 input KickInput {
   agent: ID!
@@ -1533,6 +1553,18 @@ enum LogLevel {
   ERROR
   INFO
   WARN
+}
+
+"""The input for logging state patches."""
+input LogPatchesInput {
+  instanceId: String!
+  patches: [PatchInput!]!
+}
+
+"""The input for logging state snapshots."""
+input LogSnapshotInput {
+  instanceId: String!
+  value: AnyDefault!
 }
 
 """The input for creating a blok."""
@@ -1710,6 +1742,12 @@ type Mutation {
   """Kick an agent to force disconnect. It will fail and not reconnect."""
   kick(input: KickInput!): Agent!
 
+  """Log state patches"""
+  logPatches(input: LogPatchesInput!): ID!
+
+  """Log a state snapshot """
+  logSnapshot(input: LogSnapshotInput!): ID!
+
   """Materialize a UI blok into a concrete instance on a dashboard."""
   materializeBlok(input: MaterializeBlokInput!): MaterializedBlok!
 
@@ -1830,6 +1868,35 @@ input OutputStructureUsageFilter {
 input ParamPair {
   key: String!
   value: String!
+}
+
+type Patch {
+  assignation: Assignation
+  currentRevision: Int!
+  futureRevision: Int!
+  globalCurrentRevision: Int!
+  globalFutureRevision: Int!
+  op: String!
+  patch: JSONPatch!
+  path: String!
+  sessionId: String!
+  state: State!
+  timestamp: DateTime!
+  value: Args!
+}
+
+"""The input for updating a state using JSON Patch operations."""
+input PatchInput {
+  correlationId: String = null
+  currentRev: Int!
+  futureRev: Int!
+  globalCurrentRev: Int
+  globalFutureRev: Int
+  op: String!
+  path: String!
+  sessionId: String!
+  stateName: String!
+  value: AnyDefault!
 }
 
 """The input for pausing an assignation."""
@@ -2023,6 +2090,9 @@ type Query {
   """List of UI Blok."""
   bloks: [Blok!]!
 
+  """Materialize the latest state for a specific agent"""
+  checkout(globalRevision: Int = null, localRevision: Int = null, state: ID!): StateWithValue!
+
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
 
@@ -2037,6 +2107,9 @@ type Query {
 
   """Fetch a specific event."""
   event(id: ID = null): [AssignationEvent!]!
+
+  """Get forward events after revision."""
+  forwardEventsAfterRev(count: Int! = 100, globalRevision: Int!, sessionId: String = null, stateId: ID = null): [Patch!]!
 
   """Get hardware record by ID."""
   hardwareRecord(id: ID!): HardwareRecord!
@@ -2080,6 +2153,9 @@ type Query {
   """Reservations made by the current user."""
   myreservations(instanceId: InstanceId = null): [Reservation!]!
 
+  """Get patch events between global revisions."""
+  patchEventsBetweenGlobalRevs(fromGlobalRevision: Int!, sessionId: String = null, stateIds: [ID!] = null, toGlobalRevision: Int!): [Patch!]!
+
   """Retrieve protocols grouping actions."""
   protocols(filters: ProtocolFilter, order: ProtocolOrder, pagination: OffsetPaginationInput): [Protocol!]!
 
@@ -2098,14 +2174,26 @@ type Query {
   """Fetch resolved dependencies for a resolution."""
   resolvedImplementations(dependencyKey: String = null, methodKey: String = null, resolution: ID!): [Implementation!]!
 
+  """Get session boundaries."""
+  sessionBoundaries(sessionId: String!, stateId: ID = null): SessionBoundary
+
   """Retrieve shortcut by ID."""
   shortcut(id: ID!): Shortcut!
 
   """List of shortcuts."""
   shortcuts(filters: ShortcutFilter, order: ShortcutOrder, pagination: OffsetPaginationInput): [Shortcut!]!
 
+  """Get snapshots around revision."""
+  snapshotsAroundRev(after: Int! = 1, before: Int! = 1, revision: Int!, sessionId: String = null, stateId: ID = null): [Snapshot!]!
+
   """Get a specific state by ID."""
   state(id: ID!): State!
+
+  """Get state at global revision."""
+  stateAtGlobalRev(globalRevision: Int!, sessionId: String = null, stateId: ID = null): [Snapshot!]!
+
+  """Get state at local revision."""
+  stateAtLocalRev(revision: Int!, sessionId: String = null, stateId: ID = null): [Snapshot!]!
 
   """Retrieve state for a specific context."""
   stateFor(agent: ID!, demand: SchemaDemandInput = null, stateHash: String = null): State!
@@ -2130,6 +2218,9 @@ type Query {
 
   """All registered structures."""
   structures(filters: StructureFilter, pagination: OffsetPaginationInput): [Structure!]!
+
+  """Get task boundaries."""
+  taskBoundaries(correlationId: String!, stateId: ID = null): TaskBoundary
 
   """All tasks."""
   tasks(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
@@ -2270,7 +2361,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "69859dbc-1c19-4bdf-91d5-0480196909d5"
+  reference: String = "3c33d73e-d273-4b5b-bd52-0b9505106c27"
   title: String = null
 }
 
@@ -2418,6 +2509,14 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar SearchQuery
 
+type SessionBoundary {
+  endGlobalRevision: Int
+  endTime: DateTime
+  sessionId: String!
+  startGlobalRevision: Int
+  startTime: DateTime
+}
+
 """The input for setting a state schema to an agent."""
 input SetAgentStatesInput {
   implementations: [StateImplementationInput!]!
@@ -2433,6 +2532,11 @@ input SetExtensionImplementationsInput {
   """
   implementations: [ImplementationInput!]!
   instanceId: InstanceId!
+
+  """
+  The locks to set on the implementations. This is used to identify the locks in the system.
+  """
+  locks: [LockSchemaInput!] = null
   runCleanup: Boolean! = false
 }
 
@@ -2532,6 +2636,15 @@ type SliderAssignWidget implements AssignWidget {
   step: Float
 }
 
+type Snapshot {
+  globalRevision: Int!
+  revision: Int!
+  sessionId: String!
+  state: State!
+  timestamp: DateTime!
+  value: Args!
+}
+
 type State {
   agent: Agent!
   createdAt: DateTime!
@@ -2585,6 +2698,13 @@ type StateSchema {
 input StateSchemaInput {
   name: String!
   ports: [PortInput!]!
+}
+
+type StateWithValue {
+  globalRevision: Int
+  localRevision: Int
+  schema: StateSchema!
+  value: JSON!
 }
 
 """
@@ -2698,6 +2818,9 @@ type Subscription {
   """Subscribe to creation or updates of implementations."""
   implementations(agent: ID!): ImplementationUpdate!
 
+  """Subscribe to latest patches for specific agents or states."""
+  latestPatches(agent: ID = null, state: ID = null): Patch!
+
   """Subscribe to notifications when new actions are created."""
   newActions(cage: ID!): Action!
 
@@ -2706,6 +2829,14 @@ type Subscription {
 
   """Subscribe to updates of state values and patches."""
   stateUpdateEvents(stateId: ID!): State!
+}
+
+type TaskBoundary {
+  correlationId: String!
+  endGlobalRevision: Int
+  endTime: DateTime
+  startGlobalRevision: Int
+  startTime: DateTime
 }
 
 """Defines a test case comparing expected behavior for actions."""

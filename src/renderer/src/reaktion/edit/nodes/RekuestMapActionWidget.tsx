@@ -172,6 +172,16 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
           <TemplateTag template={template} key={template.id} />
         ))}
       </div>
+      <div className="absolute top-0 left-[50%] translate-y-[-100%] translate-x-[-50%] opacity-100">
+        {data.binds?.implementations.length === 0 && (
+          <div className="px-1 m-2 rounded rounded-md border-gray-200 bg-sidepane border">
+            Swap
+          </div>
+        )}
+      </div>
+
+
+
       <CardHeader className="p-4">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="flex justify-between">

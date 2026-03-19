@@ -23,7 +23,7 @@ import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import ImplementationCard from "../components/cards/ImplementationCard";
 import TaskCard from "../components/cards/TaskCard";
-import { StateDisplay } from "../components/State";
+import { StateCheckoutDisplay, StateDisplay } from "../components/State";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
@@ -161,7 +161,7 @@ export default asDetailQueryRoute(
                     </h3>
                     <div className="space-y-3">
                       {data.agent.states.map((state) => (
-                        <StateDisplay key={state.id} stateId={state.id} label={true} />
+                        <StateCheckoutDisplay key={state.id} state={state} label={true} />
                       ))}
                     </div>
                   </div>

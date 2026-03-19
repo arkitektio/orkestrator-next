@@ -29,6 +29,8 @@ export type Scalars = {
   Identifier: { input: any; output: any; }
   /** The `InstanceID` scalar type represents a unique instance identifier */
   InstanceId: { input: any; output: any; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
+  JSON: { input: any; output: any; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   SearchQuery: { input: any; output: any; }
   /**
@@ -1573,6 +1575,22 @@ export type InterruptInput = {
   assignation: Scalars['ID']['input'];
 };
 
+export type JsonPatch = {
+  __typename?: 'JSONPatch';
+  op: JsonPatchOperation;
+  path: Scalars['String']['output'];
+  value: Scalars['Args']['output'];
+};
+
+export enum JsonPatchOperation {
+  Add = 'add',
+  Copy = 'copy',
+  Move = 'move',
+  Remove = 'remove',
+  Replace = 'replace',
+  Test = 'test'
+}
+
 /** The input for bouncing an agent. */
 export type KickInput = {
   agent: Scalars['ID']['input'];
@@ -1592,6 +1610,18 @@ export enum LogLevel {
   Info = 'INFO',
   Warn = 'WARN'
 }
+
+/** The input for logging state patches. */
+export type LogPatchesInput = {
+  instanceId: Scalars['String']['input'];
+  patches: Array<PatchInput>;
+};
+
+/** The input for logging state snapshots. */
+export type LogSnapshotInput = {
+  instanceId: Scalars['String']['input'];
+  value: Scalars['AnyDefault']['input'];
+};
 
 /** The input for creating a blok. */
 export type MaterializeBlokInput = {
@@ -1743,6 +1773,10 @@ export type Mutation = {
   interrupt: Assignation;
   /** Kick an agent to force disconnect. It will fail and not reconnect. */
   kick: Agent;
+  /** Log state patches */
+  logPatches: Scalars['ID']['output'];
+  /** Log a state snapshot  */
+  logSnapshot: Scalars['ID']['output'];
   /** Materialize a UI blok into a concrete instance on a dashboard. */
   materializeBlok: MaterializedBlok;
   /** Pause an ongoing assignation. */
@@ -1937,6 +1971,18 @@ export type MutationKickArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
+export type MutationLogPatchesArgs = {
+  input: LogPatchesInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationLogSnapshotArgs = {
+  input: LogSnapshotInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
 export type MutationMaterializeBlokArgs = {
   input: MaterializeBlokInput;
 };
@@ -2112,6 +2158,36 @@ export type OutputStructureUsageFilter = {
 export type ParamPair = {
   key: Scalars['String']['input'];
   value: Scalars['String']['input'];
+};
+
+export type Patch = {
+  __typename?: 'Patch';
+  assignation?: Maybe<Assignation>;
+  currentRevision: Scalars['Int']['output'];
+  futureRevision: Scalars['Int']['output'];
+  globalCurrentRevision: Scalars['Int']['output'];
+  globalFutureRevision: Scalars['Int']['output'];
+  op: Scalars['String']['output'];
+  patch: JsonPatch;
+  path: Scalars['String']['output'];
+  sessionId: Scalars['String']['output'];
+  state: State;
+  timestamp: Scalars['DateTime']['output'];
+  value: Scalars['Args']['output'];
+};
+
+/** The input for updating a state using JSON Patch operations. */
+export type PatchInput = {
+  correlationId?: InputMaybe<Scalars['String']['input']>;
+  currentRev: Scalars['Int']['input'];
+  futureRev: Scalars['Int']['input'];
+  globalCurrentRev?: InputMaybe<Scalars['Int']['input']>;
+  globalFutureRev?: InputMaybe<Scalars['Int']['input']>;
+  op: Scalars['String']['input'];
+  path: Scalars['String']['input'];
+  sessionId: Scalars['String']['input'];
+  stateName: Scalars['String']['input'];
+  value: Scalars['AnyDefault']['input'];
 };
 
 /** The input for pausing an assignation. */
@@ -2310,6 +2386,8 @@ export type Query = {
   blok: Blok;
   /** List of UI Blok. */
   bloks: Array<Blok>;
+  /** Materialize the latest state for a specific agent */
+  checkout: StateWithValue;
   /** List all registered clients. */
   clients: Array<Client>;
   /** Get dashboard by ID. */
@@ -2320,6 +2398,8 @@ export type Query = {
   dependency: Dependency;
   /** Fetch a specific event. */
   event: Array<AssignationEvent>;
+  /** Get forward events after revision. */
+  forwardEventsAfterRev: Array<Patch>;
   /** Get hardware record by ID. */
   hardwareRecord: HardwareRecord;
   /** List of all hardware records. */
@@ -2348,6 +2428,8 @@ export type Query = {
   myImplementationAt: Implementation;
   /** Reservations made by the current user. */
   myreservations: Array<Reservation>;
+  /** Get patch events between global revisions. */
+  patchEventsBetweenGlobalRevs: Array<Patch>;
   /** Retrieve protocols grouping actions. */
   protocols: Array<Protocol>;
   /** Retrieve reservation by ID. */
@@ -2360,12 +2442,20 @@ export type Query = {
   resolutions: Array<Resolution>;
   /** Fetch resolved dependencies for a resolution. */
   resolvedImplementations: Array<Implementation>;
+  /** Get session boundaries. */
+  sessionBoundaries?: Maybe<SessionBoundary>;
   /** Retrieve shortcut by ID. */
   shortcut: Shortcut;
   /** List of shortcuts. */
   shortcuts: Array<Shortcut>;
+  /** Get snapshots around revision. */
+  snapshotsAroundRev: Array<Snapshot>;
   /** Get a specific state by ID. */
   state: State;
+  /** Get state at global revision. */
+  stateAtGlobalRev: Array<Snapshot>;
+  /** Get state at local revision. */
+  stateAtLocalRev: Array<Snapshot>;
   /** Retrieve state for a specific context. */
   stateFor: State;
   /** Retrieve a state schema by ID. */
@@ -2382,6 +2472,8 @@ export type Query = {
   structurePackages: Array<StructurePackage>;
   /** All registered structures. */
   structures: Array<Structure>;
+  /** Get task boundaries. */
+  taskBoundaries?: Maybe<TaskBoundary>;
   /** All tasks. */
   tasks: Array<Assignation>;
   /** Retrieve test case by ID. */
@@ -2465,6 +2557,14 @@ export type QueryBlokArgs = {
 
 
 /** Root query type for fetching entities in the system. */
+export type QueryCheckoutArgs = {
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  localRevision?: InputMaybe<Scalars['Int']['input']>;
+  state: Scalars['ID']['input'];
+};
+
+
+/** Root query type for fetching entities in the system. */
 export type QueryClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
   order?: InputMaybe<ClientOrder>;
@@ -2487,6 +2587,15 @@ export type QueryDependencyArgs = {
 /** Root query type for fetching entities in the system. */
 export type QueryEventArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryForwardEventsAfterRevArgs = {
+  count?: Scalars['Int']['input'];
+  globalRevision: Scalars['Int']['input'];
+  sessionId?: InputMaybe<Scalars['String']['input']>;
+  stateId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2582,6 +2691,15 @@ export type QueryMyreservationsArgs = {
 
 
 /** Root query type for fetching entities in the system. */
+export type QueryPatchEventsBetweenGlobalRevsArgs = {
+  fromGlobalRevision: Scalars['Int']['input'];
+  sessionId?: InputMaybe<Scalars['String']['input']>;
+  stateIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  toGlobalRevision: Scalars['Int']['input'];
+};
+
+
+/** Root query type for fetching entities in the system. */
 export type QueryProtocolsArgs = {
   filters?: InputMaybe<ProtocolFilter>;
   order?: InputMaybe<ProtocolOrder>;
@@ -2623,6 +2741,13 @@ export type QueryResolvedImplementationsArgs = {
 
 
 /** Root query type for fetching entities in the system. */
+export type QuerySessionBoundariesArgs = {
+  sessionId: Scalars['String']['input'];
+  stateId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+/** Root query type for fetching entities in the system. */
 export type QueryShortcutArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2637,8 +2762,34 @@ export type QueryShortcutsArgs = {
 
 
 /** Root query type for fetching entities in the system. */
+export type QuerySnapshotsAroundRevArgs = {
+  after?: Scalars['Int']['input'];
+  before?: Scalars['Int']['input'];
+  revision: Scalars['Int']['input'];
+  sessionId?: InputMaybe<Scalars['String']['input']>;
+  stateId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+/** Root query type for fetching entities in the system. */
 export type QueryStateArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryStateAtGlobalRevArgs = {
+  globalRevision: Scalars['Int']['input'];
+  sessionId?: InputMaybe<Scalars['String']['input']>;
+  stateId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryStateAtLocalRevArgs = {
+  revision: Scalars['Int']['input'];
+  sessionId?: InputMaybe<Scalars['String']['input']>;
+  stateId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2679,6 +2830,13 @@ export type QueryStructurePackagesArgs = {
 export type QueryStructuresArgs = {
   filters?: InputMaybe<StructureFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryTaskBoundariesArgs = {
+  correlationId: Scalars['String']['input'];
+  stateId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2992,6 +3150,15 @@ export type SearchAssignWidget = AssignWidget & {
   ward: Scalars['String']['output'];
 };
 
+export type SessionBoundary = {
+  __typename?: 'SessionBoundary';
+  endGlobalRevision?: Maybe<Scalars['Int']['output']>;
+  endTime?: Maybe<Scalars['DateTime']['output']>;
+  sessionId: Scalars['String']['output'];
+  startGlobalRevision?: Maybe<Scalars['Int']['output']>;
+  startTime?: Maybe<Scalars['DateTime']['output']>;
+};
+
 /** The input for setting a state schema to an agent. */
 export type SetAgentStatesInput = {
   implementations: Array<StateImplementationInput>;
@@ -3004,6 +3171,8 @@ export type SetExtensionImplementationsInput = {
   /** The implementations to set. This is used to identify the implementations in the system. */
   implementations: Array<ImplementationInput>;
   instanceId: Scalars['InstanceId']['input'];
+  /** The locks to set on the implementations. This is used to identify the locks in the system. */
+  locks?: InputMaybe<Array<LockSchemaInput>>;
   runCleanup?: Scalars['Boolean']['input'];
 };
 
@@ -3088,6 +3257,16 @@ export type SliderAssignWidget = AssignWidget & {
   step?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Snapshot = {
+  __typename?: 'Snapshot';
+  globalRevision: Scalars['Int']['output'];
+  revision: Scalars['Int']['output'];
+  sessionId: Scalars['String']['output'];
+  state: State;
+  timestamp: Scalars['DateTime']['output'];
+  value: Scalars['Args']['output'];
+};
+
 export type State = {
   __typename?: 'State';
   agent: Agent;
@@ -3148,6 +3327,14 @@ export type StateSchema = {
 export type StateSchemaInput = {
   name: Scalars['String']['input'];
   ports: Array<PortInput>;
+};
+
+export type StateWithValue = {
+  __typename?: 'StateWithValue';
+  globalRevision?: Maybe<Scalars['Int']['output']>;
+  localRevision?: Maybe<Scalars['Int']['output']>;
+  schema: StateSchema;
+  value: Scalars['JSON']['output'];
 };
 
 /** The input for stepping an assignation. Stepping is used to go from one breakpoint to another. */
@@ -3285,6 +3472,8 @@ export type Subscription = {
   implementationChange: Implementation;
   /** Subscribe to creation or updates of implementations. */
   implementations: ImplementationUpdate;
+  /** Subscribe to latest patches for specific agents or states. */
+  latestPatches: Patch;
   /** Subscribe to notifications when new actions are created. */
   newActions: Action;
   /** Subscribe to updates on reservations. */
@@ -3325,6 +3514,13 @@ export type SubscriptionImplementationsArgs = {
 
 
 /** Root subscription type for real-time event streams from the system. */
+export type SubscriptionLatestPatchesArgs = {
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  state?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+/** Root subscription type for real-time event streams from the system. */
 export type SubscriptionNewActionsArgs = {
   cage: Scalars['ID']['input'];
 };
@@ -3339,6 +3535,15 @@ export type SubscriptionReservationsArgs = {
 /** Root subscription type for real-time event streams from the system. */
 export type SubscriptionStateUpdateEventsArgs = {
   stateId: Scalars['ID']['input'];
+};
+
+export type TaskBoundary = {
+  __typename?: 'TaskBoundary';
+  correlationId: Scalars['String']['output'];
+  endGlobalRevision?: Maybe<Scalars['Int']['output']>;
+  endTime?: Maybe<Scalars['DateTime']['output']>;
+  startGlobalRevision?: Maybe<Scalars['Int']['output']>;
+  startTime?: Maybe<Scalars['DateTime']['output']>;
 };
 
 /** Defines a test case comparing expected behavior for actions. */
@@ -4311,6 +4516,13 @@ export type GetStateForQueryVariables = Exact<{
 
 
 export type GetStateForQuery = { __typename?: 'Query', stateFor: { __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } } };
+
+export type CheckoutQueryVariables = Exact<{
+  state: Scalars['ID']['input'];
+}>;
+
+
+export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateWithValue', value: any, globalRevision?: number | null, localRevision?: number | null } };
 
 export type GetStructureQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6071,6 +6283,15 @@ export const GetStateForDocument = gql`
   }
 }
     ${StateFragmentDoc}`;
+export const CheckoutDocument = gql`
+    query Checkout($state: ID!) {
+  checkout(state: $state) {
+    value
+    globalRevision
+    localRevision
+  }
+}
+    `;
 export const GetStructureDocument = gql`
     query GetStructure($id: ID!) {
   structure(id: $id) {
@@ -6392,6 +6613,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GetStateFor(variables: GetStateForQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStateForQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetStateForQuery>({ document: GetStateForDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStateFor', 'query', variables);
+    },
+    Checkout(variables: CheckoutQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CheckoutQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CheckoutQuery>({ document: CheckoutDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Checkout', 'query', variables);
     },
     GetStructure(variables: GetStructureQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStructureQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetStructureQuery>({ document: GetStructureDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStructure', 'query', variables);

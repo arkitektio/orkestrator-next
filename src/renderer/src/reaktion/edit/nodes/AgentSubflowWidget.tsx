@@ -109,8 +109,6 @@ export const AgentSubflowWidget = ({ data, id }: NodeProps<AgentData>) => {
                     {data.description}
                 </CardDescription>
               </CardHeader>
-                <Handle type="target" position={Position.Left} className="w-3 h-3 bg-primary" />
-                <Handle type="source" position={Position.Right} className="w-3 h-3 bg-primary" />
             </Card>
           </PopoverTrigger>
         </ContextMenuTrigger>

@@ -62,7 +62,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import useUndoable, { MutationBehavior } from "use-undoable";
+import { useStore as useZustandStore } from "zustand";
 import { Graph } from "../base/Graph";
 import { Controls } from "../components/controls/Controls";
 import { rekuestActionToMatchingNode } from "../plugins/rekuest";
@@ -99,7 +99,8 @@ import { EdgeContextual } from "./components/EdgeContextual";
 import { SolvedErrorBox } from "./components/boxes/SolvedErrorBox";
 import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 import { RunButton } from "./components/buttons/RunButton";
-import { EditRiverContext } from "./context";
+import { EditRiverContext, EditFlowStoreContext } from "./context";
+import { createEditFlowStore } from "./store";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { AgentSubflowWidget } from "./nodes/AgentSubflowWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
@@ -138,7 +139,7 @@ function calculateMidpoint(
 }
 
 const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
-  return (
+  return !!(
     node.data.ins?.find(
       (s) => s && s.length && s.find((i) => i.kind == PortKind.MemoryStructure),
     ) ||
@@ -189,15 +190,61 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
   const connectingStart = useRef<OnConnectStartParams | undefined>(undefined);
 
-  const [state, setState, { redo, undo, canRedo, canUndo }] =
-    useUndoable<ValidationResult>({
+  const store = useRef(createEditFlowStore({
       nodes: nodes_to_flownodes(flow.graph?.nodes),
       edges: edges_to_flowedges(flow.graph?.edges),
       globals: flow.graph.globals || [],
       remainingErrors: [],
       solvedErrors: [],
       valid: true,
-    });
+  }));
+
+  return (
+    <EditFlowStoreContext.Provider value={store.current}>
+        <EditFlowInner flow={flow} onSave={onSave} {...{ arkitektapi, reactFlowWrapper, showEdgeLabels, showNodeErrors, setShowEdgeLabels, setShowNodeErrors, showContextual, setShowContextual, showClickContextual, setShowClickContextual, showEdgeContextual, setShowEdgeContextual, showConnectContextual, setShowConnectContextual, connectingNodeId, reactFlowInstance, setReactFlowInstance, connectingStart }} />
+    </EditFlowStoreContext.Provider>
+  );
+};
+
+const EditFlowInner = ({ flow, onSave, arkitektapi, reactFlowWrapper, showEdgeLabels, showNodeErrors, setShowEdgeLabels, setShowNodeErrors, showContextual, setShowContextual, showClickContextual, setShowClickContextual, showEdgeContextual, setShowEdgeContextual, showConnectContextual, setShowConnectContextual, connectingNodeId, reactFlowInstance, setReactFlowInstance, connectingStart }: any) => {
+  const storeContext = React.useContext(EditFlowStoreContext);
+  if (!storeContext) throw new Error("Missing EditFlowStoreContext");
+  const state = useZustandStore(storeContext);
+  const { updateData: updateNodeData, moveConstantToStream, moveVoidtoOutstream, moveOutStreamToVoid, moveStreamToConstants, moveConstantToGlobals, removeGlobal, removeEdge, setGlobals, addNode, setStateRaw, undo, redo } = state;
+
+  const triggerNodeUpdate = useCallback(
+    (changes: NodeChange[]) => {
+      setStateRaw((state) => {
+        if (
+          changes.length == 1 &&
+          (changes[0].type == "position" || changes[0].type == "dimensions")
+        ) {
+          return {
+            ...state,
+            nodes: applyNodeChanges(changes, state.nodes) as FlowNode[],
+          };
+        } else {
+          return validateState({
+            ...state,
+            nodes: applyNodeChanges(changes, state.nodes) as FlowNode[],
+          });
+        }
+      });
+    },
+    [setStateRaw],
+  );
+
+  const triggerEdgeUpdate = useCallback(
+    (changes: EdgeChange[]) => {
+      setStateRaw((state) => {
+        return validateState({
+          ...state,
+          edges: applyEdgeChanges(changes, state.edges) as FlowEdge[],
+        });
+      });
+    },
+    [setStateRaw],
+  );
 
   const isEqual = useMemo(() => {
     return checkFlowIsEqual(state, {
@@ -213,75 +260,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const boundNodes = useMemo(() => {
     return state.nodes.filter(hasBoundPort);
   }, [state.nodes]);
-
-  const triggerNodepdate = useCallback(
-    (
-      v: FlowNode[],
-      mutation?: MutationBehavior | undefined,
-      ignoreAction?: boolean | undefined,
-    ) => {
-      // To prevent a mismatch of state updates,
-      // we'll use the value passed into this
-      // function instead of the state directly.
-      if (ignoreAction) {
-        setState(
-          (e) => ({
-            ...e,
-            nodes: v,
-          }),
-          mutation,
-          ignoreAction,
-        );
-      } else {
-        console.log("triggerNodepdate", v);
-
-        setState(
-          (e) =>
-            validateState({
-              ...e,
-              nodes: v,
-            }),
-          mutation,
-          ignoreAction,
-        );
-      }
-    },
-    [setState],
-  );
-
-  const triggerEdgeUpdate = useCallback(
-    (
-      v: FlowEdge[],
-      mutation?: MutationBehavior | undefined,
-      ignoreAction?: boolean | undefined,
-    ) => {
-      // To prevent a mismatch of state updates,
-      // we'll use the value passed into this
-      // function instead of the state directly.
-
-      if (ignoreAction) {
-        setState(
-          (e) => ({
-            ...e,
-            edges: v,
-          }),
-          mutation,
-          ignoreAction,
-        );
-      } else {
-        setState(
-          (e) =>
-            validateState({
-              ...e,
-              edges: v,
-            }),
-          mutation,
-          ignoreAction,
-        );
-      }
-    },
-    [setState],
-  );
 
   // We declare these callbacks as React Flow suggests,
   // but we don't set the state directly. Instead, we pass
@@ -305,352 +283,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       document.removeEventListener("keyup", keyUpListener);
     };
   }, [undo, redo]);
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      if (
-        changes.length == 1 &&
-        (changes[0].type == "position" || changes[0].type == "dimensions")
-      ) {
-        console.log("Position Change", changes[0]);
-        triggerNodepdate(
-          applyNodeChanges(changes, state.nodes) as FlowNode[],
-          undefined,
-          true,
-        );
-      } else {
-        triggerNodepdate(
-          applyNodeChanges(changes, state.nodes) as FlowNode[],
-          undefined,
-          false,
-        );
-      }
-    },
-    [triggerNodepdate, state.nodes],
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      triggerEdgeUpdate(applyEdgeChanges(changes, state.edges) as FlowEdge[]);
-    },
-    [triggerEdgeUpdate, state.edges],
-  );
-
-  const updateNodeData = (data: Partial<NodeData>, id: string) => {
-    setState((state) =>
-      validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === id) {
-            n.data = { ...n.data, ...data };
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-      }),
-    );
-  };
-
-  const moveConstantToStream = (
-    nodeId: string,
-    conindex: number,
-    instream: number,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      const constant = node.data.constants.at(conindex);
-      if (!constant) {
-        console.log("Could not find constant", conindex);
-        return state;
-      }
-
-      const new_instream = node.data.ins.map((s, index) => {
-        if (index == instream) {
-          return [...s, constant];
-        }
-        return s;
-      });
-
-      console.log("new_instream", new_instream);
-
-      const new_constants = node.data.constants.filter(
-        (i, index) => index != conindex,
-      );
-
-      console.log("new_constants", new_constants);
-
-      const targetStreamIndex = instream;
-      const updatedEdges = state.edges.map((edge) => {
-        if (
-          edge.target === nodeId &&
-          handleToStream(edge.targetHandle) === targetStreamIndex &&
-          edge.data
-        ) {
-          const streamItems = new_instream[targetStreamIndex]?.map((port) => ({
-            __typename: "StreamItem" as const,
-            kind: port.kind,
-            label: port.label ?? port.key,
-          }));
-          if (!streamItems) return edge;
-          return {
-            ...edge,
-            data: {
-              ...edge.data,
-              stream: streamItems,
-            },
-          };
-        }
-        return edge;
-      });
-
-      const new_data = {
-        ...node.data,
-        ins: new_instream,
-        constants: new_constants,
-        constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
-        globalsMap: { ...node.data.globalsMap, [constant.key]: undefined },
-      };
-
-      return validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            const updatedNode = { ...n, data: new_data };
-            console.log("found node", updatedNode);
-            return updatedNode;
-          }
-          return n;
-        }),
-        edges: updatedEdges,
-      });
-    });
-  };
-
-  const moveVoidtoOutstream = (
-    nodeId: string,
-    voidindex: number,
-    outstream: number,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      const thevoid = node.data.voids.at(voidindex);
-      if (!thevoid) {
-        console.log("Could not find void", voidindex);
-        return state;
-      }
-
-      const new_outstream = node.data.outs.map((s, index) => {
-        if (index == outstream) {
-          return [...s, thevoid];
-        }
-        return s;
-      });
-
-      console.log("new_instream", new_outstream);
-
-      const new_voids = node.data.voids.filter((i, index) => index != voidindex);
-
-      console.log("ne_voids", new_voids);
-
-      const new_data = {
-        ...node.data,
-        outs: new_outstream, //TODO: This is not correct
-        voids: new_voids,
-      };
-
-      return validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-      });
-    });
-  };
-
-  const moveOutStreamToVoid = (
-    nodeId: string,
-    streamIndex: number,
-    streamItem: number,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      const streamitem = node.data.outs.at(streamIndex)?.at(streamItem);
-      if (!streamitem) {
-        console.log("Could not find streamitem", streamitem);
-        return state;
-      }
-
-      const new_outstream = node.data.outs.map((s, index) => {
-        if (index == streamIndex) {
-          return s.filter((i, index) => index != streamItem);
-        }
-        return s;
-      });
-
-      const new_data = {
-        ...node.data,
-        outs: new_outstream, //TODO: This is not correct
-        voids: [...node.data.voids, streamitem],
-      };
-
-      return validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-      });
-    });
-  };
-
-  const moveStreamToConstants = (
-    nodeId: string,
-    streamIndex: number,
-    streamItem: number,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      const streamitem = node.data.ins.at(streamIndex)?.at(streamItem);
-      if (!streamitem) {
-        console.log("Could not find streamitem", streamitem);
-        return state;
-      }
-
-      const new_instream = node.data.ins.map((s, index) => {
-        if (index == streamIndex) {
-          return s.filter((i, index) => index != streamItem);
-        }
-        return s;
-      });
-
-      const new_data = {
-        ...node.data,
-        ins: new_instream, //TODO: This is not correct
-        constants: [...node.data.constants, streamitem],
-        constantsMap: {
-          ...node.data.constantsMap,
-          [streamitem.key]: streamitem.default,
-        },
-      };
-
-      return validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-      });
-    });
-  };
-
-  const moveConstantToGlobals = (
-    nodeId: string,
-    conindex: number,
-    globalkey?: string | undefined,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      const constant = node.data.constants.at(conindex);
-      if (!constant) {
-        console.log("Could not find constant", conindex);
-        return state;
-      }
-
-      let new_globals = state.globals;
-      if (!globalkey) {
-        new_globals = [...state.globals, { key: constant.key, port: constant }];
-        globalkey = constant.key;
-      } else {
-        new_globals = state.globals.map((g) => {
-          if (g.key == globalkey) {
-            return { ...g, port: constant };
-          }
-          return g;
-        });
-      }
-
-      const new_data = {
-        ...node.data,
-        constants: node.data.constants, //We are not removing the constant but we are removing the constant from the constantsMap
-        constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
-        globalsMap: { ...node.data.globalsMap, [constant.key]: globalkey },
-      };
-
-      return validateState({
-        ...state,
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-        globals: new_globals,
-      });
-    });
-  };
-
-  const removeGlobal = (globalkey: string) => {
-    setState((state) => {
-      const nodes = state.nodes.map((n) => {
-        const new_data = {
-          ...n.data,
-          globalsMap: Object.fromEntries(
-            Object.entries(n.data.globalsMap).filter(
-              ([key, value]) => value != globalkey,
-            ),
-          ),
-        };
-        return { ...n, data: new_data };
-      });
-
-      return validateState({
-        ...state,
-        nodes: nodes,
-        globals: state.globals.filter((g) => g.key != globalkey),
-      });
-    });
-  };
 
   const onPaneClick = (event: React.MouseEvent) => {
     console.log("onPaneClick", event);
@@ -755,16 +387,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     }
   };
 
-  const setGlobals = (globals: GlobalArgFragment[]) => {
-    console.log("setGlobals", globals);
-    setState((state) =>
-      validateState({
-        ...state,
-        globals: globals,
-      }),
-    );
-  };
-
   const globals = useMemo(() => state.globals, [state]);
 
   const save = () => {
@@ -786,25 +408,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     }
   };
 
-  const addNode = (node: FlowNode) => {
-    setState((e) => validateState({ ...e, nodes: [...e.nodes, node] }));
-  };
-
-  const removeEdge = (id: string) => {
-    if (showEdgeContextual) {
-      if (showEdgeContextual.edgeId == id) {
-        setShowEdgeContextual(undefined);
-      }
-    }
-
-    setState((e) =>
-      validateState({ ...e, edges: e.edges.filter((el) => el.id !== id) }),
-    );
-  };
-
   const validate = () => {
     const validated = validateState(state);
-    setState(validated);
+    setStateRaw(validated);
   };
 
   const onConnect = (connection: Connection) => {
@@ -833,7 +439,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
       // Check if validated Edge is valid
 
-      setState(validated);
+      setStateRaw(validated);
     } else {
       // We need to show the contextual menu
       const leftNode = nodes.find((n) => n.id == connection.source);
@@ -902,7 +508,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
     newState.nodes = newState.nodes.concat({ ...stagingNode, position });
 
-    setState((e) => newState);
+    setStateRaw((e) => newState);
     setShowClickContextual(undefined);
   };
 
@@ -963,7 +569,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       ),
     );
 
-    setState((e) => newState);
+    setStateRaw((e) => newState);
     setShowConnectContextual(undefined);
   };
 
@@ -1015,7 +621,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
     newState.edges = newState.edges.filter((e) => e.id != params.edgeId);
 
-    setState((e) => newState);
+    setStateRaw((e) => newState);
     setShowEdgeContextual(undefined);
   };
 
@@ -1078,7 +684,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         targetHandle: "arg_0",
       });
 
-      setState((e) => integratedState);
+      setStateRaw((e) => integratedState);
       setShowContextual(undefined);
     } else if (params.connectionParams.handleType == "target") {
       // We are dealing with a scenario were a new node should be added
@@ -1115,7 +721,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         targetHandle: connectionParams.handleId,
       });
 
-      setState(() => integratedState);
+      setStateRaw(() => integratedState);
       setShowContextual(undefined);
     }
   };
@@ -1285,11 +891,11 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             targetHandle: oldEdgeTargetHandle,
           });
 
-          setState((e) => integratedState);
+          setStateRaw((e) => integratedState);
         }
       }
     },
-    [reactFlowInstance, state, setState],
+    [reactFlowInstance, state, setStateRaw],
   );
 
   const [{ isOver, canDrop }, dropref] = useSmartDrop(
@@ -1457,8 +1063,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           <Graph
             nodes={state.nodes}
             edges={state.edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
+            onNodesChange={triggerNodeUpdate}
+            onEdgesChange={triggerEdgeUpdate}
             onConnectStart={onConnectStart}
             onConnectEnd={onConnectEnd}
             onConnect={onConnect}

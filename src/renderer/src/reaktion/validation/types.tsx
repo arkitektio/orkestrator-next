@@ -1,4 +1,4 @@
-import { FlussPortFragment as PortFragment } from "@/reaktion/api/graphql";
+import { FlussPortFragment as PortFragment, GlobalArgFragment } from "@/reaktion/api/graphql";
 import { FlowEdge, FlowNode, FlowNodeData, NodeData } from "../types";
 
 export type Compare = {
@@ -30,7 +30,7 @@ export type ValidationResult = FlowState & {
 export type FlowState = {
   nodes: FlowNode[];
   edges: FlowEdge[];
-  globals: PortFragment[];
+  globals: GlobalArgFragment[];
 };
 
 export type PortType = "source" | "target";

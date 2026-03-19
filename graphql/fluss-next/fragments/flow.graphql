@@ -78,6 +78,13 @@ fragment ReturnNode on ReturnNode {
   __typename
 }
 
+fragment AgentSubFlowNode on AgentSubFlowNode {
+  ...BaseGraphNode
+  __typename
+}
+
+
+
 fragment GraphNode on GraphNode {
   __typename
   id
@@ -91,6 +98,7 @@ fragment GraphNode on GraphNode {
   ...ReactiveNode
   ...ArgNode
   ...ReturnNode
+  ...AgentSubFlowNode
 }
 
 fragment BaseGraphEdge on GraphEdge {

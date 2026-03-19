@@ -20,6 +20,8 @@ import {
   PortKind,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
+  useAgentsQuery,
+  AgentFragment,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
@@ -340,6 +342,76 @@ const ClickArkitektNodes = (props: {
 
 const displayLimit = 5;
 
+const ClickAgents = (props: {
+  search: string | undefined;
+  params: ClickContextualParams;
+}) => {
+  const { data, refetch } = useAgentsQuery({
+    variables: {
+      filters: {
+        search: props.search,
+      },
+      pagination: {
+        limit: 3,
+      },
+    },
+  });
+
+  useEffect(() => {
+    refetch({
+      filters: {
+        search: props.search,
+      },
+      pagination: {
+        limit: 3,
+      },
+    });
+  }, [props.search]);
+
+  const { addClickNode } = useEditRiver();
+
+  const onAgentClick = (agent: AgentFragment) => {
+    addClickNode(
+      {
+        id: nodeIdBuilder(),
+        type: "AgentSubflowNode",
+        position: { x: 0, y: 0 },
+        data: {
+          kind: GraphNodeKind.AgentSubflow,
+          title: agent.name,
+          description: "Agent Subflow",
+          ins: [],
+          outs: [],
+          constants: [],
+          constantsMap: {},
+          globalsMap: {},
+          agent: agent,
+          clientId: agent.registry.client.clientId,
+        },
+      },
+      props.params,
+    );
+  };
+
+  return (
+    <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
+      {data?.agents.map((agent) => (
+        <Tooltip>
+          <TooltipTrigger>
+            <Card
+              onClick={() => onAgentClick(agent)}
+              className="px-2 py-1 border-solid border-2 border-indigo-400"
+            >
+              {agent.name}
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent align="center">{agent.name}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  );
+};
+
 export const ClickContextual = (props: { params: ClickContextualParams }) => {
   const [search, setSearch] = useState(undefined);
 
@@ -363,6 +435,10 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
       <Separator />
       <div className="flex flex-row gap-1 my-auto flex-wrap  mb-1">
         <ClickArkitektNodes search={search} params={props.params} />
+      </div>
+      <Separator />
+      <div className="flex flex-row gap-1 my-auto flex-wrap  mb-1">
+        <ClickAgents search={search} params={props.params} />
       </div>
       <Separator />
       <div className="flex flex-row gap-1 my-auto flex-wrap ">

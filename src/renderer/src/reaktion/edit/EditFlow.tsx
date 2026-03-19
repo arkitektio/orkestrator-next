@@ -101,6 +101,7 @@ import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 import { RunButton } from "./components/buttons/RunButton";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
+import { AgentSubflowWidget } from "./nodes/AgentSubflowWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
 import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
@@ -113,6 +114,7 @@ const nodeTypes: NodeTypes = {
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
+  AgentSubflowNode: AgentSubflowWidget,
 };
 
 const edgeTypes: EdgeTypes = {

@@ -18,6 +18,7 @@ import {
   RekuestMapActionNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
+  AgentSubFlowNodeFragment,
 } from "@/reaktion/api/graphql";
 import {
   Connection,
@@ -35,13 +36,15 @@ export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
 export type RekuestMapNodeData = DataEnhancer<RekuestMapActionNodeFragment>;
 export type RekuestFilterNodeData = DataEnhancer<RekuesFilterActionNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
+export type AgentSubFlowNodeData = DataEnhancer<AgentSubFlowNodeFragment>;
 
 export type NodeData =
   | ArgNodeData
   | ReturnNodeData
   | RekuestMapNodeData
   | RekuestFilterNodeData
-  | ReactiveNodeData;
+  | ReactiveNodeData
+  | AgentSubFlowNodeData;
 
 export type ArgNodeProps = NodeProps<ArgNodeData>;
 export type ReturnNodeProps = NodeProps<ReturnNodeData>;
@@ -50,6 +53,7 @@ export type IONodeProps = ArgNodeProps | ReturnNodeProps;
 export type RekuestMapNodeProps = NodeProps<RekuestMapNodeData>;
 export type RekuestFilterNodeProps = NodeProps<RekuestFilterNodeData>;
 export type ReactiveNodeProps = NodeProps<ReactiveNodeData>;
+export type AgentSubFlownNodeProps = NodeProps<AgentSubFlowNodeData>;
 
 export type Elements = Element[];
 

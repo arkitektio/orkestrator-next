@@ -1385,6 +1385,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         addContextualNode: addContextualNode,
         addConnectContextualNode,
         addEdgeContextualNode,
+        addNode,
         removeGlobal,
         state: state,
         showEdgeLabels: showEdgeLabels,

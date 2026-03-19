@@ -1,5 +1,6 @@
 import { useRekuest } from '@/app/Arkitekt'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
@@ -28,6 +29,11 @@ import { ConnectContextual } from '@/reaktion/edit/components/ConnectContextual'
 import { DropContextual } from '@/reaktion/edit/components/DropContextual'
 import { EdgeContextual } from '@/reaktion/edit/components/EdgeContextual'
 import { NodeContextual } from '@/reaktion/edit/components/NodeContextual'
+import { BoundNodesBox } from '@/reaktion/edit/components/boxes/BoundNodesBox'
+import { ErrorBox } from '@/reaktion/edit/components/boxes/ErrorBox'
+import { SolvedErrorBox } from '@/reaktion/edit/components/boxes/SolvedErrorBox'
+import { DeployInterfaceButton } from '@/reaktion/edit/components/buttons/DeployButton'
+import { RunButton } from '@/reaktion/edit/components/buttons/RunButton'
 import { EditFlowStoreContext, useEditFlowStoreApi } from '@/reaktion/edit/context'
 import { LabeledShowEdge } from '@/reaktion/edit/edges/LabeledShowEdge'
 import { RedoUndoHandler } from '@/reaktion/edit/keyboardhandlers/RedoUndo'
@@ -39,7 +45,7 @@ import { ArgTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ArgShowNodeWid
 import { ReturnTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ReturnShowNodeWidget'
 import { createEditFlowStore } from '@/reaktion/edit/store'
 import { rekuestActionToMatchingNode } from '@/reaktion/plugins/rekuest'
-import { EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
+import { ContextualParams, EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
 import {
   edges_to_flowedges,
   flowEdgeToInput,
@@ -63,6 +69,7 @@ import {
   Connection,
   Edge,
   EdgeProps,
+  Node,
   NodeProps,
   OnConnectEnd,
   OnConnectStartParams
@@ -181,6 +188,7 @@ const EditFlowInner = ({
 }) => {
   const arkitektApi = useRekuest()
   const store = useEditFlowStoreApi()
+  const connectAppendRef = useRef(false)
 
   const {
     nodes,
@@ -190,11 +198,7 @@ const EditFlowInner = ({
     solvedErrors,
     showEdgeLabels,
     showNodeErrors,
-    showContextual,
-    showClickContextual,
-    showEdgeContextual,
-    showConnectContextual,
-    showNodeContextual,
+    contextuals,
     reactFlowInstance,
     onNodesChange,
     onEdgesChange,
@@ -212,11 +216,7 @@ const EditFlowInner = ({
       solvedErrors: state.solvedErrors,
       showEdgeLabels: state.showEdgeLabels,
       showNodeErrors: state.showNodeErrors,
-      showContextual: state.showContextual,
-      showClickContextual: state.showClickContextual,
-      showEdgeContextual: state.showEdgeContextual,
-      showConnectContextual: state.showConnectContextual,
-      showNodeContextual: state.showNodeContextual,
+      contextuals: state.contextuals,
       reactFlowInstance: state.reactFlowInstance,
       onNodesChange: state.onNodesChange,
       onEdgesChange: state.onEdgesChange,
@@ -261,34 +261,54 @@ const EditFlowInner = ({
     [nodes]
   )
 
+  const isCtrlPressed = useCallback((event: MouseEvent | TouchEvent) => {
+    return 'ctrlKey' in event ? !!event.ctrlKey : false
+  }, [])
+
+  const addVisibleContextual = useCallback(
+    (contextual: ContextualParams, append = false) => {
+      const state = store.getState()
+
+      if (!append) {
+        state.clearPanels()
+      }
+
+      state.addContextual(contextual)
+    },
+    [store]
+  )
+
+  const renderContextual = useCallback((contextual: ContextualParams) => {
+    switch (contextual.kind) {
+      case 'drop':
+        return <DropContextual key={contextual.id} params={contextual} />
+      case 'click':
+        return <ClickContextual key={contextual.id} params={contextual} />
+      case 'edge':
+        return <EdgeContextual key={contextual.id} params={contextual} />
+      case 'connect':
+        return <ConnectContextual key={contextual.id} params={contextual} />
+      case 'node':
+        return <NodeContextual key={contextual.id} params={contextual} />
+    }
+    return null
+  }, [])
+
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
       const nativeEvent = event.nativeEvent
       const state = store.getState()
+      const append = nativeEvent.ctrlKey
+      const hasSameEventContextual = state.contextuals.some(
+        (contextual) => 'event' in contextual && contextual.event.timeStamp === nativeEvent.timeStamp
+      )
 
-      if (state.showContextual) {
-        if (Math.abs(state.showContextual.event.timeStamp - nativeEvent.timeStamp) > 0.001) {
-          state.setShowContextual(undefined)
-          return
-        }
-
+      if (hasSameEventContextual) {
         return
       }
 
-      if (state.showConnectContextual) {
-        state.setShowConnectContextual(undefined)
-      }
-
-      if (state.showEdgeContextual) {
-        state.setShowEdgeContextual(undefined)
-      }
-
-      if (state.showNodeContextual) {
-        state.setShowNodeContextual(undefined)
-      }
-
-      if (state.showClickContextual) {
-        state.setShowClickContextual(undefined)
+      if (!append && state.contextuals.some((contextual) => contextual.kind === 'click')) {
+        state.clearPanels()
         return
       }
 
@@ -297,21 +317,27 @@ const EditFlowInner = ({
         return
       }
 
-      state.setShowClickContextual({
+      addVisibleContextual(
+        {
+          kind: 'click',
+          id: crypto.randomUUID(),
         event: nativeEvent,
         position: {
           x: nativeEvent.clientX - reactFlowBounds.left,
           y: nativeEvent.clientY - reactFlowBounds.top
         }
-      })
+        },
+        append
+      )
     },
-    [reactFlowWrapperRef, store]
+    [addVisibleContextual, reactFlowWrapperRef, store]
   )
 
   const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: any) => {
+    (event: React.MouseEvent, node: Node) => {
       const nativeEvent = event.nativeEvent
       const state = store.getState()
+      const append = nativeEvent.ctrlKey
 
       const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
       if (!state.reactFlowInstance || !reactFlowBounds) {
@@ -319,47 +345,55 @@ const EditFlowInner = ({
       }
 
       if (node.type === 'AgentSubFlowNode') {
-        if (state.showNodeContextual) {
-           state.setShowNodeContextual(undefined)
-           return
+        if (
+          !append &&
+          state.contextuals.some(
+            (contextual) => contextual.kind === 'node' && contextual.nodeId === node.id
+          )
+        ) {
+          state.clearPanels()
+          return
         }
 
+        const agentId = (node.data as { agent?: { id?: string } }).agent?.id
 
-        if (node.data && (node.data as any).agent) {
-          state.setShowNodeContextual({
+        if (agentId) {
+          addVisibleContextual({
+            kind: 'node',
+            id: crypto.randomUUID(),
             nodeId: node.id,
-            action: { type: 'implementations', agentId: (node.data as any).agent.id },
+            action: { type: 'implementations', agentId },
             position: {
               x: nativeEvent.clientX - reactFlowBounds.left,
               y: nativeEvent.clientY - reactFlowBounds.top
             }
-          })
+          }, append)
         }
       }
     },
-    [reactFlowWrapperRef, store]
+    [addVisibleContextual, reactFlowWrapperRef, store]
   )
 
   const onEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       const nativeEvent = event.nativeEvent
       const state = store.getState()
+      const append = nativeEvent.ctrlKey
+      const hasSameEventContextual = state.contextuals.some(
+        (contextual) => 'event' in contextual && contextual.event.timeStamp === nativeEvent.timeStamp
+      )
 
-      if (state.showContextual) {
-        if (Math.abs(state.showContextual.event.timeStamp - nativeEvent.timeStamp) > 0.001) {
-          state.setShowContextual(undefined)
-          return
-        }
-
+      if (hasSameEventContextual) {
         return
       }
 
-      if (state.showConnectContextual) {
-        state.setShowConnectContextual(undefined)
-      }
-
-      if (state.showClickContextual) {
-        state.setShowClickContextual(undefined)
+      if (
+        !append &&
+        state.contextuals.some(
+          (contextual) => contextual.kind === 'edge' && contextual.edgeId === edge.id
+        )
+      ) {
+        state.clearPanels()
         return
       }
 
@@ -375,7 +409,9 @@ const EditFlowInner = ({
         return
       }
 
-      state.setShowEdgeContextual({
+      addVisibleContextual({
+        kind: 'edge',
+        id: crypto.randomUUID(),
         edgeId: edge.id,
         event: nativeEvent,
         position: {
@@ -386,9 +422,9 @@ const EditFlowInner = ({
         leftStream: handleToStream(edge.sourceHandle),
         rightNode,
         rightStream: handleToStream(edge.targetHandle)
-      })
+      }, append)
     },
-    [reactFlowWrapperRef, store]
+    [addVisibleContextual, reactFlowWrapperRef, store]
   )
 
   const save = useCallback(() => {
@@ -415,6 +451,8 @@ const EditFlowInner = ({
     (connection: Connection) => {
       const state = store.getState()
       state.setConnectingStart(undefined)
+      const append = connectAppendRef.current
+      connectAppendRef.current = false
 
       if (
         istriviallyIntegratable(
@@ -451,31 +489,38 @@ const EditFlowInner = ({
         calculateMidpoint(leftNode.position, rightNode.position)
       )
 
-      state.setShowConnectContextual({
-        leftNode,
-        rightNode,
-        leftStream: handleToStream(connection.sourceHandle),
-        rightStream: handleToStream(connection.targetHandle),
-        connection,
-        position: {
-          x: screenPosition.x - reactFlowBounds.left,
-          y: screenPosition.y - reactFlowBounds.top
-        }
-      })
+      addVisibleContextual(
+        {
+          kind: 'connect',
+          id: crypto.randomUUID(),
+          leftNode,
+          rightNode,
+          leftStream: handleToStream(connection.sourceHandle),
+          rightStream: handleToStream(connection.targetHandle),
+          connection,
+          position: {
+            x: screenPosition.x - reactFlowBounds.left,
+            y: screenPosition.y - reactFlowBounds.top
+          }
+        },
+        append
+      )
     },
-    [reactFlowWrapperRef, store]
+    [addVisibleContextual, reactFlowWrapperRef, store]
   )
 
   const onConnectStart = useCallback(
-    (_event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
+    (event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
+      connectAppendRef.current = isCtrlPressed(event)
       store.getState().setConnectingStart(params)
     },
-    [store]
+    [isCtrlPressed, store]
   )
 
   const onConnectEnd = useCallback<OnConnectEnd>(
     (event) => {
       const state = store.getState()
+      const append = connectAppendRef.current || isCtrlPressed(event)
       const target = event.target as HTMLElement
       const targetEdgeId = target.dataset?.edgeid
       const targetIsPane = target.classList.contains('react-flow__pane')
@@ -510,15 +555,20 @@ const EditFlowInner = ({
           }
 
           if (connectionParams.handleType && relativePosition) {
-            state.setShowContextual({
-              handleType: connectionParams.handleType,
-              causingNode: node,
-              causingStream: handleToStream(connectionParams.handleId),
-              connectionParams,
-              position,
-              relativePosition,
-              event
-            })
+            addVisibleContextual(
+              {
+                kind: 'drop',
+                id: crypto.randomUUID(),
+                handleType: connectionParams.handleType,
+                causingNode: node,
+                causingStream: handleToStream(connectionParams.handleId),
+                connectionParams,
+                position,
+                relativePosition,
+                event
+              },
+              append
+            )
           }
         }
       }
@@ -619,8 +669,10 @@ const EditFlowInner = ({
           state.replaceValidationResult(validateState(integratedState))
         }
       }
+
+      connectAppendRef.current = false
     },
-    [reactFlowWrapperRef, store]
+    [addVisibleContextual, isCtrlPressed, reactFlowWrapperRef, store]
   )
 
   const [{ isOver }, dropRef] = useSmartDrop(
@@ -689,11 +741,47 @@ const EditFlowInner = ({
         <ErrorOverlay/>
         <AnimatePresence>
 
-          {showContextual && <DropContextual params={showContextual} />}
-          {showClickContextual && <ClickContextual params={showClickContextual} />}
-          {showConnectContextual && <ConnectContextual params={showConnectContextual} />}
-          {showEdgeContextual && <EdgeContextual params={showEdgeContextual} />}
-          {showNodeContextual && <NodeContextual params={showNodeContextual} />}
+          {remainingErrors.length === 0 && (
+            <Card className="absolute bottom-0 right-0 mr-3 mb-5 z-50 flex flex-row gap-2 items-center px-4 py-2 border">
+              <Button onClick={save} size="lg">
+                Save
+              </Button>
+              {flow.id && isEqual && <DeployInterfaceButton flow={flow} />}
+              {flow.id && isEqual && <RunButton flow={flow} />}
+            </Card>
+          )}
+
+          {globals.length > 0 && (
+            <div className="absolute top-0 left-0 ml-3 mt-5 z-50">
+              <Card className="max-w-md">
+                <CardHeader>
+                  <CardDescription>Globals</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    These are global variables that will be constants to the whole workflow.
+                  </CardDescription>
+                  {globals.map((globalArg) => (
+                    <div key={globalArg.key}>{globalArg.key}</div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div className="absolute top-0 right-0 mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col">
+            {remainingErrors.length !== 0 && showNodeErrors && (
+              <ErrorBox errors={remainingErrors} />
+            )}
+            {solvedErrors.length !== 0 && showNodeErrors && (
+              <SolvedErrorBox errors={solvedErrors} />
+            )}
+            {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
+          </div>
+
+          {isOver && <div className="absolute w-full h-full bg-white opacity-10 z-10" />}
+
+          {contextuals.map(renderContextual)}
         </AnimatePresence>
 
         <Graph

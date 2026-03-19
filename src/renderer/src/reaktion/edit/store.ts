@@ -4,9 +4,7 @@ import {
   ConnectContextualParams,
   DropContextualParams,
   EdgeContextualParams,
-  NodeContextualParams,
   FlowEdge,
-  ContextualParams,
   ContextualParams,
   FlowNode,
 } from "@/reaktion/types";

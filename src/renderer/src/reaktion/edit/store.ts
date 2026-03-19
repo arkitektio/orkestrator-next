@@ -7,6 +7,7 @@ import {
   FlowEdge,
   ContextualParams,
   FlowNode,
+  SubflowDropContextualParams,
 } from "@/reaktion/types";
 import {
   createVanillaTransformEdge,
@@ -112,7 +113,10 @@ export interface EditFlowState extends ValidationResult {
     params: ConnectContextualParams,
   ) => void;
   addEdgeContextualNode: (node: FlowNode, params: EdgeContextualParams) => void;
-  addContextualNode: (node: FlowNode, params: DropContextualParams) => void;
+  addContextualNode: (
+    node: FlowNode,
+    params: DropContextualParams | SubflowDropContextualParams,
+  ) => void;
 }
 
 export const createEditFlowStore = (initialState: ValidationResult) =>
@@ -641,20 +645,40 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             return;
           }
 
+          const targetSubflowNode =
+            "subflowNodeId" in params
+              ? state.nodes.find((node) => node.id === params.subflowNodeId)
+              : undefined;
+          const flowPosition = state.reactFlowInstance.screenToFlowPosition(point);
+          const position =
+            targetSubflowNode && "subflowNodeId" in params
+              ? {
+                  x: flowPosition.x - targetSubflowNode.position.x,
+                  y: flowPosition.y - targetSubflowNode.position.y,
+                }
+              : flowPosition;
+          const nextStagingNode =
+            targetSubflowNode && "subflowNodeId" in params
+              ? {
+                  ...stagingNode,
+                  parentId: params.subflowNodeId,
+                  extent: "parent" as const,
+                }
+              : stagingNode;
+
           if (connectionParams.handleType === "source") {
             const oldNodeSourceId = oldNode.id;
             const oldNodeSourceStreamId = handleToStream(connectionParams.handleId);
-            const position = state.reactFlowInstance.screenToFlowPosition(point);
 
             const stagedState = {
               ...state,
-              nodes: state.nodes.concat({ ...stagingNode, position }),
+              nodes: state.nodes.concat({ ...nextStagingNode, position }),
               edges: state.edges.concat(
                 createVanillaTransformEdge(
                   nodeIdBuilder(),
                   oldNodeSourceId,
                   oldNodeSourceStreamId,
-                  stagingNode.id,
+                  nextStagingNode.id,
                   0,
                 ),
               ),
@@ -663,7 +687,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             const integratedState = integrate(stagedState, {
               source: oldNodeSourceId,
               sourceHandle: connectionParams.handleId,
-              target: stagingNode.id,
+              target: nextStagingNode.id,
               targetHandle: "arg_0",
             });
 
@@ -675,15 +699,14 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
           if (connectionParams.handleType === "target") {
             const oldNodeTargetId = oldNode.id;
             const oldNodeTargetStreamId = handleToStream(connectionParams.handleId);
-            const position = state.reactFlowInstance.screenToFlowPosition(point);
 
             const stagedState = {
               ...state,
-              nodes: state.nodes.concat({ ...stagingNode, position }),
+              nodes: state.nodes.concat({ ...nextStagingNode, position }),
               edges: state.edges.concat(
                 createVanillaTransformEdge(
                   nodeIdBuilder(),
-                  stagingNode.id,
+                  nextStagingNode.id,
                   0,
                   oldNodeTargetId,
                   oldNodeTargetStreamId,
@@ -692,7 +715,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             };
 
             const integratedState = integrate(stagedState, {
-              source: stagingNode.id,
+              source: nextStagingNode.id,
               sourceHandle: "return_0",
               target: oldNodeTargetId,
               targetHandle: connectionParams.handleId,

@@ -176,6 +176,11 @@ export type DropContextualParams = {
   connectionParams: OnConnectStartParams;
 };
 
+export type SubflowDropContextualParams = DropContextualParams & {
+  subflowNodeId: string;
+  subflowNode: FlowNode;
+};
+
 export type ClickContextualParams = {
   position: { x: number; y: number };
   event: MouseEvent | TouchEvent;
@@ -217,6 +222,7 @@ export type ReactiveNodeSuggestions = {
 
 export type ContextualParams =
   | ({ kind: "drop"; id: string } & DropContextualParams)
+  | ({ kind: "subflowdrop"; id: string } & SubflowDropContextualParams)
   | ({ kind: "click"; id: string } & ClickContextualParams)
   | ({ kind: "edge"; id: string } & EdgeContextualParams)
   | ({ kind: "connect"; id: string } & ConnectContextualParams)

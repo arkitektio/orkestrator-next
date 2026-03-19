@@ -67,7 +67,7 @@ export const AgentSubflowWidget = ({
       >
         <div className="relative h-full min-h-[180px] w-full">
           <Card className="h-full min-h-[180px] w-full border-0 bg-transparent shadow-none">
-            <CardHeader className="custom-drag-handle cursor-grab p-4 pr-14 active:cursor-grabbing">
+            <CardHeader className="custom-drag-handle cursor-grab px-4 pr-14 active:cursor-grabbing">
               <CardTitle className="text-sm font-medium flex flex-row items-center gap-2">
                 <span className="rounded bg-amber-500/10 px-1 py-0.5 text-xs text-amber-700 dark:text-amber-300">
                   AGENT

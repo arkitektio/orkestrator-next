@@ -340,7 +340,50 @@ function validateMemoryStructuresSameSubflow(previous: ValidationResult) {
   };
 }
 
+function validateUniqueAgentSubflows(previous: ValidationResult) {
+  const remain: ValidationError[] = previous.remainingErrors;
+  const agentSubflows = previous.nodes.filter(
+    (node) => node.type === "AgentSubFlowNode",
+  ) as Array<FlowNode & { data: { agent?: { id?: string } } }>;
+
+  const agentNodeMap = new Map<string, string[]>();
+
+  for (const node of agentSubflows) {
+    const agentId = node.data.agent?.id;
+
+    if (!agentId) {
+      continue;
+    }
+
+    const existingNodeIds = agentNodeMap.get(agentId) ?? [];
+    existingNodeIds.push(node.id);
+    agentNodeMap.set(agentId, existingNodeIds);
+  }
+
+  for (const nodeIds of agentNodeMap.values()) {
+    if (nodeIds.length < 2) {
+      continue;
+    }
+
+    for (const nodeId of nodeIds) {
+      remain.push({
+        type: "node",
+        id: nodeId,
+        level: "critical",
+        message:
+          "You can only have one subflow per agent in the same workflow.",
+      });
+    }
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
 const validators = [
+  validateUniqueAgentSubflows,
   validateMemoryStructuresSameSubflow,
   validateMatchingPorts,
   validateNoUnconnectedNodes,

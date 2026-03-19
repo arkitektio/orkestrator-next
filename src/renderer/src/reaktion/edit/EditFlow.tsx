@@ -1,39 +1,12 @@
-import { useRekuest } from '@/app/Arkitekt'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from '@/components/ui/sheet'
 import { toast } from '@/components/ui/use-toast'
-import { FlussReactiveTemplate, RekuestAction } from '@/linkers'
-import { useSmartDrop } from '@/providers/smart/hooks'
 import {
   BaseGraphNodeFragment,
   FlowFragment,
   GraphInput,
   GraphNodeKind,
-  ReactiveImplementation,
-  ReactiveTemplateDocument,
-  ReactiveTemplateQuery
+  ReactiveImplementation
 } from '@/reaktion/api/graphql'
-import { Graph } from '@/reaktion/base/Graph'
-import { Controls } from '@/reaktion/components/controls/Controls'
-import { ClickContextual } from '@/reaktion/edit/components/ClickContextual'
-import { ConnectContextual } from '@/reaktion/edit/components/ConnectContextual'
-import { DropContextual } from '@/reaktion/edit/components/DropContextual'
-import { EdgeContextual } from '@/reaktion/edit/components/EdgeContextual'
-import { NodeContextual } from '@/reaktion/edit/components/NodeContextual'
-import { BoundNodesBox } from '@/reaktion/edit/components/boxes/BoundNodesBox'
-import { ErrorBox } from '@/reaktion/edit/components/boxes/ErrorBox'
-import { SolvedErrorBox } from '@/reaktion/edit/components/boxes/SolvedErrorBox'
-import { DeployInterfaceButton } from '@/reaktion/edit/components/buttons/DeployButton'
-import { RunButton } from '@/reaktion/edit/components/buttons/RunButton'
+import { EditFlowCanvas } from '@/reaktion/edit/components/EditFlowCanvas'
 import { EditFlowStoreContext, useEditFlowStoreApi } from '@/reaktion/edit/context'
 import { LabeledShowEdge } from '@/reaktion/edit/edges/LabeledShowEdge'
 import { RedoUndoHandler } from '@/reaktion/edit/keyboardhandlers/RedoUndo'
@@ -44,7 +17,6 @@ import { RekuestMapActionWidget } from '@/reaktion/edit/nodes/RekuestMapActionWi
 import { ArgTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ArgShowNodeWidget'
 import { ReturnTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ReturnShowNodeWidget'
 import { createEditFlowStore } from '@/reaktion/edit/store'
-import { rekuestActionToMatchingNode } from '@/reaktion/plugins/rekuest'
 import { ContextualParams, EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
 import {
   edges_to_flowedges,
@@ -53,8 +25,7 @@ import {
   globalToInput,
   handleToStream,
   nodeIdBuilder,
-  nodes_to_flownodes,
-  reactiveTemplateToFlowNode
+  nodes_to_flownodes
 } from '@/reaktion/utils'
 import {
   createVanillaTransformEdge,
@@ -63,23 +34,11 @@ import {
 } from '@/reaktion/validation/integrate'
 import { ValidationResult } from '@/reaktion/validation/types'
 import { validateState } from '@/reaktion/validation/validate'
-import { ConstantActionDocument, ConstantActionQuery, PortKind } from '@/rekuest/api/graphql'
-import { EyeOpenIcon, LetterCaseToggleIcon, QuestionMarkIcon } from '@radix-ui/react-icons'
-import {
-  Connection,
-  Edge,
-  EdgeProps,
-  Node,
-  NodeProps,
-  OnConnectEnd,
-  OnConnectStartParams
-} from '@xyflow/react'
-import { AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronsLeft } from 'lucide-react'
+import { PortKind } from '@/rekuest/api/graphql'
+import { Connection, Edge, EdgeProps, Node, NodeProps, OnConnectEnd, OnConnectStartParams } from '@xyflow/react'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { ErrorOverlay } from './overlays/Error'
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget as React.FC<NodeProps>,
@@ -186,7 +145,6 @@ const EditFlowInner = ({
   onSave?: (graph: GraphInput) => void
   reactFlowWrapperRef: React.RefObject<HTMLDivElement | null>
 }) => {
-  const arkitektApi = useRekuest()
   const store = useEditFlowStoreApi()
   const connectAppendRef = useRef(false)
 
@@ -277,22 +235,6 @@ const EditFlowInner = ({
     },
     [store]
   )
-
-  const renderContextual = useCallback((contextual: ContextualParams) => {
-    switch (contextual.kind) {
-      case 'drop':
-        return <DropContextual key={contextual.id} params={contextual} />
-      case 'click':
-        return <ClickContextual key={contextual.id} params={contextual} />
-      case 'edge':
-        return <EdgeContextual key={contextual.id} params={contextual} />
-      case 'connect':
-        return <ConnectContextual key={contextual.id} params={contextual} />
-      case 'node':
-        return <NodeContextual key={contextual.id} params={contextual} />
-    }
-    return null
-  }, [])
 
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
@@ -525,15 +467,42 @@ const EditFlowInner = ({
       const targetEdgeId = target.dataset?.edgeid
       const targetIsPane = target.classList.contains('react-flow__pane')
       const reactFlowBounds = reactFlowWrapperRef.current?.getBoundingClientRect()
+      const point = getClientPoint(event)
 
-      if (targetIsPane && state.reactFlowInstance && state.connectingStart && reactFlowBounds) {
+      const targetSubflowNode =
+        state.reactFlowInstance && point
+          ? state.nodes
+              .filter((node) => node.type === 'AgentSubFlowNode')
+              .find((node) => {
+                const flowPoint = state.reactFlowInstance?.screenToFlowPosition(point)
+                const width = node.measured?.width ?? node.width ?? 0
+                const height = node.measured?.height ?? node.height ?? 0
+
+                if (!flowPoint || width <= 0 || height <= 0) {
+                  return false
+                }
+
+                return (
+                  flowPoint.x >= node.position.x &&
+                  flowPoint.x <= node.position.x + width &&
+                  flowPoint.y >= node.position.y &&
+                  flowPoint.y <= node.position.y + height
+                )
+              })
+          : undefined
+
+      if (
+        (targetIsPane || targetSubflowNode) &&
+        state.reactFlowInstance &&
+        state.connectingStart &&
+        reactFlowBounds
+      ) {
         const connectionParams = state.connectingStart
 
         if (connectionParams.nodeId && connectionParams.handleId) {
           const node = state.reactFlowInstance.getNode(connectionParams.nodeId) as
             | FlowNode
             | undefined
-          const point = getClientPoint(event)
 
           if (!node || !point) {
             return
@@ -556,17 +525,31 @@ const EditFlowInner = ({
 
           if (connectionParams.handleType && relativePosition) {
             addVisibleContextual(
-              {
-                kind: 'drop',
-                id: crypto.randomUUID(),
-                handleType: connectionParams.handleType,
-                causingNode: node,
-                causingStream: handleToStream(connectionParams.handleId),
-                connectionParams,
-                position,
-                relativePosition,
-                event
-              },
+              targetSubflowNode
+                ? {
+                    kind: 'subflowdrop',
+                    id: crypto.randomUUID(),
+                    handleType: connectionParams.handleType,
+                    causingNode: node,
+                    causingStream: handleToStream(connectionParams.handleId),
+                    connectionParams,
+                    position,
+                    relativePosition,
+                    event,
+                    subflowNodeId: targetSubflowNode.id,
+                    subflowNode: targetSubflowNode
+                  }
+                : {
+                    kind: 'drop',
+                    id: crypto.randomUUID(),
+                    handleType: connectionParams.handleType,
+                    causingNode: node,
+                    causingStream: handleToStream(connectionParams.handleId),
+                    connectionParams,
+                    position,
+                    relativePosition,
+                    event
+                  },
               append
             )
           }
@@ -674,175 +657,41 @@ const EditFlowInner = ({
     },
     [addVisibleContextual, isCtrlPressed, reactFlowWrapperRef, store]
   )
-
-  const [{ isOver }, dropRef] = useSmartDrop(
-    (items, monitor) => {
-      if (monitor.didDrop()) {
-        return {}
-      }
-
-      const point = monitor.getClientOffset()
-      if (!reactFlowInstance || !point || !arkitektApi) {
-        return {}
-      }
-
-      items.forEach((item, index) => {
-        const id = item.object
-        const type = item.identifier
-
-        if (!id || !type) {
-          return
-        }
-
-        const position = reactFlowInstance.screenToFlowPosition({
-          x: point.x,
-          y: point.y + index * 100
-        })
-
-        if (type === RekuestAction.identifier) {
-          arkitektApi
-            .query({
-              query: ConstantActionDocument,
-              variables: { id }
-            })
-            .then((event: { data?: ConstantActionQuery }) => {
-              if (event.data?.action) {
-                addNode(rekuestActionToMatchingNode(event.data.action, position))
-              }
-            })
-        }
-
-        if (type === FlussReactiveTemplate.identifier) {
-          arkitektApi
-            .query({
-              query: ReactiveTemplateDocument,
-              variables: { id }
-            })
-            .then((event: { data?: ReactiveTemplateQuery }) => {
-              if (event.data?.reactiveTemplate) {
-                addNode(reactiveTemplateToFlowNode(event.data.reactiveTemplate, position))
-              }
-            })
-        }
-      })
-
-      return {}
-    },
-    [addNode, arkitektApi, reactFlowInstance]
-  )
-
   return (
-    <div ref={reactFlowWrapperRef} className="flex flex-grow h-full w-full" data-disableselect>
-      <div
-        ref={dropRef as unknown as React.Ref<HTMLDivElement>}
-        className="flex flex-grow h-full w-full relative"
-      >
-
-        <ErrorOverlay/>
-        <AnimatePresence>
-
-          {remainingErrors.length === 0 && (
-            <Card className="absolute bottom-0 right-0 mr-3 mb-5 z-50 flex flex-row gap-2 items-center px-4 py-2 border">
-              <Button onClick={save} size="lg">
-                Save
-              </Button>
-              {flow.id && isEqual && <DeployInterfaceButton flow={flow} />}
-              {flow.id && isEqual && <RunButton flow={flow} />}
-            </Card>
-          )}
-
-          {globals.length > 0 && (
-            <div className="absolute top-0 left-0 ml-3 mt-5 z-50">
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardDescription>Globals</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-xs text-muted-foreground">
-                    These are global variables that will be constants to the whole workflow.
-                  </CardDescription>
-                  {globals.map((globalArg) => (
-                    <div key={globalArg.key}>{globalArg.key}</div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <div className="absolute top-0 right-0 mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col">
-            {remainingErrors.length !== 0 && showNodeErrors && (
-              <ErrorBox errors={remainingErrors} />
-            )}
-            {solvedErrors.length !== 0 && showNodeErrors && (
-              <SolvedErrorBox errors={solvedErrors} />
-            )}
-            {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
-          </div>
-
-          {isOver && <div className="absolute w-full h-full bg-white opacity-10 z-10" />}
-
-          {contextuals.map(renderContextual)}
-        </AnimatePresence>
-
-        <Graph
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnectStart={onConnectStart}
-          onConnectEnd={onConnectEnd}
-          onConnect={onConnect}
-          onPaneClick={onPaneClick}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          elementsSelectable={true}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onInit={setReactFlowInstance}
-          fitView
-          attributionPosition="bottom-right"
-          proOptions={{ hideAttribution: true }}
-        >
-          <Controls className="flex flex-row bg-card gap-2 rounded rounded-md overflow-hidden px-2">
-            <Button variant="outline" size="icon" onClick={() => undo()} disabled={!canUndo}>
-              <ChevronsLeft />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo}>
-              <ChevronRight />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowEdgeLabels(!showEdgeLabels)}
-            >
-              <LetterCaseToggleIcon />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowNodeErrors(!showNodeErrors)}
-            >
-              <QuestionMarkIcon />
-            </Button>
-            <Sheet>
-              <SheetTrigger>
-                <Button variant="outline" size="icon">
-                  <EyeOpenIcon />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Debug Screen</SheetTitle>
-                  <SheetDescription />
-                </SheetHeader>
-                <ScrollArea className="h-full dark:text-white">
-                  <pre>{JSON.stringify(currentState, null, 2)}</pre>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-          </Controls>
-        </Graph>
-      </div>
-    </div>
+    <EditFlowCanvas
+      reactFlowWrapperRef={reactFlowWrapperRef}
+      flow={flow}
+      save={save}
+      isEqual={isEqual}
+      currentState={currentState}
+      globals={globals}
+      remainingErrors={remainingErrors}
+      solvedErrors={solvedErrors}
+      showNodeErrors={showNodeErrors}
+      boundNodes={boundNodes}
+      contextuals={contextuals}
+      nodes={nodes}
+      edges={edges}
+      reactFlowInstance={reactFlowInstance}
+      addNode={addNode}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnectStart={onConnectStart}
+      onConnectEnd={onConnectEnd}
+      onConnect={onConnect}
+      onPaneClick={onPaneClick}
+      onNodeClick={onNodeClick}
+      onEdgeClick={onEdgeClick}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      setReactFlowInstance={setReactFlowInstance}
+      undo={undo}
+      redo={redo}
+      canUndo={canUndo}
+      canRedo={canRedo}
+      showEdgeLabels={showEdgeLabels}
+      setShowEdgeLabels={setShowEdgeLabels}
+      setShowNodeErrors={setShowNodeErrors}
+    />
   )
 }

@@ -1,34 +1,30 @@
-import { Card } from "@/components/ui/card";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { cn } from "@/lib/utils";
-import { NodeResizeControl } from "@xyflow/react";
-import { motion } from "framer-motion";
-import React from "react";
-import { useEditNodeErrors, useEditRiver } from "../edit/context";
+import { Card } from '@/components/ui/card'
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
+import { cn } from '@/lib/utils'
+import { NodeResizeControl } from '@xyflow/react'
+import { motion } from 'framer-motion'
+import React from 'react'
+import { useEditNodeErrors, useEditRiver, EditFlowStoreContext } from '../edit/context'
 
 type NodeProps = {
-  children: React.ReactNode;
-  className?: string;
-  id: string;
-  selected?: boolean;
-  minWidth?: number;
-  minHeight?: number;
-  maxWidth?: number;
-  maxHeight?: number;
-  contextMenu?: React.ReactNode;
-  showResizeControl?: boolean;
-};
+  children: React.ReactNode
+  className?: string
+  id: string
+  selected?: boolean
+  minWidth?: number
+  minHeight?: number
+  maxWidth?: number
+  maxHeight?: number
+  contextMenu?: React.ReactNode
+  showResizeControl?: boolean
+}
 
 const controlStyle = {
-  background: "transparent",
-  border: "none",
-};
+  background: 'transparent',
+  border: 'none'
+}
 
-export const NodeShowLayout: React.FC<NodeProps> = ({
+const BaseNodeShowLayout: React.FC<NodeProps & { showNodeErrors?: boolean; errors?: any[] }> = ({
   id,
   children,
   className,
@@ -39,11 +35,9 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
   maxWidth = 800,
   maxHeight = 900,
   showResizeControl = true,
+  showNodeErrors = false,
+  errors = []
 }) => {
-  const { showNodeErrors } = useEditRiver();
-
-  const errors = useEditNodeErrors(id);
-
   return (
     <>
       <ContextMenu>
@@ -54,22 +48,25 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
             exit={{ opacity: 0 }}
             key={id}
             className={cn(
-              "rounded-xl border bg-card text-card-foreground shadow border-primary/80 w-full h-full group",
-              "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
-              "w-full",
-              className,
+              'rounded-xl border bg-card text-card-foreground shadow border-primary/80 w-full h-full group',
+              'custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ',
+              'w-full',
+              className
             )}
             style={{
               minWidth: minWidth,
-              minHeight: minHeight,
+              minHeight: minHeight
             }}
           >
             {children}
 
             {errors.length > 0 && showNodeErrors && (
               <div className="absolute translate-y-[-100%] top-0 left-[50%] translate-x-[-50%] pb-3 flex flex-col gap-2 min-w-[200px]">
-                {errors.map((e) => (
-                  <Card className="p-2 border-destructive text-xs max-w-md  animate-pulse">
+                {errors.map((e: any) => (
+                  <Card
+                    key={e.id || e.message}
+                    className="p-2 border-destructive text-xs max-w-md animate-pulse"
+                  >
                     {e.message}
                   </Card>
                 ))}
@@ -90,10 +87,10 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         >
           <div
             className={cn(
-              "absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md backdrop-blur-sm transition-opacity",
-              "nodrag nopan nowheel",
-              !selected && "pointer-events-none opacity-0",
-              selected && "opacity-100",
+              'absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md backdrop-blur-sm transition-opacity',
+              'nodrag nopan nowheel',
+              !selected && 'pointer-events-none opacity-0',
+              selected && 'opacity-100'
             )}
           >
             <svg
@@ -114,5 +111,19 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         </NodeResizeControl>
       )}
     </>
-  );
-};
+  )
+}
+
+const EditNodeShowLayout: React.FC<NodeProps> = (props) => {
+  const { showNodeErrors } = useEditRiver()
+  const errors = useEditNodeErrors(props.id)
+  return <BaseNodeShowLayout {...props} showNodeErrors={showNodeErrors} errors={errors} />
+}
+
+export const NodeShowLayout: React.FC<NodeProps> = (props) => {
+  const storeContext = React.useContext(EditFlowStoreContext)
+  if (storeContext) {
+    return <EditNodeShowLayout {...props} />
+  }
+  return <BaseNodeShowLayout {...props} />
+}

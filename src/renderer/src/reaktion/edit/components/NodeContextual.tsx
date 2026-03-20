@@ -1,7 +1,7 @@
 import { NodeContextualParams } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { DetailImplementationFragment, useImplementationsQuery, ConstantActionDocument, ConstantActionQuery } from "@/rekuest/api/graphql";
+import { DetailImplementationFragment, useImplementationsQuery, ConstantActionDocument, ConstantActionQuery, useAllActionsQuery, ListActionFragment } from "@/rekuest/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { useRekuest } from "@/app/Arkitekt";
 import {
@@ -13,13 +13,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
-const ImplementationSearch = ({ agentId, onSelect }: { agentId: string, onSelect: (impl: DetailImplementationFragment) => void }) => {
-  const { data } = useImplementationsQuery({
+const ActionSearch = ({ appIdentifier, onSelect }: { appIdentifier: string, onSelect: (impl: ListActionFragment) => void }) => {
+  const { data } = useAllActionsQuery({
     variables: {
       filters: {
-        agent: {
-          ids: [agentId],
-        },
+        appIdentifier: appIdentifier,
       },
     },
   });
@@ -30,9 +28,9 @@ const ImplementationSearch = ({ agentId, onSelect }: { agentId: string, onSelect
       <CommandList>
         <CommandEmpty>No implementations found.</CommandEmpty>
         <CommandGroup heading="Implementations">
-          {data?.implementations.map((impl) => (
-            <CommandItem key={impl.id} onSelect={() => onSelect(impl)}>
-              {impl.action.name} ({impl.interface})
+          {data?.actions.map((action) => (
+            <CommandItem key={action.id} onSelect={() => onSelect(action)}>
+              {action.name} ({action.version})
             </CommandItem>
           ))}
         </CommandGroup>
@@ -45,12 +43,12 @@ export const NodeContextual = (props: { params: NodeContextualParams }) => {
   const { clearPanels, addNode, nodes } = useEditRiver();
   const client = useRekuest();
 
-  const handleImplementationSelect = (impl: DetailImplementationFragment) => {
+  const handleImplementationSelect = (action: ListActionFragment) => {
     client &&
       client
         .query({
           query: ConstantActionDocument,
-          variables: { id: impl.action.id },
+          variables: { id: action.id },
         })
         .then((event: { data?: ConstantActionQuery }) => {
           if (event.data?.action) {
@@ -61,10 +59,6 @@ export const NodeContextual = (props: { params: NodeContextualParams }) => {
 
             flownode.parentId = props.params.nodeId;
             flownode.extent = "parent";
-            flownode.data.binds = {
-              ...flownode.data.binds,
-              templates: [impl.id],
-            };
 
             addNode(flownode);
             clearPanels();
@@ -81,12 +75,10 @@ export const NodeContextual = (props: { params: NodeContextualParams }) => {
         minWidth: 320,
       }}
     >
-      {props.params.action.type === "implementations" && (
-        <ImplementationSearch 
-          agentId={props.params.action.agentId} 
-          onSelect={handleImplementationSelect} 
+      <ActionSearch
+          appIdentifier={props.params.action.appIdentifier}
+          onSelect={handleImplementationSelect}
         />
-      )}
     </ContextualContainer>
   );
 };

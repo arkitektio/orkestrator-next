@@ -22,15 +22,17 @@ import {
   useProtocolOptionsLazyQuery,
   useAgentsQuery,
   AgentFragment,
+  ListAgentFragment,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ClickContextualParams, ReactiveNodeSuggestions } from "../../types";
+import { ClickContextualParams, FlowNode, FlowNodeData, ReactiveNodeSuggestions } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
 import { TemplateSelector } from "./TemplateSelector";
+import { action } from "@/hooks/use-metaapp";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -265,73 +267,58 @@ const ClickArkitektNodes = (props: {
           variables: { id: id },
         })
         .then(async (event) => {
-          console.log(event);
-          if (event.data?.action) {
-            const flownode = rekuestActionToMatchingNode(event.data?.action, {
-              x: 0,
-              y: 0,
-            });
-            console.log("Trying to add", flownode, props.params);
-            addClickNode(flownode, props.params);
+
+          if (!event.data?.action) {
+            return;
           }
+          const parentAgentNode = {
+            id: nodeIdBuilder(),
+            type: "AgentSubFlowNode",
+            position: { x: 0, y: 0 },
+            data: {
+              kind: GraphNodeKind.AgentSubflow,
+              title: event.data?.action?.app?.identifier,
+              description: "Agent Subflow",
+              ins: [],
+              outs: [],
+              voids: [],
+              constants: [],
+              constantsMap: {},
+              globalsMap: {},
+              app: event.data?.action?.app?.identifier
+            },
+          } as FlowNode
+
+          const flownode = rekuestActionToMatchingNode(event.data?.action, {
+            x: 0,
+            y: 0,
+          });
+
+
+          flownode.parentId = parentAgentNode.id;
+          console.log("Trying to add", flownode, props.params);
+          console.log("Trying to add parent", parentAgentNode, props.params);
+          addClickNode(parentAgentNode, props.params);
+
+          addClickNode(flownode, props.params);
+
         });
   };
 
-  const onTemplateClick = (nodeid: string, template: string) => {
-    client &&
-      client
-        .query<ConstantActionQuery>({
-          query: ConstantActionDocument,
-          variables: { id: nodeid },
-        })
-        .then(async (event) => {
-          console.log(event);
-          if (event.data?.action) {
-            const flownode = rekuestActionToMatchingNode(event.data?.action, {
-              x: 0,
-              y: 0,
-            });
 
-            flownode.data.binds.templates = [template];
-            console.log("Trying to add", flownode, props.params);
-            addClickNode(flownode, props.params);
-          }
-        });
-  };
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
       {data?.actions.map((node) => (
-        <Tooltip>
+        <Tooltip key={node.id}>
           <TooltipTrigger>
             <>
-              {node.stateful ? (
-                <Popover>
-                  <PopoverTrigger>
-                    <Card className="px-2 py-1 border-solid border-2 border-green-300 border ">
-                      {node.name}
-                    </Card>
-                  </PopoverTrigger>
-                  <PopoverContent className="rounded rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-2  mt">
-                      This is a stateful node and needs to be bound to a
-                      specific instance
-                    </div>
-                    <TemplateSelector
-                      hash={node.hash}
-                      node={node.id}
-                      onClick={onTemplateClick}
-                    />
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <Card
+              <Card
                   onClick={() => onNodeClick(node.id)}
                   className="px-2 py-1 border-solid border-2 border-accent"
                 >
                   {node.name}
-                </Card>
-              )}
+              </Card>
             </>
           </TooltipTrigger>
           <TooltipContent align="center">{node.description}</TooltipContent>
@@ -371,7 +358,7 @@ const ClickAgents = (props: {
 
   const { addClickNode } = useEditRiver();
 
-  const onAgentClick = (agent: AgentFragment) => {
+  const onAgentClick = (agent: ListAgentFragment) => {
     addClickNode(
       {
         id: nodeIdBuilder(),
@@ -379,17 +366,17 @@ const ClickAgents = (props: {
         position: { x: 0, y: 0 },
         data: {
           kind: GraphNodeKind.AgentSubflow,
-          title: agent.name,
+          title: agent.app.identifier,
           description: "Agent Subflow",
           ins: [],
           outs: [],
+          voids: [],
           constants: [],
           constantsMap: {},
           globalsMap: {},
-          agent: agent,
-          clientId: agent.registry.client.clientId,
+          app: agent.app.identifier
         },
-      },
+      } as FlowNode,
       props.params,
     );
   };
@@ -397,7 +384,7 @@ const ClickAgents = (props: {
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
       {data?.agents.map((agent) => (
-        <Tooltip>
+        <Tooltip key={agent.id}>
           <TooltipTrigger>
             <Card
               onClick={() => onAgentClick(agent)}

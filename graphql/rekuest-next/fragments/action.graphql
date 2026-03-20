@@ -43,6 +43,9 @@ fragment GraphNodeAction on Action {
   protocols {
     name
   }
+  app {
+    identifier
+  }
 }
 
 fragment DetailAction on Action {

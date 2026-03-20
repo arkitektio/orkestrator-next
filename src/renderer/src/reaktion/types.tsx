@@ -178,7 +178,7 @@ export type DropContextualParams = {
 
 export type SubflowDropContextualParams = DropContextualParams & {
   subflowNodeId: string;
-  subflowNode: FlowNode;
+  subflowNode: Node<AgentSubFlowNodeData, "AgentSubFlowNode">;
 };
 
 export type ClickContextualParams = {
@@ -206,7 +206,7 @@ export type ConnectContextualParams = {
 };
 
 export type NodeContextualAction =
-  | { type: "implementations"; agentId: string; }
+  | { type: "implementations"; appIdentifier: string; }
 
 export type NodeContextualParams = {
   nodeId: string;
@@ -227,3 +227,7 @@ export type ContextualParams =
   | ({ kind: "edge"; id: string } & EdgeContextualParams)
   | ({ kind: "connect"; id: string } & ConnectContextualParams)
   | ({ kind: "node"; id: string } & NodeContextualParams);
+
+
+
+export type AnyNode = Node<ArgNodeData, "ArgNode"> | Node<ReturnNodeData, "ReturnNode"> | Node<RekuestMapNodeData, "RekuestMapNode"> | Node<RekuestFilterNodeData, "RekuestFilterNode"> | Node<ReactiveNodeData, "ReactiveNode"> | Node<AgentSubFlowNodeData, "AgentSubFlowNode">;

@@ -162,8 +162,16 @@ input ActionDependencyInput {
   description: String = null
   forceArgLength: Int = null
   forceReturnLength: Int = null
+
+  """
+  The hash of the action. This is used to identify the action in the system.
+  """
   hash: ActionHash = null
   key: String!
+
+  """
+  The name of the action. This is used to identify the action in the system.
+  """
   name: String = null
   optional: Boolean! = false
   protocols: [ID!] = null
@@ -180,6 +188,9 @@ input ActionFilter {
   DISTINCT: Boolean
   NOT: ActionFilter
   OR: ActionFilter
+
+  """Filter using app identifier"""
+  appIdentifier: String = null
   demands: [PortDemandInput!]
   ids: [ID!]
   inCollection: String
@@ -259,6 +270,9 @@ type Agent {
   """
   active: Boolean!
 
+  """The app this agent belongs to."""
+  app: App!
+
   """Assignations executed by this agent."""
   assignations(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
 
@@ -316,6 +330,9 @@ type Agent {
   """Registry entry this agent belongs to."""
   registry: Registry!
 
+  """The release this agent belongs to."""
+  release: Release!
+
   """Current and historical states associated with the agent."""
   states: [State!]!
 }
@@ -332,17 +349,24 @@ A dependency for a implementation. By defining dependencies, you can
 """
 input AgentDependencyInput {
   actionDemands: [ActionDependencyInput!] = null
+  app: String!
   description: String = null
+  key: String!
 
   """
-  The identifier of the agent. This is used to identify the agent in the system.
+  The maximum amount of viable instances for the agent. This is used to identify the demand in the system.
   """
-  identifier: String = null
-  key: String!
+  maxViableInstances: Int = null
   minViableInstances: Int = null
+
+  """
+  A list of keys of other agent dependencies that are mutually exclusive with this one. This means two agent dependencies with mutually exclusive keys cannot be assigned to the same implementing agent. This is used to identify the demand in the system.
+  """
+  mutuallyExclusiveKeys: [String!] = null
   name: String = null
   optional: Boolean! = false
   preferedInstances: Int = null
+  version: String = null
 }
 
 """A way to filter agents"""
@@ -771,7 +795,7 @@ enum AssignationTimestampField {
 }
 
 input AutoResolveInput {
-  implementation: ID!
+  action: ID!
 }
 
 type Binds {
@@ -1038,7 +1062,7 @@ type Dashboard {
 """Date with time (isoformat)"""
 scalar DateTime
 
-"A definition\n\n    Definitions are the building implementation for Actions and provide the\n    information needed to create a action. They are primarly composed of a name,\n    a description, and a list of ports.\n\n    Definitions provide a protocol of input and output, and do not contain\n    any information about the actual implementation of the action ( this is handled\n    by a implementation that implements a action).\n\n\n\n\n    "
+"A definition\n\n    Definitions are the building implementation for Actions and provide the\n    information needed to create a action. They are primarly composed of a name,\n    a description, and a list of ports.\n\n    Definitions provide a protocol of input and output, and do not contain\n    any information about the actual implementation of the action ( this is handled\n    by a implementation that implements a action).\n\n    "
 input DefinitionInput {
   """The args of the definition. This is the input ports of the definition"""
   args: [PortInput!]! = []
@@ -2381,7 +2405,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "59c3de53-2760-4001-bb09-05f432db60f8"
+  reference: String = "e2d67e34-abd3-4418-b062-cf8cbc15f160"
   title: String = null
 }
 

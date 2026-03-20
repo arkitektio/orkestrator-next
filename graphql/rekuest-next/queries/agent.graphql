@@ -13,3 +13,14 @@ query Agent($id: ID!) {
     ...Agent
   }
 }
+
+
+query AgentOptions($search: String, $values: [ID!]) {
+  options: agents(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

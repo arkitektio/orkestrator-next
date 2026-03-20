@@ -5,7 +5,7 @@ enum ActionKind {
 }
 
 type AgentSubFlowNode implements GraphNode {
-  clientId: String
+  app: String
   constants: [Port!]!
   constantsMap: ValueMap!
   description: String!
@@ -16,7 +16,6 @@ type AgentSubFlowNode implements GraphNode {
   outs: [[Port!]!]!
   parentNode: String
   position: Position!
-  returnStuff: String
   title: String!
   voids: [Port!]!
 }
@@ -306,27 +305,28 @@ interface GraphNode {
 input GraphNodeInput {
   actionKind: ActionKind = null
   allowLocalExecution: Boolean = null
+  app: String = null
   binds: BindsInput = null
-  constants: [PortInput!]!
-  constantsMap: ValueMap!
+  constants: [PortInput!] = null
+  constantsMap: ValueMap
   description: String = null
-  globalsMap: ValueMap!
+  globalsMap: ValueMap
   hash: String = null
   hello: String = null
   id: String!
   implementation: ReactiveImplementation = null
-  ins: [[PortInput!]!]!
+  ins: [[PortInput!]!] = null
   kind: GraphNodeKind!
   mapStrategy: MapStrategy = null
   nextTimeout: Int = null
-  outs: [[PortInput!]!]!
+  outs: [[PortInput!]!] = null
   parentNode: String = null
   path: String = null
   position: PositionInput!
   retries: Int = null
   retryDelay: Int = null
   title: String = null
-  voids: [PortInput!]!
+  voids: [PortInput!]
 }
 
 enum GraphNodeKind {

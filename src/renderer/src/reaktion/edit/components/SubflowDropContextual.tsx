@@ -36,7 +36,7 @@ const toPortMatches = (ports: FlussPortFragment[] | undefined) => {
   )
 }
 
-const ImplementationSearch = ({
+const ActionsSearch = ({
   agentId,
   params,
   onSelect
@@ -138,9 +138,9 @@ export const SubflowDropContextual = (props: {
       }}
     >
       <div className="mb-2 text-xs text-muted-foreground">
-        Add implementation to {subflowTitle}
+        Add Action to {subflowTitle}
       </div>
-      <ImplementationSearch
+      <ActionsSearch
         agentId={agentId}
         params={props.params}
         onSelect={handleImplementationSelect}

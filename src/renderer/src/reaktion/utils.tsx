@@ -66,7 +66,7 @@ export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
             position: { x: position.x, y: position.y },
             data: { ...rest },
             dragHandle: ".custom-drag-handle",
-            parentNode: rest.parentNode ? rest.parentNode : undefined,
+            parentId: rest.parentNode ? rest.parentNode : undefined,
           };
           return node_;
         }
@@ -119,18 +119,21 @@ export const flowNodeToInput = (
     id,
     type,
     position,
-    parentNode,
+    parentId,
     data: { outs, constants, ins, binds, voids, ...rest },
   } = node;
   try {
+
+
+
     const node_: NodeInput = {
-      ins: ins.map((s) => s.map(convertPortToInput)),
-      outs: outs.map((s) => s.map(convertPortToInput)),
-      constants: constants.map(convertPortToInput),
-      voids: voids.map(convertPortToInput),
+      ins: ins && ins.map((s) => s.map(convertPortToInput)),
+      outs: outs && outs.map((s) => s.map(convertPortToInput)),
+      constants: constants && constants.map(convertPortToInput),
+      voids: voids && voids.map(convertPortToInput),
       id,
       position: { x: position.x, y: position.y },
-      parentNode: parentNode,
+      parentNode: parentId ? parentId : undefined,
       binds: binds && bindsToInput(binds),
       ...rest,
     };

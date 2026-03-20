@@ -1,37 +1,18 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from '@/components/ui/sheet'
+import { Card } from '@/components/ui/card'
 import { FlowFragment } from '@/reaktion/api/graphql'
 import { Graph } from '@/reaktion/base/Graph'
-import { Controls } from '@/reaktion/components/controls/Controls'
-import { ClickContextual } from '@/reaktion/edit/components/ClickContextual'
-import { ConnectContextual } from '@/reaktion/edit/components/ConnectContextual'
-import { DropContextual } from '@/reaktion/edit/components/DropContextual'
-import { EdgeContextual } from '@/reaktion/edit/components/EdgeContextual'
-import { SubflowDropContextual } from '@/reaktion/edit/components/SubflowDropContextual'
-import { NodeContextual } from '@/reaktion/edit/components/NodeContextual'
-import { BoundNodesBox } from '@/reaktion/edit/components/boxes/BoundNodesBox'
-import { ErrorBox } from '@/reaktion/edit/components/boxes/ErrorBox'
-import { SolvedErrorBox } from '@/reaktion/edit/components/boxes/SolvedErrorBox'
 import { DeployInterfaceButton } from '@/reaktion/edit/components/buttons/DeployButton'
 import { RunButton } from '@/reaktion/edit/components/buttons/RunButton'
-import { EditFlowDropArea } from '@/reaktion/edit/components/EditFlowDropArea'
-import { EdgeTypes, FlowNode, NodeTypes, ContextualParams } from '@/reaktion/types'
+import { ContextualParams, EdgeTypes, FlowNode, NodeTypes } from '@/reaktion/types'
 import { ValidationError, ValidationResult } from '@/reaktion/validation/types'
-import { EyeOpenIcon, LetterCaseToggleIcon, QuestionMarkIcon } from '@radix-ui/react-icons'
-import { Edge, NodeChange, EdgeChange, OnConnectEnd, OnConnectStartParams, ReactFlowInstance } from '@xyflow/react'
+import { Edge, EdgeChange, NodeChange, OnConnectEnd, OnConnectStartParams, ReactFlowInstance } from '@xyflow/react'
 import { AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronsLeft } from 'lucide-react'
-import React, { RefObject, useCallback } from 'react'
+import React, { RefObject } from 'react'
+import { DefaultControls } from '../overlays/DefaultControls'
 import { ErrorOverlay } from '../overlays/Error'
+import { DelegatingContextual } from './DelegatingContextual'
+import { useEditRiver } from '../context'
 
 type Props = {
   reactFlowWrapperRef: RefObject<HTMLDivElement | null>
@@ -69,22 +50,31 @@ type Props = {
   setShowNodeErrors: (value: boolean) => void
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const EditFlowCanvas: React.FC<Props> = ({
   reactFlowWrapperRef,
   flow,
   save,
   isEqual,
-  currentState,
-  globals,
   remainingErrors,
-  solvedErrors,
-  showNodeErrors,
-  boundNodes,
   contextuals,
   nodes,
   edges,
-  reactFlowInstance,
-  addNode,
   onNodesChange,
   onEdgesChange,
   onConnectStart,
@@ -96,36 +86,15 @@ export const EditFlowCanvas: React.FC<Props> = ({
   nodeTypes,
   edgeTypes,
   setReactFlowInstance,
-  undo,
-  redo,
-  canUndo,
-  canRedo,
   showEdgeLabels,
   setShowEdgeLabels,
   setShowNodeErrors
 }) => {
-  const renderContextual = useCallback((contextual: ContextualParams) => {
-    switch (contextual.kind) {
-      case 'drop':
-        return <DropContextual key={contextual.id} params={contextual} />
-      case 'subflowdrop':
-        return <SubflowDropContextual key={contextual.id} params={contextual} />
-      case 'click':
-        return <ClickContextual key={contextual.id} params={contextual} />
-      case 'edge':
-        return <EdgeContextual key={contextual.id} params={contextual} />
-      case 'connect':
-        return <ConnectContextual key={contextual.id} params={contextual} />
-      case 'node':
-        return <NodeContextual key={contextual.id} params={contextual} />
-    }
-    return null
-  }, [])
+
+
 
   return (
-    <div ref={reactFlowWrapperRef} className="flex flex-grow h-full w-full" data-disableselect>
-      <EditFlowDropArea reactFlowInstance={reactFlowInstance} addNode={addNode}>
-        {(isOver) => (
+    <div ref={reactFlowWrapperRef} className="flex flex-grow h-full w-full relative" data-disableselect>
           <>
             <ErrorOverlay />
             <AnimatePresence>
@@ -138,12 +107,8 @@ export const EditFlowCanvas: React.FC<Props> = ({
                   {flow.id && isEqual && <RunButton flow={flow} />}
                 </Card>
               )}
-
-
-              {isOver && <div className="absolute w-full h-full bg-white opacity-10 z-10" />}
-
-              {contextuals.map(renderContextual)}
             </AnimatePresence>
+            {contextuals.map((contextual, index) => <DelegatingContextual key={index} contextual={contextual} />)}
 
             <Graph
               nodes={nodes}
@@ -164,48 +129,11 @@ export const EditFlowCanvas: React.FC<Props> = ({
               attributionPosition="bottom-right"
               proOptions={{ hideAttribution: true }}
             >
-              <Controls className="flex flex-row bg-card gap-2 rounded rounded-md overflow-hidden px-2">
-                <Button variant="outline" size="icon" onClick={() => undo()} disabled={!canUndo}>
-                  <ChevronsLeft />
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo}>
-                  <ChevronRight />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowEdgeLabels(!showEdgeLabels)}
-                >
-                  <LetterCaseToggleIcon />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowNodeErrors(!showNodeErrors)}
-                >
-                  <QuestionMarkIcon />
-                </Button>
-                <Sheet>
-                  <SheetTrigger>
-                    <Button variant="outline" size="icon">
-                      <EyeOpenIcon />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Debug Screen</SheetTitle>
-                      <SheetDescription />
-                    </SheetHeader>
-                    <ScrollArea className="h-full dark:text-white">
-                      <pre>{JSON.stringify(currentState, null, 2)}</pre>
-                    </ScrollArea>
-                  </SheetContent>
-                </Sheet>
-              </Controls>
+
             </Graph>
+
+            <DefaultControls />
           </>
-        )}
-      </EditFlowDropArea>
     </div>
   )
 }

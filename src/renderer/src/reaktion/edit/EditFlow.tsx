@@ -17,7 +17,7 @@ import { RekuestMapActionWidget } from '@/reaktion/edit/nodes/RekuestMapActionWi
 import { ArgTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ArgShowNodeWidget'
 import { ReturnTrackNodeWidget } from '@/reaktion/edit/nodes/generic/ReturnShowNodeWidget'
 import { createEditFlowStore } from '@/reaktion/edit/store'
-import { ContextualParams, EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
+import { AgentSubFlowNodeData, AnyNode, ContextualParams, EdgeTypes, FlowNode, NodeTypes, RelativePosition } from '@/reaktion/types'
 import {
   edges_to_flowedges,
   flowEdgeToInput,
@@ -128,12 +128,20 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const reactFlowWrapperRef = useRef<HTMLDivElement | null>(null)
   const [store] = React.useState(() => createEditFlowStore(createInitialState(flow)))
 
+
+  if (!store) {
+    return <div>Loading...</div>
+  }
+
   return (
     <EditFlowStoreContext.Provider value={store}>
       <RedoUndoHandler />
       <EditFlowInner flow={flow} onSave={onSave} reactFlowWrapperRef={reactFlowWrapperRef} />
     </EditFlowStoreContext.Provider>
   )
+
+
+
 }
 
 const EditFlowInner = ({
@@ -185,16 +193,6 @@ const EditFlowInner = ({
     }))
   )
 
-  const { undo, redo, canUndo, canRedo } = useStore(
-    store.temporal,
-    useShallow((state) => ({
-      undo: state.undo,
-      redo: state.redo,
-      canUndo: state.pastStates.length > 0,
-      canRedo: state.futureStates.length > 0
-    }))
-  )
-
   const currentState = useMemo<ValidationResult>(
     () => ({
       nodes,
@@ -219,9 +217,7 @@ const EditFlowInner = ({
     [nodes]
   )
 
-  const isCtrlPressed = useCallback((event: MouseEvent | TouchEvent) => {
-    return 'ctrlKey' in event ? !!event.ctrlKey : false
-  }, [])
+
 
   const addVisibleContextual = useCallback(
     (contextual: ContextualParams, append = false) => {
@@ -263,11 +259,11 @@ const EditFlowInner = ({
         {
           kind: 'click',
           id: crypto.randomUUID(),
-        event: nativeEvent,
-        position: {
-          x: nativeEvent.clientX - reactFlowBounds.left,
-          y: nativeEvent.clientY - reactFlowBounds.top
-        }
+          event: nativeEvent,
+          position: {
+            x: nativeEvent.clientX - reactFlowBounds.left,
+            y: nativeEvent.clientY - reactFlowBounds.top
+          }
         },
         append
       )
@@ -276,7 +272,7 @@ const EditFlowInner = ({
   )
 
   const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
+    (event: React.MouseEvent, node: AnyNode) => {
       const nativeEvent = event.nativeEvent
       const state = store.getState()
       const append = nativeEvent.ctrlKey
@@ -297,14 +293,14 @@ const EditFlowInner = ({
           return
         }
 
-        const agentId = (node.data as { agent?: { id?: string } }).agent?.id
+        const appId = node.data.app;
 
-        if (agentId) {
+        if (appId) {
           addVisibleContextual({
             kind: 'node',
             id: crypto.randomUUID(),
             nodeId: node.id,
-            action: { type: 'implementations', agentId },
+            action: { type: 'implementations', appIdentifier: appId },
             position: {
               x: nativeEvent.clientX - reactFlowBounds.left,
               y: nativeEvent.clientY - reactFlowBounds.top
@@ -453,16 +449,14 @@ const EditFlowInner = ({
 
   const onConnectStart = useCallback(
     (event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
-      connectAppendRef.current = isCtrlPressed(event)
       store.getState().setConnectingStart(params)
     },
-    [isCtrlPressed, store]
+    [store]
   )
 
   const onConnectEnd = useCallback<OnConnectEnd>(
     (event) => {
       const state = store.getState()
-      const append = connectAppendRef.current || isCtrlPressed(event)
       const target = event.target as HTMLElement
       const targetEdgeId = target.dataset?.edgeid
       const targetIsPane = target.classList.contains('react-flow__pane')
@@ -523,7 +517,10 @@ const EditFlowInner = ({
             relativePosition = nodePosition.y < position.y ? 'bottomleft' : 'topleft'
           }
 
+          console.log('Determined relative position as', relativePosition, { nodePosition, position })
+
           if (connectionParams.handleType && relativePosition) {
+            console.log('Adding contextual with params')
             addVisibleContextual(
               targetSubflowNode
                 ? {
@@ -537,7 +534,7 @@ const EditFlowInner = ({
                     relativePosition,
                     event,
                     subflowNodeId: targetSubflowNode.id,
-                    subflowNode: targetSubflowNode
+                    subflowNode: targetSubflowNode as Node<AgentSubFlowNodeData, "AgentSubFlowNode">
                   }
                 : {
                     kind: 'drop',
@@ -550,10 +547,10 @@ const EditFlowInner = ({
                     relativePosition,
                     event
                   },
-              append
             )
           }
         }
+        return
       }
 
       if (state.reactFlowInstance && state.connectingStart && targetEdgeId) {
@@ -685,10 +682,6 @@ const EditFlowInner = ({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       setReactFlowInstance={setReactFlowInstance}
-      undo={undo}
-      redo={redo}
-      canUndo={canUndo}
-      canRedo={canRedo}
       showEdgeLabels={showEdgeLabels}
       setShowEdgeLabels={setShowEdgeLabels}
       setShowNodeErrors={setShowNodeErrors}

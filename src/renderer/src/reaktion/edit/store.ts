@@ -62,6 +62,7 @@ export interface EditFlowState extends ValidationResult {
   showNodeErrors: boolean;
   contextuals: ContextualParams[];
   reactFlowInstance: ReactFlowInstance | null;
+  relativeWrapperRef: React.RefObject<HTMLDivElement | null> | null;
   connectingStart?: OnConnectStartParams;
   replaceValidationResult: (
     next: ValidationResult | ((state: EditFlowState) => ValidationResult),
@@ -117,6 +118,10 @@ export interface EditFlowState extends ValidationResult {
     node: FlowNode,
     params: DropContextualParams | SubflowDropContextualParams,
   ) => void;
+  setRelativeWrapperRef: (ref: React.RefObject<HTMLDivElement | null>) => void;
+
+
+
 }
 
 export const createEditFlowStore = (initialState: ValidationResult) =>

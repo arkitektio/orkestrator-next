@@ -81,6 +81,7 @@ fragment ReturnNode on ReturnNode {
 fragment AgentSubFlowNode on AgentSubFlowNode {
   ...BaseGraphNode
   __typename
+  app
 }
 
 

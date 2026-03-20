@@ -61,7 +61,6 @@ export const ImplementationAssignForm = (
   const form = useImplementationForm({
     implementation: implementation,
     overwrites: { ...latestAssignation?.args, ...props.args },
-    presetDependencies: latestAssignation?.dependencies,
     reValidateMode: "onChange",
   });
 
@@ -94,8 +93,6 @@ export const ImplementationAssignForm = (
     }
   };
 
-  const dependencies = form.watch("dependencies");
-
   const { registry } = useWidgetRegistry();
 
   if (error) {
@@ -127,11 +124,6 @@ export const ImplementationAssignForm = (
             />
 
           </div>
-          <ResponsiveContainerGrid className="grid @lg:grid-cols-3 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-4 @4xl:grid-cols-4 @5xl:grid-cols-4  @6xl:grid-cols-4 gap-2 max-h-128 overflow-y-auto w-min-[80vw] @container mb-4" >
-            {implementation?.dependencies.map((dep) => (
-              <DependencyWidget dependency={dep} key={dep.id} />
-            ))}
-          </ResponsiveContainerGrid>
           <DialogFooter className="flex-initial">
             <Button
               type="submit"

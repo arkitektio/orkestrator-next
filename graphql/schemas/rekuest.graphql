@@ -1362,9 +1362,6 @@ type Implementation {
   """Agent running this implementation."""
   agent: Agent!
 
-  """Dependencies required by this implementation."""
-  dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
-
   """Extension or module name."""
   extension: String!
 
@@ -2384,7 +2381,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "442bdbde-f650-4461-8681-423626fbcb11"
+  reference: String = "59c3de53-2760-4001-bb09-05f432db60f8"
   title: String = null
 }
 

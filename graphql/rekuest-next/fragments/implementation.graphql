@@ -1,9 +1,6 @@
 fragment DetailImplementation on Implementation {
   id
   interface
-  dependencies {
-    ...ListDependency
-  }
   action {
     ...DetailAction
   }

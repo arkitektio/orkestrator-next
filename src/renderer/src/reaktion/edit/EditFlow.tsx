@@ -652,7 +652,7 @@ const EditFlowInner = ({
 
       connectAppendRef.current = false
     },
-    [addVisibleContextual, isCtrlPressed, reactFlowWrapperRef, store]
+    [addVisibleContextual, reactFlowWrapperRef, store]
   )
   return (
     <EditFlowCanvas

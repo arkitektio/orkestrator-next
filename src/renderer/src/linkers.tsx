@@ -33,6 +33,10 @@ export const RekuestDependency = buildSmart(
   "@rekuest/dependency",
   "rekuest/dependencies",
 );
+export const RekuestResolution = buildSmart(
+  "@rekuest/resolution",
+  "rekuest/resolutions",
+);
 export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const FlussWorkspace = buildSmart(
   "@fluss/workspace",

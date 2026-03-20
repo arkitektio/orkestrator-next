@@ -11,6 +11,7 @@ import { RekuestAction, RekuestImplementation } from "@/linkers";
 import {
   AssignationEventKind,
   DetailActionFragment,
+  useAutoResolveMutation,
   useDetailActionQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
@@ -55,6 +56,10 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   const errorEvent = latestAssignation?.events.find(
     (x) => x.kind == AssignationEventKind.Critical,
   );
+
+
+
+
 
   return (
     <>
@@ -160,6 +165,34 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
   const description = useActionDescription({
     description: data.action.description || "",
   });
+
+
+  const [autoResolve] = useAutoResolveMutation()
+
+
+
+  const runAutoResolve = async () => {
+    try {
+      const mdata = await autoResolve({
+        variables: {
+          input: { action: data.ac.id },
+        },
+      });
+      if (mdata.errors) {
+        toast.error("Auto-resolve failed: " + mdata.errors[0].message);
+      } else {
+        toast.success("Auto-resolve started");
+        if (mdata.data?.autoResolve?.id) {
+          navigate(RekuestResolution.linkBuilder(mdata.data?.autoResolve?.id))
+        }
+        refetch();
+      }
+    }
+    catch (e) {
+      toast.error("Auto-resolve failed: " + (e as Error).message);
+    }
+  };
+
 
   return (
     <ModelPageLayout

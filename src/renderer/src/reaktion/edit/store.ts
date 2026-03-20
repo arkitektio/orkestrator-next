@@ -1,29 +1,48 @@
-import { GlobalArgFragment } from "@/reaktion/api/graphql";
 import {
+  FlowFragment,
+  GlobalArgFragment,
+  GraphNodeKind,
+  ReactiveImplementation,
+} from "@/reaktion/api/graphql";
+import {
+  AgentSubFlowNodeData,
   ClickContextualParams,
+  ContextualParams,
   ConnectContextualParams,
   DropContextualParams,
   EdgeContextualParams,
   FlowEdge,
-  ContextualParams,
   FlowNode,
+  RelativePosition,
   SubflowDropContextualParams,
 } from "@/reaktion/types";
 import {
   createVanillaTransformEdge,
   integrate,
+  istriviallyIntegratable,
 } from "@/reaktion/validation/integrate";
 import { ValidationResult } from "@/reaktion/validation/types";
 import { validateState } from "@/reaktion/validation/validate";
-import { handleToStream, nodeIdBuilder } from "@/reaktion/utils";
 import {
+  edges_to_flowedges,
+  handleToStream,
+  nodeIdBuilder,
+  nodes_to_flownodes,
+} from "@/reaktion/utils";
+import { PortKind } from "@/rekuest/api/graphql";
+import {
+  Connection,
+  Edge,
   EdgeChange,
   NodeChange,
+  Node,
+  OnConnectEnd,
   OnConnectStartParams,
   ReactFlowInstance,
   applyEdgeChanges,
   applyNodeChanges,
 } from "@xyflow/react";
+import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import { temporal } from "zundo";
 import { createStore } from "zustand";
 
@@ -57,12 +76,53 @@ const getClientPoint = (event: MouseEvent | TouchEvent) => {
   return null;
 };
 
+const calculateMidpoint = (p1: { x: number; y: number }, p2: { x: number; y: number }) => ({
+  x: (p1.x + p2.x) / 2,
+  y: (p1.y + p2.y) / 2,
+});
+
+export const createInitialState = (flow: FlowFragment): ValidationResult =>
+  validateState({
+    nodes: nodes_to_flownodes(flow.graph?.nodes),
+    edges: edges_to_flowedges(flow.graph?.edges),
+    globals: flow.graph.globals || [],
+    remainingErrors: [],
+    solvedErrors: [],
+    valid: true,
+  });
+
+export const checkFlowIsEqual = (a: ValidationResult, b: ValidationResult) => {
+  if (a.nodes.length !== b.nodes.length) return false;
+  if (a.edges.length !== b.edges.length) return false;
+  if (a.globals.length !== b.globals.length) return false;
+  if (a.valid !== b.valid) return false;
+  if (a.remainingErrors.length !== b.remainingErrors.length) return false;
+  if (a.solvedErrors.length !== b.solvedErrors.length) return false;
+  return true;
+};
+
+const hasBoundPort = (node: FlowNode): boolean => {
+  return !!(
+    node.data.ins?.find(
+      (stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+    ) ||
+    node.data.outs?.find(
+      (stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+    ) ||
+    node.data.voids?.find((item) => item.kind === PortKind.MemoryStructure) ||
+    node.data.constants?.find((item) => item.kind === PortKind.MemoryStructure)
+  );
+};
+
 export interface EditFlowState extends ValidationResult {
   showEdgeLabels: boolean;
   showNodeErrors: boolean;
   contextuals: ContextualParams[];
   reactFlowInstance: ReactFlowInstance | null;
-  relativeWrapperRef: React.RefObject<HTMLDivElement | null> | null;
+  relativeWrapperRef: RefObject<HTMLDivElement | null> | null;
+  connectAppend: boolean;
   connectingStart?: OnConnectStartParams;
   replaceValidationResult: (
     next: ValidationResult | ((state: EditFlowState) => ValidationResult),
@@ -101,10 +161,12 @@ export interface EditFlowState extends ValidationResult {
   onEdgesChange: (changes: EdgeChange[]) => void;
   setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
   setConnectingStart: (params: OnConnectStartParams | undefined) => void;
+  setConnectAppend: (value: boolean) => void;
   setShowEdgeLabels: (value: boolean) => void;
   setShowNodeErrors: (value: boolean) => void;
   toggleShowEdgeLabels: () => void;
   toggleShowNodeErrors: () => void;
+  openContextual: (contextual: ContextualParams, append?: boolean) => void;
   addContextual: (contextual: ContextualParams) => void;
   removeContextual: (id: string) => void;
   clearPanels: () => void;
@@ -118,10 +180,14 @@ export interface EditFlowState extends ValidationResult {
     node: FlowNode,
     params: DropContextualParams | SubflowDropContextualParams,
   ) => void;
-  setRelativeWrapperRef: (ref: React.RefObject<HTMLDivElement | null>) => void;
-
-
-
+  setRelativeWrapperRef: (ref: RefObject<HTMLDivElement | null>) => void;
+  getBoundNodes: () => FlowNode[];
+  onPaneClick: (event: ReactMouseEvent) => void;
+  onNodeClick: (event: ReactMouseEvent, node: Node) => void;
+  onEdgeClick: (event: ReactMouseEvent, edge: Edge) => void;
+  onConnect: (connection: Connection) => void;
+  onConnectStart: (event: MouseEvent | TouchEvent, params: OnConnectStartParams) => void;
+  onConnectEnd: OnConnectEnd;
 }
 
 export const createEditFlowStore = (initialState: ValidationResult) =>
@@ -133,6 +199,8 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
         showNodeErrors: true,
         contextuals: [],
         reactFlowInstance: null,
+        relativeWrapperRef: null,
+        connectAppend: false,
         connectingStart: undefined,
 
         replaceValidationResult: (next) => {
@@ -486,6 +554,7 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
 
         setReactFlowInstance: (reactFlowInstance) => set({ reactFlowInstance }),
         setConnectingStart: (connectingStart) => set({ connectingStart }),
+        setConnectAppend: (connectAppend) => set({ connectAppend }),
         setShowEdgeLabels: (showEdgeLabels) => set({ showEdgeLabels }),
         setShowNodeErrors: (showNodeErrors) => set({ showNodeErrors }),
         toggleShowEdgeLabels: () => {
@@ -493,6 +562,13 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
         },
         toggleShowNodeErrors: () => {
           set((state) => ({ showNodeErrors: !state.showNodeErrors }));
+        },
+        openContextual: (contextual, append = false) => {
+          if (!append) {
+            set({ contextuals: [] });
+          }
+
+          set((state) => ({ contextuals: [...state.contextuals, contextual] }));
         },
         addContextual: (contextual) => set((state) => ({ contextuals: [...state.contextuals, contextual] })),
         removeContextual: (id) => set((state) => ({ contextuals: state.contextuals.filter(c => c.id !== id) })),
@@ -729,6 +805,411 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             set(validateState(integratedState));
             set({ contextuals: [] });
           }
+        },
+
+        setRelativeWrapperRef: (relativeWrapperRef) => set({ relativeWrapperRef }),
+
+        getBoundNodes: () => get().nodes.filter((node) => hasBoundPort(node as FlowNode)),
+
+        onPaneClick: (event) => {
+          const nativeEvent = event.nativeEvent;
+          const state = get();
+          const append = nativeEvent.ctrlKey;
+          const hasSameEventContextual = state.contextuals.some(
+            (contextual) =>
+              "event" in contextual && contextual.event.timeStamp === nativeEvent.timeStamp,
+          );
+
+          if (hasSameEventContextual) {
+            return;
+          }
+
+          if (!append && state.contextuals.some((contextual) => contextual.kind === "click")) {
+            state.clearPanels();
+            return;
+          }
+
+          const reactFlowBounds = state.relativeWrapperRef?.current?.getBoundingClientRect();
+          if (!state.reactFlowInstance || !reactFlowBounds) {
+            return;
+          }
+
+          state.openContextual(
+            {
+              kind: "click",
+              id: crypto.randomUUID(),
+              event: nativeEvent,
+              position: {
+                x: nativeEvent.clientX - reactFlowBounds.left,
+                y: nativeEvent.clientY - reactFlowBounds.top,
+              },
+            },
+            append,
+          );
+        },
+
+        onNodeClick: (event, node) => {
+          const nativeEvent = event.nativeEvent;
+          const state = get();
+          const append = nativeEvent.ctrlKey;
+          const reactFlowBounds = state.relativeWrapperRef?.current?.getBoundingClientRect();
+
+          if (!state.reactFlowInstance || !reactFlowBounds || node.type !== "AgentSubFlowNode") {
+            return;
+          }
+
+          const subflowNode = node as Node<AgentSubFlowNodeData, "AgentSubFlowNode">;
+
+          if (
+            !append &&
+            state.contextuals.some(
+              (contextual) => contextual.kind === "node" && contextual.nodeId === subflowNode.id,
+            )
+          ) {
+            state.clearPanels();
+            return;
+          }
+
+          const appId = subflowNode.data.app;
+          if (!appId) {
+            return;
+          }
+
+          state.openContextual(
+            {
+              kind: "node",
+              id: crypto.randomUUID(),
+              nodeId: subflowNode.id,
+              action: { type: "implementations", appIdentifier: appId },
+              position: {
+                x: nativeEvent.clientX - reactFlowBounds.left,
+                y: nativeEvent.clientY - reactFlowBounds.top,
+              },
+            },
+            append,
+          );
+        },
+
+        onEdgeClick: (event, edge) => {
+          const nativeEvent = event.nativeEvent;
+          const state = get();
+          const append = nativeEvent.ctrlKey;
+          const hasSameEventContextual = state.contextuals.some(
+            (contextual) =>
+              "event" in contextual && contextual.event.timeStamp === nativeEvent.timeStamp,
+          );
+
+          if (hasSameEventContextual) {
+            return;
+          }
+
+          if (
+            !append &&
+            state.contextuals.some(
+              (contextual) => contextual.kind === "edge" && contextual.edgeId === edge.id,
+            )
+          ) {
+            state.clearPanels();
+            return;
+          }
+
+          const reactFlowBounds = state.relativeWrapperRef?.current?.getBoundingClientRect();
+          if (!state.reactFlowInstance || !reactFlowBounds) {
+            return;
+          }
+
+          const leftNode = state.reactFlowInstance.getNode(edge.source) as FlowNode | undefined;
+          const rightNode = state.reactFlowInstance.getNode(edge.target) as FlowNode | undefined;
+
+          if (!leftNode || !rightNode) {
+            return;
+          }
+
+          state.openContextual(
+            {
+              kind: "edge",
+              id: crypto.randomUUID(),
+              edgeId: edge.id,
+              event: nativeEvent,
+              position: {
+                x: nativeEvent.clientX - reactFlowBounds.left,
+                y: nativeEvent.clientY - reactFlowBounds.top,
+              },
+              leftNode,
+              leftStream: handleToStream(edge.sourceHandle),
+              rightNode,
+              rightStream: handleToStream(edge.targetHandle),
+            },
+            append,
+          );
+        },
+
+        onConnect: (connection) => {
+          const state = get();
+          state.setConnectingStart(undefined);
+          const append = state.connectAppend;
+          state.setConnectAppend(false);
+
+          if (
+            istriviallyIntegratable(
+              { nodes: state.nodes, edges: state.edges, globals: state.globals },
+              connection,
+            )
+          ) {
+            const integratedState = integrate(
+              { nodes: state.nodes, edges: state.edges, globals: state.globals },
+              connection,
+            );
+
+            state.replaceValidationResult(validateState(integratedState));
+            return;
+          }
+
+          if (!state.reactFlowInstance) {
+            return;
+          }
+
+          const leftNode = state.nodes.find((node) => node.id === connection.source);
+          const rightNode = state.nodes.find((node) => node.id === connection.target);
+
+          if (!leftNode || !rightNode) {
+            return;
+          }
+
+          const reactFlowBounds = state.relativeWrapperRef?.current?.getBoundingClientRect();
+          if (!reactFlowBounds) {
+            return;
+          }
+
+          const screenPosition = state.reactFlowInstance.flowToScreenPosition(
+            calculateMidpoint(leftNode.position, rightNode.position),
+          );
+
+          state.openContextual(
+            {
+              kind: "connect",
+              id: crypto.randomUUID(),
+              leftNode,
+              rightNode,
+              leftStream: handleToStream(connection.sourceHandle),
+              rightStream: handleToStream(connection.targetHandle),
+              connection,
+              position: {
+                x: screenPosition.x - reactFlowBounds.left,
+                y: screenPosition.y - reactFlowBounds.top,
+              },
+            },
+            append,
+          );
+        },
+
+        onConnectStart: (event, params) => {
+          set({
+            connectingStart: params,
+            connectAppend: "ctrlKey" in event ? Boolean(event.ctrlKey) : false,
+          });
+        },
+
+        onConnectEnd: (event) => {
+          const state = get();
+          const target = event.target as HTMLElement;
+          const targetEdgeId = target.dataset?.edgeid;
+          const targetIsPane = target.classList.contains("react-flow__pane");
+          const reactFlowBounds = state.relativeWrapperRef?.current?.getBoundingClientRect();
+          const point = getClientPoint(event);
+
+          const targetSubflowNode =
+            state.reactFlowInstance && point
+              ? state.nodes
+                  .filter((node) => node.type === "AgentSubFlowNode")
+                  .find((node) => {
+                    const flowPoint = state.reactFlowInstance?.screenToFlowPosition(point);
+                    const width = node.measured?.width ?? node.width ?? 0;
+                    const height = node.measured?.height ?? node.height ?? 0;
+
+                    if (!flowPoint || width <= 0 || height <= 0) {
+                      return false;
+                    }
+
+                    return (
+                      flowPoint.x >= node.position.x &&
+                      flowPoint.x <= node.position.x + width &&
+                      flowPoint.y >= node.position.y &&
+                      flowPoint.y <= node.position.y + height
+                    );
+                  })
+              : undefined;
+
+          if (
+            (targetIsPane || targetSubflowNode) &&
+            state.reactFlowInstance &&
+            state.connectingStart &&
+            reactFlowBounds
+          ) {
+            const connectionParams = state.connectingStart;
+
+            if (connectionParams.nodeId && connectionParams.handleId) {
+              const node = state.reactFlowInstance.getNode(connectionParams.nodeId) as
+                | FlowNode
+                | undefined;
+
+              if (!node || !point) {
+                set({ connectAppend: false, connectingStart: undefined });
+                return;
+              }
+
+              const position = {
+                x: point.x - reactFlowBounds.left,
+                y: point.y - reactFlowBounds.top,
+              };
+
+              const nodePosition = state.reactFlowInstance.flowToScreenPosition(node.position);
+
+              let relativePosition: RelativePosition | null = null;
+
+              if (nodePosition.x < position.x) {
+                relativePosition = nodePosition.y < position.y ? "bottomright" : "topright";
+              } else {
+                relativePosition = nodePosition.y < position.y ? "bottomleft" : "topleft";
+              }
+
+              if (connectionParams.handleType && relativePosition) {
+                state.openContextual(
+                  targetSubflowNode
+                    ? {
+                        kind: "subflowdrop",
+                        id: crypto.randomUUID(),
+                        handleType: connectionParams.handleType,
+                        causingNode: node,
+                        causingStream: handleToStream(connectionParams.handleId),
+                        connectionParams,
+                        position,
+                        relativePosition,
+                        event,
+                        subflowNodeId: targetSubflowNode.id,
+                        subflowNode: targetSubflowNode as Node<AgentSubFlowNodeData, "AgentSubFlowNode">,
+                      }
+                    : {
+                        kind: "drop",
+                        id: crypto.randomUUID(),
+                        handleType: connectionParams.handleType,
+                        causingNode: node,
+                        causingStream: handleToStream(connectionParams.handleId),
+                        connectionParams,
+                        position,
+                        relativePosition,
+                        event,
+                      },
+                );
+              }
+            }
+
+            set({ connectAppend: false, connectingStart: undefined });
+            return;
+          }
+
+          if (state.reactFlowInstance && state.connectingStart && targetEdgeId) {
+            const connectionParams = state.connectingStart;
+
+            if (!connectionParams.nodeId || !connectionParams.handleId) {
+              set({ connectAppend: false, connectingStart: undefined });
+              return;
+            }
+
+            const node = state.reactFlowInstance.getNode(connectionParams.nodeId) as
+              | FlowNode
+              | undefined;
+            const edge = state.reactFlowInstance.getEdge(targetEdgeId);
+            const clientPoint = getClientPoint(event);
+
+            if (!node || !edge || !clientPoint) {
+              set({ connectAppend: false, connectingStart: undefined });
+              return;
+            }
+
+            if (connectionParams.handleType === "source") {
+              const stagingSourceId = node.id;
+              const stagingSourceStreamId = handleToStream(connectionParams.handleId);
+              const oldEdgeSourceId = edge.source;
+              const oldEdgeSourceHandle = edge.sourceHandle;
+              const oldEdgeTargetId = edge.target;
+              const oldEdgeTargetHandle = edge.targetHandle;
+              const oldEdgeSourceStreamId = handleToStream(oldEdgeSourceHandle);
+              const oldNode = state.reactFlowInstance.getNode(oldEdgeSourceId) as FlowNode | undefined;
+
+              if (!oldNode) {
+                set({ connectAppend: false, connectingStart: undefined });
+                return;
+              }
+
+              const stagingOutstream = node.data.outs.at(stagingSourceStreamId);
+              const oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamId);
+
+              if (!stagingOutstream || !oldOutstream) {
+                set({ connectAppend: false, connectingStart: undefined });
+                return;
+              }
+
+              const zipNodeInstream =
+                node.position.x < oldNode.position.x
+                  ? [stagingOutstream, oldOutstream]
+                  : [oldOutstream, stagingOutstream];
+
+              const position = state.reactFlowInstance.screenToFlowPosition(clientPoint);
+
+              const zipNode = {
+                id: nodeIdBuilder(),
+                type: "ReactiveNode",
+                position,
+                data: {
+                  globalsMap: {},
+                  title: "Zip",
+                  description: "Zips together two streams into one stream.",
+                  kind: GraphNodeKind.Reactive,
+                  ins: zipNodeInstream,
+                  constantsMap: {},
+                  outs: [[...stagingOutstream, ...oldOutstream]],
+                  constants: [],
+                  voids: [],
+                  implementation: ReactiveImplementation.Zip,
+                },
+              } as FlowNode;
+
+              const stagedState = {
+                ...state,
+                nodes: state.nodes.concat(zipNode),
+                edges: state.edges
+                  .filter((candidate) => candidate.id !== edge.id)
+                  .concat(
+                    createVanillaTransformEdge(
+                      nodeIdBuilder(),
+                      stagingSourceId,
+                      stagingSourceStreamId,
+                      zipNode.id,
+                      node.position.x < oldNode.position.x ? 0 : 1,
+                    ),
+                    createVanillaTransformEdge(
+                      nodeIdBuilder(),
+                      oldEdgeSourceId,
+                      oldEdgeSourceStreamId,
+                      zipNode.id,
+                      position.x < oldNode.position.x ? 1 : 0,
+                    ),
+                  ),
+              };
+
+              const integratedState = integrate(stagedState, {
+                source: zipNode.id,
+                sourceHandle: "return_0",
+                target: oldEdgeTargetId,
+                targetHandle: oldEdgeTargetHandle ?? null,
+              });
+
+              state.replaceValidationResult(validateState(integratedState));
+            }
+          }
+
+          set({ connectAppend: false, connectingStart: undefined });
         },
       }),
       {

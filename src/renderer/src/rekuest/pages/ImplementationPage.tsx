@@ -15,6 +15,7 @@ import {
   WatchImplementationDocument,
   WatchImplementationSubscription,
   WatchImplementationSubscriptionVariables,
+  useAutoResolveMutation,
   useImplementationQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
@@ -60,6 +61,7 @@ export const DoFormBackup = (props: { id: string }) => {
       },
     );
   };
+
 
   const { registry } = useWidgetRegistry();
 

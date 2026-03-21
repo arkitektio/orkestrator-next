@@ -284,12 +284,37 @@ export const TargetDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            const flownode = rekuestActionToMatchingNode(event.data?.action, {
-              x: 0,
-              y: 0,
-            });
-            console.log("Trying to add", flownode, props.params);
-            addContextualNode(flownode, props.params);
+            const parentAgentNode = {
+            id: nodeIdBuilder(),
+            type: "AgentSubFlowNode",
+            position: { x: 0, y: 0 },
+            data: {
+              kind: GraphNodeKind.AgentSubflow,
+              title: event.data?.action?.app?.identifier,
+              description: "Agent Subflow",
+              ins: [],
+              outs: [],
+              voids: [],
+              constants: [],
+              constantsMap: {},
+              globalsMap: {},
+              app: event.data?.action?.app?.identifier
+            },
+          } as FlowNode
+
+              const flownode = rekuestActionToMatchingNode(event.data?.action, {
+                x: 0,
+                y: 0,
+              });
+
+
+              flownode.parentId = parentAgentNode.id;
+              flownode.extent = "parent";
+              console.log("Trying to add", flownode, props.params);
+              console.log("Trying to add parent", parentAgentNode, props.params);
+              addContextualNode(parentAgentNode, props.params);
+
+              addContextualNode(flownode, props.params);
           }
         });
   };
@@ -447,12 +472,37 @@ export const SourceDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.action) {
-            const flownode = rekuestActionToMatchingNode(event.data?.action, {
-              x: 0,
-              y: 0,
-            });
-            console.log("Trying to add", flownode, props.params);
-            addContextualNode(flownode, props.params);
+            const parentAgentNode = {
+            id: nodeIdBuilder(),
+            type: "AgentSubFlowNode",
+            position: { x: 0, y: 0 },
+            data: {
+              kind: GraphNodeKind.AgentSubflow,
+              title: event.data?.action?.app?.identifier,
+              description: "Agent Subflow",
+              ins: [],
+              outs: [],
+              voids: [],
+              constants: [],
+              constantsMap: {},
+              globalsMap: {},
+              app: event.data?.action?.app?.identifier
+            },
+          } as FlowNode
+
+              const flownode = rekuestActionToMatchingNode(event.data?.action, {
+                x: 0,
+                y: 0,
+              });
+
+
+              flownode.parentId = parentAgentNode.id;
+              flownode.extent = "parent";
+              console.log("Trying to add", flownode, props.params);
+              console.log("Trying to add parent", parentAgentNode, props.params);
+              addContextualNode(parentAgentNode, props.params);
+
+              addContextualNode(flownode, props.params);
           }
         });
   };

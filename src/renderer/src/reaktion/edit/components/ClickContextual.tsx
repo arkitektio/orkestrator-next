@@ -296,6 +296,7 @@ const ClickArkitektNodes = (props: {
 
 
           flownode.parentId = parentAgentNode.id;
+          flownode.extent = "parent";
           console.log("Trying to add", flownode, props.params);
           console.log("Trying to add parent", parentAgentNode, props.params);
           addClickNode(parentAgentNode, props.params);

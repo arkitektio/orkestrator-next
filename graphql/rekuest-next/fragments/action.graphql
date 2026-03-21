@@ -59,9 +59,6 @@ fragment DetailAction on Action {
   testCases {
     ...ListTestCase
   }
-  dependencies {
-    ...ListDependency
-  }
   tests {
     id
     name

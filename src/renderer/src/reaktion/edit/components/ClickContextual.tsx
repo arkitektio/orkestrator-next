@@ -368,18 +368,26 @@ const ClickAgents = (props: {
         data: {
           kind: GraphNodeKind.AgentSubflow,
           title: agent.app.identifier,
-          description: "Agent Subflow",
+          description: "A singular instance of the agent " + agent.app.identifier,
           ins: [],
           outs: [],
           voids: [],
           constants: [],
           constantsMap: {},
           globalsMap: {},
-          app: agent.app.identifier
+          appFilter: agent.app.identifier,
+          versionFilter: agent.release.version,
+          instanceFilter: agent.instanceId,
+          deviceFilter: agent.device.id,
+          userFilter: agent.user.sub,
+          autoResolvable: false,
         },
       } as FlowNode,
       props.params,
     );
+
+
+
   };
 
   return (

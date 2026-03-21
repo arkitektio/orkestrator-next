@@ -4,8 +4,10 @@ import { FlowNode } from '@/reaktion/types'
 import { AgentSubFlowNodeFragment } from '@/reaktion/api/graphql'
 import { AgentSubFlownNodeProps, AgentSubFlowNodeData } from '../../types'
 import { NodeResizeControl } from '@xyflow/react'
-import { useSubflowChildCount } from '../context'
+import { useEditFlowStore, useSubflowChildCount } from '../context'
 import { NodeShowLayout } from '@/reaktion/base/NodeShow'
+import { Button } from '@/components/ui/button'
+import { useAgentsQuery } from '@/rekuest/api/graphql'
 
 type AgentSubflowNode = FlowNode<AgentSubFlowNodeFragment> & {
   data: AgentSubFlowNodeData & {
@@ -24,7 +26,17 @@ export const AgentSubflowWidget = ({
 
 
 
+  const setAutoResolvable = useEditFlowStore((state) => state.setAutoResolvable)
 
+
+  const { data: agentData, error: agentError } = useAgentsQuery({
+    variables: {
+      filters: {
+         appIdentifier: data.appFilter,
+         versionNumber: data.versionFilter,
+      }
+    }
+  })
 
 
 
@@ -75,16 +87,39 @@ export const AgentSubflowWidget = ({
         className="overflow-hidden border-amber-300/70 bg-amber-50/50 shadow-amber-200/40 dark:border-amber-800/70 dark:bg-amber-950/20"
       >
         <div className="relative h-full min-h-[180px] w-full">
-          <Card className="h-full min-h-[180px] w-full border-0 bg-transparent shadow-none">
-            <CardHeader className="custom-drag-handle cursor-grab px-4 pr-14 active:cursor-grabbing">
-              <CardTitle className="text-sm font-medium flex flex-row items-center gap-2">
+          <Card className="h-full min-h-[180px] w-full border-0 bg-transparent shadow-none w-full">
+            <CardHeader className="custom-drag-handle cursor-grab px-4 active:cursor-grabbing w-full">
+              <CardTitle className="text-sm font-medium flex flex-row  gap-2 justify-between flex-row  w-full">
                 <span className="rounded bg-amber-500/10 px-1 py-0.5 text-xs text-amber-700 dark:text-amber-300">
-                  AGENT
+                  {data.appFilter || 'any'}{data.versionFilter ? `:v${data.versionFilter}` : ''}
                 </span>
-                {data.title}
+                <span className="text-amber-600 dark:text-amber-400 flex-grow"></span>
+                 <Button variant="outline" size="sm"  onClick={() => setAutoResolvable(!data.autoResolvable, id)}>
+              {data.autoResolvable
+                ? 'Auto-Resolvable'
+                : 'Manual Resolution'}
+                
+            </Button>
+            <div className="flex items-center justify-center px-2 rounded-lg border border-dashed border-amber-300/80 bg-background/70 text-center text-sm text-muted-foreground dark:border-amber-700/70 dark:bg-background/20">
+                  {agentData?.agents.length || 0}
+                </div>
+
               </CardTitle>
               <CardDescription className="text-xs">{data.description}</CardDescription>
             </CardHeader>
+
+
+              <div className="px-4 pb-4">
+                
+              </div>
+
+              {agentError && (
+                <div className="px-4 pb-4">
+                  <div className="flex min-h-[92px] items-center justify-center rounded-lg border border-dashed border-amber-300/80 bg-background/70 text-center text-sm text-muted-foreground dark:border-amber-700/70 dark:bg-background/20">
+                    Error fetching agents.
+                  </div>
+                </div>
+              )}
 
             {subflowChildCount === 0 && (
               <div className="px-4 pb-4">

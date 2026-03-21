@@ -76,7 +76,7 @@ export const NodeContextual = (props: { params: NodeContextualParams }) => {
       }}
     >
       <ActionSearch
-          appIdentifier={props.params.action.appIdentifier}
+          appIdentifier={props.params.subFlowNode.data.appFilter}
           onSelect={handleImplementationSelect}
         />
     </ContextualContainer>

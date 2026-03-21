@@ -127,6 +127,7 @@ export interface EditFlowState extends ValidationResult {
   replaceValidationResult: (
     next: ValidationResult | ((state: EditFlowState) => ValidationResult),
   ) => void;
+  setAutoResolvable: (autoResolvable: boolean, id: string) => void;
   updateData: (data: Partial<FlowNode["data"]>, id: string) => void;
   setGlobals: (data: GlobalArgFragment[]) => void;
   removeGlobal: (key: string) => void;
@@ -302,6 +303,27 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
               nodes: [...state.nodes, node],
             }),
           );
+        },
+
+        setAutoResolvable: (autoResolvable, id) => {
+          set((state) => {
+            const nodes = state.nodes.map((node) => {
+              if (node.id === id) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    autoResolvable
+                  }
+                };
+              }
+              return node;
+            });
+            return validateState({
+              ...state,
+              nodes
+            });
+          });
         },
 
         moveConstantToStream: (nodeId, conindex, instream) => {
@@ -870,17 +892,13 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
             return;
           }
 
-          const appId = subflowNode.data.app;
-          if (!appId) {
-            return;
-          }
 
           state.openContextual(
             {
               kind: "node",
               id: crypto.randomUUID(),
               nodeId: subflowNode.id,
-              action: { type: "implementations", appIdentifier: appId },
+              subFlowNode: subflowNode,
               position: {
                 x: nativeEvent.clientX - reactFlowBounds.left,
                 y: nativeEvent.clientY - reactFlowBounds.top,

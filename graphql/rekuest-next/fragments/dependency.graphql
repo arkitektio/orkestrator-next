@@ -1,18 +1,22 @@
 fragment DetailDependency on Dependency {
   id
   key
-  actionHash
+  appFilter
+  versionFilter
   argMatches {
     ...PortMatch
   }
   returnMatches {
     ...PortMatch
   }
-  resolvable
+  autoResolvable
 }
 
 fragment ListDependency on Dependency {
   id
   key
   description
+  appFilter
+  versionFilter
+  autoResolvable
 }

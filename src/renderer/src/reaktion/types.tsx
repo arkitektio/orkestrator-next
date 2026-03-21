@@ -210,7 +210,7 @@ export type NodeContextualAction =
 
 export type NodeContextualParams = {
   nodeId: string;
-  action: NodeContextualAction;
+  subFlowNode: Node<AgentSubFlowNodeData, "AgentSubFlowNode">;
   position: { x: number; y: number };
 };
 

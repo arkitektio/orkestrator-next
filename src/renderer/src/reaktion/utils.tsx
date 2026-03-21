@@ -10,10 +10,14 @@ import {
   PortKind,
   ReactiveImplementationFragment,
   ReactiveNodeFragment,
+  RekuestActionNodeFragment,
+  RekuestMapActionNodeFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import {
+  ActionDemandInput,
   ActionKind,
+  AgentDependencyInput,
   DefinitionInput,
   DependencyInput,
 } from "@/rekuest/api/graphql";
@@ -357,6 +361,23 @@ export const streamToReactNode = (
   );
 };
 
+
+
+
+
+const rekuestNodeToActionDemand = (node: RekuestMapActionNodeFragment): ActionDemandInput => {
+  return {
+    key: node.id,
+    hash: "aaaa"
+  }
+}
+
+
+
+
+
+
+
 export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
   const args =
     flow.graph?.nodes
@@ -373,12 +394,45 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
       ?.ins.at(0)
       ?.map((p) => convertPortToInput(p)) || [];
 
+
+  const dependencies =
+    flow.graph?.nodes
+      ?.filter(
+        (node) => node.__typename == "AgentSubFlowNode"
+      )
+      .map((node) => {
+
+        const actionDefintions = flow.graph.nodes
+          ?.filter((n) => n.parentNode === node.id && n.__typename === "RekuestMapActionNode")
+          .map((n) => rekuestNodeToActionDemand(n as RekuestMapActionNodeFragment)) || [];
+
+
+        return {
+          key: node.id,
+          app: node.app,
+          actionDemands: actionDefintions,
+          autoResolvable: node.autoResolvable || false,
+
+        } as AgentDependencyInput
+
+        })
+      .flat()
+        
+        
+
+
+
+
+
   return {
     kind: ActionKind.Function,
+    key: flow.id,
+    version: "0.1",
     args: [...args, ...kwargs],
     returns: returns,
     name: flow.title,
     description: flow.description,
+    dependencies: dependencies,
   };
 };
 

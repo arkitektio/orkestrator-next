@@ -25,7 +25,6 @@ export const DeployButton = (props: {
         extension: "reaktion",
         implementation: {
           definition: flowToDefinition(props.flow),
-          dependencies: flowToDependencies(props.flow),
           interface: props.flow.id,
           params: {
             flow: props.flow.id,

@@ -148,6 +148,14 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
                 </CardContent>
               </Card>
             )}
+
+
+
+
+
+
+
+
           </div>
         </form>
       </Form>
@@ -263,6 +271,14 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
             </div>
           </>
         )}
+
+       
+
+
+
+
+
+
 
         <ListRender array={data?.action?.assignations} title="Tasks">
           {(item, key) => <MinimalAssignationCard item={item} key={key} />}

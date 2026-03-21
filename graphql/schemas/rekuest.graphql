@@ -21,9 +21,6 @@ type Action {
   """Timestamp when the action was defined."""
   definedAt: DateTime!
 
-  """Dependencies required by this action."""
-  dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
-
   """Optional description of the action."""
   description: String
 
@@ -282,6 +279,9 @@ type Agent {
   """Is the agent currently connected."""
   connected: Boolean!
 
+  """Device associated with the agent."""
+  device: Device!
+
   """List of installed agent extensions."""
   extensions: [String!]!
 
@@ -335,6 +335,9 @@ type Agent {
 
   """Current and historical states associated with the agent."""
   states: [State!]!
+
+  """User associated with the agent."""
+  user: User!
 }
 
 type AgentChangeEvent {
@@ -349,7 +352,8 @@ A dependency for a implementation. By defining dependencies, you can
 """
 input AgentDependencyInput {
   actionDemands: [ActionDependencyInput!] = null
-  app: String!
+  app: String = null
+  autoResolvable: Boolean! = false
   description: String = null
   key: String!
 
@@ -363,6 +367,10 @@ input AgentDependencyInput {
   A list of keys of other agent dependencies that are mutually exclusive with this one. This means two agent dependencies with mutually exclusive keys cannot be assigned to the same implementing agent. This is used to identify the demand in the system.
   """
   mutuallyExclusiveKeys: [String!] = null
+
+  """
+  The name of the agent. This is used to identify the agent in the system.
+  """
   name: String = null
   optional: Boolean! = false
   preferedInstances: Int = null
@@ -1071,7 +1079,6 @@ input DefinitionInput {
   The collections of the definition. This is used to group definitions together in the UI
   """
   collections: [String!]! = []
-  dependencies: [AgentDependencyInput!]! = []
 
   """
   The description of the definition. This is the text that is displayed in the UI
@@ -1162,11 +1169,18 @@ enum DemandKind {
 
 """Represents a dependency between implementations and actions."""
 type Dependency {
-  """Original hash when the dependency was created."""
-  actionHash: ActionHash
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the app they belong to. The filter string should be in the format 'app_identifier:version' where version can be a specific version or a wildcard '*'. For example, 'my_app:*' would allow any agent belonging to 'my_app' regardless of version, while 'my_app:1.0.0' would only allow agents with that specific version.
+  """
+  appFilter: String
 
   """Protocols that this dependency needs to match."""
   argMatches: [PortMatch!]
+
+  """
+  Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable
+  """
+  autoResolvable: Boolean!
 
   """Optional description of the dependency."""
   description: String
@@ -1174,7 +1188,7 @@ type Dependency {
   """Unique ID of the dependency."""
   id: ID!
 
-  """Implementation this dependency belongs to."""
+  """The implementation this dependency belongs to."""
   implementation: Implementation!
 
   """Optional string identifier or tag for reference."""
@@ -1188,6 +1202,11 @@ type Dependency {
 
   """Protocols that this dependency needs to match."""
   returnMatches: [PortMatch!]
+
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
+  """
+  versionFilter: String
 }
 
 input DependencyFilter {
@@ -1386,6 +1405,9 @@ type Implementation {
   """Agent running this implementation."""
   agent: Agent!
 
+  """Dependencies required by this action."""
+  dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
+
   """Extension or module name."""
   extension: String!
 
@@ -1462,6 +1484,7 @@ A implementation is a blueprint for a action. It is composed of a definition, a 
 """
 input ImplementationInput {
   definition: DefinitionInput!
+  dependencies: [AgentDependencyInput!]! = []
   dynamic: Boolean! = false
   interface: String
   locks: [String!] = null
@@ -2405,7 +2428,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "7aa2ed21-faec-48b6-b364-feccb023688f"
+  reference: String = "0cafbd56-28ed-4dda-8f35-83e1454a149d"
   title: String = null
 }
 

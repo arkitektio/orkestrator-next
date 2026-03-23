@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { RekuestImplementation } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
@@ -25,6 +26,7 @@ export const DeployButton = (props: {
         extension: "reaktion",
         implementation: {
           definition: flowToDefinition(props.flow),
+          dependencies: flowToDependencies(props.flow),
           interface: props.flow.id,
           params: {
             flow: props.flow.id,
@@ -42,7 +44,10 @@ export const DeployButton = (props: {
       onClick={() => {
         console.log(
           deploy().then((result) => {
-            result?.data;
+            const implementationId = result.data?.createForeignImplementation.id;
+            if (implementationId) {
+              navigate(RekuestImplementation.linkBuilder(implementationId));
+            }
           }),
         );
       }}

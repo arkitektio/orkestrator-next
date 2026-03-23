@@ -354,6 +354,18 @@ export default asDetailQueryRoute(
                 Timeline
               </Button>
             </RekuestAssignation.DetailLink>
+            <RekuestAssignation.DetailLink
+              object={data?.assignation?.id || ""}
+              subroute="space"
+              className="font-semibold"
+            >
+              <Button
+                variant={"outline"}
+                size={"sm"}
+              >
+                Space
+              </Button>
+            </RekuestAssignation.DetailLink>
             {data.assignation.parent && <RekuestAssignation.DetailLink
               object={data?.assignation?.parent.id || ""}
               subroute="log"

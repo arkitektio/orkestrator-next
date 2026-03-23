@@ -35,6 +35,7 @@ import {
   NodeInput,
   StreamItemFragment,
 } from "./types";
+import { d } from "node_modules/@platejs/basic-nodes/dist/BaseHeadingPlugin-nWtdPomn";
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
@@ -396,28 +397,7 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
       ?.map((p) => convertPortToInput(p)) || [];
 
 
-  const dependencies =
-    flow.graph?.nodes
-      ?.filter(
-        (node) => node.__typename == "AgentSubFlowNode"
-      )
-      .map((node) => {
 
-        const actionDefintions = flow.graph.nodes
-          ?.filter((n) => n.parentNode === node.id && n.__typename === "RekuestMapActionNode")
-          .map((n) => rekuestNodeToActionDemand(n as RekuestMapActionNodeFragment)) || [];
-
-
-        return {
-          key: node.id,
-          app: node.app,
-          actionDemands: actionDefintions,
-          autoResolvable: node.autoResolvable || false,
-
-        } as AgentDependencyInput
-
-        })
-      .flat()
 
 
 
@@ -433,21 +413,33 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
     returns: returns,
     name: flow.title,
     description: flow.description,
-    dependencies: dependencies,
   };
 };
 
 export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
-  const hashes: DependencyInput[] =
+  const dependencies =
     flow.graph?.nodes
       ?.filter(
-        (node) =>
-          node.__typename == "RekuestFilterNode" ||
-          node.__typename == "RekuestMapNode",
+        (node) => node.__typename == "AgentSubFlowNode"
       )
-      .map((x) => ({ hash: x.hash, reference: x.id })) || [];
+      .map((node) => {
 
-  console.log("hashes", hashes);
+        const actionDefintions = flow.graph.nodes
+          ?.filter((n) => n.parentNode === node.id && n.__typename === "RekuestMapActionNode")
+          .map((n) => rekuestNodeToActionDemand(n as RekuestMapActionNodeFragment)) || [];
 
-  return hashes;
+
+        return {
+          key: node.id,
+          app: node.appFilter,
+          actionDemands: actionDefintions,
+          autoResolvable: node.autoResolvable || false,
+
+        } as DependencyInput
+
+        }) || [];
+
+  console.log("hashes", dependencies);
+
+  return dependencies;
 };

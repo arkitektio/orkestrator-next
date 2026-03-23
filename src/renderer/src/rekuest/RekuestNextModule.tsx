@@ -29,6 +29,7 @@ import InterfacePage from "./pages/InterfacePage";
 import InterfacesPage from "./pages/InterfacesPage";
 import StructuresPage from "./pages/StructuresPage";
 import AssignationLogPage from "./pages/assignation/AssignationLogPage";
+import AssignationSpacePage from "./pages/assignation/AssignationSpacePage";
 import AssignationsPage from "./pages/AssignationsPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
 import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage";
@@ -75,6 +76,7 @@ const Module: React.FC = () => {
           <Route path="assignations" element={<AssignationsPage />} />
           <Route path="assignations/:id" element={<AssignationPage />} />
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
+          <Route path="assignations/:id/space" element={<AssignationSpacePage />} />
           <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />
         </Routes>
 

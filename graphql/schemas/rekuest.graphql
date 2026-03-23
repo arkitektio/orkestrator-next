@@ -291,6 +291,9 @@ type Agent {
   """Historical records of agent's hardware."""
   hardwareRecords(filters: HardwareRecordFilter, pagination: OffsetPaginationInput): [HardwareRecord!]!
 
+  """Hash representing the agent's definition for change detection."""
+  hash: String!
+
   """Webhook URL for this Agent (only if webhook)"""
   hookUrl: String
 
@@ -390,7 +393,7 @@ input AgentFilter {
 
   """Filter by client ID of the app the agent is registered to"""
   clientId: String = null
-  dependency: String = null
+  dependency: ID = null
 
   """Filter based on device"""
   deviceId: ID = null
@@ -583,6 +586,14 @@ type Assignation {
 
   """The used dependencies for this assignemnet"""
   dependencies: AnyDefault!
+
+  """The dependency thats linked to the parents execution if applicable."""
+  dependency: String
+
+  """
+  The method of the dependency that caused this assignation, if applicable.
+  """
+  dependencyMethod: String
 
   """Indicates if the assignation should be deleted after completion."""
   ephemeral: Boolean!
@@ -1119,6 +1130,11 @@ input DefinitionInput {
   name: String!
 
   """
+  The package of the function. Will default to the currents agent's app if not specified. This is used to group definitions together in the UI and provide a better user experience
+  """
+  package: String = null
+
+  """
   The port groups of the definition. This is used to group ports together in the UI
   """
   portGroups: [PortGroupInput!]! = []
@@ -1169,13 +1185,13 @@ enum DemandKind {
 
 """Represents a dependency between implementations and actions."""
 type Dependency {
+  """List of action demands"""
+  actionDemands: [ActionDemand!]!
+
   """
   Optional filter string to limit which agents can be bound to this dependency based on the app they belong to. The filter string should be in the format 'app_identifier:version' where version can be a specific version or a wildcard '*'. For example, 'my_app:*' would allow any agent belonging to 'my_app' regardless of version, while 'my_app:1.0.0' would only allow agents with that specific version.
   """
   appFilter: String
-
-  """Protocols that this dependency needs to match."""
-  argMatches: [PortMatch!]
 
   """
   Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable
@@ -1196,12 +1212,6 @@ type Dependency {
 
   """Indicates if the dependency is optional."""
   optional: Boolean!
-
-  """Check if this dependency can be resolved by a connected agent."""
-  resolvable: Boolean!
-
-  """Protocols that this dependency needs to match."""
-  returnMatches: [PortMatch!]
 
   """
   Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
@@ -2428,7 +2438,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "0cafbd56-28ed-4dda-8f35-83e1454a149d"
+  reference: String = "535b5452-b530-4087-bb0e-0e11a614b6ea"
   title: String = null
 }
 

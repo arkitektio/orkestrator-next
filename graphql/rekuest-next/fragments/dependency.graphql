@@ -3,12 +3,6 @@ fragment DetailDependency on Dependency {
   key
   appFilter
   versionFilter
-  argMatches {
-    ...PortMatch
-  }
-  returnMatches {
-    ...PortMatch
-  }
   autoResolvable
 }
 

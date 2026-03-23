@@ -71,6 +71,7 @@ export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
             data: { ...rest },
             dragHandle: ".custom-drag-handle",
             parentId: rest.parentNode ? rest.parentNode : undefined,
+            extent: rest.parentNode ? "parent" : undefined,
           };
           return node_;
         }
@@ -417,8 +418,8 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
 
         })
       .flat()
-        
-        
+
+
 
 
 

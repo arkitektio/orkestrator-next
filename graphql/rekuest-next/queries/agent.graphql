@@ -15,9 +15,9 @@ query Agent($id: ID!) {
 }
 
 
-query AgentOptions($search: String, $values: [ID!]) {
+query AgentOptions($search: String, $values: [ID!], $dependency: ID) {
   options: agents(
-    filters: { search: $search, ids: $values }
+    filters: { search: $search, ids: $values, dependency: $dependency }
     pagination: { limit: 10 }
   ) {
     value: id

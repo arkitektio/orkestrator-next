@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   ListDependencyFragment,
   PostmanAssignationFragment,
+  useAgentOptionsLazyQuery,
   useImplementationOptionsLazyQuery,
 } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
@@ -30,8 +31,8 @@ export const DependencyWidget = ({
 }: {
   dependency: ListDependencyFragment;
 }) => {
-  const [search] = useImplementationOptionsLazyQuery({
-    variables: { dependency: dependency.id },
+  const [search] = useAgentOptionsLazyQuery({
+    variables: { dependency: dependency.key },
   });
 
   return (

@@ -8,10 +8,10 @@ fragment Shortcut on Shortcut {
   bindNumber
   savedArgs
   args {
-    ...Port
+    ...ArgPort
   }
   returns {
-    ...Port
+    ...ReturnPort
   }
   allowQuick
 }
@@ -26,10 +26,10 @@ fragment ListShortcut on Shortcut {
   bindNumber
   savedArgs
   args {
-    ...Port
+    ...ArgPort
   }
   returns {
-    ...Port
+    ...ReturnPort
   }
   allowQuick
 }

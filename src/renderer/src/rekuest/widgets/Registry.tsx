@@ -4,7 +4,8 @@ import {
   EffectWidgetProps,
   InputWidgetProps,
   InputWidgetTypes,
-  MappablePort,
+  ArgPort,
+  ReturnPort,
   PortEffectTypes,
   ReturnWidgetProps,
   ReturnWidgetTypes,
@@ -139,10 +140,10 @@ export class WidgetRegistry {
   }
 
   public getInputWidgetForPort(
-    port: MappablePort,
+    port: ArgPort,
     allowFallback: boolean = true,
   ): React.FC<InputWidgetProps> {
-    if (!port?.assignWidget?.__typename) {
+    if (!port?.widget?.__typename) {
       const widget =
         (port?.kind &&
           allowFallback &&
@@ -154,7 +155,7 @@ export class WidgetRegistry {
     console.log("Getting widget for port", port);
 
     const widget =
-      this.typeInputWidgetMap[port?.assignWidget?.__typename] ||
+      this.typeInputWidgetMap[port?.widget?.__typename] ||
       this.unknownInputWidget;
 
     return widget;
@@ -191,10 +192,10 @@ export class WidgetRegistry {
   }
 
   public getReturnWidgetForPort(
-    port: MappablePort,
+    port: ReturnPort,
     allowFallback: boolean = true,
   ): React.FC<ReturnWidgetProps<any>> {
-    if (!port?.returnWidget?.__typename) {
+    if (!port?.widget?.__typename) {
       return (
         (port?.kind &&
           allowFallback &&
@@ -204,7 +205,7 @@ export class WidgetRegistry {
     }
 
     return (
-      this.typeReturnWidgetMap[port?.returnWidget?.__typename] ||
+      this.typeReturnWidgetMap[port?.widget?.__typename] ||
       this.unknownReturnWidget
     );
   }

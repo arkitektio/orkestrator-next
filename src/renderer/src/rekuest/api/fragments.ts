@@ -27,6 +27,10 @@
       "UIGrid",
       "UISplit",
       "UIState"
+    ],
+    "_Entity": [
+      "MediaStore",
+      "User"
     ]
   }
 };

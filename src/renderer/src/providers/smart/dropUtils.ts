@@ -72,7 +72,7 @@ export const resolveSmartDrop = (
       }
 
       const [, identifier, object] = match;
-      partners.push({ identifier, object });
+      partners.push({ identifier, object: JSON.parse(object) });
     }
 
     return partners.length > 0

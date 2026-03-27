@@ -42,6 +42,7 @@ const buildActionDemands = (
             at: 0,
             kind: PortKind.Structure,
             identifier: props.objects[0].identifier,
+            object: props.objects[0].object,
           },
         ],
       });
@@ -57,6 +58,7 @@ const buildActionDemands = (
                 at: 0,
                 kind: PortKind.Structure,
                 identifier: props.objects[0].identifier,
+                object: props.objects[0].object,
               },
             ],
           },
@@ -74,6 +76,7 @@ const buildActionDemands = (
             at: 1,
             kind: PortKind.Structure,
             identifier: props.partners[0].identifier,
+            object: props.partners[0].object,
           },
         ],
       });
@@ -89,6 +92,7 @@ const buildActionDemands = (
                 at: 0,
                 kind: PortKind.Structure,
                 identifier: props.partners[0].identifier,
+                object: props.partners[0].object,
               },
             ],
           },

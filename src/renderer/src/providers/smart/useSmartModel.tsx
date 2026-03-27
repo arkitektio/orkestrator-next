@@ -86,7 +86,7 @@ export const useSmartModel = ({
   const selectionStore = useSelectionStoreApi();
   const self = useMemo(
     () => ({ identifier, object }),
-    [identifier, object],
+    [identifier, object.id], // Only re-create if identifier or object id changes, not if other object attributes change
   );
 
 
@@ -304,7 +304,7 @@ export const useSmartModel = ({
       refs.setReference(node);
 
       syncAttribute(node, "data-identifier", identifier);
-      syncAttribute(node, "data-object", object);
+      syncAttribute(node, "data-object", JSON.stringify(object));
       syncAttribute(node, "data-selectable", "true");
 
       selectionStore.getState().registerSelectables([

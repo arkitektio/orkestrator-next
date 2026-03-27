@@ -89,7 +89,7 @@ export const ManagedByCard = (props: { agent: AgentFragment }) => {
   }
 
   return (
-    <KabinetPod.DetailLink object={data?.podForAgent.id}>
+    <KabinetPod.DetailLink object={data?.podForAgent}>
       <Button variant="outline" size="sm">
         <Server className="h-4 w-4 mr-2" />
         {data?.podForAgent?.resource?.name} • {data?.podForAgent?.backend?.name}
@@ -98,7 +98,7 @@ export const ManagedByCard = (props: { agent: AgentFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(
+export const AgentPage = asDetailQueryRoute(
   useAgentQuery,
   ({ data, subscribeToMore }) => {
     useEffect(() => {
@@ -147,11 +147,11 @@ export default asDetailQueryRoute(
     return (
       <RekuestAgent.ModelPage
         title={data.agent.name}
-        object={data.agent.id}
+        object={data.agent}
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <RekuestAgent.Komments object={data?.agent?.id} />,
+              Comments: <RekuestAgent.Komments object={data?.agent} />,
               States: <>
                 {/* States Section */}
                 {data.agent.states.length > 0 && (
@@ -176,14 +176,14 @@ export default asDetailQueryRoute(
             <PinAgent agent={data.agent} />
             <ManagedByCard agent={data.agent} />
             {data.agent.memoryShelve && (
-              <RekuestMemoryShelve.DetailLink object={data.agent.memoryShelve.id}>
+              <RekuestMemoryShelve.DetailLink object={data.agent.memoryShelve}>
                 <Button variant="outline" size="sm">
                   <Database className="h-4 w-4 mr-2" />
                   Memory Shelve
                 </Button>
               </RekuestMemoryShelve.DetailLink>
             )}
-            <RekuestAgent.ObjectButton object={data.agent.id} />
+            <RekuestAgent.ObjectButton object={data.agent} />
           </div>
         }
       >
@@ -191,7 +191,7 @@ export default asDetailQueryRoute(
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <div className="space-y-4">
-              <RekuestAgent.DetailLink object={data.agent.id}>
+              <RekuestAgent.DetailLink object={data.agent}>
                 <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl hover:text-primary transition-colors cursor-pointer">
                   {data.agent.name}
                 </h1>
@@ -328,3 +328,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default AgentPage;

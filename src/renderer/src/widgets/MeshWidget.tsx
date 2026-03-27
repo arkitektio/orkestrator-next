@@ -37,8 +37,12 @@ export const MeshWidget = (props: ReturnWidgetProps) => {
 
   const resolve = useResolve();
 
+  if (!data?.mesh) {
+    return <div>Mesh not found</div>;
+  }
+
   return (
-    <MikroMesh.DetailLink className="w-full h-full" object={props.value}>
+    <MikroMesh.DetailLink className="w-full h-full" object={data.mesh}>
       {data?.mesh.name}
       {data?.mesh.store.presignedUrl && (
         <MeshRenderer url={resolve(data?.mesh.store.presignedUrl)} />

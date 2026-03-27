@@ -1,4 +1,5 @@
 import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
+import { ListImageFragment } from "./mikro-next/api/graphql";
 
 // Linkers for the smart models
 // Linkers represent ways to reference a smart model consistently in the ui, and
@@ -117,7 +118,7 @@ export const RekuestDashboard = buildSmart(
   "rekuest/dashboards",
 );
 
-export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroImage = buildSmart<ListImageFragment>("@mikro/image", "mikro/images");
 export const MikroSnapshot = buildSmart("@mikro/snapshot", "mikro/snapshots");
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",

@@ -1,8 +1,9 @@
 
+import { Identifier, Object } from "@/types";
 import { useListAssignationsQuery } from "../api/graphql";
 import ListAssignationCard from "../components/cards/ListAssignationCard";
 
-export const RunsSidebar = (props: { object: string, identifier: str }) => {
+export const RunsSidebar = (props: { object: Object, identifier: Identifier }) => {
   const { data, error, loading } = useListAssignationsQuery({
     variables: {
       filter: { actedOn: [`${props.identifier}:${props.object}`] },

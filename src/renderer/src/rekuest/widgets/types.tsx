@@ -1,16 +1,22 @@
 import {
   AssignWidgetFragment,
   PortEffectFragment,
-  PortFragment,
+  ArgPortFragment,
   PortGroupFragment,
   PortKind,
-  ReturnWidgetFragment
+  ReturnWidgetFragment,
+  ReturnPortFragment
 } from "../api/graphql";
+
+
+
+export type ArgPort = ArgPortFragment;
+export type ReturnPort = ReturnPortFragment;
 
 export interface InputWidgetProps<
   W extends AssignWidgetFragment = AssignWidgetFragment,
 > {
-  port: PortFragment;
+  port: ArgPort;
   widget: W;
   options?: PortOptions;
   parentKind?: PortKind;
@@ -27,22 +33,7 @@ export type Returns =
   | { [key: string]: Returns }
   | Returns[];
 
-export type Port = PortFragment;
-export type MappablePort = {
-  kind: PortKind;
-  assignWidget?:
-  | {
-    __typename: InputWidgetTypes;
-  }
-  | null
-  | undefined;
-  returnWidget?:
-  | {
-    __typename: ReturnWidgetTypes;
-  }
-  | null
-  | undefined;
-};
+
 
 export type InputWidgetTypes = AssignWidgetFragment["__typename"];
 export type ReturnWidgetTypes = ReturnWidgetFragment["__typename"];
@@ -51,25 +42,25 @@ export type PortEffectTypes = PortEffectFragment["__typename"];
 export interface ReturnWidgetProps<
   W extends ReturnWidgetFragment = ReturnWidgetFragment,
 > {
-  port: Port;
+  port: ReturnPort;
   widget?: W | null;
-  value?: any;
+  value?: unknown;
   options?: PortOptions;
 }
 
 export type EffectWidgetProps = {
   children: React.ReactNode;
   effect: PortEffectFragment;
-  port: Port;
+  port: ReturnPort;
 };
 
 export type Effect = PortEffectFragment;
 
 export type PortGroup = PortGroupFragment;
 
-export type RunQueryFunc<T extends any> = (options: {
+export type RunQueryFunc<T extends {[key: string]: unknown}> = (options: {
   query: string;
-  variables: any;
+  variables: T;
 }) => Promise<T>;
 
 export type PortOptions = {
@@ -79,7 +70,7 @@ export type PortOptions = {
 export interface Ward {
   search: (options: {
     query: string;
-    variables: any;
+    variables:  {[key: string]: unknown};
   }) => Promise<({ label: string; value: any } | null | undefined)[]>;
   describe?: (options: {
     identifier: string;
@@ -93,13 +84,13 @@ export type LabellablePort = {
   identifier?: string;
   nullable?: boolean;
   children?: (LabellablePort | null)[] | null;
-  choices?: Port["choices"];
+  choices?: ArgPort["choices"];
 };
 
 export type PortablePort = LabellablePort & {
   key: string;
   default?: any | null | undefined;
-  validators?: PortFragment["validators"];
+  validators?: ArgPort["validators"];
 };
 
 

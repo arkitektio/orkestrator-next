@@ -201,7 +201,7 @@ export const isInterruptable = (assignation: DetailAssignationFragment) => {
   return assignation.isDone;
 };
 
-export default asDetailQueryRoute(
+export const TPage = asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, refetch, subscribeToMore }) => {
     const navigate = useNavigate();
@@ -221,7 +221,7 @@ export default asDetailQueryRoute(
             </p>
           </div>
         }
-        object={data.assignation.id}
+        object={data.assignation}
         pageActions={
           <div className="flex gap-2">
             <Button
@@ -265,7 +265,7 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestAssignation.Komments object={data?.assignation?.id} />
+                <RekuestAssignation.Komments object={data?.assignation} />
               ),
             }}
           />
@@ -281,3 +281,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

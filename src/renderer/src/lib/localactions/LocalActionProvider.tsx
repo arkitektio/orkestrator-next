@@ -71,7 +71,7 @@ export type Condition =
   | PartnerMixtureActive;
 
 export type Structure = {
-  object: string;
+  object: {id: string , [key: string]: string | number | boolean | null };
   identifier: string;
 };
 

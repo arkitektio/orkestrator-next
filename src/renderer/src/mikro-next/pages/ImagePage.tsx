@@ -44,7 +44,7 @@ export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export default asDetailQueryRoute(
+export const ImagePage =  asDetailQueryRoute(
   useGetImageQuery,
   ({ data, refetch, subscribeToMore }) => {
     const x = data?.image?.store?.shape?.at(4);
@@ -113,7 +113,7 @@ export default asDetailQueryRoute(
         object={data?.image?.id}
         pageActions={
           <div className="flex flex-row gap-2 ml-2">
-            <MikroImage.ObjectButton object={data?.image?.id} />
+            <MikroImage.ObjectButton object={data?.image} />
             {data.image.renders && data.image.renders.length > 0 && (
               <Popover>
                 <PopoverTrigger>
@@ -286,3 +286,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default ImagePage;

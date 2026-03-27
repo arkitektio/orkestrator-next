@@ -11,7 +11,7 @@ import { KommentProps } from "./types";
 
 export const Komments = ({ identifier, object }: KommentProps) => {
   const { data, error } = useCommentsForQuery({
-    variables: { identifier, object },
+    variables: { identifier, object: object.id },
   });
 
   const [createComment] = useCreateCommentMutation({
@@ -21,7 +21,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
           query: CommentsForDocument,
           variables: {
             identifier,
-            object,
+            object: object.id,
           },
         },
         (data) => {
@@ -43,7 +43,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
         <div className="">
           <CommentEdit
             identifier={identifier}
-            object={object}
+            object={object.id}
             createComment={createComment}
           />
         </div>

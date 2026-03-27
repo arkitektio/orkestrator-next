@@ -149,7 +149,7 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
+export const TPage = asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.shortcut.action?.hash || "");
   }, [data?.shortcut.action?.hash]);
@@ -163,11 +163,11 @@ export default asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
   return (
     <RekuestShortcut.ModelPage
       title={data.shortcut.name}
-      object={data.shortcut.id}
+      object={data.shortcut}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestShortcut.Komments object={data?.shortcut?.id} />,
+            Comments: <RekuestShortcut.Komments object={data?.shortcut} />,
           }}
         />
       }
@@ -190,3 +190,6 @@ export default asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
     </RekuestShortcut.ModelPage>
   );
 });
+
+
+export default TPage;

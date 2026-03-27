@@ -299,19 +299,19 @@ const TPage = asDetailQueryRoute(
             {data.implementation.action.name} @ {data.implementation.interface}
           </>
         }
-        object={data.implementation.id}
+        object={data.implementation}
         additionalSidebars={{
           "Stats": <ImplementationStatsSidebar implementation={data.implementation.id} />,
         }}
         pageActions={
           <>
             <>
-              <RekuestAction.DetailLink object={data.implementation.action.id}>
+              <RekuestAction.DetailLink object={data.implementation.action}>
                 <Button variant="outline">Go to Action</Button>
               </RekuestAction.DetailLink>
             </>
             <>
-              <RekuestAgent.DetailLink object={data.implementation.agent.id}>
+              <RekuestAgent.DetailLink object={data.implementation.agent}>
                 <Button variant="outline">Go to Agent</Button>
               </RekuestAgent.DetailLink>
             </>

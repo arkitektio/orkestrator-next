@@ -10,11 +10,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAssignation.Smart object={item?.id}>
+    <RekuestAssignation.Smart object={item}>
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
-            <RekuestAssignation.DetailLink object={item.id} className="hover:text-primary transition-colors">
+            <RekuestAssignation.DetailLink object={item} className="hover:text-primary transition-colors">
               {item.action.name}
             </RekuestAssignation.DetailLink>
           </CardTitle>

@@ -1,15 +1,14 @@
-import { ObjectID } from "@/types";
+import { Object, Identifier } from "@/types";
 import React from "react";
-import { Identifier } from "./types";
 
 export type SmartObjectContext = {
   identifier: Identifier;
   object: string;
 };
 
-export type SmartModelPage = {
+export type SmartModelPage<T extends Object = Object> = {
   children?: React.ReactNode;
-  object: string;
+  object: T;
   title?: React.ReactNode;
   sidebars?: React.ReactNode;
   additionalSidebars?: { [key: string]: React.ReactNode };
@@ -30,8 +29,8 @@ export type SmartListPageProps = {
   callback?: (object: string) => void;
 };
 
-export type SmartObjectButtonProps = {
-  object: ObjectID;
+export type SmartObjectButtonProps<T extends Object = Object> = {
+  object: T;
   children?: React.ReactNode;
   [key: string]: any;
 };
@@ -42,7 +41,7 @@ export type SmartNewButtonProps = {
 };
 
 export type SmartEnhanceButtonProps = {
-  object?: string;
+  object?: Object;
   children?: React.ReactNode;
   [key: string]: any;
 };
@@ -52,7 +51,7 @@ export interface SmartBuilderAdapters {
   renderKnowledge: (context: SmartObjectContext) => React.ReactNode;
   renderTinyKnowledge: (context: SmartObjectContext) => React.ReactNode;
   renderModelPage: (
-    props: SmartModelPage & { identifier: Identifier },
+    props: SmartModelPage<any> & { identifier: Identifier },
   ) => React.ReactNode;
   renderListPage: (
     props: SmartListPageProps & { identifier: Identifier },

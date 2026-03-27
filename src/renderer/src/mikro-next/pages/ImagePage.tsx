@@ -110,7 +110,7 @@ export const ImagePage =  asDetailQueryRoute(
     return (
       <MikroImage.ModelPage
         title={data?.image?.name}
-        object={data?.image?.id}
+        object={data?.image}
         pageActions={
           <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image} />

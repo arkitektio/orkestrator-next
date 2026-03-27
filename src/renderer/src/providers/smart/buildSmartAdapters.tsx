@@ -1,9 +1,9 @@
 import { Object, Identifier } from "@/types";
 import React from "react";
 
-export type SmartObjectContext = {
+export type SmartObjectContext<T extends Object = Object> = {
   identifier: Identifier;
-  object: string;
+  object: T;
 };
 
 export type SmartModelPage<T extends Object = Object> = {
@@ -15,10 +15,10 @@ export type SmartModelPage<T extends Object = Object> = {
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: unknown;
-  callback?: (object: string) => void;
+  callback?: (object: T) => void;
 };
 
-export type SmartListPageProps = {
+export type SmartListPageProps<T extends Object = Object> = {
   children?: React.ReactNode;
   title?: React.ReactNode;
   help?: React.ReactNode;
@@ -26,7 +26,7 @@ export type SmartListPageProps = {
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: unknown;
-  callback?: (object: string) => void;
+  callback?: (object: T) => void;
 };
 
 export type SmartObjectButtonProps<T extends Object = Object> = {
@@ -40,8 +40,8 @@ export type SmartNewButtonProps = {
   [key: string]: any;
 };
 
-export type SmartEnhanceButtonProps = {
-  object?: Object;
+export type SmartEnhanceButtonProps<T extends Object = Object> = {
+  object: T;
   children?: React.ReactNode;
   [key: string]: any;
 };
@@ -66,8 +66,8 @@ export interface SmartBuilderAdapters {
     props: SmartEnhanceButtonProps & { identifier: Identifier },
   ) => React.ReactNode;
   useNodes: (identifier: Identifier) => any;
-  useProgress: (identifier: Identifier, object: string) => any;
-  useLive: (identifier: Identifier, object: string) => any;
+  useProgress: (identifier: Identifier, object: Object) => any;
+  useLive: (identifier: Identifier, object: Object) => any;
 }
 
 let smartBuilderAdapters: SmartBuilderAdapters = {

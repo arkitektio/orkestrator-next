@@ -12,7 +12,7 @@ export const TPage = asDetailQueryRoute(
   ({ data, refetch }) => {
     return (
       <RekuestStructurePackage.ModelPage
-        title={data.structurePackage.name}
+        title={data.structurePackage.id}
         object={data.structurePackage}
         sidebars={
           <MultiSidebar
@@ -30,7 +30,7 @@ export const TPage = asDetailQueryRoute(
               {data?.structurePackage?.key}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-              {data.structurePackage.description}
+              ccc
             </p>
           </div>
         </div>

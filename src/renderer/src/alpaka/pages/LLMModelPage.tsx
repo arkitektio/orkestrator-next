@@ -36,13 +36,13 @@ export const TPage =  asDetailQueryRoute(
             >
               Use For...
             </Button>
-            <AlpakaLLMModel.ObjectButton object={data.llmModel.id} />
+            <AlpakaLLMModel.ObjectButton object={data.llmModel} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <AlpakaLLMModel.Komments object={data.llmModel.id} />,
+              Comments: <AlpakaLLMModel.Komments object={data.llmModel} />,
             }}
           />
         }

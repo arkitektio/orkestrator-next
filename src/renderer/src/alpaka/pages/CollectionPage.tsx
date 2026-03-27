@@ -85,23 +85,23 @@ export const DocumentsExplorer = (props: {
   );
 };
 
-export default asDetailQueryRoute(
+const TPage = asDetailQueryRoute(
   useGetChromaCollectionQuery,
   ({ data, subscribeToMore }) => {
     return (
       <AlpakaCollection.ModelPage
         title={data?.chromaCollection?.name}
-        object={data.chromaCollection.id}
+        object={data.chromaCollection}
         pageActions={
           <div className="flex flex-row gap-2">
-            <AlpakaCollection.ObjectButton object={data.chromaCollection.id} />
+            <AlpakaCollection.ObjectButton object={data.chromaCollection} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <AlpakaCollection.Komments object={data.chromaCollection.id} />
+                <AlpakaCollection.Komments object={data.chromaCollection} />
               ),
             }}
           />
@@ -113,3 +113,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

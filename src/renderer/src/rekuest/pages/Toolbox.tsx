@@ -4,15 +4,15 @@ import { RekuestToolbox } from "@/linkers";
 import { useToolboxQuery } from "@/rekuest/api/graphql";
 import ShortcutList from "../components/lists/ShortcutList";
 
-export default asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
+export const ToolboxPage = asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
   return (
     <RekuestToolbox.ModelPage
       title={data.toolbox.name}
-      object={data.toolbox.id}
+      object={data.toolbox}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestToolbox.Komments object={data?.toolbox?.id} />,
+            Comments: <RekuestToolbox.Komments object={data?.toolbox} />,
           }}
         />
       }
@@ -32,3 +32,6 @@ export default asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
     </RekuestToolbox.ModelPage>
   );
 });
+
+
+export default ToolboxPage;

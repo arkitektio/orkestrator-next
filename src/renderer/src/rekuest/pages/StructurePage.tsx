@@ -7,7 +7,7 @@ import {
 import InputStructureUsageCard from "../components/cards/InputStructureUsageCard";
 import OutputStructureUsageCard from "../components/cards/OutputStructureUsageCard";
 
-export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
+export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   return (
     <RekuestStructure.ModelPage
       title={data.structure.key}
@@ -64,3 +64,6 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
     </RekuestStructure.ModelPage>
   );
 });
+
+
+export default StructurePage;

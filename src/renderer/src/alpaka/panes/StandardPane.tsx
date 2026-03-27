@@ -83,7 +83,7 @@ export const NavigationPane = (props: {}) => {
       >
         {data?.rooms.map((room, index) => (
           <AlpakaRoom.DetailLink
-            object={room.id}
+            object={room}
             key={index}
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >

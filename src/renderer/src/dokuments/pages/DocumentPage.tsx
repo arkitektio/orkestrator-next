@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { PageFragment, useGetDocumentQuery } from "../api/graphql";
 import { OcrOverlay } from "../components/OcrOverlay";
 
-export default asDetailQueryRoute(
+export const DocumentPage = asDetailQueryRoute(
   useGetDocumentQuery,
   ({ data }) => {
     const document = data?.document;
@@ -40,16 +40,16 @@ export default asDetailQueryRoute(
             <span className="text-sm text-muted-foreground">ID: {document.id}</span>
           </div>
         }
-        object={document.id}
+        object={document}
         pageActions={
           <div className="flex flex-row gap-2">
-            <DokumentsDocument.ObjectButton object={document.id} />
+            <DokumentsDocument.ObjectButton object={document} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <LovekitStream.Komments object={document.id} />,
+              Comments: <LovekitStream.Komments object={document} />,
             }}
           />
         }
@@ -137,7 +137,7 @@ export default asDetailQueryRoute(
                           OCR Overlay
                         </button>
                         <DokumentsPage.DetailLink
-                          object={selectedPage!.id}
+                          object={selectedPage}
                           className="text-sm hover:text-primary transition-colors"
                         >
                           View full page →
@@ -192,3 +192,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default DocumentPage;

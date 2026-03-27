@@ -11,7 +11,7 @@ interface Props {
 
 const TheCard = ({ item, className }: Props) => {
   return (
-    <DokumentsPage.Smart object={item?.id}>
+    <DokumentsPage.Smart object={item}>
       <Card
         className={cn(
           "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",
@@ -19,7 +19,7 @@ const TheCard = ({ item, className }: Props) => {
         )}
       >
         <DokumentsPage.DetailLink
-          object={item.id}
+          object={item}
           className=""
         >
           {item.document.title} - Page {item.index + 1}

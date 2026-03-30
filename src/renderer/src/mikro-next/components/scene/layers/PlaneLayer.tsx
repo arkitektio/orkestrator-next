@@ -13,6 +13,7 @@ import { DimSliceFragment, RequestZarrAccessDocument, RequestZarrAccessMutation,
 import { useDatalayerEndpoint, useMikro } from '@/app/Arkitekt';
 import { ca } from 'date-fns/locale';
 import { calculateChunkGrid } from '../zarr/utils';
+import { ChunkPlane } from './ChunkPlane';
 
 const InvertedHullOutline = ({
   children,
@@ -83,13 +84,16 @@ const InvertedHullOutline = ({
 
 // --- 2. The Main Frame Plane ---
 
-export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
+export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
   const client = useMikro();
   const datalayer = useDatalayerEndpoint()
 
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
+  const currentZ = useViewerStore((s) => s.currentZ);
+
+
 
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -151,8 +155,9 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
 
 
 
-        if (!isMounted) return;
-        console.log(`Initialized Zarr for Frame ${layer.id}: shape=${arr.shape}, dtype=${arr.dtype}`);
+
+
+
 
 
         const xDim = layer.xDim
@@ -263,7 +268,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
               }}>
       <InvertedHullOutline enabled={isSelected}>
         {chunks.map((chunk) => (
-          <ChunkVolume key={chunk.chunkKey} chunk={chunk} />
+          <ChunkPlane key={chunk.chunkKey} chunk={chunk} />
         ))}
       </InvertedHullOutline>
     </group>

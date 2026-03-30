@@ -7,6 +7,7 @@ import { IndexerProjection } from "./indexer";
 export type ChunkData = {
   frame_id: string;
   store: ZarrStore;
+  dimensionOrder: number[];
   chunkCoords: number[];
   indexer: IndexerProjection[];
   chunk_shape: number[];

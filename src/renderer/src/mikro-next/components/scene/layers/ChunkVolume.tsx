@@ -58,6 +58,8 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
 
         if (!isMounted || !chunkData) return;
 
+        console.log(chunk.dimensionOrder)
+
         const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
 
 

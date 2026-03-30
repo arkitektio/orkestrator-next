@@ -1849,9 +1849,14 @@ type Layer {
   color: [Int!]
   colormap: ColorMap
   id: ID!
+  intensityDim: String!
   lens: Lens!
   scene: Scene!
   status: PlacementStatus!
+  tDim: String
+  xDim: String!
+  yDim: String!
+  zDim: String
 }
 
 input LayerFilter {

@@ -17,10 +17,12 @@ interface ViewerState {
   tEnd: Date | null;
   debug: boolean;
   storeBuilder: StoreBuilder;
+  currentZ: number;
 
   setZRange: (start: number | null, end: number | null) => void;
   setTRange: (start: Date | null, end: Date | null) => void;
   setDebug: (debug: boolean) => void;
+  setCurrentZ: (z: number) => void;
 }
 
 
@@ -69,11 +71,13 @@ export const createViewerStore = () =>
     zStart: 0,
     zEnd: 100,
     tStart: null,
+    currentZ: 0,
     tEnd: null,
     debug: false,
     storeBuilder: s3Builder, // Default to fetchBuilder, can be switched to localBuilder for testing
     setZRange: (start, end) => set({ zStart: start, zEnd: end }),
     setTRange: (start, end) => set({ tStart: start, tEnd: end }),
+    setCurrentZ: (z) => set({ currentZ: z }),
     setDebug: (debug) => set({ debug }),
   }));
 

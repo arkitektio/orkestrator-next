@@ -66,7 +66,7 @@ export const ScenePanel = (props: {scene: SceneFragment}) => {
     if (worldVector.z < -1 || worldVector.z > 1) return null;
 
     // Map NDC to actual screen pixels
-    let screenPos =  {
+    const screenPos =  {
       x: (worldVector.x * 0.5 + 0.5) * viewportSize.width,
       y: (worldVector.y * -0.5 + 0.5) * viewportSize.height,
     };

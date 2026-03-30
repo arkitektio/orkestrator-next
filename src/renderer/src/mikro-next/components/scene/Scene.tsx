@@ -13,6 +13,7 @@ import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
 import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
+import { SceneVolume } from "./layers/SceneVolume";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas>{children}</Canvas>;
@@ -65,6 +66,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               {/* Layers */}
 
               <ScenePlane scene={props.scene} />
+              <SceneVolume scene={props.scene} />
 
             </SceneWrapper>
 

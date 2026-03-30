@@ -40,17 +40,10 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
   // 1. Temporal Culling Logic
   const isVisible = useMemo(() => {
-    let tVisible = true;
-    if (tStart !== null && tEnd !== null && chunk.metadata?.acquisition_time) {
-      const acqTime = new Date(chunk.metadata.acquisition_time).getTime();
-      const startTime = new Date(tStart).getTime();
-      const endTime = new Date(tEnd).getTime();
-      tVisible = acqTime >= startTime && acqTime <= endTime;
-    }
+    const tVisible = true;
     return tVisible;
   }, [chunk, tStart, tEnd]);
 
-  const [, yIdx, xIdx] = chunk.chunk_coord.split(',').map(Number);
 
   // 2. Data Fetching & 3D Texture Mapping
   useEffect(() => {
@@ -61,13 +54,14 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     const loadData = async () => {
       try {
         const arr = await open.v3(chunk.store, { kind: "array" });
-        const chunkData = await arr.getChunk([chunk.z_index, yIdx, xIdx]);
+        const chunkData = await arr.getChunk(chunk.chunkCoords);
 
         if (!isMounted || !chunkData) return;
 
+        console.log(chunk.dimensionOrder)
+
         const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
 
-        console.log(Math.max(...data), Math.min(...data));
 
         const tex = new THREE.Data3DTexture(
           data,
@@ -90,7 +84,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
         setDataScale(dataScale);
         setTexture(tex);
       } catch (error) {
-        console.error(`Failed to load chunk: ${chunk.chunk_key}`, error);
+        console.error(`Failed to load chunk: ${chunk.chunkKey}`, error);
       }
     };
 
@@ -99,7 +93,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     return () => {
       isMounted = false;
     };
-  }, [chunk, isVisible, chunkWidth, chunkHeight, chunkZSize, yIdx, xIdx, texture]);
+  }, [chunk, isVisible, chunkWidth, chunkHeight, chunkZSize, texture]);
 
   // 3. Cleanup
   useEffect(() => {
@@ -111,9 +105,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   if (!isVisible) return null;
 
   // 4. Physical 3D Placement
-  const xPos = xIdx * chunkWidth + chunkWidth / 2;
-  const yPos = -(yIdx * chunkHeight) - chunkHeight / 2;
-  const zPos = chunk.z_index * chunkZSize + chunkZSize / 2;
+  const xPos = chunk.chunkCoords[2] * chunkWidth + chunkWidth / 2;
+  const yPos = -(chunk.chunkCoords[1] * chunkHeight) - chunkHeight / 2;
+  const zPos = chunk.chunkCoords[0] * chunkZSize + chunkZSize / 2;
 
   if (!texture) {
     return (
@@ -134,14 +128,11 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           depthTest={true}
-          side={THREE.BackSide}
           uniforms={{
             colorTexture: { value: texture },
-            colormapTexture: { value: createColormapTexture(
-              Array.from({ length: 256 }, (_, i) => [i / 255, 0, 0]),
-            ) },
-            minValue: { value: chunk.array_metadata?.min_value ?? 0 },
-            maxValue: { value: chunk.array_metadata?.max_value ?? 18 },
+            colormapTexture: { value: chunk.colormapTexture },
+            minValue: { value: chunk.cLimMin },
+            maxValue: { value: chunk.cLimMax },
             opacity: { value: 1.0 },
             gamma: { value: 1.0 },
             useDiscrete: { value: 0.0 },
@@ -173,8 +164,12 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
             uniform float useDiscrete;
             uniform float dataScale;
 
-            // Explicitly declare the output color for GLSL 3
             out vec4 FragColor;
+
+            // Pseudo-random generator for jittering
+            float rand(vec2 co) {
+              return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+            }
 
             vec2 hitBox(vec3 orig, vec3 dir) {
               vec3 box_min = vec3(-0.5);
@@ -199,12 +194,22 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
               vec3 p = vOrigin + bounds.x * rayDir;
               vec3 inc = 1.0 / abs(rayDir);
-              float delta = min(inc.x, min(inc.y, inc.z)) / 200.0;
+
+              // OPTIMIZATION: Reduced step count to 100
+              float delta = min(inc.x, min(inc.y, inc.z)) / 100.0;
               vec3 step = rayDir * delta;
+
+              // OPTIMIZATION: Jitter the starting point to hide stepping artifacts
+              float jitter = rand(gl_FragCoord.xy);
+              p += step * jitter;
 
               float maxVal = 0.0;
 
-              for (int i = 0; i < 400; i++) {
+              // OPTIMIZATION: Early exit threshold based on your max contrast limit
+              float earlyExitThreshold = (maxValue / dataScale) * 0.99;
+
+              // OPTIMIZATION: Reduced max loop to 200
+              for (int i = 0; i < 200; i++) {
                 float d = distance(vOrigin, p);
                 if (d > bounds.y) break;
 
@@ -213,6 +218,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
                 float val = texture(colorTexture, uvw).r;
                 maxVal = max(maxVal, val);
+
+                // OPTIMIZATION: Early Ray Termination (ERT)
+                if (maxVal >= earlyExitThreshold) break;
 
                 p += step;
               }
@@ -231,7 +239,6 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
               if (color.a * normalized < 0.01) discard;
 
-              // Write to our new output variable instead of gl_FragColor
               FragColor = vec4(color.rgb, color.a * opacity * normalized);
             }
           `}

@@ -1,0 +1,12 @@
+fragment Scene on Scene {
+  id
+  layers {
+    ...SceneLayer
+  }
+  name
+}
+
+fragment ListScene on Scene {
+  id
+  name
+}

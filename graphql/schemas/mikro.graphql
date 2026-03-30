@@ -1,5 +1,33 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
+type ADataset {
+  """Provenance entries for this camera"""
+  dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
+  description: String
+  dims: [String!]!
+  id: ID!
+  name: String!
+}
+
+input ADatasetFilter {
+  AND: ADatasetFilter
+  DISTINCT: Boolean
+  NOT: ADatasetFilter
+  OR: ADatasetFilter
+  createdAfter: DateTime
+  createdBefore: DateTime
+  dataset: DatasetFilter
+  ids: [ID!]
+  name: StrFilterLookup
+  notDerived: Boolean = null
+  owner: ID = null
+  scope: ScopeFilter = null
+  search: String = null
+  store: ZarrStoreFilter
+  timepointViews: TimepointViewFilter
+  transformationViews: AffineTransformationViewFilter
+}
+
 interface Accessor {
   id: ID!
   keys: [String!]!
@@ -559,9 +587,51 @@ input ContinousScanViewInput {
   zMin: Int = null
 }
 
+"""
+Input type for a coordinate anchor, which specifies a list of dimension anchors to anchor to
+"""
+input CoordinateAnchorInput {
+  dimAnchors: [DimAnchorInput!]!
+
+  """
+  Optional OME metadata to associate with the choordinate anchor, which can provide additional context about the dimensions being anchored to
+  """
+  omeMetadata: OmeMetadataInput = null
+}
+
+"""Input type for creating an image from an array-like object"""
+input CreateADatasetInput {
+  anchors: [CoordinateAnchorInput!] = null
+  dimDescriptors: [DimensionDescriptorInput!]!
+  name: String!
+  scales: [ArrayLike!]!
+}
+
 input CreateDatasetInput {
   name: String!
   parent: ID = null
+}
+
+"""Input type for creating an image from an array-like object"""
+input CreateLayerInput {
+  affineMatrix: [[Float!]!] = null
+  climMax: Float = null
+  climMin: Float = null
+  color: [Int!] = null
+  colormap: ColorMap = null
+  intensityDim: String = null
+  lens: ID!
+  scene: ID!
+  tDim: String = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
+}
+
+"""Input type for creating an image from an array-like object"""
+input CreateLensInput {
+  dataset: ID!
+  slices: [SliceInput!]!
 }
 
 input CreateRGBContextInput {
@@ -572,6 +642,32 @@ input CreateRGBContextInput {
   thumbnail: ID = null
   views: [PartialRGBViewInput!] = null
   z: Int = null
+}
+
+"""Input type for creating a scene from an array-like object"""
+input CreateSceneInput {
+  blending: Blending = null
+  name: String!
+  spatialUnit: SpatialUnit = null
+  temporalUnit: TemporalUnit = null
+}
+
+type DataArray {
+  chunkShape: [Int!]!
+  id: ID!
+  level: Int!
+  scaleFactors: [Float!]
+  shape: [Int!]!
+  store: ZarrStore!
+}
+
+input DataArrayFilter {
+  AND: DataArrayFilter
+  DISTINCT: Boolean
+  NOT: DataArrayFilter
+  OR: DataArrayFilter
+  id: ID
+  level: IntFilterLookup
 }
 
 type Dataset {
@@ -742,6 +838,14 @@ type DetectorElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+Input type for a dimension anchor, which specifies a dimension and a value to anchor to
+"""
+input DimAnchorInput {
+  dim: String!
+  value: Int!
+}
+
 input DimSelector {
   end: Int = null
   index: Int = null
@@ -756,6 +860,14 @@ enum DimSelectorKind {
   INDEX
   INDICES
   SLICE
+}
+
+"""
+Input type for a dimension descriptor, which specifies a key and a kind for a dimension
+"""
+input DimensionDescriptorInput {
+  key: String!
+  kind: String!
 }
 
 type DjangoModelType {
@@ -1730,6 +1842,38 @@ type LaserElement implements OpticalElement {
   serialNumber: String
 }
 
+type Layer {
+  affineMatrix: FourByFourMatrix
+  climMax: Float
+  climMin: Float
+  color: [Int!]
+  colormap: ColorMap
+  id: ID!
+  lens: Lens!
+  scene: Scene!
+  status: PlacementStatus!
+}
+
+input LayerFilter {
+  AND: LayerFilter
+  DISTINCT: Boolean
+  NOT: LayerFilter
+  OR: LayerFilter
+  description: StrFilterLookup
+  id: ID
+  name: StrFilterLookup
+}
+
+type Lens {
+  dataset: ADataset!
+  dimCount: Int!
+  dims: [String!]!
+  id: ID!
+  shape: [Int!]!
+  size: Int!
+  slices: [Slice!]!
+}
+
 """Thin lens"""
 type LensElement implements OpticalElement {
   focalLengthMm: Float!
@@ -1749,6 +1893,15 @@ type LensElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+input LensFilter {
+  AND: LensFilter
+  DISTINCT: Boolean
+  NOT: LensFilter
+  OR: LensFilter
+  id: ID
+  name: StrFilterLookup
 }
 
 """Directed edge connecting two ports"""
@@ -2085,6 +2238,11 @@ type Mutation {
   """Attach unstructured metadata to a file"""
   attachUnstructuredMeta(input: UnstructuredMetaInput!): UnstructuredMeta!
 
+  """
+  Create a new dataset from array-like data with optional choordinate anchors and OME  metadata
+  """
+  createAdataset(input: CreateADatasetInput!): ADataset!
+
   """Create a new view for affine transformation data"""
   createAffineTransformationView(input: AffineTransformationViewInput!): AffineTransformationView!
 
@@ -2118,6 +2276,14 @@ type Mutation {
   """Create a new view for label data"""
   createLabelView(input: LabelViewInput!): LabelView!
 
+  """
+  Create a new layer from an existing lens with optional affine transformation and colormap settings
+  """
+  createLayer(input: CreateLayerInput!): Layer!
+
+  """Create a new lens from an existing dataset and slicing constraints"""
+  createLens(input: CreateLensInput!): Lens!
+
   """Create a new view for masked data"""
   createMaskView(input: MaskViewInput!): MaskView!
 
@@ -2150,6 +2316,9 @@ type Mutation {
 
   """Create a new view for region of interest data"""
   createRoiView(input: ROIViewInput!): ROIView!
+
+  """Create a new scene from an existing lens with optional blending mode"""
+  createScene(input: CreateSceneInput!): Scene!
 
   """Create a new state snapshot"""
   createSnapshot(input: SnapshotInput!): Snapshot!
@@ -2455,6 +2624,12 @@ input ObjectiveInput {
 input OffsetPaginationInput {
   limit: Int
   offset: Int! = 0
+}
+
+"""Input type for OME metadata"""
+input OmeMetadataInput {
+  """The OME metadata as a JSON string"""
+  json: String!
 }
 
 """Common interface for all optical elements"""
@@ -3341,6 +3516,13 @@ input PintMultiWellPlateInput {
   pin: Boolean!
 }
 
+enum PlacementStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+  INACTIVE
+}
+
 """A channel descriptor"""
 type PlaneInfo {
   label: String!
@@ -3404,6 +3586,8 @@ type Query {
 
   """Get all active views for a specific image"""
   activeViews(exclude: [ViewKind!], image: ID!, include: [ViewKind!], selector: Selector = null): [View!]!
+  adataset(id: ID!): ADataset!
+  adatasets(filters: ADatasetFilter, pagination: OffsetPaginationInput): [ADataset!]!
   affineTransformationViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
 
   """Get available permissions for a specific identifier"""
@@ -3421,6 +3605,8 @@ type Query {
   ): [ChannelInfo!]!
   children(filters: DatasetChildrenFilter = null, order: ChildrenOrder = null, pagination: ChildrenPaginationInput = null, parent: ID!): [DatasetImageFile!]!
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
+  dataArray(id: ID!): DataArray!
+  dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
   dataset(
     """The unique identifier of an object"""
     id: ID!
@@ -3460,6 +3646,10 @@ type Query {
   instruments: [Instrument!]!
   labelAccessors: [LabelAccessor!]!
   labelViews: [LabelView!]!
+  layer(id: ID!): Layer!
+  layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
+  lens(id: ID!): Lens!
+  lenses(filters: LensFilter, pagination: OffsetPaginationInput): [Lens!]!
 
   """Returns a single image by ID"""
   lightpathView(
@@ -3519,6 +3709,8 @@ type Query {
   rois(filters: ROIFilter, order: ROIOrder, pagination: OffsetPaginationInput): [ROI!]!
   rows(filters: RowFilter = null, pagination: TablePaginationInput = null, table: ID!): [MetricMap!]!
   scaleViews: [ScaleView!]!
+  scene(id: ID!): Scene!
+  scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
   snapshot(
     """The unique identifier of an object"""
     id: ID!
@@ -4025,6 +4217,29 @@ enum ScanDirection {
   SLICE_ROW_COLUMN_SNAKE
 }
 
+type Scene {
+  id: ID!
+
+  """Provenance entries for this camera"""
+  layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
+  name: String!
+}
+
+input SceneFilter {
+  AND: SceneFilter
+  DISTINCT: Boolean
+  NOT: SceneFilter
+  OR: SceneFilter
+  description: StrFilterLookup
+  id: ID
+  name: StrFilterLookup
+}
+
+input SceneOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
 input ScopeFilter {
   me: Boolean = null
   org: Boolean = null
@@ -4045,6 +4260,30 @@ input Selector {
   x: DimSelector = null
   y: DimSelector = null
   z: DimSelector = null
+}
+
+type Slice {
+  """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
+  dim: String!
+
+  """The starting index of the slice, or None to start from the beginning"""
+  start: Int
+
+  """The step size of the slice, or None to use the default step"""
+  step: Int
+
+  """The stopping index of the slice, or None to go to the end"""
+  stop: Int
+}
+
+"""
+Input type for a dimension descriptor, which specifies a key and a kind for a dimension
+"""
+input SliceInput {
+  dim: String!
+  start: Int = null
+  step: Int = null
+  stop: Int = null
 }
 
 type Snapshot implements Render {
@@ -4069,6 +4308,14 @@ input SnapshotInput {
   file: ImageFileLike!
   image: ID!
   name: String = null
+}
+
+enum SpatialUnit {
+  ANGSTROMS
+  MICROMETERS
+  NANOMETERS
+  PIXELS
+  UNKNOWN
 }
 
 """Spectral window in nanometers"""
@@ -4209,6 +4456,16 @@ type TableRow {
 input TableRowFilter {
   ids: [ID!] = null
   search: String = null
+}
+
+enum TemporalUnit {
+  DAYS
+  HOURS
+  MILLISECONDS
+  MINUTES
+  NANOSECONDS
+  SECONDS
+  UNKNOWN
 }
 
 """The `Vector` scalar type represents a matrix values as specified by"""
@@ -4641,7 +4898,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Snapshot | Stage | Table | TimepointView | User | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

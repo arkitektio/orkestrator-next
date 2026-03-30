@@ -395,6 +395,7 @@ export const MikroFile = buildSmart("@mikro/file", "mikro/files");
 export const MikroMesh = buildSmart("@mikro/mesh", "mikro/meshes");
 
 export const MikroStage = buildSmart("@mikro/stage", "mikro/stages");
+export const MikroScene = buildSmart("@mikro/scene", "mikro/scenes");
 export const MikroTable = buildSmart("@mikro/table", "mikro/tables");
 
 export const MikroChannelView = buildSmart(

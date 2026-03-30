@@ -21,6 +21,8 @@ import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
+import ScenesPage from "./pages/ScenesPage";
+import ScenePage from "./pages/ScenePage";
 import StandardPane from "./panes/StandardPane";
 
 export const MikroNextModule: React.FC<Props> = (props) => {
@@ -41,6 +43,8 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="rois" element={<RoisPage />} />
+          <Route path="scenes" element={<ScenesPage />} />
+          <Route path="scenes/:id" element={<ScenePage />} />
           <Route path="peerhome/:id" element={<PeerHomePage />} />
           <Route path="rois/:id" element={<RoiPage />} />
           <Route path="files/:id" element={<FilePage />} />

@@ -1,0 +1,16 @@
+fragment SceneLayer on Layer {
+  id
+  lens {
+    ...SceneLens
+  }
+  affineMatrix
+  climMin
+  climMax
+  colormap
+  color
+}
+
+fragment ListScene on Scene {
+  id
+  name
+}

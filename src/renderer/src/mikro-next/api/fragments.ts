@@ -55,6 +55,7 @@
       "WellPositionView"
     ],
     "_Entity": [
+      "ADataset",
       "AcquisitionView",
       "AffineTransformationView",
       "BigFileStore",
@@ -62,6 +63,7 @@
       "ChannelView",
       "Client",
       "ContinousScanView",
+      "DataArray",
       "Dataset",
       "DerivedView",
       "Era",
@@ -75,6 +77,8 @@
       "Instrument",
       "LabelAccessor",
       "LabelView",
+      "Layer",
+      "Lens",
       "LightpathView",
       "MaskView",
       "MediaStore",
@@ -92,6 +96,7 @@
       "ReferenceView",
       "RenderTree",
       "ScaleView",
+      "Scene",
       "Snapshot",
       "Stage",
       "Table",

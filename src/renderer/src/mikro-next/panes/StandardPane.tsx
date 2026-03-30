@@ -94,6 +94,13 @@ export const NavigationPane = () => {
             <File className="h-4 w-4" />
             Files
           </PaneLink>
+          <PaneLink
+            to="/mikro/scenes"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <File className="h-4 w-4" />
+            Scenes
+          </PaneLink>
         </SidePaneGroup>
 
         <Separator className="my-3" />

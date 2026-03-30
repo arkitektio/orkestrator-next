@@ -11,6 +11,7 @@ export type ChunkData = {
   chunkCoords: number[];
   indexer: IndexerProjection[];
   chunk_shape: number[];
+  arrayShape: number[];
   chunkKey: string;
   min_value: number;
   max_value: number;

@@ -104,10 +104,13 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
   if (!isVisible) return null;
 
-  // 4. Physical 3D Placement
-  const xPos = chunk.chunkCoords[2] * chunkWidth + chunkWidth / 2;
-  const yPos = -(chunk.chunkCoords[1] * chunkHeight) - chunkHeight / 2;
-  const zPos = chunk.chunkCoords[0] * chunkZSize + chunkZSize / 2;
+  // 4. Physical 3D Placement (centered so array origin is at 0,0,0)
+  const totalX = chunk.arrayShape[2];
+  const totalY = chunk.arrayShape[1];
+  const totalZ = chunk.arrayShape[0];
+  const xPos = chunk.chunkCoords[2] * chunkWidth + chunkWidth / 2 - totalX / 2;
+  const yPos = -(chunk.chunkCoords[1] * chunkHeight + chunkHeight / 2 - totalY / 2);
+  const zPos = chunk.chunkCoords[0] * chunkZSize + chunkZSize / 2 - totalZ / 2;
 
   if (!texture) {
     return (

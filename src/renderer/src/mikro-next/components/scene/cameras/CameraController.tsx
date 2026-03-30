@@ -29,7 +29,7 @@ export const CameraController = () => {
           makeDefault
           zoom={5}
           position={[0, 0, 500]}
-          up={[0, 0, 1]}
+          up={[0, 1, 0]}
           // Extend the clipping planes for the orthographic view as well
           near={0.1}
           far={10000}

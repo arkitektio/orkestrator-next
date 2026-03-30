@@ -202,6 +202,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
               chunkKey: chunk_coords.join("/"),
               indexer: mapping,
               chunk_shape: chunk_shape,
+              arrayShape: shape,
               min_value: min_val,
               max_value: max_val,
               cLimMin: cMinAbsolute,

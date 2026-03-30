@@ -44,7 +44,6 @@ export const Scene = (props: { scene: SceneFragment }) => {
           <PanelProvider>
             <KeyboardModeController />
             <SceneWrapper>
-              <color attach="background" args={["#020617"]} />
               <ambientLight intensity={0.7} />
               <pointLight position={[100, 100, 100]} />
 

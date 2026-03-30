@@ -199,11 +199,11 @@ const buildUseNodesQuery = (model: Identifier) => {
   return getSmartBuilderAdapters().useNodes(model);
 };
 
-const buildUseProgress = (model: Identifier, object: string) => {
+const buildUseProgress = (model: Identifier, object: Object) => {
   return getSmartBuilderAdapters().useProgress(model, object);
 };
 
-const buildUseLive = (model: Identifier, object: string) => {
+const buildUseLive = (model: Identifier, object: Object) => {
   return getSmartBuilderAdapters().useLive(model, object);
 };
 

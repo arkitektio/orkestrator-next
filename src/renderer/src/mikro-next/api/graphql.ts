@@ -2483,6 +2483,8 @@ export type Mutation = {
   updateDataset: Dataset;
   /** Update an existing image's metadata */
   updateImage: Image;
+  /** Update an existing layer's lens, scene, affine transformation, and colormap settings */
+  updateLayer: Layer;
   /** Update settings of an existing RGB context */
   updateRgbContext: RgbContext;
   /** Update an existing RGB view */
@@ -2975,6 +2977,11 @@ export type MutationUpdateDatasetArgs = {
 
 export type MutationUpdateImageArgs = {
   input: UpdateImageInput;
+};
+
+
+export type MutationUpdateLayerArgs = {
+  input: UpdateLayerInput;
 };
 
 
@@ -5252,6 +5259,23 @@ export type UpdateImageInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+/** Input type for creating an image from an array-like object */
+export type UpdateLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  colormap?: InputMaybe<ColorMap>;
+  id: Scalars['ID']['input'];
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  lens?: InputMaybe<Scalars['ID']['input']>;
+  scene?: InputMaybe<Scalars['ID']['input']>;
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateRgbContextInput = {
   c?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['ID']['input'];
@@ -6050,6 +6074,13 @@ export type EnsureInstrumentMutationVariables = Exact<{
 
 
 export type EnsureInstrumentMutation = { __typename?: 'Mutation', ensureInstrument: { __typename?: 'Instrument', id: string, name: string } };
+
+export type UpdateLaterMutationVariables = Exact<{
+  input: UpdateLayerInput;
+}>;
+
+
+export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } } };
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
   input: MultiWellPlateInput;
@@ -8756,6 +8787,39 @@ export function useEnsureInstrumentMutation(baseOptions?: ApolloReactHooks.Mutat
 export type EnsureInstrumentMutationHookResult = ReturnType<typeof useEnsureInstrumentMutation>;
 export type EnsureInstrumentMutationResult = Apollo.MutationResult<EnsureInstrumentMutation>;
 export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
+export const UpdateLaterDocument = gql`
+    mutation UpdateLater($input: UpdateLayerInput!) {
+  updateLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+    ${SceneLayerFragmentDoc}`;
+export type UpdateLaterMutationFn = Apollo.MutationFunction<UpdateLaterMutation, UpdateLaterMutationVariables>;
+
+/**
+ * __useUpdateLaterMutation__
+ *
+ * To run a mutation, you first call `useUpdateLaterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateLaterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateLaterMutation, { data, loading, error }] = useUpdateLaterMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateLaterMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateLaterMutation, UpdateLaterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateLaterMutation, UpdateLaterMutationVariables>(UpdateLaterDocument, options);
+      }
+export type UpdateLaterMutationHookResult = ReturnType<typeof useUpdateLaterMutation>;
+export type UpdateLaterMutationResult = Apollo.MutationResult<UpdateLaterMutation>;
+export type UpdateLaterMutationOptions = Apollo.BaseMutationOptions<UpdateLaterMutation, UpdateLaterMutationVariables>;
 export const CreateMultiWellPlateDocument = gql`
     mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
   createMultiWellPlate(input: $input) {

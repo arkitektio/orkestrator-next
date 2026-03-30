@@ -2532,6 +2532,11 @@ type Mutation {
   """Update an existing image's metadata"""
   updateImage(input: UpdateImageInput!): Image!
 
+  """
+  Update an existing layer's lens, scene, affine transformation, and colormap settings
+  """
+  updateLayer(input: UpdateLayerInput!): Layer!
+
   """Update settings of an existing RGB context"""
   updateRgbContext(input: UpdateRGBContextInput!): RGBContext!
 
@@ -4596,6 +4601,23 @@ input UpdateImageInput {
   id: ID!
   name: String = null
   tags: [String!] = null
+}
+
+"""Input type for creating an image from an array-like object"""
+input UpdateLayerInput {
+  affineMatrix: [[Float!]!] = null
+  climMax: Float = null
+  climMin: Float = null
+  color: [Int!] = null
+  colormap: ColorMap = null
+  id: ID!
+  intensityDim: String = null
+  lens: ID
+  scene: ID
+  tDim: String = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
 }
 
 input UpdateRGBContextInput {

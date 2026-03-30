@@ -2482,6 +2482,8 @@ export type Mutation = {
   updateDataset: Dataset;
   /** Update an existing image's metadata */
   updateImage: Image;
+  /** Update an existing layer's lens, scene, affine transformation, and colormap settings */
+  updateLayer: Layer;
   /** Update settings of an existing RGB context */
   updateRgbContext: RgbContext;
   /** Update an existing RGB view */
@@ -2974,6 +2976,11 @@ export type MutationUpdateDatasetArgs = {
 
 export type MutationUpdateImageArgs = {
   input: UpdateImageInput;
+};
+
+
+export type MutationUpdateLayerArgs = {
+  input: UpdateLayerInput;
 };
 
 
@@ -5251,6 +5258,23 @@ export type UpdateImageInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+/** Input type for creating an image from an array-like object */
+export type UpdateLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  colormap?: InputMaybe<ColorMap>;
+  id: Scalars['ID']['input'];
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  lens?: InputMaybe<Scalars['ID']['input']>;
+  scene?: InputMaybe<Scalars['ID']['input']>;
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateRgbContextInput = {
   c?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['ID']['input'];
@@ -6049,6 +6073,13 @@ export type EnsureInstrumentMutationVariables = Exact<{
 
 
 export type EnsureInstrumentMutation = { __typename?: 'Mutation', ensureInstrument: { __typename?: 'Instrument', id: string, name: string } };
+
+export type UpdateLaterMutationVariables = Exact<{
+  input: UpdateLayerInput;
+}>;
+
+
+export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } } };
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
   input: MultiWellPlateInput;
@@ -7869,6 +7900,13 @@ export const EnsureInstrumentDocument = gql`
   }
 }
     `;
+export const UpdateLaterDocument = gql`
+    mutation UpdateLater($input: UpdateLayerInput!) {
+  updateLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+    ${SceneLayerFragmentDoc}`;
 export const CreateMultiWellPlateDocument = gql`
     mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
   createMultiWellPlate(input: $input) {
@@ -8624,6 +8662,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     EnsureInstrument(variables: EnsureInstrumentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<EnsureInstrumentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<EnsureInstrumentMutation>({ document: EnsureInstrumentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'EnsureInstrument', 'mutation', variables);
+    },
+    UpdateLater(variables: UpdateLaterMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateLaterMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLaterMutation>({ document: UpdateLaterDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateLater', 'mutation', variables);
     },
     CreateMultiWellPlate(variables: CreateMultiWellPlateMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateMultiWellPlateMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateMultiWellPlateMutation>({ document: CreateMultiWellPlateDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateMultiWellPlate', 'mutation', variables);

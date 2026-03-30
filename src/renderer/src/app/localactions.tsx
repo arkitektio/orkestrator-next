@@ -31,7 +31,7 @@ const NavigateAction: Action = {
     if (!path) {
       throw new Error(`No path found for identifier ${identifier}`);
     }
-    navigate(linkBuilder(path)(object));
+    navigate(linkBuilder(path)(object.id));
   },
   collections: ["smart"],
 };
@@ -55,7 +55,7 @@ const PopOutAction: Action = {
       if (!path) {
         throw new Error(`No path found for identifier ${identifier}`);
       }
-      window.api.openSecondWindow(linkBuilder(path)(object));
+      window.api.openSecondWindow(linkBuilder(path)(object.id));
     }
   },
   collections: ["smart"],

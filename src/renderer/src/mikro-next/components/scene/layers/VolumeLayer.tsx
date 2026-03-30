@@ -149,17 +149,16 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         const yDim = layer.yDim;
         const zDim = layer.zDim;
 
-        if (xDim === undefined || yDim === undefined || zDim === undefined) {
+        if (xDim === undefined || yDim === undefined) {
           console.error(`Missing dimension information for Frame ${layer.id}`);
           return;
         }
 
-        // FIX: Look up ZPos, not IntensityPos!
         const XPos = dims.indexOf(xDim);
         const YPos = dims.indexOf(yDim);
-        const ZPos = dims.indexOf(zDim);
+        const ZPos = zDim ? dims.indexOf(zDim) : -1;
 
-        if (XPos === -1 || YPos === -1 || ZPos === -1) {
+        if (XPos === -1 || YPos === -1) {
           console.error(`Invalid spatial dimension names for Frame ${layer.id}`);
           return;
         }

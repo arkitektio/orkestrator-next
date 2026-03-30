@@ -22,9 +22,10 @@ function getTextureConfig(rawData: any) {
   console.warn("Promoting TypedArray to Float32Array for strict WebGL2 compatibility.");
   const floatData = new Float32Array(rawData);
   return { data: floatData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+
 }
 
-// --- 1. Individual Chunk Renderer with Volumetric Shader ---
+// --- 1. Individual Chunk Renderer with Single Texture Lookup ---
 export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
@@ -36,31 +37,34 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
-  const gridX = chunk.chunk_shape[xIdx];
-  const gridY = chunk.chunk_shape[yIdx];
-  const gridZ = chunk.chunk_shape[zIdx];
+  const gridX = xIdx !== -1 ? chunk.chunk_shape[xIdx] : 1;
+  const gridY = yIdx !== -1 ? chunk.chunk_shape[yIdx] : 1;
+  const gridZ = zIdx !== -1 ? chunk.chunk_shape[zIdx] : 1;
 
   const [actualSizes, setActualSizes] = useState([gridX, gridY, gridZ]);
   const [chunkWidth, chunkHeight, chunkZSize] = actualSizes;
 
-  const firstSpatial = Math.min(xIdx, yIdx, zIdx);
-  const lastSpatial = Math.max(xIdx, yIdx, zIdx);
-  const middleSpatial = [xIdx, yIdx, zIdx].find(i => i !== lastSpatial && i !== firstSpatial) as number;
+  const validSpatialIndices = useMemo(() => [xIdx, yIdx, zIdx].filter(i => i !== -1), [xIdx, yIdx, zIdx]);
+  const sortedIndices = useMemo(() => [...validSpatialIndices].sort((a, b) => a - b), [validSpatialIndices]);
+
+  const fastestIdx = sortedIndices.length > 0 ? sortedIndices[sortedIndices.length - 1] : -1;
+  const middleIdx = sortedIndices.length > 1 ? sortedIndices[sortedIndices.length - 2] : -1;
+  const slowestIdx = sortedIndices.length > 2 ? sortedIndices[sortedIndices.length - 3] : -1;
 
   const dimRemapMat = useMemo(() => {
     const mat = new THREE.Matrix3();
 
-    const uX = lastSpatial === xIdx ? 1 : 0;
-    const uY = lastSpatial === yIdx ? 1 : 0;
-    const uZ = lastSpatial === zIdx ? 1 : 0;
+    const uX = fastestIdx === xIdx ? 1 : 0;
+    const uY = fastestIdx === yIdx ? 1 : 0;
+    const uZ = fastestIdx === zIdx ? 1 : 0;
 
-    const vX = middleSpatial === xIdx ? 1 : 0;
-    const vY = middleSpatial === yIdx ? 1 : 0;
-    const vZ = middleSpatial === zIdx ? 1 : 0;
+    const vX = middleIdx === xIdx ? 1 : 0;
+    const vY = middleIdx === yIdx ? 1 : 0;
+    const vZ = middleIdx === zIdx ? 1 : 0;
 
-    const wX = firstSpatial === xIdx ? 1 : 0;
-    const wY = firstSpatial === yIdx ? 1 : 0;
-    const wZ = firstSpatial === zIdx ? 1 : 0;
+    const wX = slowestIdx === xIdx ? 1 : 0;
+    const wY = slowestIdx === yIdx ? 1 : 0;
+    const wZ = slowestIdx === zIdx ? 1 : 0;
 
     mat.set(
       uX, uY, uZ,
@@ -69,7 +73,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     );
 
     return mat;
-  }, [xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial]);
+  }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
   // 1. Temporal Culling Logic
   const isVisible = useMemo(() => {
@@ -91,13 +95,16 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
         if (!isMounted || !chunkData) return;
 
         const rawShape = chunkData.shape;
-        setActualSizes([rawShape[xIdx], rawShape[yIdx], rawShape[zIdx]]);
+        const actualX = xIdx !== -1 ? rawShape[xIdx] : 1;
+        const actualY = yIdx !== -1 ? rawShape[yIdx] : 1;
+        const actualZ = zIdx !== -1 ? rawShape[zIdx] : 1;
+        setActualSizes([actualX, actualY, actualZ]);
 
-        const texWidth = rawShape[lastSpatial];
-        const texHeight = rawShape[middleSpatial];
-        const texDepth = rawShape[firstSpatial];
+        const texWidth = fastestIdx !== -1 ? rawShape[fastestIdx] : 1;
+        const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
+        const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
-        const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
+        const { data, type,  dataScale } = getTextureConfig(chunkData.data);
 
         const tex = new THREE.Data3DTexture(
           data,
@@ -108,11 +115,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
         tex.format = THREE.RedFormat;
         tex.type = type;
-        tex.internalFormat = internalFormat;
-        tex.unpackAlignment = 1;
 
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.magFilter = THREE.NearestFilter;
         tex.wrapS = THREE.ClampToEdgeWrapping;
         tex.wrapT = THREE.ClampToEdgeWrapping;
         tex.wrapR = THREE.ClampToEdgeWrapping;
@@ -131,7 +136,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     return () => {
       isMounted = false;
     };
-  }, [chunk, isVisible, xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial, texture]);
+  }, [chunk, isVisible, xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx, texture]);
 
   // 3. Cleanup
   useEffect(() => {
@@ -143,13 +148,15 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   if (!isVisible) return null;
 
   // 4. Physical 3D Placement (centered so array origin is at 0,0,0)
-  const totalX = chunk.arrayShape[xIdx];
-  const totalY = chunk.arrayShape[yIdx];
-  const totalZ = chunk.arrayShape[zIdx];
+  const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
+  const totalX = getDimArraySize(xIdx);
+  const totalY = getDimArraySize(yIdx);
+  const totalZ = getDimArraySize(zIdx);
 
-  const xPos = chunk.chunkCoords[xIdx] * gridX + chunkWidth / 2 - totalX / 2;
-  const yPos = -(chunk.chunkCoords[yIdx] * gridY + chunkHeight / 2 - totalY / 2);
-  const zPos = chunk.chunkCoords[zIdx] * gridZ + chunkZSize / 2 - totalZ / 2;
+  const getChunkCoord = (idx: number) => idx !== -1 ? chunk.chunkCoords[idx] : 0;
+  const xPos = getChunkCoord(xIdx) * gridX + chunkWidth / 2 - totalX / 2;
+  const yPos = -(getChunkCoord(yIdx) * gridY + chunkHeight / 2 - totalY / 2);
+  const zPos = getChunkCoord(zIdx) * gridZ + chunkZSize / 2 - totalZ / 2;
 
   if (!texture) {
     return (
@@ -179,24 +186,21 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
             gamma: { value: 1.0 },
             useDiscrete: { value: 0.0 },
             dataScale: { value: dataScale },
-            dimRemap: { value: dimRemapMat }, // Now passing a Matrix3
+            dimRemap: { value: dimRemapMat },
           }}
           vertexShader={`
-            out vec3 vOrigin;
-            out vec3 vDirection;
+            out vec3 vUv;
             void main() {
-              vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-              vOrigin = vec3(inverse(modelMatrix) * vec4(cameraPosition, 1.0));
-              vDirection = position - vOrigin;
-              gl_Position = projectionMatrix * viewMatrix * worldPosition;
+              // Convert geometry position from [-0.5, 0.5] to [0.0, 1.0] for texture mapping
+              vUv = position + 0.5;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
           `}
           fragmentShader={`
             precision highp float;
             precision highp sampler3D;
 
-            in vec3 vOrigin;
-            in vec3 vDirection;
+            in vec3 vUv;
 
             uniform sampler3D colorTexture;
             uniform sampler2D colormapTexture;
@@ -210,66 +214,16 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
             out vec4 FragColor;
 
-            // Pseudo-random generator for jittering
-            float rand(vec2 co) {
-              return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-            }
-
-            vec2 hitBox(vec3 orig, vec3 dir) {
-              vec3 box_min = vec3(-0.5);
-              vec3 box_max = vec3(0.5);
-              vec3 inv_dir = 1.0 / dir;
-              vec3 tmin_tmp = (box_min - orig) * inv_dir;
-              vec3 tmax_tmp = (box_max - orig) * inv_dir;
-              vec3 tmin = min(tmin_tmp, tmax_tmp);
-              vec3 tmax = max(tmin_tmp, tmax_tmp);
-              float t0 = max(tmin.x, max(tmin.y, tmin.z));
-              float t1 = min(tmax.x, min(tmax.y, tmax.z));
-              return vec2(t0, t1);
-            }
-
             void main() {
-              vec3 rayDir = normalize(vDirection);
-              vec2 bounds = hitBox(vOrigin, rayDir);
+              vec3 uvw = vUv;
+              uvw.y = 1.0 - uvw.y; // Keep previous Y-inversion logic
 
-              if (bounds.x > bounds.y) discard;
+              // Map physical volume dimensions to underlying texture arrangement
+              vec3 texCoord = dimRemap * uvw;
 
-              bounds.x = max(bounds.x, 0.0);
-
-              float steps = 150.0;
-              float delta = 1.732 / steps;
-              vec3 step = rayDir * delta;
-
-              float t = bounds.x;
-              float jitter = rand(gl_FragCoord.xy);
-              t += delta * jitter;
-
-              vec3 p = vOrigin + t * rayDir;
-              float maxVal = 0.0;
-
-              // OPTIMIZATION: Early exit threshold based on your max contrast limit
-              float earlyExitThreshold = (maxValue / dataScale) * 0.99;
-
-              for (int i = 0; i < int(steps); i++) {
-                if (t > bounds.y) break;
-
-                vec3 uvw = p + 0.5;
-                uvw.y = 1.0 - uvw.y;
-
-                // FAST MATRIX MULTIPLICATION
-                vec3 texCoord = dimRemap * uvw;
-
-                float val = texture(colorTexture, texCoord).r;
-                maxVal = max(maxVal, val);
-
-                // OPTIMIZATION: Early Ray Termination (ERT)
-                if (maxVal >= earlyExitThreshold) break;
-
-                p += step;
-                t += delta;
-              }
-
-              float rawValue = maxVal * dataScale;
+              // Simple 3D texture sample
+              float val = texture(colorTexture, texCoord).r;
+              float rawValue = val * dataScale;
 
               float normalized;
               if (useDiscrete > 0.5) {

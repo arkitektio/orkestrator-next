@@ -39,16 +39,19 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
-  const gridX = chunk.chunk_shape[xIdx];
-  const gridY = chunk.chunk_shape[yIdx];
-  const gridZ = chunk.chunk_shape[zIdx];
+  const gridX = xIdx !== -1 ? chunk.chunk_shape[xIdx] : 1;
+  const gridY = yIdx !== -1 ? chunk.chunk_shape[yIdx] : 1;
+  const gridZ = zIdx !== -1 ? chunk.chunk_shape[zIdx] : 1;
 
   const [actualSizes, setActualSizes] = useState([gridX, gridY, gridZ]);
   const [chunkWidth, chunkHeight, chunkZSize] = actualSizes;
 
-  const firstSpatial = Math.min(xIdx, yIdx, zIdx);
-  const lastSpatial = Math.max(xIdx, yIdx, zIdx);
-  const middleSpatial = [xIdx, yIdx, zIdx].find(i => i !== lastSpatial && i !== firstSpatial) as number;
+  const validSpatialIndices = useMemo(() => [xIdx, yIdx, zIdx].filter(i => i !== -1), [xIdx, yIdx, zIdx]);
+  const sortedIndices = useMemo(() => [...validSpatialIndices].sort((a, b) => a - b), [validSpatialIndices]);
+
+  const fastestIdx = sortedIndices.length > 0 ? sortedIndices[sortedIndices.length - 1] : -1;
+  const middleIdx = sortedIndices.length > 1 ? sortedIndices[sortedIndices.length - 2] : -1;
+  const slowestIdx = sortedIndices.length > 2 ? sortedIndices[sortedIndices.length - 3] : -1;
 
   // OPTIMIZATION: Hardware-accelerated Matrix Permutation
   // This replaces the expensive branching logic in the fragment shader
@@ -56,19 +59,19 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     const mat = new THREE.Matrix3();
 
     // Row 1: Maps spatial to U
-    const uX = lastSpatial === xIdx ? 1 : 0;
-    const uY = lastSpatial === yIdx ? 1 : 0;
-    const uZ = lastSpatial === zIdx ? 1 : 0;
+    const uX = fastestIdx === xIdx ? 1 : 0;
+    const uY = fastestIdx === yIdx ? 1 : 0;
+    const uZ = fastestIdx === zIdx ? 1 : 0;
 
     // Row 2: Maps spatial to V
-    const vX = middleSpatial === xIdx ? 1 : 0;
-    const vY = middleSpatial === yIdx ? 1 : 0;
-    const vZ = middleSpatial === zIdx ? 1 : 0;
+    const vX = middleIdx === xIdx ? 1 : 0;
+    const vY = middleIdx === yIdx ? 1 : 0;
+    const vZ = middleIdx === zIdx ? 1 : 0;
 
     // Row 3: Maps spatial to W
-    const wX = firstSpatial === xIdx ? 1 : 0;
-    const wY = firstSpatial === yIdx ? 1 : 0;
-    const wZ = firstSpatial === zIdx ? 1 : 0;
+    const wX = slowestIdx === xIdx ? 1 : 0;
+    const wY = slowestIdx === yIdx ? 1 : 0;
+    const wZ = slowestIdx === zIdx ? 1 : 0;
 
     mat.set(
       uX, uY, uZ,
@@ -77,7 +80,7 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     );
 
     return mat;
-  }, [xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial]);
+  }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
   useEffect(() => {
     if (texture) return;
@@ -91,11 +94,14 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
         if (!isMounted || !chunkData) return;
 
         const rawShape = chunkData.shape;
-        setActualSizes([rawShape[xIdx], rawShape[yIdx], rawShape[zIdx]]);
+        const actualX = xIdx !== -1 ? rawShape[xIdx] : 1;
+        const actualY = yIdx !== -1 ? rawShape[yIdx] : 1;
+        const actualZ = zIdx !== -1 ? rawShape[zIdx] : 1;
+        setActualSizes([actualX, actualY, actualZ]);
 
-        const texWidth = rawShape[lastSpatial];
-        const texHeight = rawShape[middleSpatial];
-        const texDepth = rawShape[firstSpatial];
+        const texWidth = fastestIdx !== -1 ? rawShape[fastestIdx] : 1;
+        const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
+        const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
         const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
 
@@ -131,7 +137,7 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     return () => {
       isMounted = false;
     };
-  }, [chunk, texture, xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial]);
+  }, [chunk, texture, xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
   useEffect(() => {
     return () => {
@@ -139,13 +145,15 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     };
   }, [texture]);
 
-  const totalX = chunk.arrayShape[xIdx];
-  const totalY = chunk.arrayShape[yIdx];
-  const totalZ = chunk.arrayShape[zIdx];
+  const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
+  const totalX = getDimArraySize(xIdx);
+  const totalY = getDimArraySize(yIdx);
+  const totalZ = getDimArraySize(zIdx);
 
-  const xPos = chunk.chunkCoords[xIdx] * gridX + chunkWidth / 2 - totalX / 2;
-  const yPos = -(chunk.chunkCoords[yIdx] * gridY + chunkHeight / 2 - totalY / 2);
-  const zPos = chunk.chunkCoords[zIdx] * gridZ + chunkZSize / 2 - totalZ / 2;
+  const getChunkCoord = (idx: number) => idx !== -1 ? chunk.chunkCoords[idx] : 0;
+  const xPos = getChunkCoord(xIdx) * gridX + chunkWidth / 2 - totalX / 2;
+  const yPos = -(getChunkCoord(yIdx) * gridY + chunkHeight / 2 - totalY / 2);
+  const zPos = getChunkCoord(zIdx) * gridZ + chunkZSize / 2 - totalZ / 2;
 
   if (!texture) {
     return (
@@ -231,7 +239,7 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
 
               bounds.x = max(bounds.x, 0.0);
 
-              float steps = 150.0;
+              float steps = 10.0;
               float delta = 1.732 / steps;
               vec3 step = rayDir * delta;
 

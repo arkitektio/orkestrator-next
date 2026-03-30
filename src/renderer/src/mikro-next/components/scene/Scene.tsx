@@ -14,6 +14,7 @@ import { SceneFragment } from "@/mikro-next/api/graphql";
 import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
 import { SceneVolume } from "./layers/SceneVolume";
+import { useGLTF, GizmoViewcube, GizmoHelper, GizmoViewport, OrbitControls, Center, softShadows } from '@react-three/drei'
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas>{children}</Canvas>;
@@ -67,10 +68,14 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <ScenePlane scene={props.scene} />
               <SceneVolume scene={props.scene} />
 
+            <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
+        <GizmoViewport labelColor="white" axisHeadScale={1} />
+      </GizmoHelper>
             </SceneWrapper>
 
 
             <ScenePanel scene={props.scene} />
+
 
             <SceneOverlay />
           </PanelProvider>

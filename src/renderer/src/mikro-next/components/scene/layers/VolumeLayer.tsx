@@ -87,7 +87,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
   const client = useMikro();
-  const datalayer = useDatalayerEndpoint()
+  const datalayer = useDatalayerEndpoint();
 
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
 
@@ -99,7 +99,6 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
 
     const initializeZarr = async () => {
       try {
-
         const zarrArray = layer.lens.dataset.dataArrays.at(0);
         const dims = layer.lens.dataset.dims;
         if (!zarrArray) {
@@ -107,13 +106,10 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
           return;
         }
 
-
         const access = await client.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
           mutation: RequestZarrAccessDocument,
           variables: { input: { storeId: zarrArray.store.id } },
         });
-
-        console.log(`Requested Zarr access for Frame ${layer.id}`, access);
 
         const credentials = access.data?.requestZarrAccess;
         if (!credentials) {
@@ -129,9 +125,8 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         const store = await storeBuilder(credentials, datalayer);
         const arr = await open.v3(store, { kind: "array" });
 
-
         const sliceMap = layer.lens.slices.reduce((acc, slice) => {
-          acc[slice.dim] = slice
+          acc[slice.dim] = slice;
           return acc;
         }, {} as Record<string, DimSliceFragment>);
 
@@ -148,33 +143,26 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
           }
         });
 
-
-
-
         if (!isMounted) return;
-        console.log(`Initialized Zarr for Frame ${layer.id}: shape=${arr.shape}, dtype=${arr.dtype}`);
 
+        const xDim = layer.xDim;
+        const yDim = layer.yDim;
+        const zDim = layer.zDim;
 
-        const xDim = layer.xDim
-        const yDim = layer.yDim
-        const zDim = layer.zDim
-        const intensityDim = layer.intensityDim
-
-        if (xDim === undefined || yDim === undefined || zDim === undefined || intensityDim === undefined) {
+        if (xDim === undefined || yDim === undefined || zDim === undefined) {
           console.error(`Missing dimension information for Frame ${layer.id}`);
           return;
         }
 
+        // FIX: Look up ZPos, not IntensityPos!
         const XPos = dims.indexOf(xDim);
         const YPos = dims.indexOf(yDim);
-        const IntensityPos = dims.indexOf(intensityDim);
+        const ZPos = dims.indexOf(zDim);
 
-        if (XPos === -1 || YPos === -1 ||  IntensityPos === -1) {
-          console.error(`Invalid dimension names for Frame ${layer.id}`);
+        if (XPos === -1 || YPos === -1 || ZPos === -1) {
+          console.error(`Invalid spatial dimension names for Frame ${layer.id}`);
           return;
         }
-
-
 
         const shape = arr.shape;
         const dtype = arr.dtype;
@@ -186,17 +174,14 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         const cMaxAbsolute = Math.floor(max_val * (layer.climMax || 1));
 
         const generatedChunks: ChunkData[] = [];
-
         const colormapTexture = getColorMapTexture(layer);
-
-
 
         const chunks = calculateChunkGrid(selection, shape, chunk_shape);
 
         for (const { chunk_coords, mapping } of chunks) {
             generatedChunks.push({
               frame_id: layer.id,
-              dimensionOrder: [XPos, YPos, IntensityPos],
+              dimensionOrder: [XPos, YPos, ZPos], // FIX: Passed ZPos instead of IntensityPos
               store: store,
               chunkCoords: chunk_coords,
               chunkKey: chunk_coords.join("/"),
@@ -209,7 +194,6 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
               cLimMax: cMaxAbsolute,
               colormapTexture: colormapTexture
             });
-
         }
 
         setChunks(generatedChunks);
@@ -225,7 +209,6 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     };
   }, [layer, storeBuilder, client]);
 
-  // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {
     const mat = new THREE.Matrix4().identity();
     if (!layer.affineMatrix) return mat;

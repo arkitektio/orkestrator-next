@@ -172,6 +172,7 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
 
         const XPos = dims.indexOf(xDim);
         const YPos = dims.indexOf(yDim);
+        const ZPos = zDim ? dims.indexOf(zDim) : -1;
         const IntensityPos = dims.indexOf(intensityDim);
 
         if (XPos === -1 || YPos === -1 ||  IntensityPos === -1) {
@@ -201,7 +202,7 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         for (const { chunk_coords, mapping } of chunks) {
             generatedChunks.push({
               frame_id: layer.id,
-              dimensionOrder: [XPos, YPos, IntensityPos],
+              dimensionOrder: [XPos, YPos, ZPos],
               store: store,
               chunkCoords: chunk_coords,
               chunkKey: chunk_coords.join("/"),

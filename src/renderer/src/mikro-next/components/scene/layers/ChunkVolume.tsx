@@ -39,28 +39,44 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
-  // The nominal size of the chunks in the grid
   const gridX = chunk.chunk_shape[xIdx];
   const gridY = chunk.chunk_shape[yIdx];
   const gridZ = chunk.chunk_shape[zIdx];
 
-  // We need to track the *actual* size for edge chunks (e.g., Z=31 means the last chunk is 7)
   const [actualSizes, setActualSizes] = useState([gridX, gridY, gridZ]);
   const [chunkWidth, chunkHeight, chunkZSize] = actualSizes;
 
-  // C-Order mapping: identify which Zarr dimension changes fastest in memory
   const firstSpatial = Math.min(xIdx, yIdx, zIdx);
   const lastSpatial = Math.max(xIdx, yIdx, zIdx);
   const middleSpatial = [xIdx, yIdx, zIdx].find(i => i !== lastSpatial && i !== firstSpatial) as number;
 
-  // Map physical UVW axes back to Texture UVW based on memory alignment
-  const dimRemap = useMemo(() => {
-    const getSpatialAxis = (rawIdx: number) => rawIdx === xIdx ? 0.0 : rawIdx === yIdx ? 1.0 : 2.0;
-    return new THREE.Vector3(
-      getSpatialAxis(lastSpatial),   // Maps to Texture U (Width)
-      getSpatialAxis(middleSpatial), // Maps to Texture V (Height)
-      getSpatialAxis(firstSpatial)   // Maps to Texture W (Depth)
+  // OPTIMIZATION: Hardware-accelerated Matrix Permutation
+  // This replaces the expensive branching logic in the fragment shader
+  const dimRemapMat = useMemo(() => {
+    const mat = new THREE.Matrix3();
+
+    // Row 1: Maps spatial to U
+    const uX = lastSpatial === xIdx ? 1 : 0;
+    const uY = lastSpatial === yIdx ? 1 : 0;
+    const uZ = lastSpatial === zIdx ? 1 : 0;
+
+    // Row 2: Maps spatial to V
+    const vX = middleSpatial === xIdx ? 1 : 0;
+    const vY = middleSpatial === yIdx ? 1 : 0;
+    const vZ = middleSpatial === zIdx ? 1 : 0;
+
+    // Row 3: Maps spatial to W
+    const wX = firstSpatial === xIdx ? 1 : 0;
+    const wY = firstSpatial === yIdx ? 1 : 0;
+    const wZ = firstSpatial === zIdx ? 1 : 0;
+
+    mat.set(
+      uX, uY, uZ,
+      vX, vY, vZ,
+      wX, wY, wZ
     );
+
+    return mat;
   }, [xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial]);
 
   useEffect(() => {
@@ -74,13 +90,9 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
 
         if (!isMounted || !chunkData) return;
 
-        // Extract actual shape of the data returned (crucial for edge chunks)
         const rawShape = chunkData.shape;
-
-        // Update physical mesh geometry to match true data size
         setActualSizes([rawShape[xIdx], rawShape[yIdx], rawShape[zIdx]]);
 
-        // Align Texture dimensions with C-Order memory strides
         const texWidth = rawShape[lastSpatial];
         const texHeight = rawShape[middleSpatial];
         const texDepth = rawShape[firstSpatial];
@@ -127,7 +139,6 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     };
   }, [texture]);
 
-  // Use the Nominal grid size for offset placement, but Actual size for local centering
   const totalX = chunk.arrayShape[xIdx];
   const totalY = chunk.arrayShape[yIdx];
   const totalZ = chunk.arrayShape[zIdx];
@@ -164,7 +175,7 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
             gamma: { value: 1.0 },
             useDiscrete: { value: 0.0 },
             dataScale: { value: dataScale },
-            dimRemap: { value: dimRemap }, // Route memory mapping to shader
+            dimRemap: { value: dimRemapMat }, // Now passing a Matrix3
           }}
           vertexShader={`
             out vec3 vOrigin;
@@ -191,18 +202,9 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
             uniform float gamma;
             uniform float useDiscrete;
             uniform float dataScale;
-            uniform vec3 dimRemap;
+            uniform mat3 dimRemap; // Received as mat3
 
             out vec4 FragColor;
-
-            // Re-aligns spatial raymarching with the flattened memory layout
-            vec3 remapUVW(vec3 spatial) {
-              return vec3(
-                dimRemap.x < 0.5 ? spatial.x : (dimRemap.x < 1.5 ? spatial.y : spatial.z),
-                dimRemap.y < 0.5 ? spatial.x : (dimRemap.y < 1.5 ? spatial.y : spatial.z),
-                dimRemap.z < 0.5 ? spatial.x : (dimRemap.z < 1.5 ? spatial.y : spatial.z)
-              );
-            }
 
             float rand(vec2 co) {
               return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
@@ -246,8 +248,8 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
                 vec3 uvw = p + 0.5;
                 uvw.y = 1.0 - uvw.y;
 
-                // Remap before sampling
-                vec3 texCoord = remapUVW(uvw);
+                // FAST MATRIX MULTIPLICATION
+                vec3 texCoord = dimRemap * uvw;
 
                 float val = texture(colorTexture, texCoord).r;
                 maxVal = max(maxVal, val);

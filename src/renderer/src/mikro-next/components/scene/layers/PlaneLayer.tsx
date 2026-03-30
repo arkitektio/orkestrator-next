@@ -160,12 +160,12 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
 
 
 
-        const xDim = layer.xDim
-        const yDim = layer.yDim
-        const zDim = layer.zDim
-        const intensityDim = layer.intensityDim
+        const xDim = layer.xDim;
+        const yDim = layer.yDim;
+        const zDim = layer.zDim;
+        const intensityDim = layer.intensityDim;
 
-        if (xDim === undefined || yDim === undefined || zDim === undefined || intensityDim === undefined) {
+        if (xDim === undefined || yDim === undefined || intensityDim === undefined) {
           console.error(`Missing dimension information for Frame ${layer.id}`);
           return;
         }
@@ -175,9 +175,14 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         const ZPos = zDim ? dims.indexOf(zDim) : -1;
         const IntensityPos = dims.indexOf(intensityDim);
 
-        if (XPos === -1 || YPos === -1 ||  IntensityPos === -1) {
+        if (XPos === -1 || YPos === -1 || IntensityPos === -1) {
           console.error(`Invalid dimension names for Frame ${layer.id}`);
           return;
+        }
+
+        // If zDim is present, slice by currentZ
+        if (ZPos !== -1 && currentZ !== undefined) {
+          selection[ZPos] = currentZ;
         }
 
 
@@ -202,7 +207,7 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         for (const { chunk_coords, mapping } of chunks) {
             generatedChunks.push({
               frame_id: layer.id,
-              dimensionOrder: [XPos, YPos, ZPos],
+              dimensionOrder: [XPos, YPos, IntensityPos],
               store: store,
               chunkCoords: chunk_coords,
               chunkKey: chunk_coords.join("/"),
@@ -229,7 +234,7 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder, client]);
+  }, [layer, storeBuilder, client, currentZ, datalayer]);
 
   // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {

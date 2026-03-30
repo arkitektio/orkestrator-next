@@ -34,16 +34,48 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   const tStart = useViewerStore((s) => s.tStart);
   const tEnd = useViewerStore((s) => s.tEnd);
 
-  const chunkZSize = chunk.chunk_shape[0];
-  const chunkHeight = chunk.chunk_shape[1];
-  const chunkWidth = chunk.chunk_shape[2];
+  const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
+
+  const gridX = chunk.chunk_shape[xIdx];
+  const gridY = chunk.chunk_shape[yIdx];
+  const gridZ = chunk.chunk_shape[zIdx];
+
+  const [actualSizes, setActualSizes] = useState([gridX, gridY, gridZ]);
+  const [chunkWidth, chunkHeight, chunkZSize] = actualSizes;
+
+  const firstSpatial = Math.min(xIdx, yIdx, zIdx);
+  const lastSpatial = Math.max(xIdx, yIdx, zIdx);
+  const middleSpatial = [xIdx, yIdx, zIdx].find(i => i !== lastSpatial && i !== firstSpatial) as number;
+
+  const dimRemapMat = useMemo(() => {
+    const mat = new THREE.Matrix3();
+
+    const uX = lastSpatial === xIdx ? 1 : 0;
+    const uY = lastSpatial === yIdx ? 1 : 0;
+    const uZ = lastSpatial === zIdx ? 1 : 0;
+
+    const vX = middleSpatial === xIdx ? 1 : 0;
+    const vY = middleSpatial === yIdx ? 1 : 0;
+    const vZ = middleSpatial === zIdx ? 1 : 0;
+
+    const wX = firstSpatial === xIdx ? 1 : 0;
+    const wY = firstSpatial === yIdx ? 1 : 0;
+    const wZ = firstSpatial === zIdx ? 1 : 0;
+
+    mat.set(
+      uX, uY, uZ,
+      vX, vY, vZ,
+      wX, wY, wZ
+    );
+
+    return mat;
+  }, [xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial]);
 
   // 1. Temporal Culling Logic
   const isVisible = useMemo(() => {
     const tVisible = true;
     return tVisible;
   }, [chunk, tStart, tEnd]);
-
 
   // 2. Data Fetching & 3D Texture Mapping
   useEffect(() => {
@@ -58,20 +90,26 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
         if (!isMounted || !chunkData) return;
 
-        console.log(chunk.dimensionOrder)
+        const rawShape = chunkData.shape;
+        setActualSizes([rawShape[xIdx], rawShape[yIdx], rawShape[zIdx]]);
+
+        const texWidth = rawShape[lastSpatial];
+        const texHeight = rawShape[middleSpatial];
+        const texDepth = rawShape[firstSpatial];
 
         const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
 
-
         const tex = new THREE.Data3DTexture(
           data,
-          chunkWidth,
-          chunkHeight,
-          chunkZSize
+          texWidth,
+          texHeight,
+          texDepth
         );
 
         tex.format = THREE.RedFormat;
         tex.type = type;
+        tex.internalFormat = internalFormat;
+        tex.unpackAlignment = 1;
 
         tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;
@@ -93,7 +131,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     return () => {
       isMounted = false;
     };
-  }, [chunk, isVisible, chunkWidth, chunkHeight, chunkZSize, texture]);
+  }, [chunk, isVisible, xIdx, yIdx, zIdx, firstSpatial, middleSpatial, lastSpatial, texture]);
 
   // 3. Cleanup
   useEffect(() => {
@@ -105,12 +143,13 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   if (!isVisible) return null;
 
   // 4. Physical 3D Placement (centered so array origin is at 0,0,0)
-  const totalX = chunk.arrayShape[2];
-  const totalY = chunk.arrayShape[1];
-  const totalZ = chunk.arrayShape[0];
-  const xPos = chunk.chunkCoords[2] * chunkWidth + chunkWidth / 2 - totalX / 2;
-  const yPos = -(chunk.chunkCoords[1] * chunkHeight + chunkHeight / 2 - totalY / 2);
-  const zPos = chunk.chunkCoords[0] * chunkZSize + chunkZSize / 2 - totalZ / 2;
+  const totalX = chunk.arrayShape[xIdx];
+  const totalY = chunk.arrayShape[yIdx];
+  const totalZ = chunk.arrayShape[zIdx];
+
+  const xPos = chunk.chunkCoords[xIdx] * gridX + chunkWidth / 2 - totalX / 2;
+  const yPos = -(chunk.chunkCoords[yIdx] * gridY + chunkHeight / 2 - totalY / 2);
+  const zPos = chunk.chunkCoords[zIdx] * gridZ + chunkZSize / 2 - totalZ / 2;
 
   if (!texture) {
     return (
@@ -140,6 +179,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
             gamma: { value: 1.0 },
             useDiscrete: { value: 0.0 },
             dataScale: { value: dataScale },
+            dimRemap: { value: dimRemapMat }, // Now passing a Matrix3
           }}
           vertexShader={`
             out vec3 vOrigin;
@@ -166,6 +206,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
             uniform float gamma;
             uniform float useDiscrete;
             uniform float dataScale;
+            uniform mat3 dimRemap;
 
             out vec4 FragColor;
 
@@ -195,37 +236,37 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
               bounds.x = max(bounds.x, 0.0);
 
-              vec3 p = vOrigin + bounds.x * rayDir;
-              vec3 inc = 1.0 / abs(rayDir);
-
-              // OPTIMIZATION: Reduced step count to 100
-              float delta = min(inc.x, min(inc.y, inc.z)) / 100.0;
+              float steps = 150.0;
+              float delta = 1.732 / steps;
               vec3 step = rayDir * delta;
 
-              // OPTIMIZATION: Jitter the starting point to hide stepping artifacts
+              float t = bounds.x;
               float jitter = rand(gl_FragCoord.xy);
-              p += step * jitter;
+              t += delta * jitter;
 
+              vec3 p = vOrigin + t * rayDir;
               float maxVal = 0.0;
 
               // OPTIMIZATION: Early exit threshold based on your max contrast limit
               float earlyExitThreshold = (maxValue / dataScale) * 0.99;
 
-              // OPTIMIZATION: Reduced max loop to 200
-              for (int i = 0; i < 200; i++) {
-                float d = distance(vOrigin, p);
-                if (d > bounds.y) break;
+              for (int i = 0; i < int(steps); i++) {
+                if (t > bounds.y) break;
 
                 vec3 uvw = p + 0.5;
                 uvw.y = 1.0 - uvw.y;
 
-                float val = texture(colorTexture, uvw).r;
+                // FAST MATRIX MULTIPLICATION
+                vec3 texCoord = dimRemap * uvw;
+
+                float val = texture(colorTexture, texCoord).r;
                 maxVal = max(maxVal, val);
 
                 // OPTIMIZATION: Early Ray Termination (ERT)
                 if (maxVal >= earlyExitThreshold) break;
 
                 p += step;
+                t += delta;
               }
 
               float rawValue = maxVal * dataScale;

@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { CameraController } from "./cameras/CameraController";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
@@ -14,7 +14,8 @@ import { SceneFragment } from "@/mikro-next/api/graphql";
 import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
 import { SceneVolume } from "./layers/SceneVolume";
-import { useGLTF, GizmoViewcube, GizmoHelper, GizmoViewport, OrbitControls, Center, softShadows } from '@react-three/drei'
+import { GizmoHelper, GizmoViewport} from '@react-three/drei'
+import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas>{children}</Canvas>;
@@ -23,21 +24,33 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
 
 
 
-const localScope = {
-  modeStore: createModeStore(),
-  viewStore: createViewStore(),
-  viewerStore: createViewerStore(),
-  selectionStore: createSelectionStore(),
-};
+
 
 
 export const Scene = (props: { scene: SceneFragment }) => {
 
+
+  const scope = useMemo(() => {
+        const localScope = {
+      modeStore: createModeStore(),
+      viewStore: createViewStore(),
+      viewerStore: createViewerStore(),
+      selectionStore: createSelectionStore(),
+      sceneStore: createSceneStore({ scene: props.scene }),
+    };
+    return localScope;
+
+  }, [props.scene]);
+
+
+
+
   return (
-    <ModeStoreContext.Provider value={localScope.modeStore}>
-      <ViewStoreContext.Provider value={localScope.viewStore}>
-        <ViewerStoreContext.Provider value={localScope.viewerStore}>
-          <SelectionStoreContext.Provider value={localScope.selectionStore}>
+    <ModeStoreContext.Provider value={scope.modeStore}>
+      <ViewStoreContext.Provider value={scope.viewStore}>
+        <ViewerStoreContext.Provider value={scope.viewerStore}>
+          <SelectionStoreContext.Provider value={scope.selectionStore}>
+            <SceneStoreContext.Provider value={scope.sceneStore}>
 
 
 
@@ -65,8 +78,8 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
               {/* Layers */}
 
-              <ScenePlane scene={props.scene} />
-              <SceneVolume scene={props.scene} />
+              <ScenePlane />
+              <SceneVolume />
 
             <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
         <GizmoViewport labelColor="white" axisHeadScale={1} />
@@ -80,6 +93,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <SceneOverlay />
           </PanelProvider>
         </div>
+                </SceneStoreContext.Provider>
         </SelectionStoreContext.Provider>
           </ViewerStoreContext.Provider>
         </ViewStoreContext.Provider>

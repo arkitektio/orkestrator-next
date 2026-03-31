@@ -59,6 +59,12 @@ export interface ModeState {
   setDisplayMode: (mode: DisplayMode) => void;
 }
 
+
+
+
+
+
+
 export const createModeStore = () =>
   createStore<ModeState>()(
     immer((set) => ({

@@ -1,19 +1,19 @@
-import { VolumeLayer } from "./VolumeLayer";
 import { useMemo } from "react";
-import { SceneFragment } from "@/mikro-next/api/graphql";
-import { PlaneLayer } from "./PlaneLayer";
 import { useModeStore } from "../store/modeStore";
+import { useSceneStore } from "../store/sceneStore";
+import { PlaneLayer } from "./PlaneLayer";
 
 const MAX_DISPLAYABLE = 10;
 
 
-export const ScenePlane = (props: {scene: SceneFragment}) => {
+export const ScenePlane = (props) => {
   // 1. Get the descriptors directly from your backend state hook
   const mode = useModeStore((s) => s.displayMode);
+  const layers = useSceneStore((s) => s.layers);
 
   const renderedAbleFrames = useMemo(() => {
-    return props.scene.layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
-  }, [props.scene.layers]);
+    return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
+  }, [layers]);
 
   if (mode == "3D") return null;
 

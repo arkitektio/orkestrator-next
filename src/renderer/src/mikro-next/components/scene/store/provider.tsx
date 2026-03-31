@@ -13,7 +13,7 @@ import { createModeStore, ModeStoreContext } from './modeStore';
 import {
   createScansStore,
   ScansStoreContext,
-} from './scansStore';
+} from './sceneStore';
 import { createTimeStore, TimeStoreContext } from './timeStore';
 import { createViewStore, ViewStoreContext } from './viewStore';
 import { createViewerStore, ViewerStoreContext } from './viewerStore';

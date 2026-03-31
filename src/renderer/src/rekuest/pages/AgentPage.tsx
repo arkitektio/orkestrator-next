@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
-import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
+import { KabinetPod, RekuestAgent } from "@/linkers";
 import {
   AgentFragment,
   useAgentQuery,
@@ -17,7 +17,7 @@ import {
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { Activity, Box, CheckCircle, Clock, Database, Pin, PinOff, Server } from "lucide-react";
+import { Activity, Box, CheckCircle, Clock, Pin, PinOff, Server } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";
@@ -27,7 +27,7 @@ import { StateCheckoutDisplay } from "../components/State";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
 
 const stageCardClass =
-  "border-white/20 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(255,255,255,0.28))] shadow-[0_22px_50px_-30px_rgba(15,23,42,0.85)] backdrop-blur-xl dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.80),rgba(15,23,42,0.28))]";
+  "border-white/20 bg-[linear-gradient(135deg,rgba(250,247,243,0.82),rgba(250,247,243,0.32))] shadow-[0_22px_50px_-30px_rgba(26,22,19,0.45)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(40,35,32,0.82),rgba(18,16,15,0.26))]";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();

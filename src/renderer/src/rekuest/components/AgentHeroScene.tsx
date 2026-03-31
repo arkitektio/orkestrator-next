@@ -1,27 +1,35 @@
 import { Badge } from "@/components/ui/badge";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Float, Html, OrbitControls, Stage, useGLTF } from "@react-three/drei";
+import { Canvas, type ThreeElements, useFrame } from "@react-three/fiber";
+import { Center, Environment, Float, Html, OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import {
   Bloom,
   ChromaticAberration,
   EffectComposer,
   Noise,
-  Vignette,
 } from "@react-three/postprocessing";
 import { Suspense, useMemo, useRef } from "react";
 import type { Group } from "three";
 import { Box3, Vector2, Vector3 } from "three";
+
+declare module "react" {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
 
 const AGENT_SCENE_URL = "https://files.catbox.moe/sgdtnt.gltf";
 
 const AgentModel = () => {
   const groupRef = useRef<Group>(null);
   const { scene } = useGLTF(AGENT_SCENE_URL);
-  const { normalizedScene, offsetY } = useMemo(() => {
+  const fadeProgressRef = useRef(0);
+  const { normalizedScene, materials } = useMemo(() => {
     const clone = scene.clone(true);
     const box = new Box3().setFromObject(clone);
     const size = new Vector3();
     const center = new Vector3();
+    const materialsToFade: Array<{ material: { opacity: number; transparent: boolean; needsUpdate: boolean }; opacity: number }> = [];
 
     box.getSize(size);
     box.getCenter(center);
@@ -32,9 +40,39 @@ const AgentModel = () => {
     clone.scale.setScalar(scale);
     clone.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
+    clone.traverse((child) => {
+      const material = (child as { material?: unknown }).material;
+
+      if (!material) {
+        return;
+      }
+
+      const materialList = Array.isArray(material) ? material : [material];
+
+      materialList.forEach((entry) => {
+        if (!entry || typeof entry !== "object" || !("opacity" in entry)) {
+          return;
+        }
+
+        const fadeMaterial = entry as {
+          opacity: number;
+          transparent: boolean;
+          needsUpdate: boolean;
+        };
+
+        materialsToFade.push({
+          material: fadeMaterial,
+          opacity: fadeMaterial.opacity,
+        });
+        fadeMaterial.transparent = true;
+        fadeMaterial.opacity = 0;
+        fadeMaterial.needsUpdate = true;
+      });
+    });
+
     return {
       normalizedScene: clone,
-      offsetY: (-size.y * scale) / 2,
+      materials: materialsToFade,
     };
   }, [scene]);
 
@@ -43,14 +81,24 @@ const AgentModel = () => {
       return;
     }
 
+     fadeProgressRef.current = Math.min(1, fadeProgressRef.current + delta * 1.35);
+     const easedOpacity = 1 - Math.pow(1 - fadeProgressRef.current, 3);
+
+     materials.forEach(({ material, opacity }) => {
+       material.opacity = opacity * easedOpacity;
+       material.needsUpdate = true;
+     });
+
     groupRef.current.rotation.y += delta * 0.45;
     groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.7) * 0.08;
   });
 
   return (
     <Float speed={1.5} rotationIntensity={0.12} floatIntensity={0.45}>
-      <group ref={groupRef} position={[1.95, offsetY - 0.1, 0]}>
-        <primitive object={normalizedScene} />
+      <group ref={groupRef}>
+        <Center>
+          <primitive object={normalizedScene} />
+        </Center>
       </group>
     </Float>
   );
@@ -68,22 +116,30 @@ const AgentSceneFallback = () => {
 
 export const AgentHeroScene = (props: { clientId: string }) => {
   return (
-    <div className="absolute right-0 w-[400px] h-full rounded-lg overflow-hidden">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-full bg-[linear-gradient(90deg,rgba(248,250,252,0.94)_0%,rgba(248,250,252,0.82)_22%,rgba(248,250,252,0.46)_42%,rgba(248,250,252,0.12)_58%,rgba(248,250,252,0.03)_70%,transparent_82%)] dark:bg-[linear-gradient(90deg,rgba(2,6,23,0.90)_0%,rgba(2,6,23,0.78)_22%,rgba(15,23,42,0.42)_42%,rgba(15,23,42,0.14)_58%,rgba(15,23,42,0.03)_70%,transparent_82%)]" />
+    <div className="absolute inset-y-0 right-0 w-[40%] overflow-hidden rounded-lg bg-black">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-full bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.78)_18%,rgba(0,0,0,0.38)_38%,rgba(0,0,0,0.10)_56%,transparent_76%)]" />
 
+      <div className="pointer-events-none absolute right-4 top-4 z-20">
+        <Badge variant="secondary" className="border border-white/20 bg-background/50 backdrop-blur-md dark:border-white/10 dark:bg-background/30">
+          {props.clientId}
+        </Badge>
+      </div>
 
-      <div className="absolute inset-0 "/>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(255,255,255,0.16),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_46%,rgba(0,0,0,0.22)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_38%,rgba(0,0,0,0.08)_56%,rgba(0,0,0,0.22)_76%,rgba(0,0,0,0.46)_100%)]" />
+
       <Canvas
         dpr={[1, 2]}
-        camera={{  fov: 27 }}
+        camera={{ position: [0, 0.15, 6.6], fov: 28 }}
         gl={{ antialias: true, alpha: true }}
         className="!absolute inset-0"
       >
-        <fog attach="fog" args={["#020617", 8, 16]} />
+        <color attach="background" args={["#000000"]} />
+        <fog attach="fog" args={["#000000", 7.5, 13]} />
 
         <Suspense fallback={<AgentSceneFallback />}>
-          <Environment preset="city" />
-          <Stage intensity={0.9} environment={null} shadows="contact" adjustCamera={false} preset="portrait">
+          <Environment preset="studio" />
+          <Stage intensity={1} environment={null} shadows="contact" adjustCamera={false} preset="portrait">
             <AgentModel />
           </Stage>
         </Suspense>
@@ -91,14 +147,17 @@ export const AgentHeroScene = (props: { clientId: string }) => {
         <OrbitControls
           enablePan={false}
           enableZoom={false}
-          target={[1.8, 0.2, 0]}
+          target={[0, 0.1, 0]}
         />
 
         <EffectComposer>
           <Bloom luminanceThreshold={0.18} luminanceSmoothing={0.8} intensity={0.85} />
-          <ChromaticAberration offset={new Vector2(0.0014, 0.001)} />
+          <ChromaticAberration
+            offset={new Vector2(0.0014, 0.001)}
+            radialModulation={false}
+            modulationOffset={0}
+          />
           <Noise opacity={0.045} />
-          <Vignette eskil={false} offset={0.18} darkness={0.95} />
         </EffectComposer>
       </Canvas>
     </div>

@@ -14,6 +14,8 @@ import { useDatalayerEndpoint, useMikro } from '@/app/Arkitekt';
 import { ca } from 'date-fns/locale';
 import { calculateChunkGrid } from '../zarr/utils';
 import { ChunkPlane } from './ChunkPlane';
+import { useSceneStore } from '../store/sceneStore';
+import { useShallow } from 'zustand/shallow';
 
 const InvertedHullOutline = ({
   children,
@@ -84,7 +86,7 @@ const InvertedHullOutline = ({
 
 // --- 2. The Main Frame Plane ---
 
-export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
+export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
   const client = useMikro();
@@ -92,14 +94,30 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
 
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
   const currentZ = useViewerStore((s) => s.currentZ);
+  const layer = useSceneStore(useShallow((s) => s.layers.find((l) => l.id === layerId)));
 
 
 
-  const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
+  const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
+
+
+
+  const colorMapTexture = useMemo(() => {
+    if (!layer) return null;
+    console.log("Generating color map texture for layer:", layer.id, "with colormap:", layer.colormap);
+    return getColorMapTexture(layer);
+  }, [layer?.colormap]);
+
+
 
   useEffect(() => {
     let isMounted = true;
+    console.log(`Initializing PlaneLayer for Frame ${layerId}`);
+    if (!layer) {
+      console.warn(`Layer with ID ${layerId} not found in store`);
+      return;
+    }
 
     const initializeZarr = async () => {
       try {
@@ -234,12 +252,12 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder, client, currentZ, datalayer]);
+  }, [layer?.id, storeBuilder, client, currentZ, datalayer, layer?.colormap]);
 
   // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {
     const mat = new THREE.Matrix4().identity();
-    if (!layer.affineMatrix) return mat;
+    if (!layer || !layer.affineMatrix) return mat;
 
     const rawMat = layer.affineMatrix;
     if (rawMat.length === 3) {
@@ -264,6 +282,9 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return null;
   }
 
+
+
+
   return (
     <group matrix={affineMatrix} matrixAutoUpdate={false} onClick={(e) => {
                 e.stopPropagation();
@@ -275,7 +296,7 @@ export const PlaneLayer = ({ layer }: { layer: SceneLayerFragment }) => {
               }}>
       <InvertedHullOutline enabled={isSelected}>
         {chunks.map((chunk) => (
-          <ChunkPlane key={chunk.chunkKey} chunk={chunk} />
+          <ChunkPlane key={chunk.chunkKey} chunk={chunk} colorMapTexture={colorMapTexture} />
         ))}
       </InvertedHullOutline>
     </group>

@@ -7,6 +7,7 @@ import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
 import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
+import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { ScenePlane } from "./layers/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
@@ -40,7 +41,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
     };
     return localScope;
 
-  }, [props.scene]);
+  }, [props.scene.id]);
 
 
 
@@ -87,7 +88,8 @@ export const Scene = (props: { scene: SceneFragment }) => {
             </SceneWrapper>
 
 
-            <ScenePanel scene={props.scene} />
+            <ScenePanel/>
+            <LayerControlPanel />
 
 
             <SceneOverlay />

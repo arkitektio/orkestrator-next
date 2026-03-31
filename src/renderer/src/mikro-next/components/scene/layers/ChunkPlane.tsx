@@ -1,37 +1,40 @@
 import { useViewerStore } from '../store/viewerStore';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
 import { open } from 'zarrita';
 import type { ChunkData } from '../stores/types';
-import { createColormapTexture } from '../zarr/colormaps';
+import { useSceneStore } from '../store/sceneStore';
+import { useShallow } from 'zustand/shallow';
 
-// --- Helper: Memory-Efficient Texture Configuration ---
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {
   if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    // 8-bit integers are natively supported in WebGL2 as R8
     return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 255.0 };
   }
   if (rawData instanceof Float32Array) {
-    // 32-bit floats are natively supported in WebGL2 as R32F
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
   }
 
-  // FIX: Safely promote 16-bit integers to 32-bit floats.
-  // This avoids the 'Invalid enum RED' crash caused by missing R16 support.
   console.warn("Promoting TypedArray to Float32Array for strict WebGL2 compatibility.");
   const floatData = new Float32Array(rawData);
   return { data: floatData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
-
 }
 
 // --- 1. Individual Chunk Renderer with Single Texture Lookup ---
-export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
+export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
 
-  // Global viewer settings
+  // FIXED: Create a ref to directly mutate the shader uniforms
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+
+  // Grab the [0, 1] contrast limits from the store
+  const layer = useSceneStore((s) => {
+    const layer = s.layers.find((l) => l.id === chunk.frame_id);
+    return layer
+  });
+
   const tStart = useViewerStore((s) => s.tStart);
   const tEnd = useViewerStore((s) => s.tEnd);
 
@@ -75,13 +78,10 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     return mat;
   }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
-  // 1. Temporal Culling Logic
   const isVisible = useMemo(() => {
-    const tVisible = true;
-    return tVisible;
+    return true;
   }, [chunk, tStart, tEnd]);
 
-  // 2. Data Fetching & 3D Texture Mapping
   useEffect(() => {
     if (!isVisible && !texture) return;
     if (texture) return;
@@ -104,18 +104,11 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
         const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
-        const { data, type,  dataScale } = getTextureConfig(chunkData.data);
+        const { data, type, dataScale } = getTextureConfig(chunkData.data);
 
-        const tex = new THREE.Data3DTexture(
-          data,
-          texWidth,
-          texHeight,
-          texDepth
-        );
-
+        const tex = new THREE.Data3DTexture(data, texWidth, texHeight, texDepth);
         tex.format = THREE.RedFormat;
         tex.type = type;
-
         tex.minFilter = THREE.NearestFilter;
         tex.magFilter = THREE.NearestFilter;
         tex.wrapS = THREE.ClampToEdgeWrapping;
@@ -136,18 +129,48 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     return () => {
       isMounted = false;
     };
-  }, [chunk, isVisible, xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx, texture]);
+  }, [chunk]);
 
-  // 3. Cleanup
   useEffect(() => {
     return () => {
       if (texture) texture.dispose();
     };
   }, [texture]);
 
-  if (!isVisible) return null;
+  // FIXED: The high-performance update loop.
+  // Pushes new values straight to the GPU without re-rendering the component structure.
+  useEffect(() => {
+    if (materialRef.current) {
+      if (layer?.climMin !== undefined) {
+        materialRef.current.uniforms.climMin.value = layer.climMin;
+      }
+      if (layer?.climMax !== undefined) {
+        materialRef.current.uniforms.climMax.value = layer.climMax;
+      }
+      if (colorMapTexture) {
+        materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
+      }
+    }
+  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
 
-  // 4. Physical 3D Placement (centered so array origin is at 0,0,0)
+
+
+  // Define the initial uniforms ONCE using useMemo so they aren't recreated every render
+  const initialUniforms = useMemo(() => ({
+    colorTexture: { value: texture },
+    colormapTexture: { value: colorMapTexture },
+    minValue: { value: chunk.min_value },
+    maxValue: { value: chunk.max_value },
+    climMin: { value: layer?.climMin ?? 0.0 },
+    climMax: { value: layer?.climMax ?? 1.0 },
+    opacity: { value: 1.0 },
+    gamma: { value: 1.0 },
+    useDiscrete: { value: 0.0 },
+    dataScale: { value: dataScale },
+    dimRemap: { value: dimRemapMat },
+  }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
+
+
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
   const totalX = getDimArraySize(xIdx);
   const totalY = getDimArraySize(yIdx);
@@ -157,6 +180,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   const xPos = getChunkCoord(xIdx) * gridX + chunkWidth / 2 - totalX / 2;
   const yPos = -(getChunkCoord(yIdx) * gridY + chunkHeight / 2 - totalY / 2);
   const zPos = getChunkCoord(zIdx) * gridZ + chunkZSize / 2 - totalZ / 2;
+
+
+  if (!isVisible) return null;
 
   if (!texture) {
     return (
@@ -172,26 +198,16 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
       <mesh scale={[chunkWidth, chunkHeight, chunkZSize]} renderOrder={1}>
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial
+          ref={materialRef} // FIXED: Attach the ref
           glslVersion={THREE.GLSL3}
           transparent={true}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
-          depthTest={true}
-          uniforms={{
-            colorTexture: { value: texture },
-            colormapTexture: { value: chunk.colormapTexture },
-            minValue: { value: chunk.cLimMin },
-            maxValue: { value: chunk.cLimMax },
-            opacity: { value: 1.0 },
-            gamma: { value: 1.0 },
-            useDiscrete: { value: 0.0 },
-            dataScale: { value: dataScale },
-            dimRemap: { value: dimRemapMat },
-          }}
+          depthTest={false}
+          uniforms={initialUniforms} // FIXED: Pass the memoized initial state
           vertexShader={`
             out vec3 vUv;
             void main() {
-              // Convert geometry position from [-0.5, 0.5] to [0.0, 1.0] for texture mapping
               vUv = position + 0.5;
               gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
@@ -206,6 +222,8 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
+            uniform float climMin;
+            uniform float climMax;
             uniform float opacity;
             uniform float gamma;
             uniform float useDiscrete;
@@ -216,12 +234,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
             void main() {
               vec3 uvw = vUv;
-              uvw.y = 1.0 - uvw.y; // Keep previous Y-inversion logic
+              uvw.y = 1.0 - uvw.y;
 
-              // Map physical volume dimensions to underlying texture arrangement
               vec3 texCoord = dimRemap * uvw;
-
-              // Simple 3D texture sample
               float val = texture(colorTexture, texCoord).r;
               float rawValue = val * dataScale;
 
@@ -229,7 +244,10 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
               if (useDiscrete > 0.5) {
                 normalized = mod(rawValue, 256.0) / 255.0;
               } else {
-                normalized = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 0.999);
+                float baseNorm = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 1.0);
+                float climRange = max(climMax - climMin, 0.00001);
+
+                normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);
                 normalized = pow(normalized, gamma);
               }
 
@@ -242,11 +260,9 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
           `}
         />
       </mesh>
-
-      {/* Debug Wireframe Overlay */}
       {isDebug && <mesh scale={[chunkWidth, chunkHeight, chunkZSize]}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial color="cyan" wireframe={true} opacity={0.3} transparent={true} />
+        <meshBasicMaterial color="cyan" wireframe={true} opacity={0.3} transparent={true} depthWrite={false} />
       </mesh>}
     </group>
   );

@@ -23,6 +23,17 @@ fragment SceneLens on Lens {
         }
       }
     }
+    activeAnchors {
+      id
+      valueHistogram {
+        bins
+        histogram
+        min
+        max
+        p1
+        p99
+      }
+    }
 }
 
 fragment ListScene on Scene {

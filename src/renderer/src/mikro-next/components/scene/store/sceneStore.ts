@@ -21,10 +21,16 @@ interface SceneState {
   reportedContrasts: Record<string, ReportedContrast>;
 }
 
+const normalizeLayer = (layer: SceneLayerFragment): SceneLayerFragment => ({
+  ...layer,
+  climMin: layer.climMin ?? 0,
+  climMax: layer.climMax ?? 1,
+});
+
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) =>
   createStore<SceneState>()(
   immer((set) => ({
-    layers: scene.layers,
+    layers: scene.layers.map(normalizeLayer),
     updateLayer: (updatedLayer) =>
       set((state) => {
         const index = state.layers.findIndex((layer) => layer.id === updatedLayer.id);

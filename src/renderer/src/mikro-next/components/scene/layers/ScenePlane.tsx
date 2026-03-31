@@ -12,8 +12,10 @@ export const ScenePlane = (props) => {
   const layers = useSceneStore((s) => s.layers);
 
   const renderedAbleFrames = useMemo(() => {
+
+    console.log("renderedAbleFrames recalculated:", layers?.length);
     return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
-  }, [layers]);
+  }, [layers?.length]);
 
   if (mode == "3D") return null;
 
@@ -22,7 +24,7 @@ export const ScenePlane = (props) => {
   return (
     <group>
       {renderedAbleFrames?.map((frame) => (
-        <PlaneLayer key={frame.id} layer={frame} />
+        <PlaneLayer key={frame.id} layerId={frame.id}/>
       ))}
     </group>
   );

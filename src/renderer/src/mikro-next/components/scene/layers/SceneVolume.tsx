@@ -15,7 +15,7 @@ export const SceneVolume = () => {
 
   const renderedAbleFrames = useMemo(() => {
     return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
-  }, [layers]);
+  }, [layers?.length]);
 
   if (mode == "2D") return null;
 

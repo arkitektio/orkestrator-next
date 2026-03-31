@@ -625,11 +625,22 @@ export type ContinousScanViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CoordinateAnchor = {
+  __typename?: 'CoordinateAnchor';
+  chunkShape: Array<Scalars['Int']['output']>;
+  dims: Array<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  optikitState?: Maybe<OptikitState>;
+  shape: Array<Scalars['Int']['output']>;
+  store: ZarrStore;
+  valueHistogram?: Maybe<ValueHistogram>;
+};
+
 /** Input type for a coordinate anchor, which specifies a list of dimension anchors to anchor to */
 export type CoordinateAnchorInput = {
   dimAnchors: Array<DimAnchorInput>;
-  /** Optional OME metadata to associate with the choordinate anchor, which can provide additional context about the dimensions being anchored to */
   omeMetadata?: InputMaybe<OmeMetadataInput>;
+  valueHistogram?: InputMaybe<ValueHistogramInput>;
 };
 
 /** Input type for creating an image from an array-like object */
@@ -1921,6 +1932,7 @@ export type LayerFilter = {
 
 export type Lens = {
   __typename?: 'Lens';
+  activeAnchors: Array<CoordinateAnchor>;
   dataset: ADataset;
   dimCount: Scalars['Int']['output'];
   dims: Array<Scalars['String']['output']>;
@@ -3220,6 +3232,15 @@ export type OpticsViewInput = {
   zMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum z coordinate of the view */
   zMin?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type OptikitState = {
+  __typename?: 'OptikitState';
+  chunkShape: Array<Scalars['Int']['output']>;
+  dims: Array<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  shape: Array<Scalars['Int']['output']>;
+  store: ZarrStore;
 };
 
 export enum Ordering {
@@ -5346,6 +5367,33 @@ export type UserObjectPermission = {
   user: User;
 };
 
+export type ValueHistogram = {
+  __typename?: 'ValueHistogram';
+  bins: Array<Scalars['Float']['output']>;
+  histogram: Array<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  p1?: Maybe<Scalars['Float']['output']>;
+  p99?: Maybe<Scalars['Float']['output']>;
+};
+
+/** Input type for a value histogram, which specifies the histogram of pixel values along certain dimensions to provide additional context about the distribution of pixel values in an image */
+export type ValueHistogramInput = {
+  /** The bin indices of the histogram (x values) */
+  bins: Array<Scalars['Float']['input']>;
+  /** The histogram of the pixel values (y values) */
+  histogram: Array<Scalars['Float']['input']>;
+  /** The maximum pixel value of the histogram */
+  max?: InputMaybe<Scalars['Float']['input']>;
+  /** The minimum pixel value of the histogram */
+  min?: InputMaybe<Scalars['Float']['input']>;
+  /** The 1st percentile pixel value of the histogram */
+  p1?: InputMaybe<Scalars['Float']['input']>;
+  /** The 99th percentile pixel value of the histogram */
+  p99?: InputMaybe<Scalars['Float']['input']>;
+};
+
 /** 3D vector or point in space */
 export type Vec3 = {
   __typename?: 'Vec3';
@@ -5583,7 +5631,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -5638,13 +5686,13 @@ export type InstanceMaskViewLabelFragment = { __typename?: 'InstanceMaskViewLabe
 
 export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
 
-export type SceneLayerFragment = { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } };
+export type SceneLayerFragment = { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } };
 
 export type ListSceneFragment = { __typename?: 'Scene', id: string, name: string };
 
 export type DimSliceFragment = { __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null };
 
-export type SceneLensFragment = { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } };
+export type SceneLensFragment = { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> };
 
 type OpticalElement_BeamSplitterElement_Fragment = { __typename?: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
 
@@ -5724,7 +5772,7 @@ export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, v
 
 export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
-export type SceneFragment = { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } }> };
+export type SceneFragment = { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> };
 
 export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
 
@@ -6080,7 +6128,7 @@ export type UpdateLaterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } } };
+export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } } };
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
   input: MultiWellPlateInput;
@@ -6545,7 +6593,7 @@ export type GetSceneQueryVariables = Exact<{
 }>;
 
 
-export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } } }> } };
+export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> } };
 
 export type GetScenesQueryVariables = Exact<{
   filters?: InputMaybe<SceneFilter>;
@@ -7240,6 +7288,17 @@ export const SceneLensFragmentDoc = gql`
       store {
         ...ZarrStore
       }
+    }
+  }
+  activeAnchors {
+    id
+    valueHistogram {
+      bins
+      histogram
+      min
+      max
+      p1
+      p99
     }
   }
 }

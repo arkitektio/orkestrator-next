@@ -481,7 +481,9 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder, client]);
+  }, [layer, storeBuilder, client, datalayer, layer.colormap]);
+
+
 
   const affineMatrix = useMemo(() => {
     const mat = new THREE.Matrix4().identity();

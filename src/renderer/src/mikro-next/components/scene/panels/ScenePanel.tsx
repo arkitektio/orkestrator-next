@@ -1,11 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useSelectionStore } from "../store/layerStore";
 import { useViewStore } from "../store/viewStore";
-import { useMemo, useState } from "react";
+import { useSceneStore } from "../store/sceneStore";
+import { useMemo } from "react";
 import * as THREE from "three";
-import { SceneFragment, SceneLayerFragment, UpdateLaterDocument, UpdateLaterMutation, UpdateLaterMutationVariables } from "@/mikro-next/api/graphql";
-import { useMikro } from "@/app/Arkitekt";
+import { SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 
 const DimBadge = ({ label, value }: { label: string; value: string | null | undefined }) => (
   <div className="flex items-center gap-1">
@@ -14,34 +15,24 @@ const DimBadge = ({ label, value }: { label: string; value: string | null | unde
   </div>
 );
 
-const LayerDimForm = ({ layer }: { layer: SceneLayerFragment }) => {
-  const client = useMikro();
-  const [rolling, setRolling] = useState(false);
-
-  const rollDimensions = async () => {
-    setRolling(true);
-    try {
-      // Collect assigned dims in order: [xDim, yDim, zDim, intensityDim]
-      const keys = ["xDim", "yDim", "zDim", "intensityDim"] as const;
-      const values = keys.map((k) => layer[k]);
-      // Roll: shift values left by one position
-      const rolled = [...values.slice(1), values[0]];
-
-      await client.mutate<UpdateLaterMutation, UpdateLaterMutationVariables>({
-        mutation: UpdateLaterDocument,
-        variables: {
-          input: {
-            id: layer.id,
-            xDim: rolled[0],
-            yDim: rolled[1],
-            zDim: rolled[2],
-            intensityDim: rolled[3],
-          },
-        },
-      });
-    } finally {
-      setRolling(false);
-    }
+const LayerDimForm = ({
+  layer,
+  onUpdate,
+}: {
+  layer: SceneLayerFragment;
+  onUpdate: (updatedLayer: SceneLayerFragment) => void;
+}) => {
+  const rollDimensions = () => {
+    const keys = ["xDim", "yDim", "zDim", "intensityDim"] as const;
+    const values = keys.map((k) => layer[k]);
+    const rolled = [...values.slice(1), values[0]];
+    onUpdate({
+      ...layer,
+      xDim: rolled[0] ?? layer.xDim,
+      yDim: rolled[1] ?? layer.yDim,
+      zDim: rolled[2] ?? null,
+      intensityDim: rolled[3] ?? layer.intensityDim,
+    });
   };
 
   return (
@@ -56,21 +47,44 @@ const LayerDimForm = ({ layer }: { layer: SceneLayerFragment }) => {
         variant="outline"
         size="xs"
         onClick={rollDimensions}
-        disabled={rolling}
       >
-        {rolling ? "Rolling..." : "Roll Dims"}
+        Roll Dims
       </Button>
     </div>
   );
 };
 
-export const ScenePanel = (props: { scene: SceneFragment }) => {
+const ContrastLimitForm = ({
+  layer,
+  onUpdate,
+}: {
+  layer: SceneLayerFragment;
+  onUpdate: (updatedLayer: SceneLayerFragment) => void;
+}) => {
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-muted-foreground text-xs">Contrast Limits</span>
+      </div>
+      <Button variant="outline" size="xs" onClick={() => onUpdate({ ...layer, climMin: 0.0, climMax: 0.2 })}>
+        Reset
+      </Button>
+
+
+    </div>
+  );
+};
+
+export const ScenePanel = (props) => {
   const selectedFrameId = useSelectionStore((s) => s.selectedLayerId);
+  const updateLayer = useSceneStore((s) => s.updateLayer);
+  const layers = useSceneStore((s) => s.layers);
 
   const viewProjectionMatrix = useViewStore((s) => s.viewProjectionMatrix);
   const viewportSize = useViewStore((s) => s.viewportSize);
 
-  const selectedLayer = props.scene.layers.find((l) => l.id === selectedFrameId);
+  const selectedLayer = layers?.find((l) => l.id === selectedFrameId);
   const affineMatrix = selectedLayer?.affineMatrix;
   const hasAffineMatrix = !!affineMatrix;
 
@@ -102,7 +116,7 @@ export const ScenePanel = (props: { scene: SceneFragment }) => {
     };
   }, [affineMatrix, viewProjectionMatrix, viewportSize, hasAffineMatrix, selectedFrameId]);
 
-  if (!screenPos || !selectedLayer) {
+  if (!screenPos) {
     return null;
   }
 
@@ -111,7 +125,8 @@ export const ScenePanel = (props: { scene: SceneFragment }) => {
       className="absolute text-xs scale-90 z-20 shadow-2xl backdrop-blur-md p-4 flex flex-col gap-2"
       style={{ left: screenPos.x, top: screenPos.y }}
     >
-      <LayerDimForm layer={selectedLayer} />
+      <LayerDimForm layer={selectedLayer} onUpdate={updateLayer} />
+      <ContrastLimitForm layer={selectedLayer} onUpdate={updateLayer} />
     </Card>
   );
 };

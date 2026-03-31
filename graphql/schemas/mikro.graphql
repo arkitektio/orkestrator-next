@@ -587,16 +587,23 @@ input ContinousScanViewInput {
   zMin: Int = null
 }
 
+type CoordinateAnchor {
+  chunkShape: [Int!]!
+  dims: [String!]!
+  id: ID!
+  optikitState: OptikitState
+  shape: [Int!]!
+  store: ZarrStore!
+  valueHistogram: ValueHistogram
+}
+
 """
 Input type for a coordinate anchor, which specifies a list of dimension anchors to anchor to
 """
 input CoordinateAnchorInput {
   dimAnchors: [DimAnchorInput!]!
-
-  """
-  Optional OME metadata to associate with the choordinate anchor, which can provide additional context about the dimensions being anchored to
-  """
   omeMetadata: OmeMetadataInput = null
+  valueHistogram: ValueHistogramInput = null
 }
 
 """Input type for creating an image from an array-like object"""
@@ -1870,6 +1877,7 @@ input LayerFilter {
 }
 
 type Lens {
+  activeAnchors: [CoordinateAnchor!]!
   dataset: ADataset!
   dimCount: Int!
   dims: [String!]!
@@ -2779,6 +2787,14 @@ input OpticsViewInput {
 
   """The minimum z coordinate of the view"""
   zMin: Int = null
+}
+
+type OptikitState {
+  chunkShape: [Int!]!
+  dims: [String!]!
+  id: ID!
+  shape: [Int!]!
+  store: ZarrStore!
 }
 
 enum Ordering {
@@ -4612,8 +4628,8 @@ input UpdateLayerInput {
   colormap: ColorMap = null
   id: ID!
   intensityDim: String = null
-  lens: ID
-  scene: ID
+  lens: ID = null
+  scene: ID = null
   tDim: String = null
   xDim: String = null
   yDim: String = null
@@ -4698,6 +4714,39 @@ type User {
 type UserObjectPermission {
   permission: String!
   user: User!
+}
+
+type ValueHistogram {
+  bins: [Float!]!
+  histogram: [Float!]!
+  id: ID!
+  max: Float
+  min: Float
+  p1: Float
+  p99: Float
+}
+
+"""
+Input type for a value histogram, which specifies the histogram of pixel values along certain dimensions to provide additional context about the distribution of pixel values in an image
+"""
+input ValueHistogramInput {
+  """The bin indices of the histogram (x values)"""
+  bins: [Float!]!
+
+  """The histogram of the pixel values (y values)"""
+  histogram: [Float!]!
+
+  """The maximum pixel value of the histogram"""
+  max: Float = null
+
+  """The minimum pixel value of the histogram"""
+  min: Float = null
+
+  """The 1st percentile pixel value of the histogram"""
+  p1: Float = null
+
+  """The 99th percentile pixel value of the histogram"""
+  p99: Float = null
 }
 
 """3D vector or point in space"""
@@ -4925,7 +4974,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

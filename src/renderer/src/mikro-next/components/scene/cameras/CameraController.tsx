@@ -1,7 +1,6 @@
 import { useModeStore } from "../store/modeStore";
 
 import {
-  MapControls,
   OrbitControls,
   OrthographicCamera,
   PerspectiveCamera,
@@ -47,7 +46,13 @@ export const CameraController = () => {
           enableZoom={true}
         />
       ) : (
-        <MapControls makeDefault enableZoom={true} enableRotate={false} />
+        <OrbitControls
+          makeDefault
+          enableRotate={false}
+          enablePan={interactionMode === "PAN"}
+          enableZoom={true}
+          screenSpacePanning={true}
+        />
       )}
     </>
   );

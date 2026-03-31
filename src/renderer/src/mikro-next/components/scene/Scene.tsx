@@ -8,6 +8,7 @@ import { SceneOverlay } from "./overlays/SceneOverlay";
 import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
+import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { ScenePlane } from "./layers/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
@@ -90,6 +91,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
             <ScenePanel/>
             <LayerControlPanel />
+            <ZSliderPanel />
 
 
             <SceneOverlay />

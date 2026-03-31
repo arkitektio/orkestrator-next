@@ -16,6 +16,7 @@ import { calculateChunkGrid } from '../zarr/utils';
 import { ChunkPlane } from './ChunkPlane';
 import { useSceneStore } from '../store/sceneStore';
 import { useShallow } from 'zustand/shallow';
+import { buildAffineMatrix, physicalToVoxelZ } from '../panels/layer/affine-utils';
 
 const InvertedHullOutline = ({
   children,
@@ -198,9 +199,11 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
           return;
         }
 
-        // If zDim is present, slice by currentZ
+        // Convert physical Z (currentZ) to the closest voxel Z for this layer
         if (ZPos !== -1 && currentZ !== undefined) {
-          selection[ZPos] = currentZ;
+          const layerAffine = buildAffineMatrix(layer);
+          const maxVoxelZ = arr.shape[ZPos] - 1;
+          selection[ZPos] = physicalToVoxelZ(layerAffine, currentZ, maxVoxelZ);
         }
 
 
@@ -256,26 +259,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
   // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {
-    const mat = new THREE.Matrix4().identity();
-    if (!layer || !layer.affineMatrix) return mat;
-
-    const rawMat = layer.affineMatrix;
-    if (rawMat.length === 3) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], 0, rawMat[0][2],
-        rawMat[1][0], rawMat[1][1], 0, rawMat[1][2],
-        0, 0, 1, 0,
-        rawMat[2][0], rawMat[2][1], 0, rawMat[2][2]
-      );
-    } else if (rawMat.length === 4) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], rawMat[0][2], rawMat[0][3],
-        rawMat[1][0], rawMat[1][1], rawMat[1][2], rawMat[1][3],
-        rawMat[2][0], rawMat[2][1], rawMat[2][2], rawMat[2][3],
-        rawMat[3][0], rawMat[3][1], rawMat[3][2], rawMat[3][3]
-      );
-    }
-    return mat;
+    if (!layer) return new THREE.Matrix4().identity();
+    return buildAffineMatrix(layer);
   }, [layer]);
 
   if (!chunks) {

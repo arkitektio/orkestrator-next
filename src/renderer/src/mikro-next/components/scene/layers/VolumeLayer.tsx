@@ -92,6 +92,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
 
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
+  const isDebug = useViewerStore((state) => state.debug);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   useEffect(() => {
@@ -244,7 +245,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
                   setSelectedLayerId(layer.id);
                 }
               }}>
-      <InvertedHullOutline enabled={isSelected}>
+      <InvertedHullOutline enabled={isSelected && isDebug}>
         {chunks.map((chunk) => (
           <ChunkVolume key={chunk.chunkKey} chunk={chunk} />
         ))}

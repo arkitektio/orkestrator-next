@@ -7,6 +7,7 @@ import { mapDTypeToMinMax } from '../stores/utils';
 import { getColorMapTexture } from '../zarr/colormaps';
 import { useSelectionStore } from '../store/layerStore';
 import { useViewerStore } from '../store/viewerStore';
+import { useSceneStore } from '../store/sceneStore'; // Added to fetch layer properties
 import {
   DimSliceFragment,
   RequestZarrAccessDocument,
@@ -32,10 +33,16 @@ function getTextureConfig(rawData: any) {
 }
 
 // --- 1. Individual Chunk Renderer with Volumetric Shader ---
-export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
+export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
+
+  // Reference for direct GPU uniform updates
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+
+  // Grab live layer state for contrast limits
+  const layer = useSceneStore((s) => s.layers.find((l) => l.id === chunk.frame_id));
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
@@ -54,21 +61,17 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
   const slowestIdx = sortedIndices.length > 2 ? sortedIndices[sortedIndices.length - 3] : -1;
 
   // OPTIMIZATION: Hardware-accelerated Matrix Permutation
-  // This replaces the expensive branching logic in the fragment shader
   const dimRemapMat = useMemo(() => {
     const mat = new THREE.Matrix3();
 
-    // Row 1: Maps spatial to U
     const uX = fastestIdx === xIdx ? 1 : 0;
     const uY = fastestIdx === yIdx ? 1 : 0;
     const uZ = fastestIdx === zIdx ? 1 : 0;
 
-    // Row 2: Maps spatial to V
     const vX = middleIdx === xIdx ? 1 : 0;
     const vY = middleIdx === yIdx ? 1 : 0;
     const vZ = middleIdx === zIdx ? 1 : 0;
 
-    // Row 3: Maps spatial to W
     const wX = slowestIdx === xIdx ? 1 : 0;
     const wY = slowestIdx === yIdx ? 1 : 0;
     const wZ = slowestIdx === zIdx ? 1 : 0;
@@ -145,6 +148,37 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
     };
   }, [texture]);
 
+  // HIGH-PERFORMANCE UPDATE LOOP
+  // Pipes dynamic values directly to the shader without rebuilding the component
+  useEffect(() => {
+    if (materialRef.current) {
+      if (layer?.climMin !== undefined) {
+        materialRef.current.uniforms.climMin.value = layer.climMin;
+      }
+      if (layer?.climMax !== undefined) {
+        materialRef.current.uniforms.climMax.value = layer.climMax;
+      }
+      if (colorMapTexture) {
+        materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
+      }
+    }
+  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
+
+  // Memoize static or heavily-dependent initial uniforms
+  const initialUniforms = useMemo(() => ({
+    colorTexture: { value: texture },
+    colormapTexture: { value: colorMapTexture },
+    minValue: { value: chunk.min_value ?? 0.0 },
+    maxValue: { value: chunk.max_value ?? 1.0 },
+    climMin: { value: layer?.climMin ?? 0.0 },
+    climMax: { value: layer?.climMax ?? 1.0 },
+    opacity: { value: 1.0 },
+    gamma: { value: 1.0 },
+    useDiscrete: { value: 0.0 },
+    dataScale: { value: dataScale },
+    dimRemap: { value: dimRemapMat },
+  }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
+
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
   const totalX = getDimArraySize(xIdx);
   const totalY = getDimArraySize(yIdx);
@@ -169,22 +203,13 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
       <mesh scale={[chunkWidth, chunkHeight, chunkZSize]} renderOrder={1}>
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial
+          ref={materialRef} // Attached ref for dynamic updates
           glslVersion={THREE.GLSL3}
           transparent={true}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           depthTest={true}
-          uniforms={{
-            colorTexture: { value: texture },
-            colormapTexture: { value: chunk.colormapTexture },
-            minValue: { value: chunk.cLimMin },
-            maxValue: { value: chunk.cLimMax },
-            opacity: { value: 1.0 },
-            gamma: { value: 1.0 },
-            useDiscrete: { value: 0.0 },
-            dataScale: { value: dataScale },
-            dimRemap: { value: dimRemapMat }, // Now passing a Matrix3
-          }}
+          uniforms={initialUniforms}
           vertexShader={`
             out vec3 vOrigin;
             out vec3 vDirection;
@@ -206,6 +231,8 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
+            uniform float climMin;
+            uniform float climMax;
             uniform float opacity;
             uniform float gamma;
             uniform float useDiscrete;
@@ -272,7 +299,11 @@ export const ChunkVolume = ({ chunk }: { chunk: ChunkData }) => {
               if (useDiscrete > 0.5) {
                 normalized = mod(rawValue, 256.0) / 255.0;
               } else {
-                normalized = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 0.999);
+                // Incorporate dynamic climMin and climMax into volumetric rendering
+                float baseNorm = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 1.0);
+                float climRange = max(climMax - climMin, 0.00001);
+
+                normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);
                 normalized = pow(normalized, gamma);
               }
 
@@ -357,175 +388,3 @@ const InvertedHullOutline = ({
   return <group ref={groupRef}>{children}</group>;
 };
 
-// --- 3. The Main Frame Plane ---
-export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
-  const [chunks, setChunks] = useState<ChunkData[] | null>(null);
-
-  const client = useMikro();
-  const datalayer = useDatalayerEndpoint();
-
-  const storeBuilder = useViewerStore((s) => s.storeBuilder);
-
-  const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
-  const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeZarr = async () => {
-      try {
-        const zarrArray = layer.lens.dataset.dataArrays.at(0);
-        const dims = layer.lens.dataset.dims;
-        if (!zarrArray) {
-          console.warn(`No data arrays found for Frame ${layer.id}`);
-          return;
-        }
-
-        const access = await client.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
-          mutation: RequestZarrAccessDocument,
-          variables: { input: { storeId: zarrArray.store.id } },
-        });
-
-        const credentials = access.data?.requestZarrAccess;
-        if (!credentials) {
-          console.error(`Failed to obtain Zarr access for Frame ${layer.id}`);
-          return;
-        }
-
-        if (!datalayer) {
-          console.error(`Datalayer endpoint is not defined`);
-          return;
-        }
-
-        const store = await storeBuilder(credentials, datalayer);
-        const arr = await open.v3(store, { kind: "array" });
-
-        const sliceMap = layer.lens.slices.reduce((acc, slice) => {
-          acc[slice.dim] = slice;
-          return acc;
-        }, {} as Record<string, DimSliceFragment>);
-
-        const selection: (null | Slice | number)[] = dims.map(dim => {
-          const slice = sliceMap[dim];
-          if (slice) {
-            return {
-              start: slice.start ?? 0,
-              stop: slice.stop ?? undefined,
-              step: slice.step ?? 1
-            } as Slice;
-          } else {
-            return null;
-          }
-        });
-
-        if (!isMounted) return;
-
-        const xDim = layer.xDim;
-        const yDim = layer.yDim;
-        const zDim = layer.zDim;
-
-        if (xDim === undefined || yDim === undefined || zDim === undefined) {
-          console.error(`Missing dimension information for Frame ${layer.id}`);
-          return;
-        }
-
-        const XPos = dims.indexOf(xDim);
-        const YPos = dims.indexOf(yDim);
-        const ZPos = dims.indexOf(zDim);
-
-        if (XPos === -1 || YPos === -1 || ZPos === -1) {
-          console.error(`Invalid spatial dimension names for Frame ${layer.id}`);
-          return;
-        }
-
-        const shape = arr.shape;
-        const dtype = arr.dtype;
-        const chunk_shape = arr.chunks;
-
-        const [min_val, max_val] = mapDTypeToMinMax(dtype);
-
-        const cMinAbsolute = Math.ceil(min_val * (layer.climMin || 0));
-        const cMaxAbsolute = Math.floor(max_val * (layer.climMax || 1));
-
-        const generatedChunks: ChunkData[] = [];
-        const colormapTexture = getColorMapTexture(layer);
-
-        const chunks = calculateChunkGrid(selection, shape, chunk_shape);
-
-        for (const { chunk_coords, mapping } of chunks) {
-            generatedChunks.push({
-              frame_id: layer.id,
-              dimensionOrder: [XPos, YPos, ZPos],
-              store: store,
-              chunkCoords: chunk_coords,
-              chunkKey: chunk_coords.join("/"),
-              indexer: mapping,
-              chunk_shape: chunk_shape,
-              arrayShape: shape,
-              min_value: min_val,
-              max_value: max_val,
-              cLimMin: cMinAbsolute,
-              cLimMax: cMaxAbsolute,
-              colormapTexture: colormapTexture
-            });
-        }
-
-        setChunks(generatedChunks);
-      } catch (error) {
-        console.error(`Failed to initialize Frame: ${layer.id}`, error);
-      }
-    };
-
-    initializeZarr();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [layer, storeBuilder, client, datalayer, layer.colormap]);
-
-
-
-  const affineMatrix = useMemo(() => {
-    const mat = new THREE.Matrix4().identity();
-    if (!layer.affineMatrix) return mat;
-
-    const rawMat = layer.affineMatrix;
-    if (rawMat.length === 3) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], 0, rawMat[0][2],
-        rawMat[1][0], rawMat[1][1], 0, rawMat[1][2],
-        0, 0, 1, 0,
-        rawMat[2][0], rawMat[2][1], 0, rawMat[2][2]
-      );
-    } else if (rawMat.length === 4) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], rawMat[0][2], rawMat[0][3],
-        rawMat[1][0], rawMat[1][1], rawMat[1][2], rawMat[1][3],
-        rawMat[2][0], rawMat[2][1], rawMat[2][2], rawMat[2][3],
-        rawMat[3][0], rawMat[3][1], rawMat[3][2], rawMat[3][3]
-      );
-    }
-    return mat;
-  }, [layer]);
-
-  if (!chunks) {
-    return null;
-  }
-
-  return (
-    <group matrix={affineMatrix} matrixAutoUpdate={false} onClick={(e) => {
-                e.stopPropagation();
-                if (isSelected) {
-                  setSelectedLayerId(null);
-                } else {
-                  setSelectedLayerId(layer.id);
-                }
-              }}>
-      <InvertedHullOutline enabled={isSelected}>
-        {chunks.map((chunk) => (
-          <ChunkVolume key={chunk.chunkKey} chunk={chunk} />
-        ))}
-      </InvertedHullOutline>
-    </group>
-  );
-};

@@ -16,7 +16,9 @@ export type ReportedContrast = {
 
 interface SceneState {
   layers: SceneLayerFragment[];
+  originalLayers: SceneLayerFragment[];
   updateLayer: (updatedLayer: SceneLayerFragment) => void;
+  markLayerClean: (layerId: string) => void;
   reportContrast: (contrast: ReportedContrast) => void;
   reportedContrasts: Record<string, ReportedContrast>;
 }
@@ -31,11 +33,20 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) =>
   createStore<SceneState>()(
   immer((set) => ({
     layers: scene.layers.map(normalizeLayer),
+    originalLayers: scene.layers.map(normalizeLayer),
     updateLayer: (updatedLayer) =>
       set((state) => {
         const index = state.layers.findIndex((layer) => layer.id === updatedLayer.id);
         if (index !== -1) {
           state.layers[index] = updatedLayer;
+        }
+      }),
+    markLayerClean: (layerId) =>
+      set((state) => {
+        const layer = state.layers.find((l) => l.id === layerId);
+        const origIndex = state.originalLayers.findIndex((l) => l.id === layerId);
+        if (layer && origIndex !== -1) {
+          state.originalLayers[origIndex] = { ...layer };
         }
       }),
     reportContrast: (contrast: ReportedContrast) =>

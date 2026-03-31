@@ -123,7 +123,7 @@ export const ScenePanel = (props) => {
 
   return (
     <Card
-      className="absolute text-xs scale-90 z-20 shadow-2xl backdrop-blur-md p-4 flex flex-col gap-2"
+      className="absolute text-xs scale-90 z-20 shadow-2xl backdrop-blur-md p-4 flex flex-col gap-2 "
       style={{ left: screenPos.x, top: screenPos.y }}
     >
       <LayerDimForm layer={selectedLayer} onUpdate={updateLayer} />

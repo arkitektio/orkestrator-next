@@ -65,6 +65,7 @@
       "ContinousScanView",
       "CoordinateAnchor",
       "DataArray",
+      "DataRoi",
       "Dataset",
       "DerivedView",
       "Era",

@@ -4,6 +4,7 @@ type ADataset {
   """Provenance entries for this camera"""
   dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
   description: String
+  dimDescriptors: [DimDescriptor!]!
   dims: [String!]!
   id: ID!
   name: String!
@@ -506,6 +507,13 @@ enum ColorMap {
   YELLOW
 }
 
+type Constraint {
+  dim: String!
+  max: Int
+  min: Int
+  step: Int
+}
+
 enum ContinousScanDirection {
   COLUMN_ROW_SLICE
   COLUMN_ROW_SLICE_SNAKE
@@ -614,6 +622,18 @@ input CreateADatasetInput {
   scales: [ArrayLike!]!
 }
 
+"""Input type for creating an image from an array-like object"""
+input CreateDataRoiInput {
+  dataset: ID!
+  drawnOnLens: ID = null
+  kind: RoiKind!
+  slices: [SliceInput!]!
+  vectors: [ThreeDVector!]!
+  xDim: String!
+  yDim: String!
+  zDim: String = null
+}
+
 input CreateDatasetInput {
   name: String!
   parent: ID = null
@@ -675,6 +695,23 @@ input DataArrayFilter {
   OR: DataArrayFilter
   id: ID
   level: IntFilterLookup
+}
+
+type DataRoi {
+  constraints: [Constraint!]!
+  dataset: ADataset!
+  description: String
+  id: UUID!
+  kind: RoiKind!
+  name: String!
+
+  """Provenance entries for this camera"""
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  vectorDims: [String!]!
+  vectors: [[Float!]!]!
+  xDim: String!
+  yDim: String!
+  zDim: String
 }
 
 type Dataset {
@@ -853,6 +890,15 @@ input DimAnchorInput {
   value: Int!
 }
 
+type DimDescriptor {
+  """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
+  key: String!
+
+  """The kind of the dimension, e.g. 'space', 'channel', or 'time'"""
+  kind: DimensionKind!
+  size: Int!
+}
+
 input DimSelector {
   end: Int = null
   index: Int = null
@@ -875,6 +921,13 @@ Input type for a dimension descriptor, which specifies a key and a kind for a di
 input DimensionDescriptorInput {
   key: String!
   kind: String!
+}
+
+enum DimensionKind {
+  CHANNEL
+  FREQUENCY
+  SPACE
+  TIME
 }
 
 type DjangoModelType {
@@ -1880,6 +1933,7 @@ type Lens {
   activeAnchors: [CoordinateAnchor!]!
   dataset: ADataset!
   dimCount: Int!
+  dimDescriptors: [DimDescriptor!]!
   dims: [String!]!
   id: ID!
   shape: [Int!]!
@@ -2267,6 +2321,11 @@ type Mutation {
 
   """Create a new view for continuous scan data"""
   createContinousScanView(input: ContinousScanViewInput!): ContinousScanView!
+
+  """
+  Create a new data ROI from vector or slice definitions with optional choordinate anchors and OME metadata
+  """
+  createDataRoi(input: CreateDataRoiInput!): DataRoi!
 
   """Create a new dataset to organize data"""
   createDataset(input: CreateDatasetInput!): Dataset!
@@ -4249,6 +4308,8 @@ type Scene {
   """Provenance entries for this camera"""
   layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
   name: String!
+  spatialUnit: SpatialUnit!
+  temporalUnit: TemporalUnit!
 }
 
 input SceneFilter {
@@ -4597,6 +4658,8 @@ input TreeNodeInput {
   kind: RenderNodeKind!
   label: String = null
 }
+
+scalar UUID
 
 """Unstructured metadata attached to a file."""
 type UnstructuredMeta {
@@ -4974,7 +5037,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

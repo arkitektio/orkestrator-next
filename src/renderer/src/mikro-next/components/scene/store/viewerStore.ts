@@ -1,13 +1,9 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { ZarrAccessGrantFragment } from "@/mikro-next/api/graphql";
-import { TestNoiseZarrStore } from "../zarr/zarr_stores/noiseStore";
-import { CachedFetchStore } from "../zarr/zarr_stores/fetchStore";
-import { ZarrStore } from "../zarr/zarr_stores/type";
-import { AwsClient } from "aws4fetch";
+import { MikroClient, ZarrStore } from "../zarr/zarr_stores/type";
 import { CachedS3Store } from "../zarr/zarr_stores/s3Store";
 import { RefObject } from "react";
-export type StoreBuilder = (fragment: ZarrAccessGrantFragment, datalayer: string, signal: AbortSignal) => Promise<ZarrStore>;
+export type StoreBuilder = (storeId: string, signal?: AbortSignal) => Promise<ZarrStore>;
 import * as THREE from 'three';
 
 /** The subset of the R3F root state we need for camera operations */
@@ -34,6 +30,9 @@ interface ViewerState {
   tStart: Date | null;
   tEnd: Date | null;
   debug: boolean;
+  showScaleBar: boolean;
+  showScaleGrid: boolean;
+  worldUnitsPerPixel: number;
   storeBuilder: StoreBuilder;
   currentZ: number;
   frustumNear: number;
@@ -52,6 +51,9 @@ interface ViewerState {
   setZRange: (start: number | null, end: number | null) => void;
   setTRange: (start: Date | null, end: Date | null) => void;
   setDebug: (debug: boolean) => void;
+  setShowScaleBar: (show: boolean) => void;
+  setShowScaleGrid: (show: boolean) => void;
+  setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
   setFrustum: (near: number, far: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
@@ -60,40 +62,15 @@ interface ViewerState {
 }
 
 
-export const localBuilder = async (fragment: ZarrAccessGrantFragment, datalayer: string, signal: AbortSignal) => {
-  console.log("[BUILD] Using localBuilder with fragment:", fragment, datalayer);
-  return new TestNoiseZarrStore(fragment);
-}
-
-export const fetchBuilder = async (fragment: ZarrAccessGrantFragment, datalayer: string, signal: AbortSignal) => {
-
-  console.log("Using fetchBuilder with fragment:", fragment)
-
-  return new CachedFetchStore(fragment.store.bucket);
-}
-
-export const s3Builder = async (fragment: ZarrAccessGrantFragment, datalayer: string, signal: AbortSignal) => {
+export const createS3Builder = (client: MikroClient, datalayer: string): StoreBuilder => {
+  return async (storeId: string, _signal?: AbortSignal) => {
+    return new CachedS3Store(storeId, client, datalayer);
+  };
+};
 
 
 
-
-  const aws = new AwsClient({
-    accessKeyId: fragment.accessKey,
-    secretAccessKey: fragment.secretKey,
-    sessionToken: fragment.sessionToken,
-    service: "s3",
-  });
-
-  const path = datalayer + "/" + fragment.bucket + "/" + fragment.key;
-  console.log("Using s3Builder with path:", path);
-
-  const store = new CachedS3Store(aws, path, {});
-  return store;
-}
-
-
-
-export const createViewerStore = () =>
+export const createViewerStore = (storeBuilder: StoreBuilder) =>
   createStore<ViewerState>((set, get) => ({
     zStart: 0,
     zEnd: 100,
@@ -115,10 +92,13 @@ export const createViewerStore = () =>
     currentZ: 0,
     tEnd: null,
     debug: false,
+    showScaleBar: true,
+    showScaleGrid: false,
+    worldUnitsPerPixel: 1,
     frustumNear: 0.1,
     frustumFar: 100000,
     canvas: null,
-    storeBuilder: s3Builder, // Default to fetchBuilder, can be switched to localBuilder for testing
+    storeBuilder: storeBuilder,
     setZRange: (start, end) => set({ zStart: start, zEnd: end }),
     setTRange: (start, end) => set({ tStart: start, tEnd: end }),
     setCurrentZ: (z) => set({ currentZ: z }),
@@ -175,6 +155,9 @@ export const createViewerStore = () =>
       invalidate();
     },
     setDebug: (debug) => set({ debug }),
+    setShowScaleBar: (show) => set({ showScaleBar: show }),
+    setShowScaleGrid: (show) => set({ showScaleGrid: show }),
+    setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
 
 const {

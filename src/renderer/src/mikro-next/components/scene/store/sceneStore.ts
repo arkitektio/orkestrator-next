@@ -15,6 +15,7 @@ export type ReportedContrast = {
 
 
 interface SceneState {
+  spatialUnit: string;
   layers: SceneLayerFragment[];
   originalLayers: SceneLayerFragment[];
   updateLayer: (updatedLayer: SceneLayerFragment) => void;
@@ -32,6 +33,7 @@ const normalizeLayer = (layer: SceneLayerFragment): SceneLayerFragment => ({
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) =>
   createStore<SceneState>()(
   immer((set) => ({
+    spatialUnit: scene.spatialUnit ?? "px",
     layers: scene.layers.map(normalizeLayer),
     originalLayers: scene.layers.map(normalizeLayer),
     updateLayer: (updatedLayer) =>

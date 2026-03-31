@@ -6,6 +6,8 @@ import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
+import { ScaleBar } from "./ScaleBar";
+import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
@@ -14,12 +16,13 @@ import { ScenePlane } from "./layers/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
+import { createViewerStore, createS3Builder, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
 import { SceneVolume } from "./layers/SceneVolume";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
+import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas>{children}</Canvas>;
@@ -33,19 +36,21 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
 
 export const Scene = (props: { scene: SceneFragment }) => {
 
+  const client = useMikro();
+  const datalayer = useDatalayerEndpoint();
 
   const scope = useMemo(() => {
         const localScope = {
       modeStore: createModeStore(),
       viewStore: createViewStore(),
-      viewerStore: createViewerStore(),
+      viewerStore: createViewerStore(createS3Builder(client, datalayer!)),
       selectionStore: createSelectionStore(),
       sceneStore: createSceneStore({ scene: props.scene }),
     };
 
     return localScope;
 
-  }, [props.scene]);
+  }, [props.scene, client, datalayer]);
 
 
 
@@ -75,6 +80,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               {/* Interaction Layers */}
               {/* The SceneAxis is a simple XYZ axis helper that also shows the scale of the scene */}
               <SceneAxis/>
+              <ScaleGrid />
 
 
 
@@ -87,9 +93,9 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <ScenePlane />
               <SceneVolume />
 
-            <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
-        <GizmoViewport labelColor="white" axisHeadScale={1} />
-      </GizmoHelper>
+                  <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
+              <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
+            </GizmoHelper>
             </SceneWrapper>
 
 
@@ -97,6 +103,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <LayerControlPanel />
             <ZSliderPanel />
             <VisibilityManager/>
+            <ScaleBar />
 
             <SceneOverlay />
           </PanelProvider>

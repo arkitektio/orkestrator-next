@@ -9,9 +9,7 @@ import { getColorMapTexture, redColormap } from '../zarr/colormaps';
 import { Slice } from "zarrita"
 import { useSelectionStore } from '../store/layerStore';
 import { useViewerStore } from '../store/viewerStore';
-import { DimSliceFragment, RequestZarrAccessDocument, RequestZarrAccessMutation, RequestZarrAccessMutationVariables, SceneLayerFragment } from '@/mikro-next/api/graphql';
-import { useDatalayerEndpoint, useMikro } from '@/app/Arkitekt';
-import { ca } from 'date-fns/locale';
+import { DimSliceFragment, SceneLayerFragment } from '@/mikro-next/api/graphql';
 import { calculateChunkGrid } from '../zarr/utils';
 import { buildAffineMatrix } from '../panels/layer/affine-utils';
 
@@ -87,9 +85,6 @@ const InvertedHullOutline = ({
 export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
-  const client = useMikro();
-  const datalayer = useDatalayerEndpoint();
-
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
 
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
@@ -108,23 +103,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
           return;
         }
 
-        const access = await client.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
-          mutation: RequestZarrAccessDocument,
-          variables: { input: { storeId: zarrArray.store.id } },
-        });
-
-        const credentials = access.data?.requestZarrAccess;
-        if (!credentials) {
-          console.error(`Failed to obtain Zarr access for Frame ${layer.id}`);
-          return;
-        }
-
-        if (!datalayer) {
-          console.error(`Datalayer endpoint is not defined`);
-          return;
-        }
-
-        const store = await storeBuilder(credentials, datalayer);
+        const store = await storeBuilder(zarrArray.store.id);
         const arr = await open.v3(store, { kind: "array" });
 
         const sliceMap = layer.lens.slices.reduce((acc, slice) => {
@@ -208,7 +187,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder, client]);
+  }, [layer, storeBuilder]);
 
   const affineMatrix = useMemo(() => {
     return buildAffineMatrix(layer);

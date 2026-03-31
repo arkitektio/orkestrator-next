@@ -1,5 +1,7 @@
 fragment Scene on Scene {
   id
+  spatialUnit
+  temporalUnit
   layers {
     ...SceneLayer
   }

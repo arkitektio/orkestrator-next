@@ -16,7 +16,7 @@ import {
 } from './sceneStore';
 import { createTimeStore, TimeStoreContext } from './timeStore';
 import { createViewStore, ViewStoreContext } from './viewStore';
-import { createViewerStore, ViewerStoreContext } from './viewerStore';
+import { createViewerStore, ViewerStoreContext, StoreBuilder } from './viewerStore';
 
 export interface LocalStoreBundle {
   modeStore: ReturnType<typeof createModeStore>;
@@ -29,10 +29,14 @@ export interface LocalStoreBundle {
   timeStore: ReturnType<typeof createTimeStore>;
 }
 
+const noopBuilder: StoreBuilder = async () => {
+  throw new Error("StoreBuilder not configured");
+};
+
 const createLocalStoreBundle = (): LocalStoreBundle => ({
   modeStore: createModeStore(),
   viewStore: createViewStore(),
-  viewerStore: createViewerStore(),
+  viewerStore: createViewerStore(noopBuilder),
   scansStore: createScansStore(),
   kubeStore: createKubeStore(),
   kubeStateStore: createKubeStateStore(),

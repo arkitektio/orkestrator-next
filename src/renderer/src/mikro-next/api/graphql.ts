@@ -46,6 +46,7 @@ export type Scalars = {
   ParquetLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
   ThreeDVector: { input: any; output: any; }
+  UUID: { input: any; output: any; }
   _Any: { input: any; output: any; }
 };
 
@@ -54,6 +55,7 @@ export type ADataset = {
   /** Provenance entries for this camera */
   dataArrays: Array<DataArray>;
   description?: Maybe<Scalars['String']['output']>;
+  dimDescriptors: Array<DimDescriptor>;
   dims: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -552,6 +554,14 @@ export enum ColorMap {
   Yellow = 'YELLOW'
 }
 
+export type Constraint = {
+  __typename?: 'Constraint';
+  dim: Scalars['String']['output'];
+  max?: Maybe<Scalars['Int']['output']>;
+  min?: Maybe<Scalars['Int']['output']>;
+  step?: Maybe<Scalars['Int']['output']>;
+};
+
 export enum ContinousScanDirection {
   ColumnRowSlice = 'COLUMN_ROW_SLICE',
   ColumnRowSliceSnake = 'COLUMN_ROW_SLICE_SNAKE',
@@ -651,6 +661,18 @@ export type CreateADatasetInput = {
   scales: Array<Scalars['ArrayLike']['input']>;
 };
 
+/** Input type for creating an image from an array-like object */
+export type CreateDataRoiInput = {
+  dataset: Scalars['ID']['input'];
+  drawnOnLens?: InputMaybe<Scalars['ID']['input']>;
+  kind: RoiKind;
+  slices: Array<SliceInput>;
+  vectors: Array<Scalars['ThreeDVector']['input']>;
+  xDim: Scalars['String']['input'];
+  yDim: Scalars['String']['input'];
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateDatasetInput = {
   name: Scalars['String']['input'];
   parent?: InputMaybe<Scalars['ID']['input']>;
@@ -713,6 +735,28 @@ export type DataArrayFilter = {
   OR?: InputMaybe<DataArrayFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   level?: InputMaybe<IntFilterLookup>;
+};
+
+export type DataRoi = {
+  __typename?: 'DataRoi';
+  constraints: Array<Constraint>;
+  dataset: ADataset;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['UUID']['output'];
+  kind: RoiKind;
+  name: Scalars['String']['output'];
+  /** Provenance entries for this camera */
+  provenanceEntries: Array<ProvenanceEntry>;
+  vectorDims: Array<Scalars['String']['output']>;
+  vectors: Array<Array<Scalars['Float']['output']>>;
+  xDim: Scalars['String']['output'];
+  yDim: Scalars['String']['output'];
+  zDim?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type DataRoiProvenanceEntriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type Dataset = {
@@ -910,6 +954,15 @@ export type DimAnchorInput = {
   value: Scalars['Int']['input'];
 };
 
+export type DimDescriptor = {
+  __typename?: 'DimDescriptor';
+  /** The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't' */
+  key: Scalars['String']['output'];
+  /** The kind of the dimension, e.g. 'space', 'channel', or 'time' */
+  kind: DimensionKind;
+  size: Scalars['Int']['output'];
+};
+
 export type DimSelector = {
   end?: InputMaybe<Scalars['Int']['input']>;
   index?: InputMaybe<Scalars['Int']['input']>;
@@ -931,6 +984,13 @@ export type DimensionDescriptorInput = {
   key: Scalars['String']['input'];
   kind: Scalars['String']['input'];
 };
+
+export enum DimensionKind {
+  Channel = 'CHANNEL',
+  Frequency = 'FREQUENCY',
+  Space = 'SPACE',
+  Time = 'TIME'
+}
 
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
@@ -1935,6 +1995,7 @@ export type Lens = {
   activeAnchors: Array<CoordinateAnchor>;
   dataset: ADataset;
   dimCount: Scalars['Int']['output'];
+  dimDescriptors: Array<DimDescriptor>;
   dims: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   shape: Array<Scalars['Int']['output']>;
@@ -2315,6 +2376,8 @@ export type Mutation = {
   createChannelView: ChannelView;
   /** Create a new view for continuous scan data */
   createContinousScanView: ContinousScanView;
+  /** Create a new data ROI from vector or slice definitions with optional choordinate anchors and OME metadata */
+  createDataRoi: DataRoi;
   /** Create a new dataset to organize data */
   createDataset: Dataset;
   /** Create a new era for temporal organization */
@@ -2538,6 +2601,11 @@ export type MutationCreateChannelViewArgs = {
 
 export type MutationCreateContinousScanViewArgs = {
   input: ContinousScanViewInput;
+};
+
+
+export type MutationCreateDataRoiArgs = {
+  input: CreateDataRoiInput;
 };
 
 
@@ -4863,6 +4931,8 @@ export type Scene = {
   /** Provenance entries for this camera */
   layers: Array<Layer>;
   name: Scalars['String']['output'];
+  spatialUnit: SpatialUnit;
+  temporalUnit: TemporalUnit;
 };
 
 
@@ -5631,7 +5701,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -5772,7 +5842,7 @@ export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, v
 
 export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
-export type SceneFragment = { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> };
+export type SceneFragment = { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> };
 
 export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
 
@@ -6593,7 +6663,7 @@ export type GetSceneQueryVariables = Exact<{
 }>;
 
 
-export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> } };
+export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null }> } }> } };
 
 export type GetScenesQueryVariables = Exact<{
   filters?: InputMaybe<SceneFilter>;
@@ -7325,6 +7395,8 @@ export const SceneLayerFragmentDoc = gql`
 export const SceneFragmentDoc = gql`
     fragment Scene on Scene {
   id
+  spatialUnit
+  temporalUnit
   layers {
     ...SceneLayer
   }

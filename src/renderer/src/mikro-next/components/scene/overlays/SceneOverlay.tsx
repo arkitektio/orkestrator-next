@@ -11,8 +11,12 @@ export const SceneOverlay = () => {
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const setDisplayMode = useModeStore((s) => s.setDisplayMode);
   const isDebug = useViewerStore((state) => state.debug);
+  const showScaleBar = useViewerStore((state) => state.showScaleBar);
+  const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
 
   const setDebug =  useViewerStore((state) => state.setDebug);
+  const setShowScaleBar = useViewerStore((state) => state.setShowScaleBar);
+  const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
 
   return (
     <>
@@ -53,6 +57,23 @@ export const SceneOverlay = () => {
         }} variant={isDebug ? "destructive" : "outline"} size={"xs"}>
             { isDebug ? "Disable Debug" : "Enable Debug" }
         </Button>
+        </ButtonGroup>
+
+        <ButtonGroup>
+          <Button
+            onClick={() => setShowScaleBar(!showScaleBar)}
+            variant={showScaleBar ? "default" : "outline"}
+            size={"xs"}
+          >
+            Scale Bar
+          </Button>
+          <Button
+            onClick={() => setShowScaleGrid(!showScaleGrid)}
+            variant={showScaleGrid ? "default" : "outline"}
+            size={"xs"}
+          >
+            Grid
+          </Button>
         </ButtonGroup>
       </div>
     </>

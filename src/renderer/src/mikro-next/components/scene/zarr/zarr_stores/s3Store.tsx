@@ -2,6 +2,12 @@ import { type AbsolutePath } from "@zarrita/storage";
 import { FetchStore } from "zarrita";
 import { LRUCache } from "../caches/in_memory_lru";
 import { AwsClient } from "aws4fetch";
+import {
+  RequestZarrAccessDocument,
+  RequestZarrAccessMutation,
+  RequestZarrAccessMutationVariables,
+} from "@/mikro-next/api/graphql";
+import type { MikroClient } from "./type";
 
 
 
@@ -83,19 +89,52 @@ async function handle_response(
 const global_cache = new LRUCache<string, ArrayBuffer>(500);
 
 export class CachedS3Store extends FetchStore {
-  private aws:  AwsClient;
+  private aws: AwsClient | null = null;
   private cache: LRUCache<string, ArrayBuffer>;
   private lockManager: AsyncLockManager;
+  private initPromise: Promise<void> | null = null;
+  private storeId: string;
+  private mikroClient: MikroClient;
+  private datalayer: string;
 
-  constructor(aws: AwsClient, url: string, options: any = {}) {
-    super(url, options);
-    this.aws = aws;
-    this.url = url;
+  constructor(storeId: string, mikroClient: MikroClient, datalayer: string, options: any = {}) {
+    super(datalayer, options);
+    this.storeId = storeId;
+    this.mikroClient = mikroClient;
+    this.datalayer = datalayer;
     this.cache = global_cache;
     this.lockManager = new AsyncLockManager();
   }
 
+  private async ensureInitialized(): Promise<void> {
+    if (this.aws) return;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = (async () => {
+      const access = await this.mikroClient.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
+        mutation: RequestZarrAccessDocument,
+        variables: { input: { storeId: this.storeId } },
+      });
+
+      const credentials = access.data?.requestZarrAccess;
+      if (!credentials) throw new Error("Failed to obtain Zarr access credentials");
+
+      this.aws = new AwsClient({
+        accessKeyId: credentials.accessKey,
+        secretAccessKey: credentials.secretKey,
+        sessionToken: credentials.sessionToken,
+        service: "s3",
+      });
+
+      this.url = this.datalayer + "/" + credentials.bucket + "/" + credentials.key;
+    })();
+
+    return this.initPromise;
+  }
+
   async get(key: AbsolutePath, options: RequestInit = {}) {
+    await this.ensureInitialized();
+
     const cacheKey = key + this.url;
 
     // Check cache first
@@ -113,7 +152,7 @@ export class CachedS3Store extends FetchStore {
       }
 
       const href = resolve(this.url, key).href;
-      const response = await this.aws.fetch(href, { ...options });
+      const response = await this.aws!.fetch(href, { ...options });
       const result = await handle_response(response);
 
       if (result) {

@@ -10,11 +10,7 @@ import { useSelectionStore } from '../store/layerStore';
 import { useViewerStore } from '../store/viewerStore';
 import {
   DimSliceFragment,
-  RequestZarrAccessDocument,
-  RequestZarrAccessMutation,
-  RequestZarrAccessMutationVariables
 } from '@/mikro-next/api/graphql';
-import { useDatalayerEndpoint, useMikro } from '@/app/Arkitekt';
 import { calculateChunkGrid } from '../zarr/utils';
 import { useSceneStore } from '../store/sceneStore';
 import { useShallow } from 'zustand/shallow';
@@ -35,9 +31,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const zarrCache = useRef<ZarrCache | null>(null);
   const groupRef = useRef<THREE.Group>(null!);
-
-  const client = useMikro();
-  const datalayer = useDatalayerEndpoint();
 
   // Store Hooks
   const register = useViewerStore((s) => s.register);
@@ -116,7 +109,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
   // --- Effect: Initialize Zarr with AbortController ---
   useEffect(() => {
-    if (!layer || !datalayer) return;
+    if (!layer) return;
     console.log(`Initializing Zarr for layer ${layer.id}...`);
 
     const controller = new AbortController();
@@ -132,20 +125,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
         const zarrArray = layer.lens.dataset.dataArrays.at(0);
         if (!zarrArray || signal.aborted) return;
 
-        // Pass signal to the mutation if your client supports it,
-        // otherwise check signal manually after the await.
-        const access = await client.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
-          mutation: RequestZarrAccessDocument,
-          variables: { input: { storeId: zarrArray.store.id } },
-          context: { fetchOptions: { signal } } // Standard Apollo/Fetch pattern
-        });
-
-        if (signal.aborted) return;
-
-        const credentials = access.data?.requestZarrAccess;
-        if (!credentials) return;
-
-        const store = await storeBuilder(credentials, datalayer, signal);
+        const store = await storeBuilder(zarrArray.store.id, signal);
         const arr = await open.v3(store, { kind: "array" });
 
         if (!signal.aborted) {

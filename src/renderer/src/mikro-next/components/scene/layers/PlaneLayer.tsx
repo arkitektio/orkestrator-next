@@ -96,7 +96,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const currentZ = useViewerStore((s) => s.currentZ);
   const layer = useSceneStore(useShallow((s) => s.layers.find((l) => l.id === layerId)));
 
-
+  const isDebug = useViewerStore((state) => state.debug);
 
   const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -294,7 +294,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
                   setSelectedLayerId(layer.id);
                 }
               }}>
-      <InvertedHullOutline enabled={isSelected}>
+      <InvertedHullOutline enabled={isSelected && isDebug}>
         {chunks.map((chunk) => (
           <ChunkPlane key={chunk.chunkKey} chunk={chunk} colorMapTexture={colorMapTexture} />
         ))}

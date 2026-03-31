@@ -4,31 +4,7 @@ import { Slider } from "@/components/ui/slider";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/layerStore";
 import { SceneLayerFragment, ColorMap, useUpdateLaterMutation } from "@/mikro-next/api/graphql";
-import { useMemo } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { useSceneStore } from "../store/sceneStore";
-import { useSelectionStore } from "../store/layerStore";
-import { SceneLayerFragment, ColorMap, useUpdateLaterMutation } from "@/mikro-next/api/graphql";
-import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  ReferenceArea,
-  ResponsiveContainer,
-  Brush,
-  Cell,
-} from "recharts";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -39,43 +15,156 @@ import {
 
 const COLORMAP_OPTIONS = Object.values(ColorMap);
 
+// --- Colormap CSS color sampling ---
+const sampleColormapCSS = (colormap: ColorMap | null | undefined, t: number): string => {
+  const clamp = (v: number) => Math.min(Math.max(v, 0), 1);
+  const toRGB = (r: number, g: number, b: number) =>
+    `rgb(${Math.round(clamp(r) * 255)},${Math.round(clamp(g) * 255)},${Math.round(clamp(b) * 255)})`;
+
+  switch (colormap) {
+    case ColorMap.Red:
+      return toRGB(t, 0, 0);
+    case ColorMap.Green:
+      return toRGB(0, t, 0);
+    case ColorMap.Blue:
+      return toRGB(0, 0, t);
+    case ColorMap.Grey:
+      return toRGB(t, t, t);
+    case ColorMap.Cool:
+      return toRGB(t, 1 - t, 1);
+    case ColorMap.Warm:
+      return toRGB(1, t, 0);
+    case ColorMap.Plasma: {
+      const c0 = [0.050383, 0.029803, 0.527975];
+      const c1 = [0.063536, 0.28201, 1.28706];
+      const c2 = [0.047002, -0.027879, -0.376627];
+      const c3 = [0.081427, -1.81901, 1.43231];
+      const c4 = [0.105724, 8.46568, -3.89642];
+      return toRGB(
+        c0[0] + t * (c1[0] + t * (c2[0] + t * (c3[0] + t * c4[0]))),
+        c0[1] + t * (c1[1] + t * (c2[1] + t * (c3[1] + t * c4[1]))),
+        c0[2] + t * (c1[2] + t * (c2[2] + t * (c3[2] + t * c4[2])))
+      );
+    }
+    case ColorMap.Inferno: {
+      const c0 = [0.0014615, 0.000466, 0.013866];
+      const c1 = [0.120565, 0.675951, 0.669823];
+      const c2 = [-0.0041943, -0.411412, -0.0498334];
+      const c3 = [0.0411583, 1.0048, 0.728707];
+      const c4 = [0.0745821, -3.65852, -1.35202];
+      return toRGB(
+        c0[0] + t * (c1[0] + t * (c2[0] + t * (c3[0] + t * c4[0]))),
+        c0[1] + t * (c1[1] + t * (c2[1] + t * (c3[1] + t * c4[1]))),
+        c0[2] + t * (c1[2] + t * (c2[2] + t * (c3[2] + t * c4[2])))
+      );
+    }
+    case ColorMap.Magma: {
+      const c0 = [0.001462, 0.000466, 0.013866];
+      const c1 = [0.078815, 0.674501, 0.973988];
+      const c2 = [0.138051, -0.411412, -0.814952];
+      const c3 = [-0.126219, 1.0048, 1.66697];
+      const c4 = [0.0582235, -3.65852, -2.87069];
+      return toRGB(
+        c0[0] + t * (c1[0] + t * (c2[0] + t * (c3[0] + t * c4[0]))),
+        c0[1] + t * (c1[1] + t * (c2[1] + t * (c3[1] + t * c4[1]))),
+        c0[2] + t * (c1[2] + t * (c2[2] + t * (c3[2] + t * c4[2])))
+      );
+    }
+    // Default to viridis
+    default: {
+      const c0 = [0.277727, 0.005407, 0.3341];
+      const c1 = [0.105093, 1.40461, 1.38459];
+      const c2 = [-0.330861, 0.214847, 0.095095];
+      const c3 = [-4.63423, -5.7991, -19.3324];
+      const c4 = [6.22827, 14.1799, 56.6906];
+      const c5 = [4.77638, -13.7451, -65.353];
+      const c6 = [-5.43546, 4.64585, 26.3124];
+      return toRGB(
+        c0[0] + t * (c1[0] + t * (c2[0] + t * (c3[0] + t * (c4[0] + t * (c5[0] + t * c6[0]))))),
+        c0[1] + t * (c1[1] + t * (c2[1] + t * (c3[1] + t * (c4[1] + t * (c5[1] + t * c6[1]))))),
+        c0[2] + t * (c1[2] + t * (c2[2] + t * (c3[2] + t * (c4[2] + t * (c5[2] + t * c6[2])))))
+      );
+    }
+  }
+};
+
+// --- Debounced onChange hook ---
+const useDebouncedCallback = <T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): T => {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestCallback = useRef(callback);
+  latestCallback.current = callback;
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  return useCallback(
+    ((...args: any[]) => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => latestCallback.current(...args), delay);
+    }) as T,
+    [delay]
+  );
+};
+
+const SVG_HEIGHT = 64;
+
 const HistogramSlider = ({
   bins,
   histogram,
   climMin,
   climMax,
+  colormap,
+  p1,
+  p99,
+  histMin,
+  histMax,
   onChange,
 }: {
   bins: number[];
   histogram: number[];
   climMin: number;
   climMax: number;
+  colormap: ColorMap | null | undefined;
+  p1: number | null | undefined;
+  p99: number | null | undefined;
+  histMin: number | null | undefined;
+  histMax: number | null | undefined;
   onChange: (min: number, max: number) => void;
 }) => {
-  const chartData = useMemo(
-    () =>
-      bins.map((bin, i) => ({
-        bin: +bin.toFixed(4),
-        count: histogram[i] ?? 0,
-        norm: bins.length > 1 ? i / (bins.length - 1) : 0,
-      })),
-    [bins, histogram]
+  const maxCount = useMemo(
+    () => Math.max(...histogram, 1),
+    [histogram]
   );
+
+  const barColors = useMemo(
+    () =>
+      bins.map((_, i) =>
+        sampleColormapCSS(colormap, bins.length > 1 ? i / (bins.length - 1) : 0)
+      ),
+    [bins, colormap]
+  );
+
+  const debouncedOnChange = useDebouncedCallback(onChange, 30);
 
   const dragging = useRef<{ startNorm: number } | null>(null);
   const [dragNorm, setDragNorm] = useState<number | null>(null);
 
   const normFromMouseEvent = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<SVGSVGElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      return x;
+      return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     },
     []
   );
 
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<SVGSVGElement>) => {
       const norm = normFromMouseEvent(e);
       dragging.current = { startNorm: norm };
       setDragNorm(norm);
@@ -84,7 +173,7 @@ const HistogramSlider = ({
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<SVGSVGElement>) => {
       if (!dragging.current) return;
       setDragNorm(normFromMouseEvent(e));
     },
@@ -112,95 +201,101 @@ const HistogramSlider = ({
     ? Math.max(dragging.current.startNorm, dragNorm ?? 0)
     : null;
 
-  // Index-based reference area for the current clim range
-  const climStartIdx = Math.round(climMin * (bins.length - 1));
-  const climEndIdx = Math.round(climMax * (bins.length - 1));
-  const climStartBin = chartData[climStartIdx]?.bin ?? 0;
-  const climEndBin = chartData[climEndIdx]?.bin ?? 1;
-
-  // Drag selection bins
-  const dragStartBin =
-    selStart !== null
-      ? chartData[Math.round(selStart * (bins.length - 1))]?.bin
-      : null;
-  const dragEndBin =
-    selEnd !== null
-      ? chartData[Math.round(selEnd * (bins.length - 1))]?.bin
-      : null;
+  const n = bins.length;
+  const barWidth = n > 0 ? 100 / n : 100;
 
   return (
     <div className="flex flex-col gap-0.5">
-      <div
-        className="w-full h-16 cursor-crosshair select-none"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-            barCategoryGap={0}
-            barGap={0}
-          >
-            <XAxis dataKey="bin" hide />
-            <ReferenceArea
-              x1={climStartBin}
-              x2={climEndBin}
-              fill="rgba(56,189,248,0.15)"
-              strokeOpacity={0}
-            />
-            {dragStartBin != null && dragEndBin != null && (
-              <ReferenceArea
-                x1={dragStartBin}
-                x2={dragEndBin}
-                fill="rgba(250,204,21,0.25)"
-                strokeOpacity={0}
-              />
-            )}
-            <Bar dataKey="count" isAnimationActive={false} radius={[1, 1, 0, 0]}>
-              {chartData.map((entry, i) => {
-                const inRange = entry.norm >= climMin && entry.norm <= climMax;
-                return (
-                  <Cell
-                    key={i}
-                    fill={inRange ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.15)"}
-                  />
-                );
-              })}
-            </Bar>
-            <Brush
-              dataKey="bin"
-              height={12}
-              stroke="rgba(255,255,255,0.3)"
-              fill="rgba(0,0,0,0.4)"
-              travellerWidth={6}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
       <div className="flex items-center justify-between text-[10px]">
         <span className="text-muted-foreground">Contrast</span>
         <span className="font-mono">
           {climMin.toFixed(3)} – {climMax.toFixed(3)}
         </span>
       </div>
+      <svg
+        className="w-full cursor-crosshair select-none"
+        viewBox={`0 0 100 ${SVG_HEIGHT}`}
+        preserveAspectRatio="none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ height: SVG_HEIGHT }}
+      >
+        {/* clim range background */}
+        <rect
+          x={climMin * 100}
+          y={0}
+          width={(climMax - climMin) * 100}
+          height={SVG_HEIGHT}
+          fill="rgba(255,255,255,0.08)"
+        />
+        {/* Histogram bars */}
+        {bins.map((_, i) => {
+          const norm = n > 1 ? i / (n - 1) : 0;
+          const count = histogram[i] ?? 0;
+          const h = (count / maxCount) * SVG_HEIGHT;
+          const inRange = norm >= climMin && norm <= climMax;
+          return (
+            <rect
+              key={i}
+              x={i * barWidth}
+              y={SVG_HEIGHT - h}
+              width={barWidth + 0.1}
+              height={h}
+              fill={inRange ? barColors[i] : "rgba(255,255,255,0.08)"}
+              rx={0.3}
+            />
+          );
+        })}
+        {/* Drag selection overlay */}
+        {selStart != null && selEnd != null && (
+          <rect
+            x={selStart * 100}
+            y={0}
+            width={(selEnd - selStart) * 100}
+            height={SVG_HEIGHT}
+            fill="rgba(250,204,21,0.25)"
+          />
+        )}
+      </svg>
       <Slider
         min={0}
         max={1}
         step={0.001}
         value={[climMin, climMax]}
-        onValueChange={([newMin, newMax]) => onChange(newMin, newMax)}
+        onValueChange={([newMin, newMax]) => debouncedOnChange(newMin, newMax)}
       />
-      <Button
-        variant="ghost"
-        size="xs"
-        className="text-[10px] h-5"
-        onClick={() => onChange(0, 1)}
-      >
-        Reset
-      </Button>
+      <div className="flex gap-1">
+        {p1 != null && p99 != null && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-[10px] h-5 flex-1"
+            onClick={() => onChange(p1, p99)}
+          >
+            Auto (p1/p99)
+          </Button>
+        )}
+        {histMin != null && histMax != null && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-[10px] h-5 flex-1"
+            onClick={() => onChange(histMin, histMax)}
+          >
+            Min/Max
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="xs"
+          className="text-[10px] h-5 flex-1"
+          onClick={() => onChange(0, 1)}
+        >
+          Reset
+        </Button>
+      </div>
     </div>
   );
 };
@@ -282,35 +377,47 @@ const LayerCard = ({
 
       {/* Contrast limits */}
       <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between text-[10px]">
-          <span className="text-muted-foreground">Contrast</span>
-          <span className="font-mono">
-            {climMin.toFixed(3)} – {climMax.toFixed(3)}
-          </span>
-        </div>
-
-        {/* Histograms from active anchors */}
-        {layer.lens.activeAnchors.map((anchor) =>
-          anchor.valueHistogram ? (
-            <MiniHistogram
-              key={anchor.id}
-              bins={anchor.valueHistogram.bins}
-              histogram={anchor.valueHistogram.histogram}
-              climMin={climMin}
-              climMax={climMax}
-            />
-          ) : null
-        )}
-
-        <Slider
-          min={0}
-          max={1}
-          step={0.001}
-          value={[climMin, climMax]}
-          onValueChange={([newMin, newMax]) =>
-            onUpdate({ ...layer, climMin: newMin, climMax: newMax })
+        {(() => {
+          const anchor = layer.lens.activeAnchors.find((a) => a.valueHistogram);
+          if (anchor?.valueHistogram) {
+            const vh = anchor.valueHistogram;
+            return (
+              <HistogramSlider
+                bins={vh.bins}
+                histogram={vh.histogram}
+                climMin={climMin}
+                climMax={climMax}
+                colormap={layer.colormap}
+                p1={vh.p1}
+                p99={vh.p99}
+                histMin={vh.min}
+                histMax={vh.max}
+                onChange={(newMin, newMax) =>
+                  onUpdate({ ...layer, climMin: newMin, climMax: newMax })
+                }
+              />
+            );
           }
-        />
+          return (
+            <>
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-muted-foreground">Contrast</span>
+                <span className="font-mono">
+                  {climMin.toFixed(3)} – {climMax.toFixed(3)}
+                </span>
+              </div>
+              <Slider
+                min={0}
+                max={1}
+                step={0.001}
+                value={[climMin, climMax]}
+                onValueChange={([newMin, newMax]) =>
+                  onUpdate({ ...layer, climMin: newMin, climMax: newMax })
+                }
+              />
+            </>
+          );
+        })()}
       </div>
 
       {/* Colormap selector */}

@@ -23,81 +23,12 @@ const AGENT_SCENE_URL = "https://files.catbox.moe/sgdtnt.gltf";
 const AgentModel = () => {
   const groupRef = useRef<Group>(null);
   const { scene } = useGLTF(AGENT_SCENE_URL);
-  const fadeProgressRef = useRef(0);
-  const { normalizedScene, materials } = useMemo(() => {
-    const clone = scene.clone(true);
-    const box = new Box3().setFromObject(clone);
-    const size = new Vector3();
-    const center = new Vector3();
-    const materialsToFade: Array<{ material: { opacity: number; transparent: boolean; needsUpdate: boolean }; opacity: number }> = [];
-
-    box.getSize(size);
-    box.getCenter(center);
-
-    const largestDimension = Math.max(size.x, size.y, size.z) || 1;
-    const scale = 3.4 / largestDimension;
-
-    clone.scale.setScalar(scale);
-    clone.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
-
-    clone.traverse((child) => {
-      const material = (child as { material?: unknown }).material;
-
-      if (!material) {
-        return;
-      }
-
-      const materialList = Array.isArray(material) ? material : [material];
-
-      materialList.forEach((entry) => {
-        if (!entry || typeof entry !== "object" || !("opacity" in entry)) {
-          return;
-        }
-
-        const fadeMaterial = entry as {
-          opacity: number;
-          transparent: boolean;
-          needsUpdate: boolean;
-        };
-
-        materialsToFade.push({
-          material: fadeMaterial,
-          opacity: fadeMaterial.opacity,
-        });
-        fadeMaterial.transparent = true;
-        fadeMaterial.opacity = 0;
-        fadeMaterial.needsUpdate = true;
-      });
-    });
-
-    return {
-      normalizedScene: clone,
-      materials: materialsToFade,
-    };
-  }, [scene]);
-
-  useFrame((state, delta) => {
-    if (!groupRef.current) {
-      return;
-    }
-
-     fadeProgressRef.current = Math.min(1, fadeProgressRef.current + delta * 1.35);
-     const easedOpacity = 1 - Math.pow(1 - fadeProgressRef.current, 3);
-
-     materials.forEach(({ material, opacity }) => {
-       material.opacity = opacity * easedOpacity;
-       material.needsUpdate = true;
-     });
-
-    groupRef.current.rotation.y += delta * 0.45;
-    groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.7) * 0.08;
-  });
 
   return (
     <Float speed={1.5} rotationIntensity={0.12} floatIntensity={0.45}>
       <group ref={groupRef}>
         <Center>
-          <primitive object={normalizedScene} />
+          <primitive object={scene} />
         </Center>
       </group>
     </Float>
@@ -135,7 +66,7 @@ export const AgentHeroScene = (props: { clientId: string }) => {
         className="!absolute inset-0"
       >
         <color attach="background" args={["#000000"]} />
-        <fog attach="fog" args={["#000000", 7.5, 13]} />
+        <fog attach="fog" args={["#434343", 7.5, 13]} />
 
         <Suspense fallback={<AgentSceneFallback />}>
           <Environment preset="studio" />

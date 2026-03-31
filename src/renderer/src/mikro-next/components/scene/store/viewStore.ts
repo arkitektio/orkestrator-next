@@ -20,7 +20,6 @@ export const createViewStore = () =>
 
     updateCameraData: (matrix, size) =>
 
-
       set({
         viewProjectionMatrix: matrix,
         viewportSize: size,

@@ -3,52 +3,68 @@ import { useViewStore } from "./store/viewStore";
 import * as THREE from "three";
 import { useRef, useEffect } from "react";
 
-export const CameraMatrixSync = ({ debounceMs = 150 }: { debounceMs?: number }) => {
+interface CameraMatrixSyncProps {
+  debounceMs?: number;
+  threshold?: number;
+}
+
+export const CameraMatrixSync = ({
+  debounceMs = 150,
+  threshold = 0.00001
+}: CameraMatrixSyncProps) => {
   const updateCameraData = useViewStore((s) => s.updateCameraData);
 
   const matrixRef = useRef(new THREE.Matrix4());
   const previousFrameMatrix = useRef(new THREE.Matrix4());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up the timeout if the component ever unmounts to prevent memory leaks
+  // Cleanup on unmount
   useEffect(() => {
-    return () => clearTimeout(timeoutRef.current);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   useFrame(({ camera, size }) => {
-    // 1. Calculate the current view-projection matrix
+    // 1. CRITICAL: Force update the projection matrix.
+    // This ensures Zoom and FOV changes are reflected in the matrix elements.
+    camera.updateProjectionMatrix();
+
+    // 2. Calculate the combined View-Projection Matrix
     matrixRef.current.multiplyMatrices(
       camera.projectionMatrix,
       camera.matrixWorldInverse
     );
 
-    // 2. Check for movement SINCE THE LAST FRAME
-    let isMoving = false;
+    // 3. Movement/Zoom check
+    let hasChanged = false;
+    const cur = matrixRef.current.elements;
+    const prev = previousFrameMatrix.current.elements;
+
     for (let i = 0; i < 16; i++) {
-      // 0.0001 ignores invisible damping jitters, but reliably catches real movement
-      if (Math.abs(matrixRef.current.elements[i] - previousFrameMatrix.current.elements[i]) > 0.0001) {
-        isMoving = true;
+      if (Math.abs(cur[i] - prev[i]) > threshold) {
+        hasChanged = true;
         break;
       }
     }
 
-    // 3. Always update the previous frame matrix for the next loop
+    // 4. If nothing changed, we exit early to save CPU
+    if (!hasChanged) return;
+
+    // 5. Update previous state for next frame check
     previousFrameMatrix.current.copy(matrixRef.current);
 
-    // 4. The Debounce Logic
-    if (isMoving) {
-      // As long as the camera is moving, we keep cancelling the timer
-      clearTimeout(timeoutRef.current);
+    // 6. Debounce logic
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-      // Set a new timer. Once the camera stops (isMoving is false),
-      // this timer will finally be allowed to finish and push to Zustand.
-      timeoutRef.current = setTimeout(() => {
-        updateCameraData(matrixRef.current.clone(), {
-          width: size.width,
-          height: size.height,
-        });
-      }, debounceMs);
-    }
+    // Capture the state at this exact moment
+    const snapshot = matrixRef.current.clone();
+    const currentSize = { width: size.width, height: size.height };
+
+    timeoutRef.current = setTimeout(() => {
+      updateCameraData(snapshot, currentSize);
+      console.log("Camera stopped. Syncing matrix to store.");
+    }, debounceMs);
   });
 
   return null;

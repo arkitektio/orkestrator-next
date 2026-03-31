@@ -2,6 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { useMemo, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { CameraController } from "./cameras/CameraController";
+import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
@@ -18,6 +19,7 @@ import { createSelectionStore, SelectionStoreContext } from "./store/layerStore"
 import { SceneVolume } from "./layers/SceneVolume";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
+import { VisibilityManager } from "./managers/VisibilityManager";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas>{children}</Canvas>;
@@ -40,9 +42,10 @@ export const Scene = (props: { scene: SceneFragment }) => {
       selectionStore: createSelectionStore(),
       sceneStore: createSceneStore({ scene: props.scene }),
     };
+
     return localScope;
 
-  }, [props.scene.id]);
+  }, [props.scene]);
 
 
 
@@ -66,6 +69,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               {/* The Camera Matrix Sync ensures that we can access the view matrix outside in html world */}
               <CameraMatrixSync />
               <CameraController />
+              <CanvasSync />
 
 
               {/* Interaction Layers */}
@@ -92,7 +96,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <ScenePanel/>
             <LayerControlPanel />
             <ZSliderPanel />
-
+            <VisibilityManager/>
 
             <SceneOverlay />
           </PanelProvider>

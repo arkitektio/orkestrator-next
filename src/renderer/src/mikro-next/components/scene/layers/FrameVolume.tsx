@@ -9,6 +9,7 @@ import { mapDTypeToMinMax } from '../stores/utils';
 import { ChunkVolume } from './ChunkVolume';
 import { redColormap } from '../zarr/colormaps';
 import { useSelectionStore } from '@/store/imageStore';
+import { affineToMatrix4 } from '../panels/layer/affine-utils';
 
 const InvertedHullOutline = ({
   children,
@@ -143,26 +144,7 @@ export const FrameVolume = ({ frame }: { frame: Frame }) => {
 
   // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {
-    const mat = new THREE.Matrix4();
-    if (!frame.metadata.affine_matrix) return mat;
-
-    const rawMat = frame.metadata.affine_matrix;
-    if (rawMat.length === 3) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], 0, rawMat[0][2],
-        rawMat[1][0], rawMat[1][1], 0, rawMat[1][2],
-        0, 0, 1, 0,
-        rawMat[2][0], rawMat[2][1], 0, rawMat[2][2]
-      );
-    } else if (rawMat.length === 4) {
-      mat.set(
-        rawMat[0][0], rawMat[0][1], rawMat[0][2], rawMat[0][3],
-        rawMat[1][0], rawMat[1][1], rawMat[1][2], rawMat[1][3],
-        rawMat[2][0], rawMat[2][1], rawMat[2][2], rawMat[2][3],
-        rawMat[3][0], rawMat[3][1], rawMat[3][2], rawMat[3][3]
-      );
-    }
-    return mat;
+    return affineToMatrix4(frame.metadata.affine_matrix);
   }, [frame]);
 
   if (!chunks) {

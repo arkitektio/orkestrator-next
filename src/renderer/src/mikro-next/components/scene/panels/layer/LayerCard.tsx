@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Focus } from "lucide-react";
 import {
   COLORMAP_OPTIONS,
   colormapGradientCSS,
@@ -28,6 +28,7 @@ export const LayerCard = ({
   onSelect,
   onUpdate,
   onSave,
+  onFocus,
 }: {
   layer: SceneLayerFragment;
   originalLayer: SceneLayerFragment | undefined;
@@ -35,6 +36,7 @@ export const LayerCard = ({
   onSelect: () => void;
   onUpdate: (updated: SceneLayerFragment) => void;
   onSave: (layer: SceneLayerFragment) => void;
+  onFocus: (layerId: string) => void;
 }) => {
   const climMin = layer.climMin ?? 0;
   const climMax = layer.climMax ?? 1;
@@ -74,6 +76,18 @@ export const LayerCard = ({
             {layer.lens.dataset.name}
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="xs"
+          className="h-5 w-5 p-0 shrink-0"
+          title="Fit camera to layer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFocus(layer.id);
+          }}
+        >
+          <Focus className="h-3 w-3" />
+        </Button>
         {dirty && (
           <div
             className="h-1.5 w-1.5 rounded-full bg-yellow-400 shrink-0"

@@ -1,4 +1,5 @@
 import { useModeStore } from "../store/modeStore";
+import { useViewerStore } from "../store/viewerStore";
 
 import {
   OrbitControls,
@@ -9,6 +10,8 @@ import {
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
+  const frustumNear = useViewerStore((s) => s.frustumNear);
+  const frustumFar = useViewerStore((s) => s.frustumFar);
 
   return (
     <>
@@ -19,19 +22,17 @@ export const CameraController = () => {
           position={[0, -200, 200]}
           fov={45}
           up={[0, 0, 1]}
-          // Extend the clipping planes to prevent geometry from being cut off
-          near={0.1}
-          far={10000}
+          near={frustumNear}
+          far={frustumFar}
         />
       ) : (
         <OrthographicCamera
           makeDefault
           zoom={5}
-          position={[0, 0, 500]}
+          position={[0, 0, 50000]}
           up={[0, 1, 0]}
-          // Extend the clipping planes for the orthographic view as well
-          near={0.1}
-          far={10000}
+          near={frustumNear}
+          far={frustumFar}
         />
       )}
 

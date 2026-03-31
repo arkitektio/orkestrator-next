@@ -7,6 +7,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { useViewerStore } from "../store/viewerStore";
 
 const DimBadge = ({ label, value }: { label: string; value: string | null | undefined }) => (
   <div className="flex items-center gap-1">

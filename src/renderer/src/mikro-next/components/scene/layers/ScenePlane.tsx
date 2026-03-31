@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { PlaneLayer } from "./PlaneLayer";
-
+import { useViewerStore } from "../store/viewerStore";
+import * as THREE from "three";
 const MAX_DISPLAYABLE = 10;
 
 
@@ -12,7 +13,6 @@ export const ScenePlane = (props) => {
   const layers = useSceneStore((s) => s.layers);
 
   const renderedAbleFrames = useMemo(() => {
-
     console.log("renderedAbleFrames recalculated:", layers?.length);
     return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
   }, [layers?.length]);

@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { useSceneStore } from "../store/sceneStore";
-import { useSelectionStore } from "../store/layerStore";
 import {
   SceneLayerFragment,
   useUpdateLaterMutation,
 } from "@/mikro-next/api/graphql";
-import { useState } from "react";
 import { Layers } from "lucide-react";
+import { useState } from "react";
+import { useSelectionStore } from "../store/layerStore";
+import { useSceneStore } from "../store/sceneStore";
+import { useViewerStore } from "../store/viewerStore";
 import { isLayerDirty } from "./layer/colormap-utils";
 import { LayerCard } from "./layer/LayerCard";
 
@@ -17,6 +18,7 @@ export const LayerControlPanel = () => {
   const markLayerClean = useSceneStore((s) => s.markLayerClean);
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
+  const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const [updateLater] = useUpdateLaterMutation();
   const [open, setOpen] = useState(false);
 
@@ -44,6 +46,10 @@ export const LayerControlPanel = () => {
       originalLayers.find((o) => o.id === l.id),
     ),
   );
+
+  console.log("rendering LayerControlPanel", { layers });
+
+
 
   return (
     <div className="absolute bottom-2 right-2 z-30 flex flex-col items-end gap-1">
@@ -82,6 +88,7 @@ export const LayerControlPanel = () => {
               }
               onUpdate={updateLayer}
               onSave={saveLayer}
+              onFocus={fitToLayer}
             />
           ))}
         </div>

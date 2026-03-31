@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
-import { ClientImage } from "@/lok-next/components/ClientAvatar";
 import {
   AgentFragment,
   useAgentQuery,
@@ -21,10 +20,14 @@ import {
 import { Activity, Box, CheckCircle, Clock, Database, Pin, PinOff, Server } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
+import { AgentHeroScene } from "../components/AgentHeroScene";
 import ImplementationCard from "../components/cards/ImplementationCard";
 import TaskCard from "../components/cards/TaskCard";
-import { StateCheckoutDisplay, StateDisplay } from "../components/State";
+import { StateCheckoutDisplay } from "../components/State";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
+
+const stageCardClass =
+  "border-white/20 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(255,255,255,0.28))] shadow-[0_22px_50px_-30px_rgba(15,23,42,0.85)] backdrop-blur-xl dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.80),rgba(15,23,42,0.28))]";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
   const [pin] = usePinAgentMutation();
@@ -148,6 +151,7 @@ export const AgentPage = asDetailQueryRoute(
       <RekuestAgent.ModelPage
         title={data.agent.name}
         object={data.agent}
+        variant={"black"}
         sidebars={
           <MultiSidebar
             map={{
@@ -172,131 +176,114 @@ export const AgentPage = asDetailQueryRoute(
           />
         }
         pageActions={
-          <div className="flex flex-row gap-2">
+          <>
             <PinAgent agent={data.agent} />
+            <BounceAgentButton agent={data.agent} />
             <ManagedByCard agent={data.agent} />
-            {data.agent.memoryShelve && (
-              <RekuestMemoryShelve.DetailLink object={data.agent.memoryShelve}>
-                <Button variant="outline" size="sm">
-                  <Database className="h-4 w-4 mr-2" />
-                  Memory Shelve
-                </Button>
-              </RekuestMemoryShelve.DetailLink>
-            )}
-            <RekuestAgent.ObjectButton object={data.agent} />
-          </div>
+          </>
         }
       >
-        {/* Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <div className="space-y-4">
-              <RekuestAgent.DetailLink object={data.agent}>
-                <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl hover:text-primary transition-colors cursor-pointer">
-                  {data.agent.name}
-                </h1>
-              </RekuestAgent.DetailLink>
+        <div className="relative h-full w-full overflow-hidden  border border-border/60 shadow-[0_30px_120px_-48px_rgba(15,23,42,0.55)]">
+          <AgentHeroScene clientId={data.agent.registry.client.clientId} />
 
-              {data.agent.extensions.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {data.agent.extensions.map((extension) => (
-                    <Badge key={extension} variant="secondary" className="text-xs font-mono">
-                      {extension}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <div className="absolute inset-y-0 left-0 z-20 flex w-full max-w-[620px] items-stretch">
+            <div className="flex w-full flex-col justify-between gap-6 p-6">
+              <div className="space-y-1">
+                <div className="space-y-4">
+                  <RekuestAgent.DetailLink object={data.agent}>
+                    <h1 className="scroll-m-20 text-4xl font-bold tracking-tight transition-colors hover:text-primary lg:text-6xl cursor-pointer">
+                      {data.agent.name}
+                    </h1>
+                  </RekuestAgent.DetailLink>
 
-          <div className="lg:col-span-4  p-6 flex items-center justify-center">
-            <ClientImage
-              clientId={data.agent.registry.client.clientId}
-              className="w-full max-w-[200px] h-auto rounded-lg shadow-lg"
-            />
-          </div>
-        </div>
-        <div className="space-y-8 mt-6">
-          {/* Status Cards Section */}
-          <div className="grid grid-cols-8  gap-3">
-            <Card className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Activity className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Status</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    data.agent.connected
-                      ? "bg-green-500 animate-pulse shadow-sm shadow-green-500/50"
-                      : "bg-red-500 shadow-sm shadow-red-500/50"
-                  )}
-                />
-                <span className="text-lg font-semibold">
-                  {data.agent.connected ? "Online" : "Offline"}
-                </span>
-              </div>
-              {(data.agent.active !== data.agent.connected || data.agent.blocked) && (
-                <div className="flex gap-1 mt-1">
-                  {data.agent.active !== data.agent.connected && (
-                    <Badge variant="outline" className="text-xs h-5 px-1">
-                      ⚠️ Mismatch
-                    </Badge>
-                  )}
-                  {data.agent.blocked && (
-                    <Badge variant="destructive" className="text-xs h-5 px-1">
-                      Blocked
-                    </Badge>
+                  {data.agent.extensions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {data.agent.extensions.map((extension) => (
+                        <Badge key={extension} variant="secondary" className="text-xs font-mono">
+                          {extension}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
                 </div>
-              )}
-            </Card>
 
-            <Card className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Last Seen</span>
-              </div>
-              <div className="text-lg font-semibold">
-                <Timestamp date={data.agent.lastSeen} relative />
-              </div>
-            </Card>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Card className={`${stageCardClass} p-4`}>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <Activity className="h-3.5 w-3.5" />
+                      Status
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "h-2.5 w-2.5 rounded-full",
+                          data.agent.connected
+                            ? "bg-green-500 shadow-[0_0_14px_rgba(34,197,94,0.75)]"
+                            : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.75)]",
+                        )}
+                      />
+                      <span className="text-2xl font-semibold">
+                        {data.agent.connected ? "Online" : "Offline"}
+                      </span>
+                    </div>
+                    {(data.agent.active !== data.agent.connected || data.agent.blocked) && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {data.agent.active !== data.agent.connected && (
+                          <Badge variant="outline" className="text-xs">
+                            Mismatch
+                          </Badge>
+                        )}
+                        {data.agent.blocked && (
+                          <Badge variant="destructive" className="text-xs">
+                            Blocked
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </Card>
 
-            <Card className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Box className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Implementations</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg font-semibold">
-                  {data.agent.implementations.length}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {data.agent.implementations.length === 1 ? "action" : "actions"}
-                </span>
-              </div>
-            </Card>
+                  <Card className={`${stageCardClass} p-4`}>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      Last Seen
+                    </div>
+                    <div className="mt-3 text-2xl font-semibold">
+                      <Timestamp date={data.agent.lastSeen} relative />
+                    </div>
+                  </Card>
 
-            <Card className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Extensions</span>
+                  <Card className={`${stageCardClass} p-4`}>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <Box className="h-3.5 w-3.5" />
+                      Actions
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                      <span className="text-2xl font-semibold">{data.agent.implementations.length}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {data.agent.implementations.length === 1 ? "registered action" : "registered actions"}
+                      </span>
+                    </div>
+                  </Card>
+
+                  <Card className={`${stageCardClass} p-4`}>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Extensions
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                      <span className="text-2xl font-semibold">{data.agent.extensions.length}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {data.agent.extensions.length === 1 ? "extension" : "extensions"}
+                      </span>
+                    </div>
+                  </Card>
+                </div>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg font-semibold">
-                  {data.agent.extensions.length}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {data.agent.extensions.length === 1 ? "ext" : "exts"}
-                </span>
-              </div>
-            </Card>
-          </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Card className={`${stageCardClass} p-4 sm:col-span-2`}>
 
-
-          {/* Assignations Section */}
+        <div className="mt-6 space-y-8 xl:hidden">
           {data.agent.assignations && data.agent.assignations.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -310,20 +297,43 @@ export const AgentPage = asDetailQueryRoute(
               </ListRender>
             </div>
           )}
+        </div>
 
-          {/* Implementations Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Box className="h-6 w-6 text-muted-foreground" />
-              <h2 className="text-2xl font-bold">Registered Actions</h2>
-              <Badge variant="outline">{data.agent.implementations.length}</Badge>
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <Box className="h-6 w-6 text-muted-foreground" />
+            <h2 className="text-2xl font-bold">Registered Actions</h2>
+            <Badge variant="outline">{data.agent.implementations.length}</Badge>
+          </div>
+          <Separator />
+          <ListRender array={data.agent.implementations}>
+            {(item) => <ImplementationCard item={item} />}
+          </ListRender>
+        </div>
+                </Card>
+              </div>
             </div>
-            <Separator />
-            <ListRender array={data.agent.implementations}>
-              {(item) => <ImplementationCard item={item} />}
-            </ListRender>
+
+
+          <div className="absolute bottom-6 right-6 left-auto z-20 hidden w-[min(42rem,calc(100%-3rem))] max-w-2xl xl:block">
+            {data.agent.assignations && data.agent.assignations.length > 0 && (
+              <Card className={`${stageCardClass} p-5`}>
+                <div className="mb-4 flex items-center gap-3">
+                  <Activity className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-xl font-semibold">Latest Tasks</h2>
+                  <Badge variant="outline">{data.agent.assignations.length}</Badge>
+                </div>
+                <div className="max-h-[16rem] overflow-auto pr-1">
+                  <ListRender array={data.agent.assignations.slice(0, 3)}>
+                    {(item) => <TaskCard item={item} />}
+                  </ListRender>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
+
+          </div>
       </RekuestAgent.ModelPage>
     );
   },

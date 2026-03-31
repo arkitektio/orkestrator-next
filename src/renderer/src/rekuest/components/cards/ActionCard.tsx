@@ -23,14 +23,14 @@ const TheCard = ({ item }: Props) => {
 
 
   return (
-    <RekuestAction.Smart object={item?.id} >
+    <RekuestAction.Smart object={item} >
       <Card
         className="group border aspect-square ring ring-0 group-data-[selected=true]:ring-1 flex flex-col justify-between"
       >
         <CardHeader className="flex flex-col justify-between h-full">
           <div className="flex-grow overflow-hidden">
             <CardTitle>
-              <RekuestAction.DetailLink object={item?.id}>
+              <RekuestAction.DetailLink object={item}>
                 {" "}
                 {item.name}
               </RekuestAction.DetailLink>

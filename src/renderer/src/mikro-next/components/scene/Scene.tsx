@@ -6,6 +6,7 @@ import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
+import { LayerViewRangesOverlay } from "./overlays/LayerViewRangesOverlay";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
@@ -25,12 +26,9 @@ import { VisibilityManager } from "./managers/VisibilityManager";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
-  return <Canvas>{children}</Canvas>;
+  return <Canvas
+        frameloop="demand">{children}</Canvas>;
 };
-
-
-
-
 
 
 
@@ -106,6 +104,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <ScaleBar />
 
             <SceneOverlay />
+            <LayerViewRangesOverlay />
           </PanelProvider>
         </div>
                 </SceneStoreContext.Provider>

@@ -21,6 +21,13 @@ interface TrackableObject {
   ref: RefObject<THREE.Object3D | undefined>;
 }
 
+export interface LayerViewRange {
+  xRange: [number, number];
+  yRange: [number, number];
+  zRange: [number, number] | null;
+  /** Screen pixels per image pixel (how many viewer pixels one voxel occupies) */
+  scale: number;
+}
 
 
 interface ViewerState {
@@ -42,10 +49,13 @@ interface ViewerState {
   trackables: Set<TrackableObject>
   // We store strings (names/IDs) for the React UI to consume
   visibleLayers: string[]
+  // Visible image-coordinate ranges per layer
+  layerViewRanges: Record<string, LayerViewRange>
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
   setVisible: (visibleSet: Set<string>) => void
+  setLayerViewRanges: (ranges: Record<string, LayerViewRange>) => void
 
 
   setZRange: (start: number | null, end: number | null) => void;
@@ -77,6 +87,7 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     tStart: null,
     trackables: new Set(),
     visibleLayers: [],
+    layerViewRanges: {},
      register: (ref) => set((state) => {
       state.trackables.add(ref);
       return state;
@@ -89,6 +100,7 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
       state.visibleLayers = Array.from(visibleSet.keys());
       return state;
     }),
+    setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
     currentZ: 0,
     tEnd: null,
     debug: false,

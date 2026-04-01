@@ -224,25 +224,10 @@ export const AgentPage = asDetailQueryRoute(
                       {data.agent.name}
                     </h1>
                   </RekuestAgent.DetailLink>
-
-                  {data.agent.extensions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {data.agent.extensions.map((extension) => (
-                        <Badge key={extension} variant="secondary" className="text-xs font-mono">
-                          {extension}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Card className={`${stageCardClass} p-4`}>
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      <Activity className="h-3.5 w-3.5" />
-                      Status
-                    </div>
-                    <div className="mt-3 flex items-center gap-3">
+                <div className="grid grid-cols-3 gap-1  ">
+                    <div className="flex items-center gap-3">
                       <div
                         className={cn(
                           "h-2.5 w-2.5 rounded-full",
@@ -254,7 +239,10 @@ export const AgentPage = asDetailQueryRoute(
                       <span className="text-2xl font-semibold">
                         {data.agent.connected ? "Online" : "Offline"}
                       </span>
-                    </div>
+                      <div className="font-light">
+                      <Timestamp date={data.agent.lastSeen} relative />
+                      </div>
+                                       </div>
                     {(data.agent.active !== data.agent.connected || data.agent.blocked) && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {data.agent.active !== data.agent.connected && (
@@ -269,100 +257,30 @@ export const AgentPage = asDetailQueryRoute(
                         )}
                       </div>
                     )}
-                  </Card>
 
-                  <Card className={`${stageCardClass} p-4`}>
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      Last Seen
-                    </div>
-                    <div className="mt-3 text-2xl font-semibold">
-                      <Timestamp date={data.agent.lastSeen} relative />
-                    </div>
-                  </Card>
 
-                  <Card className={`${stageCardClass} p-4`}>
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      <Box className="h-3.5 w-3.5" />
-                      Actions
-                    </div>
-                    <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-2xl font-semibold">{data.agent.implementations.length}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {data.agent.implementations.length === 1 ? "registered action" : "registered actions"}
-                      </span>
-                    </div>
-                  </Card>
-
-                  <Card className={`${stageCardClass} p-4`}>
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Extensions
-                    </div>
-                    <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-2xl font-semibold">{data.agent.extensions.length}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {data.agent.extensions.length === 1 ? "extension" : "extensions"}
-                      </span>
-                    </div>
-                  </Card>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Card className={`${stageCardClass} p-4 sm:col-span-2`}>
 
-        <div className="mt-6 space-y-8 xl:hidden @container">
-          {data.agent.assignations && data.agent.assignations.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Activity className="h-6 w-6 text-muted-foreground" />
-                <h2 className="text-2xl font-bold">Latest Tasks</h2>
-                <Badge variant="outline">{data.agent.assignations.length}</Badge>
-              </div>
-              <Separator />
+        <div className="mt-6  @container">
+          Tasks
               <ListRender array={data.agent.assignations}>
                 {(item) => <TaskCard item={item} />}
               </ListRender>
-            </div>
-          )}
         </div>
 
-        <div className="mt-6 space-y-4  @container">
-          <div className="flex items-center gap-3">
-            <Box className="h-6 w-6 text-muted-foreground" />
-            <h2 className="text-2xl font-bold">Registered Actions</h2>
-            <Badge variant="outline">{data.agent.implementations.length}</Badge>
-          </div>
-          <Separator />
+        <div className="mt-6  @container overflow-y-auto">
+          Actions
           <ListRender array={data.agent.implementations}>
             {(item) => <ImplementationCard item={item} />}
           </ListRender>
         </div>
-                </Card>
               </div>
             </div>
 
-
-          <div className="absolute bottom-6 right-6 left-auto z-20 hidden w-[min(42rem,calc(100%-3rem))] max-w-2xl xl:block">
-            {data.agent.assignations && data.agent.assignations.length > 0 && (
-              <Card className={`${stageCardClass} p-5`}>
-                <div className="mb-4 flex items-center gap-3">
-                  <Activity className="h-5 w-5 text-muted-foreground" />
-                  <h2 className="text-xl font-semibold">Latest Tasks</h2>
-                  <Badge variant="outline">{data.agent.assignations.length}</Badge>
-                </div>
-                <div className="max-h-[16rem] overflow-auto pr-1">
-                  <ListRender array={data.agent.assignations.slice(0, 3)}>
-                    {(item) => <TaskCard item={item} />}
-                  </ListRender>
-                </div>
-              </Card>
-            )}
-          </div>
         </div>
 
-          </div>
       </RekuestAgent.ModelPage>
     );
   },

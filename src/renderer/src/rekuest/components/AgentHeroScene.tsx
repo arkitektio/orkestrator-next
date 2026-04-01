@@ -27,20 +27,18 @@ const AgentModel = (props: { url: string }) => {
   const { scene } = useGLTF(props.url);
 
   return (
-    <Float speed={1.5} rotationIntensity={0.12} floatIntensity={0.45}>
       <group ref={groupRef}>
         <Center>
           <primitive object={scene} />
         </Center>
       </group>
-    </Float>
   );
 };
 
 const AgentSceneFallback = () => {
   return (
     <Html center>
-      <div className="rounded-full border border-primary/20 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+      <div className="text-muted-foreground backdrop-blur-sm">
         Loading scene...
       </div>
     </Html>
@@ -57,6 +55,7 @@ export const AgentHeroScene = (props: { scene: AgentScene }) => {
       <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_38%,rgba(0,0,0,0.08)_56%,rgba(0,0,0,0.22)_76%,rgba(0,0,0,0.46)_100%)]" />
 
       <Canvas
+        frameloop="demand"
         dpr={[1, 2]}
         camera={{ position: [0, 0.15, 6.6], fov: 28 }}
         gl={{ antialias: false, alpha: true }}
@@ -78,7 +77,7 @@ export const AgentHeroScene = (props: { scene: AgentScene }) => {
 
         <OrbitControls
           enablePan={false}
-          enableZoom={false}
+          enableZoom={true}
           target={[0, 0.1, 0]}
         />
 
@@ -89,7 +88,6 @@ export const AgentHeroScene = (props: { scene: AgentScene }) => {
             radialModulation={false}
             modulationOffset={0}
           />
-          <Noise opacity={0.045} />
         </EffectComposer>
       </Canvas>
     </div>

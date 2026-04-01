@@ -12,7 +12,7 @@ const TheCard = ({ item }: Props) => {
   return (
     <RekuestAssignation.Smart object={item}>
       <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-0">
           <CardTitle className="text-base">
             <RekuestAssignation.DetailLink object={item} className="hover:text-primary transition-colors">
               {item.action.name}

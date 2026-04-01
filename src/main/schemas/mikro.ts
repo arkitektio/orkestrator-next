@@ -5755,6 +5755,8 @@ export type ZarrAccessGrantFragment = { __typename?: 'ZarrAccessGrant', accessKe
 
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
+export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, dataset: { __typename?: 'ADataset', id: string, name: string } };
+
 export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
@@ -6060,6 +6062,13 @@ export type RequestZarrAccessMutationVariables = Exact<{
 
 
 export type RequestZarrAccessMutation = { __typename?: 'Mutation', requestZarrAccess: { __typename?: 'ZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type CreateDataRoiMutationVariables = Exact<{
+  input: CreateDataRoiInput;
+}>;
+
+
+export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string } };
 
 export type CreateDatasetMutationVariables = Exact<{
   input: CreateDatasetInput;
@@ -6875,6 +6884,16 @@ export const ParquetAccessGrantFragmentDoc = gql`
   path
   key
   bucket
+}
+    `;
+export const DataRoiFragmentDoc = gql`
+    fragment DataRoi on DataRoi {
+  id
+  name
+  dataset {
+    id
+    name
+  }
 }
     `;
 export const ProvenanceEntryFragmentDoc = gql`
@@ -7911,6 +7930,14 @@ export const RequestZarrAccessDocument = gql`
   }
 }
     ${ZarrAccessGrantFragmentDoc}`;
+export const CreateDataRoiDocument = gql`
+    mutation CreateDataRoi($input: CreateDataRoiInput!) {
+  createDataRoi(input: $input) {
+    id
+    name
+  }
+}
+    `;
 export const CreateDatasetDocument = gql`
     mutation CreateDataset($input: CreateDatasetInput!) {
   createDataset(input: $input) {
@@ -8756,6 +8783,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     RequestZarrAccess(variables: RequestZarrAccessMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestZarrAccessMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestZarrAccessMutation>({ document: RequestZarrAccessDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestZarrAccess', 'mutation', variables);
+    },
+    CreateDataRoi(variables: CreateDataRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDataRoiMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateDataRoiMutation>({ document: CreateDataRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDataRoi', 'mutation', variables);
     },
     CreateDataset(variables: CreateDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDatasetMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateDatasetMutation>({ document: CreateDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDataset', 'mutation', variables);

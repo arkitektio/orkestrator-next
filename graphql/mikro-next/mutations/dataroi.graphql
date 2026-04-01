@@ -1,0 +1,5 @@
+mutation CreateDataRoi($input: CreateDataRoiInput!) {
+  createDataRoi(input: $input) {
+    ...DataRoi
+  }
+}

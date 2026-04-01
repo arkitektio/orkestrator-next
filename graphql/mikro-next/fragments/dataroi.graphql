@@ -1,0 +1,8 @@
+fragment DataRoi on DataRoi {
+  id
+  name
+  dataset {
+    id
+    name
+  }
+}

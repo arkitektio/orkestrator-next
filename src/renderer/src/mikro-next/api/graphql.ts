@@ -5756,6 +5756,8 @@ export type ZarrAccessGrantFragment = { __typename?: 'ZarrAccessGrant', accessKe
 
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
+export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, dataset: { __typename?: 'ADataset', id: string, name: string } };
+
 export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
@@ -6061,6 +6063,13 @@ export type RequestZarrAccessMutationVariables = Exact<{
 
 
 export type RequestZarrAccessMutation = { __typename?: 'Mutation', requestZarrAccess: { __typename?: 'ZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type CreateDataRoiMutationVariables = Exact<{
+  input: CreateDataRoiInput;
+}>;
+
+
+export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string } };
 
 export type CreateDatasetMutationVariables = Exact<{
   input: CreateDatasetInput;
@@ -6876,6 +6885,16 @@ export const ParquetAccessGrantFragmentDoc = gql`
   path
   key
   bucket
+}
+    `;
+export const DataRoiFragmentDoc = gql`
+    fragment DataRoi on DataRoi {
+  id
+  name
+  dataset {
+    id
+    name
+  }
 }
     `;
 export const ProvenanceEntryFragmentDoc = gql`
@@ -8286,6 +8305,40 @@ export function useRequestZarrAccessMutation(baseOptions?: ApolloReactHooks.Muta
 export type RequestZarrAccessMutationHookResult = ReturnType<typeof useRequestZarrAccessMutation>;
 export type RequestZarrAccessMutationResult = Apollo.MutationResult<RequestZarrAccessMutation>;
 export type RequestZarrAccessMutationOptions = Apollo.BaseMutationOptions<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>;
+export const CreateDataRoiDocument = gql`
+    mutation CreateDataRoi($input: CreateDataRoiInput!) {
+  createDataRoi(input: $input) {
+    id
+    name
+  }
+}
+    `;
+export type CreateDataRoiMutationFn = Apollo.MutationFunction<CreateDataRoiMutation, CreateDataRoiMutationVariables>;
+
+/**
+ * __useCreateDataRoiMutation__
+ *
+ * To run a mutation, you first call `useCreateDataRoiMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateDataRoiMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createDataRoiMutation, { data, loading, error }] = useCreateDataRoiMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateDataRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDataRoiMutation, CreateDataRoiMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateDataRoiMutation, CreateDataRoiMutationVariables>(CreateDataRoiDocument, options);
+      }
+export type CreateDataRoiMutationHookResult = ReturnType<typeof useCreateDataRoiMutation>;
+export type CreateDataRoiMutationResult = Apollo.MutationResult<CreateDataRoiMutation>;
+export type CreateDataRoiMutationOptions = Apollo.BaseMutationOptions<CreateDataRoiMutation, CreateDataRoiMutationVariables>;
 export const CreateDatasetDocument = gql`
     mutation CreateDataset($input: CreateDatasetInput!) {
   createDataset(input: $input) {

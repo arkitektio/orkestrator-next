@@ -3,6 +3,8 @@ import { Suspense, useEffect } from "react";
 import { useCheckoutQuery, useGetStateQuery, WatchStateEventsDocument, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables, StateFragment } from "../api/graphql";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import AsyncBoundary from "@/components/boundaries/AsyncBoundary";
+import { RekuestState } from "@/linkers";
+
 
 
 export const useRekuestState = ({
@@ -132,6 +134,7 @@ export const StateCheckoutDisplay = ({
     return (
       <AsyncBoundary>
         {JSON.stringify(data?.checkout.value)}
+        <RekuestState.DetailLink object={state} >
         <Card className="grid grid-cols-2 gap-4 p-3">
           {ports.map((port, index) => {
             const Widget = registry.getReturnWidgetForPort(port);
@@ -149,6 +152,7 @@ export const StateCheckoutDisplay = ({
             );
           })}
         </Card>
+        </RekuestState.DetailLink>
       </AsyncBoundary>
     );
   };

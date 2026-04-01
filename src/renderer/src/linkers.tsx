@@ -18,6 +18,8 @@ export const RekuestAssignation = buildSmart(
   "rekuest/assignations",
 );
 
+export const RekuestState = buildSmart("@rekuest/state", "rekuest/states");
+
 export const BlokBlok = buildSmart("@blok/blok", "blok/bloks");
 
 export const RekuestAction = buildSmart("@rekuest/action", "rekuest/actions");

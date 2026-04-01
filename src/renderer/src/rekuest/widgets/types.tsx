@@ -39,12 +39,17 @@ export type InputWidgetTypes = AssignWidgetFragment["__typename"];
 export type ReturnWidgetTypes = ReturnWidgetFragment["__typename"];
 export type PortEffectTypes = PortEffectFragment["__typename"];
 
+export type ValueKind = string | number | boolean | null | undefined | { [key: string]: ValueKind } | ValueKind[];
+
+
+
 export interface ReturnWidgetProps<
   W extends ReturnWidgetFragment = ReturnWidgetFragment,
+  V extends ValueKind = ValueKind,
 > {
   port: ReturnPort;
   widget?: W | null;
-  value?: unknown;
+  value?: V;
   options?: PortOptions;
 }
 

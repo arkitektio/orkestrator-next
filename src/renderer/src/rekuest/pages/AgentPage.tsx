@@ -180,6 +180,18 @@ export const AgentPage = asDetailQueryRoute(
             <PinAgent agent={data.agent} />
             <BounceAgentButton agent={data.agent} />
             <ManagedByCard agent={data.agent} />
+            <RekuestAgent.DetailLink
+                          object={data?.agent}
+                          subroute="space"
+                          className="font-semibold"
+                        >
+                          <Button
+                            variant={"outline"}
+                            size={"sm"}
+                          >
+                            Space
+                          </Button>
+                        </RekuestAgent.DetailLink>
           </>
         }
       >

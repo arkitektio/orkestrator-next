@@ -272,6 +272,7 @@ export type BigFileAccessGrant = {
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -307,6 +308,7 @@ export type BigFileUploadGrant = {
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   maxBytes: Scalars['Int']['output'];
@@ -2199,6 +2201,7 @@ export type MediaAccessGrant = {
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -2232,24 +2235,21 @@ export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Temporary S3 credentials for uploading a media object. */
+/** A presigned PUT grant for uploading a media object. */
 export type MediaUploadGrant = {
   __typename?: 'MediaUploadGrant';
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   maxBytes: Scalars['Int']['output'];
-  originalFileName?: Maybe<Scalars['String']['output']>;
   path: Scalars['String']['output'];
   secretKey: Scalars['String']['output'];
   sessionToken: Scalars['String']['output'];
   status: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-  uploadContentType?: Maybe<Scalars['String']['output']>;
-  uploadFileName: Scalars['String']['output'];
-  uploadFormField: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
 };
 
 export type Membership = {
@@ -3366,6 +3366,7 @@ export type ParquetAccessGrant = {
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -3406,6 +3407,7 @@ export type ParquetUploadGrant = {
   action: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   maxBytes: Scalars['Int']['output'];
@@ -4768,40 +4770,56 @@ export type RenderTreeOrder = {
 };
 
 export type RequestBigFileAccessInput = {
-  storeId: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RequestBigFileUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
+  datalayer?: Scalars['String']['input'];
   fileSize?: InputMaybe<Scalars['Int']['input']>;
+  host?: InputMaybe<Scalars['String']['input']>;
   originalFileName: Scalars['String']['input'];
+  port?: InputMaybe<Scalars['Int']['input']>;
+  protocol?: Scalars['String']['input'];
 };
 
 export type RequestMediaAccessInput = {
-  storeId: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RequestMediaUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
+  datalayer?: Scalars['String']['input'];
   fileSize?: InputMaybe<Scalars['Int']['input']>;
+  host?: InputMaybe<Scalars['String']['input']>;
   originalFileName: Scalars['String']['input'];
+  port?: InputMaybe<Scalars['Int']['input']>;
+  protocol?: Scalars['String']['input'];
 };
 
 export type RequestParquetAccessInput = {
-  storeId: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RequestParquetUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
+  datalayer?: Scalars['String']['input'];
+  host?: InputMaybe<Scalars['String']['input']>;
   originalFileName: Scalars['String']['input'];
+  port?: InputMaybe<Scalars['Int']['input']>;
+  protocol?: Scalars['String']['input'];
 };
 
 export type RequestZarrAccessInput = {
-  storeId: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RequestZarrUploadInput = {
   chunks?: InputMaybe<Array<Scalars['Int']['input']>>;
+  datalayer?: Scalars['String']['input'];
+  host?: InputMaybe<Scalars['String']['input']>;
+  port?: InputMaybe<Scalars['Int']['input']>;
+  protocol?: Scalars['String']['input'];
   shape?: InputMaybe<Array<Scalars['Int']['input']>>;
   version?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5638,6 +5656,7 @@ export type ZarrAccessGrant = {
   accessKey: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -5687,6 +5706,7 @@ export type ZarrUploadGrant = {
   action: Scalars['String']['output'];
   bucket: Scalars['String']['output'];
   datalayer: Scalars['String']['output'];
+  endpoint: Scalars['String']['output'];
   expiresIn: Scalars['Int']['output'];
   key: Scalars['String']['output'];
   maxBytes: Scalars['Int']['output'];
@@ -5722,7 +5742,7 @@ export type CameraFragment = { __typename?: 'Camera', sensorSizeX?: number | nul
 
 export type BigFileUploadGrantFragment = { __typename?: 'BigFileUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, store: string };
 
-export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string };
+export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store?: string | null };
 
 export type ZarrUploadGrantFragment = { __typename?: 'ZarrUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string };
 
@@ -5984,7 +6004,7 @@ export type RequestMediaUploadMutationVariables = Exact<{
 }>;
 
 
-export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string } };
+export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store?: string | null } };
 
 export type FinishMediaUploadMutationVariables = Exact<{
   input: FinishMediaUploadInput;

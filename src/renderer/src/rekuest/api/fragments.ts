@@ -23,6 +23,10 @@
       "ChoiceReturnWidget",
       "CustomReturnWidget"
     ],
+    "StateSnapshotEventStatePatchEvent": [
+      "StatePatchEvent",
+      "StateSnapshotEvent"
+    ],
     "UIChild": [
       "UIGrid",
       "UISplit",

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
-import { KabinetPod, RekuestAgent } from "@/linkers";
+import { KabinetPod, RekuestAgent, RekuestState } from "@/linkers";
 import {
   AgentFragment,
   useAgentQuery,
@@ -23,7 +23,6 @@ import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";
 import ImplementationCard from "../components/cards/ImplementationCard";
 import TaskCard from "../components/cards/TaskCard";
-import { StateCheckoutDisplay } from "../components/State";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
 
 const stageCardClass =
@@ -101,6 +100,12 @@ export const ManagedByCard = (props: { agent: AgentFragment }) => {
   );
 };
 
+
+
+
+
+
+
 export const AgentPage = asDetailQueryRoute(
   useAgentQuery,
   ({ data, subscribeToMore }) => {
@@ -165,7 +170,11 @@ export const AgentPage = asDetailQueryRoute(
                     </h3>
                     <div className="space-y-3">
                       {data.agent.states.map((state) => (
-                        <StateCheckoutDisplay key={state.id} state={state} label={true} />
+                        <RekuestState.DetailLink object={state} key={state.id}>
+                          <Button variant="outline" size="sm">
+                            {state.id}
+                          </Button>
+                        </RekuestState.DetailLink>
                       ))}
                     </div>
                   </div>
@@ -195,8 +204,16 @@ export const AgentPage = asDetailQueryRoute(
           </>
         }
       >
-        <div className="relative h-full w-full overflow-hidden  border border-border/60 shadow-[0_30px_120px_-48px_rgba(15,23,42,0.55)]">
-          <AgentHeroScene clientId={data.agent.registry.client.clientId} />
+        <div className="relative h-full w-full overflow-hidden  shadow-[0_30px_120px_-48px_rgba(15,23,42,0.55)]">
+
+
+          <div>
+            {data.agent.scenes.map((scene) => (
+              <>{scene && <AgentHeroScene scene={scene} />}</>
+
+            ))}
+
+          </div>
 
           <div className="absolute inset-y-0 left-0 z-20 flex w-full max-w-[620px] items-stretch">
             <div className="flex w-full flex-col justify-between gap-6 p-6">
@@ -295,7 +312,7 @@ export const AgentPage = asDetailQueryRoute(
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Card className={`${stageCardClass} p-4 sm:col-span-2`}>
 
-        <div className="mt-6 space-y-8 xl:hidden">
+        <div className="mt-6 space-y-8 xl:hidden @container">
           {data.agent.assignations && data.agent.assignations.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -311,7 +328,7 @@ export const AgentPage = asDetailQueryRoute(
           )}
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4  @container">
           <div className="flex items-center gap-3">
             <Box className="h-6 w-6 text-muted-foreground" />
             <h2 className="text-2xl font-bold">Registered Actions</h2>

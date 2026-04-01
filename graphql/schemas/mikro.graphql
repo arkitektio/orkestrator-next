@@ -230,6 +230,7 @@ type BigFileAccessGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
@@ -259,6 +260,7 @@ type BigFileUploadGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
@@ -2144,6 +2146,7 @@ type MediaAccessGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
@@ -2167,23 +2170,20 @@ type MediaStore {
   presignedUrl(host: String = null): String!
 }
 
-"""Temporary S3 credentials for uploading a media object."""
+"""A presigned PUT grant for uploading a media object."""
 type MediaUploadGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
-  originalFileName: String
   path: String!
   secretKey: String!
   sessionToken: String!
   status: String!
-  store: String!
-  uploadContentType: String
-  uploadFileName: String!
-  uploadFormField: String!
+  store: String
 }
 
 type Membership {
@@ -2913,6 +2913,7 @@ type ParquetAccessGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
@@ -2947,6 +2948,7 @@ type ParquetUploadGrant {
   action: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
@@ -4145,40 +4147,56 @@ input RenderTreeOrder {
 }
 
 input RequestBigFileAccessInput {
-  storeId: String!
+  storeId: String = null
 }
 
 input RequestBigFileUploadInput {
   contentType: String = null
+  datalayer: String! = "s3"
   fileSize: Int = null
+  host: String = null
   originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
 }
 
 input RequestMediaAccessInput {
-  storeId: String!
+  storeId: String = null
 }
 
 input RequestMediaUploadInput {
   contentType: String = null
+  datalayer: String! = "s3"
   fileSize: Int = null
+  host: String = null
   originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
 }
 
 input RequestParquetAccessInput {
-  storeId: String!
+  storeId: String = null
 }
 
 input RequestParquetUploadInput {
   contentType: String = null
+  datalayer: String! = "s3"
+  host: String = null
   originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
 }
 
 input RequestZarrAccessInput {
-  storeId: String!
+  storeId: String = null
 }
 
 input RequestZarrUploadInput {
   chunks: [Int!] = null
+  datalayer: String! = "s3"
+  host: String = null
+  port: Int = null
+  protocol: String! = "https"
   shape: [Int!] = null
   version: String = null
 }
@@ -4979,6 +4997,7 @@ type ZarrAccessGrant {
   accessKey: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
@@ -5021,6 +5040,7 @@ type ZarrUploadGrant {
   action: String!
   bucket: String!
   datalayer: String!
+  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!

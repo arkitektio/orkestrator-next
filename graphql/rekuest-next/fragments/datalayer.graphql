@@ -1,0 +1,33 @@
+
+
+fragment MediaUploadGrant on MediaUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  maxBytes
+  store
+}
+
+fragment MediaAccessGrant on MediaAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  path
+  key
+  bucket
+}
+
+
+
+
+fragment MediaStore on MediaStore {
+  id
+  key
+  bucket
+}

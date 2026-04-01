@@ -336,6 +336,9 @@ type Agent {
   """The release this agent belongs to."""
   release: Release!
 
+  """Scenes associated with this agent."""
+  scenes(filters: AgentSceneFilter, order: AgentSceneOrder, pagination: OffsetPaginationInput): [AgentScene!]!
+
   """Current and historical states associated with the agent."""
   states: [State!]!
 
@@ -536,18 +539,15 @@ type ArgPort {
 input ArgPortInput {
   children: [ArgPortInput!] = null
   choices: [ChoiceInput!] = null
+  default: AnyDefault = null
   description: String = null
-
-  """
-  The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors
-  """
-  descriptors: [RequiresInput!] = []
   effects: [EffectInput!] = null
   identifier: String = null
   key: String!
   kind: PortKind!
   label: String = null
   nullable: Boolean! = false
+  requires: [RequiresInput!] = null
   validators: [ValidatorInput!] = null
   widget: AssignWidgetInput = null
 }
@@ -1124,7 +1124,7 @@ input CreateTestResultInput {
 """The input for creating a 3D model."""
 input CreateThreeDModelInput {
   description: String = null
-  media: ID!
+  media: MediaLike!
   name: String!
 }
 
@@ -1759,15 +1759,20 @@ type MaterializedBlok {
 type MediaAccessGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
   expiresIn: Int!
   key: String!
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
   store: String
 }
+
+"""
+A type representing a media store reference, which can be either a string ID or a more complex object.
+"""
+scalar MediaLike
 
 type MediaStore {
   """Get temporary S3 read credentials for the media object."""
@@ -1783,11 +1788,10 @@ type MediaStore {
   presignedUrl(host: String = null): String!
 }
 
-"""Temporary S3 credentials for uploading a media object."""
+"""A presigned PUT grant for uploading a media object."""
 type MediaUploadGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
@@ -2244,6 +2248,11 @@ input PortMatchInput {
   key: String = null
   kind: PortKind = null
   nullable: Boolean = null
+
+  """
+  The object of the port to match. This is used for adanved pattern matching based on the exact object descriptors of the object. i.e { x: 1, y: 2} 
+  """
+  object: Arg = null
 }
 
 """A set of related actions forming a protocol."""
@@ -2337,7 +2346,7 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, localRevision: Int = null, state: ID!): StateWithValue!
+  checkout(globalRevision: Int = null, state: ID!): StateWithValue!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2649,7 +2658,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "20029456-6b78-4657-b026-8da1bcbc026a"
+  reference: String = "b8e9ff88-be80-4c0d-b3e2-5568c530768f"
   title: String = null
 }
 
@@ -3069,6 +3078,18 @@ type StateMapping {
   updatedAt: DateTime!
 }
 
+"""A plain patch event with no model cross-references."""
+type StatePatchEvent {
+  agentId: ID!
+  globalRevision: Int!
+  op: String!
+  path: String!
+  sessionId: String!
+  stateId: ID!
+  timestamp: DateTime!
+  value: Args!
+}
+
 type StateSchema {
   hash: String!
   id: ID!
@@ -3081,6 +3102,18 @@ input StateSchemaInput {
   name: String!
   ports: [ReturnPortInput!]!
 }
+
+"""A plain snapshot of a state's current value."""
+type StateSnapshotEvent {
+  agentId: ID!
+  globalRevision: Int!
+  interface: String!
+  stateId: ID!
+  timestamp: DateTime!
+  value: Args!
+}
+
+union StateSnapshotEventStatePatchEvent = StatePatchEvent | StateSnapshotEvent
 
 type StateWithValue {
   globalRevision: Int
@@ -3211,6 +3244,12 @@ type Subscription {
 
   """Subscribe to updates of state values and patches."""
   stateUpdateEvents(stateId: ID!): State!
+
+  """Watch an agent: yields snapshots for all states then streams patches."""
+  watchAgent(agentId: ID!): StateSnapshotEventStatePatchEvent!
+
+  """Watch a state: yields the current snapshot then streams patches."""
+  watchState(stateId: ID!): StateSnapshotEventStatePatchEvent!
 }
 
 type TaskBoundary {

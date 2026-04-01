@@ -95,7 +95,7 @@ export const AssignationToaster = (props: { id: string }) => {
       onMouseLeave={() => setHovered(false)}
     >
       <div className={cn("absolute bottom-0 left-2 h-6  z-999 translate-y-[30%] border border-muted-foreground/10 bg-background rounded-md px-2 py-1", borderColorForAss(ass))}>
-        <RekuestAssignation.DetailLink object={ass.assignationId || ""}>
+        <RekuestAssignation.DetailLink object={ass}>
           <div className="flex flex-row h-full w-full justify-center ">
 
             {ass.event?.kind == AssignationEventKind.Progress && (

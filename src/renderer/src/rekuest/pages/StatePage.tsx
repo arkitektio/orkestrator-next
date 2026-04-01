@@ -26,7 +26,6 @@ export const StateCheckoutDisplay = ({
       variables: {
         state: state.id,
       },
-      pollInterval: 1000,
     });
 
     const value = data?.checkout?.value || state.value;

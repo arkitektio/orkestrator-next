@@ -339,6 +339,9 @@ type Agent {
   """Scenes associated with this agent."""
   scenes(filters: AgentSceneFilter, order: AgentSceneOrder, pagination: OffsetPaginationInput): [AgentScene!]!
 
+  """Sessions associated with this agent."""
+  sessions(filters: SessionFilter, order: SessionOrder, pagination: OffsetPaginationInput): [Session!]!
+
   """Current and historical states associated with the agent."""
   states: [State!]!
 
@@ -2131,6 +2134,7 @@ type Patch {
   futureRevision: Int!
   globalCurrentRevision: Int!
   globalFutureRevision: Int!
+  id: ID!
   op: String!
   patch: JSONPatch!
   path: String!
@@ -2347,7 +2351,7 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, state: ID!): StateWithValue!
+  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!): StateWithValue!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2430,8 +2434,14 @@ type Query {
   """Fetch resolved dependencies for a resolution."""
   resolvedImplementations(dependencyKey: String = null, methodKey: String = null, resolution: ID!): [Implementation!]!
 
+  """Fetch a specific session by ID."""
+  session(id: ID!): Session!
+
   """Get session boundaries."""
-  sessionBoundaries(sessionId: String!, stateId: ID = null): SessionBoundary
+  sessionBoundaries(sessionId: ID!, stateId: ID = null): SessionBoundary
+
+  """List all sessions."""
+  sessions(filters: SessionFilter, order: SessionOrder, pagination: OffsetPaginationInput): [Session!]!
 
   """Retrieve shortcut by ID."""
   shortcut(id: ID!): Shortcut!
@@ -2659,7 +2669,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "e44e7005-1fd6-4b3d-bf2d-d41bbaef4dcc"
+  reference: String = "08718488-9cbb-4077-b4ed-e89d4ce7499d"
   title: String = null
 }
 
@@ -2839,12 +2849,43 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar SearchQuery
 
+"""
+A session representing a continuous interaction of an agent with the system.
+"""
+type Session {
+  agent: Agent!
+  endedAt: DateTime
+  id: ID!
+  patches: [Patch!]!
+  snapshots: [Snapshot!]!
+  startedAt: DateTime!
+}
+
 type SessionBoundary {
   endGlobalRevision: Int
   endTime: DateTime
   sessionId: String!
   startGlobalRevision: Int
   startTime: DateTime
+}
+
+"""A way to filter sessions"""
+input SessionFilter {
+  AND: SessionFilter
+  DISTINCT: Boolean
+  NOT: SessionFilter
+  OR: SessionFilter
+
+  """Filter by space"""
+  agent: ID
+
+  """Filter by IDs"""
+  ids: [ID!]
+}
+
+input SessionOrder {
+  endedAt: Ordering
+  startedAt: Ordering
 }
 
 """The input for setting a state schema to an agent."""
@@ -2968,6 +3009,7 @@ type SliderAssignWidget implements AssignWidget {
 
 type Snapshot {
   globalRevision: Int!
+  id: ID!
   revision: Int!
   sessionId: String!
   state: State!
@@ -3570,7 +3612,7 @@ input WaiterFilter {
 
 scalar _Any
 
-union _Entity = MediaStore | User
+union _Entity = MediaStore | Session | User
 
 type _Service {
   sdl: String!

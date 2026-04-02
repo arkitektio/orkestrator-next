@@ -34,6 +34,7 @@
     ],
     "_Entity": [
       "MediaStore",
+      "Session",
       "User"
     ]
   }

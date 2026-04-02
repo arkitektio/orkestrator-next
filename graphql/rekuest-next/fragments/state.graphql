@@ -16,3 +16,26 @@ fragment StateEvent on State {
   value
   updatedAt
 }
+
+
+
+fragment StatePatchEvent on StatePatchEvent {
+  stateId
+  agentId
+  op
+  path
+  value
+  globalRevision
+  sessionId
+  timestamp
+}
+
+fragment StateSnapshotEvent on StateSnapshotEvent {
+  stateId
+  agentId
+  interface
+  value
+  globalRevision
+  sessionId
+  timestamp
+}

@@ -12,8 +12,8 @@ query GetStateFor($agent: ID!, $stateHash: String, $demand: SchemaDemandInput) {
 
 
 
-query Checkout($state: ID!) {
-  checkout(state: $state) {
+query Checkout($state: ID!, $globalRevision: Int) {
+  checkout(state: $state, globalRevision: $globalRevision) {
     value
     globalRevision
     localRevision

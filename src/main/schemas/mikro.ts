@@ -760,6 +760,17 @@ export type DataRoiProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type DataRoiFilter = {
+  AND?: InputMaybe<DataRoiFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<DataRoiFilter>;
+  OR?: InputMaybe<DataRoiFilter>;
+  activeFor?: InputMaybe<Array<SliceInput>>;
+  dataset?: InputMaybe<IdFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<StrFilterLookup>;
+};
+
 export type Dataset = {
   __typename?: 'Dataset';
   children: Array<Dataset>;
@@ -1465,6 +1476,26 @@ export enum HistoryKind {
   Delete = 'DELETE',
   Update = 'UPDATE'
 }
+
+export type IdFilterLookup = {
+  contains?: InputMaybe<Scalars['ID']['input']>;
+  endsWith?: InputMaybe<Scalars['ID']['input']>;
+  exact?: InputMaybe<Scalars['ID']['input']>;
+  gt?: InputMaybe<Scalars['ID']['input']>;
+  gte?: InputMaybe<Scalars['ID']['input']>;
+  iContains?: InputMaybe<Scalars['ID']['input']>;
+  iEndsWith?: InputMaybe<Scalars['ID']['input']>;
+  iExact?: InputMaybe<Scalars['ID']['input']>;
+  iRegex?: InputMaybe<Scalars['String']['input']>;
+  iStartsWith?: InputMaybe<Scalars['ID']['input']>;
+  inList?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  lt?: InputMaybe<Scalars['ID']['input']>;
+  lte?: InputMaybe<Scalars['ID']['input']>;
+  range?: InputMaybe<Array<Scalars['ID']['input']>>;
+  regex?: InputMaybe<Scalars['String']['input']>;
+  startsWith?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type Image = {
   __typename?: 'Image';
@@ -3989,6 +4020,8 @@ export type Query = {
   continousScanViews: Array<ContinousScanView>;
   dataArray: DataArray;
   dataArrays: Array<DataArray>;
+  dataRoi: DataRoi;
+  dataRois: Array<DataRoi>;
   dataset: Dataset;
   datasets: Array<Dataset>;
   describe: Array<Descriptor>;
@@ -4128,6 +4161,17 @@ export type QueryDataArrayArgs = {
 
 export type QueryDataArraysArgs = {
   filters?: InputMaybe<DataArrayFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDataRoiArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryDataRoisArgs = {
+  filters?: InputMaybe<DataRoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -5755,7 +5799,9 @@ export type ZarrAccessGrantFragment = { __typename?: 'ZarrAccessGrant', accessKe
 
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
-export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, dataset: { __typename?: 'ADataset', id: string, name: string } };
+export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
+
+export type ListDataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
 
 export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
 
@@ -6068,7 +6114,7 @@ export type CreateDataRoiMutationVariables = Exact<{
 }>;
 
 
-export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string } };
+export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } };
 
 export type CreateDatasetMutationVariables = Exact<{
   input: CreateDatasetInput;
@@ -6446,6 +6492,21 @@ export type ChildrenQueryVariables = Exact<{
 
 
 export type ChildrenQuery = { __typename?: 'Query', children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean } | { __typename?: 'File', id: string, name: string } | { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+
+export type GetDataRoiQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetDataRoiQuery = { __typename?: 'Query', dataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } };
+
+export type GetDataRoisQueryVariables = Exact<{
+  filters?: InputMaybe<DataRoiFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type GetDataRoisQuery = { __typename?: 'Query', dataRois: Array<{ __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } }> };
 
 export type GetDatasetQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6890,10 +6951,32 @@ export const DataRoiFragmentDoc = gql`
     fragment DataRoi on DataRoi {
   id
   name
+  kind
   dataset {
     id
     name
   }
+  vectors
+  vectorDims
+  xDim
+  yDim
+  zDim
+}
+    `;
+export const ListDataRoiFragmentDoc = gql`
+    fragment ListDataRoi on DataRoi {
+  id
+  name
+  kind
+  dataset {
+    id
+    name
+  }
+  vectors
+  vectorDims
+  xDim
+  yDim
+  zDim
 }
     `;
 export const ProvenanceEntryFragmentDoc = gql`
@@ -7933,11 +8016,10 @@ export const RequestZarrAccessDocument = gql`
 export const CreateDataRoiDocument = gql`
     mutation CreateDataRoi($input: CreateDataRoiInput!) {
   createDataRoi(input: $input) {
-    id
-    name
+    ...DataRoi
   }
 }
-    `;
+    ${DataRoiFragmentDoc}`;
 export const CreateDatasetDocument = gql`
     mutation CreateDataset($input: CreateDatasetInput!) {
   createDataset(input: $input) {
@@ -8293,6 +8375,20 @@ export const ChildrenDocument = gql`
     ${ListFileFragmentDoc}
 ${ListImageFragmentDoc}
 ${ListDatasetFragmentDoc}`;
+export const GetDataRoiDocument = gql`
+    query GetDataRoi($id: ID!) {
+  dataRoi(id: $id) {
+    ...DataRoi
+  }
+}
+    ${DataRoiFragmentDoc}`;
+export const GetDataRoisDocument = gql`
+    query GetDataRois($filters: DataRoiFilter, $pagination: OffsetPaginationInput) {
+  dataRois(filters: $filters, pagination: $pagination) {
+    ...ListDataRoi
+  }
+}
+    ${ListDataRoiFragmentDoc}`;
 export const GetDatasetDocument = gql`
     query GetDataset($id: ID!) {
   dataset(id: $id) {
@@ -8930,6 +9026,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Children(variables: ChildrenQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ChildrenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ChildrenQuery>({ document: ChildrenDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Children', 'query', variables);
+    },
+    GetDataRoi(variables: GetDataRoiQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDataRoiQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDataRoiQuery>({ document: GetDataRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDataRoi', 'query', variables);
+    },
+    GetDataRois(variables?: GetDataRoisQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDataRoisQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDataRoisQuery>({ document: GetDataRoisDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDataRois', 'query', variables);
     },
     GetDataset(variables: GetDatasetQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDatasetQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetDatasetQuery>({ document: GetDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDataset', 'query', variables);

@@ -24,6 +24,10 @@ import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
+import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
+import { RoiDrawer } from "./interactions/RoiDrawer";
+import { RoiToolbar } from "./overlays/RoiToolbar";
+import { SceneDataRois } from "./layers/SceneDataRois";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas
@@ -44,6 +48,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
       viewerStore: createViewerStore(createS3Builder(client, datalayer!)),
       selectionStore: createSelectionStore(),
       sceneStore: createSceneStore({ scene: props.scene }),
+      roiDrawingStore: createRoiDrawingStore(),
     };
 
     return localScope;
@@ -59,6 +64,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
         <ViewerStoreContext.Provider value={scope.viewerStore}>
           <SelectionStoreContext.Provider value={scope.selectionStore}>
             <SceneStoreContext.Provider value={scope.sceneStore}>
+            <RoiDrawingStoreContext.Provider value={scope.roiDrawingStore}>
 
 
 
@@ -90,6 +96,8 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
               <ScenePlane />
               <SceneVolume />
+              <SceneDataRois />
+              <RoiDrawer />
 
                   <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
               <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
@@ -104,9 +112,11 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <ScaleBar />
 
             <SceneOverlay />
+            <RoiToolbar />
             <LayerViewRangesOverlay />
           </PanelProvider>
         </div>
+                </RoiDrawingStoreContext.Provider>
                 </SceneStoreContext.Provider>
         </SelectionStoreContext.Provider>
           </ViewerStoreContext.Provider>

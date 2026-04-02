@@ -1837,6 +1837,7 @@ export type MediaUploadGrant = {
   maxBytes: Scalars['Int']['output'];
   originalFileName?: Maybe<Scalars['String']['output']>;
   path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
   secretKey: Scalars['String']['output'];
   sessionToken: Scalars['String']['output'];
   status: Scalars['String']['output'];
@@ -3794,6 +3795,7 @@ export type StateSnapshotEvent = {
   agentId: Scalars['ID']['output'];
   globalRevision: Scalars['Int']['output'];
   interface: Scalars['String']['output'];
+  sessionId: Scalars['String']['output'];
   stateId: Scalars['ID']['output'];
   timestamp: Scalars['DateTime']['output'];
   value: Scalars['Args']['output'];
@@ -4529,6 +4531,10 @@ export type StateFragment = { __typename?: 'State', id: string, value: any, upda
 
 export type StateEventFragment = { __typename?: 'State', id: string, value: any, updatedAt: any };
 
+export type StatePatchEventFragment = { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any };
+
+export type StateSnapshotEventFragment = { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any };
+
 export type ListOutputStructureUsageFragment = { __typename?: 'OutputStructureUsage', id: string, portKey: string, action: { __typename?: 'Action', id: string, name: string, description?: string | null } };
 
 export type ListInputStructureUsageFragment = { __typename?: 'InputStructureUsage', id: string, portKey: string, action: { __typename?: 'Action', id: string, name: string, description?: string | null } };
@@ -5131,6 +5137,7 @@ export type GetStateForQuery = { __typename?: 'Query', stateFor: { __typename?: 
 
 export type CheckoutQueryVariables = Exact<{
   state: Scalars['ID']['input'];
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
@@ -5221,6 +5228,13 @@ export type WatchStateEventsSubscriptionVariables = Exact<{
 
 
 export type WatchStateEventsSubscription = { __typename?: 'Subscription', stateUpdateEvents: { __typename?: 'State', id: string, value: any, updatedAt: any } };
+
+export type WatchStateSubscriptionVariables = Exact<{
+  stateID: Scalars['ID']['input'];
+}>;
+
+
+export type WatchStateSubscription = { __typename?: 'Subscription', watchState: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
 
 export type WatchImplementationSubscriptionVariables = Exact<{
   implementation: Scalars['ID']['input'];
@@ -6455,6 +6469,29 @@ export const StateEventFragmentDoc = gql`
   id
   value
   updatedAt
+}
+    `;
+export const StatePatchEventFragmentDoc = gql`
+    fragment StatePatchEvent on StatePatchEvent {
+  stateId
+  agentId
+  op
+  path
+  value
+  globalRevision
+  sessionId
+  timestamp
+}
+    `;
+export const StateSnapshotEventFragmentDoc = gql`
+    fragment StateSnapshotEvent on StateSnapshotEvent {
+  stateId
+  agentId
+  interface
+  value
+  globalRevision
+  sessionId
+  timestamp
 }
     `;
 export const ListOutputInterfaceUsageFragmentDoc = gql`
@@ -9285,8 +9322,8 @@ export type GetStateForQueryHookResult = ReturnType<typeof useGetStateForQuery>;
 export type GetStateForLazyQueryHookResult = ReturnType<typeof useGetStateForLazyQuery>;
 export type GetStateForQueryResult = Apollo.QueryResult<GetStateForQuery, GetStateForQueryVariables>;
 export const CheckoutDocument = gql`
-    query Checkout($state: ID!) {
-  checkout(state: $state) {
+    query Checkout($state: ID!, $globalRevision: Int) {
+  checkout(state: $state, globalRevision: $globalRevision) {
     value
     globalRevision
     localRevision
@@ -9307,6 +9344,7 @@ export const CheckoutDocument = gql`
  * const { data, loading, error } = useCheckoutQuery({
  *   variables: {
  *      state: // value for 'state'
+ *      globalRevision: // value for 'globalRevision'
  *   },
  * });
  */
@@ -9714,6 +9752,38 @@ export function useWatchStateEventsSubscription(baseOptions: ApolloReactHooks.Su
       }
 export type WatchStateEventsSubscriptionHookResult = ReturnType<typeof useWatchStateEventsSubscription>;
 export type WatchStateEventsSubscriptionResult = Apollo.SubscriptionResult<WatchStateEventsSubscription>;
+export const WatchStateDocument = gql`
+    subscription WatchState($stateID: ID!) {
+  watchState(stateId: $stateID) {
+    ...StatePatchEvent
+    ...StateSnapshotEvent
+  }
+}
+    ${StatePatchEventFragmentDoc}
+${StateSnapshotEventFragmentDoc}`;
+
+/**
+ * __useWatchStateSubscription__
+ *
+ * To run a query within a React component, call `useWatchStateSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useWatchStateSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWatchStateSubscription({
+ *   variables: {
+ *      stateID: // value for 'stateID'
+ *   },
+ * });
+ */
+export function useWatchStateSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchStateSubscription, WatchStateSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useSubscription<WatchStateSubscription, WatchStateSubscriptionVariables>(WatchStateDocument, options);
+      }
+export type WatchStateSubscriptionHookResult = ReturnType<typeof useWatchStateSubscription>;
+export type WatchStateSubscriptionResult = Apollo.SubscriptionResult<WatchStateSubscription>;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {

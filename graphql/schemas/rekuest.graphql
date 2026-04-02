@@ -1797,6 +1797,7 @@ type MediaUploadGrant {
   maxBytes: Int!
   originalFileName: String
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -2658,7 +2659,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "b8e9ff88-be80-4c0d-b3e2-5568c530768f"
+  reference: String = "e44e7005-1fd6-4b3d-bf2d-d41bbaef4dcc"
   title: String = null
 }
 
@@ -3108,6 +3109,7 @@ type StateSnapshotEvent {
   agentId: ID!
   globalRevision: Int!
   interface: String!
+  sessionId: String!
   stateId: ID!
   timestamp: DateTime!
   value: Args!

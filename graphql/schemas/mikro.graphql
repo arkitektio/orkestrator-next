@@ -716,6 +716,17 @@ type DataRoi {
   zDim: String
 }
 
+input DataRoiFilter {
+  AND: DataRoiFilter
+  DISTINCT: Boolean
+  NOT: DataRoiFilter
+  OR: DataRoiFilter
+  activeFor: [SliceInput!]
+  dataset: IDFilterLookup
+  id: ID
+  name: StrFilterLookup
+}
+
 type Dataset {
   children(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
   createdAt: DateTime!
@@ -1454,6 +1465,26 @@ enum HistoryKind {
   CREATE
   DELETE
   UPDATE
+}
+
+input IDFilterLookup {
+  contains: ID
+  endsWith: ID
+  exact: ID
+  gt: ID
+  gte: ID
+  iContains: ID
+  iEndsWith: ID
+  iExact: ID
+  iRegex: String
+  iStartsWith: ID
+  inList: [ID!]
+  isNull: Boolean
+  lt: ID
+  lte: ID
+  range: [ID!]
+  regex: String
+  startsWith: ID
 }
 
 type Image {
@@ -3694,6 +3725,8 @@ type Query {
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
   dataArray(id: ID!): DataArray!
   dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
+  dataRoi(id: ID!): DataRoi!
+  dataRois(filters: DataRoiFilter, pagination: OffsetPaginationInput): [DataRoi!]!
   dataset(
     """The unique identifier of an object"""
     id: ID!

@@ -19,7 +19,7 @@ const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
   const navigate = useNavigate();
   return (
     <OmeroArkProject.ModelPage
-      object={data?.project.id}
+      object={data?.project}
       title={data?.project?.name}
       pageActions={<> <FormDialogAction
         variant={"outline"}

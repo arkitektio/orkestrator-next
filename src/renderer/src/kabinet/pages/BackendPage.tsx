@@ -36,7 +36,7 @@ export const AgentForButton = ({
       {data?.agents.map((agent) => (
 
         <RekuestAgent.DetailLink
-          object={agent.id}
+          object={agent}
           key={agent.id}
           className="text-sm font-medium hover:underline"
         >
@@ -59,11 +59,11 @@ export default asDetailQueryRoute(useGetBackendQuery, ({ data, refetch }) => {
   return (
     <KabinetBackend.ModelPage
       title={data?.backend?.name}
-      object={data?.backend?.id}
+      object={data?.backend}
       pageActions={
         <div className="flex space-x-2">
           <AgentForButton backendId={data?.backend.clientId} />
-          <KabinetBackend.ObjectButton object={data.backend.id} />
+          <KabinetBackend.ObjectButton object={data.backend} />
         </div>
       }
       refetch={refetch}

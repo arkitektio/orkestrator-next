@@ -49,7 +49,7 @@ const CardItem = ({ view }: Props) => {
   const deleteMate = useDeleteAffineTransformationViewMate();
 
   return (
-    <MikroAffineTransformationView.Smart object={view?.id} mates={[deleteMate]}>
+    <MikroAffineTransformationView.Smart object={view} mates={[deleteMate]}>
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle className="truncate">
@@ -59,7 +59,7 @@ const CardItem = ({ view }: Props) => {
                 "z-10 font-bold text-md mb-2 cursor-pointer w-full  " +
                 (isActive ? "text-primary-300" : "")
               }
-              object={view.image.id}
+              object={view.image}
             >
               {view.image.name}
             </MikroImage.DetailLink>

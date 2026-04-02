@@ -159,7 +159,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
                     MikroDataset.Smart; // fallback
 
               return (
-                <SmartComponent key={child.id} object={child.id}>
+                <SmartComponent key={child.id} object={child}>
                   <div className="flex items-center space-x-3 p-3 rounded-lg border transition-colors hover:bg-muted/50">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       {getTypeIcon(child.__typename || "")}

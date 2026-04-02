@@ -49,7 +49,7 @@ export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export default asDetailQueryRoute(
+export const ImageEditPage = asDetailQueryRoute(
   useGetImageQuery,
   ({ data, refetch, subscribeToMore }) => {
     const x = data?.image?.store?.shape?.at(4);
@@ -137,18 +137,18 @@ export default asDetailQueryRoute(
     return (
       <MikroImage.ModelPage
         title={data?.image?.name}
-        object={data?.image?.id}
+        object={data?.image}
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <MikroImage.Komments object={data?.image?.id} />,
+              Comments: <MikroImage.Komments object={data?.image} />,
               Provenance: (
                 <ProvenanceSidebar items={data?.image.provenanceEntries} />
               ),
               Renders: (
                 <div className="p-3 flex flex-col gap-2">
                   {data.image.renders.map((render, index) => (
-                    <Card className="p-2 truncate">
+                    <Card className="p-2 truncate flex flex-row items-center gap-2" key={index}>
                       {render.__typename == "Snapshot" && (
                         <Image
                           src={resolve(render.store.presignedUrl)}
@@ -168,7 +168,7 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <>
-            <MikroImage.ObjectButton object={data?.image?.id} />
+            <MikroImage.ObjectButton object={data?.image} />
           </>
         }
         variant="black"
@@ -177,7 +177,7 @@ export default asDetailQueryRoute(
           <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
             <div className="absolute w-full h-full overflow-hidden border-0">
               {data?.image?.rgbContexts?.map((context, index) => (
-                <div
+                <div key={index}
                   className={"h-full w-full mt-0 rounded rounded-md relative"}
                 >
                   <div className="w-full h-full items-center flex justify-center flex-col">
@@ -253,7 +253,7 @@ export default asDetailQueryRoute(
                     )}
                   </div>
                   <div className="font-light my-2 ">Knowledge </div>
-                  <MikroImage.TinyKnowledge object={data?.image?.id} />
+                  <MikroImage.TinyKnowledge object={data?.image} />
 
                   <div className="flex-row flex gap-2 mt-2"></div>
 
@@ -320,9 +320,9 @@ export default asDetailQueryRoute(
                       <div className="font-light">Derived images</div>
                       <div className="flex flex-col gap-2 mt-2">
                         {data?.image.derivedFromViews?.map((view, index) => (
-                          <MikroImage.Smart object={view.image.id}>
+                          <MikroImage.Smart object={view.image} key={index}>
                             <MikroImage.DetailLink
-                              object={view.image?.id}
+                              object={view.image}
                               className="cursor-pointer"
                             >
                               <Card className="flex flex-row gap-2 px-2 py-1">
@@ -345,3 +345,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default ImageEditPage;

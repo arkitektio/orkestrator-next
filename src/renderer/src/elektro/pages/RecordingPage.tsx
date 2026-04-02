@@ -22,9 +22,8 @@ import {
   stimulusToLabel,
 } from "../components/SImulationRender";
 
-export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const RecordingPage = asDetailQueryRoute(
   useDetailRecordingQuery,
   ({ data, subscribeToMore }) => {
     const [show, setShow] = React.useState(false);
@@ -35,17 +34,17 @@ export default asDetailQueryRoute(
       <ElektroRecording.ModelPage
         variant="black"
         title={data?.recording?.label}
-        object={data?.recording.id}
+        object={data?.recording}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroRecording.ObjectButton object={data.recording.id} />
+            <ElektroRecording.ObjectButton object={data.recording} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <ElektroSimulation.Komments object={data.recording.id} />
+                <ElektroSimulation.Komments object={data.recording} />
               ),
             }}
           />
@@ -150,3 +149,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default RecordingPage;

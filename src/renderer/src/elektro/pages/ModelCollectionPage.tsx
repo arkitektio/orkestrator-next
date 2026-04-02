@@ -7,9 +7,8 @@ import { useDetailModelCollectionQuery, useDetailNeuronModelQuery } from "../api
 import { useState } from "react";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
 
-export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const ModelCollectionPage = asDetailQueryRoute(
   useDetailModelCollectionQuery,
   ({ data }) => {
     const models = data?.modelCollection?.models || [];
@@ -31,16 +30,16 @@ export default asDetailQueryRoute(
       <ElektroModelCollection.ModelPage
         variant="black"
         title={data?.modelCollection?.name}
-        object={data.modelCollection.id}
+        object={data?.modelCollection}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroModelCollection.ObjectButton object={data.modelCollection.id} />
+            <ElektroModelCollection.ObjectButton object={data.modelCollection} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <ElektroModelCollection.Komments object={data.modelCollection.id} />,
+              Comments: <ElektroModelCollection.Komments object={data.modelCollection} />,
             }}
           />
         }
@@ -66,7 +65,7 @@ export default asDetailQueryRoute(
                   <Card key={model.id} className={`mx-2 transition-all duration-200 ${isOpen ? "ring-2 ring-ring p-3" : "p-3 cursor-pointer"}`}>
                     <div onClick={() => setSelectedId(model.id)} className="flex items-center justify-between">
                       <div className="text-sm font-medium truncate">{model.name}</div>
-                      <ElektroNeuronModel.DetailLink object={model.id} className="text-xs text-muted-foreground">{model.id}</ElektroNeuronModel.DetailLink>
+                      <ElektroNeuronModel.DetailLink object={model} className="text-xs text-muted-foreground">{model.id}</ElektroNeuronModel.DetailLink>
                     </div>
 
                     {isOpen && (
@@ -119,3 +118,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default ModelCollectionPage;

@@ -10,14 +10,14 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroSpecimenView.Smart object={view?.id} >
+    <MikroSpecimenView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
             <p className="font-light ">Specimen: </p>
             <p className="font-bold text-xl">
               {view.entity && (
-                <KraphNode.DetailLink object={view.entity?.id}>
+                <KraphNode.DetailLink object={view.entity}>
                   {view.entity?.label}
                 </KraphNode.DetailLink>
               )}

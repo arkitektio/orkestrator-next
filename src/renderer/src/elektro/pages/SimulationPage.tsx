@@ -19,7 +19,7 @@ import {
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const SimulationPage = asDetailQueryRoute(
   useDetailSimulationQuery,
   ({ data, subscribeToMore }) => {
     const [show, setShow] = React.useState(false);
@@ -30,10 +30,10 @@ export default asDetailQueryRoute(
       <ElektroSimulation.ModelPage
         variant="black"
         title={data?.simulation?.name}
-        object={data.simulation.id}
+        object={data.simulation}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroSimulation.ObjectButton object={data.simulation.id} />
+            <ElektroSimulation.ObjectButton object={data.simulation} />
           </div>
         }
       >
@@ -50,7 +50,7 @@ export default asDetailQueryRoute(
             </div>
           </div>
           {data.simulation.model && <>
-            <ElektroNeuronModel.DetailLink object={data.simulation.model.id} className="col-span-1 h-32 p-3 flex items-center justify-center">
+            <ElektroNeuronModel.DetailLink object={data.simulation.model} className="col-span-1 h-32 p-3 flex items-center justify-center">
               Open Model
             </ElektroNeuronModel.DetailLink>
 
@@ -88,7 +88,7 @@ export default asDetailQueryRoute(
                   {recordingToLabel(view)}
                 </div>
                 <ElektroRecording.DetailLink
-                  object={view.id}
+                  object={view}
                   className="text-sm text-muted-foreground my-auto"
                 >
                   {" "}
@@ -121,7 +121,7 @@ export default asDetailQueryRoute(
                   {stimulusToLabel(view)}
                 </div>
                 <ElektroStimulus.DetailLink
-                  object={view.id}
+                  object={view}
                   className="text-sm text-muted-foreground my-auto"
                 >
                   {" "}
@@ -135,3 +135,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default SimulationPage;

@@ -11,7 +11,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroMultiPositionView.Smart object={view?.id} >
+    <MikroMultiPositionView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
@@ -23,7 +23,7 @@ const TheCard = ({ view }: Props) => {
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
-                  object={view.well.id}
+                  object={view.well}
                 >
                   {view.well?.name}
                 </MikroFluorophore.DetailLink>

@@ -30,7 +30,7 @@ export const PopularCarousel = ({ }) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     Your latest conversion in
                   </p>
-                  <ElektroTrace.DetailLink object={item.id}>
+                  <ElektroTrace.DetailLink object={item}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.name}
                     </h1>

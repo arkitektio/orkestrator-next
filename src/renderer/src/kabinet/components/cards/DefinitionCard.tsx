@@ -15,12 +15,12 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <KabinetDefinition.Smart object={item?.id} >
+    <KabinetDefinition.Smart object={item} >
       <Card className="group aspect-square @sm:aspect-[3/2] overflow-hidden">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>
-              <KabinetDefinition.DetailLink object={item?.id}>
+              <KabinetDefinition.DetailLink object={item}>
                 {" "}
                 {item.name}
               </KabinetDefinition.DetailLink>

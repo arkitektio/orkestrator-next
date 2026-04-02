@@ -163,7 +163,7 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
+export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.action?.hash || "");
   }, [data?.action?.hash]);
@@ -203,14 +203,13 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
 
 
   return (
-    <ModelPageLayout
-      identifier="@rekuest/action"
+    <RekuestAction.ModelPage
       title={data.action.name}
-      object={data.action.id}
+      object={data.action}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestAction.Komments object={data?.action?.id} />,
+            Comments: <RekuestAction.Komments object={data?.action} />,
           }}
         />
       }
@@ -272,7 +271,7 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
           </>
         )}
 
-       
+
 
 
 
@@ -287,6 +286,9 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
           {(item, key) => <MinimalImplementationCard item={item} key={key} />}
         </ListRender>
       </div>
-    </ModelPageLayout>
+    </RekuestAction.ModelPage>
   );
 });
+
+
+export default ActionPage;

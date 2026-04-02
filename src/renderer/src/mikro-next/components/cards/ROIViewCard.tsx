@@ -13,14 +13,14 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroROIView.Smart object={view?.id} >
+    <MikroROIView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
             <p className="font-bold text-md font-light mb-1">Represents ROI</p>
             <p className="font-bold text-xl">
               {view.roi && (
-                <MikroROI.DetailLink object={view.roi?.id}>
+                <MikroROI.DetailLink object={view.roi}>
                   {view.roi?.id}
                 </MikroROI.DetailLink>
               )}

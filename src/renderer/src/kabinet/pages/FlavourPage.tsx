@@ -5,19 +5,19 @@ import { useGetFlavourQuery } from "../api/graphql";
 
 
 
-export default asDetailQueryRoute(
+export  const FlavourPage = asDetailQueryRoute(
   useGetFlavourQuery,
   ({ data, refetch }) => {
 
     return (
       <KabinetFlavour.ModelPage
         title={data?.flavour?.name}
-        object={data?.flavour?.id}
+        object={data?.flavour}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <KabinetFlavour.Komments object={data?.flavour?.id} />
+                <KabinetFlavour.Komments object={data?.flavour} />
               ),
             }}
           />
@@ -46,3 +46,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default FlavourPage;

@@ -88,7 +88,7 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
     return (
       <DisplayWidget
         identifier={props.modifier.identifier}
-        object={props.modifier.id}
+        object={props.modifier}
       />
     );
   }

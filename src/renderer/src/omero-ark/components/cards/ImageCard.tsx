@@ -49,7 +49,7 @@ const TCard = ({ image }: Props) => {
 
   return (
     <OmeroArkImage.Smart
-      object={image?.id}
+      object={image}
     >
       <Card
         className="px-2 py-2 h-40 w-full top-0 left-0 bg-opacity-20 bg-black  rounded rounded-xl"
@@ -60,7 +60,7 @@ const TCard = ({ image }: Props) => {
             "z-10 font-bold text-md mb-2 cursor-pointer " +
             (isActive ? "text-primary-300" : "")
           }
-          object={image.id}
+          object={image}
         >
           {image?.name}
         </OmeroArkImage.DetailLink>

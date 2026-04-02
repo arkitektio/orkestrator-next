@@ -16,13 +16,16 @@ export const FlowDetail = (props: { id: string }) => {
   return <>{data?.flow && <EditFlow flow={data.flow} />}</>;
 };
 
-export default asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
+export const Page = asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
   return (
     <FlussRun.ModelPage
-      object={data.run.id}
+      object={data.run}
       title={"Run for " + data.run.flow.title}
     >
       <TrackFlow run={data.run} />
     </FlussRun.ModelPage>
   );
 });
+
+
+export default Page;

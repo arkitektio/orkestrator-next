@@ -151,11 +151,11 @@ export const ResolutionPage = asDetailQueryRoute(useGetResolutionQuery, ({ data 
   return (
     <RekuestResolution.ModelPage
       title={data.resolution.name}
-      object={data.resolution.id}
+      object={data.resolution}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestToolbox.Komments object={data?.resolution?.id} />,
+            Comments: <RekuestToolbox.Komments object={data?.resolution} />,
           }}
         />
       }

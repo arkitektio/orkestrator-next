@@ -25,7 +25,7 @@ import {
   useMaterializeBlokMutation,
 } from "../api/graphql";
 
-const components: {} = {
+const components = {
   MBLOK: (
     props: IDockviewPanelProps<{
       title: string;
@@ -34,10 +34,10 @@ const components: {} = {
   ) => {
     return <DynamicLoader blok={props.params.mblok} />;
   },
-};
+} as const;
 
-export const BlokSidebar = (props: {}) => {
-  const { data, subscribeToMore } = useListBloksQuery();
+export const BlokSidebar = () => {
+  const { data } = useListBloksQuery();
 
   return (
     <div className="flex flex-col gap-2 p-3">
@@ -99,7 +99,7 @@ export const Selector = (props: {
   );
 };
 
-export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
+export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
   const [api, setApi] = useState<DockviewApi | null>(null);
 
   const [materialize] = useMaterializeBlokMutation();
@@ -254,7 +254,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
   return (
     <RekuestDashboard.ModelPage
       title={data.dashboard.name || "New Dasboard"}
-      object={data.dashboard.id}
+      object={data.dashboard}
       sidebars={
         <MultiSidebar
           map={{
@@ -296,3 +296,6 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
     </RekuestDashboard.ModelPage>
   );
 });
+
+
+export default DashboardPage;

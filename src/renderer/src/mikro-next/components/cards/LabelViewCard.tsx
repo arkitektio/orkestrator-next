@@ -10,7 +10,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroLabelView.Smart object={view?.id} >
+    <MikroLabelView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle> {view.label}</CardTitle>

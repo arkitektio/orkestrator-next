@@ -7,7 +7,7 @@ import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const NeuronModelPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data, subscribeToMore }) => {
 
@@ -15,11 +15,11 @@ export default asDetailQueryRoute(
       <ElektroNeuronModel.ModelPage
         variant="black"
         title={data?.neuronModel?.name}
-        object={data.neuronModel.id}
+        object={data.neuronModel}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroNeuronModel.DetailLink object={data.neuronModel.id} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>
-            <ElektroNeuronModel.ObjectButton object={data.neuronModel.id} />
+            <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>
+            <ElektroNeuronModel.ObjectButton object={data.neuronModel} />
           </div>
         }
       >
@@ -40,13 +40,13 @@ export default asDetailQueryRoute(
 
             <div className="grid grid-cols-1 gap-4 p-3">
               {data.neuronModel.comparisons.map((comparison) => (
-                <Card className="col-span-1 p-4">
-                  <ElektroModelCollection.DetailLink object={comparison.collection.id} className={"font-light text-xs"}>
+                <Card className="col-span-1 p-4"  key={comparison.collection.id}>
+                  <ElektroModelCollection.DetailLink object={comparison.collection} className={"font-light text-xs"}>
                     {comparison.collection.name}
 
                   </ElektroModelCollection.DetailLink>
-                  {comparison.changes.map((change) => (
-                    <div className="flex flex-col gap-2">
+                  {comparison.changes.map((change, idx) => (
+                    <div className="flex flex-col gap-2" key={idx}>
                       <div className="flex-1 font-light">
                         {change.path.join(".")}
                       </div>
@@ -78,3 +78,5 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+export default NeuronModelPage;

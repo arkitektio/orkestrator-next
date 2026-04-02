@@ -23,10 +23,10 @@ export type ViewType = "list" | "icons";
   return (
     <MikroDataset.ModelPage
       title={data.dataset?.name}
-      object={data.dataset.id}
+      object={data.dataset}
       pageActions={
         <div className="flex items-center space-x-4">
-          <MikroDataset.Actions object={data.dataset.id} />
+          <MikroDataset.Actions object={data.dataset} />
           <DatasetExplorerToolbar
             {...explorerState}
             dataset={data.dataset}
@@ -39,7 +39,7 @@ export type ViewType = "list" | "icons";
         <MultiSidebar
           map={{
             Comments: (
-              <Komments identifier="@mikro/dataset" object={data.dataset.id} />
+              <Komments identifier="@mikro/dataset" object={data.dataset} />
             ),
           }}
         />

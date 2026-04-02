@@ -20,7 +20,7 @@ import {
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const ExperimentPage = asDetailQueryRoute(
   useDetailExperimentQuery,
   ({ data, subscribeToMore }) => {
     const [show, setShow] = React.useState(false);
@@ -31,17 +31,17 @@ export default asDetailQueryRoute(
       <ElektroExperiment.ModelPage
         variant="black"
         title={data?.experiment?.name}
-        object={data?.experiment.id}
+        object={data?.experiment}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroExperiment.ObjectButton object={data.experiment.id} />
+            <ElektroExperiment.ObjectButton object={data.experiment} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <ElektroExperiment.Komments object={data.experiment.id} />
+                <ElektroExperiment.Komments object={data.experiment} />
               ),
             }}
           />
@@ -91,7 +91,7 @@ export default asDetailQueryRoute(
                   {recordingViewToLabel(view)}
                 </div>
                 <ElektroRecording.DetailLink
-                  object={view.recording.id}
+                  object={view.recording}
                   className="text-sm text-muted-foreground my-auto truncate"
                 >
                   Open
@@ -123,7 +123,7 @@ export default asDetailQueryRoute(
                   {stimulusViewToLabel(view)}
                 </div>
                 <ElektroStimulus.DetailLink
-                  object={view.stimulus.id}
+                  object={view.stimulus}
                   className="text-sm text-muted-foreground my-auto truncate"
                 >
                   Open
@@ -136,3 +136,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default ExperimentPage;

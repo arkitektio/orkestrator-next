@@ -11,18 +11,18 @@ import { AnalogSignalRender } from "../components/AnalogSignalRender";
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const AnalogSignalChannelPage = asDetailQueryRoute(
   useDetailAnalogSignalChannelQuery,
   ({ data, subscribeToMore }) => {
     return (
       <ElektroAnalogSignalChannel.ModelPage
         variant="black"
         title={data?.analogSignalChannel?.name}
-        object={data.analogSignalChannel.id}
+        object={data.analogSignalChannel}
         pageActions={
           <div className="flex flex-row gap-2">
             <ElektroAnalogSignalChannel.ObjectButton
-              object={data.analogSignalChannel.id}
+              object={data.analogSignalChannel}
             />
           </div>
         }
@@ -31,7 +31,7 @@ export default asDetailQueryRoute(
             map={{
               Comments: (
                 <ElektroAnalogSignalChannel.Komments
-                  object={data.analogSignalChannel.id}
+                  object={data.analogSignalChannel}
                 />
               ),
             }}
@@ -45,7 +45,7 @@ export default asDetailQueryRoute(
                 {data.analogSignalChannel.name}
               </h1>
               <ElektroAnalogSignal.DetailLink
-                object={data.analogSignalChannel.signal.id}
+                object={data.analogSignalChannel.signal}
                 className="mt-3 text-xl text-muted-foreground"
               >
                 {data.analogSignalChannel.index} in{" "}
@@ -55,7 +55,7 @@ export default asDetailQueryRoute(
           </div>
           <div className="col-span-2 px-3 h-10 flex flex-row gap-2 mb-6">
             <ElektroAnalogSignalChannel.TinyKnowledge
-              object={data.analogSignalChannel.id}
+              object={data.analogSignalChannel}
             />
           </div>
         </div>
@@ -70,3 +70,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default AnalogSignalChannelPage;

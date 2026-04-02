@@ -56,7 +56,7 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
   );
 };
 
-export default asDetailQueryRoute(
+export const DefinitionPage = asDetailQueryRoute(
   useGetDefinitionQuery,
   ({ data, refetch }) => {
     const description = useActionDescription({
@@ -70,12 +70,12 @@ export default asDetailQueryRoute(
     return (
       <KabinetDefinition.ModelPage
         title={data?.definition?.name}
-        object={data?.definition?.id}
+        object={data?.definition}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <KabinetDefinition.Komments object={data?.definition?.id} />
+                <KabinetDefinition.Komments object={data?.definition} />
               ),
             }}
           />
@@ -104,3 +104,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default DefinitionPage;

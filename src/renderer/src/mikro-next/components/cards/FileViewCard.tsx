@@ -15,15 +15,15 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroFileView.Smart object={view?.id} >
+    <MikroFileView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle className="flex flex-col">
             <p className="font-bold text-md font-light mb-1">Created from</p>
             <p className="font-bold text-xs truncate">
               {view.file && (
-                <MikroFile.DetailLink object={view.file?.id}>
-                  {view.file?.name}
+                <MikroFile.DetailLink object={view.file}>
+                  {view.file.name}
                 </MikroFile.DetailLink>
               )}
             </p>

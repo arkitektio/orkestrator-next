@@ -10,7 +10,7 @@ import { FlussRun } from "@/linkers";
 import { useRunCarouselQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 
-export default ({ }) => {
+export const RunCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useRunCarouselQuery({
     variables: {
       pagination: {
@@ -32,7 +32,7 @@ export default ({ }) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     Latest Run
                   </p>
-                  <FlussRun.DetailLink object={item.id}>
+                  <FlussRun.DetailLink object={item}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.flow.title}
                     </h1>
@@ -61,3 +61,6 @@ export default ({ }) => {
     </div>
   );
 };
+
+
+export default RunCarousel;

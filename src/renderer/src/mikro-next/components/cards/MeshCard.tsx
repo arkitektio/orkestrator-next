@@ -9,10 +9,10 @@ interface Props {
 
 const TheCard = ({ mesh }: Props) => {
   return (
-    <MikroMesh.Smart object={mesh?.id} >
+    <MikroMesh.Smart object={mesh} >
       <Card className="px-2 py-2 aspect-[5/3]">
         <CardTitle className="line-clamp-2 break-words">
-          <MikroMesh.DetailLink object={mesh.id}>
+          <MikroMesh.DetailLink object={mesh}>
             {mesh.name}
           </MikroMesh.DetailLink>
         </CardTitle>

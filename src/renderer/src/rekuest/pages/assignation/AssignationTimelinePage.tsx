@@ -538,7 +538,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
   );
 };
 
-export default asDetailQueryRoute(
+export const AssignationTimelinePage = asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, id }) => {
     const reassign = useReassign({ assignation: data.assignation });
@@ -556,7 +556,7 @@ export default asDetailQueryRoute(
             </p>
           </div>
         }
-        object={data.assignation.id}
+        object={data.assignation}
         pageActions={
           <div className="flex gap-2">
             <Button
@@ -600,7 +600,7 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestAssignation.Komments object={data?.assignation?.id} />
+                <RekuestAssignation.Komments object={data?.assignation} />
               ),
             }}
           />
@@ -612,3 +612,6 @@ export default asDetailQueryRoute(
     );
   }
 );
+
+
+export default AssignationTimelinePage;

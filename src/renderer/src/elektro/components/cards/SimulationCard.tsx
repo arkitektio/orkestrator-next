@@ -15,7 +15,7 @@ const TheCard = ({ item, className }: Props) => {
   const formatted = durationMs >= 1000 ? `${seconds.toFixed(2)} seconds` : `${durationMs} ms`;
 
   return (
-    <ElektroSimulation.Smart object={item?.id}>
+    <ElektroSimulation.Smart object={item}>
       <Card
         className={cn(
           "px-3 py-2 transition-all ease-in-out duration-200 w-full hover:scale-[1.01] hover:shadow-md",
@@ -24,7 +24,7 @@ const TheCard = ({ item, className }: Props) => {
       >
         <div className="flex items-center justify-between gap-3">
           <ElektroSimulation.DetailLink
-            object={item.id}
+            object={item}
             className="flex-1 transition-all ease-in-out duration-200 truncate"
           >
             <div className="text-sm font-semibold truncate">{item.name}</div>

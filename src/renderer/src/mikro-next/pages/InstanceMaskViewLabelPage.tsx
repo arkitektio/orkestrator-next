@@ -7,19 +7,19 @@ export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export default asDetailQueryRoute(
+export const InstanceMaskViewLabelPage = asDetailQueryRoute(
   useGetInstanceMaskViewLabelQuery,
   ({ data, refetch }) => {
     return (
       <MikroInstanceMaskViewLabel.ModelPage
         title={data?.instanceMaskViewLabel?.id}
-        object={data?.instanceMaskViewLabel?.id}
+        object={data?.instanceMaskViewLabel}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
                 <MikroInstanceMaskViewLabel.Komments
-                  object={data?.instanceMaskViewLabel?.id}
+                  object={data?.instanceMaskViewLabel}
                 />
               ),
             }}
@@ -28,7 +28,7 @@ export default asDetailQueryRoute(
         pageActions={
           <>
             <MikroInstanceMaskViewLabel.ObjectButton
-              object={data?.instanceMaskViewLabel?.id}
+              object={data?.instanceMaskViewLabel}
             />
           </>
         }
@@ -43,3 +43,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default InstanceMaskViewLabelPage;

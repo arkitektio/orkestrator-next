@@ -119,7 +119,7 @@ export const LabelAccessor = ({
 }: ValueAccessorProps<LabelAccessorFragment>) => {
   return (
     <MikroPixelView.DetailLink
-      object={accessor.pixelView.id}
+      object={accessor.pixelView}
       subroute={`value/${parseInt(value?.toString() ?? "0")}`}
     >
       <div className="text-sm font-semibold">{accessor.__typename}</div>

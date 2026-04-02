@@ -10,28 +10,27 @@ import {
   channelToLabel
 } from "../components/AnalogSignalRender";
 
-export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const AnalogSignalPage = asDetailQueryRoute(
   useDetailAnalogSignalQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
     const [hidden, setHidden] = React.useState<string[]>([]);
 
     return (
       <ElektroAnalogSignal.ModelPage
         variant="black"
         title={data?.analogSignal?.id}
-        object={data?.analogSignal.id}
+        object={data?.analogSignal}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroAnalogSignal.ObjectButton object={data.analogSignal.id} />
+            <ElektroAnalogSignal.ObjectButton object={data.analogSignal} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <ElektroAnalogSignal.Komments object={data.analogSignal.id} />
+                <ElektroAnalogSignal.Komments object={data.analogSignal} />
               ),
             }}
           />
@@ -79,7 +78,7 @@ export default asDetailQueryRoute(
                     {channelToLabel(view)} {view.name}
                   </div>
                   <ElektroAnalogSignalChannel.DetailLink
-                    object={view.id}
+                    object={view}
                     className="text-sm text-muted-foreground my-auto truncate"
                   >
                     Open
@@ -93,3 +92,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default AnalogSignalPage;

@@ -15,12 +15,12 @@ const TheCard = ({ item }: Props) => {
 
 
   return (
-    <RekuestResolution.Smart object={item?.id}>
+    <RekuestResolution.Smart object={item}>
       <Card className="group">
         <CardHeader className="flex flex-row justify-between truncate ellipsis">
           <div>
             <CardTitle>
-              <RekuestResolution.DetailLink object={item?.id}>
+              <RekuestResolution.DetailLink object={item}>
                 {" "}
                 {item.name}
               </RekuestResolution.DetailLink>

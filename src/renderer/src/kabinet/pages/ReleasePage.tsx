@@ -6,15 +6,15 @@ import { KabinetFlavour, KabinetRelease } from "@/linkers";
 import { useGetReleaseQuery } from "../api/graphql";
 import FlavourCard from "../components/cards/FlavourCard";
 
-export default asDetailQueryRoute(useGetReleaseQuery, ({ data, refetch }) => {
+export const ReleasePage = asDetailQueryRoute(useGetReleaseQuery, ({ data, refetch }) => {
   return (
     <KabinetRelease.ModelPage
-      title={data?.release?.id}
-      object={data?.release?.id}
+      title={data?.release.description}
+      object={data?.release}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KabinetRelease.Komments object={data?.release?.id} />,
+            Comments: <KabinetRelease.Komments object={data?.release} />,
           }}
         />
       }
@@ -53,3 +53,6 @@ export default asDetailQueryRoute(useGetReleaseQuery, ({ data, refetch }) => {
     </KabinetRelease.ModelPage>
   );
 });
+
+
+export default ReleasePage;

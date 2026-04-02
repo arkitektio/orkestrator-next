@@ -5,13 +5,13 @@ import { KabinetResource } from "@/linkers";
 import { useGetResourceQuery } from "../api/graphql";
 import PodCard from "../components/cards/PodCard";
 
-export default asDetailQueryRoute(
+export const ResourcePage =  asDetailQueryRoute(
   useGetResourceQuery,
   ({ data, refetch }) => {
     return (
       <KabinetResource.ModelPage
         title={data?.resource?.name}
-        object={data?.resource?.id}
+        object={data?.resource}
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
@@ -50,3 +50,6 @@ export default asDetailQueryRoute(
   },
   { queryOptions: { pollInterval: 5000 } },
 );
+
+
+export default ResourcePage;

@@ -14,7 +14,7 @@ const TheCard = ({ item }: ImageCardProps) => {
   const progress = MikroRenderedPlot.useProgress({ object: item.id });
   return (
     <MikroRenderedPlot.Smart
-      object={item?.id}
+      object={item}
       className="relative group h-20 rounded-lg bg-background bg-center text-white shadow-lg transition-all duration-200 ease-in-out hover:bg-back-800 over:border over:border-primary-200 dragging:ring-primary-200 selected:ring-secondary-500"
     >
       {item?.store.presignedUrl && (
@@ -38,7 +38,7 @@ const TheCard = ({ item }: ImageCardProps) => {
             "z-10 font-bold text-md mb-2 cursor-pointer " +
             (isActive ? "text-primary-300" : "")
           }
-          object={item.id}
+          object={item}
         >
           {item?.name}
         </MikroRenderedPlot.DetailLink>

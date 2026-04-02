@@ -185,7 +185,7 @@ export const DefaultRenderer = (props: {
 }) => {
   return (
     <div className="flex flex-col">
-      <div className="flex-initial mb-3">Runnning on: <RekuestImplementation.DetailLink object={props.assignation.implementation.id}>{props.assignation.implementation.interface} @ {props.assignation.implementation.agent.name}</RekuestImplementation.DetailLink></div>
+      <div className="flex-initial mb-3">Runnning on: <RekuestImplementation.DetailLink object={props.assignation.implementation}>{props.assignation.implementation.interface} @ {props.assignation.implementation.agent.name}</RekuestImplementation.DetailLink></div>
 
       <AssignationTimeLine assignation={props.assignation} />
     </div>

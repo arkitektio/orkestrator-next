@@ -104,7 +104,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
         )}
         {error && <div>Error: {error.message}</div>}
         {data?.implementations.map((t) => (
-          <AssignButton template={t} release={props.item.id} />
+          <AssignButton template={t} release={props.item.id} key={t.id} />
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -118,7 +118,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <KabinetRelease.Smart object={item?.id} >
+    <KabinetRelease.Smart object={item} >
       <Card
         className="group transition-all duration-300 ease-in-out aspect-square"
         style={{
@@ -131,7 +131,7 @@ const TheCard = ({ item }: Props) => {
         <CardHeader className="flex flex-col justify-between h-full">
           <div className="flex-grow">
             <CardTitle>
-              <KabinetRelease.DetailLink object={item?.id}>
+              <KabinetRelease.DetailLink object={item}>
                 {" "}
                 {item.app?.identifier}:{item.version}
               </KabinetRelease.DetailLink>

@@ -12,6 +12,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Suspense } from "react";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { de } from "date-fns/locale";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);
@@ -33,7 +34,7 @@ export function MeshRenderer({ url }: { url: string }) {
   );
 }
 
-export default asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
+export const MeshPage = asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
   const [pinStage] = usePinStageMutation();
 
   const downloadFile = () => {
@@ -51,12 +52,12 @@ export default asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
   const resolve = useResolve();
   return (
     <MikroMesh.ModelPage
-      actions={<MikroMesh.Actions object={data.mesh.id} />}
-      object={data.mesh.id}
+      actions={<MikroMesh.Actions object={data.mesh} />}
+      object={data.mesh}
       title={data.mesh.name}
       sidebars={
         <MultiSidebar
-          map={{ Comments: <MikroMesh.Komments object={data.mesh.id} /> }}
+          map={{ Comments: <MikroMesh.Komments object={data.mesh} /> }}
         />
       }
       pageActions={
@@ -68,7 +69,7 @@ export default asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
       }
     >
       <div className="flex flex-col gap-1 mb-3 h-full">
-        <MikroMesh.DetailLink object={data.mesh.id} className={"text-3xl"}>
+        <MikroMesh.DetailLink object={data.mesh} className={"text-3xl"}>
           {data?.mesh?.name}
         </MikroMesh.DetailLink>
         <div className="flex-grow">
@@ -78,3 +79,6 @@ export default asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
     </MikroMesh.ModelPage>
   );
 });
+
+
+export default MeshPage;

@@ -11,7 +11,7 @@ import { useWorkspaceCarouselQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import { Ordering } from "@/rekuest/api/graphql";
 
-export default ({ }) => {
+export const WorkspaceCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useWorkspaceCarouselQuery({
     variables: {
       pagination: {
@@ -36,7 +36,7 @@ export default ({ }) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     Latest Workspace
                   </p>
-                  <FlussWorkspace.DetailLink object={item.id}>
+                  <FlussWorkspace.DetailLink object={item}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.title}
                     </h1>
@@ -47,7 +47,7 @@ export default ({ }) => {
                 </div>
               </div>
               <div className="col-span-6">
-                <FlussWorkspace.DetailLink object={item.id} className="p-1">
+                <FlussWorkspace.DetailLink object={item} className="p-1">
                   <Card>
                     <CardContent className="flex aspect-[10/5] p-6 ">
                       <div className="w-full h-full">
@@ -65,3 +65,6 @@ export default ({ }) => {
     </div>
   );
 };
+
+
+export default WorkspaceCarousel;

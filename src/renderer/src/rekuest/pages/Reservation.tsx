@@ -18,9 +18,9 @@ import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 
-export default asDetailQueryRoute(
+export const ReservationPage = asDetailQueryRoute(
   useDetailReservationQuery,
-  ({ data, refetch }) => {
+  ({ data, }) => {
     const [assign, _] = useAssignMutation();
 
     const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default asDetailQueryRoute(
       <ModelPageLayout
         identifier="@rekuest/reservation"
         title={data?.reservation?.title || data?.reservation.action?.name}
-        object={data.reservation.id}
+        object={data.reservation}
       >
         <DetailPane>
           <DetailPaneHeader>
@@ -89,3 +89,4 @@ export default asDetailQueryRoute(
     );
   },
 );
+export default ReservationPage;

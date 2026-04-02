@@ -4,25 +4,24 @@ import { ElektroTrace } from "@/linkers";
 import { useDetailTraceQuery } from "../api/graphql";
 import { TraceRender } from "../components/TraceRender";
 
-export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const TracePage = asDetailQueryRoute(
   useDetailTraceQuery,
   ({ data, subscribeToMore }) => {
 
     return (
       <ElektroTrace.ModelPage
         title={data?.trace?.name}
-        object={data.trace.id}
+        object={data.trace}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroTrace.ObjectButton object={data.trace.id} />
+            <ElektroTrace.ObjectButton object={data.trace} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <ElektroTrace.Komments object={data.trace.id} />,
+              Comments: <ElektroTrace.Komments object={data.trace} />,
             }}
           />
         }
@@ -32,3 +31,5 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+export default TracePage;

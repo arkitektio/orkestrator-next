@@ -259,11 +259,11 @@ export const ImagePage =  asDetailQueryRoute(
                       <div className="flex flex-col gap-2 mt-2">
                         {data?.image.derivedFromViews?.map((view) => (
                           <MikroImage.Smart
-                            object={view.image.id}
+                            object={view.image}
                             key={view.image.id}
                           >
                             <MikroImage.DetailLink
-                              object={view.image?.id}
+                              object={view.image}
                               className="cursor-pointer"
                             >
                               <Card className="flex flex-row gap-2 px-2 py-1">

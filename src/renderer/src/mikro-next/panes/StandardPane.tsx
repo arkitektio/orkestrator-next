@@ -200,7 +200,7 @@ const Pane: React.FunctionComponent = () => {
   );
 
   return (
-    <SidebarLayout searchBar={searchBar} bottomBar={<UploadProgress />}>
+    <SidebarLayout searchBar={searchBar}>
       {search.trim() === "" ? (
         <NavigationPane />
       ) : (

@@ -125,10 +125,10 @@ const ToyCarModel = () => {
 
 const SpaceScene = () => {
   return (
-    <div className="relative flex-1 min-h-[340px] overflow-hidden rounded-2xl border border-amber-300/40 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.14),_transparent_35%),linear-gradient(180deg,_rgba(24,24,27,0.2),_rgba(9,9,11,0.92))] shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+    <div className="relative flex-1 min-h-[340px] overflow-hidden rounded-2xl border-2 border-primary/40 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.14),_transparent_35%),linear-gradient(180deg,_rgba(24,24,27,0.2),_rgba(9,9,11,0.92))] shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.24em] text-amber-300/80">
+          <div className="text-[11px] uppercase tracking-[0.24em] text-primary/80">
             Assignation Space
           </div>
           <div className="text-sm text-white/80">
@@ -156,7 +156,7 @@ const SpaceScene = () => {
           intensity: 18,
           angle: 0.35,
           penumbra: 0.8,
-          color: "#f59e0b",
+          color: "#0bf50f",
         })}
         <Suspense fallback={null}>
           <ToyCarModel />
@@ -296,16 +296,11 @@ const TimelineMethodRender = ({
 }) => {
   return (
     <>
-      <div className="col-span-2 ml-4 rounded-md border border-amber-200/70 bg-background/50 px-2 py-2 z-10">
-        <div className="relative pl-5">
-          <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-amber-300/70" />
-          <span className="absolute left-0 -top-3 h-6 w-px bg-amber-300/70" />
+      <div className="col-span-2 ml-4 rounded-md border border-primary/40 bg-background/50 px-2 py-2 z-10">
+        <div className="relative ">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700 shrink-0">
+            <div className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-primary shrink-0">
               {row.method}
-            </div>
-            <div className="text-xs text-muted-foreground truncate">
-              {row.summary}
             </div>
             <div className="ml-auto text-[10px] text-muted-foreground">
               {row.items.length}
@@ -328,7 +323,6 @@ export const TimelineRender = ({
   highlighted: string[];
 }) => {
   const [expanded, setExpanded] = useState(true);
-  const methodCount = group.methods.length;
   const itemCount = group.items.length;
 
   return (
@@ -336,7 +330,7 @@ export const TimelineRender = ({
       <div
         className={
           expanded
-            ? "col-span-2 cursor-pointer rounded-md border border-amber-300/70 bg-amber-50/40 shadow-sm shadow-amber-200/20 transition-colors z-10"
+            ? "col-span-2 cursor-pointer rounded-md border border-primary/70 bg-primary/40 shadow-sm shadow-primary/20 transition-colors z-10"
             : "col-span-2 cursor-pointer rounded-md border border-border bg-card/60 hover:bg-card transition-colors z-10"
         }
       >
@@ -344,41 +338,25 @@ export const TimelineRender = ({
           <div className="flex flex-col px-2 py-2">
             <div className="flex items-center gap-2 min-w-0">
               {expanded ? (
-                <ChevronDown className="w-4 h-4 text-amber-600 shrink-0" />
+                <ChevronDown className="w-4 h-4 text-primary-600 shrink-0" />
               ) : (
                 <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
               )}
               <div className="font-semibold text-sm truncate">{group.dependency}</div>
-              <div className="ml-auto rounded bg-amber-500/10 px-1 py-0.5 text-[10px] text-amber-700">
+              <div className="ml-auto rounded bg-primary/10 px-1 py-0.5 text-[10px] text-primary">
                 {itemCount}
               </div>
             </div>
-
-            <div className="pl-6 pt-2">
-              <div className="relative rounded-lg border border-dashed border-amber-300/80 bg-background/70 px-2 py-1 text-xs text-muted-foreground truncate">
-                <span className="absolute -left-3 top-1/2 h-px w-3 -translate-y-1/2 bg-amber-300/70" />
-                <span className="absolute -left-3 top-0 h-1/2 w-px bg-amber-300/70" />
-                {group.summary || `${methodCount} method${methodCount === 1 ? "" : "s"}`}
-              </div>
-            </div>
-
-            {!expanded && (
-              <div className="pl-6 pt-1 text-[11px] text-muted-foreground truncate">
-                {methodCount} method{methodCount === 1 ? "" : "s"}
-              </div>
-            )}
           </div>
         </div>
       </div>
       <div className="col-span-10 flex items-center relative z-10">
         {!expanded ? (
-          <div className="relative h-6 w-full rounded-full border border-dashed border-amber-300/70 bg-amber-50/30 flex items-center px-3 text-xs text-muted-foreground">
+          <div className="relative h-6 w-full rounded-full border border-dashed border-primary/70 bg-primary/30 flex items-center px-3 text-xs text-muted-foreground">
             {itemCount} delegated task{itemCount === 1 ? "" : "s"}
           </div>
         ) : (
-          <div className="relative h-6 w-full rounded-full border border-dashed border-amber-300/70 bg-amber-50/20 flex items-center px-3 text-xs text-muted-foreground">
-            {methodCount} method{methodCount === 1 ? "" : "s"} grouped under this dependency
-          </div>
+          <>  </>
         )}
       </div>
 

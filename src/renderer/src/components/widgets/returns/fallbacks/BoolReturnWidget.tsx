@@ -1,12 +1,9 @@
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
-import React from "react";
 
-const BoolReturnWidget: React.FC<ReturnWidgetProps> = ({
-  port,
-  widget,
+const BoolReturnWidget = ({
   value,
-}) => {
-  return <div className="text-white items-center flex justify-center h-full w-full">{value}</div>
+}: ReturnWidgetProps<any, boolean>) => {
+  return <div className="text-white items-center flex justify-center h-full w-full">{value && "true" || "false"}</div>
 };
 
 export { BoolReturnWidget };

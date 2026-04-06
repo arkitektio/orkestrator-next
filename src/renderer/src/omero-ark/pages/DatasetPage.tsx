@@ -16,7 +16,7 @@ const Page = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
 
   return (
     <OmeroArkDataset.ModelPage
-      object={data.dataset.id}
+      object={data.dataset}
       title={data?.dataset?.name}
     >
       <DetailPane className="p-3 @container">

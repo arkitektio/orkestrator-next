@@ -10,11 +10,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAssignation.Smart object={item?.id}>
+    <RekuestAssignation.Smart object={item}>
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestAssignation.DetailLink object={item.id}>
+            <RekuestAssignation.DetailLink object={item}>
               {item.action.name}
             </RekuestAssignation.DetailLink>
             <div className="text-muted-foreground font-light mt-2">

@@ -8,6 +8,7 @@ import {
   MentionFragment,
   ReplyToMutationFn,
 } from "@/lok-next/api/graphql";
+import { Identifier, Object } from "@/types";
 import { BaseEditor, BaseElement, BaseText } from "slate";
 import { ReactEditor, RenderElementProps, RenderLeafProps } from "slate-react";
 
@@ -18,8 +19,8 @@ export type DescendantType = DescendantFragment;
 export type MentionType = MentionFragment;
 
 export type KommentProps = {
-  identifier: string;
-  object: string;
+  identifier: Identifier;
+  object: Object;
 };
 
 export type DescendendInput = DescendantInput;

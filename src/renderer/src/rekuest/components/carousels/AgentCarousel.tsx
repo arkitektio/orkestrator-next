@@ -12,7 +12,7 @@ import { ClientAvatar } from "@/lok-next/components/ClientAvatar";
 import { AgentFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
-export default (props: { agent: AgentFragment }) => {
+export const AgentCarousel = (props: { agent: AgentFragment }) => {
   return (
     <div className="w-full">
       <Carousel className="w-full dark:text-white">
@@ -24,7 +24,7 @@ export default (props: { agent: AgentFragment }) => {
                 <p className="mt-3 text-xl text-muted-foreground">
                   last Seen: <Timestamp date={props.agent.lastSeen} relative />
                 </p>
-                <RekuestAgent.DetailLink object={props.agent.id}>
+                <RekuestAgent.DetailLink object={props.agent}>
                   <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                     {props.agent.name}
                   </h1>
@@ -58,7 +58,7 @@ export default (props: { agent: AgentFragment }) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     {item.action.name}
                   </p>
-                  <RekuestImplementation.DetailLink object={item.id}>
+                  <RekuestImplementation.DetailLink object={item}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.agent.name}
                     </h1>
@@ -87,3 +87,6 @@ export default (props: { agent: AgentFragment }) => {
     </div>
   );
 };
+
+
+export default AgentCarousel;

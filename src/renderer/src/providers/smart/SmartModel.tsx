@@ -4,41 +4,39 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { SmartContext } from "@/providers/smart/extensions/context";
 import { Structure } from "@/types";
+import { Portal } from "@radix-ui/react-portal";
 import React from "react";
-
+import { motion } from "framer-motion";
 import { useSelectionSelector } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
 import { useSmartModel } from "./useSmartModel";
 
 export const SmartModel = ({
-  showSelfMates = true,
-  hover = false,
   ...props
 }: SmartModelProps) => {
   const {
     ref,
-    portalRef,
+    floatingRef,
+    floatingStyles,
     self,
     isOver,
-    isDragging,
-    canDrop,
     partners,
     clearPartners,
     handleClick,
     handleDragStart,
     getCurrentSelection,
-  } = useSmartModel({ identifier: props.identifier, object: props.object });
+  } = useSmartModel({ identifier: props.identifier, object: props.object,  });
 
   const className = React.useMemo(
     () =>
       cn(
         props.className,
         "group @container relative z-10 cursor-pointer",
-        "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:rounded",
+        "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:ring-primary/80 selected:rounded",
         "b-selected:ring b-selected:ring-2 b-selected:rounded b-selected:ring-red-500",
-        "dragging:opacity-50 dragging:ring-2 dragging:ring-gray-600 dragging:rounded dragging:rounded-md",
+        "dragging:animate-pulse dragging:ring-2 dragging:ring-gray-600 dragging:rounded dragging:rounded-md",
         "over:shadow-xl over:ring-2 over:border-gray-200 over:ring over:rounded over:rounded-md",
         "selected:after:absolute selected:after:top-0 selected:after:right-0 selected:after:z-[9998] selected:after:flex selected:after:h-6 selected:after:w-6 selected:after:translate-x-1/2 selected:after:-translate-y-1/2 selected:after:items-center selected:after:justify-center selected:after:rounded-full selected:after:bg-primary selected:after:text-xs selected:after:font-semibold selected:after:text-white selected:after:content-[attr(data-selected-index)]",
         "b-selected:before:absolute b-selected:before:top-0 b-selected:before:right-0 b-selected:before:z-[9999] b-selected:before:flex b-selected:before:h-6 b-selected:before:w-6 b-selected:before:translate-x-1/2 b-selected:before:-translate-y-1/2 b-selected:before:items-center b-selected:before:justify-center b-selected:before:rounded-full b-selected:before:bg-red-500 b-selected:before:text-xs b-selected:before:font-semibold b-selected:before:text-white b-selected:before:content-[attr(data-bselected-index)]",
@@ -46,28 +44,6 @@ export const SmartModel = ({
     [
       props.className,
     ],
-  );
-
-  const style = React.useMemo(
-    () => ({
-      ...(isDragging
-        ? props.dragStyle?.({
-            isOver,
-            isDragging,
-            canDrop,
-            progress: undefined,
-          })
-        : undefined),
-      ...(isOver
-        ? props.dropStyle?.({
-            isOver,
-            isDragging,
-            canDrop,
-            progress: undefined,
-          })
-        : undefined),
-    }),
-    [canDrop, isDragging, isOver, props.dragStyle, props.dropStyle],
   );
 
   return (
@@ -81,7 +57,6 @@ export const SmartModel = ({
           ref={ref}
           onClick={handleClick}
           className={cn("relative", props.containerClassName, className)}
-          style={style}
           onDragStart={handleDragStart}
           draggable={false}
         >
@@ -89,17 +64,15 @@ export const SmartModel = ({
           {isOver && <CombineButton />}
 
           {partners.length > 0 && (
-            <div
-              className="fixed inset-0 z-[9998] flex items-center justify-center"
-              ref={portalRef}
-            >
-              <div
-                className="fixed inset-0 bg-black bg-opacity-50"
-                onClick={clearPartners}
-              />
-              <div
-                className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
+            <Portal>
+              <motion.div
+                ref={floatingRef}
+                style={floatingStyles}
+                className="z-[10050] w-[320px] max-w-[min(90vw,320px)] shadow-2xl max-w-md rounded bg-popover border  rounded-lg p-1 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
+                initial={{ filter: "blur(2px)" }}
+  animate={{ filter: "none" }}
+
               >
                 <SmartContext
                   objects={
@@ -110,8 +83,8 @@ export const SmartModel = ({
                   partners={partners}
                   onDone={() => clearPartners()}
                 />
-              </div>
-            </div>
+              </motion.div>
+            </Portal>
           )}
         </div>
       </ContextMenuTrigger>

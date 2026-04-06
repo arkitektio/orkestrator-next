@@ -14,11 +14,12 @@ import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
   CreatedSmartSmartProps,
-  Identifier,
   ModelLinkProps,
   OmitedNavLinkProps,
   SmartPaneLinkProps,
 } from "./types";
+import { Object, Identifier } from "@/types";
+import { cn } from "@/lib/utils";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -62,20 +63,20 @@ export const SmartLink = ({
   );
 };
 
-export const buildModelLink = (to: string) => {
+export const buildModelLink = <T extends Object>(to: string) => {
   return ({
     children,
     subroute,
     subobject,
     deeproute,
     ...props
-  }: ModelLinkProps) => {
+  }: ModelLinkProps<T>) => {
     return (
       <NavLink
         {...props}
-        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
         title="Open"
-        className={props.className}
+        className={cn("hover:text-primary transition-colors", props.className)}
       >
         {children}
       </NavLink>
@@ -84,18 +85,18 @@ export const buildModelLink = (to: string) => {
 };
 
 
-export const buildPaneLink = (to: string) => {
+export const buildPaneLink = <T extends Object>(to: string) => {
   return ({
     children,
     subroute,
     subobject,
     deeproute,
     ...props
-  }: SmartPaneLinkProps) => {
+  }: SmartPaneLinkProps<T>) => {
     return (
       <PaneLink
         {...props}
-        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
 
       >
         {children}
@@ -104,21 +105,21 @@ export const buildPaneLink = (to: string) => {
   };
 };
 
-export const linkBuilder = (to: string) => (object: string | undefined) => {
-  if (!object) {
+export const linkBuilder = <T extends ObjectType>(to: string) => (objectId: string | undefined) => {
+  if (!objectId) {
     return `/error`;
   }
 
-  return `/${to}/${object}`;
+  return `/${to}/${objectId}`;
 };
 
-export const listLinkBuilder = (to: string) => () => {
+export const listLinkBuilder = <T extends ObjectType>(to: string) => () => {
   return `/${to}/`;
 };
 
-export const buildSmartModel = (
+export const buildSmartModel = <T extends Object>(
   identifier: Identifier,
-): React.FC<CreatedSmartSmartProps> => {
+): React.FC<CreatedSmartSmartProps<T>> => {
   return ({ children, ...props }) => {
     return (
       <SmartModel identifier={identifier} {...props}>
@@ -128,9 +129,9 @@ export const buildSmartModel = (
   };
 };
 
-export const buildDropModel = (
+export const buildDropModel = <T extends Object>(
   identifier: Identifier,
-): React.FC<CreatedSmartSmartProps> => {
+): React.FC<CreatedSmartSmartProps<T>> => {
   return ({ children, ...props }) => {
     return (
       <SmartDropZone identifier={identifier} {...props}>
@@ -140,18 +141,18 @@ export const buildDropModel = (
   };
 };
 
-export type ObjectProps = {
-  object: string;
+export type ObjectProps<T extends Object> = {
+  object: T;
 };
 
 const buildSelfActions = (_model: Identifier) => {
-  return (_props: ObjectProps) => {
+  return (_props: ObjectProps<any>) => {
     return <></>;
   };
 };
 
-const buildKomments = (model: Identifier) => {
-  return ({ ...props }: ObjectProps) => {
+const buildKomments = <T extends Object> (model: Identifier) => {
+  return ({ ...props }: ObjectProps<T>) => {
     return getSmartBuilderAdapters().renderKomments({
       identifier: model,
       object: props.object,
@@ -159,8 +160,8 @@ const buildKomments = (model: Identifier) => {
   };
 };
 
-const buildKnowledge = (model: Identifier) => {
-  return ({ ...props }: ObjectProps) => {
+const buildKnowledge = <T extends Object>(model: Identifier) => {
+  return ({ ...props }: ObjectProps<T>) => {
     return getSmartBuilderAdapters().renderKnowledge({
       identifier: model,
       object: props.object,
@@ -168,8 +169,8 @@ const buildKnowledge = (model: Identifier) => {
   };
 };
 
-const buildTinyKnowledge = (_model: Identifier) => {
-  return ({ ...props }: ObjectProps) => {
+const buildTinyKnowledge = <T extends Object>(_model: Identifier) => {
+  return ({ ...props }: ObjectProps<T>) => {
     return getSmartBuilderAdapters().renderTinyKnowledge({
       identifier: _model,
       object: props.object,
@@ -177,8 +178,8 @@ const buildTinyKnowledge = (_model: Identifier) => {
   };
 };
 
-const buildModelPage = (model: Identifier) => {
-  return ({ ...props }: SmartModelPage) => {
+const buildModelPage = <T extends Object>(model: Identifier) => {
+  return ({ ...props }: SmartModelPage<T>) => {
     return getSmartBuilderAdapters().renderModelPage({
       identifier: model,
       ...props,
@@ -199,11 +200,11 @@ const buildUseNodesQuery = (model: Identifier) => {
   return getSmartBuilderAdapters().useNodes(model);
 };
 
-const buildUseProgress = (model: Identifier, object: string) => {
+const buildUseProgress = (model: Identifier, object: Object) => {
   return getSmartBuilderAdapters().useProgress(model, object);
 };
 
-const buildUseLive = (model: Identifier, object: string) => {
+const buildUseLive = (model: Identifier, object: Object) => {
   return getSmartBuilderAdapters().useLive(model, object);
 };
 
@@ -235,7 +236,12 @@ const buildNewButton = (model: Identifier) => {
   };
 };
 
-export const buildSmart = (
+
+
+
+
+
+export const buildSmart = <T extends Object>(
   model: Identifier,
   to: string,
   options?: {
@@ -251,20 +257,20 @@ export const buildSmart = (
   });
 
   return {
-    DetailLink: buildModelLink(to),
-    PaneLink: buildPaneLink(to),
-    ListLink: buildBaseLink(to),
-    linkBuilder: linkBuilder(to),
-    listlinkBuilder: listLinkBuilder(to),
-    Smart: buildSmartModel(model),
-    Drop: buildDropModel(model),
+    DetailLink: buildModelLink<T>(to),
+    PaneLink: buildPaneLink<T>(to),
+    ListLink: buildBaseLink<T>(to),
+    linkBuilder: linkBuilder<T>(to),
+    listlinkBuilder: listLinkBuilder<T>(to),
+    Smart: buildSmartModel<T>(model),
+    Drop: buildDropModel<T>(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),
     EnhanceButton: buildEnhanceButton(model),
     TinyKnowledge: buildTinyKnowledge(model),
     identifier: model,
-    ModelPage: buildModelPage(model),
+    ModelPage: buildModelPage<T>(model),
     ListPage: buildListPage(model),
     useNodes: () => buildUseNodesQuery(model),
     ObjectButton: buildObjectButton(model),

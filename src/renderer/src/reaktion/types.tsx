@@ -2,7 +2,6 @@ import {
   ArgNodeFragment,
   BaseGraphEdgeFragment,
   BaseGraphNodeFragment,
-  FlussPortFragment,
   StreamItemFragment as FlussStreamItemFragment,
   GlobalArg,
   GlobalArgFragment,
@@ -12,12 +11,18 @@ import {
   GraphFragment,
   GraphNodeFragment,
   GraphNodeInput,
+  PortKind as FlussPortKind,
   LoggingEdgeFragment,
   ReactiveNodeFragment,
-  RekuesFilterActionNodeFragment,
+  RekuestFilterActionNodeFragment,
   RekuestMapActionNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
+  AgentSubFlowNodeFragment,
+  FlussArgPortFragment,
+  FlussReturnPortFragment,
+  FlussArgChildPortFragment,
+  FlussReturnChildPortFragment,
 } from "@/reaktion/api/graphql";
 import {
   Connection,
@@ -33,23 +38,31 @@ export type DataEnhancer<T, L = {}> = T & { extras?: L };
 export type ArgNodeData = DataEnhancer<ArgNodeFragment>;
 export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
 export type RekuestMapNodeData = DataEnhancer<RekuestMapActionNodeFragment>;
-export type RekuestFilterNodeData = DataEnhancer<RekuesFilterActionNodeFragment>;
+export type RekuestFilterNodeData = DataEnhancer<RekuestFilterActionNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
+export type AgentSubFlowNodeData = DataEnhancer<AgentSubFlowNodeFragment>;
+
+
+export type GeneralPort = FlussArgPortFragment | FlussReturnPortFragment | FlussArgChildPortFragment | FlussReturnChildPortFragment
+export type ArgPort = FlussArgPortFragment;
+export type ReturnPort = FlussReturnPortFragment;
+export const PortKind = FlussPortKind
+
+
+
+
+
+
+
+
 
 export type NodeData =
   | ArgNodeData
   | ReturnNodeData
   | RekuestMapNodeData
   | RekuestFilterNodeData
-  | ReactiveNodeData;
-
-export type ArgNodeProps = NodeProps<ArgNodeData>;
-export type ReturnNodeProps = NodeProps<ReturnNodeData>;
-export type IONodeProps = ArgNodeProps | ReturnNodeProps;
-
-export type RekuestMapNodeProps = NodeProps<RekuestMapNodeData>;
-export type RekuestFilterNodeProps = NodeProps<RekuestFilterNodeData>;
-export type ReactiveNodeProps = NodeProps<ReactiveNodeData>;
+  | ReactiveNodeData
+  | AgentSubFlowNodeData;
 
 export type Elements = Element[];
 
@@ -91,6 +104,17 @@ export type FlowEdgeData<T = GraphEdgeFragment> = Omit<
 export type FlowNode<T extends BaseGraphNodeFragment = BaseGraphNodeFragment> =
   Node<FlowNodeData<T>, NodeTypeUnion>;
 export type FlowEdge<T = GraphEdgeFragment> = Edge<FlowEdgeData<T>>;
+
+type TypedNodeProps<T extends BaseGraphNodeFragment> = NodeProps<FlowNode<T>>;
+
+export type ArgNodeProps = TypedNodeProps<ArgNodeFragment>;
+export type ReturnNodeProps = TypedNodeProps<ReturnNodeFragment>;
+export type IONodeProps = ArgNodeProps | ReturnNodeProps;
+
+export type RekuestMapNodeProps = TypedNodeProps<RekuestMapActionNodeFragment>;
+export type RekuestFilterNodeProps = TypedNodeProps<RekuestFilterActionNodeFragment>;
+export type ReactiveNodeProps = TypedNodeProps<ReactiveNodeFragment>;
+export type AgentSubFlownNodeProps = TypedNodeProps<AgentSubFlowNodeFragment>;
 
 export type VanillaEdgeProps = EdgeProps<VanillaEdgeFragment>;
 export type LoggingEdgeProps = EdgeProps<LoggingEdgeFragment>;
@@ -170,6 +194,11 @@ export type DropContextualParams = {
   connectionParams: OnConnectStartParams;
 };
 
+export type SubflowDropContextualParams = DropContextualParams & {
+  subflowNodeId: string;
+  subflowNode: Node<AgentSubFlowNodeData, "AgentSubFlowNode">;
+};
+
 export type ClickContextualParams = {
   position: { x: number; y: number };
   event: MouseEvent | TouchEvent;
@@ -194,8 +223,29 @@ export type ConnectContextualParams = {
   position: { x: number; y: number };
 };
 
+export type NodeContextualAction =
+  | { type: "implementations"; appIdentifier: string; }
+
+export type NodeContextualParams = {
+  nodeId: string;
+  subFlowNode: Node<AgentSubFlowNodeData, "AgentSubFlowNode">;
+  position: { x: number; y: number };
+};
+
 export type ReactiveNodeSuggestions = {
   node: FlowNode;
   title: string;
   description: string;
 };
+
+export type ContextualParams =
+  | ({ kind: "drop"; id: string } & DropContextualParams)
+  | ({ kind: "subflowdrop"; id: string } & SubflowDropContextualParams)
+  | ({ kind: "click"; id: string } & ClickContextualParams)
+  | ({ kind: "edge"; id: string } & EdgeContextualParams)
+  | ({ kind: "connect"; id: string } & ConnectContextualParams)
+  | ({ kind: "node"; id: string } & NodeContextualParams);
+
+
+
+export type AnyNode = Node<ArgNodeData, "ArgNode"> | Node<ReturnNodeData, "ReturnNode"> | Node<RekuestMapNodeData, "RekuestMapNode"> | Node<RekuestFilterNodeData, "RekuestFilterNode"> | Node<ReactiveNodeData, "ReactiveNode"> | Node<AgentSubFlowNodeData, "AgentSubFlowNode">;

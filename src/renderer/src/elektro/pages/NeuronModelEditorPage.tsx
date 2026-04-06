@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useCreateNeuronModelMutation, useDetailNeuronModelQuery } from "../api/graphql";
 import { NeuronEditor } from "../components/NeuronEditor";
 
-export default asDetailQueryRoute(
+export const NeuronModelEditorPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data }) => {
     const [createModel] = useCreateNeuronModelMutation();
@@ -40,7 +40,7 @@ export default asDetailQueryRoute(
       <ElektroNeuronModel.ModelPage
         variant="black"
         title={`Edit: ${data.neuronModel.name}`}
-        object={data.neuronModel.id}
+        object={data.neuronModel}
       >
         <div className="h-full w-full">
           <NeuronEditor initialModel={data.neuronModel} onSave={handleSave} />
@@ -49,3 +49,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default NeuronModelEditorPage;

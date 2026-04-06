@@ -10,6 +10,6 @@ mutation UpdateEntityCategory($input: UpdateEntityDefinitionInput!) {
   }
 }
 
-mutation DeleteEntityCategory($id: String!) {
+mutation DeleteEntityCategory($id: ID!) {
   deleteEntityCategory(input: {id: $id})
 }

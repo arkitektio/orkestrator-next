@@ -1,0 +1,15 @@
+query ListMaterializedRelationEdges(
+  $filters: MaterializedRelationEdgeFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [MaterializedRelationEdgeOrder!]
+) {
+  materializedRelationEdges(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListMaterializedRelationEdge
+  }
+}
+
+query GetMaterializedRelationEdge($id: ID!) {
+  materializedRelationEdge(id: $id) {
+    ...MaterializedRelationEdge
+  }
+}

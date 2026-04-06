@@ -3,17 +3,16 @@ import { Card } from "@/components/ui/card";
 import { ElektroAnalogSignal, ElektroBlock } from "@/linkers";
 import { useDetailBlockQuery } from "../api/graphql";
 
-export type IRepresentationScreenProps = Record<string, never>;
 
-export default asDetailQueryRoute(useDetailBlockQuery, ({ data }) => {
+export const BlockPage = asDetailQueryRoute(useDetailBlockQuery, ({ data }) => {
   return (
     <ElektroBlock.ModelPage
       variant="black"
       title={data?.block?.name}
-      object={data?.block.id}
+      object={data?.block}
       pageActions={
         <div className="flex flex-row gap-2">
-          <ElektroBlock.ObjectButton object={data.block.id} />
+          <ElektroBlock.ObjectButton object={data.block} />
         </div>
       }
     >
@@ -63,7 +62,7 @@ export default asDetailQueryRoute(useDetailBlockQuery, ({ data }) => {
                         <div className="space-y-2">
                           <div className="flex items-start justify-between">
                             <ElektroAnalogSignal.DetailLink
-                              object={signal.id}
+                              object={signal}
                               className="font-medium text-sm hover:underline"
                             >
                               {signal.name || `Signal ${signal.id}`}
@@ -132,3 +131,6 @@ export default asDetailQueryRoute(useDetailBlockQuery, ({ data }) => {
     </ElektroBlock.ModelPage>
   );
 });
+
+
+export default BlockPage;

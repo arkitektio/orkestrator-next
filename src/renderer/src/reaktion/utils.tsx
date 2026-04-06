@@ -1,21 +1,21 @@
 import {
-  FlussBindsFragment as BindsFragment,
-  BindsInput,
-  FlussChildPortFragment as ChildPortFragment,
   FlowFragment,
   GlobalArgInput,
   GraphNodeFragment,
   GraphNodeKind,
-  FlussPortFragment as PortFragment,
   PortKind,
-  ReactiveImplementationFragment,
   ReactiveNodeFragment,
+  ReactiveTemplateFragment,
+  RekuestMapActionNodeFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import {
+  ActionDemandInput,
   ActionKind,
   DefinitionInput,
-  DependencyInput,
+  AgentDependencyInput,
+  ArgPortFragment,
+  ArgChildPortFragment,
 } from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
@@ -26,11 +26,13 @@ import {
   EdgeInput,
   FlowEdge,
   FlowNode,
+  GeneralPort,
   GlobalFragment,
   GlobalInput,
   NodeInput,
   StreamItemFragment,
 } from "./types";
+
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
@@ -66,7 +68,8 @@ export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
             position: { x: position.x, y: position.y },
             data: { ...rest },
             dragHandle: ".custom-drag-handle",
-            parentNode: rest.parentNode ? rest.parentNode : undefined,
+            parentId: rest.parentNode ? rest.parentNode : undefined,
+            extent: rest.parentNode ? "parent" : undefined,
           };
           return node_;
         }
@@ -113,25 +116,27 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
 };
 
 export const flowNodeToInput = (
-  node: FlowNode<GraphNodeFragment & { binds?: BindsFragment }>,
+  node: FlowNode<GraphNodeFragment>,
 ): NodeInput => {
   const {
     id,
     type,
     position,
-    parentNode,
-    data: { outs, constants, ins, binds, voids, ...rest },
+    parentId,
+    data: { outs, constants, ins, voids, ...rest },
   } = node;
   try {
+
+
+
     const node_: NodeInput = {
-      ins: ins.map((s) => s.map(convertPortToInput)),
-      outs: outs.map((s) => s.map(convertPortToInput)),
-      constants: constants.map(convertPortToInput),
-      voids: voids.map(convertPortToInput),
+      ins: ins && ins.map((s) => s.map(convertPortToInput)),
+      outs: outs && outs.map((s) => s.map(convertPortToInput)),
+      constants: constants && constants.map(convertPortToInput),
+      voids: voids && voids.map(convertPortToInput),
       id,
       position: { x: position.x, y: position.y },
-      parentNode: parentNode,
-      binds: binds && bindsToInput(binds),
+      parentNode: parentId ? parentId : undefined,
       ...rest,
     };
 
@@ -153,10 +158,6 @@ export const streamItemToInput = (
 ): StreamItemInput => {
   const { __typename, ...rest } = node;
   return { ...rest };
-};
-
-export const bindsToInput = (node: BindsFragment): BindsInput => {
-  return { implementations: node.implementations.map(implementation => implementation) || [], clients: [] };
 };
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
@@ -192,7 +193,7 @@ export const globals_to_inputglobals = (
 };
 
 export const reactiveTemplateToFlowNode = (
-  node: ReactiveImplementationFragment,
+  node: ReactiveTemplateFragment,
   position: { x: number; y: number },
 ): FlowNode<ReactiveNodeFragment> => {
   const nodeId = "reactive-" + uuidv4();
@@ -220,9 +221,9 @@ export const reactiveTemplateToFlowNode = (
 };
 
 export const listPortToSingle = (
-  port: PortFragment,
+  port: ArgPortFragment,
   key: string,
-): PortFragment => {
+): ArgPortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
   const listChild = port.children?.at(0);
   if (!listChild) throw new Error("Port has no children");
@@ -231,18 +232,18 @@ export const listPortToSingle = (
   return {
     ...rest,
     key: key,
-    __typename: "Port",
-    children: children as ChildPortFragment[] | undefined,
+    __typename: "ArgPort",
+    children: children as ArgChildPortFragment[] | undefined,
   };
 };
 
-export const singleToList = (port: PortFragment): PortFragment => {
+export const singleToList = (port: ArgPortFragment): ArgPortFragment => {
 
   return {
     nullable: false,
     kind: PortKind.List,
     key: port.key,
-    __typename: "Port",
+    __typename: "ArgPort",
     children: [{ ...port, key: "0" }],
   };
 };
@@ -258,7 +259,7 @@ export const handleToStream = (handle: string | undefined | null) => {
 };
 
 export const portToReadble = (
-  port: PortFragment | ChildPortFragment | undefined | null,
+  port: GeneralPort | undefined | null,
   withLocalDisclaimer: boolean,
 ): string => {
   if (!port) return "undefined";
@@ -269,7 +270,7 @@ export const portToReadble = (
     answer +=
       "[ " +
       portToReadble(
-        port.children?.at(0) as ChildPortFragment,
+        port.children?.at(0) as GeneralPort,
         withLocalDisclaimer,
       ) +
       " ]";
@@ -279,7 +280,7 @@ export const portToReadble = (
     answer +=
       "{ " +
       portToReadble(
-        port.children?.at(0) as ChildPortFragment,
+        port.children?.at(0) as GeneralPort,
         withLocalDisclaimer,
       ) +
       " }";
@@ -304,7 +305,7 @@ export const portToReadble = (
   if (port.kind == PortKind.Union) {
     if (!port.children) throw new Error("Union has no variants");
     answer += port.children
-      .map((p) => portToReadble(p as ChildPortFragment, withLocalDisclaimer))
+      .map((p) => portToReadble(p as ArgChildPortFragment, withLocalDisclaimer))
       .join(" | ");
   }
 
@@ -324,7 +325,7 @@ export const portToReadble = (
 };
 
 export const streamToReadable = (
-  stream: PortFragment[] | undefined,
+  stream: GeneralPort[] | undefined,
   withLocalDisclaimer?: boolean,
 ): string => {
   if (!stream) return "undefinedStream";
@@ -334,9 +335,9 @@ export const streamToReadable = (
 };
 
 export const streamToReactNode = (
-  stream: PortFragment[] | undefined,
+  stream: GeneralPort[] | undefined,
   withLocalDisclaimer?: boolean,
-): JSX.Element => {
+) => {
   if (!stream)
     return <div className="text-red-400 stream-edge">undefinedStream</div>;
   return (
@@ -345,7 +346,7 @@ export const streamToReactNode = (
         <div className="font-bold">Event</div>
       ) : (
         stream.map((p) => (
-          <div className="flex-1">
+          <div className="flex-1" key={p.key}>
             {portToReadble(p, withLocalDisclaimer == true)}
           </div>
         ))
@@ -353,6 +354,23 @@ export const streamToReactNode = (
     </div>
   );
 };
+
+
+
+
+
+const rekuestNodeToActionDemand = (node: RekuestMapActionNodeFragment): ActionDemandInput => {
+  return {
+    key: node.id,
+    hash: "aaaa"
+  }
+}
+
+
+
+
+
+
 
 export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
   const args =
@@ -370,8 +388,19 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
       ?.ins.at(0)
       ?.map((p) => convertPortToInput(p)) || [];
 
+
+
+
+
+
+
+
+
+
   return {
     kind: ActionKind.Function,
+    key: flow.id,
+    version: "0.1",
     args: [...args, ...kwargs],
     returns: returns,
     name: flow.title,
@@ -379,17 +408,30 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
   };
 };
 
-export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
-  const hashes: DependencyInput[] =
+export const flowToDependencies = (flow: FlowFragment): AgentDependencyInput[] => {
+  const dependencies =
     flow.graph?.nodes
       ?.filter(
-        (node) =>
-          node.__typename == "RekuestFilterNode" ||
-          node.__typename == "RekuestMapNode",
+        (node) => node.__typename == "AgentSubFlowNode"
       )
-      .map((x) => ({ hash: x.hash, reference: x.id })) || [];
+      .map((node) => {
 
-  console.log("hashes", hashes);
+        const actionDefintions = flow.graph.nodes
+          ?.filter((n) => n.parentNode === node.id && n.__typename === "RekuestMapActionNode")
+          .map((n) => rekuestNodeToActionDemand(n as RekuestMapActionNodeFragment)) || [];
 
-  return hashes;
+
+        return {
+          key: node.id,
+          app: node.appFilter,
+          actionDemands: actionDefintions,
+          autoResolvable: node.autoResolvable || false,
+
+        } as AgentDependencyInput
+
+        }) || [];
+
+  console.log("hashes", dependencies);
+
+  return dependencies;
 };

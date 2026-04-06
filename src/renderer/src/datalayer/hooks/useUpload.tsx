@@ -1,18 +1,15 @@
 import {
   useDatalayerEndpoint,
-  useMikro
+  useKraph,
+  useSeaweedfs
 } from "@/app/Arkitekt";
 import {
-  PresignedPostCredentialsFragment,
-  RequestFileUploadPresignedDocument,
-  RequestFileUploadPresignedMutation,
-  RequestFileUploadPresignedMutationVariables,
+  MediaUploadGrantFragment,
   RequestMediaUploadDocument,
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
-} from "@/mikro-next/api/graphql";
+} from "@/kraph/api/graphql";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 export const uploadFetch = (
   url: RequestInfo | URL,
@@ -77,12 +74,13 @@ const customFetch = (uri: any, options: ExtraRequest) => {
 export type UploadOptions = {
   signal?: AbortSignal;
   onProgress?: (ev: ProgressEvent) => void;
+  id?: string;
 };
 
 const uploadToStore = async (
   file: File,
   endpointUrl: string,
-  z: PresignedPostCredentialsFragment,
+  z: MediaUploadGrantFragment,
   options?: UploadOptions,
 ) => {
   if (!z) {
@@ -92,51 +90,55 @@ const uploadToStore = async (
   console.log("uploadToStore", z);
 
   const data = new FormData();
-  data.append("key", z.key);
-  data.append("bucket", z.bucket);
-  data.append("X-Amz-Algorithm", z.xAmzAlgorithm);
-  data.append("X-Amz-Credential", z.xAmzCredential);
-  data.append("X-Amz-Date", z.xAmzDate);
-  data.append("X-Amz-Signature", z.xAmzSignature);
-  data.append("Policy", z.policy);
-
   data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
-  const x = customFetch(`${endpointUrl}/${z.bucket}`, {
+  const x = customFetch(`${endpointUrl}${z.path}`, {
     body: data,
     mode: "cors",
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${z.jwt}`,
+    },
     onProgress: options?.onProgress,
     signal: options?.signal,
   });
 
+
   await x;
-  console.log("done", x, z.store);
+  console.log("done", x, z.store.id);
   return `${z.store}`;
 };
 
-export const useMediaUpload = () => {
-  const client = useMikro();
+export const useKraphMediaUpload = () => {
+  const client = useKraph();
   const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
+      if (!client) {
+        throw Error("No client configured");
+      }
+
       const data = await client.mutate<
         RequestMediaUploadMutation,
         RequestMediaUploadMutationVariables
       >({
         mutation: RequestMediaUploadDocument,
         variables: {
-          key: file.name,
-          datalayer: "default",
+          input: { originalFileName: file.name,  },
         },
       });
 
       if (!data.data?.requestMediaUpload) {
         throw Error("Failed to request upload");
       }
+      if (!datalayerEndpoint) {
+        throw Error("No datalayer endpoint configured");
+      }
 
       const z = data.data.requestMediaUpload;
+
+      console.log("Got upload grant", z);
 
       return await uploadToStore(file, datalayerEndpoint, z, {});
     },
@@ -146,56 +148,3 @@ export const useMediaUpload = () => {
   return upload;
 };
 
-export type FileUploadOptions = {
-  signal?: AbortSignal;
-  onProgress?: (ev: ProgressEvent) => void;
-};
-
-export const useBigFileUpload = () => {
-  const client = useMikro();
-  const datalayerEndpoint = useDatalayerEndpoint();
-
-  const upload = useCallback(
-    async (file: File, options: FileUploadOptions) => {
-      if (!client) {
-        throw Error("No client configured");
-      }
-
-      console.log("uploading", file, options, datalayerEndpoint);
-
-      try {
-        const data = await client.mutate<
-          RequestFileUploadPresignedMutation,
-          RequestFileUploadPresignedMutationVariables
-        >({
-          mutation: RequestFileUploadPresignedDocument,
-          variables: {
-            key: file.name,
-            datalayer: "default",
-          },
-        });
-
-        if (data.errors) {
-          toast.error(
-            `Failed to request upload: ${data.errors.map((e) => e.message).join(", ")}`,
-          );
-        }
-
-        if (!data.data?.requestFileUploadPresigned) {
-          throw Error("Failed to request upload");
-        }
-
-        const z = data.data.requestFileUploadPresigned;
-
-        return await uploadToStore(file, datalayerEndpoint, z, options);
-      } catch (e) {
-        console.error("Failed to upload file", e);
-        toast.error(`Failed to upload file: ${(e as Error).message}`);
-        throw e;
-      }
-    },
-    [client, datalayerEndpoint],
-  );
-
-  return upload;
-};

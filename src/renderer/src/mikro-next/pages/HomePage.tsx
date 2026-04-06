@@ -1,7 +1,6 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Separator } from "@/components/ui/separator";
 import { UploadWrapper } from "@/components/upload/wrapper";
-import { useBigFileUpload } from "@/datalayer/hooks/useUpload";
 import { useCreateFile } from "@/lib/mikro/hooks";
 
 import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
@@ -21,6 +20,7 @@ import ImageList from "../components/lists/ImageList";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 
 // 1. Import from nuqs
+import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 
 
@@ -28,7 +28,7 @@ export interface IRepresentationScreenProps { }
 
 
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
-  const performDataLayerUpload = useBigFileUpload();
+  const performDataLayerUpload = useMikroBigFileUpload();
   const createFile = useCreateFile();
   const { startUpload } = useUpload();
 
@@ -51,8 +51,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
     files.forEach((file) => {
       startUpload(
         file,
-        async (file, { onProgress, signal }) => {
+        async (file, { id, onProgress, signal }) => {
           return await performDataLayerUpload(file, {
+            id,
             signal,
             onProgress,
           });
@@ -150,7 +151,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
           <div className="space-y-8 p-3">
             <CardHeader>
               <CardTitle className="text-3xl flex items-center gap-3">
-                <Database className="h-8 w-8 text-blue-500" />
+                <Database className="h-8 w-8 text-primary" />
                 Your Data
               </CardTitle>
               <CardDescription className="text-lg">

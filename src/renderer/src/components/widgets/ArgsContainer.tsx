@@ -1,7 +1,7 @@
 import { notEmpty } from "@/lib/utils";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
-import { Port, PortGroup } from "@/rekuest/widgets/types";
+import { ArgPort, PortGroup } from "@/rekuest/widgets/types";
 import { useMemo } from "react";
 import {
   Collapsible,
@@ -10,10 +10,10 @@ import {
 } from "../ui/collapsible";
 
 export type FilledGroup = PortGroup & {
-  filledPorts: Port[];
+  filledPorts: ArgPort[];
 };
 
-export const portHash = (port: Port[]) => {
+export const portHash = (port: ArgPort[]) => {
   return port
     .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
     .join("-");
@@ -112,7 +112,7 @@ export const ArgsContainer = ({
                         key={index}
                         port={port}
                         bound={bound}
-                        widget={port.assignWidget}
+                        widget={port.widget}
                         options={options}
                         path={[...path, port.key]}
                       />

@@ -38,6 +38,7 @@ import { CreateDatasetForm } from "../../forms/CreateDatasetForm";
 import DatasetCard from "../cards/DatasetCard";
 import FileCard from "../cards/FileCard";
 import ImageCard from "../cards/ImageCard";
+import { ContainerGrid } from "@/components/layout/ContainerGrid";
 
 
 type ViewMode = "grid" | "list" | "table";
@@ -129,7 +130,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
 
         {/* Items Grid/List */}
         {viewMode === "grid" && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <ContainerGrid className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {filteredAndSortedData.map((child) => {
               return (
                 <div key={child.id} className="relative group">
@@ -146,7 +147,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
                 </div>
               );
             })}
-          </div>
+          </ContainerGrid>
         )}          {viewMode === "list" && (
           <div className="space-y-2">
             {filteredAndSortedData.map((child) => {
@@ -158,7 +159,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
                     MikroDataset.Smart; // fallback
 
               return (
-                <SmartComponent key={child.id} object={child.id}>
+                <SmartComponent key={child.id} object={child}>
                   <div className="flex items-center space-x-3 p-3 rounded-lg border transition-colors hover:bg-muted/50">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       {getTypeIcon(child.__typename || "")}

@@ -11,11 +11,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestOutputInterfaceUsage.Smart object={item?.id}>
+    <RekuestOutputInterfaceUsage.Smart object={item}>
       <Card className={cn("aspect-square flex flex-col")}>
         <CardHeader className="flex-grow">
           <CardTitle>
-            <RekuestOutputInterfaceUsage.DetailLink object={item?.id}>
+            <RekuestOutputInterfaceUsage.DetailLink object={item}>
               {" "}
               <h1>{item.portKey}</h1>
               <span className="text-muted-foreground font-light">

@@ -2,12 +2,11 @@ import {
   GraphEdgeKind,
   GraphNodeFragment,
   GraphNodeKind,
-  FlussPortFragment as PortFragment,
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import { Connection, XYPosition } from "@xyflow/react";
-import { FlowEdge, FlowNode, FlowNodeData } from "../types";
+import { ArgPort, FlowEdge, FlowNode, FlowNodeData, ReturnPort, StreamItemFragment } from "../types";
 import {
   handleToStream,
   listPortToSingle,
@@ -114,7 +113,7 @@ export const onlyValid = (
   }
 };
 
-export const streamContainsNonLocal = (stream: PortFragment[]): boolean => {
+export const streamContainsNonLocal = (stream: StreamItemFragment[]): boolean => {
   for (const port of stream) {
     if (port.kind == PortKind.MemoryStructure) return true;
   }
@@ -190,29 +189,63 @@ export const propagateChange = (
 
 export type TransitionChange = ChangeEvent & { nodeId: string };
 
-export type Transition = {
-  type: "source" | "target";
+
+export type SourceStream = ReturnPort[][];
+export type TargetStream = ArgPort[][];
+
+
+
+export type SourceTransition = {
+  type: "source"
   index: number;
-  stream: PortFragment[];
+  stream: ReturnPort[];
   nodeId: string;
 };
 
+
+export type TargetTransition = {
+  type: "target";
+  index: number;
+  stream: ArgPort[];
+  nodeId: string;
+};
+
+export type Transition = SourceTransition | TargetTransition;
+
 export const totalOutcomes = 0;
 
-export type TransitionOptions = {
+export type TargetTransitionOptions = {
   maxCount: number;
   runningCount: number;
   nodeID: string;
   edgeID: string;
-  stream: PortFragment[];
-  type: PortType;
+  stream: ArgPort[];
+  type: "source";
   index: number;
   allowTransforms: boolean;
 };
 
+
+export type SourceTransitionOptions = {
+  maxCount: number;
+  runningCount: number;
+  nodeID: string;
+  edgeID: string;
+  stream: ReturnPort[];
+  type: "target";
+  index: number;
+  allowTransforms: boolean;
+};
+
+export type TransitionOptions = TargetTransitionOptions | SourceTransitionOptions;
+
+
+
+
+
 export const getTransform = (
   transform: Transform,
-  instream: PortFragment[],
+  instream: TargetStream,
   position: XYPosition,
 ): FlowNode => {
   if (transform == "to_list") {
@@ -476,11 +509,23 @@ export const addTransform = (
     y: (targetNodePosition.y + sourceNodePostion.y) / 2,
   };
 
-  const transformNode = getTransform(
-    transform,
-    options.stream,
-    inbetweenPosition,
-  );
+  let transformNode: FlowNode;
+
+  if (options.type == "source") {
+
+    transformNode = getTransform(
+      transform,
+      options.stream,
+      inbetweenPosition,
+    );
+  }
+  else  {
+    transformNode = getTransform(
+      transform,
+      options.stream,
+      inbetweenPosition,
+    );
+  }
 
   const toTransformEdge = createVanillaTransformEdge(
     options.edgeID, //reusing the old id

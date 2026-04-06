@@ -1,6 +1,6 @@
 import { useDatalayerEndpoint } from "@/app/Arkitekt";
 import {
-  useRequestAccessMutation,
+  useRequestZarrAccessMutation,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { AwsClient } from "aws4fetch";
@@ -11,14 +11,13 @@ import { S3Store } from "./store";
 
 export const useArray = (props: { store: ZarrStoreFragment }) => {
   const datalayerEndpoint = useDatalayerEndpoint();
+  const [request] = useRequestZarrAccessMutation();
 
   const [array, setArray] = useState<Array<DataType, S3Store> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
 
-  const [request] = useRequestAccessMutation({
-    variables: { store: props.store.id },
-  });
+
 
   // Promise to track the loading process and prevent multiple simultaneous loads
   const arrayLoadPromiseRef = useRef<Promise<Array<DataType, S3Store>> | null>(
@@ -43,22 +42,24 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
     const loadPromise = (async () => {
       try {
         const response = await request({
-          variables: { store: props.store.id },
+          variables: { input: { storeId: props.store.id } },
         });
 
-        if (!response.data?.requestAccess) {
+        if (!response.data?.requestZarrAccess) {
           throw new Error("No credentials loadable");
         }
 
-        const path =
-          datalayerEndpoint + "/" + props.store.bucket + "/" + props.store.key;
+        const accessGrant = response.data.requestZarrAccess;
 
-        const aws = new AwsClient({
-          accessKeyId: response.data.requestAccess.accessKey,
-          secretAccessKey: response.data.requestAccess.secretKey,
-          sessionToken: response.data.requestAccess.sessionToken,
-          service: "s3",
-        });
+        const path =
+          datalayerEndpoint + "/" + accessGrant.bucket + "/" + accessGrant.key;
+
+          const aws = new AwsClient({
+            accessKeyId: response.data.requestZarrAccess.accessKey,
+            secretAccessKey: response.data.requestZarrAccess.secretKey,
+            sessionToken: response.data.requestZarrAccess.sessionToken,
+            service: "s3",
+          });
 
         const store = new S3Store(path, aws);
         const loadedArray = await open.v3(store, { kind: "array" });

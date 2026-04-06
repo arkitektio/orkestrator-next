@@ -32,7 +32,7 @@ export const AffineInformation = ({ matrix }: { matrix: number[][] }) => {
 const CardItem = ({ view }: Props) => {
 
   return (
-    <MikroAffineTransformationView.Smart object={view?.id}>
+    <MikroAffineTransformationView.Smart object={view}>
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle className="truncate">
@@ -42,7 +42,7 @@ const CardItem = ({ view }: Props) => {
                 "z-10 font-bold text-md mb-2 cursor-pointer w-full  " +
                 (isActive ? "text-primary-300" : "")
               }
-              object={view.stage.id}
+              object={view.stage}
             >
               {view.stage.name}
             </MikroStage.DetailLink>

@@ -21,9 +21,6 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
     refetchQueries: ["GetGraph"],
   });
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [queryName, setQueryName] = useState("");
-
 
 
   const pin = async () => {

@@ -3,13 +3,13 @@ import { MikroTable } from "@/linkers";
 import { useGetTableQuery } from "../api/graphql";
 import { TableTable } from "../components/tables/TableTable";
 
-export default asDetailQueryRoute(useGetTableQuery, ({ data, refetch }) => {
+export const TablePage = asDetailQueryRoute(useGetTableQuery, ({ data, refetch }) => {
   return (
     <MikroTable.ModelPage
-      object={data.table.id}
+      object={data.table}
       title={data.table.name}
       pageActions={<div className="flex flex-row gap-2"></div>}
-      sidebars={<MikroTable.Komments object={data.table.id} />}
+      sidebars={<MikroTable.Komments object={data.table} />}
     >
       <div className="flex flex-col gap-2 h-full w-full">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -29,3 +29,6 @@ export default asDetailQueryRoute(useGetTableQuery, ({ data, refetch }) => {
     </MikroTable.ModelPage>
   );
 });
+
+
+export default TablePage;

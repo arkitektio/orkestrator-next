@@ -9,11 +9,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestReservation.Smart object={item?.id}>
+    <RekuestReservation.Smart object={item}>
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestReservation.DetailLink object={item?.id}>
+            <RekuestReservation.DetailLink object={item}>
               {" "}
               {item.action.name}
             </RekuestReservation.DetailLink>

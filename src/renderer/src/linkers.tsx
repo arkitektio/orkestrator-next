@@ -1,4 +1,5 @@
 import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
+import { ListImageFragment } from "./mikro-next/api/graphql";
 
 // Linkers for the smart models
 // Linkers represent ways to reference a smart model consistently in the ui, and
@@ -17,6 +18,8 @@ export const RekuestAssignation = buildSmart(
   "rekuest/assignations",
 );
 
+export const RekuestState = buildSmart("@rekuest/state", "rekuest/states");
+
 export const BlokBlok = buildSmart("@blok/blok", "blok/bloks");
 
 export const RekuestAction = buildSmart("@rekuest/action", "rekuest/actions");
@@ -32,6 +35,10 @@ export const RekuestMaterializedBlok = buildSmart(
 export const RekuestDependency = buildSmart(
   "@rekuest/dependency",
   "rekuest/dependencies",
+);
+export const RekuestResolution = buildSmart(
+  "@rekuest/resolution",
+  "rekuest/resolutions",
 );
 export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const FlussWorkspace = buildSmart(
@@ -113,7 +120,7 @@ export const RekuestDashboard = buildSmart(
   "rekuest/dashboards",
 );
 
-export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroImage = buildSmart<ListImageFragment>("@mikro/image", "mikro/images");
 export const MikroSnapshot = buildSmart("@mikro/snapshot", "mikro/snapshots");
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
@@ -390,6 +397,7 @@ export const MikroFile = buildSmart("@mikro/file", "mikro/files");
 export const MikroMesh = buildSmart("@mikro/mesh", "mikro/meshes");
 
 export const MikroStage = buildSmart("@mikro/stage", "mikro/stages");
+export const MikroScene = buildSmart("@mikro/scene", "mikro/scenes");
 export const MikroTable = buildSmart("@mikro/table", "mikro/tables");
 
 export const MikroChannelView = buildSmart(

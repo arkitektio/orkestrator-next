@@ -126,7 +126,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <KabinetFlavour.Smart object={item?.id} >
+    <KabinetFlavour.Smart object={item} >
       <Card
         className="group transition-all duration-300 ease-in-out aspect-square"
         style={{
@@ -139,7 +139,7 @@ const TheCard = ({ item }: Props) => {
         <CardHeader className="flex flex-col justify-between h-full">
           <div>
             <CardTitle>
-              <KabinetFlavour.DetailLink object={item?.id}>
+              <KabinetFlavour.DetailLink object={item}>
                 {" "}
                 {item.release.app.identifier}:{item.release.version}-{item.name}
               </KabinetFlavour.DetailLink>

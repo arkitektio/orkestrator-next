@@ -1,22 +1,22 @@
 import { PaneLinkProps } from "@/components/ui/sidepane";
-
 import { NavLinkProps } from "react-router-dom";
+import { Object, Identifier } from "@/types";
 
-export type Identifier = string;
+
 
 export type OmitedNavLinkProps = Omit<NavLinkProps, "to">;
 export type OmittedPaneLinkProps = Omit<PaneLinkProps, "to">;
 export type BaseLinkProps = OmitedNavLinkProps;
-export type ModelLinkProps = OmitedNavLinkProps & {
-  object: string;
+export type ModelLinkProps<T extends Object> = OmitedNavLinkProps & {
+  object: T;
   subroute?: string;
   subobject?: string;
   deeproute?: string;
 };
 
 
-export type SmartPaneLinkProps = OmittedPaneLinkProps & {
-  object: string;
+export type SmartPaneLinkProps<T extends Object> = OmittedPaneLinkProps & {
+  object: T;
   subroute?: string;
   subobject?: string;
   deeproute?: string;
@@ -30,8 +30,8 @@ export type ClassNameOptions = {
 };
 
 export interface SmartModelProps {
-  identifier: string;
-  object: string;
+  identifier: Identifier;
+  object: Object;
   as?: HTMLElement;
   children: React.ReactNode;
   containerClassName?: string;
@@ -43,9 +43,9 @@ export interface SmartModelProps {
 
 }
 
-export interface CreatedSmartSmartProps
+export interface CreatedSmartSmartProps<T extends Object>
   extends Omit<SmartModelProps, "accepts" | "identifier"> {
-  object: string;
+  object: T;
   dragStyle?: (props: ClassNameOptions) => React.CSSProperties;
   dropStyle?: (props: ClassNameOptions) => React.CSSProperties;
   children: React.ReactNode;

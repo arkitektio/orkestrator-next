@@ -1,0 +1,11 @@
+query GetResolution($id: ID!) {
+  resolution(id: $id) {
+    ...Resolution
+  }
+}
+
+query ListResolutions {
+  resolutions {
+    ...Resolution
+  }
+}

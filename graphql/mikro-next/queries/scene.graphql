@@ -1,0 +1,15 @@
+query GetScene($id: ID!) {
+  scene(id: $id) {
+    ...Scene
+  }
+}
+
+query GetScenes(
+  $filters: SceneFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [SceneOrder!]
+) {
+  scenes(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListScene
+  }
+}

@@ -29,9 +29,14 @@ import InterfacePage from "./pages/InterfacePage";
 import InterfacesPage from "./pages/InterfacesPage";
 import StructuresPage from "./pages/StructuresPage";
 import AssignationLogPage from "./pages/assignation/AssignationLogPage";
+import AssignationSpacePage from "./pages/assignation/AssignationSpacePage";
 import AssignationsPage from "./pages/AssignationsPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
 import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage";
+import { ResolutionPage } from "./pages/ResolutionPage";
+import AgentSpacePage from "./pages/agent/AgentSpacePage";
+import AgentTasksPage from "./pages/agent/AgentTasksPage";
+import StatePage from "./pages/StatePage";
 
 /**
  *
@@ -59,7 +64,7 @@ const Module: React.FC = () => {
           <Route path="dashboards/:id" element={<Dashboard />} />
           <Route path="structurepackages" element={<StructurePackages />} />
           <Route path="structurepackages/:id" element={<StructurePackage />} />
-
+          <Route path="resolutions/:id" element={<ResolutionPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
           <Route path="structures" element={<StructuresPage />} />
           <Route path="interfaces/:id" element={<InterfacePage />} />
@@ -71,9 +76,13 @@ const Module: React.FC = () => {
           <Route path="implementations" element={<ImplementationsPage />} />
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<AgentPage />} />
+          <Route path="agents/:id/space" element={<AgentSpacePage />} />
+          <Route path="agents/:id/tasks" element={<AgentTasksPage />} />
+          <Route path="states/:id" element={<StatePage />} />
           <Route path="assignations" element={<AssignationsPage />} />
           <Route path="assignations/:id" element={<AssignationPage />} />
           <Route path="assignations/:id/log" element={<AssignationLogPage />} />
+          <Route path="assignations/:id/space" element={<AssignationSpacePage />} />
           <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />
         </Routes>
 

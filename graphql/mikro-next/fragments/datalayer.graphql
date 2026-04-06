@@ -1,0 +1,95 @@
+fragment BigFileUploadGrant on BigFileUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  store
+}
+
+
+fragment MediaUploadGrant on MediaUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  maxBytes
+  store
+}
+
+
+fragment ZarrUploadGrant on ZarrUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  maxBytes
+  store
+}
+
+
+fragment ParquetUploadGrant on ParquetUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  maxBytes
+  store
+}
+
+
+
+fragment BigFileAccessGrant on BigFileAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+fragment MediaAccessGrant on MediaAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+
+fragment ZarrAccessGrant on ZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+
+
+fragment ParquetAccessGrant on ParquetAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}

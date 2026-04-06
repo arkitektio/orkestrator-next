@@ -7,22 +7,22 @@ import {
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const TPage = asDetailQueryRoute(
   useGetProviderQuery,
   ({ data, subscribeToMore }) => {
     return (
       <AlpakaProvider.ModelPage
         title={data?.provider?.name}
-        object={data.provider.id}
+        object={data.provider}
         pageActions={
           <div className="flex flex-row gap-2">
-            <AlpakaProvider.ObjectButton object={data.provider.id} />
+            <AlpakaProvider.ObjectButton object={data.provider} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <AlpakaProvider.Komments object={data.provider.id} />,
+              Comments: <AlpakaProvider.Komments object={data.provider} />,
             }}
           />
         }
@@ -32,3 +32,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

@@ -7,7 +7,6 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialogbutton";
-import { Progress } from "@/components/ui/progress";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
 
@@ -16,7 +15,6 @@ import {
   ListImplementationFragment,
   useDeleteImplementationMutation,
 } from "@/rekuest/api/graphql";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { PlayCircle } from "lucide-react";
 
 interface Props {
@@ -31,25 +29,19 @@ const TheCard = ({ item }: Props) => {
     },
   });
 
-  const progress = useLiveAssignation({
-    assignedImplementation: item.id,
-  });
 
   const description = useActionDescription({
     description: item.action.description || "",
   });
 
   return (
-    <RekuestImplementation.Smart object={item?.id}>
+    <RekuestImplementation.Smart object={item}>
       <Card className="group hover:shadow-md transition-shadow overflow-hidden">
-        {progress && progress.progress > 0 && (
-          <Progress value={progress.progress} className="h-1 rounded-none" />
-        )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-base mb-1">
-                <RekuestImplementation.DetailLink object={item?.id} className="hover:text-primary transition-colors">
+                <RekuestImplementation.DetailLink object={item} className="hover:text-primary transition-colors">
                   {item.action.name}
                 </RekuestImplementation.DetailLink>
               </CardTitle>

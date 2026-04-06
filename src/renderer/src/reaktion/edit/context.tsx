@@ -1,89 +1,57 @@
-import { FlowFragment, GlobalArgFragment } from "@/reaktion/api/graphql";
 import React, { useContext } from "react";
-import {
-  ClickContextualParams,
-  ConnectContextualParams,
-  DropContextualParams,
-  EdgeContextualParams,
-  FlowNode,
-  NodeData,
-} from "../types";
-import { ValidationResult } from "../validation/types";
+import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { createEditFlowStore, EditFlowState } from "./store";
 
-export type ShowRiverContextType = {
-  flow?: FlowFragment | null;
-  updateData: (data: Partial<NodeData>, id: string) => void;
-  setGlobals: (data: GlobalArgFragment[]) => void;
-  removeGlobal: (key: string) => void;
-  removeEdge: (id: string) => void;
-  moveConstantToGlobals: (
-    nodeId: string,
-    conindex: number,
-    globalkey?: string | undefined,
-  ) => void;
-  moveStreamToConstants: (
-    nodeId: string,
-    streamIndex: number,
-    itemIndex: number,
-  ) => void;
-  moveConstantToStream: (
-    nodeId: string,
-    conindex: number,
-    streamIndex: number,
-  ) => void;
-  moveOutStreamToVoid: (
-    nodeId: string,
-    conindex: number,
-    streamIndex: number,
-  ) => void;
-  moveVoidtoOutstream: (
-    nodeId: string,
-    conindex: number,
-    streamIndex: number,
-  ) => void;
-  state: ValidationResult;
-  showEdgeLabels: boolean;
-  showNodeErrors: boolean;
-  addContextualNode: (node: FlowNode, params: DropContextualParams) => void;
-  addClickNode: (node: FlowNode, params: ClickContextualParams) => void;
-  addConnectContextualNode: (
-    node: FlowNode,
-    params: ConnectContextualParams,
-  ) => void;
-  addEdgeContextualNode: (node: FlowNode, params: EdgeContextualParams) => void;
+export type EditFlowStoreApi = ReturnType<typeof createEditFlowStore>;
+
+export const EditFlowStoreContext =
+  React.createContext<EditFlowStoreApi | null>(null);
+
+export const useEditFlowStoreApi = () => {
+  const store = useContext(EditFlowStoreContext);
+
+  if (!store) {
+    throw new Error("useEditFlowStoreApi must be used within EditFlowStoreContext");
+  }
+
+  return store;
 };
 
-export const EditRiverContext = React.createContext<ShowRiverContextType>({
-  updateData: () => { },
-  setGlobals: () => { },
-  state: {
-    valid: true,
-    remainingErrors: [],
-    solvedErrors: [],
-    nodes: [],
-    edges: [],
-    globals: [],
-  },
-  showEdgeLabels: false,
-  removeGlobal: () => { },
-  removeEdge: () => { },
-  moveConstantToGlobals: () => { },
-  moveStreamToConstants: () => { },
-  moveConstantToStream: () => { },
-  moveOutStreamToVoid: () => { },
-  moveVoidtoOutstream: () => { },
-  showNodeErrors: true,
-  addContextualNode: () => { },
-  addEdgeContextualNode: () => { },
-  addClickNode: () => { },
-  addConnectContextualNode(node, params) {
-    console.log(node, params);
-  },
-});
+export const useEditFlowStore = <T,>(selector: (state: EditFlowState) => T) => {
+  const store = useEditFlowStoreApi();
+  return useStore(store, selector);
+};
 
-export const useEditRiver = () => useContext(EditRiverContext);
+export const useEditRiver = () => {
+  const store = useEditFlowStoreApi();
+
+  const state = useStore(store, useShallow((currentState) => currentState));
+  const temporal = useStore(
+    store.temporal,
+    useShallow((temporalState) => ({
+      undo: temporalState.undo,
+      redo: temporalState.redo,
+      canUndo: temporalState.pastStates.length > 0,
+      canRedo: temporalState.futureStates.length > 0,
+    })),
+  );
+
+  return {
+    ...state,
+    ...temporal,
+    state,
+  };
+};
 
 export const useEditNodeErrors = (id: string) => {
-  const { state } = useEditRiver();
-  return state.remainingErrors.filter((e) => e.id == id && e.type == "node");
+  const remainingErrors = useEditFlowStore((state) => state.remainingErrors);
+  return remainingErrors.filter((error) => error.id === id && error.type === "node");
 };
+
+export const useSubflowChildCount = (id: string) => {
+  return useEditFlowStore(
+    (state) => state.nodes.filter((node) => node.parentId === id).length,
+  );
+};
+

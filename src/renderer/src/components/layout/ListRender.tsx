@@ -83,7 +83,7 @@ export const ListRender = <T extends any>({
             {childrenComponents}
             {additionalChildren}
             <div key="xxx" className="flex items-center justify-left group">
-              <div className="p-3 group-hover:visible invisible">{actions}</div>
+              <div className="px-2 py-2 group-hover:visible invisible">{actions}</div>
             </div>
           </ContainerGrid>
         </>

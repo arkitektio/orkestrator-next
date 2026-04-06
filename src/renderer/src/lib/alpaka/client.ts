@@ -8,7 +8,7 @@ import {
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
-}
+
 
 export const createAlpakaClient = (config: Config) => {
   const token = config.retrieveToken()

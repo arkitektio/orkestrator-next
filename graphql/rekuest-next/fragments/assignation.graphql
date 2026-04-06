@@ -21,6 +21,8 @@ fragment PostmanAssignation on Assignation {
       name
     }
   }
+  dependencyMethod
+  dependency
   dependencies
   implementation {
     id
@@ -89,6 +91,16 @@ fragment DetailAssignation on Assignation {
       }
 
     name
+    }
+    dependencies {
+      id
+      key
+      appFilter
+      versionFilter
+      autoResolvable
+      actionDemands {
+        key
+      }
     }
   }
 }

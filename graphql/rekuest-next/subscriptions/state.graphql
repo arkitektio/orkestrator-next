@@ -3,3 +3,11 @@ subscription WatchStateEvents($stateID: ID!) {
     ...StateEvent
   }
 }
+
+
+subscription  WatchState($stateID: ID!) {
+  watchState(stateId: $stateID) {
+    ...StatePatchEvent
+    ...StateSnapshotEvent
+  }
+}

@@ -24,8 +24,8 @@ export const UploadZone: React.FC<{
           files.forEach((file) => {
             startUpload(
               file,
-              async (file, { onProgress, signal }) => {
-                return await uploadFile(file, { onProgress, signal });
+              async (file, { id, onProgress, signal }) => {
+                return await uploadFile(file, { id, onProgress, signal });
               },
               async (file, key) => {
                 return await createFile(file, key);

@@ -10,11 +10,11 @@ interface Props {
 
 const TheCard = ({ stage }: Props) => {
   return (
-    <MikroStage.Smart object={stage?.id} >
+    <MikroStage.Smart object={stage} >
       <Card className={cn("aspect-square flex flex-col ")}>
         <CardHeader className="flex-grow">
           <CardTitle>
-            <MikroStage.DetailLink object={stage?.id}>
+            <MikroStage.DetailLink object={stage}>
               {" "}
               <h1 className="line-clamp-2 ellipsis">{stage.name}</h1>
               <span className="text-muted-foreground font-light ">

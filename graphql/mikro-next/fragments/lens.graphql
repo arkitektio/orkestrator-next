@@ -1,0 +1,42 @@
+fragment DimSlice on Slice {
+  dim
+  start
+  stop
+  step
+}
+
+fragment SceneLens on Lens {
+    shape
+    dims
+    slices {
+      ...DimSlice
+    }
+    dataset {
+      id
+      name
+      dims
+      dataArrays {
+        id
+        level
+        store {
+          ...ZarrStore
+        }
+      }
+    }
+    activeAnchors {
+      id
+      valueHistogram {
+        bins
+        histogram
+        min
+        max
+        p1
+        p99
+      }
+    }
+}
+
+fragment ListScene on Scene {
+  id
+  name
+}

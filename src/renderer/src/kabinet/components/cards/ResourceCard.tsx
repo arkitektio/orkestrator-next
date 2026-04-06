@@ -15,12 +15,12 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <KabinetResource.Smart object={item?.id} >
+    <KabinetResource.Smart object={item} >
       <Card className="group">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>
-              <KabinetResource.DetailLink object={item?.id}>
+              <KabinetResource.DetailLink object={item}>
                 {" "}
                 {item.name}
               </KabinetResource.DetailLink>

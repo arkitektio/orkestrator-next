@@ -9,8 +9,8 @@ import {
   SmartNewButtonProps,
   SmartObjectButtonProps,
 } from "@/providers/smart/buildSmartAdapters";
+import { ObjectButton } from "@/providers/smart/extensions/context";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import React, { lazy, Suspense } from "react";

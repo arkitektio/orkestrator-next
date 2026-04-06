@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { DragZone } from "@/components/upload/drag";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphProtocolEventCategory,
@@ -674,7 +674,7 @@ export const RoleDefinitionCreator = ({
 export default asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
   ({ data, refetch }) => {
-    const uploadFile = useKraphUpload();
+    const uploadFile = useKraphMediaUpload();
     const [update] = useUpdateProtocolEventCategoryMutation();
 
     const resolve = useResolve();

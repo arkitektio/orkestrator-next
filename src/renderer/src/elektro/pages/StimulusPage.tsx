@@ -7,7 +7,7 @@ import { useTraceArray } from "../lib/useTraceArray";
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const StimulusPage = asDetailQueryRoute(
   useDetailStimulusQuery,
   ({ data, subscribeToMore }) => {
     const { renderView } = useTraceArray();
@@ -16,16 +16,16 @@ export default asDetailQueryRoute(
     return (
       <ElektroStimulus.ModelPage
         title={data?.stimulus?.label}
-        object={data.stimulus.id}
+        object={data.stimulus}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroStimulus.ObjectButton object={data.stimulus.id} />
+            <ElektroStimulus.ObjectButton object={data.stimulus} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <ElektroStimulus.Komments object={data.stimulus.id} />,
+              Comments: <ElektroStimulus.Komments object={data.stimulus} />,
             }}
           />
         }
@@ -39,3 +39,5 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+export default StimulusPage;

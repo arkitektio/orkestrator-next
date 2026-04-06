@@ -132,11 +132,11 @@ export default asDetailQueryRoute(useGetPodQuery, ({ data, refetch }) => {
   return (
     <KabinetPod.ModelPage
       title={data.pod.backend.name}
-      object={data?.pod?.id}
+      object={data?.pod}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KabinetPod.Komments object={data?.pod?.id} />,
+            Comments: <KabinetPod.Komments object={data?.pod} />,
           }}
         />
       }

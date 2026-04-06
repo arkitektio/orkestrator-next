@@ -16,11 +16,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <FlussRun.Smart object={item?.id}>
+    <FlussRun.Smart object={item}>
       <Card className="aspect-square">
         <CardHeader>
           <CardTitle>
-            <FlussRun.DetailLink object={item.id}>
+            <FlussRun.DetailLink object={item}>
               {item.flow.workspace.title}{" "}
             </FlussRun.DetailLink>
           </CardTitle>

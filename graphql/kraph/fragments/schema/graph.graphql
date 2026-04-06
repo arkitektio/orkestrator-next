@@ -1,25 +1,5 @@
 
 
-fragment ListMaterializedEdge on MaterializedEdge {
-  id
-  source {
-    id
-  }
-  target {
-    id
-    label
-  }
-  edge {
-    id
-    label
-    description
-  }
-  graph {
-    id
-    name
-  }
-}
-
 fragment Graph on Graph {
   id
   name
@@ -55,9 +35,6 @@ fragment Graph on Graph {
   pinned
   image {
     ...MediaStore
-  }
-  materializedEdges {
-    ...ListMaterializedEdge
   }
 }
 

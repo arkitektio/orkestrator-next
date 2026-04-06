@@ -1,0 +1,942 @@
+"""The kind of action."""
+enum ActionKind {
+  FUNCTION
+  GENERATOR
+}
+
+type AgentSubFlowNode implements GraphNode {
+  appFilter: String
+  autoResolvable: Boolean!
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  deviceFilter: String
+  globalsMap: ValueMap!
+  id: ID!
+  ins: [[ArgPort!]!]!
+  instanceFilter: String
+  kind: GraphNodeKind!
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  title: String!
+  userFilter: String
+  versionFilter: String
+  voids: [ArgPort!]!
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar AnyDefault
+
+"""The `Arg` scalar type represents a an Argument in a Action assignment"""
+scalar Arg
+
+type ArgNode implements GraphNode {
+  argStuff: String
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  id: ID!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  title: String!
+  voids: [ArgPort!]!
+}
+
+type ArgPort {
+  children: [ArgPort!]
+  choices: [Choice!]
+  default: AnyDefault
+  description: String
+  effects: [Effect!]
+  identifier: Identifier
+  key: String!
+  kind: PortKind!
+  label: String
+  nullable: Boolean!
+  requires: [Requires!]
+  validators: [Validator!]
+  widget: AssignWidget
+}
+
+"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+input ArgPortInput {
+  children: [ArgPortInput!] = null
+  choices: [ChoiceInput!] = null
+  default: AnyDefault = null
+  description: String = null
+  effects: [EffectInput!] = null
+  identifier: String = null
+  key: String!
+  kind: PortKind!
+  label: String = null
+  nullable: Boolean! = false
+  requires: [RequiresInput!] = null
+  validators: [ValidatorInput!] = null
+  widget: AssignWidgetInput = null
+}
+
+interface AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+}
+
+input AssignWidgetInput {
+  """
+  Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns
+  """
+  asParagraph: Boolean = null
+  choices: [ChoiceInput!] = null
+  dependencies: [String!] = []
+  fallback: AssignWidgetInput = null
+  filters: [ArgPortInput!] = null
+  hook: String = null
+  kind: AssignWidgetKind!
+  max: Float = null
+  min: Float = null
+  placeholder: String = null
+  query: SearchQuery = null
+  step: Float = null
+  ward: String = null
+}
+
+"""The kind of assign widget."""
+enum AssignWidgetKind {
+  CHOICE
+  CUSTOM
+  SEARCH
+  SLIDER
+  STATE_CHOICE
+  STRING
+}
+
+interface AssignableNode {
+  nextTimeout: Int
+}
+
+type Choice {
+  description: String
+  image: String
+  label: String!
+  value: String!
+}
+
+type ChoiceAssignWidget implements AssignWidget {
+  choices: [Choice!]
+  followValue: String
+  kind: AssignWidgetKind!
+}
+
+"\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    "
+input ChoiceInput {
+  description: String = null
+  image: String = null
+  label: String!
+  value: AnyDefault!
+}
+
+type ChoiceReturnWidget implements ReturnWidget {
+  choices: [Choice!]
+  kind: ReturnWidgetKind!
+}
+
+input CloseRunInput {
+  run: ID!
+}
+
+input CreateRunInput {
+  assignation: ID!
+  flow: ID!
+  snapshotInterval: Int!
+}
+
+input CreateWorkspaceInput {
+  description: String = null
+  graph: GraphInput = null
+  title: String = null
+  vanilla: Boolean! = false
+}
+
+type CustomAssignWidget implements AssignWidget {
+  followValue: String
+  hook: String!
+  kind: AssignWidgetKind!
+  ward: String!
+}
+
+type CustomEffect implements Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  hook: String!
+  kind: EffectKind!
+  ward: String!
+}
+
+type CustomReturnWidget implements ReturnWidget {
+  hook: String!
+  kind: ReturnWidgetKind!
+  ward: String!
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+input DeleteRunInput {
+  run: ID!
+}
+
+input DeleteSnapshotInput {
+  snapshot: ID!
+}
+
+interface Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  kind: EffectKind!
+}
+
+"\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
+input EffectInput {
+  dependencies: [String!] = []
+  fade: Boolean = true
+  function: ValidatorFunction!
+  hook: String = null
+  kind: EffectKind!
+  message: String = null
+  ward: String = null
+}
+
+"""The kind of effect."""
+enum EffectKind {
+  CUSTOM
+  HIDE
+  MESSAGE
+}
+
+"""
+The `ArrayLike` scalasr typsse represents a reference to a store previously created by the user n a datalayer
+"""
+scalar EventValue
+
+type Flow {
+  createdAt: DateTime!
+  description: String
+  graph: Graph!
+  hash: String!
+  id: ID!
+  title: String!
+  workspace: Workspace!
+}
+
+input FlowFilter {
+  AND: FlowFilter
+  DISTINCT: Boolean
+  NOT: FlowFilter
+  OR: FlowFilter
+  ids: [ID!]
+  search: String
+  workspace: WorkspaceFilter
+}
+
+type GlobalArg {
+  key: String!
+  port: ArgPort!
+}
+
+input GlobalArgInput {
+  key: String!
+  port: ArgPortInput!
+}
+
+enum Granularity {
+  DAY
+  HOUR
+  MONTH
+  QUARTER
+  WEEK
+  YEAR
+}
+
+type Graph {
+  edges: [GraphEdge!]!
+  globals: [GlobalArg!]!
+  nodes: [GraphNode!]!
+  zoom: Float!
+}
+
+interface GraphEdge {
+  id: ID!
+  kind: GraphEdgeKind!
+  source: String!
+  sourceHandle: String!
+  stream: [StreamItem!]!
+  target: String!
+  targetHandle: String!
+}
+
+input GraphEdgeInput {
+  id: String!
+  kind: GraphEdgeKind!
+  label: String = null
+  level: String = null
+  source: String!
+  sourceHandle: String!
+  stream: [StreamItemInput!]!
+  target: String!
+  targetHandle: String!
+}
+
+enum GraphEdgeKind {
+  LOGGING
+  VANILLA
+}
+
+input GraphInput {
+  edges: [GraphEdgeInput!]!
+  globals: [GlobalArgInput!]!
+  nodes: [GraphNodeInput!]!
+}
+
+interface GraphNode {
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  id: ID!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  title: String!
+  voids: [ArgPort!]!
+}
+
+input GraphNodeInput {
+  actionKind: ActionKind = null
+  allowLocalExecution: Boolean = null
+  appFilter: String = null
+  autoResolvable: Boolean! = false
+  constants: [ArgPortInput!] = null
+  constantsMap: ValueMap
+  description: String = null
+  deviceFilter: String = null
+  globalsMap: ValueMap
+  hash: String = null
+  hello: String = null
+  id: String!
+  implementation: ReactiveImplementation = null
+  ins: [[ArgPortInput!]!] = null
+  instanceFilter: String = null
+  kind: GraphNodeKind!
+  mapStrategy: MapStrategy = null
+  nextTimeout: Int = null
+  outs: [[ReturnPortInput!]!] = null
+  parentNode: String = null
+  path: String = null
+  position: PositionInput!
+  retries: Int = null
+  retryDelay: Int = null
+  title: String = null
+  userFilter: String = null
+  versionFilter: String = null
+  voids: [ArgPortInput!]
+}
+
+enum GraphNodeKind {
+  AGENT_SUBFLOW
+  ARGS
+  REACTIVE
+  REKUEST
+  REKUEST_FILTER
+  RETURNS
+}
+
+type HideEffect implements Effect {
+  dependencies: [String!]!
+  fade: Boolean!
+  function: ValidatorFunction!
+  kind: EffectKind!
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar Identifier
+
+type LoggingEdge implements GraphEdge {
+  id: ID!
+  kind: GraphEdgeKind!
+  level: String!
+  source: String!
+  sourceHandle: String!
+  stream: [StreamItem!]!
+  target: String!
+  targetHandle: String!
+}
+
+enum MapStrategy {
+  MAP
+  MAP_FROM
+  MAP_TO
+}
+
+type MessageEffect implements Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  kind: EffectKind!
+  message: String!
+}
+
+type Mutation {
+  closeRun(input: CloseRunInput!): Run!
+  createRun(input: CreateRunInput!): Run!
+  createWorkspace(input: CreateWorkspaceInput!): Workspace!
+  deleteRun(input: DeleteRunInput!): ID!
+  deleteSnapshot(input: DeleteSnapshotInput!): ID!
+  snapshot(input: SnapshotRunInput!): Snapshot!
+  track(input: TrackInput!): RunEvent!
+  updateWorkspace(input: UpdateWorkspaceInput!): Workspace!
+}
+
+input OffsetPaginationInput {
+  limit: Int
+  offset: Int! = 0
+}
+
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
+"""The kind of port."""
+enum PortKind {
+  BOOL
+  DATE
+  DICT
+  ENUM
+  FLOAT
+  INT
+  INTERFACE
+  LIST
+  MEMORY_STRUCTURE
+  MODEL
+  STRING
+  STRUCTURE
+  UNION
+}
+
+type Position {
+  x: Float!
+  y: Float!
+}
+
+input PositionInput {
+  x: Float!
+  y: Float!
+}
+
+type Provides {
+  key: String!
+  operator: ProvidesOperator!
+  value: Arg!
+}
+
+input ProvidesInput {
+  key: String!
+  operator: ProvidesOperator!
+  value: Arg!
+}
+
+"""The operator for matching descriptors."""
+enum ProvidesOperator {
+  CONTAINS
+  EQUALS
+  EXISTS
+  GTE
+  IN
+  LTE
+  NOT_EQUALS
+  NOT_IN
+}
+
+type Query {
+  eventsBetween(max: Int = null, min: Int = null, run: ID!): [RunEvent!]!
+  flow(id: ID!): Flow!
+  flows(filters: FlowFilter, pagination: OffsetPaginationInput): [Flow!]!
+  reactiveTemplate(id: ID!): ReactiveTemplate!
+  reactiveTemplates(filters: ReactiveTemplateFilter, pagination: OffsetPaginationInput): [ReactiveTemplate!]!
+  run(id: ID!): Run!
+  runForAssignation(id: ID!): Run!
+  runs(filters: RunFilter, order: RunOrder, pagination: OffsetPaginationInput): [Run!]!
+  snapshot(id: ID!): Snapshot!
+  snapshots(pagination: OffsetPaginationInput): [Snapshot!]!
+  workspace(id: ID!): Workspace!
+  workspaceStats(filters: WorkspaceFilter = null): WorkspaceStats!
+  workspaces(filters: WorkspaceFilter, order: WorkspaceOrder, pagination: OffsetPaginationInput): [Workspace!]!
+}
+
+enum ReactiveImplementation {
+  ADD
+  ALL
+  AND
+  BUFFER_COMPLETE
+  BUFFER_COUNT
+  BUFFER_UNTIL
+  CHUNK
+  COMBINELATEST
+  DELAY
+  DELAY_UNTIL
+  DIVIDE
+  ENSURE
+  FILTER
+  FOREACH
+  GATE
+  IF
+  JUST
+  MODULO
+  MULTIPLY
+  OMIT
+  POWER
+  PREFIX
+  REORDER
+  SELECT
+  SPLIT
+  SUBTRACT
+  SUFFIX
+  TO_LIST
+  WITHLATEST
+  ZIP
+}
+
+type ReactiveNode implements GraphNode {
+  argStuff: String
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  id: ID!
+  implementation: ReactiveImplementation!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  title: String!
+  voids: [ArgPort!]!
+}
+
+type ReactiveTemplate {
+  constants: [ArgPort!]!
+  description: String
+  id: ID!
+  implementation: ReactiveImplementation!
+  ins: [[ArgPort!]!]!
+  outs: [[ReturnPort!]!]!
+  title: String!
+  voids: [ArgPort!]!
+}
+
+input ReactiveTemplateFilter {
+  AND: ReactiveTemplateFilter
+  DISTINCT: Boolean
+  NOT: ReactiveTemplateFilter
+  OR: ReactiveTemplateFilter
+  ids: [ID!]
+  implementations: [ReactiveImplementation!]
+  search: String
+}
+
+interface RekuestActionNode {
+  actionKind: ActionKind!
+  allowLocalExecution: Boolean!
+  hash: String!
+  mapStrategy: String!
+}
+
+type RekuestFilterActionNode implements AssignableNode & GraphNode & RekuestActionNode & RetriableNode {
+  actionKind: ActionKind!
+  allowLocalExecution: Boolean!
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  hash: String!
+  id: ID!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  mapStrategy: String!
+  nextTimeout: Int
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  path: String
+  position: Position!
+  retries: Int
+  retryDelay: Int
+  title: String!
+  voids: [ArgPort!]!
+}
+
+type RekuestMapActionNode implements AssignableNode & GraphNode & RekuestActionNode & RetriableNode {
+  actionKind: ActionKind!
+  allowLocalExecution: Boolean!
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  hash: String!
+  hello: String
+  id: ID!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  mapStrategy: String!
+  nextTimeout: Int
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  retries: Int
+  retryDelay: Int
+  title: String!
+  voids: [ArgPort!]!
+}
+
+type Requires {
+  key: String!
+  operator: RequiresOperator!
+  value: Arg!
+}
+
+input RequiresInput {
+  key: String!
+  operator: RequiresOperator!
+  value: Arg!
+}
+
+"""The operator for matching descriptors."""
+enum RequiresOperator {
+  CONTAINS
+  EQUALS
+  EXISTS
+  GTE
+  IN
+  LTE
+  NOT_EQUALS
+  NOT_IN
+}
+
+interface RetriableNode {
+  retries: Int
+  retryDelay: Int
+}
+
+type ReturnNode implements GraphNode {
+  constants: [ArgPort!]!
+  constantsMap: ValueMap!
+  description: String!
+  globalsMap: ValueMap!
+  id: ID!
+  ins: [[ArgPort!]!]!
+  kind: GraphNodeKind!
+  outs: [[ReturnPort!]!]!
+  parentNode: String
+  position: Position!
+  returnStuff: String
+  title: String!
+  voids: [ArgPort!]!
+}
+
+type ReturnPort {
+  children: [ReturnPort!]
+  choices: [Choice!]
+  default: AnyDefault
+  description: String
+  effects: [Effect!]
+  identifier: Identifier
+  key: String!
+  kind: PortKind!
+  label: String
+  nullable: Boolean!
+  provides: [Provides!]
+  widget: ReturnWidget
+}
+
+"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+input ReturnPortInput {
+  children: [ReturnPortInput!] = null
+  choices: [ChoiceInput!] = null
+  default: AnyDefault = null
+  description: String = null
+  effects: [EffectInput!] = null
+  identifier: String = null
+  key: String!
+  kind: PortKind!
+  label: String = null
+  nullable: Boolean! = false
+  provides: [ProvidesInput!] = null
+  validators: [ValidatorInput!] = null
+  widget: ReturnWidgetInput = null
+}
+
+interface ReturnWidget {
+  kind: ReturnWidgetKind!
+}
+
+"A Return Widget is a UI element that is used to display the value of a port.\n\n    Return Widgets get displayed both if we show the return values of an assignment,\n    but also when we inspect the given arguments of a previous run task. Their primary\n    usecase is to adequately display the value of a port, in a user readable way.\n\n    Return Widgets are often overwriten by the underlying UI framework (e.g. Orkestrator)\n    to provide a better user experience. For example, a return widget that displays a\n    date could be overwriten to display a calendar widget.\n\n    Return Widgets provide more a way to customize this overwriten behavior.\n\n    "
+input ReturnWidgetInput {
+  choices: [ChoiceInput!] = null
+  hook: String = null
+  kind: ReturnWidgetKind!
+  max: Int = null
+  min: Int = null
+  placeholder: String = null
+  query: SearchQuery = null
+  step: Int = null
+  ward: String = null
+}
+
+"""The kind of return widget."""
+enum ReturnWidgetKind {
+  CHOICE
+  CUSTOM
+}
+
+type Run {
+  assignation: ID!
+  createdAt: DateTime!
+  events(pagination: OffsetPaginationInput): [RunEvent!]!
+  flow: Flow!
+  id: ID!
+  latestSnapshot: Snapshot
+  snapshots(pagination: OffsetPaginationInput): [Snapshot!]!
+  status: RunStatus!
+}
+
+type RunEvent {
+  causedBy: [ID!]!
+  createdAt: DateTime!
+  exception: String
+  handle: String!
+  id: ID!
+  kind: RunEventKind!
+  source: String!
+  t: Int!
+  value: EventValue
+}
+
+enum RunEventKind {
+  COMPLETE
+  ERROR
+  NEXT
+  UNKNOWN
+}
+
+input RunFilter {
+  AND: RunFilter
+  DISTINCT: Boolean
+  NOT: RunFilter
+  OR: RunFilter
+  ids: [ID!]
+  search: String
+}
+
+input RunOrder {
+  createdAt: Ordering
+}
+
+enum RunStatus {
+  COMPLETED
+  RUNNING
+}
+
+type SearchAssignWidget implements AssignWidget {
+  dependencies: [String!]
+  filters: [ArgPort!]
+  followValue: String
+  kind: AssignWidgetKind!
+  query: String!
+  ward: String!
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar SearchQuery
+
+type SliderAssignWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  max: Float
+  min: Float
+  step: Float
+}
+
+type Snapshot {
+  createdAt: DateTime!
+  events(pagination: OffsetPaginationInput): [RunEvent!]!
+  id: ID!
+  run: Run!
+  status: String
+  t: Int!
+}
+
+input SnapshotRunInput {
+  events: [ID!]!
+  run: ID!
+  t: Int!
+}
+
+type StateChoiceAssignWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  stateChoices: String!
+}
+
+type StreamItem {
+  kind: PortKind!
+  label: String!
+}
+
+input StreamItemInput {
+  kind: PortKind!
+  label: String!
+}
+
+type StringAssignWidget implements AssignWidget {
+  asParagraph: Boolean!
+  followValue: String
+  kind: AssignWidgetKind!
+  placeholder: String!
+}
+
+type Subscription {
+  events(run: ID!): RunEvent!
+}
+
+type TimeBucket {
+  avg: Float
+  count: Int!
+  distinctCount: Int!
+  max: Float
+  min: Float
+  sum: Float
+  ts: DateTime!
+}
+
+input TrackInput {
+  causedBy: [ID!]! = []
+  exception: String = null
+  handle: String = null
+  kind: RunEventKind!
+  message: String = null
+  reference: String!
+  run: ID!
+  source: String = null
+  t: Int!
+  value: EventValue = null
+}
+
+input UpdateWorkspaceInput {
+  description: String = null
+  graph: GraphInput!
+  title: String = null
+  workspace: ID!
+}
+
+type Validator {
+  dependencies: [String!]
+  errorMessage: String
+  function: ValidatorFunction!
+  label: String
+}
+
+"\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
+scalar ValidatorFunction
+
+" \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n"
+input ValidatorInput {
+  dependencies: [String!] = []
+  errorMessage: String = null
+  function: ValidatorFunction!
+  label: String = null
+}
+
+"""
+The `ArrayLike` scalasr typsse represents a reference to a store previously created by the user n a datalayer
+"""
+scalar ValueMap
+
+type VanillaEdge implements GraphEdge {
+  id: ID!
+  kind: GraphEdgeKind!
+  label: String
+  source: String!
+  sourceHandle: String!
+  stream: [StreamItem!]!
+  target: String!
+  targetHandle: String!
+}
+
+type Workspace {
+  createdAt: DateTime!
+  description: String
+  flows(filters: FlowFilter, pagination: OffsetPaginationInput): [Flow!]!
+  id: ID!
+  latestFlow: Flow
+  title: String!
+}
+
+"""Numeric/aggregatable fields of Workspace"""
+enum WorkspaceField {
+  CREATED_AT
+}
+
+input WorkspaceFilter {
+  AND: WorkspaceFilter
+  DISTINCT: Boolean
+  NOT: WorkspaceFilter
+  OR: WorkspaceFilter
+  ids: [ID!]
+  search: String
+}
+
+input WorkspaceOrder {
+  createdAt: Ordering
+}
+
+type WorkspaceStats {
+  """Average"""
+  avg(field: WorkspaceField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Number of distinct values for the field"""
+  distinctCount(field: WorkspaceField!): Int!
+
+  """Maximum"""
+  max(field: WorkspaceField!): Float
+
+  """Minimum"""
+  min(field: WorkspaceField!): Float
+
+  """Time-bucketed stats over a datetime field."""
+  series(by: Granularity!, field: WorkspaceField!, timestampField: WorkspaceTimestampField!): [TimeBucket!]!
+
+  """Sum"""
+  sum(field: WorkspaceField!): Float
+}
+
+"""Datetime fields of Workspace for bucketing"""
+enum WorkspaceTimestampField {
+  CREATED_AT
+}

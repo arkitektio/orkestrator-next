@@ -286,16 +286,15 @@ export const DatasetTableExplorer = (props: {
 
   return (
     <MikroDataset.ModelPage
-      object={props.dataset.id}
+      object={props.dataset}
       title={props.dataset.name}
-      actions={<MikroDataset.Actions object={props.dataset.id} />}
+      actions={<MikroDataset.Actions object={props.dataset} />}
       sidebars={
         <MultiSidebar
           map={{
             Comments: (
-              <Komments identifier="@mikro/dataset" object={props.dataset.id} />
+              <Komments identifier="@mikro/dataset" object={props.dataset} />
             ),
-            Share: <MikroDataset.Share object={props.dataset.id} />,
             Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
           }}
         />

@@ -15,7 +15,7 @@ import {
   WatchImplementationDocument,
   WatchImplementationSubscription,
   WatchImplementationSubscriptionVariables,
-  useImplementationQuery,
+  useImplementationQuery
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
@@ -29,7 +29,6 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { format } from "path";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -60,6 +59,7 @@ export const DoFormBackup = (props: { id: string }) => {
       },
     );
   };
+
 
   const { registry } = useWidgetRegistry();
 
@@ -297,19 +297,19 @@ const TPage = asDetailQueryRoute(
             {data.implementation.action.name} @ {data.implementation.interface}
           </>
         }
-        object={data.implementation.id}
+        object={data.implementation}
         additionalSidebars={{
           "Stats": <ImplementationStatsSidebar implementation={data.implementation.id} />,
         }}
         pageActions={
           <>
             <>
-              <RekuestAction.DetailLink object={data.implementation.action.id}>
+              <RekuestAction.DetailLink object={data.implementation.action}>
                 <Button variant="outline">Go to Action</Button>
               </RekuestAction.DetailLink>
             </>
             <>
-              <RekuestAgent.DetailLink object={data.implementation.agent.id}>
+              <RekuestAgent.DetailLink object={data.implementation.agent}>
                 <Button variant="outline">Go to Agent</Button>
               </RekuestAgent.DetailLink>
             </>

@@ -1,12 +1,16 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { Structure } from "@/types";
+import { autoUpdate, flip, offset, shift, useFloating } from "@floating-ui/react";
 import { createSelector } from "reselect";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
+import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
+import { toast } from "sonner";
 
 import { useSelectionStoreApi } from "../selection/SelectionContext";
 import { SelectionState } from "../selection/store";
+import { smartDropRegistryStore } from "./dropRegistry";
+import { getMatchingActions, getSmartDropObjects, resolveSmartDrop } from "./dropUtils";
 import { SmartModelProps } from "./types";
 
 type SmartModelSelectionSnapshot = {
@@ -61,7 +65,8 @@ const syncAttribute = (
 
 export type UseSmartModelResult = {
   ref: (node: HTMLDivElement | null) => void;
-  portalRef: React.RefObject<HTMLDivElement | null>;
+  floatingRef: (node: HTMLDivElement | null) => void;
+  floatingStyles: React.CSSProperties;
   self: Structure;
   isOver: boolean;
   isDragging: boolean;
@@ -81,57 +86,84 @@ export const useSmartModel = ({
   const selectionStore = useSelectionStoreApi();
   const self = useMemo(
     () => ({ identifier, object }),
-    [identifier, object],
+    [identifier, object.id], // Only re-create if identifier or object id changes, not if other object attributes change
   );
 
-  const portalRef = useRef<HTMLDivElement>(null);
+
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const registeredNodeRef = useRef<HTMLDivElement | null>(null);
+  const floatingNodeRef = useRef<HTMLDivElement | null>(null);
   const latestSelectionRef = useRef<Structure[]>(selectionStore.getState().selection);
   const latestBSelectionRef = useRef<Structure[]>(selectionStore.getState().bselection);
   const latestSnapshotRef = useRef({ selectedIndex: 0, bselectedIndex: 0 });
+  const omitDefaultDropBehaviourRef = useRef(false);
   const [partners, setPartners] = useState<Structure[]>([]);
+  const { refs, floatingStyles } = useFloating({
+    open: partners.length > 0,
+    placement: "right-start",
+    strategy: "fixed",
+    transform: true,
+    whileElementsMounted: autoUpdate,
+    middleware: [offset(12), flip(), shift({ padding: 12 })],
+  });
 
-  const dropHandler = React.useCallback((item: any, monitor: any) => {
-    if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
-      setPartners(item);
+  const dropHandler = React.useCallback(async (
+    item: unknown,
+    monitor: DropTargetMonitor<unknown, unknown>,
+  ) => {
+    const resolvedDrop = resolveSmartDrop(item, monitor.getItemType());
+
+
+    if (!resolvedDrop) {
+      alert(`Drop unknown ${String(item)}`);
       return {};
     }
 
-    if (monitor.getItemType() === NativeTypes.URL) {
-      const urls = item.urls;
-      const nextPartners: Structure[] = [];
+    syncAttribute(nodeRef.current, "data-isdropping", "true");
 
-      for (let index = 0; index < urls.length; index++) {
-        const match = urls[index].match(/arkitekt:\/\/([^:]+):([^\/]+)/);
-        if (match) {
-          const [, nextIdentifier, nextObject] = match;
-          nextPartners.push({ identifier: nextIdentifier, object: nextObject });
-        }
-      }
+    if (!resolvedDrop.omitDefaultBehaviour) {
+      const objects = getSmartDropObjects(selectionStore.getState().selection, self);
 
-      if (nextPartners.length > 0) {
-        setPartners(nextPartners);
-        return {};
-      }
-    }
 
-    if (item.text) {
       try {
-        const structure: Structure = JSON.parse(item.text);
-        setPartners([structure]);
-        return {};
+        const matchingActions = await getMatchingActions(objects, resolvedDrop.partners);
+        const registration = smartDropRegistryStore
+          .getState()
+          .findMatchingRegistration({
+            objects,
+            partners: resolvedDrop.partners,
+            matchingActions,
+          });
+
+        if (registration) {
+          const handled = await registration.handler({
+            objects,
+            partners: resolvedDrop.partners,
+            matchingActions,
+          });
+
+          if (handled !== false) {
+            return {};
+          }
+        }
       } catch (error) {
         console.error(error);
+        toast.error(error instanceof Error ? error.message : String(error));
+        return {};
+      } finally {
+        syncAttribute(nodeRef.current, "data-isdropping", "false");
       }
     }
 
-    alert(`Drop unknown ${item}`);
+
+    syncAttribute(nodeRef.current, "data-isdropping", "false");
+
+    setPartners(resolvedDrop.partners);
     return {};
-  }, []);
+  }, [self, selectionStore]);
 
   const collectDrop = React.useCallback(
-    (monitor: any) => ({
+    (monitor: DropTargetMonitor<unknown, unknown>) => ({
       isOver: !!monitor.isOver(),
       canDrop: !!monitor.canDrop(),
     }),
@@ -141,14 +173,17 @@ export const useSmartModel = ({
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
-      drop: dropHandler,
+      drop: (item, monitor) => {
+        void dropHandler(item, monitor);
+        return {};
+      },
       collect: collectDrop,
     }),
     [dropHandler, collectDrop],
   );
 
   const collectDrag = React.useCallback(
-    (monitor: any) => ({
+    (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
     [],
@@ -157,7 +192,10 @@ export const useSmartModel = ({
   const [{ isDragging }, drag] = useDrag(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
-      item: [self],
+      item: () => ({
+        structures: [self],
+        omitDefaultBehaviour: omitDefaultDropBehaviourRef.current,
+      }),
       collect: collectDrag,
     }),
     [self, collectDrag],
@@ -235,6 +273,7 @@ export const useSmartModel = ({
       isDragging ? "true" : "false",
     );
     syncAttribute(nodeRef.current, "data-can-drop", canDrop ? "true" : "false");
+
   }, [isOver, isDragging, canDrop]);
 
   const registerNode = React.useCallback(
@@ -256,14 +295,16 @@ export const useSmartModel = ({
       if (!node) {
         drag(null);
         drop(null);
+        refs.setReference(null);
         return;
       }
 
       drag(node);
       drop(node);
+      refs.setReference(node);
 
       syncAttribute(node, "data-identifier", identifier);
-      syncAttribute(node, "data-object", object);
+      syncAttribute(node, "data-object", JSON.stringify(object));
       syncAttribute(node, "data-selectable", "true");
 
       selectionStore.getState().registerSelectables([
@@ -291,6 +332,7 @@ export const useSmartModel = ({
       isDragging,
       isOver,
       object,
+      refs,
       selectionStore,
       self,
       syncSelectionState,
@@ -318,11 +360,18 @@ export const useSmartModel = ({
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        portalRef.current &&
-        !portalRef.current.contains(event.target as Node)
-      ) {
+    const handlePointerDownOutside = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      const isInsideFloating =
+        floatingNodeRef.current?.contains(target) ?? false;
+      const isInsideReference = nodeRef.current?.contains(target) ?? false;
+
+      if (!isInsideFloating && !isInsideReference) {
         clearPartners();
       }
     };
@@ -334,12 +383,12 @@ export const useSmartModel = ({
     };
 
     if (partners.length > 0) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("pointerdown", handlePointerDownOutside, true);
       document.addEventListener("keydown", handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handlePointerDownOutside, true);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [partners.length, clearPartners]);
@@ -361,6 +410,7 @@ export const useSmartModel = ({
 
   const handleDragStart = React.useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
+      omitDefaultDropBehaviourRef.current = event.ctrlKey;
       const data = JSON.stringify(self);
       event.dataTransfer.setData("text/plain", data);
       event.dataTransfer.setData(
@@ -373,7 +423,11 @@ export const useSmartModel = ({
 
   return {
     ref: registerNode,
-    portalRef,
+    floatingRef: (node) => {
+      floatingNodeRef.current = node;
+      refs.setFloating(node);
+    },
+    floatingStyles,
     self,
     isOver,
     isDragging,

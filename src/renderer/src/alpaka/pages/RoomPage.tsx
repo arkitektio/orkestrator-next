@@ -10,9 +10,8 @@ import {
   useGetRoomQuery,
 } from "../api/graphql";
 
-export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const RoomPage =  asDetailQueryRoute(
   useGetRoomQuery,
   ({ data, subscribeToMore }) => {
     useEffect(() => {
@@ -43,16 +42,16 @@ export default asDetailQueryRoute(
     return (
       <AlpakaRoom.ModelPage
         title={data?.room?.title}
-        object={data.room.id}
+        object={data.room}
         pageActions={
           <div className="flex flex-row gap-2">
-            <AlpakaRoom.ObjectButton object={data.room.id} />
+            <AlpakaRoom.ObjectButton object={data.room} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <AlpakaRoom.Komments object={data.room.id} />,
+              Comments: <AlpakaRoom.Komments object={data.room} />,
             }}
           />
         }
@@ -62,3 +61,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default RoomPage;

@@ -1,4 +1,4 @@
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { SmartContext } from "@/providers/smart/extensions/context";
 import { BasePanelProps } from "./types";
 
 export const ContextMenuPanel = ({ panel, setOpenPanels }: BasePanelProps) => {

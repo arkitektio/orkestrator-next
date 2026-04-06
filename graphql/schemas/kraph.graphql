@@ -102,19 +102,19 @@ input ArchiveCategoryTagInput {
 """Input for archiving an edge pairs query"""
 input ArchiveEdgePairsQueryInput {
   """The ID of the edge pairs query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving an edge path query"""
 input ArchiveEdgePathQueryInput {
   """The ID of the edge path query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving an edge table query"""
 input ArchiveEdgeTableQueryInput {
   """The ID of the edge table query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for recalculating an entity's derived properties"""
@@ -132,19 +132,19 @@ input ArchiveGraphInput {
 """Input for archiving a graph pairs query"""
 input ArchiveGraphPairsQueryInput {
   """The ID of the graph pairs query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving a graph path query"""
 input ArchiveGraphPathQueryInput {
   """The ID of the graph path query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving a graph table query"""
 input ArchiveGraphTableQueryInput {
   """The ID of the graph query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving an existing measurement edge"""
@@ -168,19 +168,19 @@ input ArchiveNaturalEventInput {
 """Input for archiving a node pairs query"""
 input ArchiveNodePairsQueryInput {
   """The ID of the node pairs query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving a node path query"""
 input ArchiveNodePathQueryInput {
   """The ID of the node path query to archive"""
-  id: String!
+  id: ID!
 }
 
 """Input for archiving a node table query"""
 input ArchiveNodeTableQueryInput {
   """The ID of the node table query to archive"""
-  id: String!
+  id: ID!
 }
 
 """
@@ -238,6 +238,54 @@ type Assertion implements Edge {
   targetId: String!
 }
 
+"""Temporary S3 credentials for reading a big file."""
+type BigFileAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""
+A BigFileStore represents a large object stored behind the S3 datalayer.
+"""
+type BigFileStore {
+  """Get temporary S3 read credentials for the object."""
+  accessGrant(host: String = null): BigFileAccessGrant!
+  bucket: String!
+  contentType: String
+  id: ID!
+  key: String!
+  originalFileName: String
+  path: String!
+  presignedUrl: String!
+}
+
+"""Temporary S3 credentials for uploading a big file."""
+type BigFileUploadGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  maxBytes: Int!
+  originalFileName: String
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
+}
+
 """Input type for creating a new graph query"""
 type BuilderArgs {
   """Optional patterns to match in the graph for this query"""
@@ -287,6 +335,11 @@ interface Category {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -1192,6 +1245,9 @@ input CreateStructureInput {
 Input for creating a new structure relation definition in the graph schema
 """
 input CreateStructureRelationDefinitionInput {
+  """Relation cardinality"""
+  cardinality: Cardinality! = ONE_TO_ONE
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -1204,12 +1260,7 @@ input CreateStructureRelationDefinitionInput {
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """
-  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
-  """
-  instanceKind: String = null
-
-  """The label of the node participating in the event"""
+  """Relation type name/key"""
   key: String!
 
   """
@@ -1223,16 +1274,22 @@ input CreateStructureRelationDefinitionInput {
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
 
-  """Property definitions"""
-  propertyDefinitions: [PropertyDefinitionInput!]! = []
+  """Derived property definitions"""
+  properties: [PropertyDefinitionInput!]! = []
 
   """Sequence mappings for this node"""
   sequences: [SequenceMappingInput!]! = []
+
+  """Source entity type(s)"""
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!]! = []
+
+  """Target entity type(s)"""
+  target: StructureDescriptorInput!
 }
 
 """Input for creating a new structure relation"""
@@ -1267,25 +1324,25 @@ input DeleteCategoryTagInput {
 """Input for deleting an edge pairs query"""
 input DeleteEdgePairsQueryInput {
   """The ID of the edge pairs query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting an edge path query"""
 input DeleteEdgePathQueryInput {
   """The ID of the edge path query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting an edge table query"""
 input DeleteEdgeTableQueryInput {
   """The ID of the edge table query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting an existing entity definition in the graph schema"""
 input DeleteEntityDefinitionInput {
   """The ID of the structure category to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting an existing entity"""
@@ -1303,19 +1360,19 @@ input DeleteGraphInput {
 """Input for deleting a graph pairs query"""
 input DeleteGraphPairsQueryInput {
   """The ID of the graph pairs query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting a graph path query"""
 input DeleteGraphPathQueryInput {
   """The ID of the graph path query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting a graph table query"""
 input DeleteGraphTableQueryInput {
   """The ID of the graph query to delete"""
-  id: String!
+  id: ID!
 }
 
 """
@@ -1361,19 +1418,19 @@ input DeleteNaturalEventInput {
 """Input for deleting a node pairs query"""
 input DeleteNodePairsQueryInput {
   """The ID of the node pairs query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting a node path query"""
 input DeleteNodePathQueryInput {
   """The ID of the node path query to delete"""
-  id: String!
+  id: ID!
 }
 
 """Input for deleting a node table query"""
 input DeleteNodeTableQueryInput {
   """The ID of the node table query to delete"""
-  id: String!
+  id: ID!
 }
 
 """
@@ -1811,6 +1868,11 @@ type EntityCategory implements Category & NodeCategory {
   """
   instanceKind: String
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -2041,6 +2103,11 @@ interface EventCategory implements Category & NodeCategory {
   """The graph this category belongs to"""
   inputs: [EventRole!]!
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -2163,6 +2230,21 @@ input EventRoleInput {
   role: String!
 }
 
+input FinishBigFileUploadInput {
+  storeId: String!
+  valid: Boolean! = true
+}
+
+input FinishMediaUploadInput {
+  storeId: String!
+  valid: Boolean! = true
+}
+
+input FinishZarrUploadInput {
+  storeId: String!
+  valid: Boolean! = true
+}
+
 scalar GlobalID
 
 """Base interface for graph schemas"""
@@ -2196,6 +2278,12 @@ type Graph {
 
   """List of materialized edges in the graph"""
   materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """List of materialized relation edges in the graph"""
+  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
+
+  """List of materialized structure relation edges in the graph"""
+  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
 
   """List of measurement categories/schemas defined in this graph"""
   measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
@@ -2666,9 +2754,85 @@ input MaterializedEdgeFilter {
 
   """Full-text search over connected category labels"""
   search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
 }
 
 input MaterializedEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A materialized edge representing a relationship in the graph"""
+type MaterializedRelationEdge {
+  edge: StructureRelationCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: EntityCategory!
+  target: EntityCategory!
+}
+
+input MaterializedRelationEdgeFilter {
+  AND: MaterializedRelationEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedRelationEdgeFilter
+  OR: MaterializedRelationEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
+}
+
+input MaterializedRelationEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A materialized edge representing a relationship in the graph"""
+type MaterializedStructureRelationEdge {
+  edge: StructureRelationCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: StructureCategory!
+  target: StructureCategory!
+}
+
+input MaterializedStructureRelationEdgeFilter {
+  AND: MaterializedStructureRelationEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedStructureRelationEdgeFilter
+  OR: MaterializedStructureRelationEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
+}
+
+input MaterializedStructureRelationEdgeOrder @oneOf {
   id: Ordering
 }
 
@@ -2730,6 +2894,11 @@ type MeasurementCategory implements Category & EdgeCategory {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -2931,16 +3100,51 @@ type MeasurementShadowLink implements Node {
   tags: [String!]!
 }
 
-type MediaStore {
+"""Temporary S3 credentials for reading a media object."""
+type MediaAccessGrant {
+  accessKey: String!
   bucket: String!
-  id: ID!
+  expiresIn: Int!
   key: String!
   path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
 
-  """
-  Get a presigned URL for the media store. This is used to access the media store directly from the frontend without going through the backend. The URL is valid for 1 hour. If a host is provided, it will replace the AWS_S3_ENDPOINT_URL in the generated URL. This is useful for accessing the media store through a custom domain or a proxy.
-  """
+type MediaStore {
+  """Get temporary S3 read credentials for the media object."""
+  accessGrant(host: String = null): MediaAccessGrant!
+  bucket: String!
+  contentType: String
+  id: ID!
+  key: String!
+  originalFileName: String
+  path: String!
+
+  """Compatibility field returning the canonical S3 object path."""
   presignedUrl(host: String = null): String!
+}
+
+"""A presigned PUT grant for uploading a media object."""
+type MediaUploadGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  maxBytes: Int!
+  originalFileName: String
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
 }
 
 """A metric node representing computed values"""
@@ -3009,6 +3213,11 @@ type MetricCategory implements Category & NodeCategory {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -3387,14 +3596,29 @@ type Mutation {
   """
   ensureStructure(input: EnsureStructureInput!): Structure!
 
+  """Finalize a big file upload after the client has written the object"""
+  finishBigfileUpload(input: FinishBigFileUploadInput!): BigFileStore!
+
+  """Finalize a media upload after the client has written the object"""
+  finishMediaUpload(input: FinishMediaUploadInput!): MediaStore!
+
+  """Finalize a Zarr upload after the client has written the object"""
+  finishZarrUpload(input: FinishZarrUploadInput!): ZarrStore!
+
   """Pin a node in the UI for a user"""
   pinNode(input: PinNodeInput!): Node!
 
   """Record a metric, auto-creating structure when allowed"""
   recordMetric(input: RecordMetricInput!): Metric!
 
+  """Request an upload grant for a big file store"""
+  requestBigfileUpload(input: RequestBigFileUploadInput!): BigFileUploadGrant!
+
   """Upload media and return a URL for access"""
-  requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
+  requestMediaUpload(input: RequestMediaUploadInput!): MediaUploadGrant!
+
+  """Request an upload grant for a Zarr store"""
+  requestZarrUpload(input: RequestZarrUploadInput!): ZarrUploadGrant!
 
   """Set a property on an existing entity in the graph"""
   setEntityProperty(input: SetEntityPropertyInput!): Entity!
@@ -3574,6 +3798,11 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
 
   """The graph this category belongs to"""
   inputs: [EventRole!]!
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -4065,21 +4294,6 @@ input PrefixInput {
   uri: String!
 }
 
-"""
-Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)
-"""
-type PresignedPostCredentials {
-  bucket: String!
-  datalayer: String!
-  key: String!
-  policy: String!
-  store: String!
-  xAmzAlgorithm: String!
-  xAmzCredential: String!
-  xAmzDate: String!
-  xAmzSignature: String!
-}
-
 """A property definition from the graph schema"""
 type PropertyDefinition {
   """
@@ -4273,6 +4487,11 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
 
   """The graph this category belongs to"""
   inputs: [EventRole!]!
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -4513,6 +4732,18 @@ type Query {
 
   """List all materialized edges in the graph"""
   materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """Get a single materialized relation edge by ID"""
+  materializedRelationEdge(id: ID!): MaterializedRelationEdge!
+
+  """List all materialized relation edges in the graph"""
+  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
+
+  """Get a single materialized structure relation edge by ID"""
+  materializedStructureRelationEdge(id: ID!): MaterializedStructureRelationEdge!
+
+  """List all materialized structure relation edges in the graph"""
+  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
 
   """Get a measurement by composite graph ID"""
   measurement(id: GraphID!): Measurement!
@@ -4763,6 +4994,11 @@ type RelationCategory implements Category & EdgeCategory {
 
   """An image representing this category, for visualization purposes"""
   image: MediaStore
+
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
 
   """Label/name of the category"""
   label: String!
@@ -5024,11 +5260,30 @@ input RenderGraphTablePagination {
   offset: Int!
 }
 
+input RequestBigFileUploadInput {
+  contentType: String = null
+  datalayer: String! = "s3"
+  fileSize: Int = null
+  host: String = null
+  originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
+}
+
 input RequestMediaUploadInput {
   contentType: String = null
-  datalayer: String!
   fileSize: Int = null
-  key: String!
+  originalFileName: String!
+}
+
+input RequestZarrUploadInput {
+  chunks: [Int!] = null
+  datalayer: String! = "s3"
+  host: String = null
+  port: Int = null
+  protocol: String! = "https"
+  shape: [Int!] = null
+  version: String = null
 }
 
 """Input type for creating a new graph"""
@@ -5276,6 +5531,11 @@ type StructureCategory implements Category & NodeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -5370,6 +5630,26 @@ type StructureDescriptor {
 
   """Filter by tags on the entity"""
   tags: [String!]
+}
+
+"""
+Input for creating a new structure relation definition in the graph schema
+"""
+input StructureDescriptorInput {
+  """Default category to link to if no entities match the filters"""
+  defaultCategoryKey: String = null
+
+  """Optional structure identifier to filter by (e.g. '@mikro/roi')"""
+  identifiers: [String!] = null
+
+  """Filter by entity key/label"""
+  keys: [String!] = null
+
+  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  ontotologyTerms: [String!] = null
+
+  """Filter by tags on the entity"""
+  tags: [String!] = null
 }
 
 """Filter options for querying structures"""
@@ -5496,6 +5776,11 @@ type StructureRelationCategory implements Category & EdgeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
+  """
+  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
+  """
+  key: String!
+
   """Label/name of the category"""
   label: String!
 
@@ -5612,7 +5897,7 @@ input StructureRelationDefinitionInput {
   sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
-  source: EntityDescriptorInput!
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
@@ -5620,7 +5905,7 @@ input StructureRelationDefinitionInput {
   tags: [String!]! = []
 
   """Target entity type(s)"""
-  target: EntityDescriptorInput!
+  target: StructureDescriptorInput!
 }
 
 """Filter options for querying structure relations"""
@@ -5801,7 +6086,7 @@ input UpdateEntityDefinitionInput {
   description: String = null
 
   """The ID of the definition to update"""
-  id: String!
+  id: ID!
 
   """Optional media store ID for an image representing this node role"""
   image: String = null
@@ -6582,9 +6867,61 @@ enum WhereOperator {
   STARTS_WITH
 }
 
+"""Temporary S3 credentials for reading a Zarr store."""
+type ZarrAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+type ZarrStore {
+  """Get temporary S3 read credentials for the Zarr object."""
+  accessGrant(host: String = null): ZarrAccessGrant!
+  attributes: JSON
+  bucket: String!
+  chunkKeyEncoding: JSON
+  chunks: [Int!]!
+  codecs: JSON
+  dimensionNames: [String]
+  dtype: String
+  fillValue: JSON!
+  id: ID!
+  key: String!
+  path: String!
+  shape: [Int!]!
+  storageTransformers: JSON
+  version: String
+}
+
+"""Temporary S3 credentials for uploading a Zarr store."""
+type ZarrUploadGrant {
+  accessKey: String!
+  action: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  maxBytes: Int!
+  originalFileName: String
+  path: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
+}
+
 scalar _Any
 
-union _Entity = CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory
+union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore
 
 type _Service {
   sdl: String!

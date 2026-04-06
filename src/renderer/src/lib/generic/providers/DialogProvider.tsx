@@ -155,12 +155,12 @@ export function createDialogProvider<
           {Component && (
             <DialogContent className={cn(
               "text-foreground",
-              "w-full max-h-[90vh]", // Default sizes
+              "w-[min(96vw,1200px)] max-w-[min(96vw,1200px)] max-h-[90vh]", // Default sizes
               modalState.className,
               modalState.size === "small" && "max-w-sm",
               modalState.size === "medium" && "max-w-md",
               modalState.size === "large" && "w-screen !min-w-[90vw] !max-w-[90vw] !min-h-[80vh] !max-h-[80vh]",
-              !modalState.className && modalState.size === undefined && "max-w-5xl",
+              !modalState.className && modalState.size === undefined && "min-w-[80vw]",
             )}>
               <Guard.Rekuest>
                 <Component {...modalState.props} />

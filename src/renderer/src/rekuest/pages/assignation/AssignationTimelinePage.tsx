@@ -13,12 +13,11 @@ import {
   PostmanAssignationFragment,
   useCancelMutation,
   useDetailAssignationQuery,
-  useImplementationQuery,
   useInterruptMutation,
   useNoChildrenDetailAssignationQuery,
 } from "@/rekuest/api/graphql";
 import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
@@ -46,11 +45,42 @@ export type TimelineItem = {
   events: TimelineEvent[];
 };
 
-export type TimelineRow = {
+export type TimelineMethodRow = {
   id: string;
-  type: "implementation" | "assignation";
-  name?: string;
+  method: string;
+  summary?: string;
   items: TimelineItem[];
+};
+
+export type TimelineDependencyGroup = {
+  id: string;
+  dependency: string;
+  summary?: string;
+  items: TimelineItem[];
+  methods: TimelineMethodRow[];
+};
+
+const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
+  if (typeof candidate === "string" || typeof candidate === "number") {
+    const label = String(candidate).trim();
+    return label.length > 0 ? label : undefined;
+  }
+
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    return undefined;
+  }
+
+  const objectCandidate = candidate as Record<string, unknown>;
+  const preferredKeys = ["name", "title", "reference", "key", "id"];
+
+  for (const key of preferredKeys) {
+    const value = objectCandidate[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return undefined;
 };
 
 const getStatusColor = (status: AssignationEventKind | undefined | string) => {
@@ -69,26 +99,6 @@ const getStatusColor = (status: AssignationEventKind | undefined | string) => {
     default:
       return "bg-slate-500 border-slate-600";
   }
-};
-
-const TimelineImplementationHeader = ({ id }: { id: string }) => {
-  const { data, loading } = useImplementationQuery({ variables: { id } });
-
-  if (loading)
-    return <div className="w-full h-full animate-pulse bg-muted rounded-md" />;
-  if (!data?.implementation)
-    return <div className="text-xs text-muted-foreground">Unknown</div>;
-
-  return (
-    <div className="flex flex-col justify-center h-full px-2">
-      <div className="font-semibold text-sm truncate">
-        {data.implementation.agent.name}
-      </div>
-      <div className="text-xs text-muted-foreground truncate opacity-50">
-        {data.implementation.interface}
-      </div>
-    </div>
-  );
 };
 
 
@@ -165,73 +175,154 @@ export const TimelineItemPopover = ({
   );
 };
 
-export const TimelineRender = ({
-  node,
+const TimelineBars = ({
+  items,
   highlighted,
 }: {
-  node: TimelineRow;
+  items: TimelineItem[];
   highlighted: string[];
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="relative h-8 w-full bg-muted/30 rounded-full">
+      {items.map((item, index) => {
+        return (
+          <TimelineItemPopover
+            key={index}
+            item={item}
+            highlighted={highlighted.includes(item.assignation.id)}
+          >
+            <div
+              className={`${
+                highlighted.includes(item.assignation.id)
+                  ? "ring-2 ring-offset-1 ring-primary z-20 opacity-100"
+                  : "opacity-60 hover:opacity-100 hover:z-20"
+              } ${getStatusColor(
+                item.assignation.latestEventKind
+              )} absolute h-full border rounded-md cursor-pointer transition-all flex items-center justify-center shadow-sm`}
+              style={{
+                left: item.start * 100 + "%",
+                width: Math.max((item.end - item.start) * 100, 0.5) + "%",
+              }}
+            >
+              <div className="text-[10px] truncate w-full text-center px-1 text-white font-medium drop-shadow-md">
+                {item.assignation.action?.name}
+              </div>
+              {!item.assignation.isDone && (
+                <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="w-3 h-3 animate-spin text-white" />
+                </div>
+              )}
+            </div>
+          </TimelineItemPopover>
+        );
+      })}
+    </div>
+  );
+};
+
+const TimelineMethodRender = ({
+  row,
+  highlighted,
+}: {
+  row: TimelineMethodRow;
+  highlighted: string[];
+}) => {
+  return (
+    <>
+      <div className="col-span-2 ml-4 rounded-md border border-amber-200/70 bg-background/50 px-2 py-2 z-10">
+        <div className="relative pl-5">
+          <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-amber-300/70" />
+          <span className="absolute left-0 -top-3 h-6 w-px bg-amber-300/70" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700 shrink-0">
+              {row.method}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {row.summary}
+            </div>
+            <div className="ml-auto text-[10px] text-muted-foreground">
+              {row.items.length}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="col-span-10 flex items-center relative z-10">
+        <TimelineBars items={row.items} highlighted={highlighted} />
+      </div>
+    </>
+  );
+};
+
+export const TimelineRender = ({
+  group,
+  highlighted,
+}: {
+  group: TimelineDependencyGroup;
+  highlighted: string[];
+}) => {
+  const [expanded, setExpanded] = useState(true);
+  const methodCount = group.methods.length;
+  const itemCount = group.items.length;
 
   return (
     <>
       <div
         className={
           expanded
-            ? "col-span-2 cursor-pointer bg-card border rounded-md border-border shadow-sm z-10"
-            : "col-span-2 cursor-pointer border rounded-md border-border bg-card/50 hover:bg-card transition-colors z-10"
+            ? "col-span-2 cursor-pointer rounded-md border border-amber-300/70 bg-amber-50/40 shadow-sm shadow-amber-200/20 transition-colors z-10"
+            : "col-span-2 cursor-pointer rounded-md border border-border bg-card/60 hover:bg-card transition-colors z-10"
         }
       >
-        <div
-          className="w-full h-12 relative"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {node.type === "implementation" ? (
-            <TimelineImplementationHeader id={node.id} />
-          ) : (
-            <div className="flex flex-col justify-center h-full px-2">
-              <div className="font-semibold text-sm truncate">{node.name}</div>
+        <div className="w-full relative" onClick={() => setExpanded(!expanded)}>
+          <div className="flex flex-col px-2 py-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {expanded ? (
+                <ChevronDown className="w-4 h-4 text-amber-600 shrink-0" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <div className="font-semibold text-sm truncate">{group.dependency}</div>
+              <div className="ml-auto rounded bg-amber-500/10 px-1 py-0.5 text-[10px] text-amber-700">
+                {itemCount}
+              </div>
             </div>
-          )}
+
+            <div className="pl-6 pt-2">
+              <div className="relative rounded-lg border border-dashed border-amber-300/80 bg-background/70 px-2 py-1 text-xs text-muted-foreground truncate">
+                <span className="absolute -left-3 top-1/2 h-px w-3 -translate-y-1/2 bg-amber-300/70" />
+                <span className="absolute -left-3 top-0 h-1/2 w-px bg-amber-300/70" />
+                {group.summary || `${methodCount} method${methodCount === 1 ? "" : "s"}`}
+              </div>
+            </div>
+
+            {!expanded && (
+              <div className="pl-6 pt-1 text-[11px] text-muted-foreground truncate">
+                {methodCount} method{methodCount === 1 ? "" : "s"}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="col-span-10 flex items-center relative z-10">
-        <div className="relative h-8 w-full bg-muted/30 rounded-full">
-          {node.items.map((item, index) => {
-            return (
-              <TimelineItemPopover
-                key={index}
-                item={item}
-                highlighted={highlighted.includes(item.assignation.id)}
-              >
-                <div
-                  className={`${
-                    highlighted.includes(item.assignation.id)
-                      ? "ring-2 ring-offset-1 ring-primary z-20 opacity-100"
-                      : "opacity-60 hover:opacity-100 hover:z-20"
-                  } ${getStatusColor(
-                    item.assignation.latestEventKind
-                  )} absolute h-full border rounded-md cursor-pointer transition-all flex items-center justify-center shadow-sm`}
-                  style={{
-                    left: item.start * 100 + "%",
-                    width: Math.max((item.end - item.start) * 100, 0.5) + "%",
-                  }}
-                >
-                  <div className="text-[10px] truncate w-full text-center px-1 text-white font-medium drop-shadow-md">
-                    {item.assignation.action?.name}
-                  </div>
-                  {!item.assignation.isDone && (
-                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
-                      <Loader2 className="w-3 h-3 animate-spin text-white" />
-                    </div>
-                  )}
-                </div>
-              </TimelineItemPopover>
-            );
-          })}
-        </div>
+        {!expanded ? (
+          <div className="relative h-6 w-full rounded-full border border-dashed border-amber-300/70 bg-amber-50/30 flex items-center px-3 text-xs text-muted-foreground">
+            {itemCount} delegated task{itemCount === 1 ? "" : "s"}
+          </div>
+        ) : (
+          <div className="relative h-6 w-full rounded-full border border-dashed border-amber-300/70 bg-amber-50/20 flex items-center px-3 text-xs text-muted-foreground">
+            {methodCount} method{methodCount === 1 ? "" : "s"} grouped under this dependency
+          </div>
+        )}
       </div>
+
+      {expanded &&
+        group.methods.map((row) => (
+          <TimelineMethodRender
+            key={row.id}
+            row={row}
+            highlighted={highlighted}
+          />
+        ))}
     </>
   );
 };
@@ -241,9 +332,8 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
     variables: { id },
   });
 
-  const [timeline, setTimeline] = useState<TimelineRow[]>([]);
+  const [timeline, setTimeline] = useState<TimelineDependencyGroup[]>([]);
   const [highlighted, setHighlighted] = useState<string[]>([]);
-  const [showReactive, setShowReactive] = useState(true);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
@@ -285,11 +375,57 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
       }));
       setEvents(parentEvents);
 
-      const rowMap = new Map<string, TimelineRow>();
+      const groupMap = new Map<string, TimelineDependencyGroup>();
+      const methodMap = new Map<string, Map<string, TimelineMethodRow>>();
+
+      const buildDependencyGroup = (a: PostmanAssignationFragment) => {
+        const dependencyMethod = a.dependencyMethod?.trim() || "dynamic";
+        const dependencyKey = a.dependency?.trim() || "catch-all";
+
+        const dependencies = a.dependencies;
+        const dependenciesByKey =
+          dependencies &&
+          typeof dependencies === "object" &&
+          !Array.isArray(dependencies)
+            ? (dependencies as Record<string, unknown>)
+            : undefined;
+
+        const selectedDependencyValue = dependenciesByKey?.[dependencyKey];
+        const selectedMethodValue =
+          selectedDependencyValue &&
+          typeof selectedDependencyValue === "object" &&
+          !Array.isArray(selectedDependencyValue)
+            ? (selectedDependencyValue as Record<string, unknown>)[dependencyMethod]
+            : undefined;
+
+        const dependencyLabel =
+          dependencyKey === "catch-all"
+            ? "Catch-all dependency"
+            : dependencyKey;
+
+        const resolvedDependencyLabel =
+          dependencyCandidateToLabel(selectedDependencyValue);
+        const resolvedMethodLabel = dependencyCandidateToLabel(selectedMethodValue);
+
+        return {
+          dependencyKey,
+          dependencyLabel,
+          dependencyMethod,
+          dependencySummary:
+            resolvedDependencyLabel
+              ? `resolved via ${resolvedDependencyLabel}`
+              : "Dependency group",
+          methodSummary:
+            resolvedMethodLabel ||
+            resolvedDependencyLabel ||
+            "Delegated path",
+        };
+      };
 
       allAssignations.forEach((a) => {
         const startTime = new Date(a.createdAt).getTime();
         const endTime = getEndTime(a);
+        const dependencyGroup = buildDependencyGroup(a);
 
         const item: TimelineItem = {
           assignation: a,
@@ -300,20 +436,52 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
           events: [],
         };
 
-        const id = a.implementation?.id || a.id;
-
-        if (!rowMap.has(id)) {
-          rowMap.set(id, {
-            id: id,
-            type: "implementation",
+        if (!groupMap.has(dependencyGroup.dependencyKey)) {
+          groupMap.set(dependencyGroup.dependencyKey, {
+            id: dependencyGroup.dependencyKey,
+            dependency: dependencyGroup.dependencyLabel,
+            summary: dependencyGroup.dependencySummary,
             items: [],
+            methods: [],
           });
+          methodMap.set(dependencyGroup.dependencyKey, new Map());
         }
 
-        rowMap.get(id)?.items.push(item);
+        const group = groupMap.get(dependencyGroup.dependencyKey);
+        group?.items.push(item);
+
+        const methodsForDependency = methodMap.get(dependencyGroup.dependencyKey);
+
+        if (
+          methodsForDependency &&
+          !methodsForDependency.has(dependencyGroup.dependencyMethod)
+        ) {
+          const methodRow = {
+            id: `${dependencyGroup.dependencyKey}:${dependencyGroup.dependencyMethod}`,
+            method: dependencyGroup.dependencyMethod,
+            summary: dependencyGroup.methodSummary,
+            items: [],
+          };
+
+          methodsForDependency.set(dependencyGroup.dependencyMethod, methodRow);
+          group?.methods.push(methodRow);
+        }
+
+        methodsForDependency
+          ?.get(dependencyGroup.dependencyMethod)
+          ?.items.push(item);
       });
 
-      setTimeline(Array.from(rowMap.values()));
+      const orderedTimeline = Array.from(groupMap.values())
+        .map((group) => ({
+          ...group,
+          methods: [...group.methods].sort((left, right) =>
+            left.method.localeCompare(right.method)
+          ),
+        }))
+        .sort((left, right) => left.dependency.localeCompare(right.dependency));
+
+      setTimeline(orderedTimeline);
     }
   }, [data]);
 
@@ -357,10 +525,10 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
           </div>
         </div>
         <div className="grid grid-cols-12 gap-y-2 z-10 mb-10">
-          {timeline.map((node) => (
+          {timeline.map((group) => (
             <TimelineRender
-              key={node.id}
-              node={node}
+              key={group.id}
+              group={group}
               highlighted={highlighted}
             />
           ))}
@@ -370,7 +538,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
   );
 };
 
-export default asDetailQueryRoute(
+export const AssignationTimelinePage = asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, id }) => {
     const reassign = useReassign({ assignation: data.assignation });
@@ -388,7 +556,7 @@ export default asDetailQueryRoute(
             </p>
           </div>
         }
-        object={data.assignation.id}
+        object={data.assignation}
         pageActions={
           <div className="flex gap-2">
             <Button
@@ -432,7 +600,7 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestAssignation.Komments object={data?.assignation?.id} />
+                <RekuestAssignation.Komments object={data?.assignation} />
               ),
             }}
           />
@@ -444,3 +612,6 @@ export default asDetailQueryRoute(
     );
   }
 );
+
+
+export default AssignationTimelinePage;

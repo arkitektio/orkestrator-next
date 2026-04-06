@@ -15,12 +15,12 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <KabinetPod.Smart object={item?.id} >
+    <KabinetPod.Smart object={item} >
       <Card className="group aspect-[3/2]">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>
-              <KabinetPod.DetailLink object={item?.id}>
+              <KabinetPod.DetailLink object={item}>
                 {" "}
                 {item.deployment.flavour.release.app.identifier}
                 {item.deployment.flavour.release.version}

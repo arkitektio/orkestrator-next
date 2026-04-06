@@ -12,16 +12,16 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAgent.Smart object={item?.id}>
+    <RekuestAgent.Smart object={item}>
       <Card
         className={cn(
           "aspect-square flex flex-col",
-          item.active && "dark:border-green-300 border ",
+          item.active && "dark:border-primary border ",
         )}
       >
         <CardHeader className="flex-grow">
           <CardTitle>
-            <RekuestAgent.DetailLink object={item?.id}>
+            <RekuestAgent.DetailLink object={item}>
               {" "}
               <h1 className="flex-wrap break-all">{item.name}</h1>
               <span className="text-muted-foreground font-light">

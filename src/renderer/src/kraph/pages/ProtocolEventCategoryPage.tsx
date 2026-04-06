@@ -5,7 +5,7 @@ import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { DragZone } from "@/components/upload/drag";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphProtocolEventCategory,
@@ -20,7 +20,7 @@ import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventF
 const Page =  asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
   ({ data, refetch }) => {
-    const uploadFile = useKraphUpload();
+    const uploadFile = useKraphMediaUpload();
     const [update] = useUpdateProtocolEventCategoryMutation();
 
     const resolve = useResolve();

@@ -1,0 +1,30 @@
+fragment DataRoi on DataRoi {
+  id
+  name
+  kind
+  dataset {
+    id
+    name
+  }
+  vectors
+  vectorDims
+  xDim
+  yDim
+  zDim
+}
+
+
+fragment ListDataRoi on DataRoi {
+  id
+  name
+  kind
+  dataset {
+    id
+    name
+  }
+  vectors
+  vectorDims
+  xDim
+  yDim
+  zDim
+}

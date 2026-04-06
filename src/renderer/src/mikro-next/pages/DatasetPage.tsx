@@ -8,10 +8,8 @@ import { useGetDatasetQuery } from "../api/graphql";
 import { DatasetExplorerToolbar, DatasetListExplorer, useDatasetExplorer } from "../components/explorer/DatasetListExplorer";
 import { DatasetTableExplorer } from "../components/explorer/DatasetTableExplorer";
 
-export type IRepresentationScreenProps = {};
 export type ViewType = "list" | "icons";
-
-export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
+ const TPage = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
   const [viewType, setViewType] = useState<ViewType>("icons");
   const { selection, bselection } = useSelection();
 
@@ -25,10 +23,10 @@ export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
   return (
     <MikroDataset.ModelPage
       title={data.dataset?.name}
-      object={data.dataset.id}
+      object={data.dataset}
       pageActions={
         <div className="flex items-center space-x-4">
-          <MikroDataset.Actions object={data.dataset.id} />
+          <MikroDataset.Actions object={data.dataset} />
           <DatasetExplorerToolbar
             {...explorerState}
             dataset={data.dataset}
@@ -41,7 +39,7 @@ export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
         <MultiSidebar
           map={{
             Comments: (
-              <Komments identifier="@mikro/dataset" object={data.dataset.id} />
+              <Komments identifier="@mikro/dataset" object={data.dataset} />
             ),
           }}
         />
@@ -55,3 +53,6 @@ export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
     </MikroDataset.ModelPage>
   );
 });
+
+
+export default TPage;

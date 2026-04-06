@@ -26,11 +26,11 @@ export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
           </p>
         </div>
       }
-      object={data.workspace.id}
+      object={data.workspace}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <FlussWorkspace.Komments object={data.workspace.id} />,
+            Comments: <FlussWorkspace.Komments object={data.workspace} />,
             Deployments: (
               <>
                 {data?.workspace.latestFlow && (
@@ -41,9 +41,9 @@ export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
             Versions: (
               <div className="p-4 flex flex-col gap-2">
                 {data?.workspace.flows.map((fl) => (
-                  <FlussFlow.Smart object={fl.id} key={fl.id}>
+                  <FlussFlow.Smart object={fl} key={fl.id}>
                     <Card className="p-4">
-                      <FlussFlow.DetailLink object={fl.id}>
+                      <FlussFlow.DetailLink object={fl}>
                         {fl.title}
                       </FlussFlow.DetailLink>
                     </Card>

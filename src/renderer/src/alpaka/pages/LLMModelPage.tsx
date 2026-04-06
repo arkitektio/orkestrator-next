@@ -10,15 +10,15 @@ import {
 
 export type IRepresentationScreenProps = {};
 
-export default asDetailQueryRoute(
+export const TPage =  asDetailQueryRoute(
   useGetLlmModelQuery,
   ({ data, subscribeToMore }) => {
     const { openDialog } = useDialog();
 
     return (
       <AlpakaLLMModel.ModelPage
-        title={data?.llmModel?.modelId}
-        object={data.llmModel.id}
+        title={data?.llmModel.llmString}
+        object={data.llmModel}
         pageActions={
           <div className="flex flex-row gap-2">
             <Button
@@ -36,13 +36,13 @@ export default asDetailQueryRoute(
             >
               Use For...
             </Button>
-            <AlpakaLLMModel.ObjectButton object={data.llmModel.id} />
+            <AlpakaLLMModel.ObjectButton object={data.llmModel} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <AlpakaLLMModel.Komments object={data.llmModel.id} />,
+              Comments: <AlpakaLLMModel.Komments object={data.llmModel} />,
             }}
           />
         }
@@ -77,7 +77,7 @@ export default asDetailQueryRoute(
         {data.llmModel.embedderFor?.map((embedder) => (
           <AlpakaCollection.DetailLink
             key={embedder.id}
-            object={embedder.id}
+            object={embedder}
             className="text-blue-500"
           >
             {embedder.name}
@@ -87,3 +87,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage

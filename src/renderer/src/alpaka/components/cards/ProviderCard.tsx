@@ -179,7 +179,7 @@ const getProviderKindDisplayName = (kind: ProviderKind): string => {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaProvider.Smart object={item?.id} >
+    <AlpakaProvider.Smart object={item} >
       <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group">
         <div
           className={`absolute inset-0 ${getProviderGradient(item.kind)} opacity-20 group-hover:opacity-40 transition-opacity duration-300`}
@@ -197,7 +197,7 @@ const TheCard = ({ item }: Props) => {
           {/* Bottom section with name and badge */}
           <div className="p-4 bg-black/20 backdrop-blur-sm">
             <AlpakaProvider.DetailLink
-              object={item.id}
+              object={item}
               className="text-xl font-bold text-white hover:text-white/90 transition-colors truncate block mb-2 text-center"
             >
               {item.name}

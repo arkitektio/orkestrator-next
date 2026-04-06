@@ -10,11 +10,11 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestBlok.Smart object={item?.id}>
+    <RekuestBlok.Smart object={item}>
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestBlok.DetailLink object={item?.id}>
+            <RekuestBlok.DetailLink object={item}>
               {" "}
               <h1>{item.name}</h1>
             </RekuestBlok.DetailLink>

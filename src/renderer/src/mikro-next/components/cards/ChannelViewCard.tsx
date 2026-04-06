@@ -11,7 +11,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroChannelView.Smart object={view?.id}>
+    <MikroChannelView.Smart object={view}>
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle> {view.channelName}</CardTitle>

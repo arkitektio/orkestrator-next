@@ -7,6 +7,7 @@ declare global {
   interface Window {
     electron: ElectronAPI;
     api: {
+      getFilePath: (file: File) => string;
       assignElectronAgentFunction: (name: string, implementation: ImplementationInput) => Promise<void>;
       inspectElectronAgent: () => Promise<ImplementationInput[]>;
       startFakts: (url: string) => Promise<void>;
@@ -29,6 +30,16 @@ declare global {
       }) => Promise<void>;
       getNodeId: () => Promise<string>;
       openFilePicker: () => Promise<string | undefined>;
+      uploadBigFile: (opts: { uploadId: string; path: string; grant: any; endpointUrl: string }) => Promise<string>;
+      cancelBigFile: (opts: { uploadId: string }) => Promise<void>;
+      downloadBigFile: (opts: { downloadId: string; grant: any; endpointUrl: string; fileName: string; savePath?: string }) => Promise<string>;
+      cancelBigFileDownload: (opts: { downloadId: string }) => Promise<void>;
+      showItemInFolder: (path: string) => Promise<void>;
+      openPath: (path: string) => Promise<string>;
+      onDownloadProgress: (downloadId: string, cb: (data: any) => void) => () => void;
+      onDownloadError: (downloadId: string, cb: (data: any) => void) => () => void;
+      onUploadProgress: (uploadId: string, cb: (data: any) => void) => () => void;
+      onUploadError: (uploadId: string, cb: (data: any) => void) => () => void;
       executeElectron: (assignation: Assign) => Promise<void>;
       onAgentYield: (cb: (data: any) => void) => void;
       onAgentDone: (cb: (data: any) => void) => void;

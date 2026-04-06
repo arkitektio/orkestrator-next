@@ -3,6 +3,7 @@ fragment BaseCategory on Category {
   graph {
     id
   }
+  key
   tags {
     id
     name

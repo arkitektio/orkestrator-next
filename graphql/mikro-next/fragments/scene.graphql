@@ -1,0 +1,14 @@
+fragment Scene on Scene {
+  id
+  spatialUnit
+  temporalUnit
+  layers {
+    ...SceneLayer
+  }
+  name
+}
+
+fragment ListScene on Scene {
+  id
+  name
+}

@@ -26,7 +26,7 @@ const TheCard = ({ item }: Props) => {
   });
 
   return (
-    <RekuestImplementation.Smart object={item?.id} >
+    <RekuestImplementation.Smart object={item} >
       <Card
         className="group border border-gray-200 dark:border-gray-800 aspect-square max-h-lg"
         style={{
@@ -39,7 +39,7 @@ const TheCard = ({ item }: Props) => {
         <CardHeader className="flex flex-row p-3">
           <div>
             <CardTitle className="mb-2">
-              <RekuestImplementation.DetailLink object={item?.id}>
+              <RekuestImplementation.DetailLink object={item}>
                 {" "}
                 {item.interface}
               </RekuestImplementation.DetailLink>

@@ -16,14 +16,3 @@ mutation from_parquet_like(
   }
 }
 
-mutation RequestTableUpload($key: String!, $datalayer: String!) {
-  requestTableUpload(input: { key: $key, datalayer: $datalayer }) {
-    ...Credentials
-  }
-}
-
-mutation RequestTableAccess($store: ID!, $duration: Int) {
-  requestTableAccess(input: { store: $store, duration: $duration }) {
-    ...AccessCredentials
-  }
-}

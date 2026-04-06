@@ -7,15 +7,17 @@ import {
   useGetInformedStructureQuery,
   useListGraphsQuery,
 } from "@/kraph/api/graphql";
-import { Identifier } from "@/providers/smart/types";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { MetricsTable } from "../tables/MetricsTable";
+import { Identifier, Object } from "@/types";
+import { ConnectableAs } from "../ConnectableAs";
+
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
-  object: string;
+  object: Object;
 };
 
 export type StructureViewWidgetProps = {
@@ -24,11 +26,9 @@ export type StructureViewWidgetProps = {
 
 
 
-import { ConnectableAs } from "../ConnectableAs";
-
 export const GraphKnowledgeView = (props: {
-  identifier: string;
-  object: string;
+  identifier: Identifier;
+  object: Object;
   graph: ListGraphFragment;
 }) => {
   const { data, refetch, error, loading } = useGetInformedStructureQuery({
@@ -54,7 +54,7 @@ export const GraphKnowledgeView = (props: {
           addStructure({
             variables: {
               input: {
-                object: props.object,
+                object: props.object.id,
                 identifier: props.identifier,
                 graph: props.graph.id,
               },

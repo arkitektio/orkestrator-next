@@ -12,17 +12,17 @@ export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
+export const RoiPage = asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
   const [pinRoi] = usePinRoiMutation();
 
   const context = data.roi.image.rgbContexts.at(0);
   return (
     <MikroROI.ModelPage
       title={data?.roi?.id}
-      object={data?.roi?.id}
+      object={data?.roi}
       pageActions={
         <>
-          <MikroROI.ObjectButton object={data?.roi?.id} />
+          <MikroROI.ObjectButton object={data?.roi} />
         </>
       }
       variant="black"
@@ -52,7 +52,7 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                   <Card className="truncate ellipsis p-3">
                     <MikroImage.DetailLink
                       className="text-xl cursor-pointer p-1 "
-                      object={data?.roi?.image?.id}
+                      object={data?.roi?.image}
                     >
                       {data?.roi?.image?.name}
                     </MikroImage.DetailLink>
@@ -77,3 +77,6 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
     </MikroROI.ModelPage>
   );
 });
+
+
+export default RoiPage;

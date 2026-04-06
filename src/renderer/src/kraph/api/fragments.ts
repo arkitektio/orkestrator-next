@@ -86,6 +86,7 @@
       "ProtocolEvent"
     ],
     "_Entity": [
+      "BigFileStore",
       "CategoryTag",
       "EdgePairsQuery",
       "EdgePathQuery",
@@ -97,6 +98,8 @@
       "GraphPathQuery",
       "GraphTableQuery",
       "MaterializedEdge",
+      "MaterializedRelationEdge",
+      "MaterializedStructureRelationEdge",
       "MeasurementCategory",
       "MediaStore",
       "MetricCategory",
@@ -108,7 +111,8 @@
       "RelationCategory",
       "ScatterPlot",
       "StructureCategory",
-      "StructureRelationCategory"
+      "StructureRelationCategory",
+      "ZarrStore"
     ]
   }
 };

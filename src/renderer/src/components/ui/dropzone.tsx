@@ -2,6 +2,8 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { Identifier, Structure } from "@/providers/types";
 import { useDrop } from "react-dnd";
 
+import { resolveSmartDrop } from "@/providers/smart/dropUtils";
+
 export type DropZoneProps = {
   accepts: Identifier[];
   className?: string;
@@ -23,10 +25,16 @@ export const DropZone = ({
     return {
       accept: [SMART_MODEL_DROP_TYPE],
       drop: async (item, monitor) => {
-        return await onDrop(item as Structure[]);
+        const resolvedDrop = resolveSmartDrop(item, monitor.getItemType());
+        if (!resolvedDrop) {
+          return {};
+        }
+
+        return await onDrop(resolvedDrop.partners);
       },
       collect: (monitor) => {
-        let items = monitor.getItem() as Structure[];
+        const resolvedDrop = resolveSmartDrop(monitor.getItem(), monitor.getItemType());
+        let items = resolvedDrop?.partners;
         if (!items) {
           return {
             isOver: false,

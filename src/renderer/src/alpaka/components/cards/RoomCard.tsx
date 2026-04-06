@@ -9,9 +9,9 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaRoom.Smart object={item?.id} >
+    <AlpakaRoom.Smart object={item} >
       <Card className="w-full h-20 relative">
-        <AlpakaRoom.DetailLink object={item.id}>
+        <AlpakaRoom.DetailLink object={item}>
           {item.title}
         </AlpakaRoom.DetailLink>
         <div>{item.description}</div>

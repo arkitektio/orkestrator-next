@@ -11,23 +11,7 @@ mutation from_file_like(
   }
 }
 
-mutation RequestFileUpload($key: String!, $datalayer: String!) {
-  requestFileUpload(input: { fileName: $key, datalayer: $datalayer }) {
-    ...Credentials
-  }
-}
 
-mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
-  requestFileUploadPresigned(input: { fileName: $key, datalayer: $datalayer }) {
-    ...PresignedPostCredentials
-  }
-}
-
-mutation RequestFileAccess($store: ID!, $duration: Int) {
-  requestFileAccess(input: { store: $store, duration: $duration }) {
-    ...AccessCredentials
-  }
-}
 
 mutation DeleteFile($id: ID!) {
   deleteFile(input: { id: $id })

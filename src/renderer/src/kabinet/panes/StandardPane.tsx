@@ -72,7 +72,7 @@ export const NavigationPane = () => {
 
           {data?.backends.map((backend, index) => (
             <KabinetBackend.PaneLink
-              object={backend.id}
+              object={backend}
               key={index}
               className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
             >

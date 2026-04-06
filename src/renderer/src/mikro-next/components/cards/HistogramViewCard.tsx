@@ -42,13 +42,13 @@ const TheCard = ({ view }: Props) => {
   const [deleteHistogram] = useDeleteHistogramViewMutation();
 
   return (
-    <MikroHistogramView.Smart object={view?.id} >
+    <MikroHistogramView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
             <p className="font-bold text-xs">
               {view.id && (
-                <MikroHistogramView.DetailLink object={view.id}>
+                <MikroHistogramView.DetailLink object={view}>
                   Histogram
                 </MikroHistogramView.DetailLink>
               )}

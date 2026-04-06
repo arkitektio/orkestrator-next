@@ -65,7 +65,8 @@ import {
   ValueKind,
   WhereOperator,
   useGetEntityQuery,
-  useListEntitiesQuery
+  useListEntitiesQuery,
+  useSetEntityPropertyMutation
 } from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
 import { KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
@@ -107,7 +108,7 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [setNodeProperty] = [() => { }]
+  const [setNodeProperty] = useSetEntityPropertyMutation()
 
   const [editingValue, setEditingValue] = React.useState(value);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -119,8 +120,8 @@ const EditableCell = ({
       setNodeProperty({
         variables: {
           input: {
-            entity: nodeId,
-            variable: propertyDefinition.key,
+            entityId: nodeId,
+            key: propertyDefinition.key,
             value: editingValue,
           },
         },

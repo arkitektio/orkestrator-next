@@ -5,7 +5,7 @@ fragment State on State {
     hash
     name
     ports {
-      ...Port
+      ...ReturnPort
     }
   }
   updatedAt
@@ -15,4 +15,27 @@ fragment StateEvent on State {
   id
   value
   updatedAt
+}
+
+
+
+fragment StatePatchEvent on StatePatchEvent {
+  stateId
+  agentId
+  op
+  path
+  value
+  globalRevision
+  sessionId
+  timestamp
+}
+
+fragment StateSnapshotEvent on StateSnapshotEvent {
+  stateId
+  agentId
+  interface
+  value
+  globalRevision
+  sessionId
+  timestamp
 }

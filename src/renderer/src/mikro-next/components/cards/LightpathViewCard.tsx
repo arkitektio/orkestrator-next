@@ -10,9 +10,9 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroLightpathView.Smart object={view?.id} >
+    <MikroLightpathView.Smart object={view} >
       <ViewCard view={view} className="h-20 flex flex-row p-3 overflow-hidden">
-        <MikroLightpathView.DetailLink object={view?.id} className="flex flex-row">
+        <MikroLightpathView.DetailLink object={view} className="flex flex-row">
           <span className="font-light mr-2 my-auto">
             {view.cMax}
           </span>

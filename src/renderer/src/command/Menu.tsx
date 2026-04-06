@@ -10,12 +10,10 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { SmartLink } from "@/providers/smart/builder";
-import {
-  ApplicableActions,
-  ApplicableDefinitions,
-  ApplicableLocalActions,
-  ApplicableShortcuts,
-} from "@/rekuest/buttons/ObjectButton";
+import { ApplicableDefinitions } from "@/providers/smart/extensions/kabinet/definitions";
+import { ApplicableLocalActions } from "@/providers/smart/extensions/local/localactions";
+import { ApplicableActions } from "@/providers/smart/extensions/rekuest/actions";
+import { ApplicableShortcuts } from "@/providers/smart/extensions/rekuest/shortcuts";
 import { Structure } from "@/types";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
@@ -90,7 +88,7 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
     return (
       <DisplayWidget
         identifier={props.modifier.identifier}
-        object={props.modifier.id}
+        object={props.modifier}
       />
     );
   }

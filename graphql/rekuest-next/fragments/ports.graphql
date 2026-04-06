@@ -20,18 +20,15 @@ fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   stateChoices
 }
 
-fragment FilterPort on Port {
+fragment FilterPort on ArgPort {
   __typename
   kind
   key
   identifier
-  assignWidget {
+  widget {
     ... on SearchAssignWidget {
       query
     }
-  }
-  returnWidget {
-    ...ReturnWidget
   }
   description
   nullable
@@ -64,7 +61,7 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   }
 }
 
-fragment ChildPortNested on Port {
+fragment ArgChildPortNested on ArgPort {
   __typename
   kind
   key
@@ -72,10 +69,51 @@ fragment ChildPortNested on Port {
   children {
     kind
     identifier
-    assignWidget {
+    widget {
       ...AssignWidget
     }
-    returnWidget {
+  }
+  choices {
+    value
+    label
+    description
+  }
+  widget {
+    ...AssignWidget
+  }
+  description
+  nullable
+}
+
+fragment ArgChildPort on ArgPort {
+  __typename
+  kind
+  key
+  identifier
+  children {
+    ...ArgChildPortNested
+  }
+  widget {
+    ...AssignWidget
+  }
+  choices {
+    value
+    label
+    description
+  }
+  nullable
+  description
+}
+
+fragment ReturnChildPortNested on ReturnPort {
+  __typename
+  kind
+  key
+  identifier
+  children {
+    kind
+    identifier
+    widget {
       ...ReturnWidget
     }
   }
@@ -84,28 +122,23 @@ fragment ChildPortNested on Port {
     label
     description
   }
-  assignWidget {
-    ...AssignWidget
-  }
-  returnWidget {
+  widget {
     ...ReturnWidget
   }
   description
   nullable
 }
 
-fragment ChildPort on Port {
+
+fragment ReturnChildPort on ReturnPort {
   __typename
   kind
   key
   identifier
   children {
-    ...ChildPortNested
+    ...ReturnChildPortNested
   }
-  assignWidget {
-    ...AssignWidget
-  }
-  returnWidget {
+  widget {
     ...ReturnWidget
   }
   choices {
@@ -169,7 +202,7 @@ fragment Validator on Validator {
   errorMessage
 }
 
-fragment Port on Port {
+fragment ArgPort on ArgPort {
   __typename
   key
   label
@@ -178,16 +211,13 @@ fragment Port on Port {
   effects {
     ...PortEffect
   }
-  assignWidget {
+  widget {
     ...AssignWidget
-  }
-  returnWidget {
-    ...ReturnWidget
   }
   kind
   identifier
   children {
-    ...ChildPort
+    ...ArgChildPort
   }
   choices {
     value
@@ -200,6 +230,38 @@ fragment Port on Port {
     ...Validator
   }
 }
+
+fragment ReturnPort on ReturnPort {
+  __typename
+  key
+  label
+  nullable
+  description
+  effects {
+    ...PortEffect
+  }
+  widget {
+    ...ReturnWidget
+  }
+  kind
+  identifier
+  children {
+    ...ReturnChildPort
+  }
+  choices {
+    value
+    label
+    description
+  }
+  default
+  nullable
+  provides {
+    key
+    operator
+    value
+  }
+}
+
 
 fragment CustomReturnWidget on CustomReturnWidget {
   __typename
@@ -236,10 +298,10 @@ fragment PortGroup on PortGroup {
 
 fragment Ports on Action {
   args {
-    ...Port
+    ...ArgPort
   }
   returns {
-    ...Port
+    ...ReturnPort
   }
   portGroups {
     ...PortGroup

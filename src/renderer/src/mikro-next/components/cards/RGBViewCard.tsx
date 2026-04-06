@@ -223,7 +223,7 @@ const TheCard = ({ view }: Props) => {
             </Popover>
           )}
           <MikroRGBView.ObjectButton
-            object={view.id}
+            object={view}
             collection="rescale"
             onDone={() => {
               getRgbView();

@@ -38,6 +38,9 @@ fragment Agent on Agent {
   assignations(pagination: { limit: 5 }) {
     ...ListAsssignation
   }
+  scenes {
+    ...AgentScene
+  }
 }
 
 fragment ListAgent on Agent {
@@ -57,17 +60,21 @@ fragment ListAgent on Agent {
       sub
     }
   }
-}
-
-query AgentOptions($search: String, $values: [ID!]) {
-  options: agents(
-    filters: { search: $search, ids: $values }
-    pagination: { limit: 10 }
-  ) {
-    value: id
-    label: name
+  app {
+    identifier
+  }
+  release {
+    version
+  }
+  device {
+    id
+  }
+  user {
+    sub
   }
 }
+
+
 
 fragment AgentChangeEvent on AgentChangeEvent {
   create {

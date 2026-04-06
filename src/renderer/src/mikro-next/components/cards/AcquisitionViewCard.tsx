@@ -11,7 +11,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroAcquisitionView.Smart object={view?.id} >
+    <MikroAcquisitionView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
@@ -23,7 +23,7 @@ const TheCard = ({ view }: Props) => {
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
-                  object={view.operator.sub}
+                  object={view.operator}
                 >
                   {view.operator?.sub}
                 </LokUser.DetailLink>

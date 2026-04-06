@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
 
-export default asDetailQueryRoute(
+export const FilePage = asDetailQueryRoute(
   useGetFileQuery,
   ({ data }) => {
     const file = data?.file;
@@ -57,20 +57,20 @@ export default asDetailQueryRoute(
     return (
       <DokumentsFile.ModelPage
         title={file?.name || 'Untitled File'}
-        object={file?.id}
+        object={file}
         pageActions={
           <div className="flex flex-row gap-2">
             <Button onClick={handleDownload} variant="outline" size="sm" className="shadow-sm">
               <DownloadIcon className="w-4 h-4 mr-2" />
               Download
             </Button>
-            <DokumentsFile.ObjectButton object={file?.id} />
+            <DokumentsFile.ObjectButton object={file} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <LovekitStream.Komments object={file?.id} />,
+              Comments: <LovekitStream.Komments object={file} />,
             }}
           />
         }
@@ -166,7 +166,7 @@ export default asDetailQueryRoute(
                         </div>
                         <div className="min-w-0 flex-1">
                           <DokumentsDocument.DetailLink
-                            object={doc.id}
+                            object={doc}
                             className="font-semibold text-lg hover:text-blue-600 transition-colors block truncate"
                           >
                             {doc.title}
@@ -177,7 +177,7 @@ export default asDetailQueryRoute(
                           </div>
                         </div>
                       </div>
-                      <DokumentsDocument.DetailLink object={doc.id}>
+                      <DokumentsDocument.DetailLink object={doc}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -227,3 +227,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default FilePage;

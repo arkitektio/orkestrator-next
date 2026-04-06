@@ -2,7 +2,7 @@ import { Guard } from "@/app/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
-import { Identifier } from "@/types";
+import { Identifier, Object } from "@/types";
 import { lazy, Suspense, useMemo } from "react";
 import { MultiSidebar } from "./MultiSidebar";
 import { PageLayout, PageVariant } from "./PageLayout";
@@ -22,14 +22,14 @@ const LazyKnowledgeSidebar = lazy(() =>
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
   identifier: Identifier;
-  object: string;
+  object: Object;
   title?: React.ReactNode;
   sidebars?: React.ReactNode;
   additionalSidebars?: { [key: string]: React.ReactNode };
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: PageVariant;
-  callback?: (object: string) => void;
+  callback?: (object: Object) => void;
 };
 
 export const ModelPageLayout = ({

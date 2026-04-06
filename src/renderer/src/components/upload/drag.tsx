@@ -36,6 +36,7 @@ export const DragZone: React.FC<{
           const abortController = new AbortController();
 
           const hash = hashFile(file);
+          console.log("Starting upload for", file, "with hash", hash);
 
           return {
             hash: hash,

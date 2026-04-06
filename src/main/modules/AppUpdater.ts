@@ -3,8 +3,9 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { IpcTransport } from './IpcTransport';
 import { WindowManager } from './WindowManager';
+import { AppModule } from './AppModule';
 
-export class AppUpdater {
+export class AppUpdater implements AppModule {
     constructor(private ipcTransport: IpcTransport, private windowManager: WindowManager) {}
 
     setup() {

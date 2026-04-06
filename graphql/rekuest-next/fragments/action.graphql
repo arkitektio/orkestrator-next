@@ -12,6 +12,11 @@ fragment ListAction on Action {
       id
     }
   }
+  key
+  version
+  app {
+    identifier
+  }
 }
 
 fragment SearchAction on Action {
@@ -38,6 +43,9 @@ fragment GraphNodeAction on Action {
   protocols {
     name
   }
+  app {
+    identifier
+  }
 }
 
 fragment DetailAction on Action {
@@ -63,6 +71,12 @@ fragment DetailAction on Action {
   assignations(pagination: { limit: 10, offset: 0 }) {
     ...MinimalAssignation
   }
+  key
+  version
+  app {
+    identifier
+  }
+  hash
 }
 
 fragment PrimaryAction on Action {

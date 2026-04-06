@@ -5,15 +5,15 @@ import {
   useGetInterfaceQuery
 } from "@/rekuest/api/graphql";
 
-export default asDetailQueryRoute(useGetInterfaceQuery, ({ data, refetch }) => {
+export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data, refetch }) => {
   return (
     <RekuestInterface.ModelPage
       title={data.interface.key}
-      object={data.interface.id}
+      object={data.interface}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestToolbox.Komments object={data?.interface?.id} />,
+            Comments: <RekuestToolbox.Komments object={data?.interface} />,
           }}
         />
       }
@@ -31,3 +31,6 @@ export default asDetailQueryRoute(useGetInterfaceQuery, ({ data, refetch }) => {
     </RekuestInterface.ModelPage>
   );
 });
+
+
+export default InterfacePage;

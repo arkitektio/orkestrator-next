@@ -14,7 +14,7 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
 
   const { progress } = MikroROI.useLive({ object: item.id });
   return (
-    <MikroROI.Smart object={item?.id} >
+    <MikroROI.Smart object={item} >
       <div
         className={cn(
           `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl`,
@@ -36,7 +36,7 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
               "z-10 font-bold text-md mb-2 cursor-pointer break-words line-clamp-2" +
               (isActive ? "text-primary-300" : "")
             }
-            object={item.id}
+            object={item}
           >
             {item?.kind} {item?.image.name}
           </MikroROI.DetailLink>

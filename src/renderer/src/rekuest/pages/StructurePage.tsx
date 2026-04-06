@@ -7,16 +7,16 @@ import {
 import InputStructureUsageCard from "../components/cards/InputStructureUsageCard";
 import OutputStructureUsageCard from "../components/cards/OutputStructureUsageCard";
 
-export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
+export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   return (
     <RekuestStructure.ModelPage
       title={data.structure.key}
-      object={data.structure.id}
+      object={data.structure}
       sidebars={
         <MultiSidebar
           map={{
             Comments: (
-              <RekuestStructure.Komments object={data?.structure?.id} />
+              <RekuestStructure.Komments object={data?.structure} />
             ),
           }}
         />
@@ -64,3 +64,6 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
     </RekuestStructure.ModelPage>
   );
 });
+
+
+export default StructurePage;

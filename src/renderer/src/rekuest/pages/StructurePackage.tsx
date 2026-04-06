@@ -7,18 +7,18 @@ import {
 import InterfaceCard from "../components/cards/InterfaceCard";
 import StructureCard from "../components/cards/StructureCard";
 
-export default asDetailQueryRoute(
+export const TPage = asDetailQueryRoute(
   useGetStructurePackageQuery,
   ({ data, refetch }) => {
     return (
       <RekuestStructurePackage.ModelPage
-        title={data.structurePackage.name}
-        object={data.structurePackage.id}
+        title={data.structurePackage.id}
+        object={data.structurePackage}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestToolbox.Komments object={data?.structurePackage?.id} />
+                <RekuestToolbox.Komments object={data?.structurePackage} />
               ),
             }}
           />
@@ -30,7 +30,7 @@ export default asDetailQueryRoute(
               {data?.structurePackage?.key}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-              {data.structurePackage.description}
+              ccc
             </p>
           </div>
         </div>
@@ -62,3 +62,5 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+export default TPage;

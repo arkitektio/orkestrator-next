@@ -20,32 +20,36 @@ export const StatisticsSidebar = () => {
       value: loading ? "..." : totalImages,
       description: "Total number of images in your collection",
       icon: Images,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      // Using semantic Primary color
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       title: "Recent Activity",
       value: loading ? "..." : recentActivity,
       description: "Images created in the past week",
       icon: Activity,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
+      // Using Chart 1 (Harmonious offset)
+      color: "text-chart-1",
+      bgColor: "bg-chart-1/10",
     },
     {
       title: "Daily Average",
       value: loading ? "..." : averageDaily,
       description: "Average images created per day",
       icon: TrendingUp,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
+      // Using Chart 2 (Harmonious offset)
+      color: "text-chart-2",
+      bgColor: "bg-chart-2/10",
     },
     {
       title: "This Week",
       value: loading ? "..." : recentActivity,
       description: "Total new images added this week",
       icon: Calendar,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
+      // Using Chart 3 (Harmonious offset)
+      color: "text-chart-3",
+      bgColor: "bg-chart-3/10",
     },
   ];
 
@@ -53,8 +57,8 @@ export const StatisticsSidebar = () => {
     return (
       <div className="p-4">
         <h2 className="text-lg font-semibold mb-4">Statistics</h2>
-        <div className="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
-          <p className="text-sm text-red-600 dark:text-red-400">
+        <div className="p-4 rounded-lg border border-destructive/20 bg-destructive/10">
+          <p className="text-sm text-destructive">
             Error loading statistics: {error.message}
           </p>
         </div>
@@ -74,7 +78,7 @@ export const StatisticsSidebar = () => {
       {statsCards.map((card) => (
         <div
           key={card.title}
-          className="p-4 rounded-lg border border-primary/20 flex items-center gap-4"
+          className="p-4 rounded-lg border border-border flex items-center gap-4 transition-colors hover:bg-muted/30"
         >
           <div
             className={`p-3 rounded-lg ${card.bgColor} ${card.color}`}
@@ -83,7 +87,7 @@ export const StatisticsSidebar = () => {
           </div>
           <div className="flex-1">
             <p className="text-sm text-muted-foreground">{card.title}</p>
-            <p className="text-2xl font-semibold">{card.value}</p>
+            <p className="text-2xl font-semibold tracking-tight">{card.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{card.description}</p>
           </div>
         </div>

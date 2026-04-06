@@ -5,7 +5,7 @@ projects:
 
   mikro:
     schema: "graphql/schemas/mikro.graphql"
-    documents: "graphql/mikro/**/*.graphql"
+    documents: "graphql/mikro-next/**/*.graphql"
 
   rekuest:
     schema: "graphql/schemas/rekuest.graphql"

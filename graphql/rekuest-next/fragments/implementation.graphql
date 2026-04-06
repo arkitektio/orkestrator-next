@@ -1,9 +1,6 @@
 fragment DetailImplementation on Implementation {
   id
   interface
-  dependencies {
-    ...ListDependency
-  }
   action {
     ...DetailAction
   }
@@ -12,6 +9,10 @@ fragment DetailImplementation on Implementation {
   agent {
     id
     name
+  }
+  
+  dependencies {
+    ...ListDependency
   }
   myLatestAssignation {
     ...PostmanAssignation

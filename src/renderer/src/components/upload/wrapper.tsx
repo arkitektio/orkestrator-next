@@ -3,11 +3,13 @@ import { useUpload } from "@/providers/upload/UploadProvider";
 import { useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 
+export type ElectronFile = File & { path: string };
+
 export type UploadFunc = (
-  file: File,
+  file: ElectronFile,
   options: UploadOptions,
 ) => Promise<string>;
-export type CreateFunc = (file: File, key: string) => Promise<any>;
+export type CreateFunc = (file: ElectronFile, key: string) => Promise<any>;
 
 export const UploadWrapper = ({ uploadFile, createFile, children }: {
   uploadFile: UploadFunc;
@@ -20,16 +22,23 @@ export const UploadWrapper = ({ uploadFile, createFile, children }: {
     return {
       accept: [NativeTypes.FILE],
       drop: (item, monitor) => {
-        const files: File[] = (item as any).files;
+        // In react-dnd, the HTML5 backend item may strip properties like path from File objects on Linux/Windows.
+        // Try getting the original Electron File object with .path from dataTransfer first.
+        const dataTransfer = (item as any).dataTransfer;
+        const files: ElectronFile[] = dataTransfer?.files
+          ? Array.from(dataTransfer.files)
+          : (item as any).files;
+
+        console.log("Dropped items:", item, "Extracted files:", files);
         if (files) {
           files.forEach((file) => {
             startUpload(
               file,
-              async (file, { onProgress, signal }) => {
-                return await uploadFile(file, { onProgress, signal });
+              async (file, { id, onProgress, signal }) => {
+                return await uploadFile(file as ElectronFile, { id, onProgress, signal });
               },
               async (file, key) => {
-                return await createFile(file, key);
+                return await createFile(file as ElectronFile, key);
               }
             ).catch(console.error);
           });

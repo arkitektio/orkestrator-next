@@ -1,5 +1,5 @@
+import { ApplicableActions } from "@/providers/smart/extensions/rekuest/actions";
 import { useActionSearchLazyQuery } from "@/rekuest/api/graphql";
-import { ApplicableActions } from "@/rekuest/buttons/ObjectButton";
 import { useEffect } from "react";
 import { useExtension } from "../ExtensionContext";
 

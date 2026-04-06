@@ -30,11 +30,11 @@ const TheCard = ({ item }: HistoryCardProps) => {
   const [loading, setLoading] = useState<boolean>(!!url);
 
   return (
-    <MikroInstanceMaskView.Smart object={item?.id}  key={item.id}>
+    <MikroInstanceMaskView.Smart object={item}  key={item}>
       <Card key={item.id} className="p-4 space-y-2">
         <p className="text-light text-xs">Is instance mask foddr</p>
 
-        <MikroImage.DetailLink object={item.referenceView.image.id}>
+        <MikroImage.DetailLink object={item.referenceView.image}>
           {item.referenceView.image.name}
         </MikroImage.DetailLink>
 

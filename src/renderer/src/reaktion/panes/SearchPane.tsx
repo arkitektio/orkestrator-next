@@ -62,7 +62,7 @@ export const NavigationPane = (props: {}) => {
       >
         {data?.workspaces.map((workspace, index) => (
           <FlussWorkspace.PaneLink
-            object={workspace.id}
+            object={workspace}
             key={index}
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
@@ -76,7 +76,7 @@ export const NavigationPane = (props: {}) => {
         <FlussRun.ListLink>Runs</FlussRun.ListLink>}>
         {rundata?.runs.map((run, index) => (
           <FlussRun.PaneLink
-            object={run.id}
+            object={run}
             key={index}
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >

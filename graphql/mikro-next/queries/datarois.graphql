@@ -1,0 +1,11 @@
+query GetDataRoi($id: ID!) {
+  dataRoi(id: $id) {
+    ...DataRoi
+  }
+}
+
+query GetDataRois($filters: DataRoiFilter, $pagination: OffsetPaginationInput) {
+  dataRois(filters: $filters, pagination: $pagination) {
+    ...ListDataRoi
+  }
+}

@@ -1,0 +1,13 @@
+fragment Session on Session {
+  id
+  agent {
+    id
+    name
+  }
+  snapshots {
+    id
+    value
+    timestamp
+  }
+  startedAt
+}

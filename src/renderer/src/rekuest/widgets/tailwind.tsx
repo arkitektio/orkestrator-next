@@ -1,11 +1,11 @@
 import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
-import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
+import { ArgPort, ReturnPort, PortGroup , PortOptions, WidgetRegistryType } from "./types";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;
-  ports: (Port | null | undefined)[];
+  ports: (ArgPort | null | undefined)[];
   groups?: (PortGroup | null | undefined)[] | undefined;
   options?: PortOptions | undefined;
   bound?: string; // Are we bound to a specific implementation?
@@ -13,26 +13,26 @@ export type ArgsContainerProps = {
   hidden?: { [key: string]: boolean };
 };
 
-export type InputContainer = (props: ArgsContainerProps) => JSX.Element;
+export type InputContainer = (props: ArgsContainerProps) => React.ReactNode;
 
 export type ReturnContainerProps = {
   registry: WidgetRegistryType;
-  ports: Port[];
+  ports: ReturnPort[];
   values: { [key: string]: any | null | undefined };
   options?: PortOptions | undefined;
   showKeys?: boolean;
   className?: string;
 };
 
-export type OutputContainer = (props: ReturnContainerProps) => JSX.Element;
+export type OutputContainer = (props: ReturnContainerProps) => React.ReactNode;
 
-export const ReturnsContainer: OutputContainer = ({
+export const ReturnsContainer =  ({
   ports,
   values,
   registry,
   showKeys = false,
   className,
-}) => {
+}: ReturnContainerProps) => {
   const len = ports.length;
 
   const lg_size = len < 2 ? len : 2;
@@ -55,7 +55,7 @@ export const ReturnsContainer: OutputContainer = ({
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <div className="@container flex flex-col rounded rounded-md border-1">
+          <div className="@container flex flex-col rounded rounded-md border-1" key={index}>
             {showKeys && (
               <label
                 className="flex-initial font-light text-slate-200 mb-2"
@@ -64,7 +64,7 @@ export const ReturnsContainer: OutputContainer = ({
                 {port.label || port.key}
               </label>
             )}
-            <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
+            <div className="flex-grow bg-background rounded rounded-md ">
               <EffectWrapper
                 effects={port.effects || []}
                 port={port}
@@ -73,7 +73,7 @@ export const ReturnsContainer: OutputContainer = ({
                 <Widget
                   key={index}
                   port={port}
-                  widget={port.returnWidget}
+                  widget={port.widget}
                   value={values[key]}
                 />
               </EffectWrapper>
@@ -93,13 +93,13 @@ export const ReturnsContainer: OutputContainer = ({
   );
 };
 
-export const WrappedReturnsContainer: OutputContainer = ({
+export const WrappedReturnsContainer = ({
   ports,
   values,
   registry,
   showKeys = false,
   className,
-}) => {
+}: ReturnContainerProps) => {
   return (
     <div className={cn("flex flex-row flex-wrap gap-2 w-full h-full", className)}>
       {Object.keys(values).map((key, index) => {
@@ -130,7 +130,7 @@ export const WrappedReturnsContainer: OutputContainer = ({
                 <Widget
                   key={index}
                   port={port}
-                  widget={port.returnWidget}
+                  widget={port.widget}
                   value={values[key]}
                 />
               </EffectWrapper>
@@ -151,17 +151,17 @@ export const WrappedReturnsContainer: OutputContainer = ({
 };
 
 export type FilledGroup = PortGroup & {
-  ports: Port[];
+  ports: ArgPort[];
 };
 
-export const ArgsContainer: InputContainer = ({
+export const ArgsContainer = ({
   ports,
   groups,
   options,
   path,
   hidden,
   registry,
-}) => {
+}: ArgsContainerProps) => {
   const [filledGroups, setFilledGroups] = useState<FilledGroup[]>([]);
 
   useEffect(() => {
@@ -224,7 +224,7 @@ export const ArgsContainer: InputContainer = ({
                   path={path}
                   key={index}
                   port={port}
-                  widget={port.assignWidget}
+                  widget={port.widget}
                   options={options}
                 />
               </EffectWrapper>

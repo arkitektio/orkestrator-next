@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/fluss/graphql"
+schema:
+  "http://jhnnsrs-lab/fluss/schema":
+    handleAsSDL: true
 documents: "graphql/fluss-next/**/*.graphql"
 generates:
   src/renderer/src/reaktion/api/fragments.ts:

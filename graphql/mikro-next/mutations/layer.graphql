@@ -1,0 +1,5 @@
+mutation UpdateLater($input: UpdateLayerInput!) {
+  updateLayer(input: $input) {
+    ...SceneLayer
+  }
+}

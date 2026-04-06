@@ -9,9 +9,13 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
 import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
+import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
+import { Button } from "@/components/ui/button";
+import { useDownload } from "@/providers/download/DownloadProvider";
 
-export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
-  const resolve = useResolve();
+export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
+  const download = useMikroBigFileDownload();
+  const { startDownload } = useDownload();
 
   // Get file extension for icon display
   const getFileExtension = (filename: string) => {
@@ -22,21 +26,27 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
 
   return (
     <MikroFile.ModelPage
-      actions={<MikroFile.Actions object={data.file.id} />}
-      object={data.file.id}
+      actions={<MikroFile.Actions object={data.file} />}
+      object={data.file}
       title={data.file.name}
       pageActions={
         <>
-          <DownloadButton
-            url={resolve(data.file.store.presignedUrl)}
+          <Button
+            onClick={() => {
+              startDownload(data.file.name, async ({ id, signal }) => {
+                return await download(data.file.store.id, data.file.name, { id, signal });
+              }).catch((e) => {
+                console.error("Download error:", e);
+              });
+            }}
             variant="outline"
             className="flex items-center gap-2"
           >
             <DownloadIcon className="h-4 w-4" />
             Download
-          </DownloadButton>
+          </Button>
 
-          <MikroFile.ObjectButton object={data.file.id} />
+          <MikroFile.ObjectButton object={data.file} />
         </>
       }
     >
@@ -45,12 +55,12 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
-                <FileIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 rounded-lg bg-primary/10  shadow-sm">
+                <FileIcon className="h-8 w-8 text-primary " />
               </div>
               <div>
                 <CardTitle className="text-2xl font-bold">
-                  <MikroFile.DetailLink object={data.file.id} className="hover:text-blue-600 transition-colors">
+                  <MikroFile.DetailLink object={data.file}>
                     {data?.file?.name}
                   </MikroFile.DetailLink>
                 </CardTitle>
@@ -81,19 +91,9 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
 
         <ListRender array={data?.file?.views} title="">
           {(view) => (
-            <MikroImage.Smart object={view.image?.id} key={view.image?.id}>
+            <MikroImage.Smart object={view.image} key={view.image.id}>
               <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden">
                 <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                  {view.image.latestSnapshot?.store.presignedUrl ? (
-                    <Image
-                      src={resolve(view.image.latestSnapshot?.store.presignedUrl)}
-                      className="object-cover h-full w-full transition-all duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full w-full">
-                      <ImageIcon className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )}
 
                   {/* Overlay with improved gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -102,7 +102,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform  transition-transform duration-300 truncate">
                     <MikroImage.DetailLink
                       className="font-semibold text-lg block hover:text-blue-300 transition-colors line-clamp-2"
-                      object={view.image.id}
+                      object={view.image}
                     >
                       {view.image?.name}
                     </MikroImage.DetailLink>
@@ -122,3 +122,6 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
     </MikroFile.ModelPage>
   );
 });
+
+
+export default FilePage;

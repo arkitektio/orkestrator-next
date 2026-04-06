@@ -5,8 +5,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FlussWorkspace } from "@/linkers";
+import { ListWorkspaceFragment } from "@/reaktion/api/graphql";
 
-import { ListWorkspaceFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
 interface Props {
@@ -16,11 +16,11 @@ interface Props {
 
 const TheCard = ({ workspace }: Props) => {
   return (
-    <FlussWorkspace.Smart object={workspace?.id}>
+    <FlussWorkspace.Smart object={workspace}>
       <Card className="aspect-square">
         <CardHeader>
           <CardTitle>
-            <FlussWorkspace.DetailLink object={workspace.id}>
+            <FlussWorkspace.DetailLink object={workspace}>
               {workspace.title}
             </FlussWorkspace.DetailLink>
           </CardTitle>

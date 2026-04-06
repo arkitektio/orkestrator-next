@@ -10,7 +10,7 @@ interface Props {
 
 const TheCard = ({ item, className }: Props) => {
   return (
-    <ElektroBlock.Smart object={item?.id} >
+    <ElektroBlock.Smart object={item} >
       <Card
         className={cn(
           "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",
@@ -19,7 +19,7 @@ const TheCard = ({ item, className }: Props) => {
         key={item.id}
       >
         <ElektroBlock.DetailLink
-          object={item.id}
+          object={item}
           className="px-2 py-2 h-full w-full absolute top-0 left-0 bg-opacity-20 bg-back-999 hover:bg-opacity-10 transition-all ease-in-out duration-200 truncate"
         >
           {item.name}

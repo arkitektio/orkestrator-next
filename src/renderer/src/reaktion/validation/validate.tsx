@@ -3,6 +3,7 @@ import { buildZodSchema } from "@/rekuest/widgets/utils";
 import { ZodError } from "zod";
 import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
+import { PortKind } from "@/rekuest/api/graphql";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -139,7 +140,7 @@ const validateNoUnconnectedNodes = (
 ): Partial<ValidationResult> => {
   const remain: ValidationError[] = previous.remainingErrors;
 
-  for (const node of previous.nodes) {
+  for (const node of previous.nodes.filter(x => x.type != "AgentSubFlowNode")) {
     const targetEdge = previous.edges.find((n) => n.target == node.id);
     const sourceEdge = previous.edges.find((n) => n.source == node.id);
 
@@ -163,7 +164,7 @@ const validateNoUnconnectedNodes = (
 
 function validateGraphIsConnected(previous: ValidationResult) {
   const remain: ValidationError[] = previous.remainingErrors;
-  const nodes = previous.nodes;
+  const nodes = previous.nodes.filter(n => n.type != "AgentSubFlowNode");
   const edges = previous.edges;
 
   const adjacencyList: { [key: string]: string[] } = {};
@@ -294,7 +295,96 @@ function noDoubleEdgeForOutput(previous: ValidationResult) {
   };
 }
 
+function validateMemoryStructuresSameSubflow(previous: ValidationResult) {
+  const remain: ValidationError[] = previous.remainingErrors;
+  const nodes = previous.nodes.filter(n => n.parentId != null);
+  const edges = previous.edges;
+
+  const hasMemoryStructure = (node: FlowNode): boolean => {
+    return !!(
+      node.data.ins?.find((stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+      ) ||
+      node.data.outs?.find((stream) =>
+        stream && stream.length && stream.find((item) => item.kind === PortKind.MemoryStructure),
+      ) ||
+      node.data.voids?.find((item) => item.kind === PortKind.MemoryStructure) ||
+      node.data.constants?.find(
+        (item) => item.kind === PortKind.MemoryStructure,
+      )
+    );
+  };
+
+  for (const edge of edges) {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    if (sourceNode && targetNode) {
+      if (hasMemoryStructure(sourceNode) && hasMemoryStructure(targetNode)) {
+        if (sourceNode.parentId !== targetNode.parentId) {
+          remain.push({
+            type: "edge",
+            id: edge.id,
+            level: "critical",
+            message:
+              "Nodes with memory structures must be in the same subflow.",
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
+function validateUniqueAgentSubflows(previous: ValidationResult) {
+  const remain: ValidationError[] = previous.remainingErrors;
+  const agentSubflows = previous.nodes.filter(
+    (node) => node.type === "AgentSubFlowNode",
+  ) as Array<FlowNode & { data: { agent?: { id?: string } } }>;
+
+  const agentNodeMap = new Map<string, string[]>();
+
+  for (const node of agentSubflows) {
+    const agentId = node.data.agent?.id;
+
+    if (!agentId) {
+      continue;
+    }
+
+    const existingNodeIds = agentNodeMap.get(agentId) ?? [];
+    existingNodeIds.push(node.id);
+    agentNodeMap.set(agentId, existingNodeIds);
+  }
+
+  for (const nodeIds of agentNodeMap.values()) {
+    if (nodeIds.length < 2) {
+      continue;
+    }
+
+    for (const nodeId of nodeIds) {
+      remain.push({
+        type: "node",
+        id: nodeId,
+        level: "critical",
+        message:
+          "You can only have one subflow per agent in the same workflow.",
+      });
+    }
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
 const validators = [
+  validateUniqueAgentSubflows,
+  validateMemoryStructuresSameSubflow,
   validateMatchingPorts,
   validateNoUnconnectedNodes,
   validateGraphIsConnected,

@@ -1,13 +1,13 @@
 fragment ReactiveTemplate on ReactiveTemplate {
   id
   ins {
-    ...FlussPort
+    ...FlussArgPort
   }
   outs {
-    ...FlussPort
+    ...FlussReturnPort
   }
   constants {
-    ...FlussPort
+    ...FlussArgPort
   }
   implementation
   title

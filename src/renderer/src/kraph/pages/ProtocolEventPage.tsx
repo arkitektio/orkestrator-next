@@ -2,7 +2,6 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Editor } from "@/components/plate-ui/editor";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
   KraphProtocolEvent,
@@ -17,6 +16,7 @@ import {
   ProtocolEventFragment,
   useGetProtocolEventQuery,
 } from "../api/graphql";
+import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
 export function PlateEditor({
   protocolEvent,
@@ -75,7 +75,7 @@ export function PlateEditor({
 const Page = asDetailQueryRoute(
   useGetProtocolEventQuery,
   ({ data, refetch }) => {
-    const uploadFile = useMediaUpload();
+    const uploadFile = useKraphMediaUpload();
 
     return (
       <KraphProtocolEvent.ModelPage

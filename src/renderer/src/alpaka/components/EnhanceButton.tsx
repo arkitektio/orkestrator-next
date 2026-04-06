@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DemandKind, PortKind, PrimaryActionFragment, useAllPrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { useAssignWithCallback } from "@/rekuest/hooks/useAssign";
+import { Identifier, Object } from "@/types";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,8 +18,8 @@ import { toast } from "sonner";
 
 
 export type EnhanceButtonProps = {
-  identifier: string;
-  object: string;
+  identifier: Identifier;
+  object: Object;
   refetch?: () => Promise<any>;
 };
 
@@ -26,14 +27,6 @@ export type EnhanceButtonProps = {
 
 
 export const EnhanceButton = (props: EnhanceButtonProps) => {
-
-
-
-
-
-
-
-
 
   const { data: enhanceActions } = useAllPrimaryActionsQuery({
     variables: {

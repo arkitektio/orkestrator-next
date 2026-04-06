@@ -1,5 +1,5 @@
 mutation RequestMediaUpload($input: RequestMediaUploadInput!) {
   requestMediaUpload(input: $input) {
-    ...PresignedPostCredentials
+    ...MediaUploadGrant
   }
 }

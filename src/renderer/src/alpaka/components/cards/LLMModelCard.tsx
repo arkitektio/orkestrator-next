@@ -9,10 +9,10 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <AlpakaLLMModel.Smart object={item?.id} >
+    <AlpakaLLMModel.Smart object={item} >
       <Card className="w-full h-30 flex flex-col p-3  hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group" >
 
-        <AlpakaLLMModel.DetailLink object={item.id} className="text-md font-light text-muted-foreground truncate mb-1">
+        <AlpakaLLMModel.DetailLink object={item} className="text-md font-light text-muted-foreground truncate mb-1">
           {item.modelId}
 
           <p className="text-md">{item.modelId}</p>

@@ -1,8 +1,8 @@
-import { BrowserWindow, screen, shell, dialog, app, Menu } from 'electron';
-import { resolve, join } from 'path';
-import { fileURLToPath } from 'url';
-import Store from 'electron-store';
 import { is } from '@electron-toolkit/utils';
+import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
+import Store from 'electron-store';
+import { join } from 'path';
+import { AppModule } from './AppModule';
 import { IpcTransport } from './IpcTransport';
 
 import { autoUpdater } from 'electron-updater';
@@ -19,7 +19,7 @@ function debounce<T extends (...args: any[]) => void>(
     };
 }
 
-export class WindowManager {
+export class WindowManager implements AppModule {
     private mainWindow: BrowserWindow | null = null;
     private windows: Set<BrowserWindow> = new Set();
     private store: Store;
@@ -37,6 +37,20 @@ export class WindowManager {
     setup() {
         this.setupIpcHandlers();
         this.setupApplicationMenu();
+    }
+
+    onSecondInstance(_: any, commandLine: string[], __: string) {
+        // Someone tried to run a second instance, we should focus our window.
+        if (this.mainWindow) {
+            if (this.mainWindow.isMinimized()) this.mainWindow.restore();
+            this.mainWindow.focus();
+        }
+
+        // Handle deep link on Windows/Linux
+        const url = commandLine.find(arg => arg.startsWith('orkestrator://'));
+        if (url) {
+            this.handleOrkestratorUrl(url);
+        }
     }
 
     getMainWindow(): BrowserWindow | null {

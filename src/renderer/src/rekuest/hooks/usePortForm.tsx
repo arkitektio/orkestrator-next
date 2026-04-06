@@ -3,21 +3,21 @@ import Zod from "zod";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Port } from "../widgets/types";
+import { ArgPort } from "../widgets/types";
 import {
   buildZodSchema,
   portToDefaults,
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
 
-export const portHash = (port: Port[]) => {
+export const portHash = (port: ArgPort[]) => {
   return port
     .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
     .join("-");
 };
 
 export const usePortForm = (props: {
-  ports: Port[];
+  ports: ArgPort[];
   overwrites?: Record<string, unknown>;
   doNotAutoReset?: boolean;
   additionalSchema?: Zod.ZodObject<Zod.ZodRawShape>;

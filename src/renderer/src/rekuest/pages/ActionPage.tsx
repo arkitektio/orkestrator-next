@@ -11,6 +11,7 @@ import { RekuestAction, RekuestImplementation } from "@/linkers";
 import {
   AssignationEventKind,
   DetailActionFragment,
+  useAutoResolveMutation,
   useDetailActionQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
@@ -55,6 +56,10 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   const errorEvent = latestAssignation?.events.find(
     (x) => x.kind == AssignationEventKind.Critical,
   );
+
+
+
+
 
   return (
     <>
@@ -143,6 +148,14 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
                 </CardContent>
               </Card>
             )}
+
+
+
+
+
+
+
+
           </div>
         </form>
       </Form>
@@ -150,7 +163,7 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
+export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.action?.hash || "");
   }, [data?.action?.hash]);
@@ -161,15 +174,42 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
     description: data.action.description || "",
   });
 
+
+  const [autoResolve] = useAutoResolveMutation()
+
+
+
+  const runAutoResolve = async () => {
+    try {
+      const mdata = await autoResolve({
+        variables: {
+          input: { action: data.ac.id },
+        },
+      });
+      if (mdata.errors) {
+        toast.error("Auto-resolve failed: " + mdata.errors[0].message);
+      } else {
+        toast.success("Auto-resolve started");
+        if (mdata.data?.autoResolve?.id) {
+          navigate(RekuestResolution.linkBuilder(mdata.data?.autoResolve?.id))
+        }
+        refetch();
+      }
+    }
+    catch (e) {
+      toast.error("Auto-resolve failed: " + (e as Error).message);
+    }
+  };
+
+
   return (
-    <ModelPageLayout
-      identifier="@rekuest/action"
+    <RekuestAction.ModelPage
       title={data.action.name}
-      object={data.action.id}
+      object={data.action}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestAction.Komments object={data?.action?.id} />,
+            Comments: <RekuestAction.Komments object={data?.action} />,
           }}
         />
       }
@@ -231,6 +271,14 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
           </>
         )}
 
+
+
+
+
+
+
+
+
         <ListRender array={data?.action?.assignations} title="Tasks">
           {(item, key) => <MinimalAssignationCard item={item} key={key} />}
         </ListRender>
@@ -238,6 +286,9 @@ export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
           {(item, key) => <MinimalImplementationCard item={item} key={key} />}
         </ListRender>
       </div>
-    </ModelPageLayout>
+    </RekuestAction.ModelPage>
   );
 });
+
+
+export default ActionPage;

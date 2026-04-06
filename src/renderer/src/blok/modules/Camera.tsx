@@ -27,8 +27,12 @@ export const ImageRender = ({ id }: { id: string }) => {
 
   const defaultContext = data?.image?.rgbContexts.at(0);
 
+  if (!data?.image) {
+    return <div>Image not found</div>;
+  }
+
   return (
-    <MikroImage.DetailLink object={id}>
+    <MikroImage.DetailLink object={data.image}>
       <div className="w-[700px] h-[700px]">
         {defaultContext && (
           <DelegatingImageRender context={defaultContext} rois={[]} />

@@ -108,7 +108,7 @@ export const DelegateItem = (props: { event: AssignationEventFragment }) => {
           This assignmenent was delegated to{" "}
           {props.event.delegatedTo?.implementation.action.name}
           <RekuestAssignation.DetailLink
-            object={props.event.delegatedTo?.id || ""}
+            object={props.event.delegatedTo}
             className="font-semibold"
           >
             {" "}
@@ -185,7 +185,7 @@ export const DefaultRenderer = (props: {
 }) => {
   return (
     <div className="flex flex-col">
-      <div className="flex-initial mb-3">Runnning on: <RekuestImplementation.DetailLink object={props.assignation.implementation.id}>{props.assignation.implementation.interface} @ {props.assignation.implementation.agent.name}</RekuestImplementation.DetailLink></div>
+      <div className="flex-initial mb-3">Runnning on: <RekuestImplementation.DetailLink object={props.assignation.implementation}>{props.assignation.implementation.interface} @ {props.assignation.implementation.agent.name}</RekuestImplementation.DetailLink></div>
 
       <AssignationTimeLine assignation={props.assignation} />
     </div>
@@ -306,7 +306,7 @@ export const AssignationStatsSidebar = (props: { assignation: DetailAssignationF
   );
 };
 
-export default asDetailQueryRoute(
+export const TPage = asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, refetch, subscribeToMore }) => {
     const navigate = useNavigate();
@@ -327,11 +327,11 @@ export default asDetailQueryRoute(
           </div>
         }
         additionalSidebars={{ "Stats": <AssignationStatsSidebar assignation={data.assignation} /> }}
-        object={data.assignation.id}
+        object={data.assignation}
         pageActions={
           <div className="flex gap-2">
             <RekuestAssignation.DetailLink
-              object={data?.assignation?.id || ""}
+              object={data?.assignation}
               subroute="log"
               className="font-semibold"
             >
@@ -343,7 +343,7 @@ export default asDetailQueryRoute(
               </Button>
             </RekuestAssignation.DetailLink>
             <RekuestAssignation.DetailLink
-              object={data?.assignation?.id || ""}
+              object={data?.assignation}
               subroute="timeline"
               className="font-semibold"
             >
@@ -354,8 +354,20 @@ export default asDetailQueryRoute(
                 Timeline
               </Button>
             </RekuestAssignation.DetailLink>
+            <RekuestAssignation.DetailLink
+              object={data?.assignation}
+              subroute="space"
+              className="font-semibold"
+            >
+              <Button
+                variant={"outline"}
+                size={"sm"}
+              >
+                Space
+              </Button>
+            </RekuestAssignation.DetailLink>
             {data.assignation.parent && <RekuestAssignation.DetailLink
-              object={data?.assignation?.parent.id || ""}
+              object={data?.assignation?.parent}
               subroute="log"
               className="font-semibold"
             >
@@ -461,3 +473,6 @@ export default asDetailQueryRoute(
     );
   },
 );
+
+
+export default TPage;

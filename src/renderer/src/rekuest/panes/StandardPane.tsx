@@ -133,9 +133,9 @@ export const NavigationPane = () => {
             </div>
             <div className="flex flex-col items-start gap-4 rounded-lg ml-2 mb-4 text-muted-foreground">
               {pinnedAgents?.agents.map((agent, index) => (
-                <RekuestAgent.Smart object={agent.id} key={index}>
+                <RekuestAgent.Smart object={agent} key={index}>
                   <RekuestAgent.PaneLink
-                    object={agent.id}
+                    object={agent}
                     key={index}
                     className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
                   >
@@ -160,18 +160,15 @@ export const NavigationPane = () => {
         </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           {data?.agents.map((agent, index) => (
-            <RekuestAgent.Smart object={agent.id} key={index}>
+            <RekuestAgent.Smart object={agent} key={index}>
               <div className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary">
                 <RekuestAgent.PaneLink
-                  object={agent.id}
+                  object={agent}
                   key={index}
                   className={"flex flex-row gap-2"}
                 >
                   <CardStackIcon
-                    className="h-4 w-4"
-                    style={{
-                      color: agent.active ? "#00FF00" : "#A9A9A9",
-                    }}
+                    className={"h-4 w-4 " + (agent.active ? "text-primary" : "text-muted-foreground")}
                   />
                   {agent.name}
                   <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
@@ -187,9 +184,9 @@ export const NavigationPane = () => {
             </div>
             <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
               {allDashboards.dashboards.map((dashboard, index) => (
-                <RekuestDashboard.Smart object={dashboard.id} key={index}>
+                <RekuestDashboard.Smart object={dashboard} key={index}>
                   <RekuestDashboard.PaneLink
-                    object={dashboard.id}
+                    object={dashboard}
                     key={index}
                     className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
                   >

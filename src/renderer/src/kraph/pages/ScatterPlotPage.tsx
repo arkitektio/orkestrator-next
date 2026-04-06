@@ -143,11 +143,11 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
 
   return (
     <KraphScatterPlot.ModelPage
-      object={data.scatterPlot.id}
+      object={data.scatterPlot}
       title={data.scatterPlot.label}
       pageActions={
         <div className="flex flex-row gap-2">
-          <KraphGraphQuery.DetailLink object={data.scatterPlot.query.id}>
+          <KraphGraphQuery.DetailLink object={data.scatterPlot.query}>
             <Button variant="outline" size="sm">
               Query
             </Button>
@@ -161,7 +161,7 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
             {data.scatterPlot.label}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
-            <KraphGraphQuery.DetailLink object={data.scatterPlot.query.id}>
+            <KraphGraphQuery.DetailLink object={data.scatterPlot.query}>
               {data.scatterPlot.query.label}
             </KraphGraphQuery.DetailLink>
           </p>

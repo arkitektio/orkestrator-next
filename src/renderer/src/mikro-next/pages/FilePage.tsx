@@ -55,12 +55,12 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
-                <FileIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 rounded-lg bg-primary/10  shadow-sm">
+                <FileIcon className="h-8 w-8 text-primary " />
               </div>
               <div>
                 <CardTitle className="text-2xl font-bold">
-                  <MikroFile.DetailLink object={data.file} className="hover:text-blue-600 transition-colors">
+                  <MikroFile.DetailLink object={data.file}>
                     {data?.file?.name}
                   </MikroFile.DetailLink>
                 </CardTitle>

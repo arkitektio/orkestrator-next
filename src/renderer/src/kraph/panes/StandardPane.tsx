@@ -130,7 +130,7 @@ export const NavigationPane = () => {
                 key={i.id}
               >
                 <KraphEntityCategory.DetailLink
-                  object={i.id}
+                  object={i}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
@@ -148,7 +148,7 @@ export const NavigationPane = () => {
             {data.structureCategories.map((i) => (
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                 <KraphStructureCategory.DetailLink
-                  object={i.id}
+                  object={i}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
@@ -166,7 +166,7 @@ export const NavigationPane = () => {
             {data.relationCategories.map((i) => (
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                 <KraphRelationCategory.DetailLink
-                  object={i.id}
+                  object={i}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
@@ -182,7 +182,7 @@ export const NavigationPane = () => {
               <>
                 <KraphGraphQuery.DetailLink
                   className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4"
-                  object={i.id}
+                  object={i}
                 >
                   {i.name}
                 </KraphGraphQuery.DetailLink>
@@ -217,7 +217,7 @@ export const NavigationPane = () => {
               {data.protocolEventCategories.map((i) => (
                 <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
                   <KraphProtocolEventCategory.DetailLink
-                    object={i.id}
+                    object={i}
                     className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                   >
                     <SparkleIcon className="h-4 w-4" />

@@ -19,6 +19,7 @@ import {
   SmartPaneLinkProps,
 } from "./types";
 import { Object, Identifier } from "@/types";
+import { cn } from "@/lib/utils";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -75,7 +76,7 @@ export const buildModelLink = <T extends Object>(to: string) => {
         {...props}
         to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
         title="Open"
-        className={props.className}
+        className={cn("hover:text-primary transition-colors", props.className)}
       >
         {children}
       </NavLink>

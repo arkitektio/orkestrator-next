@@ -229,11 +229,10 @@ input BeamStateInput {
 type BigFileAccessGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -259,13 +258,12 @@ type BigFileStore {
 type BigFileUploadGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
   originalFileName: String
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -1303,7 +1301,7 @@ input FromArrayLikeInput {
   acquisitionViews: [PartialAcquisitionViewInput!] = null
 
   """The array-like object to create the image from"""
-  array: ArrayLike!
+  array: ImageLike!
 
   """Optional list of channel views"""
   channelViews: [PartialChannelViewInput!] = null
@@ -1641,6 +1639,11 @@ input ImageFilter {
   timepointViews: TimepointViewFilter
   transformationViews: AffineTransformationViewFilter
 }
+
+"""
+The `ImageLike` scalar type represents a reference to an image previously created by the user in a datalayer
+"""
+scalar ImageLike
 
 input ImageOrder {
   createdAt: Ordering
@@ -2176,11 +2179,10 @@ type MaskedPixelInfo {
 type MediaAccessGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -2205,16 +2207,19 @@ type MediaStore {
 type MediaUploadGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
+  originalFileName: String
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
-  store: String
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
 }
 
 type Membership {
@@ -2943,11 +2948,10 @@ type OtherSourceElement implements OpticalElement {
 type ParquetAccessGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -2978,8 +2982,6 @@ type ParquetUploadGrant {
   accessKey: String!
   action: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!
@@ -4180,56 +4182,39 @@ input RenderTreeOrder {
 }
 
 input RequestBigFileAccessInput {
-  storeId: String = null
+  storeId: String!
 }
 
 input RequestBigFileUploadInput {
   contentType: String = null
-  datalayer: String! = "s3"
   fileSize: Int = null
-  host: String = null
   originalFileName: String!
-  port: Int = null
-  protocol: String! = "https"
 }
 
 input RequestMediaAccessInput {
-  storeId: String = null
+  storeId: String!
 }
 
 input RequestMediaUploadInput {
   contentType: String = null
-  datalayer: String! = "s3"
   fileSize: Int = null
-  host: String = null
   originalFileName: String!
-  port: Int = null
-  protocol: String! = "https"
 }
 
 input RequestParquetAccessInput {
-  storeId: String = null
+  storeId: String!
 }
 
 input RequestParquetUploadInput {
-  contentType: String = null
-  datalayer: String! = "s3"
-  host: String = null
-  originalFileName: String!
-  port: Int = null
-  protocol: String! = "https"
+  columns: [String!] = null
 }
 
 input RequestZarrAccessInput {
-  storeId: String = null
+  storeId: String!
 }
 
 input RequestZarrUploadInput {
   chunks: [Int!] = null
-  datalayer: String! = "s3"
-  host: String = null
-  port: Int = null
-  protocol: String! = "https"
   shape: [Int!] = null
   version: String = null
 }
@@ -5029,11 +5014,10 @@ input WellPositionViewInput {
 type ZarrAccessGrant {
   accessKey: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   path: String!
+  region: String!
   secretKey: String!
   sessionToken: String!
   status: String!
@@ -5072,8 +5056,6 @@ type ZarrUploadGrant {
   accessKey: String!
   action: String!
   bucket: String!
-  datalayer: String!
-  endpoint: String!
   expiresIn: Int!
   key: String!
   maxBytes: Int!

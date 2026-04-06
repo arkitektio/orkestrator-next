@@ -12,6 +12,6 @@ mutation UpdateGraphTableQuery($input: UpdateGraphTableQueryInput!) {
 
 
 
-mutation DeleteGraphTableQuery($id: String!) {
+mutation DeleteGraphTableQuery($id: ID!) {
   deleteGraphTableQuery(input: { id: $id })
 }

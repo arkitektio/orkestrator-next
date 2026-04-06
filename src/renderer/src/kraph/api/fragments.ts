@@ -86,6 +86,7 @@
       "ProtocolEvent"
     ],
     "_Entity": [
+      "BigFileStore",
       "CategoryTag",
       "EdgePairsQuery",
       "EdgePathQuery",
@@ -110,7 +111,8 @@
       "RelationCategory",
       "ScatterPlot",
       "StructureCategory",
-      "StructureRelationCategory"
+      "StructureRelationCategory",
+      "ZarrStore"
     ]
   }
 };

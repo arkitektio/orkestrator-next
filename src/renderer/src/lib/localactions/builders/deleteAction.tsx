@@ -58,7 +58,7 @@ export const buildDeleteAction = <
       await service.mutate({
         mutation: params.mutation,
         variables: {
-          id: state.left[i].object,
+          id: state.left[i].object.id,
         },
       });
 
@@ -68,7 +68,7 @@ export const buildDeleteAction = <
           service.cache.evict({
             id: service.cache.identify({
               __typename: typename,
-              id: state.left[i].object,
+              id: state.left[i].object.id,
             }),
           });
         }
@@ -78,7 +78,7 @@ export const buildDeleteAction = <
         service.cache.evict({
           id: service.cache.identify({
             __typename: params.typename,
-            id: state.left[i].object,
+            id: state.left[i].object.id,
           }),
         });
       }

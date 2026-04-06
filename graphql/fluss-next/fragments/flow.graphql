@@ -3,26 +3,22 @@
 fragment BaseGraphNode on GraphNode {
   __typename
   ins {
-    ...FlussPort
+    ...FlussArgPort
   }
   outs {
-    ...FlussPort
+    ...FlussReturnPort
   }
   constants {
-    ...FlussPort
+    ...FlussArgPort
   }
   voids {
-    ...FlussPort
+    ...FlussArgPort
   }
   globalsMap
   constantsMap
   title
   description
   kind
-}
-
-fragment FlussBinds on Binds {
-  implementations
 }
 
 fragment RetriableNode on RetriableNode {
@@ -38,9 +34,6 @@ fragment RekuestActionNode on RekuestActionNode {
   hash
   mapStrategy
   allowLocalExecution
-  binds {
-    ...FlussBinds
-  }
   actionKind
 }
 
@@ -143,7 +136,7 @@ fragment StreamItem on StreamItem {
 fragment GlobalArg on GlobalArg {
   key
   port {
-    ...FlussPort
+    ...FlussArgPort
   }
 }
 

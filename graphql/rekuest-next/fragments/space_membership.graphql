@@ -1,0 +1,12 @@
+fragment SpaceMembership on SpaceMembership {
+  id
+  name
+  affineMatrix
+}
+
+
+fragment ListSpaceMembership on SpaceMembership {
+  id
+  name
+  affineMatrix
+}

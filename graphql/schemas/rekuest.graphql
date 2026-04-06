@@ -474,6 +474,7 @@ type AgentScene {
   createdAt: DateTime!
   id: ID!
   model: ThreeDModel!
+  name: String!
   transferFunction: String!
   updatedAt: DateTime!
 }
@@ -493,6 +494,9 @@ input AgentSceneFilter {
 
   """Filter by 3D model"""
   model: ID
+
+  """Filter by 3D model"""
+  search: String
 }
 
 input AgentSceneOrder {
@@ -533,7 +537,7 @@ type ArgPort {
   kind: PortKind!
   label: String
   nullable: Boolean!
-  provides: [Provides!]
+  requires: [Requires!]
   validators: [Validator!]
   widget: AssignWidget
 }
@@ -2572,6 +2576,12 @@ input RequestMediaUploadInput {
   originalFileName: String!
 }
 
+type Requires {
+  key: String!
+  operator: RequiresOperator!
+  value: Arg!
+}
+
 input RequiresInput {
   key: String!
   operator: RequiresOperator!
@@ -2669,7 +2679,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "08718488-9cbb-4077-b4ed-e89d4ce7499d"
+  reference: String = "0a931ac5-825a-4fbe-b9ae-f3de310ace49"
   title: String = null
 }
 
@@ -3045,10 +3055,13 @@ input SpaceFilter {
 """A membership of an agent scene in a space."""
 type SpaceMembership {
   affineMatrix: Args
-  agentScene: AgentScene!
   id: ID!
   model: String
+
+  """Get the agent associated with this membership through the scene."""
+  name: String!
   role: String!
+  scene: AgentScene!
   space: Space!
 }
 
@@ -3064,6 +3077,9 @@ input SpaceMembershipFilter {
 
   """Filter by IDs"""
   ids: [ID!]
+
+  """Search by name"""
+  search: String
 
   """Filter by space"""
   space: ID

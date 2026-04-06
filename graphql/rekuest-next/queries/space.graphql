@@ -1,0 +1,26 @@
+query Spaces(
+  $pagination: OffsetPaginationInput
+  $filters: SpaceFilter
+  $order: SpaceOrder
+) {
+  spaces(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListSpace
+  }
+}
+
+query Space($id: ID!) {
+  space(id: $id) {
+    ...Space
+  }
+}
+
+
+query SpaceOptions($search: String, $values: [ID!]) {
+  options: spaces(
+    filters: { search: $search, ids: $values}
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

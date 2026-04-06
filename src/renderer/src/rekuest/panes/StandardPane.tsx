@@ -97,11 +97,11 @@ export const NavigationPane = () => {
             Toolboxes
           </PaneLink>
           <PaneLink
-            to="/rekuest/structurepackages"
+            to="/rekuest/spaces"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
-            Structure Packages
+            Spaces
           </PaneLink>
           <PaneLink
             to="/rekuest/dashboards"

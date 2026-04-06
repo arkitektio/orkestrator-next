@@ -513,3 +513,10 @@ export const KabinetFlavour = buildSmart(
   "@kabinet/flavour",
   "kabinet/flavours",
 );
+
+
+export const RekuestSpace = buildSmart("@rekuest/space", "rekuest/spaces");
+export const RekuestAgentScene = buildSmart(
+  "@rekuest/agentscene",
+  "rekuest/agentscenes",
+);

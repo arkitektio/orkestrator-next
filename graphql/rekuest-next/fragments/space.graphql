@@ -1,0 +1,20 @@
+fragment Space on Space {
+  id
+  name
+  memberships {
+    affineMatrix
+    scene {
+      model {
+        file {
+          ...MediaStore
+        }
+      }
+    }
+  }
+}
+
+
+fragment ListSpace on Space {
+  id
+  name
+}

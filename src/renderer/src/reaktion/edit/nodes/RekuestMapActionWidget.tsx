@@ -1,11 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -19,7 +13,6 @@ import {
   useActionDescription,
 } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
-import { RekuestMapActionNodeFragment } from "@/reaktion/api/graphql";
 import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
@@ -27,46 +20,15 @@ import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
 import {
-  PortFragment,
+  ArgPortFragment,
   useImplementationQuery,
-  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
-import React, { useCallback } from "react";
-import { TbBurger } from "react-icons/tb";
+import React from "react";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
 export const DeviceSelector = (props) => { };
 
-const TemplateSelector = (props: {
-  data: RekuestMapActionNodeFragment;
-  bind: (x: string) => void;
-}) => {
-  const { data } = useImplementationsQuery({
-    variables: {
-      filters: {
-        actionHash: props.data.hash,
-      },
-    },
-  });
-
-  const templates = data?.implementations || [];
-
-  return (
-    <div>
-      {templates.map((template) => (
-        <Button
-          key={template.id}
-          onClick={() => props.bind(template.id)}
-          data-active={props.data.binds.implementations.includes(template.id) && true}
-          className=" hover:bg-green-300 data-[active=true]:bg-green-300"
-        >
-          {template.interface}
-        </Button>
-      ))}
-    </div>
-  );
-};
 
 export const TemplateTag = (props: { template: string }) => {
   const { data } = useImplementationQuery({
@@ -100,7 +62,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     moveStreamToConstants(id, stream_index, onposition);
   };
 
-  const onToArg = (port: PortFragment) => {
+  const onToArg = (port: ArgPortFragment) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;
@@ -108,7 +70,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     moveConstantToStream(id, index, 0);
   };
 
-  const onToGlobal = (port: PortFragment, key?: string | undefined) => {
+  const onToGlobal = (port: ArgPortFragment, key?: string | undefined) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;
@@ -116,27 +78,6 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     moveConstantToGlobals(id, index, key);
   };
 
-  const bind = useCallback(
-    (template: string) => {
-      if (data.binds?.implementations.includes(template)) {
-        updateData(
-          {
-            binds: {
-              templates: data.binds.implementations.filter((x) => x !== template),
-            },
-          },
-          id,
-        );
-        return;
-      } else {
-        updateData(
-          { binds: { templates: [...data.binds.implementations, template] } },
-          id,
-        );
-      }
-    },
-    [id, updateData],
-  );
 
   const errors = useEditNodeErrors(id);
 
@@ -145,8 +86,6 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     variables: data.constantsMap,
   });
 
-  const bound =
-    data.binds?.implementations.length == 1 ? data.binds.implementations[0] : undefined;
 
   return (
     <NodeShowLayout
@@ -164,14 +103,9 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
       }
     >
       {ins.map((s, index) => (
-        <InStream stream={s} id={index} length={ins.length} />
+        <InStream stream={s} id={index} length={ins.length} key={index} />
       ))}
 
-      <div className="absolute top-0 left-[50%] translate-y-[-100%] translate-x-[-50%] opacity-0 group-hover:opacity-100">
-        {data.binds?.implementations.map((template) => (
-          <TemplateTag template={template} key={template.id} />
-        ))}
-      </div>
 
 
 
@@ -180,15 +114,6 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
           <div className="flex justify-between">
             {data?.title}
             <div className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
-              <Popover>
-                <PopoverTrigger className="mr-2">
-                  <TbBurger />
-                </PopoverTrigger>
-                <PopoverContent className="border-gray-200 ">
-                  <TemplateSelector data={data} bind={bind} />
-                </PopoverContent>
-              </Popover>
-
               <Sheet>
                 <SheetTrigger>
                   <GearIcon />
@@ -222,7 +147,6 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
                           onToGlobal={onToGlobal}
                           onSubmit={(values) => updateData({ constantsMap: values }, id)}
                           path={[]}
-                          bound={bound}
                         />
                       </div>
                     </SheetDescription>
@@ -261,13 +185,12 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
               onToGlobal={onToGlobal}
               onSubmit={(values) => updateData({ constantsMap: values }, id)}
               path={[]}
-              bound={bound}
             />
           </div>
         )}
       </CardHeader>
       {outs.map((s, index) => (
-        <OutStream stream={s} id={index} length={outs.length} />
+        <OutStream stream={s} id={index} length={outs.length} key={index} />
       ))}
     </NodeShowLayout>
   );

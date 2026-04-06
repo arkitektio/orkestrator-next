@@ -1,8 +1,10 @@
-import { PortFragment, PortKind } from "@/rekuest/api/graphql";
+import { GeneralPort, PortKind } from "../types";
+
+
 
 export const isSameStream = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -14,8 +16,8 @@ export const isSameStream = (
 };
 
 export const islistTransformable = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -31,8 +33,8 @@ export const islistTransformable = (
 };
 
 export const isFloatTransformable = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -45,8 +47,8 @@ export const isFloatTransformable = (
 };
 
 export const isIntTransformable = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -59,8 +61,8 @@ export const isIntTransformable = (
 };
 
 export const isChunkTransformable = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -76,8 +78,8 @@ export const isChunkTransformable = (
 };
 
 export const isNullTransformable = (
-  challenging: PortFragment[] | undefined,
-  having: PortFragment[] | undefined,
+  challenging: GeneralPort[] | undefined,
+  having: GeneralPort[] | undefined,
 ): boolean => {
   if (challenging == undefined || having == undefined) return false;
   if (challenging.length != having.length) return false;
@@ -94,17 +96,17 @@ export const isNullTransformable = (
 };
 
 export const withNewStream = (
-  oldStreams: PortFragment[][],
+  oldStreams: GeneralPort[][],
   streamIndex: number,
-  newStream: PortFragment[],
-): PortFragment[][] => {
+  newStream: GeneralPort[],
+): GeneralPort[][] => {
   const newStreams = [...oldStreams];
   newStreams[streamIndex] = newStream;
   return newStreams;
 };
 
-export const reduceStream = (streams: PortFragment[][]): PortFragment[] => {
-  let reduced: PortFragment[] = [];
+export const reduceStream = (streams: GeneralPort[][]): GeneralPort[] => {
+  let reduced: GeneralPort[] = [];
   for (const stream of streams) {
     reduced = reduced.concat(stream);
   }

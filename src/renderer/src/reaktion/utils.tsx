@@ -1,25 +1,21 @@
 import {
-  FlussBindsFragment as BindsFragment,
-  BindsInput,
-  FlussChildPortFragment as ChildPortFragment,
   FlowFragment,
   GlobalArgInput,
   GraphNodeFragment,
   GraphNodeKind,
-  FlussPortFragment as PortFragment,
   PortKind,
-  ReactiveImplementationFragment,
   ReactiveNodeFragment,
-  RekuestActionNodeFragment,
+  ReactiveTemplateFragment,
   RekuestMapActionNodeFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import {
   ActionDemandInput,
   ActionKind,
-  AgentDependencyInput,
   DefinitionInput,
-  DependencyInput,
+  AgentDependencyInput,
+  ArgPortFragment,
+  ArgChildPortFragment,
 } from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
@@ -30,12 +26,13 @@ import {
   EdgeInput,
   FlowEdge,
   FlowNode,
+  GeneralPort,
   GlobalFragment,
   GlobalInput,
   NodeInput,
   StreamItemFragment,
 } from "./types";
-import { d } from "node_modules/@platejs/basic-nodes/dist/BaseHeadingPlugin-nWtdPomn";
+
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
@@ -119,14 +116,14 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
 };
 
 export const flowNodeToInput = (
-  node: FlowNode<GraphNodeFragment & { binds?: BindsFragment }>,
+  node: FlowNode<GraphNodeFragment>,
 ): NodeInput => {
   const {
     id,
     type,
     position,
     parentId,
-    data: { outs, constants, ins, binds, voids, ...rest },
+    data: { outs, constants, ins, voids, ...rest },
   } = node;
   try {
 
@@ -140,7 +137,6 @@ export const flowNodeToInput = (
       id,
       position: { x: position.x, y: position.y },
       parentNode: parentId ? parentId : undefined,
-      binds: binds && bindsToInput(binds),
       ...rest,
     };
 
@@ -162,10 +158,6 @@ export const streamItemToInput = (
 ): StreamItemInput => {
   const { __typename, ...rest } = node;
   return { ...rest };
-};
-
-export const bindsToInput = (node: BindsFragment): BindsInput => {
-  return { implementations: node.implementations.map(implementation => implementation) || [], clients: [] };
 };
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
@@ -201,7 +193,7 @@ export const globals_to_inputglobals = (
 };
 
 export const reactiveTemplateToFlowNode = (
-  node: ReactiveImplementationFragment,
+  node: ReactiveTemplateFragment,
   position: { x: number; y: number },
 ): FlowNode<ReactiveNodeFragment> => {
   const nodeId = "reactive-" + uuidv4();
@@ -229,9 +221,9 @@ export const reactiveTemplateToFlowNode = (
 };
 
 export const listPortToSingle = (
-  port: PortFragment,
+  port: ArgPortFragment,
   key: string,
-): PortFragment => {
+): ArgPortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
   const listChild = port.children?.at(0);
   if (!listChild) throw new Error("Port has no children");
@@ -240,18 +232,18 @@ export const listPortToSingle = (
   return {
     ...rest,
     key: key,
-    __typename: "Port",
-    children: children as ChildPortFragment[] | undefined,
+    __typename: "ArgPort",
+    children: children as ArgChildPortFragment[] | undefined,
   };
 };
 
-export const singleToList = (port: PortFragment): PortFragment => {
+export const singleToList = (port: ArgPortFragment): ArgPortFragment => {
 
   return {
     nullable: false,
     kind: PortKind.List,
     key: port.key,
-    __typename: "Port",
+    __typename: "ArgPort",
     children: [{ ...port, key: "0" }],
   };
 };
@@ -267,7 +259,7 @@ export const handleToStream = (handle: string | undefined | null) => {
 };
 
 export const portToReadble = (
-  port: PortFragment | ChildPortFragment | undefined | null,
+  port: GeneralPort | undefined | null,
   withLocalDisclaimer: boolean,
 ): string => {
   if (!port) return "undefined";
@@ -278,7 +270,7 @@ export const portToReadble = (
     answer +=
       "[ " +
       portToReadble(
-        port.children?.at(0) as ChildPortFragment,
+        port.children?.at(0) as GeneralPort,
         withLocalDisclaimer,
       ) +
       " ]";
@@ -288,7 +280,7 @@ export const portToReadble = (
     answer +=
       "{ " +
       portToReadble(
-        port.children?.at(0) as ChildPortFragment,
+        port.children?.at(0) as GeneralPort,
         withLocalDisclaimer,
       ) +
       " }";
@@ -313,7 +305,7 @@ export const portToReadble = (
   if (port.kind == PortKind.Union) {
     if (!port.children) throw new Error("Union has no variants");
     answer += port.children
-      .map((p) => portToReadble(p as ChildPortFragment, withLocalDisclaimer))
+      .map((p) => portToReadble(p as ArgChildPortFragment, withLocalDisclaimer))
       .join(" | ");
   }
 
@@ -333,7 +325,7 @@ export const portToReadble = (
 };
 
 export const streamToReadable = (
-  stream: PortFragment[] | undefined,
+  stream: GeneralPort[] | undefined,
   withLocalDisclaimer?: boolean,
 ): string => {
   if (!stream) return "undefinedStream";
@@ -343,9 +335,9 @@ export const streamToReadable = (
 };
 
 export const streamToReactNode = (
-  stream: PortFragment[] | undefined,
+  stream: GeneralPort[] | undefined,
   withLocalDisclaimer?: boolean,
-): JSX.Element => {
+) => {
   if (!stream)
     return <div className="text-red-400 stream-edge">undefinedStream</div>;
   return (
@@ -354,7 +346,7 @@ export const streamToReactNode = (
         <div className="font-bold">Event</div>
       ) : (
         stream.map((p) => (
-          <div className="flex-1">
+          <div className="flex-1" key={p.key}>
             {portToReadble(p, withLocalDisclaimer == true)}
           </div>
         ))
@@ -416,7 +408,7 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
   };
 };
 
-export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
+export const flowToDependencies = (flow: FlowFragment): AgentDependencyInput[] => {
   const dependencies =
     flow.graph?.nodes
       ?.filter(
@@ -435,7 +427,7 @@ export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
           actionDemands: actionDefintions,
           autoResolvable: node.autoResolvable || false,
 
-        } as DependencyInput
+        } as AgentDependencyInput
 
         }) || [];
 

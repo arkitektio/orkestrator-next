@@ -45,7 +45,6 @@ export const ReservationPage = asDetailQueryRoute(
             <DetailPaneDescription>
               {data?.reservation?.action?.description}
 
-              {JSON.stringify(data?.reservation?.binds)}
             </DetailPaneDescription>
           </DetailPaneHeader>
 

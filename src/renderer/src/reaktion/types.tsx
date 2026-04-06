@@ -2,7 +2,6 @@ import {
   ArgNodeFragment,
   BaseGraphEdgeFragment,
   BaseGraphNodeFragment,
-  FlussPortFragment,
   StreamItemFragment as FlussStreamItemFragment,
   GlobalArg,
   GlobalArgFragment,
@@ -12,6 +11,7 @@ import {
   GraphFragment,
   GraphNodeFragment,
   GraphNodeInput,
+  PortKind as FlussPortKind,
   LoggingEdgeFragment,
   ReactiveNodeFragment,
   RekuestFilterActionNodeFragment,
@@ -19,6 +19,10 @@ import {
   ReturnNodeFragment,
   VanillaEdgeFragment,
   AgentSubFlowNodeFragment,
+  FlussArgPortFragment,
+  FlussReturnPortFragment,
+  FlussArgChildPortFragment,
+  FlussReturnChildPortFragment,
 } from "@/reaktion/api/graphql";
 import {
   Connection,
@@ -37,6 +41,20 @@ export type RekuestMapNodeData = DataEnhancer<RekuestMapActionNodeFragment>;
 export type RekuestFilterNodeData = DataEnhancer<RekuestFilterActionNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 export type AgentSubFlowNodeData = DataEnhancer<AgentSubFlowNodeFragment>;
+
+
+export type GeneralPort = FlussArgPortFragment | FlussReturnPortFragment | FlussArgChildPortFragment | FlussReturnChildPortFragment
+export type ArgPort = FlussArgPortFragment;
+export type ReturnPort = FlussReturnPortFragment;
+export const PortKind = FlussPortKind
+
+
+
+
+
+
+
+
 
 export type NodeData =
   | ArgNodeData

@@ -62,24 +62,23 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     }
   }, [settings?.darkMode]);
 
+  // NEW: OKLCH Master Controls
+  // Note: Setting these inline on the documentElement will override the
+  // default light/dark mode root hues specified in your CSS file, which
+  // is standard behavior for user-selected custom themes.
   useEffect(() => {
-    if (settings?.colorScheme) {
-      document.documentElement.classList.remove(
-        "theme-green",
-        "theme-blue",
-        "theme-red",
-      );
-      document.documentElement.classList.add(`theme-${settings.colorScheme}`);
+    if (settings?.brandHue !== undefined) {
+      document.documentElement.style.setProperty("--brand-hue", settings.brandHue.toString());
+    } else {
+      document.documentElement.style.removeProperty("--brand-hue");
     }
-  }, [settings?.colorScheme]);
 
-  useEffect(() => {
-    if (settings?.primaryColor) {
-      document.documentElement.style.setProperty("--primary", settings.primaryColor);
-      document.documentElement.style.setProperty("--sidebar-primary", settings.primaryColor);
-      // We might want to set derived colors too, but let's start with this
+    if (settings?.brandChroma !== undefined) {
+      document.documentElement.style.setProperty("--brand-chroma", settings.brandChroma.toString());
+    } else {
+      document.documentElement.style.removeProperty("--brand-chroma");
     }
-  }, [settings?.primaryColor]);
+  }, [settings?.brandHue, settings?.brandChroma]);
 
   useEffect(() => {
     // Apply zoom level when settings change (debounced)
@@ -122,7 +121,7 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     };
 
     loadValidateSettings();
-  }, [applyZoomLevel]);
+  }, [applyZoomLevel, defaultSettings]);
 
   // Cleanup debounce timeout on unmount
   useEffect(() => {

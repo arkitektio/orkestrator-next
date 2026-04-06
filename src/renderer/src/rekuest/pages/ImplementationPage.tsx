@@ -15,8 +15,7 @@ import {
   WatchImplementationDocument,
   WatchImplementationSubscription,
   WatchImplementationSubscriptionVariables,
-  useAutoResolveMutation,
-  useImplementationQuery,
+  useImplementationQuery
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
@@ -30,7 +29,6 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { format } from "path";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({

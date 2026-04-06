@@ -10,6 +10,8 @@ import AssignationList from "@/rekuest/components/lists/AssignationList";
 import ReservationList from "@/rekuest/components/lists/ReservationList";
 import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database, Podcast } from "lucide-react";
 
 
 
@@ -155,11 +157,24 @@ const Page = () => {
 
   return (
     <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
+      <div className="space-y-8 p-3">
+      <CardHeader>
+
+              <CardTitle className="text-3xl flex items-center gap-3">
+                <Podcast   className="h-8 w-8 text-primary" />
+                Your Apps
+              </CardTitle>
+              <CardDescription className="text-lg">
+                Overview of your applications and their activity. Filter by user, app, or device to find specific insights.
+              </CardDescription>
+            </CardHeader>
+
       <ActionList />
 
       <ReservationList />
       <AssignationList />
       <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} />
+      </div>
     </PageLayout>
   );
 };

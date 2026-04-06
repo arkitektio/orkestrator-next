@@ -16,7 +16,7 @@ const TheCard = ({ item }: Props) => {
       <Card
         className={cn(
           "aspect-square flex flex-col",
-          item.active && "dark:border-green-300 border ",
+          item.active && "dark:border-primary border ",
         )}
       >
         <CardHeader className="flex-grow">

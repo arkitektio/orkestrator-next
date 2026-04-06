@@ -64,7 +64,7 @@ export const ReturnsContainer =  ({
                 {port.label || port.key}
               </label>
             )}
-            <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
+            <div className="flex-grow bg-background rounded rounded-md ">
               <EffectWrapper
                 effects={port.effects || []}
                 port={port}

@@ -1,6 +1,6 @@
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
-import { CommandItem } from "@/components/ui/command";
+import { CommandItem, CommandList } from "@/components/ui/command";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -513,14 +513,12 @@ export const ApplicableBatchActions = (props: PassDownProps) => {
   }
 
   return (
-    <CommandItem asChild value="batch-actions-group" className="hidden">
-      <div>
-        <div className="font-light text-xs w-full items-center ml-2 w-full">Batch ..</div>
+    <>
+    <div className="font-light text-xs w-full items-center ml-2 w-full">Batch ..</div>
         {data.actions.map((action) => (
           <BatchAssignButton action={action} {...props} key={action.id} />
         ))}
-      </div>
-    </CommandItem>
+        </>
   );
 };
 

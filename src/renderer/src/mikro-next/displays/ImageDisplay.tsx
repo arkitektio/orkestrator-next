@@ -11,9 +11,13 @@ export const ImageDisplay = (props: DisplayWidgetProps) => {
   });
 
   const defaultContext = data?.image?.rgbContexts.at(0);
+  if (!data?.image) {
+    return <div>Image not found</div>;
+  }
+
 
   return (
-    <MikroImage.DetailLink object={props.object}>
+    <MikroImage.DetailLink object={data?.image}>
       <div className="w-full h-full">
         {defaultContext && <FinalRender context={defaultContext} rois={[]} hideControls={true} />}
       </div>

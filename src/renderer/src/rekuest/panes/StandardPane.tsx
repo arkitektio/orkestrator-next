@@ -168,10 +168,7 @@ export const NavigationPane = () => {
                   className={"flex flex-row gap-2"}
                 >
                   <CardStackIcon
-                    className="h-4 w-4"
-                    style={{
-                      color: agent.active ? "#00FF00" : "#A9A9A9",
-                    }}
+                    className={"h-4 w-4 " + (agent.active ? "text-primary" : "text-muted-foreground")}
                   />
                   {agent.name}
                   <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />

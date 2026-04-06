@@ -3,8 +3,6 @@ import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent, RekuestState } from "@/linkers";
@@ -17,7 +15,7 @@ import {
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { Activity, Box, CheckCircle, Clock, Pin, PinOff, Server } from "lucide-react";
+import { Pin, PinOff, Server } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";

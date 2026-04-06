@@ -25,7 +25,7 @@ import ScenesPage from "./pages/ScenesPage";
 import ScenePage from "./pages/ScenePage";
 import StandardPane from "./panes/StandardPane";
 
-export const MikroNextModule: React.FC<Props> = (props) => {
+export const MikroNextModule = () => {
   return (
     <Guard.Mikro fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>

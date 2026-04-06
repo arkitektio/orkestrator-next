@@ -34,7 +34,7 @@ export const SmartModel = ({
       cn(
         props.className,
         "group @container relative z-10 cursor-pointer",
-        "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:rounded",
+        "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:ring-primary/80 selected:rounded",
         "b-selected:ring b-selected:ring-2 b-selected:rounded b-selected:ring-red-500",
         "dragging:animate-pulse dragging:ring-2 dragging:ring-gray-600 dragging:rounded dragging:rounded-md",
         "over:shadow-xl over:ring-2 over:border-gray-200 over:ring over:rounded over:rounded-md",

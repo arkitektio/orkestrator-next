@@ -14,6 +14,7 @@ import { FileQuestion, Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { BsCaretLeft, BsCaretRight } from "react-icons/bs";
 import { Refetcher } from "../ui/refetcher";
+import { Card } from "../ui/card";
 
 // --- Types ---
 
@@ -252,10 +253,13 @@ export const createSubscribingList = <
     if (error) {
       return (
         <ListLayout.Root>
-          <div className="p-4 text-red-500 border border-red-200 rounded bg-red-50">
-            <div className="font-bold">Error loading data</div>
-            <div className="text-sm">{error.message}</div>
-          </div>
+          <Card className="p-3  rounded-md">
+            <div className="font-bold text-xs">Error loading data for {title}</div>
+            <pre className="text-sm">{error.message}</pre>
+            <Button variant="outline" className="max-w-sm" onClick={() => refetch()}>
+              Try Again
+            </Button>
+          </Card>
         </ListLayout.Root>
       );
     }

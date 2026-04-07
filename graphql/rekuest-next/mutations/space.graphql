@@ -5,42 +5,28 @@ mutation CreateSpace($input: CreateSpaceInput!) {
 }
 
 
-mutation CreateSpaceMembership($input: CreateSpaceMembershipInput!) {
-  createSpaceMembership(input: $input) {
+mutation CreatePlacement($input: CreatePlacementInput!) {
+  createPlacement(input: $input) {
     id
     affineMatrix
-    scene {
-      model {
-        file {
-          ...MediaStore
-        }
-      }
-    }
-  }
-}
-
-mutation UpdateSpaceMembership( $input: UpdateSpaceMembershipInput!) {
-  updateSpaceMembership(input: $input) {
-    id
-    affineMatrix
-    scene {
-      model {
-        file {
-          ...MediaStore
-        }
-      }
-    }
-  }
-}
-
-
-mutation CreateAgentScene($input: CreateAgentSceneInput!) {
-  createAgentScene(input: $input) {
     model {
-      id
-      file {
-        ...MediaStore
+        file {
+          ...MediaStore
+        }
       }
     }
+}
+
+mutation UpdatePlacement( $input: UpdatePlacementInput!) {
+  updatePlacement(input: $input) {
+    id
+    affineMatrix
+      model {
+        file {
+          ...MediaStore
+        }
+      }
+
   }
 }
+

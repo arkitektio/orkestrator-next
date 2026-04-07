@@ -1,4 +1,4 @@
-import { useDatalayerEndpoint, useSeaweedfs } from "@/app/Arkitekt";
+import { useDatalayerEndpoint } from "@/app/Arkitekt";
 import { useCallback } from "react";
 
 const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
@@ -16,7 +16,7 @@ const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
 };
 
 export const useKraphMediaResolve = () => {
-  const endpoint = useSeaweedfs();
+  const endpoint = useDatalayerEndpoint();
 
   const s3resolve = useCallback(
     (key: string | undefined) => {

@@ -1,25 +1,15 @@
 import {
   useDatalayerEndpoint,
-  useKraph,
-  useMikro,
-  useSeaweedfs
+  useMikro
 } from "@/app/Arkitekt";
 import {
   BigFileUploadGrantFragment,
   FinishBigfileUploadDocument,
   FinishBigfileUploadMutation,
   FinishBigfileUploadMutationVariables,
-  FinishMediaUploadDocument,
-  FinishMediaUploadMutation,
-  FinishMediaUploadMutationVariables,
-  MediaUploadGrantFragment,
   RequestBigfileUploadDocument,
-  RequestBigFileUploadInput,
   RequestBigfileUploadMutation,
-  RequestBigfileUploadMutationVariables,
-  RequestMediaUploadDocument,
-  RequestMediaUploadMutation,
-  RequestMediaUploadMutationVariables,
+  RequestBigfileUploadMutationVariables
 } from "@/mikro-next/api/graphql";
 import { useCallback } from "react";
 

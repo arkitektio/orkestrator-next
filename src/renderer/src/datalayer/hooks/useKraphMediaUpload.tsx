@@ -1,7 +1,6 @@
 import {
   useDatalayerEndpoint,
-  useKraph,
-  useSeaweedfs
+  useKraph
 } from "@/app/Arkitekt";
 import {
   MediaUploadGrantFragment,
@@ -110,11 +109,11 @@ const uploadToStore = async (
 
 export const useKraphMediaUpload = () => {
   const client = useKraph();
-  const datalayerEndpoint = useSeaweedfs();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
-      if (!client) {
+      if (!client || !datalayerEndpoint) {
         throw Error("No client configured");
       }
 

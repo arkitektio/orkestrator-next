@@ -204,13 +204,13 @@ export type ActionDemandInput = {
  *     create a dependency graph for your implementations and actions
  */
 export type ActionDependencyInput = {
+  actionKey?: InputMaybe<Scalars['String']['input']>;
   allowInactive?: InputMaybe<Scalars['Boolean']['input']>;
+  app?: InputMaybe<Scalars['String']['input']>;
   argMatches?: InputMaybe<Array<PortMatchInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   forceArgLength?: InputMaybe<Scalars['Int']['input']>;
   forceReturnLength?: InputMaybe<Scalars['Int']['input']>;
-  /** The hash of the action. This is used to identify the action in the system. */
-  hash?: InputMaybe<Scalars['ActionHash']['input']>;
   key: Scalars['String']['input'];
   /** The name of the action. This is used to identify the action in the system. */
   name?: InputMaybe<Scalars['String']['input']>;
@@ -373,12 +373,12 @@ export type Agent = {
   name: Scalars['String']['output'];
   /** Check if this agent is pinned by the current user. */
   pinned: Scalars['Boolean']['output'];
+  /** Placements associated with this agent. */
+  placements: Array<Placement>;
   /** Registry entry this agent belongs to. */
   registry: Registry;
   /** The release this agent belongs to. */
   release: Release;
-  /** Scenes associated with this agent. */
-  scenes: Array<AgentScene>;
   /** Sessions associated with this agent. */
   sessions: Array<Session>;
   /** Current and historical states associated with the agent. */
@@ -425,9 +425,9 @@ export type AgentImplementationsArgs = {
 
 
 /** Represents a compute agent that can execute implementations. */
-export type AgentScenesArgs = {
-  filters?: InputMaybe<AgentSceneFilter>;
-  order?: InputMaybe<AgentSceneOrder>;
+export type AgentPlacementsArgs = {
+  filters?: InputMaybe<PlacementFilter>;
+  order?: InputMaybe<PlacementOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -465,6 +465,7 @@ export type AgentDependencyInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   optional?: Scalars['Boolean']['input'];
   preferedInstances?: InputMaybe<Scalars['Int']['input']>;
+  stateDemands?: InputMaybe<Array<StateDependencyInput>>;
   version?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -524,39 +525,6 @@ export enum AgentKind {
 
 export type AgentOrder = {
   lastSeen?: InputMaybe<Ordering>;
-};
-
-/** A scene linking an agent to a 3D model. */
-export type AgentScene = {
-  __typename?: 'AgentScene';
-  agent: Agent;
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  model: ThreeDModel;
-  name: Scalars['String']['output'];
-  transferFunction: Scalars['String']['output'];
-  updatedAt: Scalars['DateTime']['output'];
-};
-
-/** A way to filter agent scenes */
-export type AgentSceneFilter = {
-  AND?: InputMaybe<AgentSceneFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<AgentSceneFilter>;
-  OR?: InputMaybe<AgentSceneFilter>;
-  /** Filter by agent */
-  agent?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Filter by 3D model */
-  model?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by 3D model */
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AgentSceneOrder = {
-  createdAt?: InputMaybe<Ordering>;
-  updatedAt?: InputMaybe<Ordering>;
 };
 
 /** Profile information for a user. */
@@ -1097,13 +1065,6 @@ export type CollectionActionsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** The input for creating an agent scene. */
-export type CreateAgentSceneInput = {
-  agentId: Scalars['ID']['input'];
-  modelId: Scalars['ID']['input'];
-  transferFunction: Scalars['String']['input'];
-};
-
 /** The input for creating a blok. */
 export type CreateBlokInput = {
   /** The action demands of the blok. This is used to identify the blok in the system. */
@@ -1139,6 +1100,15 @@ export type CreateImplementationInput = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
+/** The input for creating a placement. */
+export type CreatePlacementInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  model?: InputMaybe<Scalars['ID']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
+  space: Scalars['String']['input'];
+};
+
 /** The input for creating a resolution. */
 export type CreateResolutionInput = {
   /** The implementation ID of the resolution. This is used to identify the resolution in the system. */
@@ -1164,14 +1134,8 @@ export type CreateShortcutInput = {
 
 /** The input for creating a space. */
 export type CreateSpaceInput = {
-  key: Scalars['String']['input'];
   name: Scalars['String']['input'];
-};
-
-/** The input for creating a space membership. */
-export type CreateSpaceMembershipInput = {
-  agentId: Scalars['String']['input'];
-  spaceId: Scalars['String']['input'];
+  placements?: InputMaybe<Array<PlacementInput>>;
 };
 
 /** The input for creating a state schema. */
@@ -1196,9 +1160,11 @@ export type CreateTestResultInput = {
 
 /** The input for creating a 3D model. */
 export type CreateThreeDModelInput = {
+  dependency?: InputMaybe<AgentDependencyInput>;
   description?: InputMaybe<Scalars['String']['input']>;
   media: Scalars['MediaLike']['input'];
   name: Scalars['String']['input'];
+  transferFunction?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for creating a toolbox. */
@@ -1291,14 +1257,14 @@ export type DeleteAgentInput = {
   id: Scalars['ID']['input'];
 };
 
-/** The input for deleting an agent scene. */
-export type DeleteAgentSceneInput = {
-  id: Scalars['ID']['input'];
-};
-
 /** The input for deleting a implementation. */
 export type DeleteImplementationInput = {
   implementation: Scalars['ID']['input'];
+};
+
+/** The input for deleting a placement. */
+export type DeletePlacementInput = {
+  id: Scalars['ID']['input'];
 };
 
 /** The input for deleting a resolution. */
@@ -1313,11 +1279,6 @@ export type DeleteShortcutInput = {
 
 /** The input for deleting a space. */
 export type DeleteSpaceInput = {
-  id: Scalars['ID']['input'];
-};
-
-/** The input for deleting a space membership. */
-export type DeleteSpaceMembershipInput = {
   id: Scalars['ID']['input'];
 };
 
@@ -1951,8 +1912,6 @@ export type Mutation = {
   cleanupActions: Scalars['Int']['output'];
   /** Collect results from an assignation. */
   collect: Array<Scalars['String']['output']>;
-  /** Create a new agent scene with a 3D model. */
-  createAgentScene: AgentScene;
   /** Create a user interface panel. */
   createBlok: Blok;
   /** Create a dashboard layout. */
@@ -1961,14 +1920,14 @@ export type Mutation = {
   createForeignImplementation: Implementation;
   /** Create a new implementation entry. */
   createImplementation: Implementation;
+  /** Create a new placement for an agent in a space. */
+  createPlacement: Placement;
   /** Create sa resolution from */
   createResolution: Resolution;
   /** Create a shortcut to an action. */
   createShortcut: Shortcut;
   /** Create a new space. */
   createSpace: Space;
-  /** Create a new space membership for an agent in a space. */
-  createSpaceMembership: SpaceMembership;
   /** Define a new state schema. */
   createStateSchema: StateSchema;
   /** Create a new test case. */
@@ -1981,18 +1940,16 @@ export type Mutation = {
   createToolbox: Toolbox;
   /** Delete an agent record. */
   deleteAgent: Scalars['ID']['output'];
-  /** Delete an agent scene. */
-  deleteAgentScene: Scalars['ID']['output'];
   /** Delete a registered implementation. */
   deleteImplementation: Scalars['String']['output'];
+  /** Delete a placement. */
+  deletePlacement: Scalars['ID']['output'];
   /** Delete a resolution by ID. */
   deleteResolution: Scalars['ID']['output'];
   /** Delete a shortcut. */
   deleteShortcut: Scalars['ID']['output'];
   /** Delete a space. */
   deleteSpace: Scalars['ID']['output'];
-  /** Delete a space membership. */
-  deleteSpaceMembership: Scalars['ID']['output'];
   /** Delete a 3D model. */
   deleteThreedModel: Scalars['ID']['output'];
   /** Ensure agent record exists or is up to date. */
@@ -2041,14 +1998,12 @@ export type Mutation = {
   unreserve: Scalars['String']['output'];
   /** Unshelve data from a memory drawer. */
   unshelveMemoryDrawer: Scalars['ID']['output'];
-  /** Update an existing agent scene. */
-  updateAgentScene: AgentScene;
+  /** Update an existing placement. */
+  updatePlacement: Placement;
   /** Update an existing resolution. */
   updateResolution: Resolution;
   /** Update an existing space. */
   updateSpace: Space;
-  /** Update an existing space membership. */
-  updateSpaceMembership: SpaceMembership;
   /** Update fields in a state object. */
   updateState: State;
   /** Update an existing 3D model. */
@@ -2111,12 +2066,6 @@ export type MutationCollectArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
-export type MutationCreateAgentSceneArgs = {
-  input: CreateAgentSceneInput;
-};
-
-
-/** Root mutation type for executing write operations on the API. */
 export type MutationCreateBlokArgs = {
   input: CreateBlokInput;
 };
@@ -2141,6 +2090,12 @@ export type MutationCreateImplementationArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
+export type MutationCreatePlacementArgs = {
+  input: CreatePlacementInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
 export type MutationCreateResolutionArgs = {
   input: CreateResolutionInput;
 };
@@ -2155,12 +2110,6 @@ export type MutationCreateShortcutArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationCreateSpaceArgs = {
   input: CreateSpaceInput;
-};
-
-
-/** Root mutation type for executing write operations on the API. */
-export type MutationCreateSpaceMembershipArgs = {
-  input: CreateSpaceMembershipInput;
 };
 
 
@@ -2201,14 +2150,14 @@ export type MutationDeleteAgentArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
-export type MutationDeleteAgentSceneArgs = {
-  input: DeleteAgentSceneInput;
+export type MutationDeleteImplementationArgs = {
+  input: DeleteImplementationInput;
 };
 
 
 /** Root mutation type for executing write operations on the API. */
-export type MutationDeleteImplementationArgs = {
-  input: DeleteImplementationInput;
+export type MutationDeletePlacementArgs = {
+  input: DeletePlacementInput;
 };
 
 
@@ -2227,12 +2176,6 @@ export type MutationDeleteShortcutArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationDeleteSpaceArgs = {
   input: DeleteSpaceInput;
-};
-
-
-/** Root mutation type for executing write operations on the API. */
-export type MutationDeleteSpaceMembershipArgs = {
-  input: DeleteSpaceMembershipInput;
 };
 
 
@@ -2381,8 +2324,8 @@ export type MutationUnshelveMemoryDrawerArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
-export type MutationUpdateAgentSceneArgs = {
-  input: UpdateAgentSceneInput;
+export type MutationUpdatePlacementArgs = {
+  input: UpdatePlacementInput;
 };
 
 
@@ -2395,12 +2338,6 @@ export type MutationUpdateResolutionArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationUpdateSpaceArgs = {
   input: UpdateSpaceInput;
-};
-
-
-/** Root mutation type for executing write operations on the API. */
-export type MutationUpdateSpaceMembershipArgs = {
-  input: UpdateSpaceMembershipInput;
 };
 
 
@@ -2532,6 +2469,47 @@ export type PauseInput = {
 export type PinInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
+};
+
+/** A placement of an agent in a space. */
+export type Placement = {
+  __typename?: 'Placement';
+  affineMatrix?: Maybe<Scalars['Args']['output']>;
+  agent: Agent;
+  id: Scalars['ID']['output'];
+  model?: Maybe<ThreeDModel>;
+  /** Get the agent associated with this placement. */
+  name: Scalars['String']['output'];
+  role: Scalars['String']['output'];
+  space: Space;
+};
+
+/** A way to filter placements (space memberships) */
+export type PlacementFilter = {
+  AND?: InputMaybe<PlacementFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<PlacementFilter>;
+  OR?: InputMaybe<PlacementFilter>;
+  /** Filter by agent */
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by name */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by space */
+  space?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** The input for creating or updating a placement. */
+export type PlacementInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  model?: InputMaybe<Scalars['ID']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PlacementOrder = {
+  role?: InputMaybe<Ordering>;
 };
 
 /** The input for creating a port demand. */
@@ -2677,12 +2655,8 @@ export type Query = {
   actionStats: ActionStats;
   /** List of all available actions. */
   actions: Array<Action>;
-  /** Retrieve an agent by ID. */
+  /** Fetch a specific agent by ID or by app, version, device_id and instance_id. */
   agent: Agent;
-  /** Get an agent scene by ID. */
-  agentScene: AgentScene;
-  /** List all agent scenes. */
-  agentScenes: Array<AgentScene>;
   /** Retrieve all compute agents. */
   agents: Array<Agent>;
   /** Fetch assignation by ID. */
@@ -2739,6 +2713,10 @@ export type Query = {
   myreservations: Array<Reservation>;
   /** Get patch events between global revisions. */
   patchEventsBetweenGlobalRevs: Array<Patch>;
+  /** Fetch a specific placement by ID. */
+  placement: Placement;
+  /** List all placements. */
+  placements: Array<Placement>;
   /** Retrieve protocols grouping actions. */
   protocols: Array<Protocol>;
   /** Retrieve reservation by ID. */
@@ -2763,12 +2741,8 @@ export type Query = {
   shortcuts: Array<Shortcut>;
   /** Get snapshots around revision. */
   snapshotsAroundRev: Array<Snapshot>;
-  /** Get a space by ID. */
+  /** Fetch a specific space by ID. */
   space: Space;
-  /** Get a space membership by ID. */
-  spaceMembership: SpaceMembership;
-  /** List all space memberships. */
-  spaceMemberships: Array<SpaceMembership>;
   /** List all spaces. */
   spaces: Array<Space>;
   /** Get a specific state by ID. */
@@ -2805,7 +2779,7 @@ export type Query = {
   testResult: TestResult;
   /** Test results associated with test cases. */
   testResults: Array<TestResult>;
-  /** Get a 3D model by ID. */
+  /** Fetch a specific 3D model by ID. */
   threedModel: ThreeDModel;
   /** List all 3D models. */
   threedModels: Array<ThreeDModel>;
@@ -2846,19 +2820,11 @@ export type QueryActionsArgs = {
 
 
 export type QueryAgentArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryAgentSceneArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryAgentScenesArgs = {
-  filters?: InputMaybe<AgentSceneFilter>;
-  order?: InputMaybe<AgentSceneOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
+  app?: InputMaybe<Scalars['String']['input']>;
+  deviceId?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  instanceId?: InputMaybe<Scalars['String']['input']>;
+  version?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3012,6 +2978,18 @@ export type QueryPatchEventsBetweenGlobalRevsArgs = {
 };
 
 
+export type QueryPlacementArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryPlacementsArgs = {
+  filters?: InputMaybe<PlacementFilter>;
+  order?: InputMaybe<PlacementOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryProtocolsArgs = {
   filters?: InputMaybe<ProtocolFilter>;
   order?: InputMaybe<ProtocolOrder>;
@@ -3088,18 +3066,6 @@ export type QuerySnapshotsAroundRevArgs = {
 
 export type QuerySpaceArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QuerySpaceMembershipArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QuerySpaceMembershipsArgs = {
-  filters?: InputMaybe<SpaceMembershipFilter>;
-  order?: InputMaybe<SpaceMembershipOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -3721,16 +3687,16 @@ export type Space = {
   creator: User;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  memberships: Array<SpaceMembership>;
   name: Scalars['String']['output'];
+  placements: Array<Placement>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
 
 /** A space where agents can interact. */
-export type SpaceMembershipsArgs = {
-  filters?: InputMaybe<SpaceMembershipFilter>;
-  order?: InputMaybe<SpaceMembershipOrder>;
+export type SpacePlacementsArgs = {
+  filters?: InputMaybe<PlacementFilter>;
+  order?: InputMaybe<PlacementOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3744,39 +3710,6 @@ export type SpaceFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Search by name */
   search?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** A membership of an agent scene in a space. */
-export type SpaceMembership = {
-  __typename?: 'SpaceMembership';
-  affineMatrix?: Maybe<Scalars['Args']['output']>;
-  id: Scalars['ID']['output'];
-  model?: Maybe<Scalars['String']['output']>;
-  /** Get the agent associated with this membership through the scene. */
-  name: Scalars['String']['output'];
-  role: Scalars['String']['output'];
-  scene: AgentScene;
-  space: Space;
-};
-
-/** A way to filter space memberships */
-export type SpaceMembershipFilter = {
-  AND?: InputMaybe<SpaceMembershipFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<SpaceMembershipFilter>;
-  OR?: InputMaybe<SpaceMembershipFilter>;
-  /** Filter by agent scene */
-  agentScene?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Search by name */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Filter by space */
-  space?: InputMaybe<Scalars['ID']['input']>;
-};
-
-export type SpaceMembershipOrder = {
-  role?: InputMaybe<Ordering>;
 };
 
 export type SpaceOrder = {
@@ -3814,6 +3747,24 @@ export type StateDemand = {
   key: Scalars['String']['output'];
   matches?: Maybe<Array<PortMatch>>;
   protocols?: Maybe<Array<Scalars['ID']['output']>>;
+};
+
+/**
+ * A dependency for a implementation. By defining dependencies, you can
+ *     create a dependency graph for your implementations and actions
+ */
+export type StateDependencyInput = {
+  allowInactive?: InputMaybe<Scalars['Boolean']['input']>;
+  app?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  /** The name of the state. This is used to identify the action in the system. */
+  name?: InputMaybe<Scalars['String']['input']>;
+  optional?: Scalars['Boolean']['input'];
+  portMatches?: InputMaybe<Array<PortMatchInput>>;
+  /** The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together. */
+  protocols?: InputMaybe<Array<Scalars['ID']['input']>>;
+  stateKey?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for initializing a state schema. */
@@ -4176,10 +4127,12 @@ export type TestResultFilter = {
 export type ThreeDModel = {
   __typename?: 'ThreeDModel';
   createdAt: Scalars['DateTime']['output'];
+  dependency: Agent;
   description?: Maybe<Scalars['String']['output']>;
   file: MediaStore;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  transferFunction?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -4325,11 +4278,13 @@ export type UnshelveMemoryDrawerInput = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
-/** The input for updating an agent scene. */
-export type UpdateAgentSceneInput = {
+/** The input for updating a placement. */
+export type UpdatePlacementInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
-  modelId?: InputMaybe<Scalars['ID']['input']>;
-  transferFunction?: InputMaybe<Scalars['String']['input']>;
+  model?: InputMaybe<Scalars['ID']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for creating a resolution. */
@@ -4344,14 +4299,6 @@ export type UpdateSpaceInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The input for updating a space membership. */
-export type UpdateSpaceMembershipInput = {
-  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
-  id: Scalars['ID']['input'];
-  model?: InputMaybe<Scalars['String']['input']>;
-  role?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for updating a state schema. */
@@ -4439,15 +4386,11 @@ export type DetailActionFragment = { __typename?: 'Action', key: string, version
 
 export type PrimaryActionFragment = { __typename?: 'Action', id: string, stateful: boolean, name: string, hash: any, description?: string | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string }>, args: Array<{ __typename?: 'ArgPort', key: string, identifier?: any | null, kind: PortKind, nullable: boolean, default?: any | null }> };
 
-export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> };
+export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> };
 
 export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string }, user: { __typename?: 'User', sub: string } };
 
 export type AgentChangeEventFragment = { __typename?: 'AgentChangeEvent', delete?: string | null, create?: { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string }, user: { __typename?: 'User', sub: string } } | null, update?: { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string }, user: { __typename?: 'User', sub: string } } | null };
-
-export type AgentSceneFragment = { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } };
-
-export type ListAgentSceneFragment = { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string }, agent: { __typename?: 'Agent', id: string, name: string } };
 
 export type PostmanAssignationFragment = { __typename?: 'Assignation', id: string, latestEventKind: AssignationEventKind, args: any, reference?: string | null, isDone: boolean, ephemeral: boolean, dependencyMethod?: string | null, dependency?: string | null, dependencies: any, createdAt: any, finishedAt?: any | null, events: Array<{ __typename?: 'AssignationEvent', id: string, kind: AssignationEventKind, level: LogLevel, returns?: any | null, progress?: number | null, reference: string, createdAt: any, message?: string | null, assignation: { __typename?: 'Assignation', id: string, reference?: string | null }, delegatedTo?: { __typename?: 'Assignation', id: string, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string, action: { __typename?: 'Action', name: string } } } | null }>, action: { __typename?: 'Action', hash: any, id: string, name: string, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }>, portGroups: Array<{ __typename?: 'PortGroup', key: string, title?: string | null, description?: string | null, ports: Array<string>, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null }> }, reservation?: { __typename?: 'Reservation', id: string, title?: string | null, action: { __typename?: 'Action', name: string } } | null, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } };
 
@@ -4507,6 +4450,12 @@ export type ImplementationStatsQuery = { __typename?: 'Query', assignationStats:
 export type MemoryShelveFragment = { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string }, drawers: Array<{ __typename?: 'MemoryDrawer', id: string, label: string, description?: string | null, resourceId: string }> };
 
 export type ListMemoryShelveFragment = { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string } };
+
+export type PlacementFragment = { __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } };
+
+export type SpacePlacementFragment = { __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } };
+
+export type ListPlacementFragment = { __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null };
 
 export type StringAssignWidgetFragment = { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean };
 
@@ -4602,13 +4551,9 @@ export type ShortcutFragment = { __typename?: 'Shortcut', id: string, name: stri
 
 export type ListShortcutFragment = { __typename?: 'Shortcut', id: string, name: string, description?: string | null, bindNumber?: number | null, savedArgs: any, allowQuick: boolean, action: { __typename?: 'Action', id: string }, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> };
 
-export type SpaceFragment = { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> };
+export type SpaceFragment = { __typename?: 'Space', id: string, name: string, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> };
 
 export type ListSpaceFragment = { __typename?: 'Space', id: string, name: string };
-
-export type SpaceMembershipFragment = { __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null };
-
-export type ListSpaceMembershipFragment = { __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null };
 
 export type StateFragment = { __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } };
 
@@ -4667,7 +4612,7 @@ export type PinAgentMutationVariables = Exact<{
 }>;
 
 
-export type PinAgentMutation = { __typename?: 'Mutation', pinAgent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type PinAgentMutation = { __typename?: 'Mutation', pinAgent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type DeleteAgentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4681,35 +4626,35 @@ export type EnsureAgentMutationVariables = Exact<{
 }>;
 
 
-export type EnsureAgentMutation = { __typename?: 'Mutation', ensureAgent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type EnsureAgentMutation = { __typename?: 'Mutation', ensureAgent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type BounceMutationVariables = Exact<{
   input: BounceInput;
 }>;
 
 
-export type BounceMutation = { __typename?: 'Mutation', bounce: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type BounceMutation = { __typename?: 'Mutation', bounce: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type KickMutationVariables = Exact<{
   input: KickInput;
 }>;
 
 
-export type KickMutation = { __typename?: 'Mutation', kick: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type KickMutation = { __typename?: 'Mutation', kick: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type BlockMutationVariables = Exact<{
   input: BlockInput;
 }>;
 
 
-export type BlockMutation = { __typename?: 'Mutation', block: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type BlockMutation = { __typename?: 'Mutation', block: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type UnblockMutationVariables = Exact<{
   input: UnblockInput;
 }>;
 
 
-export type UnblockMutation = { __typename?: 'Mutation', unblock: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type UnblockMutation = { __typename?: 'Mutation', unblock: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type AssignMutationVariables = Exact<{
   input: AssignInput;
@@ -4816,28 +4761,21 @@ export type CreateSpaceMutationVariables = Exact<{
 }>;
 
 
-export type CreateSpaceMutation = { __typename?: 'Mutation', createSpace: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
+export type CreateSpaceMutation = { __typename?: 'Mutation', createSpace: { __typename?: 'Space', id: string, name: string, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
-export type CreateSpaceMembershipMutationVariables = Exact<{
-  input: CreateSpaceMembershipInput;
+export type CreatePlacementMutationVariables = Exact<{
+  input: CreatePlacementInput;
 }>;
 
 
-export type CreateSpaceMembershipMutation = { __typename?: 'Mutation', createSpaceMembership: { __typename?: 'SpaceMembership', id: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } } };
+export type CreatePlacementMutation = { __typename?: 'Mutation', createPlacement: { __typename?: 'Placement', id: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } };
 
-export type UpdateSpaceMembershipMutationVariables = Exact<{
-  input: UpdateSpaceMembershipInput;
+export type UpdatePlacementMutationVariables = Exact<{
+  input: UpdatePlacementInput;
 }>;
 
 
-export type UpdateSpaceMembershipMutation = { __typename?: 'Mutation', updateSpaceMembership: { __typename?: 'SpaceMembership', id: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } } };
-
-export type CreateAgentSceneMutationVariables = Exact<{
-  input: CreateAgentSceneInput;
-}>;
-
-
-export type CreateAgentSceneMutation = { __typename?: 'Mutation', createAgentScene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } };
+export type UpdatePlacementMutation = { __typename?: 'Mutation', updatePlacement: { __typename?: 'Placement', id: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } };
 
 export type CreateForeignImplementationMutationVariables = Exact<{
   input: CreateForeignImplementationInput;
@@ -4965,7 +4903,7 @@ export type AgentQueryVariables = Exact<{
 }>;
 
 
-export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, scenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } }> } };
+export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type AgentOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4975,30 +4913,6 @@ export type AgentOptionsQueryVariables = Exact<{
 
 
 export type AgentOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Agent', value: string, label: string }> };
-
-export type AgentScenesQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  filters?: InputMaybe<AgentSceneFilter>;
-  order?: InputMaybe<AgentSceneOrder>;
-}>;
-
-
-export type AgentScenesQuery = { __typename?: 'Query', agentScenes: Array<{ __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string }, agent: { __typename?: 'Agent', id: string, name: string } }> };
-
-export type AgentSceneQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type AgentSceneQuery = { __typename?: 'Query', agentScene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', id: string, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } };
-
-export type AgentSceneOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
-}>;
-
-
-export type AgentSceneOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'AgentScene', value: string, label: string }> };
 
 export type AssignationsQueryVariables = Exact<{
   instanceId: Scalars['InstanceId']['input'];
@@ -5204,6 +5118,30 @@ export type MemoryShelveQueryVariables = Exact<{
 
 export type MemoryShelveQuery = { __typename?: 'Query', memoryShelve: { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string }, drawers: Array<{ __typename?: 'MemoryDrawer', id: string, label: string, description?: string | null, resourceId: string }> } };
 
+export type PlacementsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<PlacementFilter>;
+  order?: InputMaybe<PlacementOrder>;
+}>;
+
+
+export type PlacementsQuery = { __typename?: 'Query', placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null }> };
+
+export type PlacementQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type PlacementQuery = { __typename?: 'Query', placement: { __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } } };
+
+export type PlacementOptionsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+}>;
+
+
+export type PlacementOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Placement', value: string, label: string }> };
+
 export type ProtocolOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   values?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -5268,7 +5206,7 @@ export type SpaceQueryVariables = Exact<{
 }>;
 
 
-export type SpaceQuery = { __typename?: 'Query', space: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
+export type SpaceQuery = { __typename?: 'Query', space: { __typename?: 'Space', id: string, name: string, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type SpaceOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -5277,30 +5215,6 @@ export type SpaceOptionsQueryVariables = Exact<{
 
 
 export type SpaceOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Space', value: string, label: string }> };
-
-export type SpaceMembershipsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  filters?: InputMaybe<SpaceMembershipFilter>;
-  order?: InputMaybe<SpaceMembershipOrder>;
-}>;
-
-
-export type SpaceMembershipsQuery = { __typename?: 'Query', spaceMemberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null }> };
-
-export type SpaceMembershipQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type SpaceMembershipQuery = { __typename?: 'Query', spaceMembership: { __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null } };
-
-export type SpaceMembershipOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']>>;
-}>;
-
-
-export type SpaceMembershipOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'SpaceMembership', value: string, label: string }> };
 
 export type GetStateQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5697,14 +5611,21 @@ export const MediaStoreFragmentDoc = gql`
   bucket
 }
     `;
-export const AgentSceneFragmentDoc = gql`
-    fragment AgentScene on AgentScene {
+export const PlacementFragmentDoc = gql`
+    fragment Placement on Placement {
+  id
+  name
   model {
     id
     file {
       ...MediaStore
     }
+    transferFunction
   }
+  agent {
+    id
+  }
+  affineMatrix
 }
     ${MediaStoreFragmentDoc}`;
 export const AgentFragmentDoc = gql`
@@ -5747,14 +5668,14 @@ export const AgentFragmentDoc = gql`
   assignations(pagination: {limit: 5}) {
     ...ListAsssignation
   }
-  scenes {
-    ...AgentScene
+  placements {
+    ...Placement
   }
 }
     ${ListImplementationFragmentDoc}
 ${StateFragmentDoc}
 ${ListAsssignationFragmentDoc}
-${AgentSceneFragmentDoc}`;
+${PlacementFragmentDoc}`;
 export const ListAgentFragmentDoc = gql`
     fragment ListAgent on Agent {
   id
@@ -5798,17 +5719,6 @@ export const AgentChangeEventFragmentDoc = gql`
   delete
 }
     ${ListAgentFragmentDoc}`;
-export const ListAgentSceneFragmentDoc = gql`
-    fragment ListAgentScene on AgentScene {
-  model {
-    id
-  }
-  agent {
-    id
-    name
-  }
-}
-    `;
 export const AssignationEventFragmentDoc = gql`
     fragment AssignationEvent on AssignationEvent {
   id
@@ -6340,6 +6250,13 @@ export const ListMemoryShelveFragmentDoc = gql`
   name
 }
     `;
+export const ListPlacementFragmentDoc = gql`
+    fragment ListPlacement on Placement {
+  id
+  name
+  affineMatrix
+}
+    `;
 export const PostmanReservationFragmentDoc = gql`
     fragment PostmanReservation on Reservation {
   title
@@ -6681,48 +6598,36 @@ export const ListShortcutFragmentDoc = gql`
 }
     ${ArgPortFragmentDoc}
 ${ReturnPortFragmentDoc}`;
+export const SpacePlacementFragmentDoc = gql`
+    fragment SpacePlacement on Placement {
+  id
+  name
+  model {
+    id
+    file {
+      ...MediaStore
+    }
+    transferFunction
+  }
+  agent {
+    id
+  }
+  affineMatrix
+}
+    ${MediaStoreFragmentDoc}`;
 export const SpaceFragmentDoc = gql`
     fragment Space on Space {
   id
   name
-  memberships {
-    id
-    name
-    affineMatrix
-    scene {
-      id
-      name
-      agent {
-        id
-        name
-      }
-      model {
-        file {
-          ...MediaStore
-        }
-      }
-    }
+  placements {
+    ...SpacePlacement
   }
 }
-    ${MediaStoreFragmentDoc}`;
+    ${SpacePlacementFragmentDoc}`;
 export const ListSpaceFragmentDoc = gql`
     fragment ListSpace on Space {
   id
   name
-}
-    `;
-export const SpaceMembershipFragmentDoc = gql`
-    fragment SpaceMembership on SpaceMembership {
-  id
-  name
-  affineMatrix
-}
-    `;
-export const ListSpaceMembershipFragmentDoc = gql`
-    fragment ListSpaceMembership on SpaceMembership {
-  id
-  name
-  affineMatrix
 }
     `;
 export const StateEventFragmentDoc = gql`
@@ -7706,93 +7611,12 @@ export function useCreateSpaceMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type CreateSpaceMutationHookResult = ReturnType<typeof useCreateSpaceMutation>;
 export type CreateSpaceMutationResult = Apollo.MutationResult<CreateSpaceMutation>;
 export type CreateSpaceMutationOptions = Apollo.BaseMutationOptions<CreateSpaceMutation, CreateSpaceMutationVariables>;
-export const CreateSpaceMembershipDocument = gql`
-    mutation CreateSpaceMembership($input: CreateSpaceMembershipInput!) {
-  createSpaceMembership(input: $input) {
+export const CreatePlacementDocument = gql`
+    mutation CreatePlacement($input: CreatePlacementInput!) {
+  createPlacement(input: $input) {
     id
     affineMatrix
-    scene {
-      model {
-        file {
-          ...MediaStore
-        }
-      }
-    }
-  }
-}
-    ${MediaStoreFragmentDoc}`;
-export type CreateSpaceMembershipMutationFn = Apollo.MutationFunction<CreateSpaceMembershipMutation, CreateSpaceMembershipMutationVariables>;
-
-/**
- * __useCreateSpaceMembershipMutation__
- *
- * To run a mutation, you first call `useCreateSpaceMembershipMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateSpaceMembershipMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createSpaceMembershipMutation, { data, loading, error }] = useCreateSpaceMembershipMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateSpaceMembershipMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSpaceMembershipMutation, CreateSpaceMembershipMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateSpaceMembershipMutation, CreateSpaceMembershipMutationVariables>(CreateSpaceMembershipDocument, options);
-      }
-export type CreateSpaceMembershipMutationHookResult = ReturnType<typeof useCreateSpaceMembershipMutation>;
-export type CreateSpaceMembershipMutationResult = Apollo.MutationResult<CreateSpaceMembershipMutation>;
-export type CreateSpaceMembershipMutationOptions = Apollo.BaseMutationOptions<CreateSpaceMembershipMutation, CreateSpaceMembershipMutationVariables>;
-export const UpdateSpaceMembershipDocument = gql`
-    mutation UpdateSpaceMembership($input: UpdateSpaceMembershipInput!) {
-  updateSpaceMembership(input: $input) {
-    id
-    affineMatrix
-    scene {
-      model {
-        file {
-          ...MediaStore
-        }
-      }
-    }
-  }
-}
-    ${MediaStoreFragmentDoc}`;
-export type UpdateSpaceMembershipMutationFn = Apollo.MutationFunction<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>;
-
-/**
- * __useUpdateSpaceMembershipMutation__
- *
- * To run a mutation, you first call `useUpdateSpaceMembershipMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateSpaceMembershipMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateSpaceMembershipMutation, { data, loading, error }] = useUpdateSpaceMembershipMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateSpaceMembershipMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>(UpdateSpaceMembershipDocument, options);
-      }
-export type UpdateSpaceMembershipMutationHookResult = ReturnType<typeof useUpdateSpaceMembershipMutation>;
-export type UpdateSpaceMembershipMutationResult = Apollo.MutationResult<UpdateSpaceMembershipMutation>;
-export type UpdateSpaceMembershipMutationOptions = Apollo.BaseMutationOptions<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>;
-export const CreateAgentSceneDocument = gql`
-    mutation CreateAgentScene($input: CreateAgentSceneInput!) {
-  createAgentScene(input: $input) {
     model {
-      id
       file {
         ...MediaStore
       }
@@ -7800,32 +7624,71 @@ export const CreateAgentSceneDocument = gql`
   }
 }
     ${MediaStoreFragmentDoc}`;
-export type CreateAgentSceneMutationFn = Apollo.MutationFunction<CreateAgentSceneMutation, CreateAgentSceneMutationVariables>;
+export type CreatePlacementMutationFn = Apollo.MutationFunction<CreatePlacementMutation, CreatePlacementMutationVariables>;
 
 /**
- * __useCreateAgentSceneMutation__
+ * __useCreatePlacementMutation__
  *
- * To run a mutation, you first call `useCreateAgentSceneMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateAgentSceneMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useCreatePlacementMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreatePlacementMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createAgentSceneMutation, { data, loading, error }] = useCreateAgentSceneMutation({
+ * const [createPlacementMutation, { data, loading, error }] = useCreatePlacementMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateAgentSceneMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateAgentSceneMutation, CreateAgentSceneMutationVariables>) {
+export function useCreatePlacementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreatePlacementMutation, CreatePlacementMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateAgentSceneMutation, CreateAgentSceneMutationVariables>(CreateAgentSceneDocument, options);
+        return ApolloReactHooks.useMutation<CreatePlacementMutation, CreatePlacementMutationVariables>(CreatePlacementDocument, options);
       }
-export type CreateAgentSceneMutationHookResult = ReturnType<typeof useCreateAgentSceneMutation>;
-export type CreateAgentSceneMutationResult = Apollo.MutationResult<CreateAgentSceneMutation>;
-export type CreateAgentSceneMutationOptions = Apollo.BaseMutationOptions<CreateAgentSceneMutation, CreateAgentSceneMutationVariables>;
+export type CreatePlacementMutationHookResult = ReturnType<typeof useCreatePlacementMutation>;
+export type CreatePlacementMutationResult = Apollo.MutationResult<CreatePlacementMutation>;
+export type CreatePlacementMutationOptions = Apollo.BaseMutationOptions<CreatePlacementMutation, CreatePlacementMutationVariables>;
+export const UpdatePlacementDocument = gql`
+    mutation UpdatePlacement($input: UpdatePlacementInput!) {
+  updatePlacement(input: $input) {
+    id
+    affineMatrix
+    model {
+      file {
+        ...MediaStore
+      }
+    }
+  }
+}
+    ${MediaStoreFragmentDoc}`;
+export type UpdatePlacementMutationFn = Apollo.MutationFunction<UpdatePlacementMutation, UpdatePlacementMutationVariables>;
+
+/**
+ * __useUpdatePlacementMutation__
+ *
+ * To run a mutation, you first call `useUpdatePlacementMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePlacementMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updatePlacementMutation, { data, loading, error }] = useUpdatePlacementMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdatePlacementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdatePlacementMutation, UpdatePlacementMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdatePlacementMutation, UpdatePlacementMutationVariables>(UpdatePlacementDocument, options);
+      }
+export type UpdatePlacementMutationHookResult = ReturnType<typeof useUpdatePlacementMutation>;
+export type UpdatePlacementMutationResult = Apollo.MutationResult<UpdatePlacementMutation>;
+export type UpdatePlacementMutationOptions = Apollo.BaseMutationOptions<UpdatePlacementMutation, UpdatePlacementMutationVariables>;
 export const CreateForeignImplementationDocument = gql`
     mutation CreateForeignImplementation($input: CreateForeignImplementationInput!) {
   createForeignImplementation(input: $input) {
@@ -8455,118 +8318,6 @@ export function useAgentOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type AgentOptionsQueryHookResult = ReturnType<typeof useAgentOptionsQuery>;
 export type AgentOptionsLazyQueryHookResult = ReturnType<typeof useAgentOptionsLazyQuery>;
 export type AgentOptionsQueryResult = Apollo.QueryResult<AgentOptionsQuery, AgentOptionsQueryVariables>;
-export const AgentScenesDocument = gql`
-    query AgentScenes($pagination: OffsetPaginationInput, $filters: AgentSceneFilter, $order: AgentSceneOrder) {
-  agentScenes(order: $order, pagination: $pagination, filters: $filters) {
-    ...ListAgentScene
-  }
-}
-    ${ListAgentSceneFragmentDoc}`;
-
-/**
- * __useAgentScenesQuery__
- *
- * To run a query within a React component, call `useAgentScenesQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentScenesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentScenesQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useAgentScenesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentScenesQuery, AgentScenesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentScenesQuery, AgentScenesQueryVariables>(AgentScenesDocument, options);
-      }
-export function useAgentScenesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentScenesQuery, AgentScenesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentScenesQuery, AgentScenesQueryVariables>(AgentScenesDocument, options);
-        }
-export type AgentScenesQueryHookResult = ReturnType<typeof useAgentScenesQuery>;
-export type AgentScenesLazyQueryHookResult = ReturnType<typeof useAgentScenesLazyQuery>;
-export type AgentScenesQueryResult = Apollo.QueryResult<AgentScenesQuery, AgentScenesQueryVariables>;
-export const AgentSceneDocument = gql`
-    query AgentScene($id: ID!) {
-  agentScene(id: $id) {
-    ...AgentScene
-  }
-}
-    ${AgentSceneFragmentDoc}`;
-
-/**
- * __useAgentSceneQuery__
- *
- * To run a query within a React component, call `useAgentSceneQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentSceneQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentSceneQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useAgentSceneQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AgentSceneQuery, AgentSceneQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentSceneQuery, AgentSceneQueryVariables>(AgentSceneDocument, options);
-      }
-export function useAgentSceneLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentSceneQuery, AgentSceneQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentSceneQuery, AgentSceneQueryVariables>(AgentSceneDocument, options);
-        }
-export type AgentSceneQueryHookResult = ReturnType<typeof useAgentSceneQuery>;
-export type AgentSceneLazyQueryHookResult = ReturnType<typeof useAgentSceneLazyQuery>;
-export type AgentSceneQueryResult = Apollo.QueryResult<AgentSceneQuery, AgentSceneQueryVariables>;
-export const AgentSceneOptionsDocument = gql`
-    query AgentSceneOptions($search: String, $values: [ID!]) {
-  options: agentScenes(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-
-/**
- * __useAgentSceneOptionsQuery__
- *
- * To run a query within a React component, call `useAgentSceneOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAgentSceneOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAgentSceneOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useAgentSceneOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentSceneOptionsQuery, AgentSceneOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentSceneOptionsQuery, AgentSceneOptionsQueryVariables>(AgentSceneOptionsDocument, options);
-      }
-export function useAgentSceneOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentSceneOptionsQuery, AgentSceneOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentSceneOptionsQuery, AgentSceneOptionsQueryVariables>(AgentSceneOptionsDocument, options);
-        }
-export type AgentSceneOptionsQueryHookResult = ReturnType<typeof useAgentSceneOptionsQuery>;
-export type AgentSceneOptionsLazyQueryHookResult = ReturnType<typeof useAgentSceneOptionsLazyQuery>;
-export type AgentSceneOptionsQueryResult = Apollo.QueryResult<AgentSceneOptionsQuery, AgentSceneOptionsQueryVariables>;
 export const AssignationsDocument = gql`
     query Assignations($instanceId: InstanceId!) {
   assignations(instanceId: $instanceId) {
@@ -9524,6 +9275,118 @@ export function useMemoryShelveLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type MemoryShelveQueryHookResult = ReturnType<typeof useMemoryShelveQuery>;
 export type MemoryShelveLazyQueryHookResult = ReturnType<typeof useMemoryShelveLazyQuery>;
 export type MemoryShelveQueryResult = Apollo.QueryResult<MemoryShelveQuery, MemoryShelveQueryVariables>;
+export const PlacementsDocument = gql`
+    query Placements($pagination: OffsetPaginationInput, $filters: PlacementFilter, $order: PlacementOrder) {
+  placements(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListPlacement
+  }
+}
+    ${ListPlacementFragmentDoc}`;
+
+/**
+ * __usePlacementsQuery__
+ *
+ * To run a query within a React component, call `usePlacementsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePlacementsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePlacementsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function usePlacementsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PlacementsQuery, PlacementsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PlacementsQuery, PlacementsQueryVariables>(PlacementsDocument, options);
+      }
+export function usePlacementsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PlacementsQuery, PlacementsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PlacementsQuery, PlacementsQueryVariables>(PlacementsDocument, options);
+        }
+export type PlacementsQueryHookResult = ReturnType<typeof usePlacementsQuery>;
+export type PlacementsLazyQueryHookResult = ReturnType<typeof usePlacementsLazyQuery>;
+export type PlacementsQueryResult = Apollo.QueryResult<PlacementsQuery, PlacementsQueryVariables>;
+export const PlacementDocument = gql`
+    query Placement($id: ID!) {
+  placement(id: $id) {
+    ...Placement
+  }
+}
+    ${PlacementFragmentDoc}`;
+
+/**
+ * __usePlacementQuery__
+ *
+ * To run a query within a React component, call `usePlacementQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePlacementQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePlacementQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function usePlacementQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PlacementQuery, PlacementQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PlacementQuery, PlacementQueryVariables>(PlacementDocument, options);
+      }
+export function usePlacementLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PlacementQuery, PlacementQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PlacementQuery, PlacementQueryVariables>(PlacementDocument, options);
+        }
+export type PlacementQueryHookResult = ReturnType<typeof usePlacementQuery>;
+export type PlacementLazyQueryHookResult = ReturnType<typeof usePlacementLazyQuery>;
+export type PlacementQueryResult = Apollo.QueryResult<PlacementQuery, PlacementQueryVariables>;
+export const PlacementOptionsDocument = gql`
+    query PlacementOptions($search: String, $values: [ID!]) {
+  options: placements(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __usePlacementOptionsQuery__
+ *
+ * To run a query within a React component, call `usePlacementOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePlacementOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePlacementOptionsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function usePlacementOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PlacementOptionsQuery, PlacementOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PlacementOptionsQuery, PlacementOptionsQueryVariables>(PlacementOptionsDocument, options);
+      }
+export function usePlacementOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PlacementOptionsQuery, PlacementOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PlacementOptionsQuery, PlacementOptionsQueryVariables>(PlacementOptionsDocument, options);
+        }
+export type PlacementOptionsQueryHookResult = ReturnType<typeof usePlacementOptionsQuery>;
+export type PlacementOptionsLazyQueryHookResult = ReturnType<typeof usePlacementOptionsLazyQuery>;
+export type PlacementOptionsQueryResult = Apollo.QueryResult<PlacementOptionsQuery, PlacementOptionsQueryVariables>;
 export const ProtocolOptionsDocument = gql`
     query ProtocolOptions($search: String, $values: [ID!]) {
   options: protocols(
@@ -9887,118 +9750,6 @@ export function useSpaceOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type SpaceOptionsQueryHookResult = ReturnType<typeof useSpaceOptionsQuery>;
 export type SpaceOptionsLazyQueryHookResult = ReturnType<typeof useSpaceOptionsLazyQuery>;
 export type SpaceOptionsQueryResult = Apollo.QueryResult<SpaceOptionsQuery, SpaceOptionsQueryVariables>;
-export const SpaceMembershipsDocument = gql`
-    query SpaceMemberships($pagination: OffsetPaginationInput, $filters: SpaceMembershipFilter, $order: SpaceMembershipOrder) {
-  spaceMemberships(order: $order, pagination: $pagination, filters: $filters) {
-    ...ListSpaceMembership
-  }
-}
-    ${ListSpaceMembershipFragmentDoc}`;
-
-/**
- * __useSpaceMembershipsQuery__
- *
- * To run a query within a React component, call `useSpaceMembershipsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSpaceMembershipsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSpaceMembershipsQuery({
- *   variables: {
- *      pagination: // value for 'pagination'
- *      filters: // value for 'filters'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useSpaceMembershipsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SpaceMembershipsQuery, SpaceMembershipsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SpaceMembershipsQuery, SpaceMembershipsQueryVariables>(SpaceMembershipsDocument, options);
-      }
-export function useSpaceMembershipsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SpaceMembershipsQuery, SpaceMembershipsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SpaceMembershipsQuery, SpaceMembershipsQueryVariables>(SpaceMembershipsDocument, options);
-        }
-export type SpaceMembershipsQueryHookResult = ReturnType<typeof useSpaceMembershipsQuery>;
-export type SpaceMembershipsLazyQueryHookResult = ReturnType<typeof useSpaceMembershipsLazyQuery>;
-export type SpaceMembershipsQueryResult = Apollo.QueryResult<SpaceMembershipsQuery, SpaceMembershipsQueryVariables>;
-export const SpaceMembershipDocument = gql`
-    query SpaceMembership($id: ID!) {
-  spaceMembership(id: $id) {
-    ...SpaceMembership
-  }
-}
-    ${SpaceMembershipFragmentDoc}`;
-
-/**
- * __useSpaceMembershipQuery__
- *
- * To run a query within a React component, call `useSpaceMembershipQuery` and pass it any options that fit your needs.
- * When your component renders, `useSpaceMembershipQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSpaceMembershipQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useSpaceMembershipQuery(baseOptions: ApolloReactHooks.QueryHookOptions<SpaceMembershipQuery, SpaceMembershipQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SpaceMembershipQuery, SpaceMembershipQueryVariables>(SpaceMembershipDocument, options);
-      }
-export function useSpaceMembershipLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SpaceMembershipQuery, SpaceMembershipQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SpaceMembershipQuery, SpaceMembershipQueryVariables>(SpaceMembershipDocument, options);
-        }
-export type SpaceMembershipQueryHookResult = ReturnType<typeof useSpaceMembershipQuery>;
-export type SpaceMembershipLazyQueryHookResult = ReturnType<typeof useSpaceMembershipLazyQuery>;
-export type SpaceMembershipQueryResult = Apollo.QueryResult<SpaceMembershipQuery, SpaceMembershipQueryVariables>;
-export const SpaceMembershipOptionsDocument = gql`
-    query SpaceMembershipOptions($search: String, $values: [ID!]) {
-  options: spaceMemberships(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-
-/**
- * __useSpaceMembershipOptionsQuery__
- *
- * To run a query within a React component, call `useSpaceMembershipOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSpaceMembershipOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSpaceMembershipOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useSpaceMembershipOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SpaceMembershipOptionsQuery, SpaceMembershipOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SpaceMembershipOptionsQuery, SpaceMembershipOptionsQueryVariables>(SpaceMembershipOptionsDocument, options);
-      }
-export function useSpaceMembershipOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SpaceMembershipOptionsQuery, SpaceMembershipOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SpaceMembershipOptionsQuery, SpaceMembershipOptionsQueryVariables>(SpaceMembershipOptionsDocument, options);
-        }
-export type SpaceMembershipOptionsQueryHookResult = ReturnType<typeof useSpaceMembershipOptionsQuery>;
-export type SpaceMembershipOptionsLazyQueryHookResult = ReturnType<typeof useSpaceMembershipOptionsLazyQuery>;
-export type SpaceMembershipOptionsQueryResult = Apollo.QueryResult<SpaceMembershipOptionsQuery, SpaceMembershipOptionsQueryVariables>;
 export const GetStateDocument = gql`
     query GetState($id: ID!) {
   state(id: $id) {

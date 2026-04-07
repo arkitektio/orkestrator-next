@@ -1,35 +1,35 @@
-import { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
 import {
   Environment,
   Grid,
   OrbitControls,
 } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Suspense } from "react";
+import { SpacePlacementFragment } from "../api/graphql";
 import { useSpaceScene } from "./context";
-import { MovableMembership, MembershipFallback } from "./MovableMembership";
-import { MembershipEntry } from "./store";
-import {
-  AddMembershipDialog,
-  CreateAgentSceneDialog,
-} from "./AddMembershipPanel";
+import { MoveablePlacement, PlacementFallback } from "./MoveablePlacement";
 
-const MembershipObject = ({ membership }: { membership: MembershipEntry }) => {
-  const hasMedia = membership.media?.key;
+
+
+
+
+const PlacementObject = ({ placement }: { placement: SpacePlacementFragment }) => {
+  const hasMedia = placement.model?.file
   if (!hasMedia) {
-    return <MembershipFallback membership={membership} />;
+    return <PlacementFallback placement={placement} />;
   }
   return (
     <Suspense
-      fallback={<MembershipFallback membership={membership} />}
+      fallback={<PlacementFallback placement={placement} />}
     >
-      <MovableMembership membership={membership} />
+      <MoveablePlacement placement={placement} />
     </Suspense>
   );
 };
 
 const SceneContent = () => {
-  const memberships = useSpaceScene((s) => s.memberships);
-  const selectMembership = useSpaceScene((s) => s.selectMembership);
+  const placements = useSpaceScene((s) => s.placements);
+  const selectPlacement = useSpaceScene((s) => s.selectPlacement);
 
   return (
     <>
@@ -64,15 +64,15 @@ const SceneContent = () => {
         position={[0, -0.01, 0]}
       />
 
-      {memberships.map((m) => (
-        <MembershipObject key={m.id} membership={m} />
+      {placements.map((p) => (
+        <PlacementObject key={p.id} placement={p} />
       ))}
 
       {/* Click on empty space to deselect */}
       <mesh
         position={[0, -0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
-        onClick={() => selectMembership(null)}
+        onClick={() => selectPlacement(null)}
         visible={false}
       >
         <planeGeometry args={[100, 100]} />
@@ -92,9 +92,9 @@ const SceneContent = () => {
 };
 
 const SelectedInfo = () => {
-  const selectedId = useSpaceScene((s) => s.selectedMembershipId);
-  const memberships = useSpaceScene((s) => s.memberships);
-  const selected = memberships.find((m) => m.id === selectedId);
+  const selectedId = useSpaceScene((s) => s.selectedPlacementId);
+  const placements = useSpaceScene((s) => s.placements);
+  const selected = placements.find((p) => p.id === selectedId);
 
   if (!selected) return null;
 
@@ -102,10 +102,7 @@ const SelectedInfo = () => {
     <div className="absolute bottom-4 left-4 z-20 rounded-lg border bg-background/80 px-4 py-3 text-sm backdrop-blur-sm">
       <div className="font-semibold">{selected.name}</div>
       <div className="text-muted-foreground">
-        Agent: {selected.agentName} &middot; Scene: {selected.sceneName}
-      </div>
-      <div className="mt-1 font-mono text-xs text-muted-foreground">
-        pos: [{selected.position.map((v) => v.toFixed(2)).join(", ")}]
+        Agent: {selected.agent.id} &middot;
       </div>
     </div>
   );
@@ -120,8 +117,6 @@ export const SpaceThreeScene = () => {
           Space Scene
         </div>
         <div className="flex-1" />
-        <CreateAgentSceneDialog />
-        <AddMembershipDialog />
       </div>
 
       {/* Canvas */}
@@ -129,7 +124,8 @@ export const SpaceThreeScene = () => {
         <Canvas
           dpr={[1, 2]}
           camera={{ position: [4, 4, 8], fov: 45 }}
-          gl={{ antialias: true, alpha: false }}
+          frameloop="demand"
+
           className="!absolute inset-0"
         >
           <SceneContent />

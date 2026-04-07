@@ -1,5 +1,5 @@
 import { createStore, StoreApi } from "zustand/vanilla";
-import { SpaceFragment, MediaStoreFragment } from "../api/graphql";
+import { SpaceFragment, MediaStoreFragment, PlacementFragment } from "../api/graphql";
 
 export interface MembershipEntry {
   id: string;
@@ -56,81 +56,67 @@ export function buildAffineMatrix(
 
 export interface SpaceSceneState {
   spaceId: string;
-  memberships: MembershipEntry[];
-  selectedMembershipId: string | null;
+  placements: PlacementFragment[];
+  selectedPlacementId: string | null;
 
   // Actions
-  setMemberships: (memberships: MembershipEntry[]) => void;
-  addMembership: (membership: MembershipEntry) => void;
-  removeMembership: (id: string) => void;
-  updateMembershipTransform: (
+  setPlacements: (placements: PlacementFragment[]) => void;
+  addPlacement: (placement: PlacementFragment) => void;
+  removePlacement: (id: string) => void;
+  updatePlacementTransform: (
     id: string,
     position: [number, number, number],
     rotation?: [number, number, number],
     scale?: [number, number, number],
   ) => void;
-  selectMembership: (id: string | null) => void;
+  selectPlacement: (id: string | null) => void;
 }
 
 export type SpaceSceneStore = StoreApi<SpaceSceneState>;
 
-export function membershipFromFragment(
-  m: SpaceFragment["memberships"][number],
-): MembershipEntry {
-  const { position, rotation, scale } = parseAffineMatrix(m.affineMatrix);
-  return {
-    id: m.id,
-    name: m.name,
-    position,
-    rotation,
-    scale,
-    sceneId: m.scene.id,
-    sceneName: m.scene.name,
-    agentId: m.scene.agent.id,
-    agentName: m.scene.agent.name,
-    media: m.scene.model.file,
-  };
-}
+
 
 export const createSpaceSceneStore = (
   spaceId: string,
-  initial: SpaceFragment["memberships"],
+  initial: SpaceFragment["placements"],
 ): SpaceSceneStore => {
   return createStore<SpaceSceneState>((set) => ({
     spaceId,
-    memberships: initial.map(membershipFromFragment),
-    selectedMembershipId: null,
+    placements: initial,
+    selectedPlacementId: null,
 
-    setMemberships: (memberships) => set({ memberships }),
+    setPlacements: (placements) => set({ placements }),
 
-    addMembership: (membership) =>
+    addPlacement: (placement) =>
       set((state) => ({
-        memberships: [...state.memberships, membership],
+        placements: [...state.placements, placement],
       })),
 
-    removeMembership: (id) =>
+    removePlacement: (id) =>
       set((state) => ({
-        memberships: state.memberships.filter((m) => m.id !== id),
-        selectedMembershipId:
-          state.selectedMembershipId === id
+        placements: state.placements.filter((p) => p.id !== id),
+        selectedPlacementId:
+          state.selectedPlacementId === id
             ? null
-            : state.selectedMembershipId,
+            : state.selectedPlacementId,
       })),
 
-    updateMembershipTransform: (id, position, rotation, scale) =>
+    updatePlacementTransform: (id, position, rotation, scale) =>
       set((state) => ({
-        memberships: state.memberships.map((m) =>
-          m.id === id
+        placements: state.placements.map((p) =>
+          p.id === id
             ? {
-                ...m,
-                position,
-                rotation: rotation ?? m.rotation,
-                scale: scale ?? m.scale,
+                ...p,
+                affineMatrix: buildAffineMatrix(
+                  position,
+                  rotation || [0, 0, 0],
+                  scale || [1, 1, 1],
+                ),
               }
-            : m,
+            : p,
         ),
       })),
 
-    selectMembership: (id) => set({ selectedMembershipId: id }),
+    selectPlacement: (id) => set({ selectedPlacementId: id }),
   }));
 };

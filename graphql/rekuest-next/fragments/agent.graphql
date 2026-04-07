@@ -39,7 +39,7 @@ fragment Agent on Agent {
     ...ListAsssignation
   }
   placements {
-    ...Placement
+    ...AgentPlacement
   }
 }
 

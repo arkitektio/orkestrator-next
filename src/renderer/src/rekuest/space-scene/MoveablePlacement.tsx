@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef } from "react";
 import { Group, Matrix4 } from "three";
 import { MediaStore, SpacePlacementFragment, useUpdatePlacementMutation } from "../api/graphql";
 import { useSpaceScene } from "./context";
-import { e } from "node_modules/@platejs/basic-nodes/dist/BaseHeadingPlugin-nWtdPomn";
 
 const MembershipModel = ({ url }: { url: string }) => {
   const { scene } = useGLTF(url);
@@ -36,9 +35,16 @@ export const MoveablePlacement = ({
   const [updateSpacePlacement] = useUpdatePlacementMutation();
 
 
-  const matrix = useMemo(() =>
-    new Matrix4().fromArray(placement.affineMatrix.flat() as unknown as number[])
-    , [placement.affineMatrix]);
+  const matrix = useMemo(() => {
+    const flat = placement.affineMatrix.flat() as number[];
+    // affineMatrix is row-major; Matrix4.set() takes row-major args
+    return new Matrix4().set(
+      flat[0],  flat[1],  flat[2],  flat[3],
+      flat[4],  flat[5],  flat[6],  flat[7],
+      flat[8],  flat[9],  flat[10], flat[11],
+      flat[12], flat[13], flat[14], flat[15],
+    );
+  }, [placement.affineMatrix]);
 
 
   console.log(matrix)
@@ -46,19 +52,26 @@ export const MoveablePlacement = ({
 
 
 
-  const handleTransformEnd = useCallback((e) => {
-    console.log(e)
-
-    // Persist to backend
+  const handleTransformEnd = useCallback(() => {
+    if (!meshRef.current) return;
+    // Read the matrix that TransformControls wrote into the object
+    const elems = meshRef.current.matrix.elements; // column-major
+    // Convert back to row-major 4×4 for the backend
+    const affineMatrix = [
+      [elems[0], elems[4], elems[8],  elems[12]],
+      [elems[1], elems[5], elems[9],  elems[13]],
+      [elems[2], elems[6], elems[10], elems[14]],
+      [elems[3], elems[7], elems[11], elems[15]],
+    ];
     updateSpacePlacement({
       variables: {
         input: {
           id: placement.id,
-          affineMatrix: placement.affineMatrix
+          affineMatrix,
         },
       },
     });
-  }, [placement.id, placement.affineMatrix, updateSpacePlacement]);
+  }, [placement.id, updateSpacePlacement]);
 
   return (
     <>
@@ -72,7 +85,6 @@ export const MoveablePlacement = ({
       <group
         ref={meshRef}
         matrix={matrix}
-        matrixAutoUpdate={true}
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);
@@ -120,17 +132,34 @@ export const PlacementFallback = ({
 
   const [updateSpacePlacement] = useUpdatePlacementMutation();
 
-  const handleTransformEnd = useCallback((e) => {
-    console.log(e)
+  const matrix = useMemo(() => {
+    const flat = placement.affineMatrix.flat() as number[];
+    return new Matrix4().set(
+      flat[0],  flat[1],  flat[2],  flat[3],
+      flat[4],  flat[5],  flat[6],  flat[7],
+      flat[8],  flat[9],  flat[10], flat[11],
+      flat[12], flat[13], flat[14], flat[15],
+    );
+  }, [placement.affineMatrix]);
+
+  const handleTransformEnd = useCallback(() => {
+    if (!meshRef.current) return;
+    const elems = meshRef.current.matrix.elements; // column-major
+    const affineMatrix = [
+      [elems[0], elems[4], elems[8],  elems[12]],
+      [elems[1], elems[5], elems[9],  elems[13]],
+      [elems[2], elems[6], elems[10], elems[14]],
+      [elems[3], elems[7], elems[11], elems[15]],
+    ];
     updateSpacePlacement({
       variables: {
         input: {
           id: placement.id,
-          affineMatrix: placement.affineMatrix
+          affineMatrix,
         },
       },
     });
-  }, [placement.id, placement.affineMatrix, updateSpacePlacement  ]);
+  }, [placement.id, updateSpacePlacement]);
 
   return (
     <>
@@ -143,7 +172,7 @@ export const PlacementFallback = ({
       )}
       <group
         ref={meshRef}
-        matrix={placement.affineMatrix}
+        matrix={matrix}
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);

@@ -1,7 +1,6 @@
 import {
   useDatalayerEndpoint,
-  useKraph,
-  useSeaweedfs
+  useKraph
 } from "@/app/Arkitekt";
 import {
   MediaUploadGrantFragment,

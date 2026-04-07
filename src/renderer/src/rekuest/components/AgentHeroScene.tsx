@@ -1,17 +1,15 @@
-import { Badge } from "@/components/ui/badge";
-import { Canvas, type ThreeElements, useFrame } from "@react-three/fiber";
-import { Center, Environment, Float, Html, OrbitControls, Stage, useGLTF } from "@react-three/drei";
+import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
+import { Center, Environment, Html, OrbitControls, Stage, useGLTF } from "@react-three/drei";
+import { Canvas, type ThreeElements } from "@react-three/fiber";
 import {
   Bloom,
   ChromaticAberration,
-  EffectComposer,
-  Noise,
+  EffectComposer
 } from "@react-three/postprocessing";
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useRef } from "react";
 import type { Group } from "three";
-import { Box3, Vector2, Vector3 } from "three";
-import { AgentScene } from "../api/graphql";
-import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
+import { Vector2 } from "three";
+import { AgentPlacementFragment } from "../api/graphql";
 
 declare module "react" {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -45,7 +43,7 @@ const AgentSceneFallback = () => {
   );
 };
 
-export const AgentHeroScene = (props: { scene: AgentScene }) => {
+export const AgentHeroScene = (props: { placement: AgentPlacementFragment }) => {
   return (
     <div className="absolute inset-y-0 right-0 w-[40%] overflow-hidden rounded-lg bg-black">
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-full bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.78)_18%,rgba(0,0,0,0.38)_38%,rgba(0,0,0,0.10)_56%,transparent_76%)]" />
@@ -67,7 +65,7 @@ export const AgentHeroScene = (props: { scene: AgentScene }) => {
         <Suspense fallback={<AgentSceneFallback />}>
           <Environment preset="studio" />
           <Stage intensity={1} environment={null} shadows="contact" adjustCamera={false} preset="portrait">
-            <WithMediaUrl media={props.scene.model.file}>
+            <WithMediaUrl media={props.placement.model?.file}>
               {(url) => (
                   <AgentModel url={url} />
               )}

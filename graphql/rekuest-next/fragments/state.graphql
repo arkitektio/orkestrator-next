@@ -1,7 +1,7 @@
 fragment State on State {
   id
   value
-  stateSchema {
+  definition {
     hash
     name
     ports {

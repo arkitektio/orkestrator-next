@@ -1,0 +1,13 @@
+fragment Space on Space {
+  id
+  name
+  placements {
+   ...SpacePlacement
+  }
+}
+
+
+fragment ListSpace on Space {
+  id
+  name
+}

@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/kabinet/graphql"
+schema:
+  "http://jhnnsrs-lab/kabinet/schema":
+    handleAsSDL: true
 documents: "graphql/kabinet/**/*.graphql"
 generates:
   src/renderer/src/kabinet/api/fragments.ts:

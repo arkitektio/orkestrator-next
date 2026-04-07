@@ -218,8 +218,8 @@ export const AgentPage = asDetailQueryRoute(
 
 
           <div>
-            {data.agent.scenes.map((scene) => (
-              <>{scene && <AgentHeroScene scene={scene} />}</>
+            {data.agent.placements.map((plc) => (
+              <>{plc.model?.file && <AgentHeroScene placement={plc} />}</>
 
             ))}
 

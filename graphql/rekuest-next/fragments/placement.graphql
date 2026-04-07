@@ -1,0 +1,60 @@
+fragment Placement on Placement {
+  id
+  name
+  model {
+    id
+    file {
+      ...MediaStore
+
+    }
+    transferFunction
+  }
+
+  agent {
+    id
+  }
+  affineMatrix
+}
+
+fragment SpacePlacement on Placement {
+  id
+  name
+  model {
+    id
+    file {
+      ...MediaStore
+
+    }
+
+    transferFunction
+  }
+  agent {
+    id
+  }
+  affineMatrix
+}
+
+fragment AgentPlacement on Placement {
+  id
+  name
+  model {
+    id
+    file {
+      ...MediaStore
+
+    }
+
+    transferFunction
+  }
+  space {
+    id
+  }
+  affineMatrix
+}
+
+
+fragment ListPlacement on Placement {
+  id
+  name
+  affineMatrix
+}

@@ -1,11 +1,11 @@
-import {  MediaAccessGrantFragment, MediaStore, RequestMediaAccessDocument, RequestMediaAccessInput, RequestMediaAccessMutation, RequestMediaAccessMutationVariables } from "@/rekuest/api/graphql";
+import {  MediaAccessGrantFragment, MediaStore, MediaStoreFragment, RequestMediaAccessDocument, RequestMediaAccessInput, RequestMediaAccessMutation, RequestMediaAccessMutationVariables } from "@/rekuest/api/graphql";
 import {  signS3Request } from "./s3request";
 import { ApolloClient } from "@apollo/client";
 import { useDatalayerEndpoint, useRekuest } from "@/app/Arkitekt";
 import React from "react";
 
 
-export const createBlobUrl = async (media: MediaStore, datalayer: string, credentials: MediaAccessGrantFragment) => {
+export const createBlobUrl = async (media: MediaStoreFragment, datalayer: string, credentials: MediaAccessGrantFragment) => {
 
 
   const s3Url = datalayer + "/" + credentials.bucket + "/" + credentials.key;
@@ -27,7 +27,7 @@ export const createBlobUrl = async (media: MediaStore, datalayer: string, creden
 
 
 
-export const createBlobedUrl = async (media: MediaStore, mikro: ApolloClient, datalayer: string) => {
+export const createBlobedUrl = async (media: MediaStoreFragment, mikro: ApolloClient, datalayer: string) => {
 
   const { data } = await mikro.mutate<RequestMediaAccessMutation, RequestMediaAccessMutationVariables>({
     mutation: RequestMediaAccessDocument,
@@ -49,21 +49,22 @@ export const createBlobedUrl = async (media: MediaStore, mikro: ApolloClient, da
 
 
 
-export const WithMediaUrl = (props: { children: (url) => React.ReactNode, media: MediaStore }) => {
+export const WithMediaUrl = (props: { children: (url) => React.ReactNode, media?: MediaStoreFragment | undefined | null }) => {
 
   const endpointUrl = useDatalayerEndpoint();
-  const mikro = useRekuest();
+  const rekuest = useRekuest();
 
 
   const [url, setUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!endpointUrl) return;
+    if (!props.media) return;
 
-    createBlobedUrl(props.media, mikro, endpointUrl)
+    createBlobedUrl(props.media, rekuest, endpointUrl)
       .then(setUrl)
       .catch(err => console.error("Error creating blob URL:", err));
-  }, [props.media.id, endpointUrl]);
+  }, [props.media, endpointUrl, rekuest]);
 
   if (!url) {
     return null;

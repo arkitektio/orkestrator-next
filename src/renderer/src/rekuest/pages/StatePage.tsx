@@ -30,8 +30,8 @@ const StateValueDisplay = ({
   const { registry } = useWidgetRegistry();
 
   const ports = select
-    ? state.stateSchema.ports.filter((p) => select.includes(p.key)) || []
-    : state.stateSchema.ports || [];
+    ? state.definition.ports.filter((p) => select.includes(p.key)) || []
+    : state.definition.ports || [];
 
   return (
     <Card className="grid grid-cols-2 gap-4 p-3">
@@ -206,11 +206,11 @@ const CheckoutStateDisplay = ({
 export const StatePage = asDetailQueryRoute(
   useGetStateQuery,
   ({ data }) => {
-    const allKeys = data.state.stateSchema.ports.map((p) => p.key);
+    const allKeys = data.state.definition.ports.map((p) => p.key);
 
     return (
       <RekuestState.ModelPage
-        title={data.state.stateSchema.name}
+        title={data.state.definition.name}
         object={data.state}
       >
         <div className="p-6">

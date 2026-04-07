@@ -1,8 +1,0 @@
-fragment AgentScene on AgentScene {
-  model {
-    id
-    file {
-      ...MediaStore
-    }
-  }
-}

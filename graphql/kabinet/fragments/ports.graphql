@@ -10,27 +10,29 @@ fragment SliderAssignWidget on SliderAssignWidget {
   kind
   min
   max
+  step
 }
 
 fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   __typename
   kind
-  followValue
-  stateChoices
+  statePath
+  stateAccessors {
+    optionKey
+    subPath
+  }
+  dependency
 }
 
-fragment FilterPort on Port {
+fragment FilterPort on ArgPort {
   __typename
   kind
   key
   identifier
-  assignWidget {
+  widget {
     ... on SearchAssignWidget {
       query
     }
-  }
-  returnWidget {
-    ...ReturnWidget
   }
   description
   nullable
@@ -44,6 +46,7 @@ fragment SearchAssignWidget on SearchAssignWidget {
   filters {
     ...FilterPort
   }
+  dependencies
 }
 
 fragment CustomAssignWidget on CustomAssignWidget {
@@ -62,7 +65,7 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   }
 }
 
-fragment ChildPortNested on Port {
+fragment ArgChildPortNested on ArgPort {
   __typename
   kind
   key
@@ -70,42 +73,96 @@ fragment ChildPortNested on Port {
   children {
     kind
     identifier
-    assignWidget {
+    widget {
       ...AssignWidget
     }
-    returnWidget {
-      ...ReturnWidget
-    }
   }
-  assignWidget {
+  choices {
+    value
+    label
+    description
+  }
+  widget {
     ...AssignWidget
-  }
-  returnWidget {
-    ...ReturnWidget
   }
   description
   nullable
 }
 
-fragment ChildPort on Port {
+fragment ArgChildPort on ArgPort {
   __typename
   kind
   key
   identifier
   children {
-    ...ChildPortNested
+    ...ArgChildPortNested
   }
-  assignWidget {
+  widget {
     ...AssignWidget
   }
-  returnWidget {
-    ...ReturnWidget
+  choices {
+    value
+    label
+    description
   }
   nullable
   description
 }
 
+fragment ReturnChildPortNested on ReturnPort {
+  __typename
+  kind
+  key
+  identifier
+  children {
+    kind
+    identifier
+    widget {
+      ...ReturnWidget
+    }
+  }
+  choices {
+    value
+    label
+    description
+  }
+  widget {
+    ...ReturnWidget
+  }
+  description
+  nullable
+}
+
+
+fragment ReturnChildPort on ReturnPort {
+  __typename
+  kind
+  key
+  identifier
+  children {
+    ...ReturnChildPortNested
+  }
+  widget {
+    ...ReturnWidget
+  }
+  choices {
+    value
+    label
+    description
+  }
+  nullable
+  description
+}
+
+fragment BaseEffect on Effect {
+  __typename
+  kind
+  dependencies
+  function
+}
+
 fragment CustomEffect on CustomEffect {
+  ...BaseEffect
   __typename
   kind
   hook
@@ -113,17 +170,22 @@ fragment CustomEffect on CustomEffect {
 }
 
 fragment MessageEffect on MessageEffect {
+  ...BaseEffect
   __typename
   kind
   message
 }
 
-fragment PortEffect on Effect {
+fragment HideEffect on HideEffect {
+  ...BaseEffect
   __typename
-  kind
-  dependencies
+  fade
+}
+
+fragment PortEffect on Effect {
   ...CustomEffect
   ...MessageEffect
+  ...HideEffect
 }
 
 fragment AssignWidget on AssignWidget {
@@ -144,7 +206,7 @@ fragment Validator on Validator {
   errorMessage
 }
 
-fragment Port on Port {
+fragment ArgPort on ArgPort {
   __typename
   key
   label
@@ -153,16 +215,18 @@ fragment Port on Port {
   effects {
     ...PortEffect
   }
-  assignWidget {
+  widget {
     ...AssignWidget
-  }
-  returnWidget {
-    ...ReturnWidget
   }
   kind
   identifier
   children {
-    ...ChildPort
+    ...ArgChildPort
+  }
+  choices {
+    value
+    label
+    description
   }
   default
   nullable
@@ -170,6 +234,38 @@ fragment Port on Port {
     ...Validator
   }
 }
+
+fragment ReturnPort on ReturnPort {
+  __typename
+  key
+  label
+  nullable
+  description
+  effects {
+    ...PortEffect
+  }
+  widget {
+    ...ReturnWidget
+  }
+  kind
+  identifier
+  children {
+    ...ReturnChildPort
+  }
+  choices {
+    value
+    label
+    description
+  }
+  default
+  nullable
+  provides {
+    key
+    operator
+    value
+  }
+}
+
 
 fragment CustomReturnWidget on CustomReturnWidget {
   __typename
@@ -193,3 +289,4 @@ fragment ReturnWidget on ReturnWidget {
   ...CustomReturnWidget
   ...ChoiceReturnWidget
 }
+

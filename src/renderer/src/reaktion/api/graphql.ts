@@ -147,6 +147,7 @@ export type AssignWidgetInput = {
   asParagraph?: InputMaybe<Scalars['Boolean']['input']>;
   choices?: InputMaybe<Array<ChoiceInput>>;
   dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  dependency?: InputMaybe<Scalars['String']['input']>;
   fallback?: InputMaybe<AssignWidgetInput>;
   filters?: InputMaybe<Array<ArgPortInput>>;
   hook?: InputMaybe<Scalars['String']['input']>;
@@ -155,6 +156,8 @@ export type AssignWidgetInput = {
   min?: InputMaybe<Scalars['Float']['input']>;
   placeholder?: InputMaybe<Scalars['String']['input']>;
   query?: InputMaybe<Scalars['SearchQuery']['input']>;
+  stateAccessors?: InputMaybe<Array<StateAccessorInput>>;
+  statePath?: InputMaybe<Scalars['String']['input']>;
   step?: InputMaybe<Scalars['Float']['input']>;
   ward?: InputMaybe<Scalars['String']['input']>;
 };
@@ -522,6 +525,13 @@ export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
+
+export enum OptionKey {
+  Description = 'DESCRIPTION',
+  Label = 'LABEL',
+  Logo = 'LOGO',
+  Value = 'VALUE'
+}
 
 export enum Ordering {
   Asc = 'ASC',
@@ -1039,11 +1049,24 @@ export type SnapshotRunInput = {
   t: Scalars['Int']['input'];
 };
 
+export type StateAccessor = {
+  __typename?: 'StateAccessor';
+  optionKey: OptionKey;
+  subPath?: Maybe<Scalars['String']['output']>;
+};
+
+export type StateAccessorInput = {
+  optionKey: OptionKey;
+  subPath?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type StateChoiceAssignWidget = AssignWidget & {
   __typename?: 'StateChoiceAssignWidget';
+  dependency?: Maybe<Scalars['String']['output']>;
   followValue?: Maybe<Scalars['String']['output']>;
   kind: AssignWidgetKind;
-  stateChoices: Scalars['String']['output'];
+  stateAccessors?: Maybe<Array<StateAccessor>>;
+  statePath: Scalars['String']['output'];
 };
 
 export type StreamItem = {

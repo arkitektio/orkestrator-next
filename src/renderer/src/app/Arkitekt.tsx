@@ -122,18 +122,6 @@ export const serviceMap = {
       };
     },
   },
-  seaweedfs: {
-    key: "seaweedfs",
-    service: "live.arkitekt.seaweedfs",
-    optional: false,
-    omitchallenge: true,
-    builder: ({ alias }) => {
-      return {
-        client: { url: aliasToHttpPath(alias, "") },
-        alias
-      };
-    },
-  },
 } as const satisfies ServiceBuilderMap;
 
 export const moduleRegistry = {
@@ -271,11 +259,5 @@ export const useDokuments = () => {
 };
 export const useDatalayerEndpoint = (): string | undefined => {
   const url = Arkitekt.usePotentialService("datalayer")?.client?.url;
-  return url;
-};
-
-
-export const useSeaweedfs = (): string => {
-  const url = Arkitekt.useService("seaweedfs")?.client.url;
   return url;
 };

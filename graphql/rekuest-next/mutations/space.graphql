@@ -1,0 +1,32 @@
+mutation CreateSpace($input: CreateSpaceInput!) {
+  createSpace(input: $input) {
+    ...Space
+  }
+}
+
+
+mutation CreatePlacement($input: CreatePlacementInput!) {
+  createPlacement(input: $input) {
+    id
+    affineMatrix
+    model {
+        file {
+          ...MediaStore
+        }
+      }
+    }
+}
+
+mutation UpdatePlacement( $input: UpdatePlacementInput!) {
+  updatePlacement(input: $input) {
+    id
+    affineMatrix
+      model {
+        file {
+          ...MediaStore
+        }
+      }
+
+  }
+}
+

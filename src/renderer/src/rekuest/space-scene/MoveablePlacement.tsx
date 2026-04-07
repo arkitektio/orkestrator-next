@@ -1,6 +1,6 @@
 import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
 import { Center, Html, TransformControls, useGLTF } from "@react-three/drei";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Group, Matrix4 } from "three";
 import { MediaStore, SpacePlacementFragment, useUpdatePlacementMutation } from "../api/graphql";
 import { useSpaceScene } from "./context";
@@ -35,19 +35,33 @@ export const MoveablePlacement = ({
   const [updateSpacePlacement] = useUpdatePlacementMutation();
 
 
-  const matrix = useMemo(() => {
-    const flat = placement.affineMatrix.flat() as number[];
-    // affineMatrix is row-major; Matrix4.set() takes row-major args
-    return new Matrix4().set(
-      flat[0],  flat[1],  flat[2],  flat[3],
-      flat[4],  flat[5],  flat[6],  flat[7],
-      flat[8],  flat[9],  flat[10], flat[11],
-      flat[12], flat[13], flat[14], flat[15],
-    );
-  }, [placement.affineMatrix]);
+  useEffect(() => {
+  if (!meshRef.current) return;
 
+  const flat = placement.affineMatrix.flat() as number[];
 
-  console.log(matrix)
+  // 1. Load the Row-Major matrix and transpose it for Three.js
+  const m = new Matrix4().fromArray(flat).transpose();
+
+  // 2. Apply this matrix to the object
+  meshRef.current.matrix.copy(m);
+
+  // 3. IMPORTANT: Decompose the matrix back into pos/rot/scale
+  // This allows TransformControls to "see" the current state
+  meshRef.current.matrix.decompose(
+    meshRef.current.position,
+    meshRef.current.quaternion,
+    meshRef.current.scale
+  );
+
+  // 4. Re-enable autoUpdate so TransformControls can move it
+  meshRef.current.matrixAutoUpdate = true;
+
+  // 5. Force a world update
+  meshRef.current.updateMatrixWorld(true);
+
+}, [placement.affineMatrix, placement.id]);
+
 
 
 
@@ -84,7 +98,6 @@ export const MoveablePlacement = ({
       )}
       <group
         ref={meshRef}
-        matrix={matrix}
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);
@@ -126,21 +139,41 @@ export const PlacementFallback = ({
 }) => {
   const meshRef = useRef<Group>(null!);
   const selectedId = useSpaceScene((s) => s.selectedPlacementId);
-  const updateTransform = useSpaceScene((s) => s.updatePlacementTransform);
   const selectPlacement = useSpaceScene((s) => s.selectPlacement);
   const isSelected = selectedId === placement.id;
 
   const [updateSpacePlacement] = useUpdatePlacementMutation();
 
-  const matrix = useMemo(() => {
-    const flat = placement.affineMatrix.flat() as number[];
-    return new Matrix4().set(
-      flat[0],  flat[1],  flat[2],  flat[3],
-      flat[4],  flat[5],  flat[6],  flat[7],
-      flat[8],  flat[9],  flat[10], flat[11],
-      flat[12], flat[13], flat[14], flat[15],
-    );
-  }, [placement.affineMatrix]);
+
+useEffect(() => {
+  if (!meshRef.current) return;
+
+  const flat = placement.affineMatrix.flat() as number[];
+
+  // 1. Load the Row-Major matrix and transpose it for Three.js
+  const m = new Matrix4().fromArray(flat).transpose();
+
+  // 2. Apply this matrix to the object
+  meshRef.current.matrix.copy(m);
+
+  // 3. IMPORTANT: Decompose the matrix back into pos/rot/scale
+  // This allows TransformControls to "see" the current state
+  meshRef.current.matrix.decompose(
+    meshRef.current.position,
+    meshRef.current.quaternion,
+    meshRef.current.scale
+  );
+
+  // 4. Re-enable autoUpdate so TransformControls can move it
+  meshRef.current.matrixAutoUpdate = true;
+
+  // 5. Force a world update
+  meshRef.current.updateMatrixWorld(true);
+
+}, [placement.affineMatrix, placement.id]);
+
+
+
 
   const handleTransformEnd = useCallback(() => {
     if (!meshRef.current) return;
@@ -172,7 +205,6 @@ export const PlacementFallback = ({
       )}
       <group
         ref={meshRef}
-        matrix={matrix}
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);

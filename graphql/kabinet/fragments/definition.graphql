@@ -4,10 +4,10 @@ fragment Definition on Definition {
   hash
   description
   args {
-    ...Port
+    ...ArgPort
   }
   returns {
-    ...Port
+    ...ReturnPort
   }
   flavours {
     ...ListFlavour

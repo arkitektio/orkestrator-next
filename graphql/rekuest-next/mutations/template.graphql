@@ -9,11 +9,3 @@ mutation CreateForeignImplementation(
 mutation DeleteImplementation($id: ID!) {
   deleteImplementation(input: { implementation: $id })
 }
-
-mutation SetExtensionImplementations(
-  $input: SetExtensionImplementationsInput!
-) {
-  setExtensionImplementations(input: $input) {
-    id
-  }
-}

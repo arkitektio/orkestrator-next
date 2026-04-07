@@ -38,7 +38,7 @@ fragment Agent on Agent {
   assignations(pagination: { limit: 5 }) {
     ...ListAsssignation
   }
-  placements {
+  placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
     ...AgentPlacement
   }
 }

@@ -8,7 +8,7 @@ export type ArgsContainerProps = {
   ports: (ArgPort | null | undefined)[];
   groups?: (PortGroup | null | undefined)[] | undefined;
   options?: PortOptions | undefined;
-  bound?: string; // Are we bound to a specific implementation?
+  bound?: string; // Are we bound to a specific AGENT if so the id of the agent
   path: string[];
   hidden?: { [key: string]: boolean };
 };

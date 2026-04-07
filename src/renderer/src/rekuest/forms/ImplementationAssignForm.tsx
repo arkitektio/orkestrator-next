@@ -1,5 +1,4 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -11,8 +10,7 @@ import { toast } from "sonner";
 import {
   ListDependencyFragment,
   PostmanAssignationFragment,
-  useAgentOptionsLazyQuery,
-  useImplementationOptionsLazyQuery,
+  useAgentOptionsLazyQuery
 } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
@@ -102,7 +100,7 @@ export const ImplementationAssignForm = (
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6 overflow-hidden @container">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6  @container">
         <div className="flex flex-col sm:justify-between mb-2 h-full min-h-0">
 
 
@@ -119,7 +117,7 @@ export const ImplementationAssignForm = (
               registry={registry}
               ports={implementation?.action.args || []}
               path={["args"]}
-              bound={implementation?.id}
+              bound={implementation?.agent.id}
               groups={implementation?.action.portGroups}
               hidden={props.hidden}
             />

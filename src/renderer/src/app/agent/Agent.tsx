@@ -4,7 +4,7 @@ import type { AppContext } from "@/lib/arkitekt/provider";
 import type { AvailableService } from "@/lib/arkitekt/types";
 import { TokenResponse } from "@/lib/arkitekt/fakts/tokenSchema";
 import { selectAlias, selectApolloClient } from "@/lib/arkitekt/utils";
-import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput, SetExtensionImplementationsDocument, SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables } from "@/rekuest/api/graphql";
+import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput} from "@/rekuest/api/graphql";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
   Assign,
@@ -307,7 +307,7 @@ export class OrkestratorAgent {
 
     await this.registerElectron();
 
-    await this.runAbortableRequest((controller) =>
+    const result = await this.runAbortableRequest((controller) =>
       this.rekuestClient.mutate<EnsureAgentMutation, EnsureAgentMutationVariables>({
         mutation: EnsureAgentDocument,
         variables: {
@@ -324,23 +324,8 @@ export class OrkestratorAgent {
       }),
     );
 
-    await this.runAbortableRequest((controller) =>
-      this.rekuestClient.mutate<SetExtensionImplementationsMutation, SetExtensionImplementationsMutationVariables>({
-        mutation: SetExtensionImplementationsDocument,
-        variables: {
-          input: {
-            extension: "orkestrator",
-            instanceId: this.instanceId,
-            implementations: this.implementations,
-          },
-        },
-        context: {
-          fetchOptions: {
-            signal: controller.signal,
-          },
-        },
-      }),
-    );
+   // Reimplmemnt with new api
+
 
   }
 

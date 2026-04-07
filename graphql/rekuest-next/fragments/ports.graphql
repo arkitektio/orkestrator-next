@@ -16,8 +16,12 @@ fragment SliderAssignWidget on SliderAssignWidget {
 fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   __typename
   kind
-  followValue
-  stateChoices
+  statePath
+  stateAccessors {
+    optionKey
+    subPath
+  }
+  dependency
 }
 
 fragment FilterPort on ArgPort {

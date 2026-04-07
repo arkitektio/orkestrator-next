@@ -79,8 +79,8 @@ export const StateDisplay = ({
   });
 
   const ports = select
-    ? data?.state.stateSchema.ports.filter((p) => select.includes(p.key)) || []
-    : data?.state.stateSchema.ports || [];
+    ? data?.state.definition.ports.filter((p) => select.includes(p.key)) || []
+    : data?.state.definition.ports || [];
 
   return (
     <Card className="grid grid-cols-2 gap-4 p-3">
@@ -125,8 +125,8 @@ export const StateCheckoutDisplay = ({
     const value = data?.checkout?.value || state.value;
 
     const ports = select
-      ? state.stateSchema.ports.filter((p) => select.includes(p.key)) || []
-      : state.stateSchema.ports || [];
+      ? state.definition.ports.filter((p) => select.includes(p.key)) || []
+      : state.definition.ports || [];
 
 
 

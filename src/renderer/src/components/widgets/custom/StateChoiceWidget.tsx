@@ -4,54 +4,106 @@ import {
   StateChoiceAssignWidgetFragment,
   useGetStateForQuery,
 } from "@/rekuest/api/graphql";
+import { useAgentLiveState } from "@/rekuest/hooks/useLiveState";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";
 
+
+
+const accessNestedValue = (obj: Record<string, unknown>, path: string[]) => {
+  return path.reduce((acc, key) => {
+    if (acc && typeof acc === "object" && key in acc) {
+      return acc[key] as Record<string, unknown>;
+    }
+    return null;
+  }, obj);
+}
+
+
+
+
+
+
+
+
+
+
+
 export const StateChoiceWidget = (
   props: InputWidgetProps<StateChoiceAssignWidgetFragment>,
 ) => {
-  if (!props.bound) {
-    return (
-      <div>
-        This widget makes only sense if you use it on a bound instance, because
-        it depends on specific app state
-      </div>
-    );
-  }
 
-  const stateKey = props.widget?.stateChoices.split(".")[0];
-  const valueKey = props.widget?.stateChoices.split(".")[1];
 
-  if (!stateKey || !valueKey) {
-    return <div>Invalid state choices widget configuration</div>;
-  }
+  const stateKey = props.widget?.statePath.split(".")[0];
+  const statePaths = props.widget?.statePath.split(".").slice(1) || [];
+  const stateAccessors = props.widget.stateAccessors;
+  const dependency = props.widget.dependency
 
-  const { data, error } = useGetStateForQuery({
-    variables: {
-      template: props.bound,
-      stateKey: stateKey,
-    },
+
+  const { value: liveValue } = useAgentLiveState({
+    agentID: props.bound,
+    stateInterface: stateKey,
+    skip: !props.bound || !stateKey,
   });
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("Searching", searching);
-      if (searching.search) {
-        return data?.stateFor.value[valueKey]
-          .filter(notEmpty)
-          .filter((c) => c.label.startsWith(searching.search || ""));
+      console.log("Searching with liveValue:", liveValue);
+
+      const accessedValue = accessNestedValue(liveValue || {}, statePaths);
+
+      // 1. Validation: Must be an array
+      if (!Array.isArray(accessedValue)) {
+        console.warn("Path did not resolve to an array", statePaths);
+        throw new Error("Invalid state path: Expected an array.");
       }
-      if (searching.values) {
-        console.log("Searching", searching.values);
-        return data?.stateFor.value[valueKey]
-          .filter(notEmpty)
-          .filter((c) => searching.values?.includes(c.value));
-      }
-      return data?.stateFor.value[valueKey].filter(notEmpty);
+
+      // 2. Identify Subpaths (Handling null accessors)
+      const valuePath = stateAccessors?.find(a => a?.optionKey === 'VALUE')?.subPath;
+      const labelPath = stateAccessors?.find(a => a?.optionKey === 'LABEL')?.subPath;
+      const descPath = stateAccessors?.find(a => a?.optionKey === 'DESCRIPTION')?.subPath;
+
+      // 3. Map the array with fallbacks
+      return accessedValue.map((item, index) => {
+        // Handle Objects
+        if (item !== null && typeof item === "object") {
+          // Resolve values via subpaths or fallback to common keys
+          const val = valuePath ? accessNestedValue(item, valuePath.split('.')) : (item.id || item.key || index);
+          const lab = labelPath ? accessNestedValue(item, labelPath.split('.')) : (item.name || item.label || String(val));
+          const desc = descPath ? accessNestedValue(item, descPath.split('.')) : undefined;
+
+          return {
+            value: val,
+            label: lab,
+            description: desc,
+            key: String(val), // Keys must be strings for many UI frameworks
+          };
+        }
+
+        // Handle Primitives (Strings/Numbers)
+        return {
+          value: item,
+          label: String(item),
+          key: String(item),
+        };
+      })
     },
-    [data],
+    [liveValue, statePaths, stateAccessors],
   );
+
+  if (dependency) {
+    return (
+      <div>
+        This widget is currently not compatible with dependencies. Please remove
+        the dependency to use it.
+      </div>
+    );
+  }
+
+  if (!stateKey) {
+    return <div>Invalid state choices widget configuration</div>;
+  }
 
   return (
     <>
@@ -63,7 +115,6 @@ export const StateChoiceWidget = (
         noOptionFoundPlaceholder="No options found"
         commandPlaceholder="Search..."
       />
-      {error && <div>Error: {error.message}</div>}
     </>
   );
 };

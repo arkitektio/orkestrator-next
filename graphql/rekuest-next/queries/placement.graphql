@@ -1,9 +1,9 @@
 query Placements(
   $pagination: OffsetPaginationInput
   $filters: PlacementFilter
-  $order: PlacementOrder
+  $ordering: [PlacementOrder!]
 ) {
-  placements(order: $order, pagination: $pagination, filters: $filters) {
+  placements(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListPlacement
   }
 }

@@ -1,0 +1,1361 @@
+directive @unionElementOf(discriminator: String!, key: String!, union: String!) on INPUT_OBJECT
+
+"""
+A dependency for a implementation. By defining dependencies, you can
+    create a dependency graph for your implementations and actions
+"""
+input ActionDependencyInput {
+  actionKey: String = null
+  allowInactive: Boolean = true
+  app: String = null
+  argMatches: [PortMatchInput!] = null
+  description: String = null
+  forceArgLength: Int = null
+  forceReturnLength: Int = null
+  key: String!
+
+  """
+  The name of the action. This is used to identify the action in the system.
+  """
+  name: String = null
+  optional: Boolean! = false
+  protocols: [ID!] = null
+  returnMatches: [PortMatchInput!] = null
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar ActionHash
+
+"""The kind of action."""
+enum ActionKind {
+  FUNCTION
+  GENERATOR
+}
+
+"""The kind of action scope."""
+enum ActionScope {
+  BRIDGE_GLOBAL_TO_LOCAL
+  BRIDGE_LOCAL_TO_GLOBAL
+  GLOBAL
+  LOCAL
+}
+
+"""
+A dependency for a implementation. By defining dependencies, you can
+    create a dependency graph for your implementations and actions
+"""
+input AgentDependencyInput {
+  actionDemands: [ActionDependencyInput!] = null
+  app: String = null
+  autoResolvable: Boolean! = false
+  description: String = null
+  key: String!
+
+  """
+  The maximum amount of viable instances for the agent. This is used to identify the demand in the system.
+  """
+  maxViableInstances: Int = null
+  minViableInstances: Int = null
+
+  """
+  A list of keys of other agent dependencies that are mutually exclusive with this one. This means two agent dependencies with mutually exclusive keys cannot be assigned to the same implementing agent. This is used to identify the demand in the system.
+  """
+  mutuallyExclusiveKeys: [String!] = null
+
+  """
+  The name of the agent. This is used to identify the agent in the system.
+  """
+  name: String = null
+  optional: Boolean! = false
+  preferedInstances: Int = null
+  stateDemands: [StateDependencyInput!] = null
+  version: String = null
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar AnyDefault
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type App {
+  id: ID!
+  identifier: String!
+}
+
+"""Create a new Github repository input"""
+input AppImageInput {
+  appImageId: String!
+  flavourName: String
+  image: DockerImageInput!
+  inspection: InspectionInput!
+  manifest: ManifestInput!
+  selectors: [SelectorInput!]!
+}
+
+"""The `Arg` scalar type represents a an Argument in a Action assignment"""
+scalar Arg
+
+type ArgPort {
+  children: [ArgPort!]
+  choices: [Choice!]
+  default: AnyDefault
+  description: String
+  effects: [Effect!]
+  identifier: Identifier
+  key: String!
+  kind: PortKind!
+  label: String
+  nullable: Boolean!
+  requires: [Requires!]
+  validators: [Validator!]
+  widget: AssignWidget
+}
+
+"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+input ArgPortInput {
+  children: [ArgPortInput!] = null
+  choices: [ChoiceInput!] = null
+  default: AnyDefault = null
+  description: String = null
+  effects: [EffectInput!] = null
+  identifier: String = null
+  key: String!
+  kind: PortKind!
+  label: String = null
+  nullable: Boolean! = false
+  requires: [RequiresInput!] = null
+  validators: [ValidatorInput!] = null
+  widget: AssignWidgetInput = null
+}
+
+interface AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+}
+
+input AssignWidgetInput {
+  """
+  Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns
+  """
+  asParagraph: Boolean = null
+  choices: [ChoiceInput!] = null
+  dependencies: [String!] = []
+  dependency: String = null
+  fallback: AssignWidgetInput = null
+  filters: [ArgPortInput!] = null
+  hook: String = null
+  kind: AssignWidgetKind!
+  max: Float = null
+  min: Float = null
+  placeholder: String = null
+  query: SearchQuery = null
+  stateAccessors: [StateAccessorInput!] = null
+  statePath: String = null
+  step: Float = null
+  ward: String = null
+}
+
+"""The kind of assign widget."""
+enum AssignWidgetKind {
+  CHOICE
+  CUSTOM
+  SEARCH
+  SLIDER
+  STATE_CHOICE
+  STRING
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Backend {
+  client: Client!
+  clientId: String!
+  id: ID!
+  instanceId: String!
+  kind: String!
+  name: String!
+  organization: Organization!
+  pods(filters: PodFilter, pagination: OffsetPaginationInput): [Pod!]!
+  resources(filters: ResourceFilter, pagination: OffsetPaginationInput): [Resource!]!
+  user: User!
+}
+
+"""Filter for Resources"""
+input BackendFilter {
+  AND: BackendFilter
+  DISTINCT: Boolean
+  NOT: BackendFilter
+  OR: BackendFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+""" A selector is a way to select a release"""
+type CPUSelector implements Selector {
+  frequency: Float
+  kind: String!
+  min: Int
+  required: Boolean!
+}
+
+type Choice {
+  description: String
+  image: String
+  label: String!
+  value: String!
+}
+
+type ChoiceAssignWidget implements AssignWidget {
+  choices: [Choice!]
+  followValue: String
+  kind: AssignWidgetKind!
+}
+
+"\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    "
+input ChoiceInput {
+  description: String = null
+  image: String = null
+  label: String!
+  value: AnyDefault!
+}
+
+type ChoiceReturnWidget implements ReturnWidget {
+  choices: [Choice!]
+  kind: ReturnWidgetKind!
+}
+
+"""Represents a registered OAuth2 client."""
+type Client {
+  """OAuth2 client ID."""
+  clientId: String!
+
+  """Device associated with the client."""
+  device: Device
+
+  """Unique ID of the client."""
+  id: ID!
+
+  """Name of the client."""
+  name: String!
+
+  """Release associated with the client."""
+  release: ClientRelease
+}
+
+"""Profile information for a user."""
+type ClientApp {
+  """Unique ID of the app."""
+  id: ID!
+
+  """Name of the app."""
+  identifier: String!
+}
+
+"""Profile information for a user."""
+type ClientRelease {
+  """The app this release belongs to."""
+  app: ClientApp!
+
+  """Unique ID of the release."""
+  id: ID!
+
+  """Version string of the release."""
+  version: String!
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Collection {
+  definedAt: DateTime!
+  description: String!
+  id: ID!
+  name: String!
+}
+
+"""The state of a dask cluster"""
+enum ContainerType {
+  APPTAINER
+  DOCKER
+}
+
+input CpuSelectorInput {
+  """The frequency in MHz"""
+  frequency: Int
+
+  """The memory in MB"""
+  memory: Int
+}
+
+"""Create a new Github repository input"""
+input CreateDeploymentInput {
+  flavour: ID!
+  instanceId: String!
+  lastPulled: DateTime = null
+  localId: ID!
+  secretParams: UntypedParams
+}
+
+"""Create a new Github repository input"""
+input CreateGithubRepoInput {
+  autoScan: Boolean = true
+  branch: String = null
+  identifier: String = null
+  name: String = null
+  repo: String = null
+  user: String = null
+}
+
+"""Create a new Github repository input"""
+input CreatePodInput {
+  clientId: String = null
+  deployment: ID!
+  instanceId: String!
+  localId: ID!
+  resource: ID = null
+}
+
+""" A selector is a way to select a release"""
+type CudaSelector implements Selector {
+  """The number of cuda cores"""
+  cudaCores: Int
+
+  """The minimum cuda version"""
+  cudaVersion: String
+  kind: String!
+  required: Boolean!
+}
+
+input CudaSelectorInput {
+  """The cuda cores"""
+  cudaCores: Int = null
+
+  """The minimum cuda version"""
+  cudaVersion: String = null
+}
+
+type CustomAssignWidget implements AssignWidget {
+  followValue: String
+  hook: String!
+  kind: AssignWidgetKind!
+  ward: String!
+}
+
+type CustomEffect implements Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  hook: String!
+  kind: EffectKind!
+  ward: String!
+}
+
+type CustomReturnWidget implements ReturnWidget {
+  hook: String!
+  kind: ReturnWidgetKind!
+  ward: String!
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+"""Create a new Github repository input"""
+input DeclareBackendInput {
+  instanceId: String!
+  kind: String!
+  name: String!
+}
+
+"""Create a resource"""
+input DeclareResourceInput {
+  backend: ID!
+  localId: String!
+  name: String
+  qualifiers: [QualifierInput!] = null
+}
+
+type Definition {
+  args: [ArgPort!]!
+  collections: [Collection!]!
+  definedAt: DateTime!
+  description: String
+  flavours(filters: FlavourFilter, order: FlavourOrder, pagination: OffsetPaginationInput): [Flavour!]!
+  hash: ActionHash!
+  id: ID!
+  isTestFor(filters: DefinitionFilter, order: DefinitionOrder, pagination: OffsetPaginationInput): [Definition!]!
+  kind: ActionKind!
+  name: String!
+  protocols: [Protocol!]!
+  returns: [ReturnPort!]!
+  scope: ActionScope!
+  tests(filters: DefinitionFilter, order: DefinitionOrder, pagination: OffsetPaginationInput): [Definition!]!
+}
+
+"""Filter for Dask Clusters"""
+input DefinitionFilter {
+  AND: DefinitionFilter
+  DISTINCT: Boolean
+  NOT: DefinitionFilter
+  OR: DefinitionFilter
+  demands: [PortDemandInput!]
+  ids: [ID!] = null
+  search: String = null
+}
+
+"A definition\n\n    Definitions are the building implementation for Actions and provide the\n    information needed to create a action. They are primarly composed of a name,\n    a description, and a list of ports.\n\n    Definitions provide a protocol of input and output, and do not contain\n    any information about the actual implementation of the action ( this is handled\n    by a implementation that implements a action).\n\n    "
+input DefinitionInput {
+  """The args of the definition. This is the input ports of the definition"""
+  args: [ArgPortInput!]! = []
+
+  """
+  The collections of the definition. This is used to group definitions together in the UI
+  """
+  collections: [String!]! = []
+
+  """
+  The description of the definition. This is the text that is displayed in the UI
+  """
+  description: String = null
+
+  """
+  The interfaces of the definition. This is used to group definitions together in the UI
+  """
+  interfaces: [String!]! = []
+
+  """
+  Whether the definition is a dev definition or not. If the definition is a dev definition, it can be used to create a dev action. If the definition is not a dev definition, it cannot be used to create a dev action
+  """
+  isDev: Boolean! = false
+
+  """
+  The tests for the definition. This is used to group definitions together in the UI
+  """
+  isTestFor: [String!]! = []
+
+  """
+  The key of the definition. This is used to uniquely identify the definition
+  """
+  key: String!
+
+  """
+  The kind of the definition. This is the type of the definition. Can be either a function or a generator
+  """
+  kind: ActionKind!
+
+  """The logo of the definition. This is used to display the logo in the UI"""
+  logo: String = null
+
+  """
+  The name of the actions. This is used to uniquely identify the definition
+  """
+  name: String!
+
+  """
+  The package of the function. Will default to the currents agent's app if not specified. This is used to group definitions together in the UI and provide a better user experience
+  """
+  package: String = null
+
+  """
+  The port groups of the definition. This is used to group ports together in the UI
+  """
+  portGroups: [PortGroupInput!]! = []
+
+  """
+  The returns of the definition. This is the output ports of the definition
+  """
+  returns: [ReturnPortInput!]! = []
+
+  """
+  Whether the definition is stateful or not. If the definition is stateful, it can be used to create a stateful action. If the definition is not stateful, it cannot be used to create a stateful action
+  """
+  stateful: Boolean! = false
+  tests: ActionDependencyInput = null
+
+  """
+  The version of the definition. This is used to differentiate if the underyling algorithm has changed, i.e we would expect different results for the same input
+  """
+  version: String!
+}
+
+input DefinitionOrder {
+  definedAt: Ordering
+}
+
+input DeletePodInput {
+  id: ID!
+}
+
+enum DemandKind {
+  ARGS
+  RETURNS
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Deployment {
+  apiToken: String!
+  backend: Backend!
+  flavour: Flavour!
+  id: ID!
+  localId: ID!
+  name: String!
+}
+
+"""Filter for Dask Clusters"""
+input DeploymentFilter {
+  AND: DeploymentFilter
+  DISTINCT: Boolean
+  NOT: DeploymentFilter
+  OR: DeploymentFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+"""Represents a device assigned to users within an organization."""
+type Device {
+  """The device identifier."""
+  deviceId: ID!
+
+  """Unique ID of the device."""
+  id: ID!
+}
+
+"""The Feature you are trying to match"""
+input DeviceFeature {
+  cpuCount: String!
+  kind: String!
+}
+
+"""A docker image descriptor"""
+type DockerImage {
+  buildAt: DateTime!
+  imageString: String!
+}
+
+input DockerImageInput {
+  buildAt: DateTime!
+  imageString: String!
+}
+
+"""Create a new Github repository input"""
+input DumpLogsInput {
+  logs: String!
+  pod: ID!
+}
+
+interface Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  kind: EffectKind!
+}
+
+"\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
+input EffectInput {
+  dependencies: [String!] = []
+  fade: Boolean = true
+  function: ValidatorFunction!
+  hook: String = null
+  kind: EffectKind!
+  message: String = null
+  ward: String = null
+}
+
+"""The kind of effect."""
+enum EffectKind {
+  CUSTOM
+  HIDE
+  MESSAGE
+}
+
+"""Which environment do you want to match against?"""
+input EnvironmentInput {
+  containerType: ContainerType!
+  features: [DeviceFeature!]
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Flavour {
+  definitions(filters: DefinitionFilter, order: DefinitionOrder, pagination: OffsetPaginationInput): [Definition!]!
+  deployments(filters: DeploymentFilter, pagination: OffsetPaginationInput): [Deployment!]!
+  description: String!
+  entrypoint: CudaSelector!
+  id: ID!
+  image: DockerImage!
+  logo: String
+  manifest: UntypedParams!
+  name: String!
+  originalLogo: String
+  release: Release!
+  repo: GithubRepo!
+  requirements: [Requirement!]!
+  selectors: [Selector!]!
+}
+
+"""Filter for Dask Clusters"""
+input FlavourFilter {
+  AND: FlavourFilter
+  DISTINCT: Boolean
+  NOT: FlavourFilter
+  OR: FlavourFilter
+  hasDefinitions: [ID!]
+  ids: [ID!]
+  search: String
+}
+
+input FlavourOrder @oneOf {
+  releasedAt: Ordering
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type GithubRepo {
+  addedAt: DateTime!
+  branch: String!
+  flavours(filters: FlavourFilter, order: FlavourOrder, pagination: OffsetPaginationInput): [Flavour!]!
+  id: ID!
+  issueUrl: String!
+  name: String!
+  organization: Organization!
+  repo: String!
+  updatedAt: DateTime!
+  url: String!
+  user: String!
+}
+
+"""Numeric/aggregatable fields of GithubRepo"""
+enum GithubRepoField {
+  CREATED_AT
+}
+
+"""Filter for Dask Clusters"""
+input GithubRepoFilter {
+  AND: GithubRepoFilter
+  DISTINCT: Boolean
+  NOT: GithubRepoFilter
+  OR: GithubRepoFilter
+  branch: String = null
+  ids: [ID!] = null
+  repo: String = null
+  search: String = null
+  user: String = null
+}
+
+type GithubRepoStats {
+  """Average"""
+  avg(field: GithubRepoField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Number of distinct values for the field"""
+  distinctCount(field: GithubRepoField!): Int!
+
+  """Maximum"""
+  max(field: GithubRepoField!): Float
+
+  """Minimum"""
+  min(field: GithubRepoField!): Float
+
+  """Time-bucketed stats over a datetime field."""
+  series(by: Granularity!, field: GithubRepoField!, timestampField: GithubRepoTimestampField!): [TimeBucket!]!
+
+  """Sum"""
+  sum(field: GithubRepoField!): Float
+}
+
+"""Datetime fields of GithubRepo for bucketing"""
+enum GithubRepoTimestampField {
+  CREATED_AT
+}
+
+enum Granularity {
+  DAY
+  HOUR
+  MONTH
+  QUARTER
+  WEEK
+  YEAR
+}
+
+type HideEffect implements Effect {
+  dependencies: [String!]!
+  fade: Boolean!
+  function: ValidatorFunction!
+  kind: EffectKind!
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar Identifier
+
+"""
+A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params.
+"""
+input ImplementationInput {
+  definition: DefinitionInput!
+  dependencies: [AgentDependencyInput!]! = []
+  dynamic: Boolean! = false
+  extension: String = null
+  interface: String
+  locks: [String!] = null
+  logo: String = null
+
+  """
+  The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
+  """
+  optimistics: [OptimisticInput!] = null
+  params: AnyDefault = null
+}
+
+input InspectionInput {
+  implementations: [ImplementationInput!]!
+  requirements: [RequirementInput!]!
+  size: Int
+}
+
+"""The logs of a pod"""
+type LogDump {
+  createdAt: DateTime!
+  id: ID!
+  logs: String!
+  pod: Pod!
+}
+
+input ManifestInput {
+  author: String! = "unknown"
+
+  """The entrypoint of the app, defaults to 'app'"""
+  entrypoint: String
+  identifier: String!
+  logo: String = null
+  scopes: [String!]! = []
+  version: String!
+}
+
+"""Create a new Github repository input"""
+input MatchFlavoursInput {
+  actions: [ActionHash!]
+  environment: EnvironmentInput = null
+  release: ID = null
+}
+
+type MessageEffect implements Effect {
+  dependencies: [String!]!
+  function: ValidatorFunction!
+  kind: EffectKind!
+  message: String!
+}
+
+type Mutation {
+  """Create a new release"""
+  createAppImage(input: AppImageInput!): Release!
+
+  """Create a new dask cluster on a bridge server"""
+  createDeployment(input: CreateDeploymentInput!): Deployment!
+
+  """Create a new Github repository on a bridge server"""
+  createGithubRepo(input: CreateGithubRepoInput!): GithubRepo!
+
+  """Create a new dask cluster on a bridge server"""
+  createPod(input: CreatePodInput!): Pod!
+
+  """Create a new dask cluster on a bridge server"""
+  declareBackend(input: DeclareBackendInput!): Backend!
+
+  """Create a new resource for your backend"""
+  declareResource(input: DeclareResourceInput!): Resource!
+
+  """Create a new dask cluster on a bridge server"""
+  deleteBackend(id: ID!): ID!
+
+  """Create a new dask cluster on a bridge server"""
+  deletePod(input: DeletePodInput!): ID!
+
+  """Create a new dask cluster on a bridge server"""
+  dumpLogs(input: DumpLogsInput!): LogDump!
+
+  """Rescan all repos"""
+  rescanRepos: [GithubRepo!]!
+
+  """Create a new dask cluster on a bridge server"""
+  scanRepo(input: ScanRepoInput!): GithubRepo!
+
+  """Create a new dask cluster on a bridge server"""
+  updateDeployment(input: UpdateDeploymentInput!): Deployment!
+
+  """Create a new dask cluster on a bridge server"""
+  updatePod(input: UpdatePodInput!): Pod!
+}
+
+input OffsetPaginationInput {
+  limit: Int
+  offset: Int! = 0
+}
+
+input OneApiSelectorInput {
+  """The api versison of the selector"""
+  oneapiVersion: String = null
+}
+
+" An optimistic is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state values when the action is assigned, instead of waiting for the action to be executed and the state to be updated. This will only ever happen on the frontend.\n\n"
+input OptimisticInput {
+  accessor: String = null
+  path: String!
+  state: String!
+}
+
+enum OptionKey {
+  DESCRIPTION
+  LABEL
+  LOGO
+  VALUE
+}
+
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
+"""Represents an organization in the system."""
+type Organization {
+  """Slug of the organization."""
+  slug: String!
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Pod {
+  backend: Backend!
+  clientId: String
+  deployment: Deployment!
+  id: ID!
+  latestLogDump: LogDump
+  name: String!
+  podId: String!
+  resource: Resource
+  status: PodStatus!
+}
+
+"""Filter for Dask Clusters"""
+input PodFilter {
+  AND: PodFilter
+  DISTINCT: Boolean
+  NOT: PodFilter
+  OR: PodFilter
+  backend: ID = null
+  ids: [ID!] = null
+  search: String = null
+}
+
+"""The state of a dask cluster"""
+enum PodStatus {
+  FAILED
+  PENDING
+  RUNNING
+  STOPPED
+  STOPPING
+  UNKOWN
+}
+
+"""An update on a pod"""
+type PodUpdateMessage {
+  created: Boolean!
+  id: String!
+  progress: Int
+  status: String!
+}
+
+input PortDemandInput {
+  """
+  Require that the action has a specific number of ports. This is used to identify the demand in the system.
+  """
+  forceLength: Int = null
+
+  """
+  Require that the action has a specific number of non-nullable ports. This is used to identify the demand in the system.
+  """
+  forceNonNullableLength: Int = null
+
+  """
+  Require that the action has a specific number of structure ports. This is used to identify the demand in the system.
+  """
+  forceStructureLength: Int = null
+
+  """The kind of the demand. You can ask for args or returns"""
+  kind: DemandKind!
+
+  """The matches of the demand. """
+  matches: [PortMatchInput!] = null
+}
+
+"""
+A Port Group is a group of ports that are related to each other. It is used to group ports together in the UI and provide a better user experience.
+"""
+input PortGroupInput {
+  description: String
+  effects: [EffectInput!] = []
+
+  """
+  The key of the port group. This is used to uniquely identify the port group
+  """
+  key: String!
+  ports: [String!] = []
+  title: String
+}
+
+"""The kind of port."""
+enum PortKind {
+  BOOL
+  DATE
+  DICT
+  ENUM
+  FLOAT
+  INT
+  INTERFACE
+  LIST
+  MEMORY_STRUCTURE
+  MODEL
+  STRING
+  STRUCTURE
+  UNION
+}
+
+"""
+A dependency for a implementation. By defining dependencies, you can
+    create a dependency graph for your implementations and actions
+"""
+input PortMatchInput {
+  at: Int = null
+  children: [PortMatchInput!] = null
+  identifier: String = null
+  key: String = null
+  kind: PortKind = null
+  nullable: Boolean = null
+
+  """
+  The object of the port to match. This is used for adanved pattern matching based on the exact object descriptors of the object. i.e { x: 1, y: 2} 
+  """
+  object: Arg = null
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Protocol {
+  description: String!
+  id: ID!
+  name: String!
+}
+
+type Provides {
+  key: String!
+  operator: ProvidesOperator!
+  value: Arg!
+}
+
+input ProvidesInput {
+  key: String!
+  operator: ProvidesOperator!
+  value: Arg!
+}
+
+"""The operator for matching descriptors."""
+enum ProvidesOperator {
+  CONTAINS
+  EQUALS
+  EXISTS
+  GTE
+  IN
+  LTE
+  NOT_EQUALS
+  NOT_IN
+}
+
+"""A qualifier that describes some property of the action"""
+input QualifierInput {
+  key: String!
+  value: String!
+}
+
+type Query {
+  """Return all dask clusters"""
+  backend(id: ID!): Backend!
+  backends(filters: BackendFilter, pagination: OffsetPaginationInput): [Backend!]!
+
+  """Return all dask clusters"""
+  definition(hash: ActionHash = null, id: ID = null): Definition!
+  definitions(filters: DefinitionFilter, order: DefinitionOrder, pagination: OffsetPaginationInput): [Definition!]!
+
+  """Return all dask clusters"""
+  deployment(id: ID!): Deployment!
+  deployments(filters: DeploymentFilter, pagination: OffsetPaginationInput): [Deployment!]!
+
+  """Return all dask clusters"""
+  flavour(id: ID!): Flavour!
+  flavours(filters: FlavourFilter, order: FlavourOrder, pagination: OffsetPaginationInput): [Flavour!]!
+
+  """Return all dask clusters"""
+  githubRepo(id: ID!): GithubRepo!
+
+  """Stats about github repos"""
+  githubRepoStats(filters: GithubRepoFilter = null): GithubRepoStats!
+  githubRepos(filters: GithubRepoFilter, pagination: OffsetPaginationInput): [GithubRepo!]!
+
+  """Return the currently logged in user"""
+  matchFlavour(input: MatchFlavoursInput!): Flavour!
+
+  """Return the currently logged in user"""
+  me: User!
+
+  """Let a backend discover its own pods"""
+  myPodAt(instanceId: ID!, localId: ID!): Pod!
+
+  """Return all dask clusters"""
+  pod(id: ID!): Pod!
+
+  """Return the pod for an agent"""
+  podForAgent(clientId: ID!, instanceId: ID!): Pod
+  pods(filters: PodFilter, pagination: OffsetPaginationInput): [Pod!]!
+
+  """Return all dask clusters"""
+  release(id: ID!): Release!
+  releases(filters: ReleaseFilter, pagination: OffsetPaginationInput): [Release!]!
+
+  """Return all dask clusters"""
+  resource(id: ID!): Resource!
+  resources(filters: ResourceFilter, pagination: OffsetPaginationInput): [Resource!]!
+}
+
+"""A user of the bridge server. Maps to an authentikate user"""
+type Release {
+  app: App!
+
+  """Is this release deployed"""
+  colour: String!
+
+  """Is this release deployed"""
+  deployments: [Deployment!]!
+
+  """Is this release deployed"""
+  description: String!
+  entrypoint: String!
+  flavours(filters: FlavourFilter, order: FlavourOrder, pagination: OffsetPaginationInput): [Flavour!]!
+  id: ID!
+
+  """Is this release deployed"""
+  installed: Boolean!
+  logo: String
+
+  """Is this release deployed"""
+  name: String!
+  originalLogo: String
+  scopes: [String!]!
+  version: String!
+}
+
+"""Filter for Dask Clusters"""
+input ReleaseFilter {
+  AND: ReleaseFilter
+  DISTINCT: Boolean
+  NOT: ReleaseFilter
+  OR: ReleaseFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+"""A requirement"""
+type Requirement {
+  description: String
+  key: String!
+  optional: Boolean!
+  service: String!
+}
+
+input RequirementInput {
+  description: String = null
+  key: String!
+  optional: Boolean! = false
+  service: String!
+}
+
+type Requires {
+  key: String!
+  operator: RequiresOperator!
+  value: Arg!
+}
+
+input RequiresInput {
+  key: String!
+  operator: RequiresOperator!
+  value: Arg!
+}
+
+"""The operator for matching descriptors."""
+enum RequiresOperator {
+  CONTAINS
+  EQUALS
+  EXISTS
+  GTE
+  IN
+  LTE
+  NOT_EQUALS
+  NOT_IN
+}
+
+"""
+A resource on a backend. Resource define allocated resources on a backend. E.g a computational action
+"""
+type Resource {
+  backend: Backend!
+  id: ID!
+  name: String!
+  pods(filters: PodFilter, pagination: OffsetPaginationInput): [Pod!]!
+  qualifiers: UntypedParams
+  resourceId: String!
+}
+
+"""Filter for Resources"""
+input ResourceFilter {
+  AND: ResourceFilter
+  DISTINCT: Boolean
+  NOT: ResourceFilter
+  OR: ResourceFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+type ReturnPort {
+  children: [ReturnPort!]
+  choices: [Choice!]
+  default: AnyDefault
+  description: String
+  effects: [Effect!]
+  identifier: Identifier
+  key: String!
+  kind: PortKind!
+  label: String
+  nullable: Boolean!
+  provides: [Provides!]
+  widget: ReturnWidget
+}
+
+"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
+input ReturnPortInput {
+  children: [ReturnPortInput!] = null
+  choices: [ChoiceInput!] = null
+  default: AnyDefault = null
+  description: String = null
+  effects: [EffectInput!] = null
+  identifier: String = null
+  key: String!
+  kind: PortKind!
+  label: String = null
+  nullable: Boolean! = false
+  provides: [ProvidesInput!] = null
+  validators: [ValidatorInput!] = null
+  widget: ReturnWidgetInput = null
+}
+
+interface ReturnWidget {
+  kind: ReturnWidgetKind!
+}
+
+"A Return Widget is a UI element that is used to display the value of a port.\n\n    Return Widgets get displayed both if we show the return values of an assignment,\n    but also when we inspect the given arguments of a previous run task. Their primary\n    usecase is to adequately display the value of a port, in a user readable way.\n\n    Return Widgets are often overwriten by the underlying UI framework (e.g. Orkestrator)\n    to provide a better user experience. For example, a return widget that displays a\n    date could be overwriten to display a calendar widget.\n\n    Return Widgets provide more a way to customize this overwriten behavior.\n\n    "
+input ReturnWidgetInput {
+  choices: [ChoiceInput!] = null
+  hook: String = null
+  kind: ReturnWidgetKind!
+  max: Int = null
+  min: Int = null
+  placeholder: String = null
+  query: SearchQuery = null
+  step: Int = null
+  ward: String = null
+}
+
+"""The kind of return widget."""
+enum ReturnWidgetKind {
+  CHOICE
+  CUSTOM
+}
+
+""" A selector is a way to select a release"""
+type RocmSelector implements Selector {
+  apiThing: String
+  apiVersion: String
+  kind: String!
+  required: Boolean!
+}
+
+input RocmSelectorInput {
+  """The api thing of the selector"""
+  apiThing: String = null
+
+  """The api version of the selector"""
+  apiVersion: String = null
+}
+
+"""Create a dask cluster input"""
+input ScanRepoInput {
+  id: String!
+}
+
+type SearchAssignWidget implements AssignWidget {
+  dependencies: [String!]
+  filters: [ArgPort!]
+  followValue: String
+  kind: AssignWidgetKind!
+  query: String!
+  ward: String!
+}
+
+"""
+The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+"""
+scalar SearchQuery
+
+""" A selector is a way to select a release"""
+interface Selector {
+  kind: String!
+  required: Boolean!
+}
+
+input SelectorInput {
+  """The api thing of the selector"""
+  apiThing: String = null
+
+  """The api version of the selector"""
+  apiVersion: String = null
+
+  """The cuda cores"""
+  cudaCores: Int = null
+
+  """The frequency in MHz"""
+  frequency: Int = null
+
+  """The kind of the selector"""
+  kind: String!
+
+  """The memory in MB"""
+  memory: Int = null
+
+  """The api version of the selector"""
+  oneapiVersion: String = null
+}
+
+type SliderAssignWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  max: Float
+  min: Float
+  step: Float
+}
+
+type StateAccessor {
+  optionKey: OptionKey!
+  subPath: String
+}
+
+input StateAccessorInput {
+  optionKey: OptionKey!
+  subPath: String = null
+}
+
+type StateChoiceAssignWidget implements AssignWidget {
+  dependency: String
+  followValue: String
+  kind: AssignWidgetKind!
+  stateAccessors: [StateAccessor!]
+  statePath: String!
+}
+
+"""
+A dependency for a implementation. By defining dependencies, you can
+    create a dependency graph for your implementations and actions
+"""
+input StateDependencyInput {
+  allowInactive: Boolean = true
+  app: String = null
+  description: String = null
+  key: String!
+
+  """
+  The name of the state. This is used to identify the action in the system.
+  """
+  name: String = null
+  optional: Boolean! = false
+  portMatches: [PortMatchInput!] = null
+
+  """
+  The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together.
+  """
+  protocols: [ID!] = null
+  stateKey: String = null
+}
+
+type StringAssignWidget implements AssignWidget {
+  asParagraph: Boolean!
+  followValue: String
+  kind: AssignWidgetKind!
+  placeholder: String!
+}
+
+type Subscription {
+  """Create a new dask cluster on a bridge server"""
+  pod(podId: ID!): PodUpdateMessage!
+
+  """Create a new dask cluster on a bridge server"""
+  pods: PodUpdateMessage!
+}
+
+type TimeBucket {
+  avg: Float
+  count: Int!
+  distinctCount: Int!
+  max: Float
+  min: Float
+  sum: Float
+  ts: DateTime!
+}
+
+"""
+UntypedParams represents an untyped options object returned by the Dask Gateway API.
+"""
+scalar UntypedParams
+
+"""Create a new Github repository input"""
+input UpdateDeploymentInput {
+  deployment: ID!
+  status: PodStatus!
+}
+
+"""Create a new Github repository input"""
+input UpdatePodInput {
+  instanceId: String!
+  localId: ID
+  pod: ID
+  status: PodStatus!
+}
+
+"""Represents an authenticated user."""
+type User {
+  """The subject identifier of the user."""
+  sub: ID!
+}
+
+type Validator {
+  dependencies: [String!]
+  errorMessage: String
+  function: ValidatorFunction!
+  label: String
+}
+
+"\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
+scalar ValidatorFunction
+
+" \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n"
+input ValidatorInput {
+  dependencies: [String!] = []
+  errorMessage: String = null
+  function: ValidatorFunction!
+  label: String = null
+}

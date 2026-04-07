@@ -94,6 +94,7 @@ input AssignWidgetInput {
   asParagraph: Boolean = null
   choices: [ChoiceInput!] = null
   dependencies: [String!] = []
+  dependency: String = null
   fallback: AssignWidgetInput = null
   filters: [ArgPortInput!] = null
   hook: String = null
@@ -102,6 +103,8 @@ input AssignWidgetInput {
   min: Float = null
   placeholder: String = null
   query: SearchQuery = null
+  stateAccessors: [StateAccessorInput!] = null
+  statePath: String = null
   step: Float = null
   ward: String = null
 }
@@ -408,6 +411,13 @@ type Mutation {
 input OffsetPaginationInput {
   limit: Int
   offset: Int! = 0
+}
+
+enum OptionKey {
+  DESCRIPTION
+  LABEL
+  LOGO
+  VALUE
 }
 
 enum Ordering {
@@ -795,10 +805,22 @@ input SnapshotRunInput {
   t: Int!
 }
 
+type StateAccessor {
+  optionKey: OptionKey!
+  subPath: String
+}
+
+input StateAccessorInput {
+  optionKey: OptionKey!
+  subPath: String = null
+}
+
 type StateChoiceAssignWidget implements AssignWidget {
+  dependency: String
   followValue: String
   kind: AssignWidgetKind!
-  stateChoices: String!
+  stateAccessors: [StateAccessor!]
+  statePath: String!
 }
 
 type StreamItem {

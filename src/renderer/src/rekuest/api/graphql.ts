@@ -4602,7 +4602,7 @@ export type ShortcutFragment = { __typename?: 'Shortcut', id: string, name: stri
 
 export type ListShortcutFragment = { __typename?: 'Shortcut', id: string, name: string, description?: string | null, bindNumber?: number | null, savedArgs: any, allowQuick: boolean, action: { __typename?: 'Action', id: string }, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> };
 
-export type SpaceFragment = { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> };
+export type SpaceFragment = { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> };
 
 export type ListSpaceFragment = { __typename?: 'Space', id: string, name: string };
 
@@ -4816,7 +4816,7 @@ export type CreateSpaceMutationVariables = Exact<{
 }>;
 
 
-export type CreateSpaceMutation = { __typename?: 'Mutation', createSpace: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
+export type CreateSpaceMutation = { __typename?: 'Mutation', createSpace: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
 
 export type CreateSpaceMembershipMutationVariables = Exact<{
   input: CreateSpaceMembershipInput;
@@ -4824,6 +4824,13 @@ export type CreateSpaceMembershipMutationVariables = Exact<{
 
 
 export type CreateSpaceMembershipMutation = { __typename?: 'Mutation', createSpaceMembership: { __typename?: 'SpaceMembership', id: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } } };
+
+export type UpdateSpaceMembershipMutationVariables = Exact<{
+  input: UpdateSpaceMembershipInput;
+}>;
+
+
+export type UpdateSpaceMembershipMutation = { __typename?: 'Mutation', updateSpaceMembership: { __typename?: 'SpaceMembership', id: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } } };
 
 export type CreateAgentSceneMutationVariables = Exact<{
   input: CreateAgentSceneInput;
@@ -5261,7 +5268,7 @@ export type SpaceQueryVariables = Exact<{
 }>;
 
 
-export type SpaceQuery = { __typename?: 'Query', space: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', affineMatrix?: any | null, scene: { __typename?: 'AgentScene', model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
+export type SpaceQuery = { __typename?: 'Query', space: { __typename?: 'Space', id: string, name: string, memberships: Array<{ __typename?: 'SpaceMembership', id: string, name: string, affineMatrix?: any | null, scene: { __typename?: 'AgentScene', id: string, name: string, agent: { __typename?: 'Agent', id: string, name: string }, model: { __typename?: 'ThreeDModel', file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } } }> } };
 
 export type SpaceOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -5348,6 +5355,14 @@ export type ListStructurePackageQueryVariables = Exact<{
 
 
 export type ListStructurePackageQuery = { __typename?: 'Query', structurePackages: Array<{ __typename?: 'StructurePackage', id: string, key: string, description?: string | null }> };
+
+export type ThreeDModelOptionsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+}>;
+
+
+export type ThreeDModelOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'ThreeDModel', value: string, label: string }> };
 
 export type ToolboxesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -6671,8 +6686,16 @@ export const SpaceFragmentDoc = gql`
   id
   name
   memberships {
+    id
+    name
     affineMatrix
     scene {
+      id
+      name
+      agent {
+        id
+        name
+      }
       model {
         file {
           ...MediaStore
@@ -7724,6 +7747,47 @@ export function useCreateSpaceMembershipMutation(baseOptions?: ApolloReactHooks.
 export type CreateSpaceMembershipMutationHookResult = ReturnType<typeof useCreateSpaceMembershipMutation>;
 export type CreateSpaceMembershipMutationResult = Apollo.MutationResult<CreateSpaceMembershipMutation>;
 export type CreateSpaceMembershipMutationOptions = Apollo.BaseMutationOptions<CreateSpaceMembershipMutation, CreateSpaceMembershipMutationVariables>;
+export const UpdateSpaceMembershipDocument = gql`
+    mutation UpdateSpaceMembership($input: UpdateSpaceMembershipInput!) {
+  updateSpaceMembership(input: $input) {
+    id
+    affineMatrix
+    scene {
+      model {
+        file {
+          ...MediaStore
+        }
+      }
+    }
+  }
+}
+    ${MediaStoreFragmentDoc}`;
+export type UpdateSpaceMembershipMutationFn = Apollo.MutationFunction<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>;
+
+/**
+ * __useUpdateSpaceMembershipMutation__
+ *
+ * To run a mutation, you first call `useUpdateSpaceMembershipMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSpaceMembershipMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSpaceMembershipMutation, { data, loading, error }] = useUpdateSpaceMembershipMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateSpaceMembershipMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>(UpdateSpaceMembershipDocument, options);
+      }
+export type UpdateSpaceMembershipMutationHookResult = ReturnType<typeof useUpdateSpaceMembershipMutation>;
+export type UpdateSpaceMembershipMutationResult = Apollo.MutationResult<UpdateSpaceMembershipMutation>;
+export type UpdateSpaceMembershipMutationOptions = Apollo.BaseMutationOptions<UpdateSpaceMembershipMutation, UpdateSpaceMembershipMutationVariables>;
 export const CreateAgentSceneDocument = gql`
     mutation CreateAgentScene($input: CreateAgentSceneInput!) {
   createAgentScene(input: $input) {
@@ -10187,6 +10251,46 @@ export function useListStructurePackageLazyQuery(baseOptions?: ApolloReactHooks.
 export type ListStructurePackageQueryHookResult = ReturnType<typeof useListStructurePackageQuery>;
 export type ListStructurePackageLazyQueryHookResult = ReturnType<typeof useListStructurePackageLazyQuery>;
 export type ListStructurePackageQueryResult = Apollo.QueryResult<ListStructurePackageQuery, ListStructurePackageQueryVariables>;
+export const ThreeDModelOptionsDocument = gql`
+    query ThreeDModelOptions($search: String, $values: [ID!]) {
+  options: threedModels(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useThreeDModelOptionsQuery__
+ *
+ * To run a query within a React component, call `useThreeDModelOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useThreeDModelOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useThreeDModelOptionsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useThreeDModelOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ThreeDModelOptionsQuery, ThreeDModelOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ThreeDModelOptionsQuery, ThreeDModelOptionsQueryVariables>(ThreeDModelOptionsDocument, options);
+      }
+export function useThreeDModelOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ThreeDModelOptionsQuery, ThreeDModelOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ThreeDModelOptionsQuery, ThreeDModelOptionsQueryVariables>(ThreeDModelOptionsDocument, options);
+        }
+export type ThreeDModelOptionsQueryHookResult = ReturnType<typeof useThreeDModelOptionsQuery>;
+export type ThreeDModelOptionsLazyQueryHookResult = ReturnType<typeof useThreeDModelOptionsLazyQuery>;
+export type ThreeDModelOptionsQueryResult = Apollo.QueryResult<ThreeDModelOptionsQuery, ThreeDModelOptionsQueryVariables>;
 export const ToolboxesDocument = gql`
     query Toolboxes($pagination: OffsetPaginationInput, $filters: ToolboxFilter, $order: ToolboxOrder) {
   toolboxes(order: $order, pagination: $pagination, filters: $filters) {

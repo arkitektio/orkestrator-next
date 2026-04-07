@@ -1,10 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { RekuestSpace, RekuestToolbox } from "@/linkers";
+import { RekuestSpace } from "@/linkers";
 import { useSpaceQuery } from "@/rekuest/api/graphql";
-import ShortcutList from "../components/lists/ShortcutList";
+import { SpaceSceneProvider, SpaceThreeScene } from "../space-scene";
 
-export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data, refetch }) => {
+export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
   return (
     <RekuestSpace.ModelPage
       title={data.space.name}
@@ -17,7 +17,7 @@ export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data, refetch })
         />
       }
     >
-      <div className=" p-6">
+      <div className="flex h-full flex-col p-6">
         <div className="mb-3">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer">
             {data?.space?.name}
@@ -26,7 +26,11 @@ export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data, refetch })
             {data.space.id}
           </p>
         </div>
-
+        <div className="flex-1 min-h-[500px] rounded-lg border overflow-hidden">
+          <SpaceSceneProvider space={data.space}>
+            <SpaceThreeScene />
+          </SpaceSceneProvider>
+        </div>
       </div>
     </RekuestSpace.ModelPage>
   );

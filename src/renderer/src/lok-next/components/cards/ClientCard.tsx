@@ -21,8 +21,8 @@ const ClientCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokClient.Smart object={item?.id} >
-      <LokClient.DetailLink object={item.id} className="block h-full">
+    <LokClient.Smart object={item} >
+      <LokClient.DetailLink object={item} className="block h-full">
         <Card className="h-full hover:bg-muted/50 transition-colors group">
           <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
             <Avatar className="h-10 w-10 rounded-lg border bg-muted">

@@ -50,7 +50,7 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
   return (
     <div className="flex gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group w-full">
       <div className="flex-shrink-0 mt-1">
-        <LokUser.DetailLink object={comment?.user?.id}>
+        <LokUser.DetailLink object={comment?.user}>
           <Avatar className="h-10 w-10">
             <AvatarImage
               src={
@@ -78,7 +78,7 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
 
         <div className="flex h-7">
           <div className="flex-1 flex items-center gap-2">
-            <LokUser.DetailLink object={comment?.user?.id}>
+            <LokUser.DetailLink object={comment?.user}>
               <span className="font-light text-sm hover:underline">
                 {comment?.user?.username}
               </span>

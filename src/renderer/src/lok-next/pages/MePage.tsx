@@ -53,13 +53,13 @@ const Page = (props) => {
 
   return (
     <LokUser.ModelPage
-      object={data.me.id}
-      actions={<LokUser.Actions object={data.me.id} />}
-      pageActions={<LokUser.ObjectButton object={data.me.id} />}
+      object={data.me}
+      actions={<LokUser.Actions object={data.me} />}
+      pageActions={<LokUser.ObjectButton object={data.me} />}
       title={data?.me?.username}
       sidebars={
         <MultiSidebar map={{
-          "Komments": <LokUser.Komments object={data.me.id} />,
+          "Komments": <LokUser.Komments object={data.me} />,
         }} />
       }
     >

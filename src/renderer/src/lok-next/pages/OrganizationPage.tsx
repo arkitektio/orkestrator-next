@@ -112,7 +112,7 @@ const Page = asDetailQueryRoute(useOrganizationQuery, ({ data }) => {
                     {m.user.username[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0 space-y-1.5">
-                    <LokUser.DetailLink object={m.user.id}>
+                    <LokUser.DetailLink object={m.user}>
                       <p className="font-medium hover:text-primary transition-colors">
                         {m.user.username}
                         <span className="text-muted-foreground font-normal text-xs ml-2">

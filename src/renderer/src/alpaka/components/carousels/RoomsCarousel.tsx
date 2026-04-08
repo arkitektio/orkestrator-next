@@ -14,7 +14,7 @@ export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export default ({ }) => {
+export const RoomsCarousel = () => {
   const { data, error, subscribeToMore, refetch } = useRoomsQuery({});
 
   if (!data?.rooms) {
@@ -98,3 +98,6 @@ export default ({ }) => {
     </div>
   );
 };
+
+
+export default RoomsCarousel;

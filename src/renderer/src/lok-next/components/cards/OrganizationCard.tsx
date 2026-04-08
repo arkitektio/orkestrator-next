@@ -9,10 +9,10 @@ export type OrganizationCardProps = {
 
 const OrganizationCard = ({ item }: OrganizationCardProps) => {
   return (
-    <LokOrganization.Smart object={item.id}>
+    <LokOrganization.Smart object={item}>
       <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader className="pb-2">
-          <LokOrganization.DetailLink object={item.id}>
+          <LokOrganization.DetailLink object={item}>
             <div className="flex items-center space-x-2">
               <Building2 className="h-5 w-5 text-muted-foreground" />
               <CardTitle className="text-lg">{item.name}</CardTitle>

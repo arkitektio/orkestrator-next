@@ -6,13 +6,13 @@ import { LokApp } from "@/linkers";
 import { useDetailReleaseQuery } from "../api/graphql";
 import ClientCard from "../components/cards/ClientCard";
 
-export default asDetailQueryRoute(useDetailReleaseQuery, ({ data }) => {
+export const ReleasePage = asDetailQueryRoute(useDetailReleaseQuery, ({ data }) => {
   const resolve = useResolve();
 
   return (
     <LokApp.ModelPage
-      object={data.release.id}
-      actions={<LokApp.Actions object={data?.release?.id} />}
+      object={data.release}
+      actions={<LokApp.Actions object={data?.release} />}
       title={
         <div className="flex flex-row gap-2 items-baseline">
           {data?.release?.app?.identifier} <div className="font-light text-muted-foreground">{data?.release?.version}</div>
@@ -48,3 +48,6 @@ export default asDetailQueryRoute(useDetailReleaseQuery, ({ data }) => {
     </LokApp.ModelPage>
   );
 });
+
+
+export default ReleasePage;

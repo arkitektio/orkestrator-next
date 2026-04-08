@@ -13,9 +13,9 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokLayer.Smart object={item?.id} >
+    <LokLayer.Smart object={item} >
       <Card className="p-3">
-        <LokLayer.DetailLink object={item.id} className="">
+        <LokLayer.DetailLink object={item} className="">
           {item.name}
           <br />
         </LokLayer.DetailLink>

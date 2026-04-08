@@ -12,9 +12,9 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokComputeNode.Smart object={item?.id} >
+    <LokComputeNode.Smart object={item} >
       <Card className="p-3">
-        <LokComputeNode.DetailLink object={item.id} className="">
+        <LokComputeNode.DetailLink object={item} className="">
           {item.name || item.nodeId}
           <br />
         </LokComputeNode.DetailLink>

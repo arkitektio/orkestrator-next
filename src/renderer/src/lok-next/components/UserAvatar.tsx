@@ -39,7 +39,7 @@ export const UserUsername = (props: { sub: string }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <LokUser.DetailLink object={props.sub}>
+        <LokUser.DetailLink object={{ id: props.sub }}>
           <span className="cursor-pointer">{data?.user.username}</span>
         </LokUser.DetailLink>
       </TooltipTrigger>

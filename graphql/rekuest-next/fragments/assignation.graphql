@@ -110,7 +110,12 @@ fragment DetailAssignation on Assignation {
     mappedAgents {
       agent {
         name
+        placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
+            ...AgentPlacement
+        }
+
       }
+
       mappedImplementations {
         key
         implementation {

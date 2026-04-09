@@ -103,6 +103,22 @@ fragment DetailAssignation on Assignation {
       }
     }
   }
+  resolvedDependencies {
+
+    key
+    values
+    mappedAgents {
+      agent {
+        name
+      }
+      mappedImplementations {
+        key
+        implementation {
+          id
+        }
+      }
+    }
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {

@@ -184,6 +184,8 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
   return (
     <div className="grid gap-4">
       <div className="space-y-2">
+
+
         <h4 className="font-medium leading-none">{assignation.action?.name}</h4>
         <p className="text-sm text-muted-foreground">{assignation.id}</p>
       </div>
@@ -535,6 +537,8 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
       className="flex w-full flex-col justify-end text-white @container"
       onClick={() => setHighlighted([])}
     >
+
+        {JSON.stringify(data?.assignation.resolvedDependencies)}
       <div className="relative mt-auto flex flex-col gap-2 rounded-2xl border border-white/8 bg-background/75 p-4 shadow-[0_-12px_40px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="absolute inset-0 flex pointer-events-none z-0">
           <div className="w-2/12"></div>

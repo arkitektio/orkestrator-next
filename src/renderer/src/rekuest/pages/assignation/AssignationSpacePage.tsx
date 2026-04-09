@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestAgent, RekuestAssignation } from "@/linkers";
 import {
   AssignationEventKind,
   DetailAssignationQuery,
@@ -21,16 +22,94 @@ import {
 } from "@/rekuest/api/graphql";
 import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
 import { Center, Environment, OrbitControls, useGLTF } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import type {} from "@react-three/fiber";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { Group, Matrix4 } from "three";
+import React, {
+  createContext,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Timestamp from "react-timestamp";
+import * as THREE from "three";
+import { Group, Matrix4 } from "three";
+import { createStore } from "zustand/vanilla";
+import { useStore } from "zustand";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 import { isCancalable, isInterruptable, useReassign } from "../AssignationPage";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import React from "react";
+
+// ── Local View Store (camera matrix bridge) ──────────────────────────
+
+interface SpaceViewState {
+  viewProjectionMatrix: THREE.Matrix4 | null;
+  viewportSize: { width: number; height: number };
+  selectedPlacementId: string | null;
+  updateCameraData: (
+    matrix: THREE.Matrix4,
+    size: { width: number; height: number },
+  ) => void;
+  selectPlacement: (id: string | null) => void;
+}
+
+const createSpaceViewStore = () =>
+  createStore<SpaceViewState>((set) => ({
+    viewProjectionMatrix: null,
+    viewportSize: { width: 0, height: 0 },
+    selectedPlacementId: null,
+    updateCameraData: (matrix, size) =>
+      set({ viewProjectionMatrix: matrix, viewportSize: size }),
+    selectPlacement: (id) => set({ selectedPlacementId: id }),
+  }));
+
+type SpaceViewStore = ReturnType<typeof createSpaceViewStore>;
+
+const SpaceViewStoreContext = createContext<SpaceViewStore | null>(null);
+
+function useSpaceViewStore<T>(selector: (s: SpaceViewState) => T): T {
+  const store = useContext(SpaceViewStoreContext);
+  if (!store) throw new Error("Missing SpaceViewStoreContext");
+  return useStore(store, selector);
+}
+
+// ── Camera Matrix Sync (runs inside Canvas) ──────────────────────────
+
+const CameraMatrixSync = ({ debounceMs = 80 }: { debounceMs?: number }) => {
+  const updateCameraData = useSpaceViewStore((s) => s.updateCameraData);
+  const matRef = useRef(new THREE.Matrix4());
+  const prevRef = useRef(new THREE.Matrix4());
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  useFrame(({ camera, size }) => {
+    camera.updateProjectionMatrix();
+    matRef.current.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+
+    let changed = false;
+    const cur = matRef.current.elements;
+    const prev = prevRef.current.elements;
+    for (let i = 0; i < 16; i++) {
+      if (Math.abs(cur[i] - prev[i]) > 0.00001) { changed = true; break; }
+    }
+    if (!changed) return;
+    prevRef.current.copy(matRef.current);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const snapshot = matRef.current.clone();
+    const currentSize = { width: size.width, height: size.height };
+    timerRef.current = setTimeout(() => {
+      updateCameraData(snapshot, currentSize);
+    }, debounceMs);
+  });
+
+  return null;
+};
 
 export function notEmpty<TValue>(
   value: TValue | null | undefined
@@ -113,6 +192,7 @@ const getStatusColor = (status: AssignationEventKind | undefined | string) => {
 type SpaceGroupPlacement = {
   id: string;
   name: string;
+  agentId: string;
   agentName: string;
   model?: {
     id: string;
@@ -143,6 +223,7 @@ const PlacementObject = ({
   placement: SpaceGroupPlacement;
 }) => {
   const groupRef = React.useRef<Group>(null!);
+  const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
 
   useEffect(() => {
     if (!groupRef.current || !placement.affineMatrix) return;
@@ -158,8 +239,16 @@ const PlacementObject = ({
     groupRef.current.updateMatrixWorld(true);
   }, [placement.affineMatrix]);
 
+  const handleClick = useCallback(
+    (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      selectPlacement(placement.id);
+    },
+    [placement.id, selectPlacement],
+  );
+
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} onClick={handleClick}>
       {placement.model?.file ? (
         <WithMediaUrl media={placement.model.file as unknown as MediaStoreFragment}>
           {(url: string) => <PlacementModel url={url} />}
@@ -192,75 +281,149 @@ const StageFloor = ({ brandHue }: { brandHue: number }) => {
   );
 };
 
+// ── Agent Panel (projected from 3D → 2D, rendered outside Canvas) ────
+
+const AgentPanel = ({ placements }: { placements: SpaceGroupPlacement[] }) => {
+  const selectedId = useSpaceViewStore((s) => s.selectedPlacementId);
+  const vpMatrix = useSpaceViewStore((s) => s.viewProjectionMatrix);
+  const vpSize = useSpaceViewStore((s) => s.viewportSize);
+  const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
+
+  const selected = placements.find((p) => p.id === selectedId);
+
+  const screenPos = useMemo(() => {
+    if (!selected || !vpMatrix || !vpSize) return null;
+
+    const mat = new THREE.Matrix4();
+    const affine = selected.affineMatrix as number[][];
+    if (affine && affine.length >= 4) {
+      mat.set(
+        affine[0][0], affine[0][1], affine[0][2], affine[0][3],
+        affine[1][0], affine[1][1], affine[1][2], affine[1][3],
+        affine[2][0], affine[2][1], affine[2][2], affine[2][3],
+        affine[3][0], affine[3][1], affine[3][2], affine[3][3],
+      );
+    }
+
+    const worldVec = new THREE.Vector3();
+    worldVec.setFromMatrixPosition(mat);
+    worldVec.applyMatrix4(vpMatrix);
+
+    if (worldVec.z < -1 || worldVec.z > 1) return null;
+
+    return {
+      x: (worldVec.x * 0.5 + 0.5) * vpSize.width,
+      y: (worldVec.y * -0.5 + 0.5) * vpSize.height,
+    };
+  }, [selected, vpMatrix, vpSize]);
+
+  if (!selected || !screenPos) return null;
+
+  return (
+    <Card
+      className="absolute z-20 shadow-2xl backdrop-blur-md p-3 flex flex-col gap-2 min-w-[160px] pointer-events-auto"
+      style={{
+        left: screenPos.x,
+        top: screenPos.y,
+        transform: "translate(-50%, -110%)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="font-semibold text-sm">{selected.agentName}</div>
+          <div className="text-[11px] text-muted-foreground">{selected.name}</div>
+        </div>
+        <button
+          className="text-muted-foreground hover:text-foreground text-xs"
+          onClick={() => selectPlacement(null)}
+        >
+          ✕
+        </button>
+      </div>
+      <RekuestAgent.DetailLink
+        object={{ id: selected.agentId }}
+        className="text-xs text-primary hover:underline"
+      >
+        Open Agent →
+      </RekuestAgent.DetailLink>
+    </Card>
+  );
+};
+
 const SpaceCard = ({ group }: { group: SpaceGroup }) => {
   const { settings } = useSettings();
   const brandHue = settings.brandHue ?? 267.256;
+  const [store] = useState(() => createSpaceViewStore());
 
   return (
-    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl">
-      <div className="h-full relative">
-        <Canvas
-          dpr={[1, 2]}
-          camera={{ position: [2, 2.8, 5], fov: 38 }}
-          shadows
-          className="!absolute inset-0"
-        >
-          <color attach="background" args={["#08080c"]} />
-          <fog attach="fog" args={["#08080c", 8, 20]} />
-          <ambientLight intensity={0.3} />
-          <spotLight
-            position={[0, 8, 0]}
-            intensity={40}
-            angle={0.5}
-            penumbra={1}
-            color="#c4b5fd"
-            castShadow
-          />
-          <spotLight
-            position={[-4, 5, 3]}
-            intensity={15}
-            angle={0.4}
-            penumbra={0.8}
-            color="#818cf8"
-          />
-          <spotLight
-            position={[4, 5, -2]}
-            intensity={10}
-            angle={0.4}
-            penumbra={0.8}
-            color="#38bdf8"
-          />
-          <spotLight
-            position={[0, 6, 4]}
-            intensity={25}
-            angle={0.6}
-            penumbra={0.9}
-            color="#e0e0e0"
-            castShadow
-          />
-          <directionalLight
-            position={[5, 3, 5]}
-            intensity={0.4}
-            color="#fde68a"
-          />
-          <Suspense fallback={null}>
-            {group.placements.map((p) => (
-              <PlacementObject key={p.id} placement={p} />
-            ))}
-            <StageFloor brandHue={brandHue} />
-            <Environment preset="night" />
-          </Suspense>
-          <OrbitControls
-            enablePan={false}
-            enableZoom={true}
-            minDistance={2}
-            maxDistance={14}
-            maxPolarAngle={Math.PI / 2.05}
-            minPolarAngle={Math.PI / 6}
-          />
-        </Canvas>
+    <SpaceViewStoreContext.Provider value={store}>
+      <div className="flex-1 min-w-0 overflow-hidden rounded-2xl">
+        <div className="h-full relative">
+          <Canvas
+            dpr={[1, 2]}
+            camera={{ position: [2, 2.8, 5], fov: 38 }}
+            shadows
+            className="!absolute inset-0"
+          >
+            <CameraMatrixSync />
+            <color attach="background" args={["#08080c"]} />
+            <fog attach="fog" args={["#08080c", 8, 20]} />
+            <ambientLight intensity={0.3} />
+            <spotLight
+              position={[0, 8, 0]}
+              intensity={40}
+              angle={0.5}
+              penumbra={1}
+              color="#c4b5fd"
+              castShadow
+            />
+            <spotLight
+              position={[-4, 5, 3]}
+              intensity={15}
+              angle={0.4}
+              penumbra={0.8}
+              color="#818cf8"
+            />
+            <spotLight
+              position={[4, 5, -2]}
+              intensity={10}
+              angle={0.4}
+              penumbra={0.8}
+              color="#38bdf8"
+            />
+            <spotLight
+              position={[0, 6, 4]}
+              intensity={25}
+              angle={0.6}
+              penumbra={0.9}
+              color="#e0e0e0"
+              castShadow
+            />
+            <directionalLight
+              position={[5, 3, 5]}
+              intensity={0.4}
+              color="#fde68a"
+            />
+            <Suspense fallback={null}>
+              {group.placements.map((p) => (
+                <PlacementObject key={p.id} placement={p} />
+              ))}
+              <StageFloor brandHue={brandHue} />
+              <Environment preset="night" />
+            </Suspense>
+            <OrbitControls
+              enablePan={false}
+              enableZoom={true}
+              minDistance={2}
+              maxDistance={14}
+              maxPolarAngle={Math.PI / 2.05}
+              minPolarAngle={Math.PI / 6}
+            />
+          </Canvas>
+          <AgentPanel placements={group.placements} />
+        </div>
       </div>
-    </div>
+    </SpaceViewStoreContext.Provider>
   );
 };
 
@@ -283,6 +446,7 @@ const ResolvedAgentSpaces = ({
             id: placement.id,
             name: placement.name,
             agentName: mapping.agent.name,
+            agentId: mapping.agent.id,
             model: placement.model ?? null,
             affineMatrix: placement.affineMatrix,
           });
@@ -676,7 +840,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
 
   return (
     <div
-      className="flex w-full flex-col justify-end text-white @container"
+      className="flex w-full flex-col justify-end text-white @container mt-4"
       onClick={() => setHighlighted([])}
     >
 

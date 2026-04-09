@@ -109,6 +109,7 @@ fragment DetailAssignation on Assignation {
     values
     mappedAgents {
       agent {
+        id
         name
         placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
             ...AgentPlacement

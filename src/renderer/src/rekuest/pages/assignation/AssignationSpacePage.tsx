@@ -29,6 +29,7 @@ import { Group, Matrix4 } from "three";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 import { isCancalable, isInterruptable, useReassign } from "../AssignationPage";
+import { useSettings } from "@/providers/settings/SettingsContext";
 import React from "react";
 
 export function notEmpty<TValue>(
@@ -94,18 +95,18 @@ const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
 const getStatusColor = (status: AssignationEventKind | undefined | string) => {
   switch (status) {
     case AssignationEventKind.Done:
-      return "bg-green-500 border-green-600";
+      return "bg-emerald-400/90 border-emerald-500";
     case AssignationEventKind.Yield:
-      return "bg-purple-500 border-purple-600";
+      return "bg-violet-400/90 border-violet-500";
     case AssignationEventKind.Error:
     case AssignationEventKind.Critical:
-      return "bg-red-500 border-red-600";
+      return "bg-rose-400/90 border-rose-500";
     case AssignationEventKind.Cancelled:
-      return "bg-gray-500 border-gray-600";
+      return "bg-zinc-500/80 border-zinc-600";
     case AssignationEventKind.Assign:
-      return "bg-blue-500 border-blue-600";
+      return "bg-sky-400/90 border-sky-500";
     default:
-      return "bg-slate-500 border-slate-600";
+      return "bg-zinc-400/70 border-zinc-500";
   }
 };
 
@@ -173,67 +174,91 @@ const PlacementObject = ({
   );
 };
 
-const SpaceCard = ({ group }: { group: SpaceGroup }) => {
+const StageFloor = ({ brandHue }: { brandHue: number }) => {
+  const floorColor = `hsl(${brandHue}, 15%, 6%)`;
+  const ringColor = `hsl(${brandHue}, 12%, 10%)`;
+
   return (
-    <div className="flex-1 min-w-[300px] min-h-[300px] rounded-2xl border border-border/60 bg-card/40 overflow-hidden flex flex-col">
-      <div className="px-4 py-3 border-b border-border/40">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-          Space
-        </div>
-        <div className="text-sm font-medium truncate">{group.spaceId}</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          {group.placements.length} placement
-          {group.placements.length !== 1 ? "s" : ""}
-        </div>
-      </div>
-      <div className="flex-1 min-h-[240px] relative">
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <circleGeometry args={[6, 64]} />
+        <meshStandardMaterial color={floorColor} roughness={0.9} metalness={0.05} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
+        <ringGeometry args={[5.8, 6, 64]} />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.4} />
+      </mesh>
+    </>
+  );
+};
+
+const SpaceCard = ({ group }: { group: SpaceGroup }) => {
+  const { settings } = useSettings();
+  const brandHue = settings.brandHue ?? 267.256;
+
+  return (
+    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl">
+      <div className="h-full relative">
         <Canvas
           dpr={[1, 2]}
-          camera={{ position: [3, 3, 6], fov: 40 }}
+          camera={{ position: [2, 2.8, 5], fov: 38 }}
+          shadows
           className="!absolute inset-0"
         >
-          <color attach="background" args={["#0a0a0f"]} />
-          <fog attach="fog" args={["#0a0a0f", 10, 24]} />
-          <ambientLight intensity={0.8} />
-          <directionalLight
-            position={[6, 8, 4]}
-            intensity={2}
-            color="#fff8e7"
+          <color attach="background" args={["#08080c"]} />
+          <fog attach="fog" args={["#08080c", 8, 20]} />
+          <ambientLight intensity={0.3} />
+          <spotLight
+            position={[0, 8, 0]}
+            intensity={40}
+            angle={0.5}
+            penumbra={1}
+            color="#c4b5fd"
+            castShadow
+          />
+          <spotLight
+            position={[-4, 5, 3]}
+            intensity={15}
+            angle={0.4}
+            penumbra={0.8}
+            color="#818cf8"
+          />
+          <spotLight
+            position={[4, 5, -2]}
+            intensity={10}
+            angle={0.4}
+            penumbra={0.8}
+            color="#38bdf8"
+          />
+          <spotLight
+            position={[0, 6, 4]}
+            intensity={25}
+            angle={0.6}
+            penumbra={0.9}
+            color="#e0e0e0"
+            castShadow
           />
           <directionalLight
-            position={[-4, 2, -4]}
-            intensity={0.5}
-            color="#93c5fd"
+            position={[5, 3, 5]}
+            intensity={0.4}
+            color="#fde68a"
           />
           <Suspense fallback={null}>
             {group.placements.map((p) => (
               <PlacementObject key={p.id} placement={p} />
             ))}
-            <Environment preset="city" />
+            <StageFloor brandHue={brandHue} />
+            <Environment preset="night" />
           </Suspense>
           <OrbitControls
             enablePan={false}
+            enableZoom={true}
             minDistance={2}
-            maxDistance={12}
-            maxPolarAngle={Math.PI / 2.1}
-            autoRotate
-            autoRotateSpeed={1}
+            maxDistance={14}
+            maxPolarAngle={Math.PI / 2.05}
+            minPolarAngle={Math.PI / 6}
           />
         </Canvas>
-      </div>
-      <div className="px-4 py-2 border-t border-border/40 space-y-1">
-        {group.placements.map((p) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-2 text-xs text-muted-foreground"
-          >
-            <span className="w-2 h-2 rounded-full bg-primary/60 shrink-0" />
-            <span className="truncate font-medium text-foreground/80">
-              {p.name}
-            </span>
-            <span className="truncate ml-auto">{p.agentName}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -270,14 +295,14 @@ const ResolvedAgentSpaces = ({
 
   if (spaceGroups.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border border-dashed border-border/60 p-8 text-sm text-muted-foreground">
+      <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm text-muted-foreground">
         No spaces found for resolved agents
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex-1 flex gap-2 min-h-0">
       {spaceGroups.map((group) => (
         <SpaceCard key={group.spaceId} group={group} />
       ))}
@@ -771,7 +796,7 @@ export const TaskSpacePage = asDetailQueryRoute(
         }
       >
         <ChildAssignationUpdater assignationId={id} />
-        <div className="flex h-full min-h-[calc(100vh-12rem)] flex-col gap-4 px-3 pb-3">
+        <div className="flex h-full min-h-[calc(100vh-12rem)] flex-col gap-0 px-3 pb-3">
           <ResolvedAgentSpaces
             resolvedDependencies={data.assignation.resolvedDependencies}
           />

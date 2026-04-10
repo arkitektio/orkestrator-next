@@ -13,10 +13,10 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokUser.Smart object={item?.id}>
+    <LokUser.Smart object={item}>
       <Card className="p-2">
         <CardHeader className="flex flex-row gap-2">
-          <LokUser.DetailLink object={item.id}>
+          <LokUser.DetailLink object={item}>
             <Avatar>
               {item.profile?.avatar?.presignedUrl && (
                 <AvatarImage
@@ -28,7 +28,7 @@ const TheCard = ({ item }: Props) => {
             </Avatar>
           </LokUser.DetailLink>
           <CardTitle>
-            <LokUser.DetailLink object={item.id}>
+            <LokUser.DetailLink object={item}>
               {item.username}
             </LokUser.DetailLink>
           </CardTitle>

@@ -9,15 +9,15 @@ import {
 } from "../api/graphql";
 import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
 
-export default asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
+export const LayerPage = asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
   const resolve = useResolve();
 
   return (
     <LokLayer.ModelPage
-      object={data.layer.id}
-      actions={<LokLayer.Actions object={data?.layer?.id} />}
+      object={data.layer}
+      actions={<LokLayer.Actions object={data?.layer} />}
       title={data?.layer?.name}
-      sidebars={<LokLayer.Komments object={data?.layer?.id} />}
+      sidebars={<LokLayer.Komments object={data?.layer} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -52,3 +52,6 @@ export default asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
     </LokLayer.ModelPage>
   );
 });
+
+
+export default LayerPage;

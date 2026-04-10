@@ -9,9 +9,9 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <LokServiceInstance.Smart object={item?.id} >
+    <LokServiceInstance.Smart object={item} >
       <Card className="p-3 flex flex-col">
-        <LokServiceInstance.DetailLink object={item.id} className="">
+        <LokServiceInstance.DetailLink object={item} className="">
           {item.identifier}
         </LokServiceInstance.DetailLink>
         <div className="text-xs">configured for {item.service.id}</div>

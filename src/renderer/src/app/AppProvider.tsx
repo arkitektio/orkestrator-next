@@ -94,6 +94,11 @@ import { DownloadProvider } from "@/providers/download/DownloadProvider";
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 import { AgentProvider } from "./agent/AgentProvider";
 import { WardRegistrar } from "@/lib/arkitekt/WardRegistrar";
+import { BuiltinDashboardWidgets } from "@/providers/dashboard/widgets/BuiltinDashboardWidgets";
+import { RekuestDashboardWidgets } from "@/providers/dashboard/widgets/RekuestDashboardWidgets";
+import { MikroDashboardWidgets } from "@/providers/dashboard/widgets/MikroDashboardWidgets";
+import { LatestTasksDashboardWidget } from "@/providers/dashboard/widgets/LatestTasksDashboardWidget";
+import { LatestImagesDashboardWidget } from "@/providers/dashboard/widgets/LatestImagesDashboardWidget";
 
 
 const AgentUpdater = React.lazy(() =>
@@ -127,13 +132,20 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                               <SelectionProvider>
                                 <AgentProvider disabled={true}>
                                   <WardRegistrar />
+                                  <BuiltinDashboardWidgets />
                                   <Guard.Rekuest fallback={<></>}>
                                     <LazyProviderBoundary>
                                       <AssignationUpdater />
                                       <AgentUpdater />
                                     </LazyProviderBoundary>
+                                    <RekuestDashboardWidgets />
+                                    <LatestTasksDashboardWidget />
                                     <Toaster />
                                   </Guard.Rekuest>
+                                  <Guard.Mikro fallback={<></>}>
+                                    <MikroDashboardWidgets />
+                                    <LatestImagesDashboardWidget />
+                                  </Guard.Mikro>
                                   <BackNavigationErrorCatcher>
                                     {children}
                                   </BackNavigationErrorCatcher>

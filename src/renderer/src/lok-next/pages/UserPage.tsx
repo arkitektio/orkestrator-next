@@ -46,8 +46,8 @@ const Page = asDetailQueryRoute(useUserQuery, ({ data }) => {
 
   return (
     <LokUser.ModelPage
-      object={data.user.id}
-      pageActions={<LokUser.ObjectButton object={data.user.id} />}
+      object={data.user}
+      pageActions={<LokUser.ObjectButton object={data.user} />}
       title={data?.user?.username}
     >
       {/* Profile Hero Section */}
@@ -158,7 +158,7 @@ const Page = asDetailQueryRoute(useUserQuery, ({ data }) => {
             <CardContent className="space-y-4 text-sm">
               {data.user.memberships?.map(m => (
                 <div key={m.id} className="space-y-1">
-                  <LokOrganization.DetailLink object={m.organization.id}>
+                  <LokOrganization.DetailLink object={m.organization}>
                     <p className="font-medium">{m.organization.name} <span className="text-muted-foreground font-normal">({m.organization.slug})</span></p>
                   </LokOrganization.DetailLink>
                   {m.roles?.length ? (

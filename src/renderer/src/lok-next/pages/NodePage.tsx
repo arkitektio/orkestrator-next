@@ -5,15 +5,15 @@ import { LokClient } from "@/linkers";
 import { useDetailClientQuery } from "../api/graphql";
 import CompositionGraph from "../components/graphs/CompositionGraph";
 
-export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
+export const ClientPage = asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
   const resolve = useResolve();
 
   return (
     <LokClient.ModelPage
-      object={data.client.id}
-      actions={<LokClient.Actions object={data?.client?.id} />}
+      object={data.client}
+      actions={<LokClient.Actions object={data?.client} />}
       title={data?.client?.release.app.identifier}
-      sidebars={<LokClient.Komments object={data?.client?.id} />}
+      sidebars={<LokClient.Komments object={data?.client} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -46,3 +46,6 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
     </LokClient.ModelPage>
   );
 });
+
+
+export default ClientPage ;

@@ -201,6 +201,18 @@ export const AgentPage = asDetailQueryRoute(
                         </RekuestAgent.DetailLink>
                         <RekuestAgent.DetailLink
                           object={data?.agent}
+                          subroute="states"
+                          className="font-semibold"
+                        >
+                          <Button
+                            variant={"outline"}
+                            size={"sm"}
+                          >
+                            States
+                          </Button>
+                        </RekuestAgent.DetailLink>
+                        <RekuestAgent.DetailLink
+                          object={data?.agent}
                           subroute="tasks"
                           className="font-semibold"
                         >

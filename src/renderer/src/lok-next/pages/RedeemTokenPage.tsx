@@ -3,15 +3,15 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokRedeemToken } from "@/linkers";
 import { useGetRedeemTokenQuery } from "../api/graphql";
 
-export default asDetailQueryRoute(useGetRedeemTokenQuery, ({ data }) => {
+export const RedeemTokenPage = asDetailQueryRoute(useGetRedeemTokenQuery, ({ data }) => {
   const resolve = useResolve();
 
   return (
     <LokRedeemToken.ModelPage
-      object={data.redeemToken.id}
-      actions={<LokRedeemToken.Actions object={data?.redeemToken?.token} />}
+      object={data.redeemToken}
+      actions={<LokRedeemToken.Actions object={data?.redeemToken} />}
       title={data?.redeemToken?.token}
-      sidebars={<LokRedeemToken.Komments object={data?.redeemToken?.id} />}
+      sidebars={<LokRedeemToken.Komments object={data?.redeemToken} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -26,3 +26,6 @@ export default asDetailQueryRoute(useGetRedeemTokenQuery, ({ data }) => {
     </LokRedeemToken.ModelPage>
   );
 });
+
+
+export default RedeemTokenPage;

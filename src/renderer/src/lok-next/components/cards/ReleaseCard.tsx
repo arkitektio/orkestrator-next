@@ -9,9 +9,9 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <LokRelease.Smart object={item?.id} >
+    <LokRelease.Smart object={item} >
       <Card className="p-3">
-        <LokRelease.DetailLink object={item.id} className="">
+        <LokRelease.DetailLink object={item} className="">
           {item.version}
           <br />
         </LokRelease.DetailLink>

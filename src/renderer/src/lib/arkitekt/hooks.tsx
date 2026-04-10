@@ -80,7 +80,12 @@ export const useServiceState = (key: string): ServiceRuntimeState | undefined =>
   useArkitektStore((state) => state.serviceStates[key]);
 
 export const usePotentialService = (key: string): Service | undefined =>
-  useArkitektStore((state) => state.connection?.serviceMap?.[key] as Service | undefined);
+  useArkitektStore((state) => state.connection?.serviceMap?.[key] as Service | undefined );
+
+
+
+
+
 
 export const useToken = () => {
   const token = useArkitektStore((state) => state.connection?.token ?? state.storedSession?.token ?? null);

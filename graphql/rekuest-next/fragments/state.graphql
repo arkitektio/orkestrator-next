@@ -1,6 +1,5 @@
 fragment State on State {
   id
-  value
   definition {
     hash
     name
@@ -13,7 +12,6 @@ fragment State on State {
 
 fragment StateEvent on State {
   id
-  value
   updatedAt
 }
 

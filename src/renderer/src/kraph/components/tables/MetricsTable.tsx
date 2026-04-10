@@ -79,7 +79,7 @@ const columns: ColumnDef<MetricsTableItem>[] = [
     cell: ({ row }) =>
       row.original.createdThrough ? (
         <RekuestAssignation.DetailLink
-          object={row.original.createdThrough}
+          object={{id: row.original.createdThrough}}
           className="text-xs text-scroll font-light"
         >
           View
@@ -94,7 +94,7 @@ const columns: ColumnDef<MetricsTableItem>[] = [
     header: () => <div>Created By</div>,
     cell: ({ row }) =>
       row.original.createdBy ? (
-        <LokUser.DetailLink object={row.original.createdBy}>
+        <LokUser.DetailLink object={{id: row.original.createdBy}}>
           <JustUsername sub={row.original.createdBy} />
         </LokUser.DetailLink>
       ) : (

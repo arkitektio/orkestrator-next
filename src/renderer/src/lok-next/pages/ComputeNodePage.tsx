@@ -8,14 +8,14 @@ import { useGetComputeNodeQuery } from "../api/graphql";
 import ClientCard from "../components/cards/ClientCard";
 import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
 
-export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
+export const ComputeNodePage = asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
 
   const manifest = Arkitekt.useConnectedManifest()
 
   return (
     <LokComputeNode.ModelPage
-      object={data.computeNode.id}
-      actions={<LokComputeNode.Actions object={data?.computeNode?.id} />}
+      object={data.computeNode}
+      actions={<LokComputeNode.Actions object={data?.computeNode} />}
       title={data?.computeNode?.name || "Untitled Compute Node"}
       pageActions={
         <FormSheet
@@ -59,3 +59,6 @@ export default asDetailQueryRoute(useGetComputeNodeQuery, ({ data }) => {
     </LokComputeNode.ModelPage>
   );
 });
+
+
+export default ComputeNodePage;

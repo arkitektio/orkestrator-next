@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
-import { useCheckoutQuery, useWatchStateSubscription } from "../api/graphql";
 import { applyPatch } from "fast-json-patch";
+import { useRef, useState } from "react";
+import { useCheckoutQuery, useWatchAgentSubscription, useWatchStateSubscription } from "../api/graphql";
 
 export const useLiveState = ({
   stateID
@@ -113,6 +113,63 @@ export const useAgentLiveState = ({
 
   return {
     value: currentLiveValue,
+    revision,
+  };
+}
+
+
+
+export const useAgentStates = ({
+  agentID
+}: {
+  agentID: string;
+}) => {
+
+    const [liveValue, setLiveValue] = useState<Record<string, Record<string, unknown>> | null>(null);
+    const [revision, setRevision] = useState<number | null>(null);
+    const valueRef = useRef<Record<string, Record<string, unknown>> | null>(null);
+
+
+    // Subscribe to live patches
+    useWatchAgentSubscription({
+      variables: { agentID: agentID },
+      onData: ({ data: subData }) => {
+        const event = subData.data?.watchAgent;
+        if (!event) return;
+
+
+        if (event.__typename === "StateSnapshotEvent") {
+          // Snapshot replaces one state entry in the map
+          const nextMap = {
+            ...(valueRef.current ?? {}),
+            [event.stateId]: event.value,
+          };
+          valueRef.current = nextMap;
+          setLiveValue(nextMap);
+          setRevision(event.globalRevision);
+        } else if (event.__typename === "StatePatchEvent") {
+          // Apply JSON patch to one state entry in the map
+          const currentMap = valueRef.current ?? {};
+          const result = applyPatch(
+            currentMap[event.stateId] || {},
+            [{ op: event.op as "replace" | "add" | "remove", path: event.path, value: event.value }],
+            false,
+            false,
+          );
+          const nextMap = {
+            ...currentMap,
+            [event.stateId]: result.newDocument,
+          };
+          valueRef.current = nextMap;
+          setLiveValue(nextMap);
+          setRevision(event.globalRevision);
+        }
+      },
+    });
+
+
+  return {
+    value: liveValue,
     revision,
   };
 }

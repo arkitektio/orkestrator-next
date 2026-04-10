@@ -13,9 +13,9 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokApp.Smart object={item?.id} >
+    <LokApp.Smart object={item} >
       <Card className="p-3 truncate">
-        <LokApp.DetailLink object={item.id} className="">
+        <LokApp.DetailLink object={item} className="">
           {item.identifier}
           <br />
         </LokApp.DetailLink>

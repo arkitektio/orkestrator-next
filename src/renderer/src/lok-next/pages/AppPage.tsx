@@ -7,13 +7,13 @@ import { LokApp } from "@/linkers";
 import { useDetailAppQuery } from "../api/graphql";
 import ReleaseCard from "../components/cards/ReleaseCard";
 
-export default asDetailQueryRoute(useDetailAppQuery, ({ data }) => {
+export const AppPage = asDetailQueryRoute(useDetailAppQuery, ({ data }) => {
   const resolve = useResolve();
 
   return (
     <LokApp.ModelPage
-      object={data.app.id}
-      pageActions={<LokApp.Actions object={data?.app?.id} />}
+      object={data.app}
+      pageActions={<LokApp.Actions object={data?.app} />}
       title={data?.app?.identifier}
     >
       <div className="grid grid-cols-6">
@@ -46,3 +46,6 @@ export default asDetailQueryRoute(useDetailAppQuery, ({ data }) => {
     </LokApp.ModelPage>
   );
 });
+
+
+export default AppPage;

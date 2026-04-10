@@ -11,3 +11,11 @@ subscription  WatchState($stateID: ID, $agentID: ID, $interface: String) {
     ...StateSnapshotEvent
   }
 }
+
+
+subscription WatchAgent($agentID: ID!) {
+  watchAgent( agentId: $agentID) {
+    ...StatePatchEvent
+    ...StateSnapshotEvent
+  }
+}

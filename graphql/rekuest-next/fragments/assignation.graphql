@@ -103,6 +103,28 @@ fragment DetailAssignation on Assignation {
       }
     }
   }
+  resolvedDependencies {
+
+    key
+    values
+    mappedAgents {
+      agent {
+        id
+        name
+        placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
+            ...AgentPlacement
+        }
+
+      }
+
+      mappedImplementations {
+        key
+        implementation {
+          id
+        }
+      }
+    }
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {

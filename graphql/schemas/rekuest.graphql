@@ -453,6 +453,17 @@ enum AgentKind {
   WEBSOCKET
 }
 
+type AgentMapping {
+  """Get the agent's name from the mapping."""
+  agent: Agent!
+
+  """Get the agent's ID from the mapping."""
+  agentId: String!
+
+  """Get a specific argument by key."""
+  mappedImplementations: [ImplementationMapping!]!
+}
+
 input AgentOrder {
   lastSeen: Ordering
 }
@@ -661,6 +672,9 @@ type Assignation {
 
   """Resolution used to resolve dependencies for this assignation."""
   resolution: Resolution
+
+  """Get a specific dependency by key."""
+  resolvedDependencies: [ResolvedAgentDependency!]!
 
   """Root assignation in the creation chain."""
   root: Assignation
@@ -1432,6 +1446,7 @@ Implement an agent with the given implementations, states and locks. This will c
 """
 input ImplementAgentInput {
   extensions: [String!] = null
+  hash: String = null
   implementations: [ImplementationInput!] = null
   instanceId: InstanceId!
   locks: [LockImplementationInput!] = null
@@ -1538,6 +1553,17 @@ input ImplementationInput {
   """
   optimistics: [OptimisticInput!] = null
   params: AnyDefault = null
+}
+
+type ImplementationMapping {
+  """Get the key of the implementation mapping."""
+  implementation: Implementation!
+
+  """Get the key of the implementation mapping."""
+  key: String!
+
+  """Get the key of the implementation mapping."""
+  resolvedDependencies: [ResolvedAgentDependency!]!
 }
 
 input ImplementationOrder {
@@ -2292,6 +2318,7 @@ enum ProvidesOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
@@ -2333,7 +2360,10 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!): StateWithValue!
+  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateWithValue!
+
+  """Materialize the latest states for a specific agent"""
+  checkoutAgent(agent: ID!, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): [StateWithValue!]!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2574,6 +2604,7 @@ enum RequiresOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
@@ -2657,7 +2688,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "bc913003-64a5-4f79-b15f-e4d38a2b1ee1"
+  reference: String = "76e49c42-d59c-471c-a955-84f15df5c857"
   title: String = null
 }
 
@@ -2691,6 +2722,17 @@ input ResolutionFilter {
   OR: ResolutionFilter
   ids: [ID!]
   name: StrFilterLookup
+}
+
+type ResolvedAgentDependency {
+  """Get the key of the resolved dependency."""
+  key: String!
+
+  """Get a specific argument by key."""
+  mappedAgents: [AgentMapping!]!
+
+  """Get a specific argument by key."""
+  values: String
 }
 
 """
@@ -3007,13 +3049,21 @@ input SpaceOrder {
 }
 
 type State {
+  """The agent to which this state belongs."""
   agent: Agent!
+
+  """Timestamp when this state was created."""
   createdAt: DateTime!
-  definition: StateDefinition! @deprecated(reason: "Use schema instead")
+
+  """The schema definition for this state."""
+  definition: StateDefinition!
   id: ID!
+
+  """The interface this state is associated with."""
   interface: String!
+
+  """Timestamp when this state was last updated."""
   updatedAt: DateTime!
-  value: Args!
 }
 
 type StateAccessor {
@@ -3127,6 +3177,7 @@ type StateWithValue {
   definition: StateDefinition!
   globalRevision: Int
   localRevision: Int
+  stateId: ID!
   value: JSON!
 }
 

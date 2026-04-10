@@ -8838,6 +8838,11 @@ dockview-core@^1.17.2:
   resolved "https://registry.yarnpkg.com/dockview-core/-/dockview-core-1.17.2.tgz#91123165c5e8fd757ea2bee49fa91d512419f09d"
   integrity sha512-eHMVEo4ckOc+ieFm5gSM/vE0niGojNQP/9z6l5JqGNqCcxWWnvu6PRTuTYIg5XCENpk1XIa/El/uIOOtTaafUw==
 
+dockview-core@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/dockview-core/-/dockview-core-5.2.0.tgz#0b6d96ece172378dfbf966f396ade3e642a5d4f1"
+  integrity sha512-Gib8yhK2Ng7w47ASvbUZ7GdhBYbeXEflbIDxf/vobdQBMrN/QXmPaouSsSSkEx5YH0N8ap8GYljfvqjug7h5Fg==
+
 dockview-react@^1.16.1:
   version "1.17.2"
   resolved "https://registry.yarnpkg.com/dockview-react/-/dockview-react-1.17.2.tgz#b030c286b8340a4f6ae696b840f29b2e02178f5f"
@@ -8845,12 +8850,19 @@ dockview-react@^1.16.1:
   dependencies:
     dockview "^1.17.2"
 
-dockview@^1.16.1, dockview@^1.17.2:
+dockview@^1.17.2:
   version "1.17.2"
   resolved "https://registry.yarnpkg.com/dockview/-/dockview-1.17.2.tgz#713c65bd9467324520be05f2174cecd9352daf5b"
   integrity sha512-/6bezdcRaK7quHRBpuwdjMYSNC0BXbIyCID6jDnfCdr/rFwvDqAvdsDSIQJ3YvWKQlECsM5hIhLKk3ksL6219A==
   dependencies:
     dockview-core "^1.17.2"
+
+dockview@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/dockview/-/dockview-5.2.0.tgz#35d5174b26687de0dbe3b162196ca7aacd05207c"
+  integrity sha512-Eh+SWt+AydcyeVmYkwP+Yxax0XpYSQfXsc4Rad9k+6QEddkSCn4hcjsdxp9lLsw/CaMy39jHawbDVxPMC4kvTg==
+  dependencies:
+    dockview-core "^5.2.0"
 
 doctrine@^2.1.0:
   version "2.1.0"

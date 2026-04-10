@@ -3,11 +3,11 @@ import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient, LokUser } from "@/linkers";
 import { DetailClientFragment } from "@/lok-next/api/graphql";
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Handle, NodeProps, Position, Node } from "@xyflow/react";
 import { memo } from "react";
 
-export default memo(
-  ({ data, isConnectable }: NodeProps<DetailClientFragment>) => {
+export const ClientNode = memo(
+  ({ data, isConnectable }: NodeProps<Node<DetailClientFragment>>) => {
     const resolve = useResolve();
 
     return (
@@ -44,7 +44,7 @@ export default memo(
           className="invisible"
           isConnectable={isConnectable}
         />
-        <LokClient.DetailLink object={data.id}>
+        <LokClient.DetailLink object={data}>
           <Card
             style={{ padding: 10, width: 100, height: 100, zIndex: 100 }}
             className="flex flex-col justify-center items-center bg-black p-3"
@@ -55,15 +55,20 @@ export default memo(
                 className="m-3  h-20 w-20"
               />
             )}
-            <LokUser.DetailLink
-              object={data.user?.id}
-              className={"text-xs absolute bottom-2"}
-            >
-              {data.user?.username}
-            </LokUser.DetailLink>
+            {data.user && (
+              <LokUser.DetailLink
+                object={data.user}
+                className={"text-xs absolute bottom-2"}
+              >
+                {data.user?.username}
+              </LokUser.DetailLink>
+            )}
           </Card>
         </LokClient.DetailLink>
       </>
     );
   },
 );
+
+
+export default ClientNode;

@@ -13,7 +13,7 @@ import {
 } from "../api/graphql";
 import UserCard from "../components/cards/UserCard";
 
-export default asDetailQueryRoute(useDetailGroupQuery, ({ data }) => {
+export const GroupPage = asDetailQueryRoute(useDetailGroupQuery, ({ data }) => {
   const uploadFile = useLokUpload();
 
   const resolve = useResolve();
@@ -45,10 +45,10 @@ export default asDetailQueryRoute(useDetailGroupQuery, ({ data }) => {
 
   return (
     <LokGroup.ModelPage
-      object={data.group.id}
-      actions={<LokGroup.Actions object={data?.group?.id} />}
+      object={data.group}
+      actions={<LokGroup.Actions object={data?.group} />}
       title={data?.group?.name}
-      sidebars={<LokGroup.Komments object={data?.group?.id} />}
+      sidebars={<LokGroup.Komments object={data?.group} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
@@ -81,3 +81,6 @@ export default asDetailQueryRoute(useDetailGroupQuery, ({ data }) => {
     </LokGroup.ModelPage>
   );
 });
+
+
+export default GroupPage;

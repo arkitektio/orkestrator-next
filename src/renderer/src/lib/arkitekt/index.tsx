@@ -13,21 +13,34 @@ import {
   useAvailableServices,
   useConfigurationIssues,
   usePotentialService,
-  useService
+  useService,
+  useServiceState,
 } from "@/lib/arkitekt/provider";
 import { useSelfService } from "./hooks";
 // When using the Tauri API npm package:
 
 export const buildGuard =
   (key: string) =>
-    (props: { children: React.ReactNode; fallback?: React.ReactNode }) => {
-      const service = usePotentialService(key);
+    (props: { children: React.ReactNode; unavailable?: React.ReactNode; unconfigured?: React.ReactNode; configuring?: React.ReactNode; challenging?: React.ReactNode }) => {
+      const serviceState = useServiceState(key);
 
-      if (!service) {
-        return <div>{props.fallback || "Loading "}</div>;
+      if (!serviceState) {
+        return props.unavailable ?? null;
       }
 
-      return props.children;
+      switch (serviceState.status) {
+        case "unconfigured":
+        case "invalid":
+          return props.unconfigured ?? null;
+        case "configured":
+          return props.configuring ?? null;
+        case "checking":
+          return props.challenging ?? null;
+        case "ready":
+          return props.children;
+        default:
+          return null;
+      }
     };
 
 export const buildWith =

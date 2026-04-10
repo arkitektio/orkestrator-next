@@ -253,8 +253,11 @@ export const Home = () => {
         ),
       };
       dockApi.fromJSON(layout);
+      // Mark ALL panel IDs from the saved layout as known (including ones the
+      // user intentionally closed), so addAllDefaultPanels won't re-add them.
+      Object.keys(saved.panels).forEach((id) => addedKeysRef.current.add(id));
       dockApi.panels.forEach((p) => addedKeysRef.current.add(p.id));
-      // Add any newly registered widgets not yet in saved layout
+      // Add only genuinely new widgets that have never appeared in this layout
       addAllDefaultPanels(dockApi, currentWidgets);
     },
     [addAllDefaultPanels],

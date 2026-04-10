@@ -39,10 +39,6 @@ const NotificationsWidget = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-3">
-        <Bell className="w-4 h-4 text-primary" />
-        <span className="text-sm font-medium">Notifications</span>
-      </div>
       <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
         {messages.map((msg) => (
           <div
@@ -94,10 +90,6 @@ const TeamWidget = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-3">
-        <Users className="w-4 h-4 text-primary" />
-        <span className="text-sm font-medium">Team</span>
-      </div>
       {loading ? (
         <div className="flex gap-2 flex-wrap">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -145,7 +137,7 @@ export const BuiltinDashboardWidgets = () => {
     key: "team",
     label: "Team",
     module: "lok",
-    icon: <Users className="w-3 h-3" />,
+    icon: <Users className="w-3 h-3 text-primary/40" />,
     component: () => <TeamWidget />,
     defaultSize: "1x2",
     defaultWidth: 25,

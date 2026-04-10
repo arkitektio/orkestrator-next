@@ -9,10 +9,6 @@ const RekuestWidget = () => {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <PlayCircle className="w-4 h-4 text-primary" />
-        <span className="text-sm font-medium">Tasks</span>
-      </div>
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
       ) : (

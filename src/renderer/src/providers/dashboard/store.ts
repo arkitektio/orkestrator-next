@@ -29,6 +29,12 @@ type DashboardRegistryState = {
   /** Serialized DockView layout (persisted per scope) */
   serializedLayout: SerializedDockview | null;
 
+  /** Widget keys that were known when the layout was last saved */
+  knownWidgetKeys: string[] | null;
+
+  /** Whether the dashboard is in edit mode (allows resize, drag, close) */
+  editing: boolean;
+
   // ── Actions ──
   register: (widget: DashboardWidgetRegistration) => void;
   unregister: (key: string) => void;
@@ -36,15 +42,19 @@ type DashboardRegistryState = {
   saveLayout: (layout: SerializedDockview) => void;
   loadLayout: () => SerializedDockview | null;
   clearLayout: () => void;
+  setEditing: (editing: boolean) => void;
 };
 
 const STORAGE_PREFIX = "home-dashboard-layout-";
+const KNOWN_KEYS_PREFIX = "home-dashboard-known-keys-";
 
 const storageKeyFor = (scopeKey: string) => `${STORAGE_PREFIX}${scopeKey}`;
+const knownKeysKeyFor = (scopeKey: string) => `${KNOWN_KEYS_PREFIX}${scopeKey}`;
 
-const persistLayout = (scopeKey: string, layout: SerializedDockview) => {
+const persistLayout = (scopeKey: string, layout: SerializedDockview, widgetKeys: string[]) => {
   try {
     localStorage.setItem(storageKeyFor(scopeKey), JSON.stringify(layout));
+    localStorage.setItem(knownKeysKeyFor(scopeKey), JSON.stringify(widgetKeys));
   } catch {
     // Silently fail if storage is full
   }
@@ -60,11 +70,23 @@ const loadLayoutFromStorage = (scopeKey: string): SerializedDockview | null => {
   }
 };
 
+const loadKnownKeysFromStorage = (scopeKey: string): string[] | null => {
+  try {
+    const raw = localStorage.getItem(knownKeysKeyFor(scopeKey));
+    if (!raw) return null;
+    return JSON.parse(raw) as string[];
+  } catch {
+    return null;
+  }
+};
+
 export const useDashboardRegistry = create<DashboardRegistryState>(
   (set, get) => ({
     widgets: {},
     scopeKey: null,
     serializedLayout: null,
+    knownWidgetKeys: null,
+    editing: false,
 
     register: (widget) => {
       set((state) => ({
@@ -82,13 +104,15 @@ export const useDashboardRegistry = create<DashboardRegistryState>(
 
     setScope: (scopeKey) => {
       const layout = loadLayoutFromStorage(scopeKey);
-      set({ scopeKey, serializedLayout: layout });
+      const knownWidgetKeys = loadKnownKeysFromStorage(scopeKey);
+      set({ scopeKey, serializedLayout: layout, knownWidgetKeys });
     },
 
     saveLayout: (layout) => {
-      const { scopeKey } = get();
-      if (scopeKey) persistLayout(scopeKey, layout);
-      set({ serializedLayout: layout });
+      const { scopeKey, widgets } = get();
+      const widgetKeys = Object.keys(widgets);
+      if (scopeKey) persistLayout(scopeKey, layout, widgetKeys);
+      set({ serializedLayout: layout, knownWidgetKeys: widgetKeys });
     },
 
     loadLayout: () => {
@@ -102,11 +126,16 @@ export const useDashboardRegistry = create<DashboardRegistryState>(
       if (scopeKey) {
         try {
           localStorage.removeItem(storageKeyFor(scopeKey));
+          localStorage.removeItem(knownKeysKeyFor(scopeKey));
         } catch {
           // ignore
         }
       }
-      set({ serializedLayout: null });
+      set({ serializedLayout: null, knownWidgetKeys: null });
+    },
+
+    setEditing: (editing) => {
+      set({ editing });
     },
   }),
 );

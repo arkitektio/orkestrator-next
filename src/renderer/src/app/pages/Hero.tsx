@@ -18,8 +18,10 @@ import {
 import {
   ArrowRight,
   Circle,
+  Pencil,
   Plus,
   RotateCcw,
+  Check,
   Users,
   X,
 } from "lucide-react";
@@ -48,21 +50,24 @@ const WidgetTab = (
   props: IDockviewPanelHeaderProps<{ widgetKey: string }>,
 ) => {
   const widgets = useDashboardRegistry((s) => s.widgets);
+  const editing = useDashboardRegistry((s) => s.editing);
   const widget = widgets[props.params.widgetKey];
 
   return (
     <div className="group flex items-center gap-1.5 px-2 py-1 text-muted-foreground">
       {widget?.icon}
       <span>{widget?.label ?? props.api.title}</span>
-      <button
-        className="ml-1 rounded-sm p-0.5 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-muted transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation();
-          props.api.close();
-        }}
-      >
-        <X className="w-3 h-3" />
-      </button>
+      {editing && (
+        <button
+          className="ml-1 rounded-sm p-0.5 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-muted transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.api.close();
+          }}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
     </div>
   );
 };
@@ -201,6 +206,8 @@ export const Home = () => {
   const serializedLayout = useDashboardRegistry((s) => s.serializedLayout);
   const setScope = useDashboardRegistry((s) => s.setScope);
   const clearLayout = useDashboardRegistry((s) => s.clearLayout);
+  const editing = useDashboardRegistry((s) => s.editing);
+  const setEditing = useDashboardRegistry((s) => s.setEditing);
 
   const [api, setApi] = useState<DockviewApi | null>(null);
   const widgetsRef = useRef(widgets);
@@ -253,11 +260,15 @@ export const Home = () => {
         ),
       };
       dockApi.fromJSON(layout);
-      // Mark ALL panel IDs from the saved layout as known (including ones the
-      // user intentionally closed), so addAllDefaultPanels won't re-add them.
-      Object.keys(saved.panels).forEach((id) => addedKeysRef.current.add(id));
+      // Mark all widget keys that were known when the layout was saved.
+      // This includes panels the user intentionally removed — they should
+      // NOT be re-added. Only genuinely new widgets (not in knownKeys) will pass.
+      const knownKeys = useDashboardRegistry.getState().knownWidgetKeys;
+      if (knownKeys) {
+        knownKeys.forEach((k) => addedKeysRef.current.add(k));
+      }
       dockApi.panels.forEach((p) => addedKeysRef.current.add(p.id));
-      // Add only genuinely new widgets that have never appeared in this layout
+      // Add only genuinely new widgets that weren't known at save time
       addAllDefaultPanels(dockApi, currentWidgets);
     },
     [addAllDefaultPanels],
@@ -362,19 +373,34 @@ export const Home = () => {
             )}
           </div>
           <div className="flex gap-2">
-            <AddWidgetButton api={api} />
-            <Button onClick={resetLayout} variant="ghost" size="sm">
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-              Reset
-            </Button>
-            <Button onClick={reconnect} variant="outline" size="sm">
-              <Users className="w-3.5 h-3.5 mr-1.5" />
-              Switch
-            </Button>
-            <Button onClick={disconnect} variant="ghost" size="sm">
-              <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
-              Disconnect
-            </Button>
+            {editing ? (
+              <>
+                <AddWidgetButton api={api} />
+                <Button onClick={resetLayout} variant="ghost" size="sm">
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Reset
+                </Button>
+                <Button onClick={() => setEditing(false)} variant="default" size="sm">
+                  <Check className="w-3.5 h-3.5 mr-1.5" />
+                  Done
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={() => setEditing(true)} variant="ghost" size="sm">
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Edit
+                </Button>
+                <Button onClick={reconnect} variant="outline" size="sm">
+                  <Users className="w-3.5 h-3.5 mr-1.5" />
+                  Switch
+                </Button>
+                <Button onClick={disconnect} variant="ghost" size="sm">
+                  <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
+                  Disconnect
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -396,6 +422,8 @@ export const Home = () => {
             components={components}
             defaultTabComponent={WidgetTab}
             onReady={onReady}
+            locked={!editing}
+            disableDnd={!editing}
             className="dockview-theme-abyss h-full w-full"
           />
         </div>

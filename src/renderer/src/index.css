@@ -196,7 +196,9 @@
 }
 
 .dockview-theme-abyss {
-  --dv-paneview-active-outline-color: var(--primary);
+  --dv-paneview-active-outline-color: 1px solid white !important;
+  --dv-separator-border: 1px solid white !important;
+
   --dv-tabs-and-actions-container-font-size: 13px;
   --dv-tabs-and-actions-container-height: 44px;
   --dv-drag-over-background-color: color-mix(in srgb, var(--primary) 8%, transparent);

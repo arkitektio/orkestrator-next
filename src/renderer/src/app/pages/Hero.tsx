@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import BreadCrumbs from "@/components/navigation/BreadCrumbs";
 
 
 
@@ -38,7 +39,7 @@ const WidgetPanel = (
   const widget = widgets[props.params.widgetKey];
 
   return (
-    <div className="h-full overflow-auto p-3">
+    <div className="h-full overflow-auto p-3 @container">
       {widget?.component()}
     </div>
   );
@@ -357,6 +358,11 @@ export const Home = () => {
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       <div className="px-6 py-5 flex flex-col flex-1 gap-4 min-h-0">
+        {/* Breadcrumbs */}
+        <div className="shrink-0">
+          <BreadCrumbs />
+        </div>
+
         {/* Header */}
         <div className="flex items-end justify-between shrink-0">
           <div>
@@ -422,8 +428,6 @@ export const Home = () => {
             components={components}
             defaultTabComponent={WidgetTab}
             onReady={onReady}
-            locked={!editing}
-            disableDnd={!editing}
             className="dockview-theme-abyss h-full w-full"
           />
         </div>

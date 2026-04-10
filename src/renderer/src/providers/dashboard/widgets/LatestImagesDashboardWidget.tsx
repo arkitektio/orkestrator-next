@@ -29,14 +29,14 @@ const LatestImagesWidget = () => {
       ) : images.length === 0 ? (
         <p className="text-xs text-muted-foreground">No images yet</p>
       ) : (
-        <ResponsiveContainerGrid className="nchild:1">
+        <ResponsiveContainerGrid className="[&>*:first-child]:@lg:col-span-2 [&>*:first-child]:@lg:row-span-2">
             {images.map((img) => (
               <MikroImage.Smart key={img.id} object={img}>
                 <MikroImage.DetailLink
                   object={img}
                   className={() => "block cursor-pointer group"}
                 >
-                  <Card className="relative aspect-square rounded-md overflow-hidden bg-muted ">
+                  <Card className="relative aspect-square rounded-md overflow-hidden bg-muted h-full">
                     {img.latestSnapshot?.store.presignedUrl ? (
                       <Image
                         src={resolve(img.latestSnapshot.store.presignedUrl)}

@@ -9,3 +9,9 @@ export type Object = {
   [key: string]: JSONValue;
 };
 
+
+
+export type Structure = {
+  identifier: Identifier;
+  object: Object;
+}

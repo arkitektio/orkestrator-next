@@ -24,6 +24,7 @@ import {
   useConfigurationIssues,
   usePotentialService,
   useService,
+  useServiceState,
 } from "./hooks";
 import { login } from "./oauth/login";
 import {
@@ -748,6 +749,7 @@ export {
   useConfigurationIssues,
   usePotentialService,
   useService,
+  useServiceState,
 };
 
 export type { AliasMap, ServiceMap } from "./runtime/connection";

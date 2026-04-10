@@ -2683,7 +2683,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "3153fc79-69ba-4ee0-a247-1b7cf59ff8c2"
+  reference: String = "25115aa6-4d02-4704-b472-052f308b0850"
   title: String = null
 }
 
@@ -3044,13 +3044,21 @@ input SpaceOrder {
 }
 
 type State {
+  """The agent to which this state belongs."""
   agent: Agent!
+
+  """Timestamp when this state was created."""
   createdAt: DateTime!
-  definition: StateDefinition! @deprecated(reason: "Use schema instead")
+
+  """The schema definition for this state."""
+  definition: StateDefinition!
   id: ID!
+
+  """The interface this state is associated with."""
   interface: String!
+
+  """Timestamp when this state was last updated."""
   updatedAt: DateTime!
-  value: Args!
 }
 
 type StateAccessor {

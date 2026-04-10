@@ -129,7 +129,7 @@ const buildActionArgs = (
     }
     keys[key] = {
       __identifier: props.objects[0].identifier,
-      object: props.objects[0].object,
+      object: props.objects[0].object.id,
     };
   }
 
@@ -143,7 +143,10 @@ const buildActionArgs = (
       toast.error("No key found for self");
       return null;
     }
-    keys[key] = props.objects.map((item) => item.object);
+    keys[key] = props.objects.map((item) => ({
+      __identifier: item.identifier,
+      object: item.object.id,
+    }));
   }
 
   if (props.partners && props.partners.length === 1) {
@@ -154,7 +157,7 @@ const buildActionArgs = (
     }
     keys[key] = {
       __identifier: props.partners[0].identifier,
-      object: props.partners[0].object,
+      object: props.partners[0].object.id,
     };
   }
 
@@ -170,7 +173,7 @@ const buildActionArgs = (
     }
     keys[key] = props.partners.map((item) => ({
       __identifier: item.identifier,
-      object: item.object,
+      object: item.object.id,
     }));
   }
 
@@ -205,8 +208,8 @@ export const DirectImplementationAssignment = (
     if (action.args.length > 1) {
       openDialog("implementationassign", {
         id: implementation.id,
-        args: { [key]: firstObject.object },
-        hidden: { [key]: firstObject.object },
+        args: { [key]:  {"__identifier": firstObject.identifier, object: firstObject.object.id},},
+        hidden: { [key]:  {"__identifier": firstObject.identifier, object: firstObject.object.id},},
       });
       return;
     }
@@ -217,7 +220,7 @@ export const DirectImplementationAssignment = (
       await assign({
         implementation: implementation.id,
         args: {
-          [key]: firstObject.object,
+          [key]: {"__identifier": firstObject.identifier, object: firstObject.object.id},
         },
         reference,
       });

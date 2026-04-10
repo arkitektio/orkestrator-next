@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/app/Arkitekt";
+import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { ConnectingFallback } from "@/app/components/fallbacks/Connecting";
 import { NotConnected } from "@/app/components/fallbacks/NotConnected";
 import { Badge } from "@/components/ui/badge";
@@ -279,23 +279,11 @@ export const Home = () => {
 
               <div className="max-w-3xl mx-auto space-y-4">
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  You are currently connected to{" "}
-                  <Tooltip>
-                    <TooltipTrigger className="cursor-pointer">
-                      <span className="cursor-default font-semibold text-foreground">
-                        {fakts?.self?.deployment_name || "Arkitekt Server"}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-sm">
-                        {connection?.endpoint?.base_url}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
+
                   {data?.mycontext?.organization && (
                     <>
                       {" "}
-                      and working with{" "}
+                       You are currently  and working with{" "}
                       <span className="font-semibold text-foreground">
                         {data.mycontext.organization.name}
                       </span>
@@ -303,6 +291,20 @@ export const Home = () => {
                   )}
                 </p>
               </div>
+
+
+
+
+              <Guard.Rekuest unavailable={
+                "Rekuest service is not available. Please check your connection or contact support."
+              }>
+                  <>
+                  GG
+
+                  </>
+
+
+              </Guard.Rekuest>
 
 
 

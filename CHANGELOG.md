@@ -1,3 +1,92 @@
+# [1.55.0](https://github.com/arkitektio/orkestrator-next/compare/v1.54.0...v1.55.0) (2026-04-07)
+
+
+### Bug Fixes
+
+* more stuff ([de5799b](https://github.com/arkitektio/orkestrator-next/commit/de5799bd8d68d6f538ce3bbb8cb2a3e10ed3d05b))
+* scence display ([649adde](https://github.com/arkitektio/orkestrator-next/commit/649addea47299762057d964c57b821155dfc2c5f))
+* translate ([0159a0e](https://github.com/arkitektio/orkestrator-next/commit/0159a0e7ae8fabdecb5b22eb917069c001396261))
+
+
+### Features
+
+* space memeberhsip ([cb70e42](https://github.com/arkitektio/orkestrator-next/commit/cb70e42cda8b4adb4ffc551753007c403de0c0c7))
+
+# [1.54.0](https://github.com/arkitektio/orkestrator-next/compare/v1.53.2...v1.54.0) (2026-04-06)
+
+
+### Bug Fixes
+
+* add layer visibility score ([3610bf1](https://github.com/arkitektio/orkestrator-next/commit/3610bf12c32e7f2c7c69c833cc03a79496fd910c))
+* add more stuff ([ad8d94e](https://github.com/arkitektio/orkestrator-next/commit/ad8d94e579ff2f9df59f92defbd000222deb577c))
+* add subflow ([6e27fdd](https://github.com/arkitektio/orkestrator-next/commit/6e27fddf4dbe75dea325904996fd295d8e4c37e4))
+* added stuff ([c9aac8d](https://github.com/arkitektio/orkestrator-next/commit/c9aac8d2a01364c325506d25d2db81846a68f276))
+* again ([22a8fde](https://github.com/arkitektio/orkestrator-next/commit/22a8fde8a4812e7298cd8b7087e06081cb2ddfbb))
+* agent more ([108eea3](https://github.com/arkitektio/orkestrator-next/commit/108eea352ab4d9a4cb2c566c977603d95a3c3960))
+* broken ([1dd4667](https://github.com/arkitektio/orkestrator-next/commit/1dd4667788f4ded6ded6b5e036ade4baad78dfb0))
+* fix big file download ([1f3257c](https://github.com/arkitektio/orkestrator-next/commit/1f3257c728b1f1b4e08ee7e9c9ab1e8dbad05f51))
+* fix object more ([f00204f](https://github.com/arkitektio/orkestrator-next/commit/f00204f9cd024e2016cb7fd6296da8d89cbef752))
+* gett new stuff ([fe6efe5](https://github.com/arkitektio/orkestrator-next/commit/fe6efe56878c9530d89ace322c746b7406678740))
+* lets try ([8b40c16](https://github.com/arkitektio/orkestrator-next/commit/8b40c16586c5e0bc3ff55004cac300447f8578c8))
+* little things ([0c46d21](https://github.com/arkitektio/orkestrator-next/commit/0c46d21f594dc96902c67b94659aed71d7544f0a))
+* make it go ([4cdc77b](https://github.com/arkitektio/orkestrator-next/commit/4cdc77be73a0ae5cef9d4dae381e1e536f399cb0))
+* massive little fixes ([da26001](https://github.com/arkitektio/orkestrator-next/commit/da260014d1dd48044b120406aa657d2e8c7b6e9a))
+* more ([cf4b935](https://github.com/arkitektio/orkestrator-next/commit/cf4b93508cb73096593d60276c1047843ad735fe))
+* more ([5913efc](https://github.com/arkitektio/orkestrator-next/commit/5913efc54e579ab4a81e6d782e370abea2bffe8d))
+* more ([48f4cff](https://github.com/arkitektio/orkestrator-next/commit/48f4cff569165442c2c8cf40a5a42c4109ce466b))
+* more ([b392ed9](https://github.com/arkitektio/orkestrator-next/commit/b392ed9cfb7dfe1eb03dfa79ccd4cd5ff43c0df0))
+* more ([6871cd7](https://github.com/arkitektio/orkestrator-next/commit/6871cd779154a7f3fbaeadd908989cdd50316352))
+* more agent page ([5da4bc2](https://github.com/arkitektio/orkestrator-next/commit/5da4bc2f94d14dca61531a5927a0999f8dc33486))
+* more and more ([a1715ff](https://github.com/arkitektio/orkestrator-next/commit/a1715ff1c3d2182928df50cee8164d1ca8517533))
+* more and more ([e68545c](https://github.com/arkitektio/orkestrator-next/commit/e68545c09dd332321019e1eab76b1807152ba2a2))
+* more and more ([516a553](https://github.com/arkitektio/orkestrator-next/commit/516a5536bb2f0d7efa25e0ca55b99677da7c0c3e))
+* more stuff ([c0caf51](https://github.com/arkitektio/orkestrator-next/commit/c0caf5137f92bf290f5f0124aa9d49f82683120a))
+* more stuff ([6e45947](https://github.com/arkitektio/orkestrator-next/commit/6e45947f17747dabc297e8bc6bc0685a265382d1))
+* more stuff ([ddaba03](https://github.com/arkitektio/orkestrator-next/commit/ddaba03058b4d1af563bbc41e476e06529180322))
+* more stuff ([152bf98](https://github.com/arkitektio/orkestrator-next/commit/152bf987d7d5a7f548bba4f52deb3310d077bd9b))
+* more stuff ([3fe5107](https://github.com/arkitektio/orkestrator-next/commit/3fe510794f4967453248cfdf31dd58e19858d4e8))
+* more stuff ([0a10039](https://github.com/arkitektio/orkestrator-next/commit/0a10039585a4587136e07c8c07e2c9a152a5c42a))
+* more subtlesl ([16c8ae2](https://github.com/arkitektio/orkestrator-next/commit/16c8ae2f264fdda03914e150c7dca36bb6e1be88))
+* more things here ([f42bd99](https://github.com/arkitektio/orkestrator-next/commit/f42bd991740de558b2b6440365bc756481baac53))
+* more ui features ([0cf09af](https://github.com/arkitektio/orkestrator-next/commit/0cf09af6a70dff3a3713caf8dfa97809a3990b1a))
+* new stuff ([d904586](https://github.com/arkitektio/orkestrator-next/commit/d904586d5b2109289381cf7975fc44f9d2fb8b43))
+* new stuff ([0c2820f](https://github.com/arkitektio/orkestrator-next/commit/0c2820fd7feb052e3b79ed79e9e5fcf717d279ed))
+* nicer looks ([a1ce491](https://github.com/arkitektio/orkestrator-next/commit/a1ce49113595fc6523b3e60c3af406fff414e5df))
+* refix file upload ([cc0f2cf](https://github.com/arkitektio/orkestrator-next/commit/cc0f2cfd018dcfae2c2e76b5654112cfc6e04587))
+* remap ([ba0129a](https://github.com/arkitektio/orkestrator-next/commit/ba0129a893902e129dc9d151cf653e4b0ebc59a6))
+* sidebar more informativ on right click ([1513cdb](https://github.com/arkitektio/orkestrator-next/commit/1513cdbfe7c488a7821ea3af9074ab07eeb5e56f))
+* stuff ([57c7cbe](https://github.com/arkitektio/orkestrator-next/commit/57c7cbe05af42ea54dc06eb86eac40dfa746ae07))
+* stuff ([61efdb5](https://github.com/arkitektio/orkestrator-next/commit/61efdb551895ae96c59da1225d979267e55fb971))
+* stuff ([29d14c5](https://github.com/arkitektio/orkestrator-next/commit/29d14c54398c10ab390c49691ea4a316bdde81cd))
+* stuff ([3caf9d1](https://github.com/arkitektio/orkestrator-next/commit/3caf9d14851d9240155edbba5c6174e5bf998831))
+* stuff ([9b3feea](https://github.com/arkitektio/orkestrator-next/commit/9b3feeab862ca84a1d6d353696e9dc4a9c9e40f2))
+* stuff ([ef9e7a4](https://github.com/arkitektio/orkestrator-next/commit/ef9e7a4c71cb69749e9f4b2af7b49b62f1ef1734))
+* test ([c09ee4d](https://github.com/arkitektio/orkestrator-next/commit/c09ee4ddac849a945ab6024582b5561f5258bf32))
+* trying new stuff ([47b3c99](https://github.com/arkitektio/orkestrator-next/commit/47b3c994bca12a0fe0e6bc1e195dfa84490f2f37))
+* up up ([574cb4c](https://github.com/arkitektio/orkestrator-next/commit/574cb4ca9ac6822e6c3dc6e90b3f168ec9cf3c24))
+* update ([715c8d4](https://github.com/arkitektio/orkestrator-next/commit/715c8d4a58710cc25b08b4f8cd248913c8c31983))
+* update ([10422a0](https://github.com/arkitektio/orkestrator-next/commit/10422a025ff0f0d582e631169cacbdc41aab3609))
+* uploads working? ([af9b1e2](https://github.com/arkitektio/orkestrator-next/commit/af9b1e273b80472a28c70798aa2c128024b350bc))
+* with resoltuions ([6c85f8f](https://github.com/arkitektio/orkestrator-next/commit/6c85f8f7acd9fc04a05f94c71d2a38284c9031f7))
+
+
+### Features
+
+* add implementation score ([799db5b](https://github.com/arkitektio/orkestrator-next/commit/799db5b5d7b600f4a2e6f5b9abb71901a63188c2))
+* add more chunking ([c3fe04d](https://github.com/arkitektio/orkestrator-next/commit/c3fe04d52e981c863f168a71e225db7d84cbb904))
+* add stuff ([150a0ba](https://github.com/arkitektio/orkestrator-next/commit/150a0ba892832945b71a20282c07531d1274a6c7))
+* dataroi mutation ([93f1231](https://github.com/arkitektio/orkestrator-next/commit/93f1231a870f4fa5f9665b25fa81382ed7704bba))
+* fix uvm remapping ([65462d7](https://github.com/arkitektio/orkestrator-next/commit/65462d79fa037576fdc43a6667fb2dc9fd67b84b))
+* good enough ([a73274b](https://github.com/arkitektio/orkestrator-next/commit/a73274bf9188fca9aee1adecc24eff1226185715))
+* more and little ([e52f880](https://github.com/arkitektio/orkestrator-next/commit/e52f8800d167c2064e44e19e4f640fcfc5c7608c))
+* refactor ([030bbbb](https://github.com/arkitektio/orkestrator-next/commit/030bbbbabcea577b3324908fe87969c44a6a21e5))
+* stuff ([957b92a](https://github.com/arkitektio/orkestrator-next/commit/957b92a16b1edb88e6f395839be87fba6b44b67b))
+* test ([9c710fb](https://github.com/arkitektio/orkestrator-next/commit/9c710fb481dc7d01fd15832424c808cd0e6440dd))
+* test stuff ([705b949](https://github.com/arkitektio/orkestrator-next/commit/705b94916527a532ad145ca55050c5e51ed8977d))
+* up ([32baa22](https://github.com/arkitektio/orkestrator-next/commit/32baa22e5921746e7a8222459f86c7a1010f3c6d))
+* with roi stuff ([0c5de50](https://github.com/arkitektio/orkestrator-next/commit/0c5de50c80bc150408cf2b9befd1913bea20bf52))
+* x ([b08e7d8](https://github.com/arkitektio/orkestrator-next/commit/b08e7d81256f7211dba60f4de6d5602311cf5a93))
+
 ## [1.53.2](https://github.com/arkitektio/orkestrator-next/compare/v1.53.1...v1.53.2) (2026-03-13)
 
 

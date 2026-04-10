@@ -1,370 +1,396 @@
-import { Arkitekt, Guard } from "@/app/Arkitekt";
+import { Arkitekt } from "@/app/Arkitekt";
 import { ConnectingFallback } from "@/app/components/fallbacks/Connecting";
 import { NotConnected } from "@/app/components/fallbacks/NotConnected";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
-import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
+import { ServiceRuntimeState } from "@/lib/arkitekt/types";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { useDashboardRegistry } from "@/providers/dashboard";
+import type { DashboardWidgetRegistration } from "@/providers/dashboard";
 import {
-  Activity,
-  AlertCircle,
+  DockviewApi,
+  DockviewReact,
+  DockviewReadyEvent,
+  IDockviewPanelProps,
+  IDockviewPanelHeaderProps,
+  SerializedDockview,
+} from "dockview";
+import {
   ArrowRight,
-  CheckCircle,
-  Globe,
-  Heart,
-  Loader2,
+  Circle,
+  Plus,
+  RotateCcw,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import './hero.css';
+// ── DockView panel component ──
 
-type ServiceCardProps = {
-  instance: Instance;
-  serviceKey: string;
-};
-
-const ServiceWidget = (props: ServiceCardProps) => {
-  const [health, setHealth] = useState<boolean | null>(null);
-  const [healthyAliases, setHealthyAliases] = useState<number>(0);
-  const [totalAliases, setTotalAliases] = useState<number>(0);
-
-  useEffect(() => {
-    const aliases = props.instance.aliases;
-    setTotalAliases(aliases.length);
-
-    if (aliases.length === 0) {
-      setHealth(false);
-      return;
-    }
-
-    // Check all aliases
-    const aliasChecks = aliases.map(async (alias) => {
-      try {
-        const healthUrl = aliasToHttpPath(alias, alias.challenge);
-        // Create an AbortController for timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        const response = await fetch(healthUrl, {
-          method: "GET",
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        return response.ok;
-      } catch (error) {
-        console.error(`Health check failed for alias ${alias.host}:`, error);
-        return false;
-      }
-    });
-
-    Promise.all(aliasChecks).then((results) => {
-      const healthyCount = results.filter(Boolean).length;
-      setHealthyAliases(healthyCount);
-      setHealth(healthyCount > 0); // Service is healthy if at least one alias is healthy
-    });
-  }, [props]);
-
-  const getHealthIcon = () => {
-    if (health === null)
-      return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
-    if (health) return <CheckCircle className="w-4 h-4 text-green-500" />;
-    return <AlertCircle className="w-4 h-4 text-red-500" />;
-  };
-
-  const getHealthBadge = () => {
-    if (health === null) return <Badge variant="secondary">Checking...</Badge>;
-    if (health) {
-      const allHealthy = healthyAliases === totalAliases;
-      return (
-        <Badge
-          variant="default"
-          className={allHealthy ? "bg-green-500" : "bg-yellow-500"}
-        >
-          {allHealthy
-            ? "Healthy"
-            : `Partial (${healthyAliases}/${totalAliases})`}
-        </Badge>
-      );
-    }
-    return <Badge variant="destructive">Unhealthy</Badge>;
-  };
+const WidgetPanel = (
+  props: IDockviewPanelProps<{ widgetKey: string }>,
+) => {
+  const widgets = useDashboardRegistry((s) => s.widgets);
+  const widget = widgets[props.params.widgetKey];
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-blue-500" />
-            <CardTitle className="text-md">{props.instance.service}</CardTitle>
-          </div>
-          {getHealthBadge()}
+    <div className="h-full overflow-auto p-3">
+      {widget?.component()}
+    </div>
+  );
+};
+
+// ── DockView custom tab component ──
+
+const WidgetTab = (
+  props: IDockviewPanelHeaderProps<{ widgetKey: string }>,
+) => {
+  const widgets = useDashboardRegistry((s) => s.widgets);
+  const widget = widgets[props.params.widgetKey];
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 text-muted-foreground">
+      {widget?.icon}
+      <span>{widget?.label ?? props.api.title}</span>
+    </div>
+  );
+};
+
+const components = {
+  widget: WidgetPanel,
+} as const;
+
+// ── Helpers ──
+
+/** Build a deterministic scope key from server + user + org */
+const buildScopeKey = (
+  baseUrl: string,
+  userId: string,
+  orgId: string,
+): string => `${baseUrl}::${userId}::${orgId}`;
+
+/** Add a widget as a new split panel — never as a tab, alternating right/below */
+let _nextDirection: "right" | "below" = "right";
+const addWidgetPanel = (
+  api: DockviewApi,
+  w: DashboardWidgetRegistration,
+) => {
+  const panels = api.panels;
+  const lastPanel = panels.length > 0 ? panels[panels.length - 1] : null;
+  const direction = _nextDirection;
+  _nextDirection = direction === "right" ? "below" : "right";
+  api.addPanel({
+    id: w.key,
+    component: "widget",
+    params: { widgetKey: w.key },
+    title: w.label,
+    ...(lastPanel
+      ? {
+          position: {
+            referencePanel: lastPanel.id,
+            direction,
+          },
+        }
+      : {}),
+
+    initialWidth: w.defaultWidth,
+    initialHeight: w.defaultHeight,
+  });
+};
+
+// ── Service health dots ──
+
+const statusColor: Record<string, string> = {
+  ready: "text-green-500",
+  checking: "text-yellow-500",
+  configured: "text-blue-500",
+  unconfigured: "text-muted-foreground/40",
+  invalid: "text-destructive",
+};
+
+const statusLabel: Record<string, string> = {
+  ready: "Healthy",
+  checking: "Testing",
+  configured: "Configuring",
+  unconfigured: "Not configured",
+  invalid: "Down",
+};
+
+const ServiceHealthDot = ({ state }: { state: ServiceRuntimeState }) => (
+  <div
+    className="flex items-center gap-1.5"
+    title={`${state.key}: ${statusLabel[state.status] ?? state.status}`}
+  >
+    <Circle
+      className={`w-2 h-2 fill-current ${statusColor[state.status] ?? "text-muted-foreground"}`}
+    />
+    <span className="text-xs text-muted-foreground">{state.key}</span>
+  </div>
+);
+
+// ── Add-widget dropdown ──
+
+const AddWidgetButton = ({ api }: { api: DockviewApi | null }) => {
+  const widgets = useDashboardRegistry((s) => s.widgets);
+  const [open, setOpen] = useState(false);
+
+  const existingPanelIds = useMemo(() => {
+    if (!api) return new Set<string>();
+    return new Set(api.panels.map((p) => p.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, open]); // re-compute when toggled
+
+  const missing = Object.values(widgets).filter(
+    (w) => !existingPanelIds.has(w.key),
+  );
+
+  if (missing.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(!open)}
+      >
+        <Plus className="w-3.5 h-3.5 mr-1.5" />
+        Add widget
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-popover border rounded-lg shadow-lg py-1 min-w-[160px]">
+          {missing.map((w) => (
+            <button
+              key={w.key}
+              className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+              onClick={() => {
+                if (api) addWidgetPanel(api, w);
+                setOpen(false);
+              }}
+            >
+              {w.label}
+            </button>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          {getHealthIcon()}
-          <span className="text-sm text-muted-foreground">
-            Service Status:{" "}
-            {health === null ? "Checking" : health ? "Operational" : "Down"}
-          </span>
-        </div>
-        {totalAliases > 0 && (
-          <div className="mt-2 space-y-1">
-            <p className="text-xs text-muted-foreground">
-              Aliases: {healthyAliases}/{totalAliases} healthy
-            </p>
-            {props.instance.aliases.map((alias, index) => (
-              <p key={index} className="text-xs text-muted-foreground">
-                {alias.ssl ? "https" : "http"}://{alias.host}
-                {alias.port ? `:${alias.port}` : ""}
-                {alias.path || ""}
+      )}
+    </div>
+  );
+};
+
+// ── Dashboard ──
+
+export const Home = () => {
+  const disconnect = Arkitekt.useDisconnect();
+  const reconnect = Arkitekt.useReconnect();
+  const { data: contextData } = useMyContextQuery({ fetchPolicy: "cache-and-network" });
+  const connection = Arkitekt.useConnection();
+  const availableServices = Arkitekt.useAvailableServices();
+
+  const widgets = useDashboardRegistry((s) => s.widgets);
+  const saveLayout = useDashboardRegistry((s) => s.saveLayout);
+  const serializedLayout = useDashboardRegistry((s) => s.serializedLayout);
+  const setScope = useDashboardRegistry((s) => s.setScope);
+  const clearLayout = useDashboardRegistry((s) => s.clearLayout);
+
+  const [api, setApi] = useState<DockviewApi | null>(null);
+  const widgetsRef = useRef(widgets);
+  useEffect(() => {
+    widgetsRef.current = widgets;
+  }, [widgets]);
+
+  // Track which widget keys have been added as panels so far
+  const addedKeysRef = useRef<Set<string>>(new Set());
+  // Track the current scope to detect changes
+  const activeScopeRef = useRef<string | null>(null);
+
+  // Compute scope from context + connection
+  const baseUrl = connection?.endpoint?.base_url;
+  const userId = contextData?.mycontext?.user.id;
+  const orgId = contextData?.mycontext?.organization?.id;
+  const currentScope = useMemo(() => {
+    if (!baseUrl || !userId) return null;
+    return buildScopeKey(baseUrl, userId, orgId ?? "personal");
+  }, [baseUrl, userId, orgId]);
+
+
+  const addAllDefaultPanels = useCallback(
+    (dockApi: DockviewApi, widgetMap: Record<string, DashboardWidgetRegistration>) => {
+      _nextDirection = "right";
+      Object.values(widgetMap).forEach((w) => {
+        if (!addedKeysRef.current.has(w.key)) {
+          addWidgetPanel(dockApi, w);
+          addedKeysRef.current.add(w.key);
+        }
+      });
+    },
+    [],
+  );
+
+  const restoreLayout = useCallback(
+    (dockApi: DockviewApi, saved: SerializedDockview, currentWidgets: Record<string, DashboardWidgetRegistration>) => {
+      const layout: SerializedDockview = {
+        ...saved,
+        panels: Object.fromEntries(
+          Object.entries(saved.panels).map(([id, panel]) => [
+            id,
+            {
+              ...panel,
+              contentComponent: "widget",
+              params: { widgetKey: id },
+              title: currentWidgets[id]?.label ?? panel.title ?? id,
+            },
+          ]),
+        ),
+      };
+      dockApi.fromJSON(layout);
+      dockApi.panels.forEach((p) => addedKeysRef.current.add(p.id));
+      // Add any newly registered widgets not yet in saved layout
+      addAllDefaultPanels(dockApi, currentWidgets);
+    },
+    [addAllDefaultPanels],
+  );
+
+  // Set scope when it changes — this reloads the layout from the right storage key
+  useEffect(() => {
+    if (currentScope && currentScope !== activeScopeRef.current) {
+      activeScopeRef.current = currentScope;
+      setScope(currentScope);
+
+      // If DockView is already mounted, reload it
+      if (api) {
+        api.clear();
+        addedKeysRef.current.clear();
+        const saved = useDashboardRegistry.getState().serializedLayout;
+        if (saved) {
+          try {
+            restoreLayout(api, saved, widgetsRef.current);
+          } catch {
+            addAllDefaultPanels(api, widgetsRef.current);
+          }
+        } else {
+          addAllDefaultPanels(api, widgetsRef.current);
+        }
+      }
+    }
+  }, [currentScope, api, setScope, addAllDefaultPanels, restoreLayout]);
+
+  const onReady = useCallback(
+    (event: DockviewReadyEvent) => {
+      const saved = serializedLayout;
+
+      if (saved) {
+        try {
+          restoreLayout(event.api, saved, widgetsRef.current);
+        } catch {
+          addAllDefaultPanels(event.api, widgetsRef.current);
+        }
+      } else {
+        addAllDefaultPanels(event.api, widgetsRef.current);
+      }
+
+      setApi(event.api);
+    },
+    [serializedLayout, addAllDefaultPanels, restoreLayout],
+  );
+
+  // Persist layout on changes
+  useEffect(() => {
+    if (!api) return;
+    const disposable = api.onDidLayoutChange(() => {
+      saveLayout(api.toJSON());
+    });
+    return () => disposable.dispose();
+  }, [api, saveLayout]);
+
+  // Accept unhandled drag-over
+  useEffect(() => {
+    if (!api) return;
+    const disposable = api.onUnhandledDragOverEvent((e) => e.accept());
+    return () => disposable.dispose();
+  }, [api]);
+
+  // When new widgets register after DockView is ready, add them as new panels
+  useEffect(() => {
+    if (!api) return;
+    const newKeys = Object.keys(widgets).filter(
+      (k) => !addedKeysRef.current.has(k),
+    );
+    newKeys.forEach((k) => {
+      const w = widgets[k];
+      addWidgetPanel(api, w);
+      addedKeysRef.current.add(k);
+    });
+  }, [api, widgets]);
+
+  const resetLayout = useCallback(() => {
+    if (!api) return;
+    api.clear();
+    addedKeysRef.current.clear();
+    clearLayout();
+    addAllDefaultPanels(api, widgetsRef.current);
+  }, [api, addAllDefaultPanels, clearLayout]);
+
+  return (
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      <div className="px-6 py-5 flex flex-col flex-1 gap-4 min-h-0">
+        {/* Header */}
+        <div className="flex items-end justify-between shrink-0">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Welcome back, {contextData?.mycontext?.user.username || "User"}
+            </h1>
+            {contextData?.mycontext?.organization && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Working with{" "}
+                <span className="font-medium text-foreground">
+                  {contextData.mycontext.organization.name}
+                </span>
               </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <AddWidgetButton api={api} />
+            <Button onClick={resetLayout} variant="ghost" size="sm">
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Reset
+            </Button>
+            <Button onClick={reconnect} variant="outline" size="sm">
+              <Users className="w-3.5 h-3.5 mr-1.5" />
+              Switch
+            </Button>
+            <Button onClick={disconnect} variant="ghost" size="sm">
+              <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
+              Disconnect
+            </Button>
+          </div>
+        </div>
+
+        {/* Service health strip */}
+        {availableServices.length > 0 && (
+          <div className="flex items-center gap-4 flex-wrap shrink-0">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Services
+            </span>
+            {availableServices.map((s) => (
+              <ServiceHealthDot key={s.key} state={s} />
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-};
 
-export const ServiceInfo = (props: { value: Instance; serviceKey: string }) => {
-  return <ServiceWidget instance={props.value} serviceKey={props.serviceKey} />;
-};
-
-export const ServerHealthInfo = () => {
-  const { data } = useMyContextQuery({
-    fetchPolicy: "cache-and-network",
-  });
-
-  const fakts = Arkitekt.useFakts();
-
-  return (
-    <div className="space-y-6">
-      {/* User/Organization Info */}
-      <div className="grid md:grid-cols-1 gap-6">
-        <Card className="border-none shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Users className="w-6 h-6 text-blue-500" />
-              <CardTitle>User Information</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Username:</span>
-              <span className="font-medium">
-                {data?.mycontext?.user.username || "N/A"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">User ID:</span>
-              <span className="font-mono text-sm">
-                {data?.mycontext?.user.id || "N/A"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-
-
-
-        <Card className="border-none shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Globe className="w-6 h-6 text-purple-500" />
-              <CardTitle>Organization</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Name:</span>
-              <span className="font-medium">
-                {data?.mycontext?.organization?.name || "N/A"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Organization ID:</span>
-              <span className="font-mono text-sm">
-                {data?.mycontext?.organization?.id || "N/A"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="h-0.5 bg-border my-4" >
-        <pre className="text-xs text-muted-foreground">
-          {JSON.stringify(fakts, null, 2)}
-
-        </pre>
-      </div>
-
-      {/* Services Section */}
-      <div className="space-y-4">
-        <div className="text-left">
-          <h3 className="text-md font-semibold mb-2">Available Services</h3>
-          <p className="text-muted-foreground text-sm">
-            Status and health information for connected services
-          </p>
-        </div>
-
-        <ServicesInfo />
-      </div>
-    </div>
-  );
-};
-export const ServicesInfo = () => {
-  const fakts = Arkitekt.useFakts();
-
-  const listedServices = fakts
-    ? Object.keys(fakts.instances)
-      .map((key) => {
-        return {
-          serviceKey: key,
-          value: fakts.instances[key as keyof typeof fakts],
-        };
-      })
-      .filter((e) => e.serviceKey)
-    : [];
-
-  return (
-    <ScrollArea className="grid grid-cols-1 gap-4 overflow-y-scroll">
-      {listedServices.map((service) => {
-        return <ServiceInfo key={service.serviceKey} {...service} />;
-      })}
-    </ScrollArea>
-  );
-};
-
-export const Home = () => {
-  const fakts = Arkitekt.useFakts();
-  const connection = Arkitekt.useConnection();
-  const disconnect = Arkitekt.useDisconnect();
-  const reconnect = Arkitekt.useReconnect();
-
-  const { data } = useMyContextQuery({
-    fetchPolicy: "cache-and-network",
-  });
-
-  return (
-    <div className="min-h-screen w-full h-full bg-radial-[at_100%_100%] from-background to-backgroundpaired  flex items-center justify-center">
-      <div className="container mx-auto my-auto px-4 py-16 min-h-screen flex flex-col">
-        <div className="max-w-6xl mx-auto my-auto">
-          {/* Welcome Section */}
-          <div className="text-center mb-12">
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                <span className="text-foreground">Welcome back,</span>
-                <br />
-                <span className="text-foreground">
-                  {data?.mycontext?.user.username || "User"}
-                </span>
-              </h1>
-
-              <div className="max-w-3xl mx-auto space-y-4">
-                <p className="text-xl text-muted-foreground leading-relaxed">
-
-                  {data?.mycontext?.organization && (
-                    <>
-                      {" "}
-                       You are currently  and working with{" "}
-                      <span className="font-semibold text-foreground">
-                        {data.mycontext.organization.name}
-                      </span>
-                    </>
-                  )}
-                </p>
-              </div>
-
-
-
-
-              <Guard.Rekuest unavailable={
-                "Rekuest service is not available. Please check your connection or contact support."
-              }>
-                  <>
-                  GG
-
-                  </>
-
-
-              </Guard.Rekuest>
-
-
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
-                <Button
-                  onClick={reconnect}
-                  variant="default"
-                  size="lg"
-                  className="text-base"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Switch User/Organization
-                </Button>
-                <Button
-                  onClick={disconnect}
-                  variant="outline"
-                  size="lg"
-                  className="text-base"
-                >
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Disconnect
-                </Button>
-
-                {/* Server Health Button with Sheet */}
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="secondary" size="lg" className="text-base">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Inspect
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="overflow-y-auto ">
-                    <SheetHeader>
-                      <SheetTitle>Server Health Information</SheetTitle>
-                      <SheetDescription>
-                        Overview of connected services and their status
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
-                      <ServerHealthInfo />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-          </div>
+        {/* DockView dashboard */}
+        <div className="flex-1 min-h-0 rounded-2xl overflow-hidden">
+          <DockviewReact
+            components={components}
+            defaultTabComponent={WidgetTab}
+            onReady={onReady}
+            className="h-full w-full"
+          />
         </div>
       </div>
     </div>
   );
 };
 
-/**
- * This is the hero component, which is the main page of the public application.
- * @todo: This component should be replaced with a more useful component for the public application.
- */
 function Page() {
   return (
-    <div className="min-h-screen w-full">
+    <div className="h-full w-full">
       <Arkitekt.Guard
         notConnectedFallback={<NotConnected />}
         connectingFallback={<ConnectingFallback />}

@@ -5346,6 +5346,13 @@ export type WatchStateSubscriptionVariables = Exact<{
 
 export type WatchStateSubscription = { __typename?: 'Subscription', watchState: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
 
+export type WatchAgentSubscriptionVariables = Exact<{
+  agentID: Scalars['ID']['input'];
+}>;
+
+
+export type WatchAgentSubscription = { __typename?: 'Subscription', watchAgent: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
+
 export type WatchImplementationSubscriptionVariables = Exact<{
   implementation: Scalars['ID']['input'];
 }>;
@@ -10392,6 +10399,38 @@ export function useWatchStateSubscription(baseOptions?: ApolloReactHooks.Subscri
       }
 export type WatchStateSubscriptionHookResult = ReturnType<typeof useWatchStateSubscription>;
 export type WatchStateSubscriptionResult = Apollo.SubscriptionResult<WatchStateSubscription>;
+export const WatchAgentDocument = gql`
+    subscription WatchAgent($agentID: ID!) {
+  watchAgent(agentId: $agentID) {
+    ...StatePatchEvent
+    ...StateSnapshotEvent
+  }
+}
+    ${StatePatchEventFragmentDoc}
+${StateSnapshotEventFragmentDoc}`;
+
+/**
+ * __useWatchAgentSubscription__
+ *
+ * To run a query within a React component, call `useWatchAgentSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useWatchAgentSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWatchAgentSubscription({
+ *   variables: {
+ *      agentID: // value for 'agentID'
+ *   },
+ * });
+ */
+export function useWatchAgentSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAgentSubscription, WatchAgentSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useSubscription<WatchAgentSubscription, WatchAgentSubscriptionVariables>(WatchAgentDocument, options);
+      }
+export type WatchAgentSubscriptionHookResult = ReturnType<typeof useWatchAgentSubscription>;
+export type WatchAgentSubscriptionResult = Apollo.SubscriptionResult<WatchAgentSubscription>;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {

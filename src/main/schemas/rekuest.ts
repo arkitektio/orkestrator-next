@@ -5345,6 +5345,13 @@ export type WatchStateSubscriptionVariables = Exact<{
 
 export type WatchStateSubscription = { __typename?: 'Subscription', watchState: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
 
+export type WatchAgentSubscriptionVariables = Exact<{
+  agentID: Scalars['ID']['input'];
+}>;
+
+
+export type WatchAgentSubscription = { __typename?: 'Subscription', watchAgent: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
+
 export type WatchImplementationSubscriptionVariables = Exact<{
   implementation: Scalars['ID']['input'];
 }>;
@@ -7617,6 +7624,15 @@ export const WatchStateDocument = gql`
 }
     ${StatePatchEventFragmentDoc}
 ${StateSnapshotEventFragmentDoc}`;
+export const WatchAgentDocument = gql`
+    subscription WatchAgent($agentID: ID!) {
+  watchAgent(agentId: $agentID) {
+    ...StatePatchEvent
+    ...StateSnapshotEvent
+  }
+}
+    ${StatePatchEventFragmentDoc}
+${StateSnapshotEventFragmentDoc}`;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {
@@ -7944,6 +7960,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     WatchState(variables?: WatchStateSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchStateSubscription> {
       return withWrapper((wrappedRequestHeaders) => client.request<WatchStateSubscription>({ document: WatchStateDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchState', 'subscription', variables);
+    },
+    WatchAgent(variables: WatchAgentSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchAgentSubscription> {
+      return withWrapper((wrappedRequestHeaders) => client.request<WatchAgentSubscription>({ document: WatchAgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchAgent', 'subscription', variables);
     },
     WatchImplementation(variables: WatchImplementationSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchImplementationSubscription> {
       return withWrapper((wrappedRequestHeaders) => client.request<WatchImplementationSubscription>({ document: WatchImplementationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchImplementation', 'subscription', variables);

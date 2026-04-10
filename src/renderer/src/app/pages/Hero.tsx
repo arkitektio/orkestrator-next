@@ -13,6 +13,7 @@ import {
   IDockviewPanelProps,
   IDockviewPanelHeaderProps,
   SerializedDockview,
+  type DockviewTheme,
 } from "dockview";
 import {
   ArrowRight,
@@ -20,9 +21,12 @@ import {
   Plus,
   RotateCcw,
   Users,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "./hero.css";
+
+
+
 // ── DockView panel component ──
 
 const WidgetPanel = (
@@ -47,9 +51,18 @@ const WidgetTab = (
   const widget = widgets[props.params.widgetKey];
 
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 text-muted-foreground">
+    <div className="group flex items-center gap-1.5 px-2 py-1 text-muted-foreground">
       {widget?.icon}
       <span>{widget?.label ?? props.api.title}</span>
+      <button
+        className="ml-1 rounded-sm p-0.5 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-muted transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.api.close();
+        }}
+      >
+        <X className="w-3 h-3" />
+      </button>
     </div>
   );
 };
@@ -380,7 +393,7 @@ export const Home = () => {
             components={components}
             defaultTabComponent={WidgetTab}
             onReady={onReady}
-            className="dockview-theme-home h-full w-full"
+            className="dockview-theme-abyss h-full w-full"
           />
         </div>
       </div>

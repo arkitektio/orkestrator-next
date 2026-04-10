@@ -139,22 +139,30 @@ export const useAgentStates = ({
 
 
         if (event.__typename === "StateSnapshotEvent") {
-          // Full snapshot replaces the value
-          valueRef.current = event.value;
-          setLiveValue((prev) => ({ ...prev, [event.stateId]: event.value }));
+          // Snapshot replaces one state entry in the map
+          const nextMap = {
+            ...(valueRef.current ?? {}),
+            [event.stateId]: event.value,
+          };
+          valueRef.current = nextMap;
+          setLiveValue(nextMap);
           setRevision(event.globalRevision);
         } else if (event.__typename === "StatePatchEvent") {
-          // Apply JSON patch to current value
-          if (valueRef.current) {
-            const result = applyPatch(
-              valueRef.current[event.stateId] || {},
-              [{ op: event.op as "replace" | "add" | "remove", path: event.path, value: event.value }],
-              false,
-              false,
-            );
-            setLiveValue((prev) => ({ ...prev, [event.stateId]: result.newDocument }));
-            setRevision(event.globalRevision);
-          }
+          // Apply JSON patch to one state entry in the map
+          const currentMap = valueRef.current ?? {};
+          const result = applyPatch(
+            currentMap[event.stateId] || {},
+            [{ op: event.op as "replace" | "add" | "remove", path: event.path, value: event.value }],
+            false,
+            false,
+          );
+          const nextMap = {
+            ...currentMap,
+            [event.stateId]: result.newDocument,
+          };
+          valueRef.current = nextMap;
+          setLiveValue(nextMap);
+          setRevision(event.globalRevision);
         }
       },
     });

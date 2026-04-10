@@ -2629,6 +2629,7 @@ export enum ProvidesOperator {
   Gte = 'GTE',
   In = 'IN',
   Lte = 'LTE',
+  Matches = 'MATCHES',
   NotEquals = 'NOT_EQUALS',
   NotIn = 'NOT_IN'
 }
@@ -2659,6 +2660,8 @@ export type Query = {
   bloks: Array<Blok>;
   /** Materialize the latest state for a specific agent */
   checkout: StateWithValue;
+  /** Materialize the latest states for a specific agent */
+  checkoutAgent: Array<StateWithValue>;
   /** List all registered clients. */
   clients: Array<Client>;
   /** Get dashboard by ID. */
@@ -2847,6 +2850,15 @@ export type QueryCheckoutArgs = {
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
   state: Scalars['ID']['input'];
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type QueryCheckoutAgentArgs = {
+  agent: Scalars['ID']['input'];
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 
@@ -3244,6 +3256,7 @@ export enum RequiresOperator {
   Gte = 'GTE',
   In = 'IN',
   Lte = 'LTE',
+  Matches = 'MATCHES',
   NotEquals = 'NOT_EQUALS',
   NotIn = 'NOT_IN'
 }
@@ -3816,6 +3829,7 @@ export type StateWithValue = {
   definition: StateDefinition;
   globalRevision?: Maybe<Scalars['Int']['output']>;
   localRevision?: Maybe<Scalars['Int']['output']>;
+  stateId: Scalars['ID']['output'];
   value: Scalars['JSON']['output'];
 };
 
@@ -5211,10 +5225,22 @@ export type GetStateForQuery = { __typename?: 'Query', stateFor: { __typename?: 
 export type CheckoutQueryVariables = Exact<{
   state: Scalars['ID']['input'];
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateWithValue', value: any, globalRevision?: number | null, localRevision?: number | null } };
+export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateWithValue', stateId: string, value: any, globalRevision?: number | null, localRevision?: number | null } };
+
+export type CheckoutAgentQueryVariables = Exact<{
+  agent: Scalars['ID']['input'];
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: Array<{ __typename?: 'StateWithValue', stateId: string, value: any, globalRevision?: number | null, localRevision?: number | null }> };
 
 export type GetStructureQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7458,8 +7484,29 @@ export const GetStateForDocument = gql`
 }
     ${StateFragmentDoc}`;
 export const CheckoutDocument = gql`
-    query Checkout($state: ID!, $globalRevision: Int) {
-  checkout(state: $state, globalRevision: $globalRevision) {
+    query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID) {
+  checkout(
+    state: $state
+    globalRevision: $globalRevision
+    timestamp: $timestamp
+    sessionId: $sessionId
+  ) {
+    stateId
+    value
+    globalRevision
+    localRevision
+  }
+}
+    `;
+export const CheckoutAgentDocument = gql`
+    query CheckoutAgent($agent: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID) {
+  checkoutAgent(
+    agent: $agent
+    globalRevision: $globalRevision
+    timestamp: $timestamp
+    sessionId: $sessionId
+  ) {
+    stateId
     value
     globalRevision
     localRevision
@@ -7852,6 +7899,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     Checkout(variables: CheckoutQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CheckoutQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CheckoutQuery>({ document: CheckoutDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Checkout', 'query', variables);
+    },
+    CheckoutAgent(variables: CheckoutAgentQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CheckoutAgentQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CheckoutAgentQuery>({ document: CheckoutAgentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CheckoutAgent', 'query', variables);
     },
     GetStructure(variables: GetStructureQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStructureQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetStructureQuery>({ document: GetStructureDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStructure', 'query', variables);

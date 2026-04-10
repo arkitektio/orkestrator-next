@@ -2630,6 +2630,7 @@ export enum ProvidesOperator {
   Gte = 'GTE',
   In = 'IN',
   Lte = 'LTE',
+  Matches = 'MATCHES',
   NotEquals = 'NOT_EQUALS',
   NotIn = 'NOT_IN'
 }
@@ -2660,6 +2661,8 @@ export type Query = {
   bloks: Array<Blok>;
   /** Materialize the latest state for a specific agent */
   checkout: StateWithValue;
+  /** Materialize the latest states for a specific agent */
+  checkoutAgent: Array<StateWithValue>;
   /** List all registered clients. */
   clients: Array<Client>;
   /** Get dashboard by ID. */
@@ -2848,6 +2851,15 @@ export type QueryCheckoutArgs = {
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
   state: Scalars['ID']['input'];
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type QueryCheckoutAgentArgs = {
+  agent: Scalars['ID']['input'];
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 
@@ -3245,6 +3257,7 @@ export enum RequiresOperator {
   Gte = 'GTE',
   In = 'IN',
   Lte = 'LTE',
+  Matches = 'MATCHES',
   NotEquals = 'NOT_EQUALS',
   NotIn = 'NOT_IN'
 }
@@ -3817,6 +3830,7 @@ export type StateWithValue = {
   definition: StateDefinition;
   globalRevision?: Maybe<Scalars['Int']['output']>;
   localRevision?: Maybe<Scalars['Int']['output']>;
+  stateId: Scalars['ID']['output'];
   value: Scalars['JSON']['output'];
 };
 
@@ -5212,10 +5226,22 @@ export type GetStateForQuery = { __typename?: 'Query', stateFor: { __typename?: 
 export type CheckoutQueryVariables = Exact<{
   state: Scalars['ID']['input'];
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateWithValue', value: any, globalRevision?: number | null, localRevision?: number | null } };
+export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateWithValue', stateId: string, value: any, globalRevision?: number | null, localRevision?: number | null } };
+
+export type CheckoutAgentQueryVariables = Exact<{
+  agent: Scalars['ID']['input'];
+  globalRevision?: InputMaybe<Scalars['Int']['input']>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  sessionId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: Array<{ __typename?: 'StateWithValue', stateId: string, value: any, globalRevision?: number | null, localRevision?: number | null }> };
 
 export type GetStructureQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -9808,8 +9834,14 @@ export type GetStateForQueryHookResult = ReturnType<typeof useGetStateForQuery>;
 export type GetStateForLazyQueryHookResult = ReturnType<typeof useGetStateForLazyQuery>;
 export type GetStateForQueryResult = Apollo.QueryResult<GetStateForQuery, GetStateForQueryVariables>;
 export const CheckoutDocument = gql`
-    query Checkout($state: ID!, $globalRevision: Int) {
-  checkout(state: $state, globalRevision: $globalRevision) {
+    query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID) {
+  checkout(
+    state: $state
+    globalRevision: $globalRevision
+    timestamp: $timestamp
+    sessionId: $sessionId
+  ) {
+    stateId
     value
     globalRevision
     localRevision
@@ -9831,6 +9863,8 @@ export const CheckoutDocument = gql`
  *   variables: {
  *      state: // value for 'state'
  *      globalRevision: // value for 'globalRevision'
+ *      timestamp: // value for 'timestamp'
+ *      sessionId: // value for 'sessionId'
  *   },
  * });
  */
@@ -9845,6 +9879,52 @@ export function useCheckoutLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type CheckoutQueryHookResult = ReturnType<typeof useCheckoutQuery>;
 export type CheckoutLazyQueryHookResult = ReturnType<typeof useCheckoutLazyQuery>;
 export type CheckoutQueryResult = Apollo.QueryResult<CheckoutQuery, CheckoutQueryVariables>;
+export const CheckoutAgentDocument = gql`
+    query CheckoutAgent($agent: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID) {
+  checkoutAgent(
+    agent: $agent
+    globalRevision: $globalRevision
+    timestamp: $timestamp
+    sessionId: $sessionId
+  ) {
+    stateId
+    value
+    globalRevision
+    localRevision
+  }
+}
+    `;
+
+/**
+ * __useCheckoutAgentQuery__
+ *
+ * To run a query within a React component, call `useCheckoutAgentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCheckoutAgentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCheckoutAgentQuery({
+ *   variables: {
+ *      agent: // value for 'agent'
+ *      globalRevision: // value for 'globalRevision'
+ *      timestamp: // value for 'timestamp'
+ *      sessionId: // value for 'sessionId'
+ *   },
+ * });
+ */
+export function useCheckoutAgentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<CheckoutAgentQuery, CheckoutAgentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<CheckoutAgentQuery, CheckoutAgentQueryVariables>(CheckoutAgentDocument, options);
+      }
+export function useCheckoutAgentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<CheckoutAgentQuery, CheckoutAgentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<CheckoutAgentQuery, CheckoutAgentQueryVariables>(CheckoutAgentDocument, options);
+        }
+export type CheckoutAgentQueryHookResult = ReturnType<typeof useCheckoutAgentQuery>;
+export type CheckoutAgentLazyQueryHookResult = ReturnType<typeof useCheckoutAgentLazyQuery>;
+export type CheckoutAgentQueryResult = Apollo.QueryResult<CheckoutAgentQuery, CheckoutAgentQueryVariables>;
 export const GetStructureDocument = gql`
     query GetStructure($id: ID!) {
   structure(id: $id) {

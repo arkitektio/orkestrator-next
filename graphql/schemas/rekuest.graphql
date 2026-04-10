@@ -2318,6 +2318,7 @@ enum ProvidesOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
@@ -2359,7 +2360,10 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!): StateWithValue!
+  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateWithValue!
+
+  """Materialize the latest states for a specific agent"""
+  checkoutAgent(agent: ID!, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): [StateWithValue!]!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2600,6 +2604,7 @@ enum RequiresOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
@@ -2683,7 +2688,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "25115aa6-4d02-4704-b472-052f308b0850"
+  reference: String = "5303b09f-4735-490b-b888-70cfd146c242"
   title: String = null
 }
 
@@ -3172,6 +3177,7 @@ type StateWithValue {
   definition: StateDefinition!
   globalRevision: Int
   localRevision: Int
+  stateId: ID!
   value: JSON!
 }
 

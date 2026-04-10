@@ -22,7 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import './hero.css';
+import "./hero.css";
 // ── DockView panel component ──
 
 const WidgetPanel = (
@@ -380,7 +380,7 @@ export const Home = () => {
             components={components}
             defaultTabComponent={WidgetTab}
             onReady={onReady}
-            className="h-full w-full"
+            className="dockview-theme-home h-full w-full"
           />
         </div>
       </div>

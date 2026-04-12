@@ -29,14 +29,22 @@ const getStatusBadge = (kind: AssignationEventKind | undefined | string) => {
 const AgentStateValueDisplay = ({
   state,
   value,
+  revision,
+
 }: {
   state: StateFragment;
   value: Record<string, unknown>;
+  revision: string | undefined;
 }) => {
   const { registry } = useWidgetRegistry();
 
   return (
     <Card className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
+      {revision && (
+        <div className="text-xs text-muted-foreground">
+          Revision: <span className="font-mono">{revision}</span>
+        </div>
+      )}
       {state.definition.ports.map((port, index) => {
         const Widget = registry.getReturnWidgetForPort(port);
 
@@ -48,6 +56,7 @@ const AgentStateValueDisplay = ({
               value={value?.[port.key] as never}
               port={port}
               widget={port.widget}
+              revision={revision}
             />
           </div>
         );
@@ -70,6 +79,7 @@ const AgentCheckoutPanel = ({
     }
   })
 
+  const { registry } = useWidgetRegistry();
   const timepoint = useSpaceViewStore((s) => s.selectedTimepoint);
 
 
@@ -99,16 +109,30 @@ const AgentCheckoutPanel = ({
         <div className="grid gap-4">
           {data?.agent?.states.map((state) =>{
 
-            const value = useMemo(() => {
-              if (!revData || revData.checkoutAgent.agentId !== agentId) return undefined;
-              return revData.checkoutAgent.values[state.interface];
-            }, [revData, state.id, agentId]);
-
+            const value =  revData?.checkoutAgent.values[state.interface];
+            console.log("Rendering state:", state.definition.name, "with value:", value);
 
 
             return <div key={state.id} className="space-y-2 rounded-lg border p-4">
               <h3 className="text-sm font-semibold">{state.definition.name}</h3>
-              <AgentStateValueDisplay state={state} value={value ?? {}} />
+              <Card className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
+                  {state.definition.ports.map((port, index) => {
+                    const Widget = registry.getReturnWidgetForPort(port);
+
+                    return (
+                      <div className="flex flex-col gap-2" key={index}>
+                        <label className="text-xs text-muted-foreground">{port.key}</label>
+                        <Widget
+                          key={index}
+                          value={value?.[port.key] as never}
+                          port={port}
+                          widget={port.widget}
+                          options={{minimal: true}}
+                        />
+                      </div>
+                    );
+                  })}
+                </Card>
             </div>
 })}
         </div>

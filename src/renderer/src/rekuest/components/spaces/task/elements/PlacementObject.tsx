@@ -36,19 +36,17 @@ export const PlacementObject = ({
 }) => {
   const groupRef = React.useRef<Group>(null!);
   const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
-  const selectedPlacementId = useSpaceViewStore((s) => s.selectedPlacementId);
-  const activeAgentIds = useSpaceViewStore((s) => s.activeAgentIds);
-  const rootAgentId = useSpaceViewStore((s) => s.rootAgentId);
-
-  const isSelected = selectedPlacementId === placement.id;
-  const isRoot = placement.isRoot === true || placement.agentId === rootAgentId;
-  const isActive = activeAgentIds.has(placement.agentId);
+  const isSelected = useSpaceViewStore((s) => s.selectedPlacementId === placement.id);
+  const isActive = useSpaceViewStore((s) => s.activeAgentIds.has(placement.agentId));
+  const isRoot = useSpaceViewStore(
+    (s) => placement.isRoot === true || placement.agentId === s.rootAgentId,
+  );
 
   const hullConfig = useMemo(() => {
-    if (isRoot) return { enabled: true, color: HULL_COLOR_ROOT, thickness: 1.06, opacity: 0.28 };
-    if (isSelected) return { enabled: true, color: HULL_COLOR_SELECTED, thickness: 1.05, opacity: 0.25 };
-    if (isActive) return { enabled: true, color: HULL_COLOR_ACTIVE, thickness: 1.03, opacity: 0.22 };
-    return { enabled: false, color: HULL_COLOR_ACTIVE, thickness: 1.03, opacity: 0.22 };
+    if (isRoot) return { enabled: true, color: HULL_COLOR_ROOT, thickness: 1.10, opacity: 0.8 };
+    if (isSelected) return { enabled: true, color: HULL_COLOR_SELECTED, thickness: 1.10, opacity: 0.8 };
+    if (isActive) return { enabled: true, color: HULL_COLOR_ACTIVE,  thickness: 1.10, opacity: 0.8 };
+    return { enabled: false, color: HULL_COLOR_ACTIVE, thickness: 1.10, opacity: 0.8 };
   }, [isRoot, isSelected, isActive]);
 
   useEffect(() => {

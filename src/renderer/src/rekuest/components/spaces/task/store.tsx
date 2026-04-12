@@ -222,26 +222,46 @@ function buildTimeline(children: PostmanAssignationFragment[]): {
   return { groups, events: [], startTime: min, endTime: max };
 }
 
-// ── active agents ────────────────────────────────────────────────────
+// ── active-at-timepoint ──────────────────────────────────────────────
 
-function computeActiveAgentIds(
-  agentToAssignationIds: Map<string, string[]>,
+function computeActiveAtTimepoint(
+  timepoint: number,
   children: PostmanAssignationFragment[],
-): Set<string> {
-  const childMap = new Map(children.map((c) => [c.id, c]));
-  const active = new Set<string>();
+  agentToAssignationIds: Map<string, string[]>,
+): {
+  assignationIds: Set<string>;
+  agentIds: Set<string>;
+  implementationIds: Set<string>;
+} {
+  const assignationIds = new Set<string>();
+  const implementationIds = new Set<string>();
 
-  for (const [agentId, assignationIds] of agentToAssignationIds) {
-    for (const aId of assignationIds) {
-      const child = childMap.get(aId);
-      if (child && !child.isDone) {
-        active.add(agentId);
+  for (const child of children) {
+    const start = new Date(child.createdAt).getTime();
+    const end = child.finishedAt
+      ? new Date(child.finishedAt).getTime()
+      : Date.now();
+
+      console.log(`Checking assignation ${child.id} with time range[${start}, ${end}] against timepoint ${timepoint}`);
+    if (timepoint >= start && timepoint <= end) {
+      assignationIds.add(child.id);
+      if (child.implementation?.id) {
+        implementationIds.add(child.implementation.id);
+      }
+    }
+  }
+
+  const agentIds = new Set<string>();
+  for (const [agentId, aIds] of agentToAssignationIds) {
+    for (const aId of aIds) {
+      if (assignationIds.has(aId)) {
+        agentIds.add(agentId);
         break;
       }
     }
   }
 
-  return active;
+  return { assignationIds, agentIds, implementationIds };
 }
 
 // ── store interface ──────────────────────────────────────────────────
@@ -256,8 +276,10 @@ interface SpaceViewState {
   // Root agent
   rootAgentId: string | null;
 
-  // Active agents (currently have non-done assignations)
+  // Active at selected timepoint
+  activeAssignationIds: Set<string>;
   activeAgentIds: Set<string>;
+  activeImplementationIds: Set<string>;
 
   // Timeline
   timelineGroups: TimelineDependencyGroup[];
@@ -300,8 +322,8 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
   const spaceGroups = buildSpaceGroups(task.resolvedDependencies, rootAgent);
   const allPlacements = spaceGroups.flatMap((g) => g.placements);
   const agentToAssignationIds = buildAgentToAssignationMap(task.resolvedDependencies, children);
-  const activeAgentIds = computeActiveAgentIds(agentToAssignationIds, children);
   const { groups, startTime, endTime } = buildTimeline(children);
+  const initialActive = computeActiveAtTimepoint(startTime, children, agentToAssignationIds);
 
   const parentEvents: TimelineEvent[] = (task.events || []).map((e) => ({
     kind: e.kind,
@@ -315,7 +337,9 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
     spaceGroups,
     allPlacements,
     rootAgentId,
-    activeAgentIds,
+    activeAssignationIds: initialActive.assignationIds,
+    activeAgentIds: initialActive.agentIds,
+    activeImplementationIds: initialActive.implementationIds,
     timelineGroups: groups,
     timelineEvents: parentEvents,
     timelineStartTime: startTime,
@@ -353,7 +377,18 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
 
     selectDependency: (id) => set({ selectedDependencyId: id }),
 
-    selectTimepoint: (timestamp) => set({ selectedTimepoint: timestamp }),
+    selectTimepoint: (timestamp) => {
+      const { task: currentTask, agentToAssignationIds: currentMap } = get();
+      const currentChildren = (currentTask.children || []).filter(notEmpty);
+      const active = computeActiveAtTimepoint(timestamp, currentChildren, currentMap);
+      set({
+        selectedTimepoint: timestamp,
+        activeAssignationIds: active.assignationIds,
+        activeAgentIds: active.agentIds,
+        activeImplementationIds: active.implementationIds,
+        highlightedAssignationIds: [...active.assignationIds],
+      });
+    },
 
     setHighlightedAssignationIds: (ids) => set({ highlightedAssignationIds: ids }),
 
@@ -366,7 +401,7 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
       const updatedSpaceGroups = buildSpaceGroups(updatedTask.resolvedDependencies, updatedRootAgent);
       const updatedAllPlacements = updatedSpaceGroups.flatMap((g) => g.placements);
       const updatedAgentMap = buildAgentToAssignationMap(updatedTask.resolvedDependencies, updatedChildren);
-      const updatedActiveAgentIds = computeActiveAgentIds(updatedAgentMap, updatedChildren);
+      const updatedActive = computeActiveAtTimepoint(get().selectedTimepoint, updatedChildren, updatedAgentMap);
       const { groups: tGroups, startTime: sT, endTime: eT } = buildTimeline(updatedChildren);
       const updatedParentEvents: TimelineEvent[] = (updatedTask.events || []).map((e) => ({
         kind: e.kind,
@@ -378,7 +413,10 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
       set({
         task: updatedTask,
         rootAgentId: updatedRootAgentId,
-        activeAgentIds: updatedActiveAgentIds,
+        activeAssignationIds: updatedActive.assignationIds,
+        activeAgentIds: updatedActive.agentIds,
+        activeImplementationIds: updatedActive.implementationIds,
+        highlightedAssignationIds: [...updatedActive.assignationIds],
         spaceGroups: updatedSpaceGroups,
         allPlacements: updatedAllPlacements,
         agentToAssignationIds: updatedAgentMap,

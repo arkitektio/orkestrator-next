@@ -6,7 +6,9 @@ import {
   BounceMutation,
   BounceMutationVariables,
   DeleteAgentDocument,
+  DeletePlacementDocument,
   DeleteShortcutDocument,
+  DeleteSpaceDocument,
   KickDocument,
   KickMutation,
   KickMutationVariables,
@@ -34,6 +36,23 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     typename: 'Shortcut',
     mutation: DeleteShortcutDocument
   }),
+   'rekuest-delete-space': buildDeleteAction({
+    title: 'Delete Space',
+    identifier: '@rekuest/space',
+    description: 'Delete the space',
+    service: 'rekuest',
+    typename: 'Space',
+    mutation: DeleteSpaceDocument
+  }),
+  'rekuest-delete-placement': buildDeleteAction({
+    title: 'Delete Placement',
+    identifier: '@rekuest/placement',
+    description: 'Delete the placement',
+    service: 'rekuest',
+    typename: 'Placement',
+    mutation: DeletePlacementDocument // You would need to implement this mutation in your GraphQL API
+  }),
+
   'rekuest-bounce-agent': {
     title: 'Bounce Agent',
     conditions: [

@@ -4,6 +4,15 @@ mutation CreateSpace($input: CreateSpaceInput!) {
   }
 }
 
+mutation UpdateSpace($input: UpdateSpaceInput!) {
+  updateSpace(input: $input) {
+    ...Space
+  }
+}
+mutation DeleteSpace($id: ID!) {
+  deleteSpace(input: { id: $id })
+}
+
 
 mutation CreatePlacement($input: CreatePlacementInput!) {
   createPlacement(input: $input) {
@@ -30,3 +39,7 @@ mutation UpdatePlacement( $input: UpdatePlacementInput!) {
   }
 }
 
+
+mutation DeletePlacement($id: ID!) {
+  deletePlacement(input: { id: $id })
+}

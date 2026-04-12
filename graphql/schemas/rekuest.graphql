@@ -2688,7 +2688,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "76e49c42-d59c-471c-a955-84f15df5c857"
+  reference: String = "e04a36fe-e730-4987-bb78-1bba94cc5c16"
   title: String = null
 }
 

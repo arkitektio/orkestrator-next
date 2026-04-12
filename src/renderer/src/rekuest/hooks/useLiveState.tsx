@@ -138,14 +138,9 @@ export const useAgentStates = ({
         if (!event) return;
 
 
-        if (event.__typename === "StateSnapshotEvent") {
-          // Snapshot replaces one state entry in the map
-          const nextMap = {
-            ...(valueRef.current ?? {}),
-            [event.stateId]: event.value,
-          };
-          valueRef.current = nextMap;
-          setLiveValue(nextMap);
+        if (event.__typename === "AgentSnapshotEvent") {
+          valueRef.current = event.values;
+          setLiveValue(valueRef.current);
           setRevision(event.globalRevision);
         } else if (event.__typename === "StatePatchEvent") {
           // Apply JSON patch to one state entry in the map

@@ -133,6 +133,11 @@ export const ShadnWigets = () => {
       DelegatingStructureWidget,
     );
 
+    const mstructureReturn = registry.registerReturnWidgetFallback(
+      PortKind.MemoryStructure,
+      MemoryStructureWidget,
+    );
+
     return () => {
       int();
       list();
@@ -159,6 +164,7 @@ export const ShadnWigets = () => {
       enumReturn();
       unionReturn();
       structureReturn();
+      mstructureReturn();
     };
   }, []);
 

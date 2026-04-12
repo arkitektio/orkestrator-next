@@ -468,6 +468,17 @@ input AgentOrder {
   lastSeen: Ordering
 }
 
+"""A plain snapshot of a state's current value."""
+type AgentSnapshotEvent {
+  agentId: ID!
+  globalRevision: Int!
+  sessionId: String!
+  timestamp: DateTime!
+  values: Args!
+}
+
+union AgentSnapshotEventStatePatchEvent = AgentSnapshotEvent | StatePatchEvent
+
 type AgentWithValues {
   """The ID of the agent this state belongs to"""
   agentId: ID!
@@ -2424,6 +2435,9 @@ type Query {
   """List of UI Blok."""
   materializedBloks: [MaterializedBlok!]!
 
+  """Fetch a memory drawer by ID."""
+  memoryDrawer(id: ID!): MemoryDrawer!
+
   """All memory drawers."""
   memoryDrawers(filters: MemoryDrawerFilter, pagination: OffsetPaginationInput): [MemoryDrawer!]!
 
@@ -2702,7 +2716,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "0e826e43-0613-4437-ac5b-a7ec73c7d47d"
+  reference: String = "50063c3e-0820-4938-a3e8-53bc762f09e0"
   title: String = null
 }
 
@@ -3166,6 +3180,7 @@ type StateMapping {
 type StatePatchEvent {
   agentId: ID!
   globalRevision: Int!
+  interface: String!
   op: String!
   path: String!
   sessionId: String!
@@ -3325,7 +3340,7 @@ type Subscription {
   stateUpdateEvents(stateId: ID!): State!
 
   """Watch an agent: yields snapshots for all states then streams patches."""
-  watchAgent(agentId: ID!): StateSnapshotEventStatePatchEvent!
+  watchAgent(agentId: ID!): AgentSnapshotEventStatePatchEvent!
 
   """Watch a state: yields the current snapshot then streams patches."""
   watchState(agentId: ID = null, interface: String = null, stateId: ID = null): StateSnapshotEventStatePatchEvent!

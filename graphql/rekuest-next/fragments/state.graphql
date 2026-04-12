@@ -32,6 +32,7 @@ fragment StatePatchEvent on StatePatchEvent {
   globalRevision
   sessionId
   timestamp
+  interface
 }
 
 fragment StateSnapshotEvent on StateSnapshotEvent {
@@ -39,6 +40,13 @@ fragment StateSnapshotEvent on StateSnapshotEvent {
   agentId
   interface
   value
+  globalRevision
+  sessionId
+  timestamp
+}
+fragment AgentSnapshotEvent on AgentSnapshotEvent {
+  agentId
+  values
   globalRevision
   sessionId
   timestamp

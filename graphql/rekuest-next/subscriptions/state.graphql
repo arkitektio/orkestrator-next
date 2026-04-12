@@ -16,6 +16,6 @@ subscription  WatchState($stateID: ID, $agentID: ID, $interface: String) {
 subscription WatchAgent($agentID: ID!) {
   watchAgent( agentId: $agentID) {
     ...StatePatchEvent
-    ...StateSnapshotEvent
+    ...AgentSnapshotEvent
   }
 }

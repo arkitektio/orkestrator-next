@@ -533,6 +533,18 @@ export type AgentOrder = {
   lastSeen?: InputMaybe<Ordering>;
 };
 
+/** A plain snapshot of a state's current value. */
+export type AgentSnapshotEvent = {
+  __typename?: 'AgentSnapshotEvent';
+  agentId: Scalars['ID']['output'];
+  globalRevision: Scalars['Int']['output'];
+  sessionId: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
+  values: Scalars['Args']['output'];
+};
+
+export type AgentSnapshotEventStatePatchEvent = AgentSnapshotEvent | StatePatchEvent;
+
 export type AgentWithValues = {
   __typename?: 'AgentWithValues';
   /** The ID of the agent this state belongs to */
@@ -2704,6 +2716,8 @@ export type Query = {
   materializedBlok: MaterializedBlok;
   /** List of UI Blok. */
   materializedBloks: Array<MaterializedBlok>;
+  /** Fetch a memory drawer by ID. */
+  memoryDrawer: MemoryDrawer;
   /** All memory drawers. */
   memoryDrawers: Array<MemoryDrawer>;
   /** Fetch a memory shelve by ID. */
@@ -2950,6 +2964,11 @@ export type QueryInterfacesArgs = {
 
 
 export type QueryMaterializedBlokArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMemoryDrawerArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -3816,6 +3835,7 @@ export type StatePatchEvent = {
   __typename?: 'StatePatchEvent';
   agentId: Scalars['ID']['output'];
   globalRevision: Scalars['Int']['output'];
+  interface: Scalars['String']['output'];
   op: Scalars['String']['output'];
   path: Scalars['String']['output'];
   sessionId: Scalars['String']['output'];
@@ -3994,7 +4014,7 @@ export type Subscription = {
   /** Subscribe to updates of state values and patches. */
   stateUpdateEvents: State;
   /** Watch an agent: yields snapshots for all states then streams patches. */
-  watchAgent: StateSnapshotEventStatePatchEvent;
+  watchAgent: AgentSnapshotEventStatePatchEvent;
   /** Watch a state: yields the current snapshot then streams patches. */
   watchState: StateSnapshotEventStatePatchEvent;
 };
@@ -4575,9 +4595,11 @@ export type StateEventFragment = { __typename?: 'State', id: string, updatedAt: 
 
 export type PatchFragment = { __typename?: 'Patch', id: string, op: string, path: string, value: any };
 
-export type StatePatchEventFragment = { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any };
+export type StatePatchEventFragment = { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any, interface: string };
 
 export type StateSnapshotEventFragment = { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any };
+
+export type AgentSnapshotEventFragment = { __typename?: 'AgentSnapshotEvent', agentId: string, values: any, globalRevision: number, sessionId: string, timestamp: any };
 
 export type ListOutputStructureUsageFragment = { __typename?: 'OutputStructureUsage', id: string, portKey: string, action: { __typename?: 'Action', id: string, name: string, description?: string | null } };
 
@@ -5034,6 +5056,13 @@ export type SearchMemoryDrawerQueryVariables = Exact<{
 
 export type SearchMemoryDrawerQuery = { __typename?: 'Query', options: Array<{ __typename?: 'MemoryDrawer', label: string, value: string }> };
 
+export type GetMemoryDrawerQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetMemoryDrawerQuery = { __typename?: 'Query', memoryDrawer: { __typename?: 'MemoryDrawer', id: string, label: string, identifier: string } };
+
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   noActions: Scalars['Boolean']['input'];
@@ -5385,14 +5414,14 @@ export type WatchStateSubscriptionVariables = Exact<{
 }>;
 
 
-export type WatchStateSubscription = { __typename?: 'Subscription', watchState: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
+export type WatchStateSubscription = { __typename?: 'Subscription', watchState: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any, interface: string } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
 
 export type WatchAgentSubscriptionVariables = Exact<{
   agentID: Scalars['ID']['input'];
 }>;
 
 
-export type WatchAgentSubscription = { __typename?: 'Subscription', watchAgent: { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StateSnapshotEvent', stateId: string, agentId: string, interface: string, value: any, globalRevision: number, sessionId: string, timestamp: any } };
+export type WatchAgentSubscription = { __typename?: 'Subscription', watchAgent: { __typename?: 'AgentSnapshotEvent', agentId: string, values: any, globalRevision: number, sessionId: string, timestamp: any } | { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any, interface: string } };
 
 export type WatchImplementationSubscriptionVariables = Exact<{
   implementation: Scalars['ID']['input'];
@@ -6752,6 +6781,7 @@ export const StatePatchEventFragmentDoc = gql`
   globalRevision
   sessionId
   timestamp
+  interface
 }
     `;
 export const StateSnapshotEventFragmentDoc = gql`
@@ -6760,6 +6790,15 @@ export const StateSnapshotEventFragmentDoc = gql`
   agentId
   interface
   value
+  globalRevision
+  sessionId
+  timestamp
+}
+    `;
+export const AgentSnapshotEventFragmentDoc = gql`
+    fragment AgentSnapshotEvent on AgentSnapshotEvent {
+  agentId
+  values
   globalRevision
   sessionId
   timestamp
@@ -7329,6 +7368,15 @@ export const SearchMemoryDrawerDocument = gql`
   }
 }
     `;
+export const GetMemoryDrawerDocument = gql`
+    query GetMemoryDrawer($id: ID!) {
+  memoryDrawer(id: $id) {
+    id
+    label
+    identifier
+  }
+}
+    `;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $noActions: Boolean!, $pagination: OffsetPaginationInput) {
   actions: actions(filters: {search: $search}, pagination: $pagination) @skip(if: $noActions) {
@@ -7706,11 +7754,11 @@ export const WatchAgentDocument = gql`
     subscription WatchAgent($agentID: ID!) {
   watchAgent(agentId: $agentID) {
     ...StatePatchEvent
-    ...StateSnapshotEvent
+    ...AgentSnapshotEvent
   }
 }
     ${StatePatchEventFragmentDoc}
-${StateSnapshotEventFragmentDoc}`;
+${AgentSnapshotEventFragmentDoc}`;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {
@@ -7912,6 +7960,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     SearchMemoryDrawer(variables?: SearchMemoryDrawerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SearchMemoryDrawerQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SearchMemoryDrawerQuery>({ document: SearchMemoryDrawerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SearchMemoryDrawer', 'query', variables);
+    },
+    GetMemoryDrawer(variables: GetMemoryDrawerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetMemoryDrawerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetMemoryDrawerQuery>({ document: GetMemoryDrawerDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetMemoryDrawer', 'query', variables);
     },
     GlobalSearch(variables: GlobalSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GlobalSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GlobalSearchQuery>({ document: GlobalSearchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GlobalSearch', 'query', variables);

@@ -6,7 +6,10 @@ import { SpaceGroupPlacement } from "../types";
 import * as THREE from "three";
 import { Card } from "@/components/ui/card";
 import { RekuestAgent } from "@/linkers";
-import { AssignationEventKind } from "@/rekuest/api/graphql";
+import { AssignationEventKind, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { AsyncBoundary } from "@/components/boundaries/AsyncBoundary";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const getStatusBadge = (kind: AssignationEventKind | undefined | string) => {
   switch (kind) {
@@ -23,44 +26,123 @@ const getStatusBadge = (kind: AssignationEventKind | undefined | string) => {
   }
 };
 
+const AgentStateValueDisplay = ({
+  state,
+  value,
+}: {
+  state: StateFragment;
+  value: Record<string, unknown>;
+}) => {
+  const { registry } = useWidgetRegistry();
+
+  return (
+    <Card className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
+      {state.definition.ports.map((port, index) => {
+        const Widget = registry.getReturnWidgetForPort(port);
+
+        return (
+          <div className="flex flex-col gap-2" key={index}>
+            <label className="text-xs text-muted-foreground">{port.key}</label>
+            <Widget
+              key={index}
+              value={value?.[port.key] as never}
+              port={port}
+              widget={port.widget}
+            />
+          </div>
+        );
+      })}
+    </Card>
+  );
+};
+
+
+
+const AgentCheckoutPanel = ({
+  agentId,
+}: {
+  agentId: string;
+}) => {
+
+  const { data} = useAgentQuery({
+    variables: {
+      id: agentId,
+    }
+  })
+
+  const timepoint = useSpaceViewStore((s) => s.selectedTimepoint);
+
+
+  const debouncedTimepoint = useDebounce(timepoint, 200);
+
+
+  const { data: revData, error, loading } = useCheckoutAgentQuery({
+    variables: {
+      agent: agentId,
+      timestamp: debouncedTimepoint ? new Date(debouncedTimepoint).toISOString() : undefined,
+    },
+  });
+
+
+  return (
+    <AsyncBoundary>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>Revision</span>
+            <span className="font-mono">
+              {revData?.checkoutAgent.globalRevision}
+            </span>
+            {loading && <span className="text-yellow-500">loading…</span>}
+          </div>
+        </div>
+        <div className="grid gap-4">
+          {data?.agent?.states.map((state) =>{
+
+            const value = useMemo(() => {
+              if (!revData || revData.checkoutAgent.agentId !== agentId) return undefined;
+              return revData.checkoutAgent.values[state.interface];
+            }, [revData, state.id, agentId]);
+
+
+
+            return <div key={state.id} className="space-y-2 rounded-lg border p-4">
+              <h3 className="text-sm font-semibold">{state.definition.name}</h3>
+              <AgentStateValueDisplay state={state} value={value ?? {}} />
+            </div>
+})}
+        </div>
+      </div>
+    </AsyncBoundary>
+
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const AgentPanel = ({ placements }: { placements: SpaceGroupPlacement[] }) => {
+
+
   const selectedId = useSpaceViewStore((s) => s.selectedPlacementId);
   const vpMatrix = useSpaceViewStore((s) => s.viewProjectionMatrix);
   const vpSize = useSpaceViewStore((s) => s.viewportSize);
   const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
-  const selectedTimepoint = useSpaceViewStore((s) => s.selectedTimepoint);
-  const task = useSpaceViewStore((s) => s.task);
-  const agentToAssignationIds = useSpaceViewStore((s) => s.agentToAssignationIds);
 
   const selected = placements.find((p) => p.id === selectedId);
 
-  // checkout agent state at selected timepoint
-  const agentStateAtTimepoint = useMemo(() => {
-    if (!selected) return null;
-    const assignationIds = agentToAssignationIds.get(selected.agentId) ?? [];
-    const children = (task.children ?? []).filter(
-      (c) => c && assignationIds.includes(c.id),
-    );
 
-    return children.map((child) => {
-      if (!child) return null;
-      // find latest event at or before timepoint
-      const events = (child.events ?? [])
-        .filter((e) => new Date(e.createdAt).getTime() <= selectedTimepoint)
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-      const latestEvent = events[0] ?? null;
-
-      return {
-        id: child.id,
-        name: child.action?.name ?? child.id,
-        latestEventKind: latestEvent?.kind ?? child.latestEventKind,
-        message: latestEvent?.message ?? null,
-      };
-    }).filter(Boolean);
-  }, [selected, selectedTimepoint, task, agentToAssignationIds]);
 
   const screenPos = useMemo(() => {
     if (!selected || !vpMatrix || !vpSize) return null;
@@ -112,26 +194,10 @@ export const AgentPanel = ({ placements }: { placements: SpaceGroupPlacement[] }
         </button>
       </div>
 
-      {/* state at timepoint */}
-      {agentStateAtTimepoint && agentStateAtTimepoint.length > 0 && (
-        <div className="flex flex-col gap-1 border-t border-border/40 pt-2 mt-1">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            State @ {new Date(selectedTimepoint).toLocaleTimeString()}
-          </div>
-          {agentStateAtTimepoint.map((s) => {
-            if (!s) return null;
-            const badge = getStatusBadge(s.latestEventKind);
-            return (
-              <div key={s.id} className="flex items-center gap-2 text-xs">
-                <span className={`rounded px-1 py-0.5 text-[10px] ${badge.cls}`}>
-                  {badge.label}
-                </span>
-                <span className="truncate">{s.name}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+
+      <AgentCheckoutPanel agentId={selected.agentId} />
+
+
 
       <RekuestAgent.DetailLink
         object={{ id: selected.agentId }}

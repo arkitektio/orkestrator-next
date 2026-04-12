@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { SpaceGroup } from "../types";
 import { PlacementObject } from "./PlacementObject";
 import { useSpaceViewStore } from "../store";
@@ -6,8 +6,6 @@ import { Box3, Group, Vector3 } from "three";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { BrandColors } from "./brandColors";
-
-const RADIAL_RADIUS = 2.5;
 
 const WireframeBounds = ({ groupRef }: { groupRef: React.RefObject<Group> }) => {
   const boxRef = useRef<THREE.Mesh>(null!);
@@ -46,45 +44,13 @@ export const SpaceGroupObject = ({
   brandColors: BrandColors;
 }) => {
   const debugWireframe = useSpaceViewStore((s) => s.debugWireframe);
-  const layoutMode = useSpaceViewStore((s) => s.layoutMode);
-  const rootAgentId = useSpaceViewStore((s) => s.rootAgentId);
   const groupRef = useRef<Group>(null!);
-
-  // Compute radial positions: root at center, others equally spaced around it
-  const radialPositions = useMemo(() => {
-    if (layoutMode !== "radial") return null;
-    const map = new Map<string, [number, number, number]>();
-    const rootPlacement = group.placements.find(
-      (p) => p.isRoot || p.agentId === rootAgentId,
-    );
-    const others = group.placements.filter(
-      (p) => !p.isRoot && p.agentId !== rootAgentId,
-    );
-
-    if (rootPlacement) {
-      map.set(rootPlacement.id, [0, 0, 0]);
-    }
-
-    others.forEach((p, i) => {
-      const angle = (i / Math.max(others.length, 1)) * Math.PI * 2;
-      const x = Math.cos(angle) * RADIAL_RADIUS;
-      const z = Math.sin(angle) * RADIAL_RADIUS;
-      map.set(p.id, [x, 0, z]);
-    });
-
-    return map;
-  }, [layoutMode, group.placements, rootAgentId]);
 
   return (
     <group position={offset}>
       <group ref={groupRef}>
         {group.placements.map((p) => (
-          <PlacementObject
-            key={p.id}
-            placement={p}
-            brandColors={brandColors}
-            overridePosition={radialPositions?.get(p.id) ?? null}
-          />
+          <PlacementObject key={p.id} placement={p} brandColors={brandColors} />
         ))}
       </group>
       {debugWireframe && <WireframeBounds groupRef={groupRef} />}

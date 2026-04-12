@@ -264,6 +264,58 @@ function computeActiveAtTimepoint(
   return { assignationIds, agentIds, implementationIds };
 }
 
+// ── layout engine ────────────────────────────────────────────────────
+
+const RADIAL_RADIUS = 2.5;
+
+const IDENTITY_MATRIX: number[][] = [
+  [1, 0, 0, 0],
+  [0, 1, 0, 0],
+  [0, 0, 1, 0],
+  [0, 0, 0, 1],
+];
+
+function computeLayoutTransforms(
+  spaceGroups: SpaceGroup[],
+  layoutMode: "space" | "radial",
+  rootAgentId: string | null,
+): Map<string, number[][]> {
+  const transforms = new Map<string, number[][]>();
+
+  for (const group of spaceGroups) {
+    if (layoutMode === "space") {
+      for (const p of group.placements) {
+        transforms.set(p.id, p.affineMatrix ?? IDENTITY_MATRIX);
+      }
+    } else {
+      const rootPlacement = group.placements.find(
+        (p) => p.isRoot || p.agentId === rootAgentId,
+      );
+      const others = group.placements.filter(
+        (p) => !p.isRoot && p.agentId !== rootAgentId,
+      );
+
+      if (rootPlacement) {
+        transforms.set(rootPlacement.id, IDENTITY_MATRIX);
+      }
+
+      others.forEach((p, i) => {
+        const angle = (i / Math.max(others.length, 1)) * Math.PI * 2;
+        const x = Math.cos(angle) * RADIAL_RADIUS;
+        const z = Math.sin(angle) * RADIAL_RADIUS;
+        transforms.set(p.id, [
+          [1, 0, 0, x],
+          [0, 1, 0, 0],
+          [0, 0, 1, z],
+          [0, 0, 0, 1],
+        ]);
+      });
+    }
+  }
+
+  return transforms;
+}
+
 // ── store interface ──────────────────────────────────────────────────
 
 interface SpaceViewState {
@@ -306,6 +358,7 @@ interface SpaceViewState {
 
   // Layout
   layoutMode: "space" | "radial";
+  computedTransforms: Map<string, number[][]>;
 
   // Actions
   updateCameraData: (matrix: THREE.Matrix4, size: { width: number; height: number }) => void;
@@ -336,6 +389,9 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
     position: endTime === startTime ? 0 : (new Date(e.createdAt).getTime() - startTime) / (endTime - startTime),
   }));
 
+  const initialLayoutMode = "space" as const;
+  const initialTransforms = computeLayoutTransforms(spaceGroups, initialLayoutMode, rootAgentId);
+
   return createStore<SpaceViewState>((set, get) => ({
     task,
     spaceGroups,
@@ -361,7 +417,8 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
 
     debugWireframe: false,
 
-    layoutMode: "space" as const,
+    layoutMode: initialLayoutMode,
+    computedTransforms: initialTransforms,
 
     updateCameraData: (matrix, size) => set({ viewProjectionMatrix: matrix, viewportSize: size }),
 
@@ -400,8 +457,12 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
 
     toggleDebugWireframe: () => set((s) => ({ debugWireframe: !s.debugWireframe })),
 
-    toggleLayoutMode: () =>
-      set((s) => ({ layoutMode: s.layoutMode === "space" ? "radial" : "space" })),
+    toggleLayoutMode: () => {
+      const s = get();
+      const next = s.layoutMode === "space" ? "radial" as const : "space" as const;
+      const transforms = computeLayoutTransforms(s.spaceGroups, next, s.rootAgentId);
+      set({ layoutMode: next, computedTransforms: transforms });
+    },
 
     refreshTimeline: (updatedTask) => {
       const updatedChildren = (updatedTask.children || []).filter(notEmpty);
@@ -419,6 +480,8 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
         position: eT === sT ? 0 : (new Date(e.createdAt).getTime() - sT) / (eT - sT),
       }));
 
+      const updatedTransforms = computeLayoutTransforms(updatedSpaceGroups, get().layoutMode, updatedRootAgentId);
+
       set({
         task: updatedTask,
         rootAgentId: updatedRootAgentId,
@@ -433,6 +496,7 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
         timelineEvents: updatedParentEvents,
         timelineStartTime: sT,
         timelineEndTime: eT,
+        computedTransforms: updatedTransforms,
       });
     },
   }));

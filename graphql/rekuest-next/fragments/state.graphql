@@ -7,6 +7,7 @@ fragment State on State {
       ...ReturnPort
     }
   }
+  interface
   updatedAt
 }
 
@@ -15,7 +16,12 @@ fragment StateEvent on State {
   updatedAt
 }
 
-
+fragment Patch on Patch {
+  id
+  op
+  path
+  value
+}
 
 fragment StatePatchEvent on StatePatchEvent {
   stateId

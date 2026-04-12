@@ -7,10 +7,8 @@ import { BrandColors } from "./brandColors";
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-function extractPosition(affineMatrix: unknown): THREE.Vector3 {
-  const flat = (Array.isArray(affineMatrix)
-    ? (affineMatrix as number[][]).flat()
-    : []) as number[];
+function extractPositionFromMatrix(matrix: number[][]): THREE.Vector3 {
+  const flat = matrix.flat() as number[];
   if (flat.length < 16) return new THREE.Vector3();
   const m = new THREE.Matrix4().fromArray(flat).transpose();
   return new THREE.Vector3().setFromMatrixPosition(m);
@@ -72,15 +70,13 @@ const JunctionSphere = ({ position, color }: { position: THREE.Vector3; color: s
   </mesh>
 );
 
-const RADIAL_RADIUS = 2.5;
-
 // ── main component ───────────────────────────────────────────────────
 
 export const CallingPathTubes = ({ group, brandColors }: { group: SpaceGroup; brandColors: BrandColors }) => {
   const rootAgentId = useSpaceViewStore((s) => s.rootAgentId);
   const selectedTimepoint = useSpaceViewStore((s) => s.selectedTimepoint);
   const activeAgentIds = useSpaceViewStore((s) => s.activeAgentIds);
-  const layoutMode = useSpaceViewStore((s) => s.layoutMode);
+  const computedTransforms = useSpaceViewStore((s) => s.computedTransforms);
 
   const connections = useMemo(() => {
     const rootPlacement = group.placements.find(
@@ -88,40 +84,25 @@ export const CallingPathTubes = ({ group, brandColors }: { group: SpaceGroup; br
         p.isRoot === true || p.agentId === rootAgentId,
     );
 
-    const others = group.placements.filter(
-      (p) => !p.isRoot && p.agentId !== rootAgentId,
+    const activePlacements = group.placements.filter(
+      (p) => p.agentId !== rootAgentId && !p.isRoot && activeAgentIds.has(p.agentId),
     );
-
-    const activePlacements = others.filter((p) => activeAgentIds.has(p.agentId));
 
     if (!rootPlacement || activePlacements.length === 0) return [];
 
-    const rootPos =
-      layoutMode === "radial"
-        ? new THREE.Vector3(0, 0, 0)
-        : rootPlacement.affineMatrix
-          ? extractPosition(rootPlacement.affineMatrix)
-          : new THREE.Vector3();
+    const rootMatrix = computedTransforms.get(rootPlacement.id);
+    if (!rootMatrix) return [];
+    const rootPos = extractPositionFromMatrix(rootMatrix);
 
-    return activePlacements.map((p) => {
-      let targetPos: THREE.Vector3;
-      if (layoutMode === "radial") {
-        const idx = others.indexOf(p);
-        const angle = (idx / Math.max(others.length, 1)) * Math.PI * 2;
-        targetPos = new THREE.Vector3(
-          Math.cos(angle) * RADIAL_RADIUS,
-          0,
-          Math.sin(angle) * RADIAL_RADIUS,
-        );
-      } else {
-        targetPos = p.affineMatrix
-          ? extractPosition(p.affineMatrix)
-          : new THREE.Vector3();
-      }
-      return { id: p.id, from: rootPos, to: targetPos };
-    });
+    return activePlacements
+      .map((p) => {
+        const mat = computedTransforms.get(p.id);
+        if (!mat) return null;
+        return { id: p.id, from: rootPos, to: extractPositionFromMatrix(mat) };
+      })
+      .filter((c): c is { id: string; from: THREE.Vector3; to: THREE.Vector3 } => c !== null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [group.placements, rootAgentId, activeAgentIds, selectedTimepoint, layoutMode]);
+  }, [group.placements, rootAgentId, activeAgentIds, selectedTimepoint, computedTransforms]);
 
   if (connections.length === 0) return null;
 

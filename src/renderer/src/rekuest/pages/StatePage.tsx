@@ -64,19 +64,12 @@ const LiveStateDisplay = ({
   label?: boolean;
   select?: string[] | null | undefined;
 }) => {
-  // Start from the latest checkout as our base
-  const { data: checkoutData, error: checkoutError } = useCheckoutQuery({
-    variables: { state: state.id },
-  });
 
   const [liveValue, setLiveValue] = useState<Record<string, unknown> | null>(null);
   const [revision, setRevision] = useState<number | null>(null);
   const valueRef = useRef<Record<string, unknown> | null>(null);
 
-  const checkoutValue = checkoutData?.checkout?.value;
-  const checkoutRevision = checkoutData?.checkout?.globalRevision ?? null;
 
-  const currentLiveValue = liveValue ?? checkoutValue ?? state.value;
 
   // Subscribe to live patches
   useWatchStateSubscription({
@@ -84,11 +77,6 @@ const LiveStateDisplay = ({
     onData: ({ data: subData }) => {
       const event = subData.data?.watchState;
       if (!event) return;
-
-      // Lazily initialize the ref from checkout on first patch
-      if (valueRef.current === null && checkoutValue) {
-        valueRef.current = checkoutValue;
-      }
 
       if (event.__typename === "StateSnapshotEvent") {
         // Full snapshot replaces the value
@@ -112,28 +100,25 @@ const LiveStateDisplay = ({
     },
   });
 
-  const displayValue = currentLiveValue;
+  const displayValue = liveValue;
 
   return (
     <AsyncBoundary>
-      {checkoutError && (
-        <div className="text-red-500">Error: {checkoutError.message}</div>
-      )}
       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
           Live
         </span>
-        {(revision ?? checkoutRevision) != null && (
-          <span>Rev {revision ?? checkoutRevision}</span>
-        )}
+        <span>Revision: {revision ?? "–"}</span>
       </div>
-      <StateValueDisplay
-        state={state}
-        value={displayValue}
-        label={label}
-        select={select}
-      />
+      {liveValue && (
+        <StateValueDisplay
+          state={state}
+          value={liveValue}
+          label={label}
+          select={select}
+        />
+      )}
     </AsyncBoundary>
   );
 };
@@ -168,8 +153,7 @@ const CheckoutStateDisplay = ({
     skip: effectiveRevision === null,
   });
 
-  const displayValue =
-    revData?.checkout?.value ?? latestData?.checkout?.value ?? state.value;
+  const displayValue =  revData?.checkout?.value ?? latestData?.checkout?.value
 
   return (
     <AsyncBoundary>
@@ -192,12 +176,14 @@ const CheckoutStateDisplay = ({
           />
         )}
       </div>
-      <StateValueDisplay
-        state={state}
-        value={displayValue}
-        label={label}
-        select={select}
-      />
+      {displayValue && (
+        <StateValueDisplay
+          state={state}
+          value={displayValue}
+          label={label}
+          select={select}
+        />
+      )}
     </AsyncBoundary>
   );
 };

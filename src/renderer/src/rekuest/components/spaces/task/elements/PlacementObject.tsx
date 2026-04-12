@@ -29,11 +29,9 @@ const PlacementModel = ({ url }: { url: string }) => {
 export const PlacementObject = ({
   placement,
   brandColors,
-  overridePosition,
 }: {
   placement: SpaceGroupPlacement;
   brandColors: BrandColors;
-  overridePosition?: [number, number, number] | null;
 }) => {
   const groupRef = React.useRef<Group>(null!);
   const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
@@ -42,6 +40,7 @@ export const PlacementObject = ({
   const isRoot = useSpaceViewStore(
     (s) => placement.isRoot === true || placement.agentId === s.rootAgentId,
   );
+  const computedMatrix = useSpaceViewStore((s) => s.computedTransforms.get(placement.id));
 
   const hullConfig = useMemo(() => {
     if (isRoot)     return { enabled: true, color: brandColors.chart1, thickness: 1.10, opacity: 0.8 };
@@ -51,18 +50,8 @@ export const PlacementObject = ({
   }, [isRoot, isSelected, isActive, brandColors]);
 
   useEffect(() => {
-    if (!groupRef.current) return;
-    if (overridePosition) {
-      // Radial mode: use explicit position, reset any matrix-based transform
-      groupRef.current.position.set(...overridePosition);
-      groupRef.current.quaternion.identity();
-      groupRef.current.scale.set(1, 1, 1);
-      groupRef.current.matrixAutoUpdate = true;
-      groupRef.current.updateMatrixWorld(true);
-      return;
-    }
-    if (!placement.affineMatrix) return;
-    const flat = placement.affineMatrix.flat() as number[];
+    if (!groupRef.current || !computedMatrix) return;
+    const flat = computedMatrix.flat() as number[];
     const m = new Matrix4().fromArray(flat).transpose();
     groupRef.current.matrix.copy(m);
     groupRef.current.matrix.decompose(
@@ -72,7 +61,7 @@ export const PlacementObject = ({
     );
     groupRef.current.matrixAutoUpdate = true;
     groupRef.current.updateMatrixWorld(true);
-  }, [placement.affineMatrix, overridePosition]);
+  }, [computedMatrix]);
 
   const handleClick = useCallback(
     (e: { stopPropagation: () => void }) => {

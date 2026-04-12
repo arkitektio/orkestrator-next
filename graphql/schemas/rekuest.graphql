@@ -468,6 +468,20 @@ input AgentOrder {
   lastSeen: Ordering
 }
 
+type AgentWithValues {
+  """The ID of the agent this state belongs to"""
+  agentId: ID!
+
+  """The patches to move forward"""
+  forwardPatches: [Patch!]!
+
+  """The maximum global revision across these states"""
+  globalRevision: Int!
+
+  """The state value, indexed by state_interface"""
+  values: JSON!
+}
+
 """
 The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
 """
@@ -2360,10 +2374,10 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateWithValue!
+  checkout(forwardPatchCount: Int! = 0, globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateValue!
 
   """Materialize the latest states for a specific agent"""
-  checkoutAgent(agent: ID!, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): [StateWithValue!]!
+  checkoutAgent(agent: ID!, forwardPatchCount: Int! = 0, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): AgentWithValues!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2688,7 +2702,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "e04a36fe-e730-4987-bb78-1bba94cc5c16"
+  reference: String = "0e826e43-0613-4437-ac5b-a7ec73c7d47d"
   title: String = null
 }
 
@@ -3173,11 +3187,17 @@ type StateSnapshotEvent {
 
 union StateSnapshotEventStatePatchEvent = StatePatchEvent | StateSnapshotEvent
 
-type StateWithValue {
-  definition: StateDefinition!
+type StateValue {
+  """The patches that can be applied to move forward from this state"""
+  forwardPatches: [Patch!]!
+
+  """The global revision of this state"""
   globalRevision: Int
-  localRevision: Int
+
+  """The ID of the state"""
   stateId: ID!
+
+  """The state value"""
   value: JSON!
 }
 

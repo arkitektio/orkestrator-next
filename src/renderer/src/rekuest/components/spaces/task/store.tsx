@@ -304,6 +304,9 @@ interface SpaceViewState {
   // Debug
   debugWireframe: boolean;
 
+  // Layout
+  layoutMode: "space" | "radial";
+
   // Actions
   updateCameraData: (matrix: THREE.Matrix4, size: { width: number; height: number }) => void;
   selectPlacement: (id: string | null) => void;
@@ -312,6 +315,7 @@ interface SpaceViewState {
   selectTimepoint: (timestamp: number) => void;
   setHighlightedAssignationIds: (ids: string[]) => void;
   toggleDebugWireframe: () => void;
+  toggleLayoutMode: () => void;
   refreshTimeline: (task: DetailAssignationFragment) => void;
 }
 
@@ -357,6 +361,8 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
 
     debugWireframe: false,
 
+    layoutMode: "space" as const,
+
     updateCameraData: (matrix, size) => set({ viewProjectionMatrix: matrix, viewportSize: size }),
 
     selectPlacement: (id) => {
@@ -393,6 +399,9 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
     setHighlightedAssignationIds: (ids) => set({ highlightedAssignationIds: ids }),
 
     toggleDebugWireframe: () => set((s) => ({ debugWireframe: !s.debugWireframe })),
+
+    toggleLayoutMode: () =>
+      set((s) => ({ layoutMode: s.layoutMode === "space" ? "radial" : "space" })),
 
     refreshTimeline: (updatedTask) => {
       const updatedChildren = (updatedTask.children || []).filter(notEmpty);

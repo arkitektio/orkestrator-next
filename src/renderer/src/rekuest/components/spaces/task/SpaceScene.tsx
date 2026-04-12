@@ -8,7 +8,7 @@ import { Environment, OrbitControls } from "@react-three/drei";
 import { AgentPanel } from "./panels/AgentPanel";
 import { SpaceGroupObject } from "./elements/SpaceGroupObject";
 import { CallingPathTubes } from "./elements/CallingPathTubes";
-import { Bug } from "lucide-react";
+import { Bug, Orbit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TimeSlider } from "./panels/TimeSlider";
 import { SpaceGroup } from "./types";
@@ -95,6 +95,8 @@ export const TaskSpaceScene = () => {
   const spaceGroups = useSpaceViewStore((s) => s.spaceGroups);
   const debugWireframe = useSpaceViewStore((s) => s.debugWireframe);
   const toggleDebugWireframe = useSpaceViewStore((s) => s.toggleDebugWireframe);
+  const layoutMode = useSpaceViewStore((s) => s.layoutMode);
+  const toggleLayoutMode = useSpaceViewStore((s) => s.toggleLayoutMode);
 
   if (spaceGroups.length === 0) {
     return (
@@ -113,6 +115,15 @@ export const TaskSpaceScene = () => {
       </div>
       <div className="relative">
         <TimeSlider />
+        <Button
+          variant={layoutMode === "radial" ? "default" : "ghost"}
+          size="icon"
+          className="absolute top-1 right-12 z-30 h-7 w-7"
+          onClick={toggleLayoutMode}
+          title={layoutMode === "space" ? "Switch to radial layout" : "Switch to space layout"}
+        >
+          <Orbit className="h-3.5 w-3.5" />
+        </Button>
         <Button
           variant={debugWireframe ? "default" : "ghost"}
           size="icon"

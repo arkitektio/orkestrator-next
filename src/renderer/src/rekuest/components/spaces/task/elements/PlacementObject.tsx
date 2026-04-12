@@ -29,9 +29,11 @@ const PlacementModel = ({ url }: { url: string }) => {
 export const PlacementObject = ({
   placement,
   brandColors,
+  overridePosition,
 }: {
   placement: SpaceGroupPlacement;
   brandColors: BrandColors;
+  overridePosition?: [number, number, number] | null;
 }) => {
   const groupRef = React.useRef<Group>(null!);
   const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
@@ -49,7 +51,17 @@ export const PlacementObject = ({
   }, [isRoot, isSelected, isActive, brandColors]);
 
   useEffect(() => {
-    if (!groupRef.current || !placement.affineMatrix) return;
+    if (!groupRef.current) return;
+    if (overridePosition) {
+      // Radial mode: use explicit position, reset any matrix-based transform
+      groupRef.current.position.set(...overridePosition);
+      groupRef.current.quaternion.identity();
+      groupRef.current.scale.set(1, 1, 1);
+      groupRef.current.matrixAutoUpdate = true;
+      groupRef.current.updateMatrixWorld(true);
+      return;
+    }
+    if (!placement.affineMatrix) return;
     const flat = placement.affineMatrix.flat() as number[];
     const m = new Matrix4().fromArray(flat).transpose();
     groupRef.current.matrix.copy(m);
@@ -60,7 +72,7 @@ export const PlacementObject = ({
     );
     groupRef.current.matrixAutoUpdate = true;
     groupRef.current.updateMatrixWorld(true);
-  }, [placement.affineMatrix]);
+  }, [placement.affineMatrix, overridePosition]);
 
   const handleClick = useCallback(
     (e: { stopPropagation: () => void }) => {

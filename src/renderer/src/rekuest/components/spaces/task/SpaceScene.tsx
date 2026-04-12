@@ -1,21 +1,24 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useSpaceViewStore } from "./store";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { CameraMatrixSync } from "./syncs/CameraMatrixSync";
 import { Canvas } from "@react-three/fiber";
 import { StageFloor } from "./elements/StageFloor";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { AgentPanel } from "./panels/AgentPanel";
 import { SpaceGroupObject } from "./elements/SpaceGroupObject";
+import { CallingPathTubes } from "./elements/CallingPathTubes";
 import { Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TimeSlider } from "./panels/TimeSlider";
 import { SpaceGroup } from "./types";
+import { computeBrandColors } from "./elements/brandColors";
 
 /** A single space rendered in its own Canvas. */
 const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
   const { settings } = useSettings();
   const brandHue = settings.brandHue ?? 267.256;
+  const brandColors = useMemo(() => computeBrandColors(brandHue), [brandHue]);
 
   return (
     <div className="flex-grow relative min-w-0 rounded-2xl overflow-hidden">
@@ -68,7 +71,9 @@ const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
           <SpaceGroupObject
             group={group}
             offset={[0, 0, 0]}
+            brandColors={brandColors}
           />
+          <CallingPathTubes group={group} brandColors={brandColors} />
           <StageFloor brandHue={brandHue} />
           <Environment preset="night" />
         </Suspense>

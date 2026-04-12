@@ -7,10 +7,7 @@ import { MediaStoreFragment } from "@/rekuest/api/graphql";
 import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
 import { Center, useGLTF } from "@react-three/drei";
 import { InvertedHullOutline } from "./InvertedHullOutline";
-
-const HULL_COLOR_ROOT = "#f59e0b"; // amber
-const HULL_COLOR_ACTIVE = "#10b981"; // emerald
-const HULL_COLOR_SELECTED = "#6366f1"; // indigo
+import { BrandColors } from "./brandColors";
 
 
 
@@ -31,8 +28,10 @@ const PlacementModel = ({ url }: { url: string }) => {
 
 export const PlacementObject = ({
   placement,
+  brandColors,
 }: {
   placement: SpaceGroupPlacement;
+  brandColors: BrandColors;
 }) => {
   const groupRef = React.useRef<Group>(null!);
   const selectPlacement = useSpaceViewStore((s) => s.selectPlacement);
@@ -43,11 +42,11 @@ export const PlacementObject = ({
   );
 
   const hullConfig = useMemo(() => {
-    if (isRoot) return { enabled: true, color: HULL_COLOR_ROOT, thickness: 1.10, opacity: 0.8 };
-    if (isSelected) return { enabled: true, color: HULL_COLOR_SELECTED, thickness: 1.10, opacity: 0.8 };
-    if (isActive) return { enabled: true, color: HULL_COLOR_ACTIVE,  thickness: 1.10, opacity: 0.8 };
-    return { enabled: false, color: HULL_COLOR_ACTIVE, thickness: 1.10, opacity: 0.8 };
-  }, [isRoot, isSelected, isActive]);
+    if (isRoot)     return { enabled: true, color: brandColors.chart1, thickness: 1.10, opacity: 0.8 };
+    if (isSelected) return { enabled: true, color: brandColors.chart3, thickness: 1.10, opacity: 0.8 };
+    if (isActive)   return { enabled: true, color: brandColors.chart2, thickness: 1.10, opacity: 0.8 };
+    return { enabled: false, color: brandColors.chart2, thickness: 1.10, opacity: 0.8 };
+  }, [isRoot, isSelected, isActive, brandColors]);
 
   useEffect(() => {
     if (!groupRef.current || !placement.affineMatrix) return;
@@ -86,7 +85,7 @@ export const PlacementObject = ({
         ) : (
           <mesh castShadow>
             <boxGeometry args={[0.6, 0.6, 0.6]} />
-            <meshStandardMaterial color={isRoot ? "#f59e0b" : "#6366f1"} />
+            <meshStandardMaterial color={isRoot ? brandColors.chart1 : brandColors.chart4} />
           </mesh>
         )}
       </InvertedHullOutline>

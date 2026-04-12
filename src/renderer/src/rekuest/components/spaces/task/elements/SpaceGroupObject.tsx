@@ -1,9 +1,11 @@
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { SpaceGroup } from "../types";
 import { PlacementObject } from "./PlacementObject";
 import { useSpaceViewStore } from "../store";
 import { Box3, Group, Vector3 } from "three";
 import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { BrandColors } from "./brandColors";
 
 const WireframeBounds = ({ groupRef }: { groupRef: React.RefObject<Group> }) => {
   const boxRef = useRef<THREE.Mesh>(null!);
@@ -35,9 +37,11 @@ const WireframeBounds = ({ groupRef }: { groupRef: React.RefObject<Group> }) => 
 export const SpaceGroupObject = ({
   group,
   offset,
+  brandColors,
 }: {
   group: SpaceGroup;
   offset: [number, number, number];
+  brandColors: BrandColors;
 }) => {
   const debugWireframe = useSpaceViewStore((s) => s.debugWireframe);
   const groupRef = useRef<Group>(null!);
@@ -46,7 +50,7 @@ export const SpaceGroupObject = ({
     <group position={offset}>
       <group ref={groupRef}>
         {group.placements.map((p) => (
-          <PlacementObject key={p.id} placement={p} />
+          <PlacementObject key={p.id} placement={p} brandColors={brandColors} />
         ))}
       </group>
       {debugWireframe && <WireframeBounds groupRef={groupRef} />}

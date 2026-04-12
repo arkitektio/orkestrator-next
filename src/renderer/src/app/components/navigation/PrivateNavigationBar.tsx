@@ -58,6 +58,8 @@ import { TbBugOff } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
+import { Badge } from "@/components/ui/badge";
+
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -97,7 +99,7 @@ const matchIcon = (key: string) => {
 const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
   const availableServices = Arkitekt.useAvailableServices();
   const moduleState = Arkitekt.useAvailableModules().find((entry) => entry.key === moduleKey);
-  
+
   if (!moduleState) {
     return (
       <div className="p-2 text-xs text-muted-foreground">
@@ -105,7 +107,7 @@ const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
       </div>
     );
   }
-  
+
   const serviceState = availableServices.find(service => service.key === moduleState.definition.key);
 
   if (!serviceState) {
@@ -120,7 +122,7 @@ const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
   const allAliases = serviceState.instance?.aliases || [];
   const hasErrors = serviceState.errors.length > 0;
   const isConnected = serviceState.status === "ready" && connectedAlias;
-  const lastChecked = serviceState.lastCheckedAt 
+  const lastChecked = serviceState.lastCheckedAt
     ? new Date(serviceState.lastCheckedAt).toLocaleString()
     : "Never";
 
@@ -359,6 +361,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
   const connection = Arkitekt.useConnection();
   const hasLokProfile = Boolean(connection?.selfService);
   const { debug, setDebug } = useDebug();
+  const fakts = Arkitekt.useFakts()
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -444,8 +447,10 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
             {hasLokProfile ? <Me /> : <div className="h-12 w-12 rounded-full border" />}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" className="w-64 mb-2 border-border">
-            <DropdownMenuLabel>
+            <DropdownMenuLabel className="flex items-center gap-2 w-full justify-between">
               {hasLokProfile ? <Username /> : <div>Guest</div>}
+
+            {fakts?.self.alias.host ? <Badge className="px-1">{fakts?.self.alias.host}</Badge> : null}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {configurationIssues.length > 0 && (

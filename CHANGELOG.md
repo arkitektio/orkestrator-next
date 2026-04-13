@@ -1,3 +1,23 @@
+# [1.57.0](https://github.com/arkitektio/orkestrator-next/compare/v1.56.0...v1.57.0) (2026-04-13)
+
+
+### Bug Fixes
+
+* add go.arkitekt .ive ([587ca30](https://github.com/arkitektio/orkestrator-next/commit/587ca30656a770dee3c940320a8d8629a08c771c))
+* agent panel ([d1d3ae2](https://github.com/arkitektio/orkestrator-next/commit/d1d3ae2f1403a2630c451aaec1552d5a1f66ee50))
+* hulloutline ([745d733](https://github.com/arkitektio/orkestrator-next/commit/745d73333b1136dbe5a3f81b8ac9c6ba1dcbf3cb))
+* live state update ([abdc229](https://github.com/arkitektio/orkestrator-next/commit/abdc2293290709a349b98f6b0b1a3128b0154519))
+* more space scene ([002c15d](https://github.com/arkitektio/orkestrator-next/commit/002c15db359ef44941ba2b181ea0ea1d033bbf25))
+* radial layout ([3ca7804](https://github.com/arkitektio/orkestrator-next/commit/3ca7804b104240d7159442e6e78a21a0180a83cd))
+* stuff ([1541ea3](https://github.com/arkitektio/orkestrator-next/commit/1541ea3664feea492f97703685342016fa5b02c4))
+* task slider ([13e3086](https://github.com/arkitektio/orkestrator-next/commit/13e30862b323e95621574991ebeb6445e1c3d85c))
+* with brand colours ([e58a279](https://github.com/arkitektio/orkestrator-next/commit/e58a279a3576b852c0719dcc8839c3e6ecf78558))
+
+
+### Features
+
+* a bit nicer to look at ([a43c9f5](https://github.com/arkitektio/orkestrator-next/commit/a43c9f5f627f675bad6976f05abd3e8f8fd351e0))
+
 # [1.56.0](https://github.com/arkitektio/orkestrator-next/compare/v1.55.0...v1.56.0) (2026-04-10)
 
 

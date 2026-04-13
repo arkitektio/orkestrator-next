@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Zod from "zod";
-import { DetailImplementationFragment } from "../api/graphql";
+import { DetailImplementationFragment, ResolvedDependencyInput } from "../api/graphql";
 import { Port } from "../widgets/types";
 import {
   buildZodSchema,
@@ -20,7 +20,7 @@ export const portHash = (port: Port[]) => {
 export const useImplementationForm = (props: {
   implementation?: DetailImplementationFragment;
   overwrites?: { [key: string]: unknown };
-  presetDependencies?: { [key: string]: string };
+  presetDependencies?: ResolvedDependencyInput[] ;
   doNotAutoReset?: boolean;
   additionalSchema?: Zod.ZodObject<unknown>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
@@ -34,7 +34,7 @@ export const useImplementationForm = (props: {
         props.implementation?.action.args || [],
         props.overwrites || {},
       ),
-      dependencies: props.presetDependencies || {},
+      dependencies: props.presetDependencies || [],
     };
   }, [hash, props.overwrites, props.presetDependencies]);
 
@@ -43,7 +43,7 @@ export const useImplementationForm = (props: {
 
     const zodSchema = Zod.object({
       args: argsSchema,
-      dependencies: Zod.record(Zod.string(), Zod.string()).optional(),
+      dependencies: Zod.array(Zod.any()).optional(),
     });
     return zodResolver(zodSchema);
   }, [hash, props.additionalSchema]);
@@ -81,7 +81,7 @@ export const useImplementationForm = (props: {
         props.implementation?.action.args || [],
         props.overwrites || {},
       ),
-      dependencies: props.presetDependencies || {},
+      dependencies: props.presetDependencies || [],
     });
   }, [hash]);
 

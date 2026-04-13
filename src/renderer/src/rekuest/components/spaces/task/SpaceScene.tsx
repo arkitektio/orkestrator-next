@@ -107,14 +107,14 @@ export const TaskSpaceScene = () => {
   }
 
   return (
-    <div className="flex-grow flex flex-col min-w-0 overflow-hidden gap-2">
+    <div className="flex-grow flex flex-col min-w-0 overflow-hidden gap-2 relative">
       <div className="flex-grow flex flex-row gap-2 min-h-0">
         {spaceGroups.map((group) => (
           <SpaceCanvas key={group.spaceId} group={group} />
         ))}
       </div>
-      <div className="relative">
-        <TimeSlider />
+
+      <div className="absolute w-full transform top-2 z-20">
         <Button
           variant={layoutMode === "radial" ? "default" : "ghost"}
           size="icon"
@@ -133,6 +133,10 @@ export const TaskSpaceScene = () => {
         >
           <Bug className="h-3.5 w-3.5" />
         </Button>
+        </div>
+      <div className="absolute w-full transform bottom-2 z-20">
+        <TimeSlider />
+
       </div>
     </div>
   );

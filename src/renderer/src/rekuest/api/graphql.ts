@@ -550,6 +550,8 @@ export type AgentWithValues = {
   __typename?: 'AgentWithValues';
   /** The ID of the agent this state belongs to */
   agentId: Scalars['ID']['output'];
+  /** The patches to move backward */
+  backwardPatches: Array<Patch>;
   /** The patches to move forward */
   forwardPatches: Array<Patch>;
   /** The maximum global revision across these states */
@@ -626,17 +628,17 @@ export type AssignInput = {
   actionHash?: InputMaybe<Scalars['ActionHash']['input']>;
   agent?: InputMaybe<Scalars['ID']['input']>;
   args: Scalars['Args']['input'];
-  cached?: Scalars['Boolean']['input'];
-  capture?: Scalars['Boolean']['input'];
-  dependencies?: InputMaybe<Scalars['Args']['input']>;
+  cached: Scalars['Boolean']['input'];
+  capture: Scalars['Boolean']['input'];
+  dependencies?: InputMaybe<Array<ResolvedDependencyInput>>;
   dependency?: InputMaybe<Scalars['String']['input']>;
-  ephemeral?: Scalars['Boolean']['input'];
+  ephemeral: Scalars['Boolean']['input'];
   hooks?: InputMaybe<Array<HookInput>>;
   implementation?: InputMaybe<Scalars['ID']['input']>;
   instanceId: Scalars['InstanceId']['input'];
   interface?: InputMaybe<Scalars['String']['input']>;
   isHook?: InputMaybe<Scalars['Boolean']['input']>;
-  log?: Scalars['Boolean']['input'];
+  log: Scalars['Boolean']['input'];
   method?: InputMaybe<Scalars['String']['input']>;
   parent?: InputMaybe<Scalars['ID']['input']>;
   /** The policy for the assignation. This defines how the assignation should be handled. */
@@ -1783,6 +1785,20 @@ export type LogSnapshotInput = {
   value: Scalars['AnyDefault']['input'];
 };
 
+/** The input for mapping an action to an implementation in a agent. */
+export type MappedActionInput = {
+  dependencies?: InputMaybe<Array<ResolvedDependencyInput>>;
+  implementation: Scalars['ID']['input'];
+  key: Scalars['String']['input'];
+};
+
+/** The input for mapping actions to implementations in a agent. */
+export type MappedAgentInput = {
+  agent: Scalars['ID']['input'];
+  key: Scalars['String']['input'];
+  mappedActions: Array<MappedActionInput>;
+};
+
 /** The input for creating a blok. */
 export type MaterializeBlokInput = {
   /** The agent ID to materialize the blok in. If not provided, the blok will be materialized in the default agent */
@@ -2874,6 +2890,7 @@ export type QueryBlokArgs = {
 
 
 export type QueryCheckoutArgs = {
+  backwardPatchCount?: Scalars['Int']['input'];
   forwardPatchCount?: Scalars['Int']['input'];
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
@@ -2884,6 +2901,7 @@ export type QueryCheckoutArgs = {
 
 export type QueryCheckoutAgentArgs = {
   agent: Scalars['ID']['input'];
+  backwardPatchCount?: Scalars['Int']['input'];
   forwardPatchCount?: Scalars['Int']['input'];
   globalRevision?: InputMaybe<Scalars['Int']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
@@ -3446,13 +3464,10 @@ export type ResolvedDependencyFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
-/** The input for mapping a dependency to an implementation. */
+/** The input for mapping dependencies to implementations in a agent. */
 export type ResolvedDependencyInput = {
-  dependency: Scalars['ID']['input'];
-  downStreamResolution?: InputMaybe<Scalars['ID']['input']>;
-  implementation: Scalars['ID']['input'];
   key: Scalars['String']['input'];
-  resolutionKey?: InputMaybe<Scalars['String']['input']>;
+  mappedAgents: Array<MappedAgentInput>;
 };
 
 /** The input for resuming an assignation. */
@@ -3861,6 +3876,8 @@ export type StateSnapshotEventStatePatchEvent = StatePatchEvent | StateSnapshotE
 
 export type StateValue = {
   __typename?: 'StateValue';
+  /** The patches that can be applied to move backward from this state */
+  backwardPatches: Array<Patch>;
   /** The patches that can be applied to move forward from this state */
   forwardPatches: Array<Patch>;
   /** The global revision of this state */
@@ -5298,10 +5315,11 @@ export type CheckoutQueryVariables = Exact<{
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
   forwardPatchCount?: InputMaybe<Scalars['Int']['input']>;
+  backwardPatchCount?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateValue', stateId: string, value: any, globalRevision?: number | null, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
+export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateValue', stateId: string, value: any, globalRevision?: number | null, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
 
 export type CheckoutAgentQueryVariables = Exact<{
   agent: Scalars['ID']['input'];
@@ -5309,10 +5327,11 @@ export type CheckoutAgentQueryVariables = Exact<{
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   sessionId?: InputMaybe<Scalars['ID']['input']>;
   forwardPatchCount?: InputMaybe<Scalars['Int']['input']>;
+  backwardPatchCount?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: { __typename?: 'AgentWithValues', agentId: string, values: any, globalRevision: number, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
+export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: { __typename?: 'AgentWithValues', agentId: string, values: any, globalRevision: number, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
 
 export type GetStructureQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -10067,18 +10086,22 @@ export type GetStateForQueryHookResult = ReturnType<typeof useGetStateForQuery>;
 export type GetStateForLazyQueryHookResult = ReturnType<typeof useGetStateForLazyQuery>;
 export type GetStateForQueryResult = Apollo.QueryResult<GetStateForQuery, GetStateForQueryVariables>;
 export const CheckoutDocument = gql`
-    query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int) {
+    query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int, $backwardPatchCount: Int) {
   checkout(
     state: $state
     globalRevision: $globalRevision
     timestamp: $timestamp
     sessionId: $sessionId
     forwardPatchCount: $forwardPatchCount
+    backwardPatchCount: $backwardPatchCount
   ) {
     stateId
     value
     globalRevision
     forwardPatches {
+      ...Patch
+    }
+    backwardPatches {
       ...Patch
     }
   }
@@ -10102,6 +10125,7 @@ export const CheckoutDocument = gql`
  *      timestamp: // value for 'timestamp'
  *      sessionId: // value for 'sessionId'
  *      forwardPatchCount: // value for 'forwardPatchCount'
+ *      backwardPatchCount: // value for 'backwardPatchCount'
  *   },
  * });
  */
@@ -10117,18 +10141,22 @@ export type CheckoutQueryHookResult = ReturnType<typeof useCheckoutQuery>;
 export type CheckoutLazyQueryHookResult = ReturnType<typeof useCheckoutLazyQuery>;
 export type CheckoutQueryResult = Apollo.QueryResult<CheckoutQuery, CheckoutQueryVariables>;
 export const CheckoutAgentDocument = gql`
-    query CheckoutAgent($agent: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int) {
+    query CheckoutAgent($agent: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int, $backwardPatchCount: Int) {
   checkoutAgent(
     agent: $agent
     globalRevision: $globalRevision
     timestamp: $timestamp
     sessionId: $sessionId
     forwardPatchCount: $forwardPatchCount
+    backwardPatchCount: $backwardPatchCount
   ) {
     agentId
     values
     globalRevision
     forwardPatches {
+      ...Patch
+    }
+    backwardPatches {
       ...Patch
     }
   }
@@ -10152,6 +10180,7 @@ export const CheckoutAgentDocument = gql`
  *      timestamp: // value for 'timestamp'
  *      sessionId: // value for 'sessionId'
  *      forwardPatchCount: // value for 'forwardPatchCount'
+ *      backwardPatchCount: // value for 'backwardPatchCount'
  *   },
  * });
  */

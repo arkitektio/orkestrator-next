@@ -18,6 +18,7 @@ import type {
   TimelineItem,
   TimelineMethodRow,
 } from "../types";
+import { Button } from "@/components/ui/button";
 
 // ── status helpers ───────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
     variables: { id: item.assignation.id },
   });
 
+  const setTimelineTimepoint = useSpaceViewStore((s) => s.selectTimepoint);
+
   const { registry } = useWidgetRegistry();
   const assignation = data?.assignation || item.assignation;
   const latestEvent = assignation.events
@@ -55,6 +58,9 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
 
   return (
     <div className="grid gap-4">
+      <Button variant="outline" size="sm" onClick={() => setTimelineTimepoint(item.startTime)}>
+        Jump Here
+      </Button>
       <div className="space-y-2">
         <h4 className="font-medium leading-none">{assignation.action?.name}</h4>
         <p className="text-sm text-muted-foreground">{assignation.id}</p>

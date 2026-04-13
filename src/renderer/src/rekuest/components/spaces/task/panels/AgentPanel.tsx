@@ -10,6 +10,7 @@ import { AssignationEventKind, StateFragment, useAgentQuery, useCheckoutAgentQue
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { AsyncBoundary } from "@/components/boundaries/AsyncBoundary";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const getStatusBadge = (kind: AssignationEventKind | undefined | string) => {
   switch (kind) {
@@ -90,6 +91,7 @@ const AgentCheckoutPanel = ({
     variables: {
       agent: agentId,
       timestamp: debouncedTimepoint ? new Date(debouncedTimepoint).toISOString() : undefined,
+      backwardPatchCount: 1
     },
   });
 
@@ -105,7 +107,21 @@ const AgentCheckoutPanel = ({
             </span>
             {loading && <span className="text-yellow-500">loading…</span>}
           </div>
+          {revData?.checkoutAgent.backwardPatches.map((patch) => {
+            return <div key={patch.id} className="flex items-center gap-2 text-xs">
+              <span>{patch.path}</span>
+              <span className={`px-2 py-1 rounded text-center text-xs`}>
+                {patch.op}
+              </span>
+              <span className="font-mono">{JSON.stringify(patch.value)}</span>
+            </div>
+             })}
         </div>
+        <Collapsible>
+          <CollapsibleTrigger className="text-sm font-medium">
+            View State
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <div className="grid gap-4">
           {data?.agent?.states.map((state) =>{
 
@@ -136,6 +152,8 @@ const AgentCheckoutPanel = ({
             </div>
 })}
         </div>
+        </CollapsibleContent>
+        </Collapsible>
       </div>
     </AsyncBoundary>
 

@@ -1,5 +1,3 @@
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";
 import { MikroImage } from "@/linkers";
 import { ListImageFragment } from "../../api/graphql";
@@ -10,7 +8,6 @@ interface ImageCardProps {
 }
 
 const ImageCard = ({ item, className }: ImageCardProps) => {
-  const resolve = useResolve();
 
   const { progress } = MikroImage.useLive({ object: item.id });
   return (
@@ -21,13 +18,6 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
           className,
         )}
       >
-        {item.latestSnapshot?.store.presignedUrl && (
-          <Image
-            src={resolve(item.latestSnapshot?.store.presignedUrl)}
-            style={{ filter: "brightness(0.7)" }}
-            className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
-          />
-        )}
         <div
           className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row "
           style={{

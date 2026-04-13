@@ -3,7 +3,6 @@ import { useSpaceViewStore } from "./store";
 import { Suspense, useMemo } from "react";
 import { CameraMatrixSync } from "./syncs/CameraMatrixSync";
 import { Canvas } from "@react-three/fiber";
-import { StageFloor } from "./elements/StageFloor";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { AgentPanel } from "./panels/AgentPanel";
 import { SpaceGroupObject } from "./elements/SpaceGroupObject";
@@ -74,7 +73,6 @@ const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
             brandColors={brandColors}
           />
           <CallingPathTubes group={group} brandColors={brandColors} />
-          <StageFloor brandHue={brandHue} />
           <Environment preset="night" />
         </Suspense>
         <OrbitControls

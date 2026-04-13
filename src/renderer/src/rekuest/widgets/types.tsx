@@ -70,6 +70,7 @@ export type RunQueryFunc<T extends {[key: string]: unknown}> = (options: {
 
 export type PortOptions = {
   disable: boolean;
+  bound: string | null;
 };
 
 export interface Ward {

@@ -468,6 +468,34 @@ input AgentOrder {
   lastSeen: Ordering
 }
 
+"""A plain snapshot of a state's current value."""
+type AgentSnapshotEvent {
+  agentId: ID!
+  globalRevision: Int!
+  sessionId: String!
+  timestamp: DateTime!
+  values: Args!
+}
+
+union AgentSnapshotEventStatePatchEvent = AgentSnapshotEvent | StatePatchEvent
+
+type AgentWithValues {
+  """The ID of the agent this state belongs to"""
+  agentId: ID!
+
+  """The patches to move backward"""
+  backwardPatches: [Patch!]!
+
+  """The patches to move forward"""
+  forwardPatches: [Patch!]!
+
+  """The maximum global revision across these states"""
+  globalRevision: Int!
+
+  """The state value, indexed by state_interface"""
+  values: JSON!
+}
+
 """
 The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
 """
@@ -527,17 +555,17 @@ input AssignInput {
   actionHash: ActionHash = null
   agent: ID = null
   args: Args!
-  cached: Boolean! = false
-  capture: Boolean! = false
-  dependencies: Args = null
+  cached: Boolean!
+  capture: Boolean!
+  dependencies: [ResolvedDependencyInput!] = null
   dependency: String = null
-  ephemeral: Boolean! = false
+  ephemeral: Boolean!
   hooks: [HookInput!] = null
   implementation: ID = null
   instanceId: InstanceId!
   interface: String = null
-  isHook: Boolean = false
-  log: Boolean! = false
+  isHook: Boolean = null
+  log: Boolean!
   method: String = null
   parent: ID = null
 
@@ -548,7 +576,7 @@ input AssignInput {
   reference: String = null
   reservation: ID = null
   resolution: ID = null
-  step: Boolean = false
+  step: Boolean = null
 }
 
 enum AssignPolicy {
@@ -1709,6 +1737,20 @@ input LogSnapshotInput {
   value: AnyDefault!
 }
 
+"""The input for mapping an action to an implementation in a agent."""
+input MappedActionInput {
+  dependencies: [ResolvedDependencyInput!] = null
+  implementation: ID!
+  key: String!
+}
+
+"""The input for mapping actions to implementations in a agent."""
+input MappedAgentInput {
+  agent: ID!
+  key: String!
+  mappedActions: [MappedActionInput!]!
+}
+
 """The input for creating a blok."""
 input MaterializeBlokInput {
   """
@@ -2360,10 +2402,10 @@ type Query {
   bloks: [Blok!]!
 
   """Materialize the latest state for a specific agent"""
-  checkout(globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateWithValue!
+  checkout(backwardPatchCount: Int! = 0, forwardPatchCount: Int! = 0, globalRevision: Int = null, sessionId: ID = null, state: ID!, timestamp: DateTime = null): StateValue!
 
   """Materialize the latest states for a specific agent"""
-  checkoutAgent(agent: ID!, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): [StateWithValue!]!
+  checkoutAgent(agent: ID!, backwardPatchCount: Int! = 0, forwardPatchCount: Int! = 0, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): AgentWithValues!
 
   """List all registered clients."""
   clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
@@ -2409,6 +2451,9 @@ type Query {
 
   """List of UI Blok."""
   materializedBloks: [MaterializedBlok!]!
+
+  """Fetch a memory drawer by ID."""
+  memoryDrawer(id: ID!): MemoryDrawer!
 
   """All memory drawers."""
   memoryDrawers(filters: MemoryDrawerFilter, pagination: OffsetPaginationInput): [MemoryDrawer!]!
@@ -2688,7 +2733,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "76e49c42-d59c-471c-a955-84f15df5c857"
+  reference: String = "2aa8f03f-adae-4a25-a442-15395ac52e2e"
   title: String = null
 }
 
@@ -2767,13 +2812,10 @@ input ResolvedDependencyFilter {
   ids: [ID!]
 }
 
-"""The input for mapping a dependency to an implementation."""
+"""The input for mapping dependencies to implementations in a agent."""
 input ResolvedDependencyInput {
-  dependency: ID!
-  downStreamResolution: ID = null
-  implementation: ID!
   key: String!
-  resolutionKey: String = null
+  mappedAgents: [MappedAgentInput!]!
 }
 
 """The input for resuming an assignation."""
@@ -3152,6 +3194,7 @@ type StateMapping {
 type StatePatchEvent {
   agentId: ID!
   globalRevision: Int!
+  interface: String!
   op: String!
   path: String!
   sessionId: String!
@@ -3173,11 +3216,20 @@ type StateSnapshotEvent {
 
 union StateSnapshotEventStatePatchEvent = StatePatchEvent | StateSnapshotEvent
 
-type StateWithValue {
-  definition: StateDefinition!
+type StateValue {
+  """The patches that can be applied to move backward from this state"""
+  backwardPatches: [Patch!]!
+
+  """The patches that can be applied to move forward from this state"""
+  forwardPatches: [Patch!]!
+
+  """The global revision of this state"""
   globalRevision: Int
-  localRevision: Int
+
+  """The ID of the state"""
   stateId: ID!
+
+  """The state value"""
   value: JSON!
 }
 
@@ -3305,7 +3357,7 @@ type Subscription {
   stateUpdateEvents(stateId: ID!): State!
 
   """Watch an agent: yields snapshots for all states then streams patches."""
-  watchAgent(agentId: ID!): StateSnapshotEventStatePatchEvent!
+  watchAgent(agentId: ID!): AgentSnapshotEventStatePatchEvent!
 
   """Watch a state: yields the current snapshot then streams patches."""
   watchState(agentId: ID = null, interface: String = null, stateId: ID = null): StateSnapshotEventStatePatchEvent!

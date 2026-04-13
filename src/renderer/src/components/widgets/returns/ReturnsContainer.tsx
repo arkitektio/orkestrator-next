@@ -33,7 +33,7 @@ export const ReturnsContainer = ({
               key={index}
               value={values[port.key]}
               port={port}
-              widget={port.returnWidget}
+              widget={port.widget}
               options={options}
             />
           </>

@@ -6,6 +6,10 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
+    "AgentSnapshotEventStatePatchEvent": [
+      "AgentSnapshotEvent",
+      "StatePatchEvent"
+    ],
     "AssignWidget": [
       "ChoiceAssignWidget",
       "CustomAssignWidget",

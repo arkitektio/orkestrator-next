@@ -12,21 +12,33 @@ query GetStateFor($agent: ID!, $stateHash: String, $demand: SchemaDemandInput) {
 
 
 
-query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID) {
-  checkout(state: $state, globalRevision: $globalRevision, timestamp: $timestamp, sessionId: $sessionId) {
+
+query Checkout($state: ID!, $globalRevision: Int, $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int, $backwardPatchCount: Int) {
+  checkout(state: $state, globalRevision: $globalRevision, timestamp: $timestamp, sessionId: $sessionId, forwardPatchCount: $forwardPatchCount, backwardPatchCount: $backwardPatchCount) {
     stateId
     value
     globalRevision
-    localRevision
+    forwardPatches {
+     ...Patch
+    }
+    backwardPatches {
+     ...Patch
+    }
+
   }
 }
 
 
-query CheckoutAgent($agent: ID!, $globalRevision: Int , $timestamp: DateTime, $sessionId: ID) {
-  checkoutAgent(agent: $agent, globalRevision: $globalRevision, timestamp: $timestamp, sessionId: $sessionId) {
-    stateId
-    value
+query CheckoutAgent($agent: ID!, $globalRevision: Int , $timestamp: DateTime, $sessionId: ID, $forwardPatchCount: Int, $backwardPatchCount: Int) {
+  checkoutAgent(agent: $agent, globalRevision: $globalRevision, timestamp: $timestamp, sessionId: $sessionId, forwardPatchCount: $forwardPatchCount, backwardPatchCount: $backwardPatchCount) {
+    agentId
+    values
     globalRevision
-    localRevision
+    forwardPatches {
+     ...Patch
+    }
+    backwardPatches {
+     ...Patch
+    }
   }
 }

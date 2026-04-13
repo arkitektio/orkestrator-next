@@ -81,6 +81,7 @@ fragment DetailAssignation on Assignation {
   finishedAt
   implementation {
     agent {
+      id
       registry {
         client {
           clientId
@@ -91,6 +92,9 @@ fragment DetailAssignation on Assignation {
       }
 
     name
+    placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
+        ...AgentPlacement
+    }
     }
     dependencies {
       id

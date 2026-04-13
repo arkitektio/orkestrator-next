@@ -12,7 +12,7 @@ import {
 } from "@/rekuest/api/graphql";
 import { useAgentStates } from "@/rekuest/hooks/useLiveState";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const AgentStateValueDisplay = ({
   state,
@@ -96,7 +96,7 @@ const AgentCheckoutTab = ({
     variables: { agent: agentId },
   });
 
-  const maxRevision = latestData?.checkoutAgent?.[0]?.globalRevision ?? 0;
+  const maxRevision = latestData?.checkoutAgent?.globalRevision ?? 0;
   const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
   const effectiveRevision = selectedRevision ?? (maxRevision || null);
 
@@ -108,14 +108,6 @@ const AgentCheckoutTab = ({
     skip: effectiveRevision === null,
   });
 
-  // Build stateId → value map from the revision query (fall back to latest)
-  const valueMap = (revData?.checkoutAgent ?? latestData?.checkoutAgent ?? []).reduce(
-    (acc, item) => {
-      acc[item.stateId] = item.value as Record<string, unknown>;
-      return acc;
-    },
-    {} as Record<string, Record<string, unknown>>,
-  );
 
   return (
     <AsyncBoundary>
@@ -140,12 +132,20 @@ const AgentCheckoutTab = ({
         </div>
         {error && <div className="text-xs text-red-500">Error: {error.message}</div>}
         <div className="grid gap-4">
-          {states.map((state) => (
-            <div key={state.id} className="space-y-2 rounded-lg border p-4">
+          {states.map((state) =>{
+
+            const value = useMemo(() => {
+              if (!revData || revData.checkoutAgent.agentId !== agentId) return undefined;
+              return revData.checkoutAgent.values[state.interface];
+            }, [revData, state.id, agentId]);
+
+
+
+            return <div key={state.id} className="space-y-2 rounded-lg border p-4">
               <h3 className="text-sm font-semibold">{state.definition.name}</h3>
-              <AgentStateValueDisplay state={state} value={valueMap[state.id] ?? {}} />
+              <AgentStateValueDisplay state={state} value={value ?? {}} />
             </div>
-          ))}
+})}
         </div>
       </div>
     </AsyncBoundary>

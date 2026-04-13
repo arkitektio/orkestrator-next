@@ -22,6 +22,7 @@ import { EnumReturnWidget } from "@/components/widgets/returns/fallbacks/EnumRet
 import { FloatReturnWidget } from "@/components/widgets/returns/fallbacks/FloatReturnWidget";
 import { IntReturnWidget } from "@/components/widgets/returns/fallbacks/IntReturnWidget";
 import { ListReturnWidget } from "@/components/widgets/returns/fallbacks/ListReturnWidget";
+import { MemoryStructureReturnWidget } from "@/components/widgets/returns/fallbacks/MemoryStructureReturnWidget";
 import { ModelReturnWidget } from "@/components/widgets/returns/fallbacks/ModelReturnWidget";
 import { StringReturnWidget } from "@/components/widgets/returns/fallbacks/StringReturnWidget";
 import { UnionReturnWidget } from "@/components/widgets/returns/fallbacks/UnionReturnWidget";
@@ -155,6 +156,12 @@ const unionReturn = registry.registerReturnWidgetFallback(
 const structureReturn = registry.registerReturnWidgetFallback(
   PortKind.Structure,
   DelegatingStructureWidget,
+);
+
+
+const mstructureReturn = registry.registerReturnWidgetFallback(
+  PortKind.MemoryStructure,
+  MemoryStructureReturnWidget,
 );
 
 export const THE_WIDGET_REGISTRY = registry;

@@ -7,6 +7,7 @@ fragment State on State {
       ...ReturnPort
     }
   }
+  interface
   updatedAt
 }
 
@@ -15,7 +16,12 @@ fragment StateEvent on State {
   updatedAt
 }
 
-
+fragment Patch on Patch {
+  id
+  op
+  path
+  value
+}
 
 fragment StatePatchEvent on StatePatchEvent {
   stateId
@@ -26,6 +32,7 @@ fragment StatePatchEvent on StatePatchEvent {
   globalRevision
   sessionId
   timestamp
+  interface
 }
 
 fragment StateSnapshotEvent on StateSnapshotEvent {
@@ -33,6 +40,13 @@ fragment StateSnapshotEvent on StateSnapshotEvent {
   agentId
   interface
   value
+  globalRevision
+  sessionId
+  timestamp
+}
+fragment AgentSnapshotEvent on AgentSnapshotEvent {
+  agentId
+  values
   globalRevision
   sessionId
   timestamp

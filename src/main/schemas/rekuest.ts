@@ -2465,6 +2465,7 @@ export type Patch = {
   globalCurrentRevision: Scalars['Int']['output'];
   globalFutureRevision: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
+  interface: Scalars['String']['output'];
   op: Scalars['String']['output'];
   patch: JsonPatch;
   path: Scalars['String']['output'];
@@ -4610,7 +4611,7 @@ export type StateFragment = { __typename?: 'State', id: string, interface: strin
 
 export type StateEventFragment = { __typename?: 'State', id: string, updatedAt: any };
 
-export type PatchFragment = { __typename?: 'Patch', id: string, op: string, path: string, value: any };
+export type PatchFragment = { __typename?: 'Patch', id: string, op: string, path: string, value: any, interface: string };
 
 export type StatePatchEventFragment = { __typename?: 'StatePatchEvent', stateId: string, agentId: string, op: string, path: string, value: any, globalRevision: number, sessionId: string, timestamp: any, interface: string };
 
@@ -5318,7 +5319,7 @@ export type CheckoutQueryVariables = Exact<{
 }>;
 
 
-export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateValue', stateId: string, value: any, globalRevision?: number | null, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
+export type CheckoutQuery = { __typename?: 'Query', checkout: { __typename?: 'StateValue', stateId: string, value: any, globalRevision?: number | null, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any, interface: string }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any, interface: string }> } };
 
 export type CheckoutAgentQueryVariables = Exact<{
   agent: Scalars['ID']['input'];
@@ -5330,7 +5331,7 @@ export type CheckoutAgentQueryVariables = Exact<{
 }>;
 
 
-export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: { __typename?: 'AgentWithValues', agentId: string, values: any, globalRevision: number, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any }> } };
+export type CheckoutAgentQuery = { __typename?: 'Query', checkoutAgent: { __typename?: 'AgentWithValues', agentId: string, values: any, globalRevision: number, forwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any, interface: string }>, backwardPatches: Array<{ __typename?: 'Patch', id: string, op: string, path: string, value: any, interface: string }> } };
 
 export type GetStructureQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6788,6 +6789,7 @@ export const PatchFragmentDoc = gql`
   op
   path
   value
+  interface
 }
     `;
 export const StatePatchEventFragmentDoc = gql`

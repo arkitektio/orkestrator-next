@@ -6,7 +6,7 @@ import { SpaceGroupPlacement } from "../types";
 import * as THREE from "three";
 import { Card } from "@/components/ui/card";
 import { RekuestAgent } from "@/linkers";
-import { AssignationEventKind, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
+import { AssignationEventKind, PatchFragment, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { AsyncBoundary } from "@/components/boundaries/AsyncBoundary";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -66,6 +66,119 @@ const AgentStateValueDisplay = ({
   );
 };
 
+/**
+ * Resolves a JSON Patch path to the matching state port and renders the
+ * patch value using the correct return widget.
+ *
+ * Uses patch.interface to identify the state, then walks the path segments
+ * through the port tree. Handles nested paths including array indices
+ * (e.g. "/images/0" or "/model/nested_key/2").
+ */
+const PatchRenderWidget = ({
+  patch,
+  states,
+}: {
+  patch: PatchFragment;
+  states: StateFragment[];
+}) => {
+  const { registry } = useWidgetRegistry();
+
+  const resolved = useMemo(() => {
+    const state = states.find((s) => s.interface === patch.interface);
+    if (!state) return null;
+
+    // Split path: "/images/0/name" → ["images", "0", "name"]
+    const segments = patch.path.replace(/^\//, "").split("/");
+    if (segments.length === 0 || segments[0] === "") return null;
+
+    // First segment is always the top-level port key
+    const portKey = segments[0];
+    const topPort = state.definition.ports.find((p) => p.key === portKey);
+    if (!topPort) return null;
+
+    // Walk remaining segments to resolve the deepest port in the tree.
+    // Numeric segments (array indices) step through a List's single child port
+    // without consuming a named key. Named segments match a child port by key.
+    let currentPort: any = topPort;
+    const breadcrumbs: string[] = [topPort.label || topPort.key];
+
+    for (let i = 1; i < segments.length; i++) {
+      const seg = segments[i];
+      const children = currentPort.children;
+      if (!children || children.length === 0) break; // leaf reached
+
+      if (/^\d+$/.test(seg)) {
+        // Numeric index – step into List's single child port
+        if (children.length === 1) {
+          currentPort = children[0];
+          breadcrumbs.push(`[${seg}]`);
+        } else {
+          break; // unexpected
+        }
+      } else {
+        // Named key – step into Model/Union child port
+        const child = children.find((c: any) => c.key === seg);
+        if (child) {
+          currentPort = child;
+          breadcrumbs.push(child.label || child.key);
+        } else {
+          break; // can't resolve further
+        }
+      }
+    }
+
+    return { state, port: currentPort, breadcrumbs };
+  }, [patch.path, patch.interface, states]);
+
+  if (!resolved) {
+    // Fallback: show raw JSON when path cannot be resolved
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground truncate">{patch.path}</span>
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+          patch.op === "replace" ? "bg-amber-500/20 text-amber-400" :
+          patch.op === "add" ? "bg-emerald-500/20 text-emerald-400" :
+          patch.op === "remove" ? "bg-rose-500/20 text-rose-400" :
+          "bg-muted text-muted-foreground"
+        }`}>
+          {patch.op}
+        </span>
+        <span className="font-mono truncate">{JSON.stringify(patch.value)}</span>
+      </div>
+    );
+  }
+
+  const { state, port, breadcrumbs } = resolved;
+  const Widget = registry.getReturnWidgetForPort(port);
+
+  return (
+    <div className="flex flex-col gap-1 rounded-md border p-2">
+      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+        <span className="truncate">{state.definition.name}</span>
+        <span>›</span>
+        <span className="font-medium text-foreground truncate">
+          {breadcrumbs.join(" › ")}
+        </span>
+        <span className={`ml-auto px-1.5 py-0.5 rounded font-medium whitespace-nowrap ${
+          patch.op === "replace" ? "bg-amber-500/20 text-amber-400" :
+          patch.op === "add" ? "bg-emerald-500/20 text-emerald-400" :
+          patch.op === "remove" ? "bg-rose-500/20 text-rose-400" :
+          "bg-muted text-muted-foreground"
+        }`}>
+          {patch.op}
+        </span>
+      </div>
+      <div className="rounded bg-background">
+        <Widget
+          port={port}
+          widget={port.widget}
+          value={patch.value}
+        />
+      </div>
+    </div>
+  );
+};
+
 
 
 const AgentCheckoutPanel = ({
@@ -107,15 +220,13 @@ const AgentCheckoutPanel = ({
             </span>
             {loading && <span className="text-yellow-500">loading…</span>}
           </div>
-          {revData?.checkoutAgent.backwardPatches.map((patch) => {
-            return <div key={patch.id} className="flex items-center gap-2 text-xs">
-              <span>{patch.path}</span>
-              <span className={`px-2 py-1 rounded text-center text-xs`}>
-                {patch.op}
-              </span>
-              <span className="font-mono">{JSON.stringify(patch.value)}</span>
-            </div>
-             })}
+          {data?.agent?.states && revData?.checkoutAgent.backwardPatches.map((patch) => (
+            <PatchRenderWidget
+              key={patch.id}
+              patch={patch}
+              states={data.agent.states}
+            />
+          ))}
         </div>
         <Collapsible>
           <CollapsibleTrigger className="text-sm font-medium">

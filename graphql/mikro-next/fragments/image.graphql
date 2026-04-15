@@ -46,8 +46,7 @@ fragment ListImage on Image {
   latestSnapshot {
     id
     store {
-      key
-      presignedUrl
+      ...MediaStore
     }
   }
   id

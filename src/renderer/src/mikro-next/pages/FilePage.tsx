@@ -1,17 +1,15 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { DownloadButton } from "@/components/ui/download-button";
-import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
-import { useResolve } from "@/datalayer/hooks/useResolve";
+import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
 import { MikroFile, MikroImage } from "@/linkers";
+import { useDownload } from "@/providers/download/DownloadProvider";
 import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
-import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
-import { Button } from "@/components/ui/button";
-import { useDownload } from "@/providers/download/DownloadProvider";
+import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 
 export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
   const download = useMikroBigFileDownload();
@@ -93,10 +91,18 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           {(view) => (
             <MikroImage.Smart object={view.image} key={view.image.id}>
               <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden">
-                <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                <div className="relative aspect-square">
+                  <WithMikroMediaUrl media={view.image.latestSnapshot?.store}>
+                    {(url) => (
+                      <img
+                        src={url}
+                        alt={view.image.name}
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                  </WithMikroMediaUrl>
 
-                  {/* Overlay with improved gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
 
                   {/* Content overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform  transition-transform duration-300 truncate">

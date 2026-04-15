@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { MikroImage } from "@/linkers";
 import { ListImageFragment } from "../../api/graphql";
+import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 
 interface ImageCardProps {
   item: ListImageFragment;
@@ -14,12 +15,24 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
     <MikroImage.Smart object={item}>
       <div
         className={cn(
-          `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl`,
+          `relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden`,
           className,
         )}
       >
+        <WithMikroMediaUrl media={item.latestSnapshot?.store}>
+          {(url) => (
+            <img
+              src={url}
+              alt={item.name}
+              className="object-cover w-full h-full  transition-transform duration-300 rounded-lg rounded"
+            />
+          )}
+        </WithMikroMediaUrl>
+
+
+
         <div
-          className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row "
+          className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row overflow-hidden "
           style={{
             backgroundSize: `${progress || 0}% 100%`,
             backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
@@ -27,9 +40,12 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
             backgroundPosition: "left center",
           }}
         >
+
+
+
           <MikroImage.DetailLink
             className={({ isActive } /*  */) =>
-              "z-10 font-bold text-md mb-2 cursor-pointer break-words line-clamp-2" +
+              "z-10 font-bold text-md mb-2 cursor-pointer break-words line-clamp-2 truncate elipsis" +
               (isActive ? "text-primary-300" : "")
             }
             object={item}

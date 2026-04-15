@@ -2143,6 +2143,7 @@ type Patch {
   globalCurrentRevision: Int!
   globalFutureRevision: Int!
   id: ID!
+  interface: String!
   op: String!
   patch: JSONPatch!
   path: String!
@@ -2733,7 +2734,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "2aa8f03f-adae-4a25-a442-15395ac52e2e"
+  reference: String = "0afa4287-e43b-4aed-9207-cec91d76e351"
   title: String = null
 }
 

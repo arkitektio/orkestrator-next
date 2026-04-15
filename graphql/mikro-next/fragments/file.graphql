@@ -25,4 +25,7 @@ fragment File on File {
 fragment ListFile on File {
   id
   name
+  creator {
+    sub
+  }
 }

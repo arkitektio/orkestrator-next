@@ -1,4 +1,4 @@
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { MikroFile } from "@/linkers";
 import { cn } from "@udecode/cn";
 import { ListFileFragment } from "../../api/graphql";
@@ -22,6 +22,12 @@ const TheCard = ({ item, className }: Props) => {
             {item.name}
           </MikroFile.DetailLink>
         </CardTitle>
+        <CardContent className="text-sm text-muted-foreground">
+          <div className="flex flex-row gap-2">
+            <div className="font-light">Size:</div>
+            <div>{item.creator.sub} bytes</div>
+          </div>
+        </CardContent>
       </Card>
     </MikroFile.Smart>
   );

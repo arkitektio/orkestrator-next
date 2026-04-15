@@ -18,16 +18,16 @@ export const HomePageStatisticsSidebar = () => {
             value: loading ? "..." : totalImages,
             description: "Total number of actions in your collection",
             icon: Images,
-            color: "text-blue-500",
-            bgColor: "bg-blue-500/10",
+            color: "text-primary",
+            bgColor: "bg-chart-1/10",
         },
         {
             title: "Recent Activity",
             value: loading ? "..." : totalAssignations,
             description: "Assignations created since you joined",
             icon: Activity,
-            color: "text-green-500",
-            bgColor: "bg-green-500/10",
+            color: "text-chart-2",
+            bgColor: "bg-chart-2/10",
         }
     ];
 
@@ -55,7 +55,7 @@ export const HomePageStatisticsSidebar = () => {
             {statsCards.map((card) => (
                 <div
                     key={card.title}
-                    className="p-4 rounded-lg border dark:border-gray-700 flex items-center gap-4"
+                    className="p-4 rounded-lg border  border-border  flex items-center gap-4"
                 >
                     <div
                         className={`p-3 rounded-lg ${card.bgColor} ${card.color}`}

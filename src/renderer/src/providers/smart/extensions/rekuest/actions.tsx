@@ -398,7 +398,7 @@ export const BatchAssignButton = (
     }
 
     for (const object of props.objects) {
-      const keys: Record<string, unknown> = { [key]: object.object };
+      const keys: Record<string, unknown> = { [key]: {__identifier: object.identifier, object: object.object.id } };
 
       if (props.partners && props.partners.length === 1) {
         const partnerKey = action.args?.at(1)?.key;
@@ -408,7 +408,7 @@ export const BatchAssignButton = (
         }
         keys[partnerKey] = {
           __identifier: props.partners[0].identifier,
-          object: props.partners[0].object,
+          object: props.partners[0].object.id,
         };
       }
 
@@ -424,7 +424,7 @@ export const BatchAssignButton = (
         }
         keys[partnerKey] = props.partners.map((partner) => ({
           __identifier: partner.identifier,
-          object: partner.object,
+          object: partner.object.id,
         }));
       }
 

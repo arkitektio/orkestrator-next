@@ -20,6 +20,8 @@ fragment File on File {
   organization {
     slug
   }
+  size
+  contentType
 }
 
 fragment ListFile on File {
@@ -28,4 +30,6 @@ fragment ListFile on File {
   creator {
     sub
   }
+  size
+  contentType
 }

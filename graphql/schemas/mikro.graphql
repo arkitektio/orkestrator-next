@@ -1111,6 +1111,9 @@ input ExperimentFilter {
 }
 
 type File {
+  """The content type of the file"""
+  contentType: String
+
   """The user who created this file"""
   creator: User!
   id: ID!
@@ -1122,6 +1125,9 @@ type File {
 
   """Provenance entries for this camera"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The size of the file in bytes"""
+  size: Int
   store: BigFileStore!
   views: [FileView!]!
 }

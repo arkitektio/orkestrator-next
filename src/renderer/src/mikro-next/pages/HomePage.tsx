@@ -160,10 +160,10 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
             </CardHeader>
 
             <ImageList
-              filters={{ notDerived: true, ...temporalFilter }}
+              filters={{ notDerived: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
             />
             <DatasetList
-              filters={{ parentless: true, ...temporalFilter }}
+              filters={{ parentless: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
             />
             <Separator className="my-4" />
             <FileList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />

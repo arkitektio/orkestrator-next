@@ -8,10 +8,10 @@ export interface ViewCardProps extends ComponentProps<typeof Card> {
 }
 export const ViewCard = ({ view, className, ...props }: ViewCardProps) => {
   return (
-    <Card
+    <div
       data-viewactive={true}
       className={cn(
-        "data-[viewactive=true]:border-accent data-[viewactive=false]:opacity-20 cursor-pointer @container ",
+        "cursor-pointer @container text-xs rounded-md border group-data-[viewactive=true]:border-primary bg-background/80",
         className,
       )}
       {...props}

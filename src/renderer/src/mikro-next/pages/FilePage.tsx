@@ -90,8 +90,8 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <ListRender array={data?.file?.views} title="">
           {(view) => (
             <MikroImage.Smart object={view.image} key={view.image.id}>
-              <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden">
-                <div className="relative aspect-square">
+              <div className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden rounded-lg rounded border-border ">
+                <div className="relative w-full h-full">
                   <WithMikroMediaUrl media={view.image.latestSnapshot?.store}>
                     {(url) => (
                       <img
@@ -107,20 +107,20 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                   {/* Content overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform  transition-transform duration-300 truncate">
                     <MikroImage.DetailLink
-                      className="font-semibold text-lg block hover:text-blue-300 transition-colors line-clamp-2"
+                      className="font-semibold text-lg block hover:text-primary transition-colors line-clamp-2"
                       object={view.image}
                     >
                       {view.image?.name}
                     </MikroImage.DetailLink>
 
                     {view.seriesIdentifier && (
-                      <Badge variant={"outline"}>
+                      <Badge variant={"default"} className="mt-1 bg-black  text-xs text-primary">
                         Series: {view.seriesIdentifier}
                       </Badge>
                     )}
                   </div>
                 </div>
-              </Card>
+              </div>
             </MikroImage.Smart>
           )}
         </ListRender>

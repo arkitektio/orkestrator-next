@@ -1,20 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { Button } from "@/components/plate-ui/button";
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
 import {
   DetailPane,
   DetailPaneContent,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -25,7 +18,6 @@ import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { Download, DownloadIcon } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import {
@@ -39,7 +31,6 @@ import RGBViewCard from "../components/cards/RGBViewCard";
 import { FinalRender } from "../components/render/FInalRender";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 
 export type IRepresentationScreenProps = {};
 

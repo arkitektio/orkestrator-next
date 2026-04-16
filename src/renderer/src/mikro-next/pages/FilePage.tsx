@@ -90,7 +90,7 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <ListRender array={data?.file?.views} title="">
           {(view) => (
             <MikroImage.Smart object={view.image} key={view.image.id}>
-              <div className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden rounded-lg rounded border-border ">
+              <div className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden rounded-lg rounded border-border bg-background h-48 aspect-square">
                 <div className="relative w-full h-full">
                   <WithMikroMediaUrl media={view.image.latestSnapshot?.store}>
                     {(url) => (

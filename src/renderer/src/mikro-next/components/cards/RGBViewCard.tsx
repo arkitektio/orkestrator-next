@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -11,18 +9,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
 import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
 
-import { ChevronDown, Edit2, Scale3DIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Scale3DIcon,
+  Eye,
+  EyeOff,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useMemo, useEffect, useState } from "react";
 import { RgbColorPicker } from "react-colorful";
 import {
   ColorMap,
@@ -35,7 +35,6 @@ import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: RgbViewFragment;
-
 }
 
 export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
@@ -47,10 +46,9 @@ export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
 
 export const baseColorToName = (baseColor: number[] | undefined | null) => {
   const rgb = baseColorToRGB(baseColor);
-  return rgb
+  return rgb;
 };
 
-// Convert baseColor array to react-colorful RGB format
 export const baseColorToRGBObject = (
   baseColor: number[] | undefined | null,
 ) => {
@@ -61,36 +59,33 @@ export const baseColorToRGBObject = (
   };
 };
 
-// Available colormap options
 const colorMapOptions = enumToOptions(ColorMap).map((option) => ({
   value: option.value,
   label: option.label,
 }));
 
 const TheCard = ({ view }: Props) => {
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [isContrastExpanded, setIsContrastExpanded] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Helper function to calculate min/max values from image dtype
   const getImageMinMax = () => {
     const dtype = view.image?.store?.dtype;
-    if (!dtype) return { min: 0, max: 65535 }; // Default fallback
+    if (!dtype) return { min: 0, max: 65535 };
 
     switch (dtype) {
-      case 'uint8':
+      case "uint8":
         return { min: 0, max: 255 };
-      case 'uint16':
+      case "uint16":
         return { min: 0, max: 65535 };
-      case 'uint32':
+      case "uint32":
         return { min: 0, max: 4294967295 };
-      case 'int8':
+      case "int8":
         return { min: 0, max: 127 };
-      case 'int16':
+      case "int16":
         return { min: 0, max: 32767 };
-      case 'int32':
+      case "int32":
         return { min: 0, max: 2147483647 };
-      case 'float32':
-      case 'float64':
+      case "float32":
+      case "float64":
         return { min: 0, max: 1 };
       default:
         return { min: 0, max: 65535 };
@@ -116,7 +111,6 @@ const TheCard = ({ view }: Props) => {
     fetchPolicy: "network-only",
   });
 
-  // Handle debounced contrast updates
   useEffect(() => {
     const currentMin = view.contrastLimitMin ?? imageMin;
     const currentMax = view.contrastLimitMax ?? imageMax;
@@ -135,10 +129,17 @@ const TheCard = ({ view }: Props) => {
         },
       }).catch((error) => {
         console.error("Error updating contrast limits:", error);
-        alert("Failed to update contrast limits.");
       });
     }
-  }, [debouncedContrastValues, view.contrastLimitMin, view.contrastLimitMax, view.id, updateRgbView, imageMin, imageMax]);
+  }, [
+    debouncedContrastValues,
+    view.contrastLimitMin,
+    view.contrastLimitMax,
+    view.id,
+    updateRgbView,
+    imageMin,
+    imageMax,
+  ]);
 
   const handleContrastChange = (values: number[]) => {
     setContrastValues([values[0], values[1]]);
@@ -154,7 +155,6 @@ const TheCard = ({ view }: Props) => {
       },
     }).catch((error) => {
       console.error("Error updating colormap:", error);
-      alert("Failed to update colormap.");
     });
   };
 
@@ -168,147 +168,131 @@ const TheCard = ({ view }: Props) => {
       },
     }).catch((error) => {
       console.error("Error toggling active state:", error);
-      alert("Failed to toggle active state.");
     });
   };
 
   const handleColorChange = (color: { r: number; g: number; b: number }) => {
-    // Extract RGB values from the color object
     const r = Math.round(color.r);
     const g = Math.round(color.g);
     const b = Math.round(color.b);
-    const newBaseColor = [r, g, b];
-
     updateRgbView({
       variables: {
         input: {
           id: view.id,
-          baseColor: newBaseColor,
+          baseColor: [r, g, b],
         },
       },
     }).catch((error) => {
       console.error("Error updating base color:", error);
-      alert("Failed to update base color.");
     });
   };
 
+  const gradientStyle = useMemo(() => {
+    const rgb = baseColorToRGBObject(view.baseColor);
+    return {
+      background: `linear-gradient(135deg, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08) 0%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.02) 100%)`,
+    };
+  }, [view.baseColor]);
+
   return (
-    <ViewCard view={view} className="group flex flex-rowjustify-between">
-      <CardHeader className="flex flex-col justify-between w-full">
-        <CardTitle className="flex w-full items-center gap-2">
-          Channel {view.cMin}{" "}
-          {view.colorMap == ColorMap.Intensity && (
-            <Popover
-              open={isColorPickerOpen}
-              onOpenChange={setIsColorPickerOpen}
-            >
-              <PopoverTrigger asChild>
-                <button
-                  className="w-4 h-4 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-primary transition-all"
-                  style={{ backgroundColor: baseColorToRGB(view.baseColor) }}
-                  aria-label="Select base color"
-                />
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-3" align="start">
-                <div className="space-y-3">
-                  <RgbColorPicker
-                    color={baseColorToRGBObject(view.baseColor)}
-                    onChange={handleColorChange}
-                  />
-                  <div className="text-sm text-muted-foreground">
-                    Current: {baseColorToName(view.baseColor)}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-          <MikroRGBView.ObjectButton
-            object={view}
-            collection="rescale"
-            onDone={() => {
-              getRgbView();
-            }}
-            className="flex-shrink-0"
-            ephemeral
-          >
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              aria-label="Rescale RGB View"
-            >
-              <Scale3DIcon className="mr-2" />
-            </Button>
-          </MikroRGBView.ObjectButton>
-          <Button
-            onClick={() => handleToggleActive()}
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            aria-label="Toggle View Visibility"
-          >
-            {view.active ? "👁️" : "🚫"}
-          </Button>
-        </CardTitle>
+    <ViewCard
+      view={view}
+      className={`group overflow-hidden transition-all duration-200 ${
+        view.active ? "shadow-sm" : "opacity-50"
+      }`}
+      style={gradientStyle}
+    >
+      <div className="px-2 py-1.5" style={gradientStyle}>
+        {/* Compact single row: color dot, label, actions */}
         <div className="flex items-center gap-2 w-full">
-          {view.colorMap == ColorMap.Intensity ? (
-            <p className="text-xs text-foreground-muted">
-              {baseColorToName(view.baseColor)}
-            </p>
-          ) : (
-            <p className="text-xs text-foreground-muted">{view.colorMap}</p>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 group-hover:opacity-100 opacity-0"
+          {/* Color indicator dot */}
+          <span
+            className="w-3 h-3 rounded-full flex-shrink-0 ring-1 ring-black/10"
+            style={{ backgroundColor: baseColorToRGB(view.baseColor) }}
+          />
+
+          {/* Channel label + colormap */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="text-xs font-medium truncate">
+              Ch {view.cMin}
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-[10px] text-muted-foreground hover:text-foreground truncate transition-colors">
+                  {view.colorMap === ColorMap.Intensity
+                    ? "Intensity"
+                    : view.colorMap}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-36">
+                {colorMapOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => handleColorMapChange(option.value)}
+                    className={
+                      view.colorMap === option.value
+                        ? "bg-accent font-medium"
+                        : ""
+                    }
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Right: compact action icons */}
+          <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <MikroRGBView.ObjectButton
+              object={view}
+              collection="rescale"
+              onDone={() => getRgbView()}
+              className="flex-shrink-0"
+              ephemeral
+            >
+              <button
+                className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                aria-label="Rescale"
               >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {colorMapOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => handleColorMapChange(option.value)}
-                  className={
-                    view.colorMap === option.value ? "bg-accent" : ""
-                  }
-                >
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Scale3DIcon className="h-3 w-3" />
+              </button>
+            </MikroRGBView.ObjectButton>
+            <button
+              onClick={handleToggleActive}
+              className={`h-6 w-6 flex items-center justify-center rounded transition-colors ${
+                view.active
+                  ? "text-foreground hover:text-foreground/80"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Toggle visibility"
+            >
+              {view.active ? (
+                <Eye className="h-3 w-3" />
+              ) : (
+                <EyeOff className="h-3 w-3" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Collapsible Contrast Slider */}
+        {/* Expandable settings: contrast slider */}
         <Collapsible
-          open={isContrastExpanded}
-          onOpenChange={setIsContrastExpanded}
-          className="space-y-2"
+          open={isSettingsOpen}
+          onOpenChange={setIsSettingsOpen}
         >
           <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-between p-2 h-auto"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Contrast
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {contrastValues[0].toFixed(0)} - {contrastValues[1].toFixed(0)}
-                </span>
-              </div>
+            <button className="flex items-center gap-1.5 mt-1 text-muted-foreground hover:text-foreground transition-colors w-full">
+              <SlidersHorizontal className="h-2.5 w-2.5" />
+              <span className="text-[10px]">
+                {contrastValues[0].toFixed(0)}–{contrastValues[1].toFixed(0)}
+              </span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform duration-200 ${isContrastExpanded ? "rotate-180" : ""
-                  }`}
+                className={`h-2.5 w-2.5 ml-auto transition-transform duration-200 ${
+                  isSettingsOpen ? "rotate-180" : ""
+                }`}
               />
-            </Button>
+            </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2">
             <Slider
@@ -317,11 +301,21 @@ const TheCard = ({ view }: Props) => {
               min={imageMin}
               max={imageMax}
               step={1}
-              className="w-full"
+              className="w-full mt-1.5 mb-0.5"
             />
+            {view.colorMap === ColorMap.Intensity && (
+              <div className="space-y-1.5">
+                <span className="text-[10px] text-muted-foreground">Base Color</span>
+                <RgbColorPicker
+                  color={baseColorToRGBObject(view.baseColor)}
+                  onChange={handleColorChange}
+                  style={{ width: "100%", height: 80 }}
+                />
+              </div>
+            )}
           </CollapsibleContent>
         </Collapsible>
-      </CardHeader>
+      </div>
     </ViewCard>
   );
 };

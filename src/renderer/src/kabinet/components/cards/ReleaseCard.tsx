@@ -46,7 +46,7 @@ export const AssignButton = (props: {
     console.log(
       await assign({
         args: {
-          release: props.release,
+          release: { object: props.release, __identifier: KabinetRelease.identifier},
         },
       }),
     );
@@ -93,7 +93,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button variant="outline" size="sm">
           Install
         </Button>

@@ -148,7 +148,7 @@ export const SearchField = ({
               shouldFilter={false}
               className="overflow-visible bg-transparent"
             >
-              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+              <div className="group  text-sm rounded ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                 <div className="w-full relative h-10">
                   <CommandInput
                     onKeyDown={handleKeyDown}

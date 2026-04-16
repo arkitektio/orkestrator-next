@@ -23,32 +23,32 @@ export const PeerStatisticsSidebar = (props: { sub: string }) => {
             value: loading ? "..." : totalImages,
             description: "Total number of images in your collection",
             icon: Images,
-            color: "text-blue-500",
-            bgColor: "bg-blue-500/10",
+            color: "text-primary",
+            bgColor: "bg-chart-1/10",
         },
         {
             title: "Recent Activity",
             value: loading ? "..." : recentActivity,
             description: "Images created in the past week",
             icon: Activity,
-            color: "text-green-500",
-            bgColor: "bg-green-500/10",
+            color: "text-chart-1",
+            bgColor: "bg-chart-2/10",
         },
         {
             title: "Daily Average",
             value: loading ? "..." : averageDaily,
             description: "Average images created per day",
             icon: TrendingUp,
-            color: "text-purple-500",
-            bgColor: "bg-purple-500/10",
+            color: "text-chart-3",
+            bgColor: "bg-chart-3/10",
         },
         {
             title: "This Week",
             value: loading ? "..." : recentActivity,
             description: "Total new images added this week",
             icon: Calendar,
-            color: "text-orange-500",
-            bgColor: "bg-orange-500/10",
+            color: "text-chart-4",
+            bgColor: "bg-chart-4/10",
         },
     ];
 
@@ -77,7 +77,7 @@ export const PeerStatisticsSidebar = (props: { sub: string }) => {
             {statsCards.map((card) => (
                 <div
                     key={card.title}
-                    className="p-4 rounded-lg border dark:border-gray-700 flex items-center gap-4"
+                    className="p-4 rounded-lg border  border-border  flex items-center gap-4"
                 >
                     <div
                         className={`p-3 rounded-lg ${card.bgColor} ${card.color}`}

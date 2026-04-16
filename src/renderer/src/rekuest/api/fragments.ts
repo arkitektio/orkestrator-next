@@ -13,6 +13,7 @@
     "AssignWidget": [
       "ChoiceAssignWidget",
       "CustomAssignWidget",
+      "ProxyWidget",
       "SearchAssignWidget",
       "SliderAssignWidget",
       "StateChoiceAssignWidget",

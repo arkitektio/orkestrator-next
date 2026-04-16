@@ -1,7 +1,7 @@
-import {  MediaAccessGrantFragment } from "@/rekuest/api/graphql";
+import { GeneralMediaAccessGrantFragment } from "@/mikro-next/api/graphql";
 
 
-export async function signS3Request(url: string, method: string, credentials: MediaAccessGrantFragment) {
+export async function signS3Request(url: string, method: string, credentials: GeneralMediaAccessGrantFragment) {
   const { accessKey, secretKey, sessionToken, region } = credentials;
   const parsedUrl = new URL(url);
   const endpoint = parsedUrl.host; // e.g., "jhnnsrs-la" or "minio"

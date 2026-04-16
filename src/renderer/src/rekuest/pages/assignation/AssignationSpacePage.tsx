@@ -16,6 +16,7 @@ import {
 } from "@/rekuest/components/spaces/task/store";
 import { TaskTimeline } from "@/rekuest/components/spaces/task/panels/TaskTimeline";
 import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import type {} from "@react-three/fiber";
 import { useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
@@ -111,10 +112,15 @@ export const TaskSpacePage = asDetailQueryRoute(
           }
         >
           <ChildAssignationUpdater assignationId={id} />
-          <div className="flex h-full min-h-[calc(100vh-12rem)] flex-col gap-0 px-3 pb-3">
-            <TaskSpaceScene />
-            <TaskTimeline />
-          </div>
+          <ResizablePanelGroup direction="vertical" className="h-full min-h-[calc(100vh-12rem)] px-3 pb-3">
+            <ResizablePanel defaultSize={70} minSize={20}>
+              <TaskSpaceScene />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={30} minSize={10}>
+              <TaskTimeline />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </RekuestAssignation.ModelPage>
       </SpaceViewStoreContext.Provider>
     );

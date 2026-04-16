@@ -19,6 +19,7 @@ import { useHashActionWithProgress } from "@/rekuest/hooks/useHashActionWithProg
 import { CommandGroup } from "cmdk";
 import React from "react";
 import type { PassDownProps } from "../types";
+import { KabinetDefinition } from "@/linkers";
 
 type InstallAction = {
   id: string;
@@ -44,7 +45,7 @@ export const InstallButton = (props: {
     <CommandItem
       value={`install-${props.definition.id}-${props.action.id}`}
       onSelect={() => {
-        void assign({ definition: props.definition.id });
+        void assign({ definition: {object: props.definition.id, __identifier: KabinetDefinition.identifier } });
       }}
       className="flex-1"
       style={{

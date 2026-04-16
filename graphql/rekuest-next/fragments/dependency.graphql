@@ -13,4 +13,7 @@ fragment ListDependency on Dependency {
   appFilter
   versionFilter
   autoResolvable
+  minViableInstances
+  maxViableInstances
+  singular
 }

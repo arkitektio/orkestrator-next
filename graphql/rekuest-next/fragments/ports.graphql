@@ -24,6 +24,14 @@ fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   dependency
 }
 
+fragment ProxyWidget on ProxyWidget {
+  __typename
+  kind
+  targetPort
+  targetAction
+  targetDependency
+}
+
 fragment FilterPort on ArgPort {
   __typename
   kind
@@ -195,6 +203,7 @@ fragment AssignWidget on AssignWidget {
   ...SearchAssignWidget
   ...SliderAssignWidget
   ...ChoiceAssignWidget
+  ...ProxyWidget
   ...CustomAssignWidget
   ...StateChoiceAssignWidget
 }

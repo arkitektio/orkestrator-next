@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { ActionDescription, useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestAction, RekuestAgent, RekuestAssignation, RekuestImplementation } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
   AssignationEventKind,
   DetailImplementationFragment,
+  ResolvedDependencyInput,
   WatchImplementationDocument,
   WatchImplementationSubscription,
   WatchImplementationSubscriptionVariables,
@@ -29,99 +30,53 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
+import { useImplementationForm } from "../hooks/useImplementationForm";
 
-export const DoFormBackup = (props: { id: string }) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
-    id: props.id,
-  });
-
-  const form = usePortForm({
-    ports: implementation?.action.args || [],
-    overwrites: latestAssignation?.args,
-  });
-
-  const navigate = useNavigate();
-
-  const onSubmit = (data: any) => {
-    console.log("Submitting");
-    console.log(data);
-    assign({
-      implementation: props.id,
-      args: data,
-      hooks: [],
-    }).then(
-      (result) => {
-        console.log("Result", result);
-        navigate(RekuestAssignation.linkBuilder(result.id));
-      },
-      (error) => {
-        toast.error(error.message);
-      },
-    );
-  };
-
-
-  const { registry } = useWidgetRegistry();
-
-  return (
-    <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          {implementation?.action?.description && (
-            <ActionDescription
-              description={implementation.action.description}
-              variables={form.watch()}
-            />
-          )}
-          <ArgsContainer
-            registry={registry}
-            groups={implementation?.action.portGroups}
-            ports={implementation?.action.args || []}
-            path={[]}
-          />
-          <DialogFooter>
-            <Button type="submit" className="btn">
-              {" "}
-              Submit{" "}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </>
-  );
-};
 
 export const DoForm = ({ id }: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: id,
   });
 
-  const form = usePortForm({
-    ports: implementation?.action.args || [],
-  });
+  const description = useActionDescription({
+     description: implementation?.action.description || "",
+   });
 
+   const form = useImplementationForm({
+     implementation: implementation,
+     overwrites: { ...latestAssignation?.args },
+     reValidateMode: "onChange",
+   });
 
-  const navigate = useNavigate();
+   const onSubmit = async (data: {
+     args: Record<string, unknown>;
+     dependencies: Record<string, ResolvedDependencyInput>;
+   }) => {
+     console.log("Submitting");
+     console.log(data);
+     try {
+       const assignation = await assign({
+         implementation: id,
+         args: data.args,
+         dependencies: Object.values(data.dependencies),
+         hooks: [],
+       });
 
-  const onSubmit = (data: any) => {
-    console.log("Submitting");
-    console.log(data);
-    assign({
-      implementation: id,
-      args: data,
-      hooks: [],
-    }).then(
-      (result) => {
-        console.log("Result", result);
-        navigate(RekuestAssignation.linkBuilder(result.id));
-      },
-      (error) => {
-        toast.error(error.message);
-      },
-    );
-  };
+     } catch (e) {
+       const message = (e as ApolloError).message;
+         if (!message) {
+           toast.error("No key found");
+           return;
+         }
+         toast.error(message);
+     }
+   };
+
 
   const { registry } = useWidgetRegistry();
+
+
 
   const yieldEvent = latestAssignation?.events?.find(
     (x) => x.kind == AssignationEventKind.Yield,
@@ -148,6 +103,9 @@ export const DoForm = ({ id }: { id: string }) => {
                     ports={implementation?.action?.args || []}
                     path={[]}
                   />
+                   {implementation?.dependencies && (
+            <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation.agent.id} />
+          )}
                 </div>
               </CardContent>
             </Card>

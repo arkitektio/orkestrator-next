@@ -173,7 +173,7 @@ const Page = () => {
 
       <ReservationList />
       <AssignationList />
-      <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} />
+      <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: "DESC" }} />
       </div>
     </PageLayout>
   );

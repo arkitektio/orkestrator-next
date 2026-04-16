@@ -168,7 +168,7 @@ const TimelineMethodRender = ({
   onClickPosition: (normalised: number) => void;
 }) => (
   <>
-    <div className="col-span-2 ml-4 rounded-md border border-primary/40 bg-background/50 px-2 py-2 z-10">
+    <div className="col-span-1 ml-4 rounded-md border border-primary/40 bg-background/50 px-2 py-2 z-10">
       <div className="relative">
         <div className="flex items-center gap-2 min-w-0">
           <div className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-primary shrink-0">
@@ -178,7 +178,7 @@ const TimelineMethodRender = ({
         </div>
       </div>
     </div>
-    <div className="col-span-10 flex items-center relative z-10">
+    <div className="col-span-11 flex items-center relative z-10">
       <TimelineBars items={row.items} highlighted={highlighted} onClickPosition={onClickPosition} />
     </div>
   </>
@@ -203,8 +203,8 @@ const TimelineGroupRender = ({
       <div
         className={
           expanded
-            ? "col-span-2 cursor-pointer rounded-md border border-primary/70 bg-primary/40 shadow-sm shadow-primary/20 transition-colors z-10"
-            : "col-span-2 cursor-pointer rounded-md border border-border bg-card/60 hover:bg-card transition-colors z-10"
+            ? "col-span-1 cursor-pointer rounded-md border border-primary/70 bg-primary/40 shadow-sm shadow-primary/20 transition-colors z-10"
+            : "col-span-1 cursor-pointer rounded-md border border-border bg-card/60 hover:bg-card transition-colors z-10"
         }
       >
         <div className="w-full relative" onClick={() => setExpanded(!expanded)}>
@@ -223,7 +223,7 @@ const TimelineGroupRender = ({
           </div>
         </div>
       </div>
-      <div className="col-span-10 flex items-center relative z-10">
+      <div className="col-span-11 flex items-center relative z-10">
         {!expanded ? (
           <div className="relative h-6 w-full rounded-full border border-dashed border-primary/70 bg-primary/30 flex items-center px-3 text-xs text-muted-foreground">
             {itemCount} delegated task{itemCount === 1 ? "" : "s"}
@@ -271,14 +271,14 @@ export const TaskTimeline = () => {
 
   return (
     <div
-      className="flex w-full flex-col justify-end text-white @container"
+      className="w-full h-full justify-end text-white @container overflow-y-auto overflow-x-hidden rounded-b-2xl border border-border/60 bg-gradient-to-b from-background to-background/80  cursor-default"
       onClick={() => setHighlighted([])}
     >
-      <div className="relative mt-auto flex flex-col gap-2 rounded-2xl border border-white/8 bg-background/75 p-4 shadow-[0_-12px_40px_rgba(0,0,0,0.22)] backdrop-blur-md">
+      <div className="relative w-full h-full min-h-[200px] p-3 bg-background">
         {/* event markers (background) */}
         <div className="absolute inset-0 flex pointer-events-none z-0">
-          <div className="w-2/12" />
-          <div className="w-10/12 relative border-l border-white/5">
+          <div className="w-1/12" />
+          <div className="w-11/12 relative border-l border-white/5">
             {timelineEvents.map((event, index) => (
               <div
                 key={`ev-${index}`}
@@ -295,8 +295,8 @@ export const TaskTimeline = () => {
 
         {/* log event labels */}
         <div className="absolute inset-0 flex pointer-events-none z-0">
-          <div className="w-2/12" />
-          <div className="w-10/12 relative border-l border-white/5">
+          <div className="w-1/12" />
+          <div className="w-11/12 relative border-l border-white/5">
             {timelineEvents.map((event, index) => (
               <div
                 key={`log-${index}`}
@@ -313,8 +313,8 @@ export const TaskTimeline = () => {
 
         {/* selected timepoint indicator */}
         <div className="absolute inset-0 flex pointer-events-none z-30">
-          <div className="w-2/12" />
-          <div className="w-10/12 relative">
+          <div className="w-1/12" />
+          <div className="w-11/12 relative">
             <div
               className="absolute top-0 bottom-0 w-0.5 bg-primary/80"
               style={{ left: `${timepointNormalised * 100}%` }}
@@ -324,9 +324,9 @@ export const TaskTimeline = () => {
 
         {/* clickable background to set timepoint */}
         <div className="absolute inset-0 flex z-[1]">
-          <div className="w-2/12" />
+          <div className="w-1/12" />
           <div
-            className="w-10/12 cursor-crosshair"
+            className="w-11/12 cursor-crosshair"
             onClick={(e) => {
               e.stopPropagation();
               const rect = e.currentTarget.getBoundingClientRect();

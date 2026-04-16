@@ -21,6 +21,7 @@ fragment Patch on Patch {
   op
   path
   value
+  interface
 }
 
 fragment StatePatchEvent on StatePatchEvent {

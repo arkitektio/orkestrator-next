@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/tooltip";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
-  FlussPortFragment,
+  FlussArgPortFragment,
+  FlussReturnPortFragment,
   GraphNodeKind,
   PortKind,
   ReactiveImplementation,
@@ -129,7 +130,7 @@ export type ReactiveNodeSuggestions = {
 };
 
 const reactiveNodes = (
-  ports: FlussPortFragment[],
+  ports: FlussArgPortFragment[],
   params: DropContextualParams,
 ): ReactiveNodeSuggestions[] => {
   const nodes: ReactiveNodeSuggestions[] = [];
@@ -225,7 +226,7 @@ const displayLimit = 5;
 
 export const TargetDropContextual = (props: {
   params: DropContextualParams;
-  ports: FlussPortFragment[] | null | undefined;
+  ports: FlussReturnPortFragment[] | null | undefined;
 }) => {
   const { addContextualNode } = useEditRiver();
 
@@ -412,7 +413,7 @@ export const TargetDropContextual = (props: {
 
 export const SourceDropContextual = (props: {
   params: DropContextualParams;
-  ports: FlussPortFragment[] | null | undefined;
+  ports: FlussArgPortFragment[] | null | undefined;
 }) => {
   const { addContextualNode } = useEditRiver();
 

@@ -3,7 +3,6 @@ import { useSpaceViewStore } from "./store";
 import { Suspense, useMemo } from "react";
 import { CameraMatrixSync } from "./syncs/CameraMatrixSync";
 import { Canvas } from "@react-three/fiber";
-import { StageFloor } from "./elements/StageFloor";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { AgentPanel } from "./panels/AgentPanel";
 import { SpaceGroupObject } from "./elements/SpaceGroupObject";
@@ -14,6 +13,7 @@ import { TimeSlider } from "./panels/TimeSlider";
 import { SpaceGroup } from "./types";
 import { computeBrandColors } from "./elements/brandColors";
 
+
 /** A single space rendered in its own Canvas. */
 const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
   const { settings } = useSettings();
@@ -21,7 +21,7 @@ const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
   const brandColors = useMemo(() => computeBrandColors(brandHue), [brandHue]);
 
   return (
-    <div className="flex-grow relative min-w-0 rounded-2xl overflow-hidden">
+    <div className="h-full w-full flex-grow relative min-w-0 rounded-t-2xl overflow-hidden">
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [2, 2.8, 5], fov: 38 }}
@@ -74,7 +74,6 @@ const SpaceCanvas = ({ group }: { group: SpaceGroup }) => {
             brandColors={brandColors}
           />
           <CallingPathTubes group={group} brandColors={brandColors} />
-          <StageFloor brandHue={brandHue} />
           <Environment preset="night" />
         </Suspense>
         <OrbitControls
@@ -107,7 +106,7 @@ export const TaskSpaceScene = () => {
   }
 
   return (
-    <div className="flex-grow flex flex-col min-w-0 overflow-hidden gap-2 relative">
+    <div className="h-full flex flex-col min-w-0 overflow-hidden gap-2 relative">
       <div className="flex-grow flex flex-row gap-2 min-h-0">
         {spaceGroups.map((group) => (
           <SpaceCanvas key={group.spaceId} group={group} />

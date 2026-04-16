@@ -21,18 +21,15 @@ import {
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
   useAgentsQuery,
-  AgentFragment,
   ListAgentFragment,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ClickContextualParams, FlowNode, FlowNodeData, ReactiveNodeSuggestions } from "../../types";
+import { ClickContextualParams, FlowNode, ReactiveNodeSuggestions } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { TemplateSelector } from "./TemplateSelector";
-import { action } from "@/hooks/use-metaapp";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -148,7 +145,7 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
                 key: "the_int",
                 kind: PortKind.Int,
                 nullable: false,
-                __typename: "Port",
+                __typename: "ReturnPort",
               },
             ],
           ],
@@ -178,7 +175,7 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
         outs: [
           [
             {
-              __typename: "Port",
+              __typename: "ReturnPort",
               nullable: false,
               description: "Just a String",
               key: "string",
@@ -300,7 +297,6 @@ const ClickArkitektNodes = (props: {
           console.log("Trying to add", flownode, props.params);
           console.log("Trying to add parent", parentAgentNode, props.params);
           addClickNode(parentAgentNode, props.params);
-
           addClickNode(flownode, props.params);
 
         });

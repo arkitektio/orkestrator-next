@@ -7,8 +7,15 @@ query ListComputeNode(
   }
 }
 
-query GetComputeNode($id: ID!) {
-  computeNode(id: $id) {
-    ...DetailComputeNode
+query GetDevice($id: ID!) {
+  device: computeNode(id: $id) {
+    ...DetailDevice
+  }
+}
+
+
+query GetDeviceByDeviceId($id: ID!) {
+  deviceByDeviceId(id: $id) {
+    ...DetailDevice
   }
 }

@@ -1111,6 +1111,9 @@ input ExperimentFilter {
 }
 
 type File {
+  """The content type of the file"""
+  contentType: String
+
   """The user who created this file"""
   creator: User!
   id: ID!
@@ -1122,6 +1125,9 @@ type File {
 
   """Provenance entries for this camera"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The size of the file in bytes"""
+  size: Int
   store: BigFileStore!
   views: [FileView!]!
 }
@@ -1377,6 +1383,19 @@ input FromParquetLike {
 
   """The IDs of tables this table was derived from"""
   origins: [ID!] = null
+}
+
+"""Temporary S3 credentials for reading a media object."""
+type GeneralMediaAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
 }
 
 enum Granularity {
@@ -2608,6 +2627,11 @@ type Mutation {
   """Request an upload grant for a big file store"""
   requestBigfileUpload(input: RequestBigFileUploadInput!): BigFileUploadGrant!
 
+  """
+  Request temporary S3 read credentials for media files in the organization
+  """
+  requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
+
   """Request temporary S3 read credentials for a media file"""
   requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
 
@@ -2742,7 +2766,7 @@ input OffsetPaginationInput {
 """Input type for OME metadata"""
 input OmeMetadataInput {
   """The OME metadata as a JSON string"""
-  json: String!
+  metadataString: String!
 }
 
 """Common interface for all optical elements"""
@@ -4187,8 +4211,16 @@ input RequestBigFileAccessInput {
 
 input RequestBigFileUploadInput {
   contentType: String = null
+  datalayer: String! = "s3"
   fileSize: Int = null
+  host: String = null
   originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
+}
+
+input RequestGeneralMediaAccessInput {
+  expiresIn: Int = null
 }
 
 input RequestMediaAccessInput {
@@ -4206,7 +4238,12 @@ input RequestParquetAccessInput {
 }
 
 input RequestParquetUploadInput {
-  columns: [String!] = null
+  contentType: String = null
+  datalayer: String! = "s3"
+  host: String = null
+  originalFileName: String!
+  port: Int = null
+  protocol: String! = "https"
 }
 
 input RequestZarrAccessInput {
@@ -4215,6 +4252,10 @@ input RequestZarrAccessInput {
 
 input RequestZarrUploadInput {
   chunks: [Int!] = null
+  datalayer: String! = "s3"
+  host: String = null
+  port: Int = null
+  protocol: String! = "https"
   shape: [Int!] = null
   version: String = null
 }

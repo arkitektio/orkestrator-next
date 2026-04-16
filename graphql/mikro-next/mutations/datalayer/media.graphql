@@ -17,3 +17,10 @@ mutation RequestMediaAccess($input: RequestMediaAccessInput!) {
      ...MediaAccessGrant
   }
 }
+
+
+mutation RequestGeneralMediaAccess($input: RequestGeneralMediaAccessInput!) {
+  requestGeneralMediaAccess(input: $input) {
+     ...GeneralMediaAccessGrant
+  }
+}

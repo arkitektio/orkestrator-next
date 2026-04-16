@@ -6,13 +6,18 @@ import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useClientQuery } from "../api/graphql";
 
 export const AgentPill = (props: { clientId: string }) => {
-  const { data } = useClientQuery({
+  const { data, error } = useClientQuery({
     variables: {
       clientId: props.clientId,
     },
   });
 
   const resolve = useResolve();
+
+  if (error) {
+    return <div>
+        {JSON.stringify(error)}</div>;
+  }
 
   return (
     <Tooltip>
@@ -29,6 +34,7 @@ export const AgentPill = (props: { clientId: string }) => {
             </Avatar>
             {data.client.user?.username}
             {data.client.node ? <p className="text-muted-foreground">{data.client.node?.name || "Unlabeled Node"}</p> : ""}
+
           </LokClient.DetailLink>
         )}
       </TooltipTrigger>

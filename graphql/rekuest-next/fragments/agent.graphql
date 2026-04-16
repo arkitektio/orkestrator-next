@@ -60,6 +60,11 @@ fragment ListAgent on Agent {
       sub
     }
   }
+  user {
+    sub
+  }
+
+
   app {
     identifier
   }

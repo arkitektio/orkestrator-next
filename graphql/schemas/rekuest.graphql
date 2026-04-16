@@ -2755,7 +2755,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "b3ab5a0f-79da-4129-bebd-7e557214dad8"
+  reference: String = "eefa1493-8996-4df6-bba6-c214199b95ef"
   title: String = null
 }
 
@@ -2836,6 +2836,7 @@ input ResolvedDependencyFilter {
 
 """The input for mapping dependencies to implementations in a agent."""
 input ResolvedDependencyInput {
+  autoResolve: Boolean! = false
   key: String!
   mappedAgents: [MappedAgentInput!]!
 }

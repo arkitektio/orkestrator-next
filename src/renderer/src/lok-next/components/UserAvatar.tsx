@@ -4,8 +4,9 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useUserQuery } from "../api/graphql";
+import { cn } from "@/lib/utils";
 
-export const UserAvatar = (props: { sub: string }) => {
+export const UserAvatar = (props: { sub: string, className?: string }) => {
   const { data } = useUserQuery({
     variables: {
       id: props.sub,
@@ -15,7 +16,8 @@ export const UserAvatar = (props: { sub: string }) => {
   const resolve = useResolve();
 
   return (
-    <Avatar>
+    <Avatar className={cn(props.className)}>
+
       <AvatarImage
         src={
           resolve(data?.user?.profile.avatar?.presignedUrl) as
@@ -71,7 +73,7 @@ export const UserAvatarUsername = (props: { sub: string }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <LokUser.DetailLink object={props.sub}>
+        <LokUser.DetailLink object={{ id: props.sub }}>
           <Avatar className="h-10 w-10 cursor-pointer">
             <AvatarImage
               className="rounded-md"

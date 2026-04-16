@@ -10,11 +10,13 @@ import { toast } from "sonner";
 import {
   ListDependencyFragment,
   PostmanAssignationFragment,
+  ResolvedDependencyInput,
   useAgentOptionsLazyQuery
 } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -24,26 +26,7 @@ export type ImplementationAssignFormProps = {
   hidden?: { [key: string]: any };
 };
 
-export const DependencyWidget = ({
-  dependency,
-}: {
-  dependency: ListDependencyFragment;
-}) => {
-  const [search] = useAgentOptionsLazyQuery({
-    variables: { dependency: dependency.key },
-  });
 
-  return (
-    <div className="rounded shadow-md border border-gray-600 p-4 rounded-md max-h-60  ">
-      <GraphQLSearchField
-        name={`dependencies.${dependency.key}`}
-        searchQuery={search}
-        label={dependency.key}
-        description={dependency.description || ""}
-      />
-    </div>
-  );
-};
 
 export const ImplementationAssignForm = (
   props: ImplementationAssignFormProps,
@@ -65,7 +48,7 @@ export const ImplementationAssignForm = (
 
   const onSubmit = async (data: {
     args: Record<string, unknown>;
-    dependencies: Record<string, string>;
+    dependencies: Record<string, ResolvedDependencyInput>;
   }) => {
     console.log("Submitting");
     console.log(data);
@@ -73,7 +56,7 @@ export const ImplementationAssignForm = (
       const assignation = await assign({
         implementation: props.id,
         args: data.args,
-        dependencies: data.dependencies,
+        dependencies: Object.values(data.dependencies),
         hooks: [],
       });
 
@@ -121,6 +104,11 @@ export const ImplementationAssignForm = (
               groups={implementation?.action.portGroups}
               hidden={props.hidden}
             />
+
+
+            {implementation?.dependencies && (
+              <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation?.agent.id} />
+            )}
 
           </div>
           <DialogFooter className="flex-initial">

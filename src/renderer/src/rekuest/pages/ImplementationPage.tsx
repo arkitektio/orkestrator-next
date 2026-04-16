@@ -29,7 +29,7 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { DepedenciesContainer, DependenciesContainer } from "@/components/widgets/DepenciesContainer";
+import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -107,6 +107,7 @@ export const DoForm = ({ id }: { id: string }) => {
 
   const form = usePortForm({
     ports: implementation?.action.args || [],
+
   });
 
 

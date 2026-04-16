@@ -18,7 +18,6 @@ import {
   ChangeEvent,
   ChangeOutcome,
   FlowState,
-  PortType,
   SolvedError,
   Transform,
   ValidationResult,

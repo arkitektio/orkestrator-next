@@ -29,6 +29,7 @@ import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { DepedenciesContainer, DependenciesContainer } from "@/components/widgets/DepenciesContainer";
 
 export const DoFormBackup = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
@@ -79,6 +80,14 @@ export const DoFormBackup = (props: { id: string }) => {
             ports={implementation?.action.args || []}
             path={[]}
           />
+
+
+
+
+
+
+
+
           <DialogFooter>
             <Button type="submit" className="btn">
               {" "}
@@ -148,6 +157,9 @@ export const DoForm = ({ id }: { id: string }) => {
                     ports={implementation?.action?.args || []}
                     path={[]}
                   />
+                   {implementation?.dependencies && (
+            <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation.agent.id} />
+          )}
                 </div>
               </CardContent>
             </Card>

@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/tooltip";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
-  FlussChildPortFragment,
-  FlussPortFragment,
+  FlussArgChildPortFragment,
+  FlussArgPortFragment,
+  FlussReturnChildPortFragment,
+  FlussReturnPortFragment,
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
@@ -46,6 +48,46 @@ import {
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
 import { TemplateSelector } from "./TemplateSelector";
+
+
+
+export const argToReturn = (arg: FlussArgPortFragment): FlussReturnPortFragment => ({
+  __typename: "ReturnPort",
+  key: arg.key,
+  kind: arg.kind,
+  identifier: arg.identifier,
+  nullable: arg.nullable,
+  description: arg.description,
+  children: arg.children?.map((child) => ({
+    __typename: "ReturnChildPort",
+    key: child.key,
+    kind: child.kind,
+    identifier: child.identifier,
+    nullable: child.nullable,
+    description: child.description,
+  })),
+});
+
+export const returnToArg = (arg: FlussReturnPortFragment): FlussArgPortFragment => ({
+  __typename: "ArgPort",
+  key: arg.key,
+   kind: arg.kind,
+  identifier: arg.identifier,
+  nullable: arg.nullable,
+  description: arg.description,
+  children: arg.children?.map((child) => ({
+    __typename: "ArgChildPort",
+    key: child.key,
+    kind: child.kind,
+    identifier: child.identifier,
+    nullable: child.nullable,
+  })),
+});
+
+
+
+
+
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -124,10 +166,10 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
-export const allandone = <T extends any>(
-  left: T[],
-  right: T[],
-  predicate: (l: T, r: T) => boolean,
+export const allandone = <A extends any, B extends any>(
+  left: A[],
+  right: B[],
+  predicate: (l: A, r: B) => boolean,
 ) => {
   return (
     left.every((l) => right.some((r) => predicate(l, r))) &&
@@ -136,7 +178,7 @@ export const allandone = <T extends any>(
   );
 };
 
-function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
+function isMatch(item1: FlussArgPortFragment, item2: FlussReturnPortFragment): boolean {
   return (
     item1.kind === item2.kind &&
     (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier)
@@ -144,8 +186,8 @@ function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
 }
 
 function findMappings(
-  list1: FlussPortFragment[],
-  list2: FlussPortFragment[],
+  list1: FlussArgPortFragment[],
+  list2: FlussReturnPortFragment[],
   index1 = 0,
   currentMapping: Map<number, number> = new Map(),
   allMappings: Map<number, number>[] = [],
@@ -170,8 +212,8 @@ function findMappings(
 }
 
 function generateAllMappings(
-  list1: FlussPortFragment[],
-  list2: FlussPortFragment[],
+  list1: FlussArgPortFragment[],
+  list2: FlussReturnPortFragment[],
 ): { [key: number]: number }[] {
   const allMappings: Map<number, number>[] = [];
   if (list1.length !== list2.length) return [];
@@ -219,8 +261,8 @@ const bufferOptions = [
 
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
-  item1: FlussPortFragment | FlussChildPortFragment | undefined,
-  item2: FlussPortFragment | FlussChildPortFragment | undefined,
+  item1: FlussArgPortFragment | FlussArgChildPortFragment | undefined,
+  item2: FlussReturnPortFragment | FlussReturnChildPortFragment | undefined,
 ) => {
   if (!item1 || !item2) {
     return false;
@@ -237,8 +279,8 @@ const isStructuralMatch = (
 };
 
 const connectReactiveNodes = (
-  leftPorts: FlussPortFragment[],
-  rightPorts: FlussPortFragment[],
+  leftPorts: FlussArgPortFragment[],
+  rightPorts: FlussReturnPortFragment[],
   search: string | undefined,
 ): ReactiveNodeSuggestions[] => {
   const nodes: ReactiveNodeSuggestions[] = [];
@@ -258,7 +300,7 @@ const connectReactiveNodes = (
           title: "Gate",
           description: "Gate the signal",
           kind: GraphNodeKind.Reactive,
-          ins: [leftPorts, rightPorts],
+          ins: [leftPorts],
           constantsMap: {},
           outs: [rightPorts],
           voids: [],
@@ -563,8 +605,8 @@ const buildVariabels = (
 const ConnectArkitektNodes = (props: {
   search: string | undefined;
   params: ConnectContextualParams;
-  leftPorts: FlussPortFragment[];
-  rightPorts: FlussPortFragment[];
+  leftPorts: FlussArgPortFragment[];
+  rightPorts: FlussReturnPortFragment[];
 }) => {
   const { data, refetch, variables, error } = useAllActionsQuery({
     variables: buildVariabels(props.leftPorts, props.rightPorts, props.search),

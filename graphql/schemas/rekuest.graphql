@@ -362,10 +362,6 @@ input AgentDependencyInput {
   autoResolvable: Boolean! = false
   description: String = null
   key: String!
-
-  """
-  The maximum amount of viable instances for the agent. This is used to identify the demand in the system.
-  """
   maxViableInstances: Int = null
   minViableInstances: Int = null
 
@@ -610,6 +606,9 @@ input AssignWidgetInput {
   stateAccessors: [StateAccessorInput!] = null
   statePath: String = null
   step: Float = null
+  targetAction: String = null
+  targetDependency: String = null
+  targetPort: String = null
   ward: String = null
 }
 
@@ -617,6 +616,7 @@ input AssignWidgetInput {
 enum AssignWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
   SEARCH
   SLIDER
   STATE_CHOICE
@@ -1302,8 +1302,21 @@ type Dependency {
   """Optional string identifier or tag for reference."""
   key: String!
 
+  """
+  Maximum number of viable agent instances that can be bound to this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is greater than this number, the dependency will not be considered auto resolvable.
+  """
+  maxViableInstances: Int
+
+  """
+  Minimum number of viable agent instances required to resolve this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is less than this number, the dependency will not be considered auto resolvable.
+  """
+  minViableInstances: Int
+
   """Indicates if the dependency is optional."""
   optional: Boolean!
+
+  """List of action demands specified in this dependency."""
+  singular: Boolean!
 
   """
   Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
@@ -2366,6 +2379,14 @@ enum ProvidesOperator {
   NOT_IN
 }
 
+type ProxyWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  targetAction: String!
+  targetDependency: String
+  targetPort: String!
+}
+
 type Query {
   _entities(representations: [_Any!]!): [_Entity]!
   _service: _Service!
@@ -2734,7 +2755,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "0afa4287-e43b-4aed-9207-cec91d76e351"
+  reference: String = "b3ab5a0f-79da-4129-bebd-7e557214dad8"
   title: String = null
 }
 
@@ -2877,6 +2898,7 @@ input ReturnWidgetInput {
 enum ReturnWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
 }
 
 """The input for creating a action demand."""

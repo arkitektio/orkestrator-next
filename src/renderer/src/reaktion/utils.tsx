@@ -325,7 +325,7 @@ export const portToReadble = (
 };
 
 export const streamToReadable = (
-  stream: GeneralPort[] | undefined,
+  stream: GeneralPort[] | undefined  | null,
   withLocalDisclaimer?: boolean,
 ): string => {
   if (!stream) return "undefinedStream";

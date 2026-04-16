@@ -1,4 +1,5 @@
 import { ChoicesWidget } from "@/components/widgets/custom/ChoicesWidget";
+import { ProxyWidget } from "@/components/widgets/custom/ProxyWidget";
 import { SearchWidget } from "@/components/widgets/custom/SearchWidget";
 import { SliderWidget } from "@/components/widgets/custom/SliderWidget";
 import { StateChoiceWidget } from "@/components/widgets/custom/StateChoiceWidget";
@@ -38,7 +39,7 @@ export const UnknownInputWidget = ({ port }: InputWidgetProps) => {
   return (
     <div className="text-xl bg-red-200">
       Registry error! No assign Widget registered for: {port.kind} and{" "}
-      {port?.assignWidget?.__typename || "unset widget"}
+      {port?.widget?.__typename || "unset widget"}
     </div>
   );
 };
@@ -47,9 +48,9 @@ export const UnknownReturnWidget = ({ port }: ReturnWidgetProps) => {
   return (
     <div className="text-xl bg-red-200">
       Registry error! No assign Widget registered for: {port.kind} and{" "}
-      {port?.returnWidget?.__typename || "unset widget"}
-      {JSON.stringify(port)}
+      {port?.widget?.__typename || "unset widget"}
     </div>
+
   );
 };
 
@@ -112,6 +113,8 @@ const stateChoise = registry.registerInputWidget(
   "StateChoiceAssignWidget",
   StateChoiceWidget,
 );
+
+const proxy = registry.registerInputWidget("ProxyWidget", ProxyWidget);
 
 const intReturn = registry.registerReturnWidgetFallback(
   PortKind.Int,

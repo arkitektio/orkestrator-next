@@ -42,7 +42,7 @@ export const AssignButton = (props: {
     console.log(
       await assign({
         args: {
-          [argKey]: props.release,
+          [argKey]: { object: props.release , __identifier: KabinetFlavour.identifier },
         },
       }),
     );
@@ -90,7 +90,7 @@ const InstallDialog = (props: { item: { id: string } }) => {
   return (
     <div className="flex flex-row gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger>
           <Button variant="outline" size="sm">
             Install
           </Button>

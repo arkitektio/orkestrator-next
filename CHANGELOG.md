@@ -1,3 +1,18 @@
+## [1.57.1](https://github.com/arkitektio/orkestrator-next/compare/v1.57.0...v1.57.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* add stuff in ([151a84e](https://github.com/arkitektio/orkestrator-next/commit/151a84e41ec2a9c9a8695b14eaf80178c9020922))
+* auf auf ([6f08c00](https://github.com/arkitektio/orkestrator-next/commit/6f08c0053dfa0d618bd8bafefc7843102f90c380))
+* dependency injection for workflows ([ab592be](https://github.com/arkitektio/orkestrator-next/commit/ab592becc09e3b034cc238d1fd783ec41cfa95ad))
+* file cards ([d3a20ff](https://github.com/arkitektio/orkestrator-next/commit/d3a20ff5ea24d2b2fd4d6f00da28528de7c765f7))
+* filecard ([a540174](https://github.com/arkitektio/orkestrator-next/commit/a54017457722c3b167a0c6d55e6d4e88c0cdcf97))
+* fix disply on file page ([7e9c178](https://github.com/arkitektio/orkestrator-next/commit/7e9c178e3070f7a2b85159264b1e06fd1fe121e7))
+* smaller visual updates ([da39594](https://github.com/arkitektio/orkestrator-next/commit/da39594c6a4f0e1278359a01d3b709eaf43b1e25))
+* space scene ([5066471](https://github.com/arkitektio/orkestrator-next/commit/5066471840ad65687cba7a310b1898d6e15dd98c))
+* ui improvements ([c061f0a](https://github.com/arkitektio/orkestrator-next/commit/c061f0a775fa6c3d10cdc62c76096dee8de02152))
+
 # [1.57.0](https://github.com/arkitektio/orkestrator-next/compare/v1.56.0...v1.57.0) (2026-04-13)
 
 

@@ -1,10 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokUser } from "@/linkers";
+import { LokComputeNode, LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useUserQuery } from "../api/graphql";
+import { useGetDeviceByDeviceIdQuery, useGetDeviceQuery, useUserQuery } from "../api/graphql";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export const UserAvatar = (props: { sub: string, className?: string }) => {
   const { data } = useUserQuery({
@@ -13,21 +14,36 @@ export const UserAvatar = (props: { sub: string, className?: string }) => {
     },
   });
 
-  const resolve = useResolve();
-
   return (
     <Avatar className={cn(props.className)}>
 
-      <AvatarImage
-        src={
-          resolve(data?.user?.profile.avatar?.presignedUrl) as
-          | string
-          | undefined
-        }
-        alt={data?.user?.username}
-      />
       <AvatarFallback>{data?.user.username.slice(0, 2)}</AvatarFallback>
     </Avatar>
+  );
+};
+
+
+
+export const DeviceImprint = (props: { deviceId: string, className?: string }) => {
+  const { data } = useGetDeviceByDeviceIdQuery({
+    variables: {
+      id: props.deviceId,
+    },
+  });
+
+  if (!data) {
+    return <Badge className="animate-pule">
+      Loading
+    </Badge>;
+  }
+
+
+  return (
+    <LokComputeNode.DetailLink object={data?.deviceByDeviceId}>
+      <Badge className={cn("text-xs font-mono mx-3  truncate elipsis flex flex-wrap items-left align-left group-hover:opacity-100 opacity-0 transition-opacity", !data?.deviceByDeviceId && "animate-pulse ", props.className)}>
+        {data?.deviceByDeviceId?.name || "Unknown"}
+      </Badge>
+    </LokComputeNode.DetailLink>
   );
 };
 

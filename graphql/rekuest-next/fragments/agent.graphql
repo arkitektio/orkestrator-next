@@ -73,6 +73,7 @@ fragment ListAgent on Agent {
   }
   device {
     id
+    deviceId
   }
   user {
     sub

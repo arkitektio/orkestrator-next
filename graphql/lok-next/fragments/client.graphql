@@ -16,9 +16,6 @@ fragment DetailClient on Client {
   oauth2Client {
     clientId
   }
-  mappings {
-    ...ListServiceInstanceMapping
-  }
   node {
     id
     name

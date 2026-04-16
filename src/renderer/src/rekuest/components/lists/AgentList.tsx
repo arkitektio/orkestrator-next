@@ -9,12 +9,13 @@ import {
 import AgentCard from "../cards/AgentCard";
 
 export type Props = {
+  title?: string;
   filters?: AgentFilter;
   pagination?: OffsetPaginationInput;
-  order: AgentOrder
+  order?: AgentOrder
 };
 
-const List = ({ filters, pagination, order }: Props) => {
+const List = ({ filters, pagination, order, title }: Props) => {
   const { data, error, subscribeToMore, refetch } = useAgentsQuery({
     variables: { filters, pagination, order: order },
   });
@@ -23,7 +24,11 @@ const List = ({ filters, pagination, order }: Props) => {
     <ListRender
       array={data?.agents}
       title={
-        <RekuestAgent.ListLink className="flex-0">Latest  Agents</RekuestAgent.ListLink>
+        title ? (
+          <div className="text-lg font-semibold">{title}</div>
+        ) : (
+          <RekuestAgent.ListLink className="flex-0">Latest  Agents</RekuestAgent.ListLink>
+        )
       }
       refetch={refetch}
     >

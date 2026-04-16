@@ -2,7 +2,7 @@ import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { AgentPill } from "@/lok-next/components/AgentPill";
-import { UserAvatar, UserAvatarUsername } from "@/lok-next/components/UserAvatar";
+import { DeviceImprint, UserAvatar, UserAvatarUsername } from "@/lok-next/components/UserAvatar";
 
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 
@@ -16,7 +16,7 @@ const TheCard = ({ item }: Props) => {
     <RekuestAgent.Smart object={item}>
       <Card
         className={cn(
-          "aspect-square flex flex-col relative",
+          "aspect-square flex flex-col relative overflow-visible",
           item.active && "dark:border-primary border ",
         )}
       >
@@ -38,6 +38,7 @@ const TheCard = ({ item }: Props) => {
         </CardFooter>
 
         <UserAvatar sub={item.user.sub} className="absolute bottom-2 right-2 w-8 h-8" />
+        <DeviceImprint deviceId={item.device.deviceId} className="absolute bottom-0  w-[80%] translate-y-1/2" />
       </Card>
     </RekuestAgent.Smart>
   );

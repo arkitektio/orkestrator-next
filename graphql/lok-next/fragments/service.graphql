@@ -6,9 +6,6 @@ fragment ListService on Service {
     presignedUrl
   }
   description
-  instances {
-    ...ListServiceInstance
-  }
 }
 
 fragment Service on Service {
@@ -19,7 +16,4 @@ fragment Service on Service {
     presignedUrl
   }
   description
-  instances {
-    ...ListServiceInstance
-  }
 }

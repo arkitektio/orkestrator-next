@@ -9,6 +9,14 @@ fragment DetailComputeNode on ComputeNode {
     ...ListDeviceGroup
   }
 }
+fragment DetailDevice on ComputeNode {
+  id
+  name
+  nodeId
+  deviceGroups {
+    ...ListDeviceGroup
+  }
+}
 
 fragment ListComputeNode on ComputeNode {
   id

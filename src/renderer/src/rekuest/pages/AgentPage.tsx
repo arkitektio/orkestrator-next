@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent, RekuestState } from "@/linkers";
 import {
   AgentFragment,
+  PortKind,
+  ProtocolAgentFragment,
+  useAgentForProtocolLazyQuery,
   useAgentQuery,
   useBounceMutation,
   usePinAgentMutation,
@@ -15,8 +18,8 @@ import {
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { Pin, PinOff, Server } from "lucide-react";
-import { useEffect } from "react";
+import { Clipboard, ClipboardCheck, Pin, PinOff, Server } from "lucide-react";
+import { useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";
 import ImplementationCard from "../components/cards/ImplementationCard";
@@ -72,6 +75,184 @@ export const BounceAgentButton = (props: { agent: AgentFragment }) => {
       }}
     >
       Bounce
+    </Button>
+  );
+};
+
+const toPythonIdentifier = (value: string, fallback: string) => {
+  const normalized = value
+    .trim()
+    .replace(/[^a-zA-Z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  return /^[0-9]/.test(normalized) ? `_${normalized}` : normalized;
+};
+
+const toPythonClassName = (name: string) => {
+  const words = name.trim().split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  if (!words.length) return "Agent";
+  const pascal = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+  return /^[0-9]/.test(pascal) ? `Agent${pascal}` : pascal;
+};
+
+const escapePyTripleString = (value?: string | null) =>
+  value ? value.replace(/"""/g, '"""') : null;
+
+const portKindToPython = (kind: PortKind, identifier?: string | null): string => {
+  switch (kind) {
+    case PortKind.String:
+      return "str";
+    case PortKind.Int:
+      return "int";
+    case PortKind.Float:
+      return "float";
+    case PortKind.Bool:
+      return "bool";
+    case PortKind.Date:
+      return "datetime";
+    case PortKind.Dict:
+      return "dict";
+    case PortKind.List:
+      return "list";
+    case PortKind.Enum:
+      return "str";
+    case PortKind.Structure:
+    case PortKind.Model: {
+      if (identifier) {
+        const parts = String(identifier).split("/");
+        return toPythonClassName(parts[parts.length - 1]);
+      }
+      return "Any";
+    }
+    default:
+      return "Any";
+  }
+};
+
+const portTypePy = (port: {
+  kind: PortKind;
+  identifier?: string | null;
+  nullable: boolean;
+}): string => {
+  const base = portKindToPython(port.kind, port.identifier);
+  return port.nullable ? `Optional[${base}]` : base;
+};
+
+const protocolAgentToPythonString = (agent: ProtocolAgentFragment): string => {
+  const className = toPythonClassName(agent.name);
+  const usedMethodNames = new Set<string>();
+  const extraImports = new Set<string>();
+
+  const methodBlocks = agent.implementations.map((impl, index) => {
+    const preferredName = impl.action.key;
+    const baseMethodName = toPythonIdentifier(
+      preferredName,
+      `method_${index + 1}`,
+    );
+
+    let methodName = baseMethodName;
+    let suffix = 2;
+    while (usedMethodNames.has(methodName)) {
+      methodName = `${baseMethodName}_${suffix}`;
+      suffix += 1;
+    }
+    usedMethodNames.add(methodName);
+
+    const argList = impl.action.args
+      .map((a) => {
+        const argName = toPythonIdentifier(a.key, `arg_${index}`);
+        const pyType = portTypePy(a);
+        if (a.nullable) extraImports.add("Optional");
+        if (pyType === "datetime") extraImports.add("datetime");
+        return `${argName}: ${pyType}`;
+      })
+      .join(", ");
+
+    const rets = impl.action.returns;
+    let returnType: string;
+    if (rets.length === 0) {
+      returnType = "None";
+    } else if (rets.length === 1) {
+      returnType = portTypePy(rets[0]);
+      if (rets[0].nullable) extraImports.add("Optional");
+      if (returnType.startsWith("datetime")) extraImports.add("datetime");
+    } else {
+      const parts = rets.map((r) => {
+        if (r.nullable) extraImports.add("Optional");
+        const t = portTypePy(r);
+        if (t.startsWith("datetime")) extraImports.add("datetime");
+        return t;
+      });
+      returnType = `Tuple[${parts.join(", ")}]`;
+      extraImports.add("Tuple");
+    }
+
+    const description = escapePyTripleString(impl.action.description);
+    const params = argList ? `self, ${argList}` : "self";
+
+    return [
+      `    def ${methodName}(${params}) -> ${returnType}:`,
+      `        """${description ?? impl.action.name}"""`,
+      "        ...",
+      "",
+    ].join("\n");
+  });
+
+  const body = methodBlocks.length ? methodBlocks.join("\n") : "    pass\n";
+
+  const typingImports = ["Protocol", ...extraImports].sort().join(", ");
+
+  return [
+    `from typing import ${typingImports}`,
+    `from arkitekt_next import declare`,
+    "",
+    `@declare(app="${agent.app.identifier}")`,
+    `class ${className}Like(Protocol):`,
+    body,
+  ].join("\n");
+};
+
+export const CopyAgentPythonButton = (props: { agent: AgentFragment }) => {
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [fetchProtocol] = useAgentForProtocolLazyQuery();
+
+  const handleCopy = async () => {
+    setLoading(true);
+    try {
+      const result = await fetchProtocol({ variables: { id: props.agent.id } });
+      if (result.data?.agent) {
+        navigator.clipboard.writeText(protocolAgentToPythonString(result.data.agent));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={loading}
+      onClick={handleCopy}
+    >
+      {copied ? (
+        <>
+          <ClipboardCheck className="h-4 w-4 mr-2" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Clipboard className="h-4 w-4 mr-2" />
+          {loading ? "Loading..." : "Copy Python"}
+        </>
+      )}
     </Button>
   );
 };
@@ -186,6 +367,7 @@ export const AgentPage = asDetailQueryRoute(
           <>
             <PinAgent agent={data.agent} />
             <BounceAgentButton agent={data.agent} />
+            <CopyAgentPythonButton agent={data.agent} />
             <ManagedByCard agent={data.agent} />
             <RekuestAgent.DetailLink
                           object={data?.agent}

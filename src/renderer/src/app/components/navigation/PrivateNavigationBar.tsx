@@ -55,7 +55,7 @@ import { IconContext } from "react-icons/lib";
 import { MdStream } from "react-icons/md";
 import { PiDatabaseLight, PiGraph } from "react-icons/pi";
 import { TbBugOff } from "react-icons/tb";
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
 import { Badge } from "@/components/ui/badge";
@@ -437,6 +437,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
                 </div>
               </div>
             ))}
+
           </DrawerContent>
         </Drawer>
       </div>
@@ -449,6 +450,11 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
           <DropdownMenuContent side="right" className="w-64 mb-2 border-border">
             <DropdownMenuLabel className="flex items-center gap-2 w-full justify-between">
               {hasLokProfile ? <Username /> : <div>Guest</div>}
+              <div key={"lok"} className="flex flex-col rounded-md border p-2">
+                <div className="flex items-center justify-between">
+                  <NavLink to={"lok"} className="text-foreground">Manage</NavLink>
+                </div>
+              </div>
 
             {fakts?.self.alias.host ? <Badge className="px-1">{fakts?.self.alias.host}</Badge> : null}
             </DropdownMenuLabel>

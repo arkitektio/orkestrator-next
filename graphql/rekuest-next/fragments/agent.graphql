@@ -1,3 +1,35 @@
+fragment ProtocolAgent on Agent {
+  id
+  instanceId
+  app {
+    identifier
+  }
+  name
+  implementations {
+    interface
+    action {
+      key
+      name
+      description
+      args {
+        key
+        label
+        kind
+        identifier
+        nullable
+        description
+      }
+      returns {
+        key
+        label
+        kind
+        identifier
+        nullable
+        description
+      }
+    }
+  }
+}
 fragment Agent on Agent {
   id
   instanceId
@@ -42,6 +74,7 @@ fragment Agent on Agent {
     ...AgentPlacement
   }
 }
+
 
 fragment ListAgent on Agent {
   id

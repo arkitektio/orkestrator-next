@@ -4457,6 +4457,8 @@ export type DetailActionFragment = { __typename?: 'Action', key: string, version
 
 export type PrimaryActionFragment = { __typename?: 'Action', id: string, stateful: boolean, name: string, hash: any, description?: string | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string }>, args: Array<{ __typename?: 'ArgPort', key: string, identifier?: any | null, kind: PortKind, nullable: boolean, default?: any | null }> };
 
+export type ProtocolAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename?: 'ArgPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }>, returns: Array<{ __typename?: 'ReturnPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }> } }> };
+
 export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, space: { __typename?: 'Space', id: string } }> };
 
 export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } };
@@ -5000,6 +5002,13 @@ export type AgentQueryVariables = Exact<{
 
 export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, space: { __typename?: 'Space', id: string } }> } };
 
+export type AgentForProtocolQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type AgentForProtocolQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename?: 'ArgPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }>, returns: Array<{ __typename?: 'ReturnPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }> } }> } };
+
 export type AgentOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   values?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -5541,6 +5550,40 @@ export const PrimaryActionFragmentDoc = gql`
     default
   }
   description
+}
+    `;
+export const ProtocolAgentFragmentDoc = gql`
+    fragment ProtocolAgent on Agent {
+  id
+  instanceId
+  app {
+    identifier
+  }
+  name
+  implementations {
+    interface
+    action {
+      key
+      name
+      description
+      args {
+        key
+        label
+        kind
+        identifier
+        nullable
+        description
+      }
+      returns {
+        key
+        label
+        kind
+        identifier
+        nullable
+        description
+      }
+    }
+  }
 }
     `;
 export const ListImplementationFragmentDoc = gql`
@@ -8556,6 +8599,41 @@ export function useAgentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOp
 export type AgentQueryHookResult = ReturnType<typeof useAgentQuery>;
 export type AgentLazyQueryHookResult = ReturnType<typeof useAgentLazyQuery>;
 export type AgentQueryResult = Apollo.QueryResult<AgentQuery, AgentQueryVariables>;
+export const AgentForProtocolDocument = gql`
+    query AgentForProtocol($id: ID!) {
+  agent(id: $id) {
+    ...ProtocolAgent
+  }
+}
+    ${ProtocolAgentFragmentDoc}`;
+
+/**
+ * __useAgentForProtocolQuery__
+ *
+ * To run a query within a React component, call `useAgentForProtocolQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAgentForProtocolQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAgentForProtocolQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useAgentForProtocolQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AgentForProtocolQuery, AgentForProtocolQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<AgentForProtocolQuery, AgentForProtocolQueryVariables>(AgentForProtocolDocument, options);
+      }
+export function useAgentForProtocolLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentForProtocolQuery, AgentForProtocolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<AgentForProtocolQuery, AgentForProtocolQueryVariables>(AgentForProtocolDocument, options);
+        }
+export type AgentForProtocolQueryHookResult = ReturnType<typeof useAgentForProtocolQuery>;
+export type AgentForProtocolLazyQueryHookResult = ReturnType<typeof useAgentForProtocolLazyQuery>;
+export type AgentForProtocolQueryResult = Apollo.QueryResult<AgentForProtocolQuery, AgentForProtocolQueryVariables>;
 export const AgentOptionsDocument = gql`
     query AgentOptions($search: String, $values: [ID!], $dependency: ID) {
   options: agents(

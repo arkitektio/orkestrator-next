@@ -1,3 +1,10 @@
+## [1.57.2](https://github.com/arkitektio/orkestrator-next/compare/v1.57.1...v1.57.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* implelementation ([e697133](https://github.com/arkitektio/orkestrator-next/commit/e697133567349bcda1411fe98be81ae4052921bf))
+
 ## [1.57.1](https://github.com/arkitektio/orkestrator-next/compare/v1.57.0...v1.57.1) (2026-04-16)
 
 

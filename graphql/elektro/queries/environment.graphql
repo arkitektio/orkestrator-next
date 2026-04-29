@@ -1,0 +1,15 @@
+query DetailModEnvironment($id: ID!) {
+  modEnvironment(id: $id) {
+    ...ModEnvironment
+  }
+}
+
+query ListModEnvironments(
+  $pagination: OffsetPaginationInput
+  $filters: ModEnvironmentFilter
+  $ordering: [ModEnvironmentOrder!]
+) {
+  modEnvironments(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListModEnvironment
+  }
+}

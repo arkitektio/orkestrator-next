@@ -10,6 +10,19 @@ import {
 import type { MikroClient } from "./type";
 
 
+type ZarrAccessGrant = {
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  bucket: string;
+  key: string;
+};
+
+type AccessRequester = (
+  storeId: string,
+  client: MikroClient,
+) => Promise<ZarrAccessGrant>;
+
 
 class AsyncLockManager {
   private locks = new Map<string, Promise<Uint8Array<ArrayBufferLike>>>();
@@ -96,6 +109,7 @@ export class CachedS3Store extends FetchStore {
   private storeId: string;
   private mikroClient: MikroClient;
   private datalayer: string;
+  private requestAccess: AccessRequester;
 
   constructor(storeId: string, mikroClient: MikroClient, datalayer: string, options: any = {}) {
     super(datalayer, options);
@@ -104,6 +118,7 @@ export class CachedS3Store extends FetchStore {
     this.datalayer = datalayer;
     this.cache = global_cache;
     this.lockManager = new AsyncLockManager();
+    this.requestAccess = options.requestAccess ?? defaultRequestAccess;
   }
 
   private async ensureInitialized(): Promise<void> {
@@ -111,13 +126,7 @@ export class CachedS3Store extends FetchStore {
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
-      const access = await this.mikroClient.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
-        mutation: RequestZarrAccessDocument,
-        variables: { input: { storeId: this.storeId } },
-      });
-
-      const credentials = access.data?.requestZarrAccess;
-      if (!credentials) throw new Error("Failed to obtain Zarr access credentials");
+      const credentials = await this.requestAccess(this.storeId, this.mikroClient);
 
       this.aws = new AwsClient({
         accessKeyId: credentials.accessKey,
@@ -188,6 +197,18 @@ export class CachedS3Store extends FetchStore {
     return this.cache.has(key) || this.cache.has(`getItem:${key}`);
   }
 }
+
+const defaultRequestAccess: AccessRequester = async (storeId, mikroClient) => {
+  const access = await mikroClient.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
+    mutation: RequestZarrAccessDocument,
+    variables: { input: { storeId } },
+  });
+
+  const credentials = access.data?.requestZarrAccess;
+  if (!credentials) throw new Error("Failed to obtain Zarr access credentials");
+
+  return credentials;
+};
 
 export interface Zattrs {
   fileversion: string;

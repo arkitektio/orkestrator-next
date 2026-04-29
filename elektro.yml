@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/elektro/graphql"
+schema:
+  "http://jhnnsrs-lab/elektro/schema":
+    handleAsSDL: true
 documents: "graphql/elektro/**/*.graphql"
 generates:
   src/renderer/src/elektro/api/fragments.ts:

@@ -160,6 +160,19 @@ export const ElektroSimulation = buildSmart(
   "@elektro/simulation",
   "elektro/simulations",
 );
+
+export const ElektroMechanism = buildSmart(
+  "@elektro/mechanism",
+  "elektro/mechanisms",
+);
+
+export const ElektroEnvironment = buildSmart(
+  "@elektro/environment",
+  "elektro/environments",
+);
+
+
+
 export const ElektroModelCollection = buildSmart(
   "@elektro/modelcollection",
   "elektro/modelcollections",

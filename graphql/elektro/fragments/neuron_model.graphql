@@ -69,6 +69,9 @@ fragment DetailNeuronModel on NeuronModel {
   simulations {
     ...ListSimulation
   }
+  environment {
+    ...ModEnvironment
+  }
 }
 
 fragment ListNeuronModel on NeuronModel {

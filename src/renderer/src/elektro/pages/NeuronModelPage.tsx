@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Card } from "@/components/ui/card";
-import { ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
+import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
 import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
@@ -67,6 +67,14 @@ export const NeuronModelPage = asDetailQueryRoute(
                 <NeuronModelSimulationCard key={comparison.id} item={comparison} />
               ))}
             </div>
+            <div className="flex flex-col gap-2 mt-2 p-3">
+              {data.neuronModel.environment &&
+                <ElektroEnvironment.DetailLink object={data.neuronModel.environment}>
+                  {data.neuronModel.environment.name}
+                </ElektroEnvironment.DetailLink>
+              }
+            </div>
+
           </div>
           <div className="col-span-9">
             <NeuronVisualizer model={data.neuronModel} />

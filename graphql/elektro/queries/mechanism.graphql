@@ -1,0 +1,15 @@
+query DetailMechanism($id: ID!) {
+  mechanism(id: $id) {
+    ...Mechanism
+  }
+}
+
+query ListMechanisms(
+  $pagination: OffsetPaginationInput
+  $filters: MechanismFilter
+  $ordering: [MechanismOrder!]
+) {
+  mechanisms(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListMechanism
+  }
+}

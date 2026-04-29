@@ -1,168 +1,330 @@
-import * as ApolloReactHooks from '@/lib/elektro/funcs'
-import * as Apollo from '@apollo/client'
-import { gql } from '@apollo/client'
-export type Maybe<T> = T | null
-export type InputMaybe<T> = Maybe<T>
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] }
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> }
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> }
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = {
-  [_ in K]?: never
-}
-export type Incremental<T> =
-  | T
-  | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never }
-const defaultOptions = {} as const
+import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+import * as ApolloReactHooks from '@/lib/elektro/funcs';
+export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string }
-  String: { input: string; output: string }
-  Boolean: { input: boolean; output: boolean }
-  Int: { input: number; output: number }
-  Float: { input: number; output: number }
-  Any: { input: any; output: any }
-  DateTime: { input: any; output: any }
-  FileLike: { input: any; output: any }
-  FiveDVector: { input: any; output: any }
-  Milliseconds: { input: any; output: any }
-  TraceLike: { input: any; output: any }
-  TwoDVector: { input: any; output: any }
-}
-
-/** Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer) */
-export type AccessCredentials = {
-  __typename?: 'AccessCredentials'
-  accessKey: Scalars['String']['output']
-  bucket: Scalars['String']['output']
-  key: Scalars['String']['output']
-  path: Scalars['String']['output']
-  secretKey: Scalars['String']['output']
-  sessionToken: Scalars['String']['output']
-}
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  /** The `Any` scalar any type */
+  Any: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
+  AnyDefault: { input: any; output: any; }
+  /** The `Arg` scalar type represents a an Argument in a Action assignment */
+  Arg: { input: any; output: any; }
+  /** A type representing an array-like store reference, which can be either a string ID or a more complex object. */
+  ArrayLike: { input: any; output: any; }
+  /** A type representing a big file store reference, which can be either a string ID or a more complex object. */
+  BigFileLike: { input: any; output: any; }
+  /** Date with time (isoformat) */
+  DateTime: { input: any; output: any; }
+  /** The `FileLike` scalar type represents a reference to a big file storage previously created by the user n a datalayer */
+  FileLike: { input: any; output: any; }
+  /** The `Vector` scalar type represents a matrix values as specified by */
+  FiveDVector: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
+  Identifier: { input: any; output: any; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
+  JSON: { input: any; output: any; }
+  /** The `Matrix` scalar type represents a matrix values as specified by */
+  Milliseconds: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
+  SearchQuery: { input: any; output: any; }
+  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
+  TraceLike: { input: any; output: any; }
+  /** The `Vector` scalar type represents a matrix values as specified by */
+  TwoDVector: { input: any; output: any; }
+  /**
+   *
+   *     The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)
+   *       to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.
+   *         The otherValues parameter is an object with the other values in the form {fieldName: value}.
+   */
+  ValidatorFunction: { input: any; output: any; }
+  _Any: { input: any; output: any; }
+};
 
 export type AnalogSignal = Signal & {
-  __typename?: 'AnalogSignal'
-  channels: Array<AnalogSignalChannel>
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  samplingRate: Scalars['Float']['output']
-  segment: BlockSegment
-  timeTrace: Trace
-  unit?: Maybe<Scalars['String']['output']>
-}
+  __typename?: 'AnalogSignal';
+  channels: Array<AnalogSignalChannel>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  samplingRate: Scalars['Float']['output'];
+  segment: BlockSegment;
+  timeTrace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
 
 export type AnalogSignalChannelsArgs = {
-  filters?: InputMaybe<AnalogSignalChannelFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type AnalogSignalChannel = {
-  __typename?: 'AnalogSignalChannel'
-  description?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  index: Scalars['Int']['output']
-  label?: Maybe<Scalars['String']['output']>
-  name?: Maybe<Scalars['String']['output']>
-  signal: AnalogSignal
-  trace: Trace
-  unit?: Maybe<Scalars['String']['output']>
-}
+  __typename?: 'AnalogSignalChannel';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  index: Scalars['Int']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  signal: AnalogSignal;
+  trace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
 
 export type AnalogSignalChannelFilter = {
-  AND?: InputMaybe<AnalogSignalChannelFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<AnalogSignalChannelFilter>
-  OR?: InputMaybe<AnalogSignalChannelFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  label?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-  session?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<AnalogSignalChannelFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AnalogSignalChannelFilter>;
+  OR?: InputMaybe<AnalogSignalChannelFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type AnalogSignalChannelInput = {
-  color?: InputMaybe<Array<Scalars['Int']['input']>>
-  description?: InputMaybe<Scalars['String']['input']>
-  index: Scalars['Int']['input']
-  name: Scalars['String']['input']
-  trace: Scalars['TraceLike']['input']
-  unit?: InputMaybe<Scalars['String']['input']>
-}
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  index: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  trace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type AnalogSignalFilter = {
-  AND?: InputMaybe<AnalogSignalFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<AnalogSignalFilter>
-  OR?: InputMaybe<AnalogSignalFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  label?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-  session?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<AnalogSignalFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AnalogSignalFilter>;
+  OR?: InputMaybe<AnalogSignalFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type AnalogSignalInput = {
-  channels: Array<AnalogSignalChannelInput>
-  description?: InputMaybe<Scalars['String']['input']>
-  name?: InputMaybe<Scalars['String']['input']>
-  samplingRate: Scalars['Float']['input']
-  tStart: Scalars['Float']['input']
-  timeTrace: Scalars['TraceLike']['input']
-  unit?: InputMaybe<Scalars['String']['input']>
+  channels: Array<AnalogSignalChannelInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  samplingRate: Scalars['Float']['input'];
+  tStart: Scalars['Float']['input'];
+  timeTrace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type App = {
+  __typename?: 'App';
+  id: Scalars['ID']['output'];
+  identifier: Scalars['String']['output'];
+};
+
+export type ArgPort = {
+  __typename?: 'ArgPort';
+  children?: Maybe<Array<ArgPort>>;
+  choices?: Maybe<Array<Choice>>;
+  default?: Maybe<Scalars['AnyDefault']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  effects?: Maybe<Array<Effect>>;
+  identifier?: Maybe<Scalars['Identifier']['output']>;
+  key: Scalars['String']['output'];
+  kind: PortKind;
+  label?: Maybe<Scalars['String']['output']>;
+  nullable: Scalars['Boolean']['output'];
+  requires?: Maybe<Array<Requires>>;
+  validators?: Maybe<Array<Validator>>;
+  widget?: Maybe<AssignWidget>;
+};
+
+/**
+ * Port
+ *
+ *     A Port is a single input or output of a action. It is composed of a key and a kind
+ *     which are used to uniquely identify the port.
+ *
+ *     If the Port is a structure, we need to define a identifier and scope,
+ *     Identifiers uniquely identify a specific type of model for the scopes (e.g
+ *     all the ports that have the identifier "@mikro/image" are of the same type, and
+ *     are hence compatible with each other). Scopes are used to define in which context
+ *     the identifier is valid (e.g. a port with the identifier "@mikro/image" and the
+ *     scope "local", can only be wired to other ports that have the same identifier and
+ *     are running in the same app). Global ports are ports that have the scope "global",
+ *     and can be wired to any other port that has the same identifier, as there exists a
+ *     mechanism to resolve and retrieve the object for each app. Please check the rekuest
+ *     documentation for more information on how this works.
+ *
+ *
+ *
+ */
+export type ArgPortInput = {
+  children?: InputMaybe<Array<ArgPortInput>>;
+  choices?: InputMaybe<Array<ChoiceInput>>;
+  default?: InputMaybe<Scalars['AnyDefault']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  effects?: InputMaybe<Array<EffectInput>>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  kind: PortKind;
+  label?: InputMaybe<Scalars['String']['input']>;
+  nullable?: Scalars['Boolean']['input'];
+  requires?: InputMaybe<Array<RequiresInput>>;
+  validators?: InputMaybe<Array<ValidatorInput>>;
+  widget?: InputMaybe<AssignWidgetInput>;
+};
+
+export type AssignWidget = {
+  followValue?: Maybe<Scalars['String']['output']>;
+  kind: AssignWidgetKind;
+};
+
+export type AssignWidgetInput = {
+  /** Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns */
+  asParagraph?: InputMaybe<Scalars['Boolean']['input']>;
+  choices?: InputMaybe<Array<ChoiceInput>>;
+  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  dependency?: InputMaybe<Scalars['String']['input']>;
+  fallback?: InputMaybe<AssignWidgetInput>;
+  filters?: InputMaybe<Array<ArgPortInput>>;
+  hook?: InputMaybe<Scalars['String']['input']>;
+  kind: AssignWidgetKind;
+  max?: InputMaybe<Scalars['Float']['input']>;
+  min?: InputMaybe<Scalars['Float']['input']>;
+  placeholder?: InputMaybe<Scalars['String']['input']>;
+  query?: InputMaybe<Scalars['SearchQuery']['input']>;
+  stateAccessors?: InputMaybe<Array<StateAccessorInput>>;
+  statePath?: InputMaybe<Scalars['String']['input']>;
+  step?: InputMaybe<Scalars['Float']['input']>;
+  targetAction?: InputMaybe<Scalars['String']['input']>;
+  targetDependency?: InputMaybe<Scalars['String']['input']>;
+  targetPort?: InputMaybe<Scalars['String']['input']>;
+  ward?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** The kind of assign widget. */
+export enum AssignWidgetKind {
+  Choice = 'CHOICE',
+  Custom = 'CUSTOM',
+  Proxy = 'PROXY',
+  Search = 'SEARCH',
+  Slider = 'SLIDER',
+  StateChoice = 'STATE_CHOICE',
+  String = 'STRING'
 }
 
 export type AssociateInput = {
-  other: Scalars['ID']['input']
-  selfs: Array<Scalars['ID']['input']>
-}
+  other: Scalars['ID']['input'];
+  selfs: Array<Scalars['ID']['input']>;
+};
 
+/** Temporary S3 credentials for reading a big file. */
+export type BigFileAccessGrant = {
+  __typename?: 'BigFileAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+/** A BigFileStore represents a large object stored behind the S3 datalayer. */
 export type BigFileStore = {
-  __typename?: 'BigFileStore'
-  bucket: Scalars['String']['output']
-  id: Scalars['ID']['output']
-  key: Scalars['String']['output']
-  path: Scalars['String']['output']
-  presignedUrl: Scalars['String']['output']
-}
+  __typename?: 'BigFileStore';
+  /** Get temporary S3 read credentials for the object. */
+  accessGrant: BigFileAccessGrant;
+  bucket: Scalars['String']['output'];
+  contentType?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  presignedUrl: Scalars['String']['output'];
+};
+
+
+/** A BigFileStore represents a large object stored behind the S3 datalayer. */
+export type BigFileStoreAccessGrantArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Temporary S3 credentials for uploading a big file. */
+export type BigFileUploadGrant = {
+  __typename?: 'BigFileUploadGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store: Scalars['String']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
+};
 
 export type Biophysics = {
-  __typename?: 'Biophysics'
-  compartments: Array<Compartment>
-}
+  __typename?: 'Biophysics';
+  compartments: Array<Compartment>;
+};
 
 export type BiophysicsInput = {
-  compartments?: Array<CompartmentInput>
-}
+  compartments?: Array<CompartmentInput>;
+};
 
 export type Block = {
-  __typename?: 'Block'
-  acquiredAt?: Maybe<Scalars['DateTime']['output']>
+  __typename?: 'Block';
+  acquiredAt?: Maybe<Scalars['DateTime']['output']>;
   /** Who created this recording session */
-  creator?: Maybe<User>
-  description?: Maybe<Scalars['String']['output']>
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
   /** The groups in this recording session */
-  groups: Array<BlockGroup>
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  provenanceEntries: Array<ProvenanceEntry>
+  groups: Array<BlockGroup>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
   /** The segments in this recording session */
-  segments: Array<BlockSegment>
-  trace: Trace
-}
+  segments: Array<BlockSegment>;
+  trace: Trace;
+};
+
 
 export type BlockGroupsArgs = {
-  filters?: InputMaybe<BlockGroupFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<BlockGroupFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockSegmentsArgs = {
-  filters?: InputMaybe<BlockSegmentFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<BlockSegmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 /** Numeric/aggregatable fields of Block */
 export enum BlockField {
@@ -170,173 +332,187 @@ export enum BlockField {
 }
 
 export type BlockFilter = {
-  AND?: InputMaybe<BlockFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<BlockFilter>
-  OR?: InputMaybe<BlockFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  groups?: InputMaybe<Array<Scalars['ID']['input']>>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  label?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-  trace?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<BlockFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockFilter>;
+  OR?: InputMaybe<BlockFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  groups?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  trace?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type BlockGroup = {
-  __typename?: 'BlockGroup'
+  __typename?: 'BlockGroup';
   /** The analog signals in this group */
-  analogSignals: Array<AnalogSignal>
-  block: Block
-  description?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
   /** The irregularly sampled signals in this group */
-  irregularlySampledSignals: Array<IrregularlySampledSignal>
-  name: Scalars['String']['output']
+  irregularlySampledSignals: Array<IrregularlySampledSignal>;
+  name: Scalars['String']['output'];
   /** The spike trains in this group */
-  spikeTrains: Array<SpikeTrain>
-}
+  spikeTrains: Array<SpikeTrain>;
+};
+
 
 export type BlockGroupAnalogSignalsArgs = {
-  filters?: InputMaybe<AnalogSignalFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockGroupIrregularlySampledSignalsArgs = {
-  filters?: InputMaybe<IrregularlySampledSignalFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockGroupSpikeTrainsArgs = {
-  filters?: InputMaybe<SpikeTrainFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<SpikeTrainFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type BlockGroupFilter = {
-  AND?: InputMaybe<BlockGroupFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<BlockGroupFilter>
-  OR?: InputMaybe<BlockGroupFilter>
-  description?: InputMaybe<StrFilterLookup>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<BlockGroupFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockGroupFilter>;
+  OR?: InputMaybe<BlockGroupFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type BlockOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type BlockSegment = {
-  __typename?: 'BlockSegment'
+  __typename?: 'BlockSegment';
   /** The analog signals in this group */
-  analogSignals: Array<AnalogSignal>
-  block: Block
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
   /** Who created this segment */
-  creator?: Maybe<User>
-  description?: Maybe<Scalars['String']['output']>
-  endTime: Scalars['Float']['output']
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  endTime: Scalars['Float']['output'];
   /** The groups that this segment belongs to */
-  groups: Array<BlockGroup>
-  id: Scalars['ID']['output']
+  groups: Array<BlockGroup>;
+  id: Scalars['ID']['output'];
   /** The irregularly sampled signals in this group */
-  irregularlySampledSignals: Array<IrregularlySampledSignal>
-  label: Scalars['String']['output']
-  provenanceEntries: Array<ProvenanceEntry>
+  irregularlySampledSignals: Array<IrregularlySampledSignal>;
+  label: Scalars['String']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
   /** The spike trains in this group */
-  spikeTrains: Array<SpikeTrain>
-  startTime: Scalars['Float']['output']
-}
+  spikeTrains: Array<SpikeTrain>;
+  startTime: Scalars['Float']['output'];
+};
+
 
 export type BlockSegmentAnalogSignalsArgs = {
-  filters?: InputMaybe<AnalogSignalFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockSegmentGroupsArgs = {
-  filters?: InputMaybe<BlockGroupFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<BlockGroupFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockSegmentIrregularlySampledSignalsArgs = {
-  filters?: InputMaybe<IrregularlySampledSignalFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockSegmentProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type BlockSegmentSpikeTrainsArgs = {
-  filters?: InputMaybe<SpikeTrainFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<SpikeTrainFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type BlockSegmentFilter = {
-  AND?: InputMaybe<BlockSegmentFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<BlockSegmentFilter>
-  OR?: InputMaybe<BlockSegmentFilter>
-  description?: InputMaybe<StrFilterLookup>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<BlockSegmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockSegmentFilter>;
+  OR?: InputMaybe<BlockSegmentFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type BlockSegmentInput = {
-  analogSignals?: Array<AnalogSignalInput>
-  description?: InputMaybe<Scalars['String']['input']>
-  irregularlySampledSignals?: Array<IrregularlySampledSignalInput>
-  name?: InputMaybe<Scalars['String']['input']>
-  spikeTrains?: Array<SpikeTrainInput>
-}
+  analogSignals?: Array<AnalogSignalInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  irregularlySampledSignals?: Array<IrregularlySampledSignalInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  spikeTrains?: Array<SpikeTrainInput>;
+};
 
 export type BlockStats = {
-  __typename?: 'BlockStats'
+  __typename?: 'BlockStats';
   /** Average */
-  avg?: Maybe<Scalars['Float']['output']>
+  avg?: Maybe<Scalars['Float']['output']>;
   /** Total number of items in the selection */
-  count: Scalars['Int']['output']
+  count: Scalars['Int']['output'];
   /** Number of distinct values for the field */
-  distinctCount: Scalars['Int']['output']
+  distinctCount: Scalars['Int']['output'];
   /** Maximum */
-  max?: Maybe<Scalars['Float']['output']>
+  max?: Maybe<Scalars['Float']['output']>;
   /** Minimum */
-  min?: Maybe<Scalars['Float']['output']>
+  min?: Maybe<Scalars['Float']['output']>;
   /** Time-bucketed stats over a datetime field. */
-  series: Array<TimeBucket>
+  series: Array<TimeBucket>;
   /** Sum */
-  sum?: Maybe<Scalars['Float']['output']>
-}
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
 
 export type BlockStatsAvgArgs = {
-  field: BlockField
-}
+  field: BlockField;
+};
+
 
 export type BlockStatsDistinctCountArgs = {
-  field: BlockField
-}
+  field: BlockField;
+};
+
 
 export type BlockStatsMaxArgs = {
-  field: BlockField
-}
+  field: BlockField;
+};
+
 
 export type BlockStatsMinArgs = {
-  field: BlockField
-}
+  field: BlockField;
+};
+
 
 export type BlockStatsSeriesArgs = {
-  by: Granularity
-  field: BlockField
-  timestampField: BlockTimestampField
-}
+  by: Granularity;
+  field: BlockField;
+  timestampField: BlockTimestampField;
+};
+
 
 export type BlockStatsSumArgs = {
-  field: BlockField
-}
+  field: BlockField;
+};
 
 /** Datetime fields of Block for bucketing */
 export enum BlockTimestampField {
@@ -344,30 +520,30 @@ export enum BlockTimestampField {
 }
 
 export type Cell = {
-  __typename?: 'Cell'
-  biophysics: Biophysics
-  id: Scalars['String']['output']
-  topology: Topology
-}
+  __typename?: 'Cell';
+  biophysics: Biophysics;
+  id: Scalars['String']['output'];
+  topology: Topology;
+};
 
 export type CellInput = {
-  biophysics: BiophysicsInput
-  id: Scalars['String']['input']
-  topology: TopologyInput
-}
+  biophysics: BiophysicsInput;
+  id: Scalars['String']['input'];
+  topology: TopologyInput;
+};
 
 export type Change = {
-  __typename?: 'Change'
-  path: Array<Scalars['String']['output']>
-  type: ChangeType
-  valueA?: Maybe<Scalars['Any']['output']>
-  valueB?: Maybe<Scalars['Any']['output']>
-}
+  __typename?: 'Change';
+  path: Array<Scalars['String']['output']>;
+  type: ChangeType;
+  valueA?: Maybe<Scalars['Any']['output']>;
+  valueB?: Maybe<Scalars['Any']['output']>;
+};
 
 export type ChangeDatasetInput = {
-  id: Scalars['ID']['input']
-  name: Scalars['String']['input']
-}
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+};
 
 export enum ChangeType {
   Added = 'ADDED',
@@ -375,322 +551,421 @@ export enum ChangeType {
   Removed = 'REMOVED'
 }
 
+export type Choice = {
+  __typename?: 'Choice';
+  description?: Maybe<Scalars['String']['output']>;
+  image?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+/**
+ *
+ * A choice is a value that can be selected in a dropdown.
+ *
+ * It is composed of a value, a label, and a description. The value is the
+ * value that is returned when the choice is selected. The label is the
+ * text that is displayed in the dropdown. The description is the text
+ * that is displayed when the user hovers over the choice.
+ *
+ *
+ */
+export type ChoiceInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  image?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
+  value: Scalars['AnyDefault']['input'];
+};
+
 export type Client = {
-  __typename?: 'Client'
-  clientId: Scalars['String']['output']
-  name: Scalars['String']['output']
-}
+  __typename?: 'Client';
+  clientId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  release?: Maybe<Release>;
+};
 
 export type Comparison = {
-  __typename?: 'Comparison'
-  changes: Array<Change>
-  collection: ModelCollection
-}
+  __typename?: 'Comparison';
+  changes: Array<Change>;
+  collection: ModelCollection;
+};
 
 export type Compartment = {
-  __typename?: 'Compartment'
-  globalParams: Array<GlobalParamMap>
-  id: Scalars['String']['output']
-  mechanisms: Array<Scalars['String']['output']>
-  sectionParams: Array<SectionParamMap>
-}
+  __typename?: 'Compartment';
+  globalParams: Array<GlobalParamMap>;
+  id: Scalars['String']['output'];
+  mechanisms: Array<Scalars['String']['output']>;
+  sectionParams: Array<SectionParamMap>;
+};
 
 export type CompartmentInput = {
-  globalParams?: InputMaybe<Array<GlobalParamMapInput>>
-  id: Scalars['String']['input']
-  mechanisms?: Array<Scalars['String']['input']>
-  sectionParams?: InputMaybe<Array<SectionParamMapInput>>
-}
+  globalParams?: InputMaybe<Array<GlobalParamMapInput>>;
+  id: Scalars['String']['input'];
+  mechanisms?: Array<Scalars['String']['input']>;
+  sectionParams?: InputMaybe<Array<SectionParamMapInput>>;
+};
 
 export type Connection = {
-  __typename?: 'Connection'
-  location: Scalars['Float']['output']
-  parent: Scalars['String']['output']
-}
+  __typename?: 'Connection';
+  location: Scalars['Float']['output'];
+  parent: Scalars['String']['output'];
+};
 
 export type ConnectionInput = {
-  location?: Scalars['Float']['input']
-  parent: Scalars['String']['input']
-}
+  location?: Scalars['Float']['input'];
+  parent: Scalars['String']['input'];
+};
 
 export enum ConnectionKind {
   Synapse = 'SYNAPSE'
 }
 
 export type Coord = {
-  __typename?: 'Coord'
-  x: Scalars['Float']['output']
-  y: Scalars['Float']['output']
-  z: Scalars['Float']['output']
-}
+  __typename?: 'Coord';
+  x: Scalars['Float']['output'];
+  y: Scalars['Float']['output'];
+  z: Scalars['Float']['output'];
+};
 
 export type CoordInput = {
-  x: Scalars['Float']['input']
-  y: Scalars['Float']['input']
-  z: Scalars['Float']['input']
-}
+  x: Scalars['Float']['input'];
+  y: Scalars['Float']['input'];
+  z: Scalars['Float']['input'];
+};
 
 export type CreateBlockInput = {
-  file?: InputMaybe<Scalars['ID']['input']>
-  name: Scalars['String']['input']
-  recordingTime?: InputMaybe<Scalars['DateTime']['input']>
-  segments?: Array<BlockSegmentInput>
-}
+  file?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+  recordingTime?: InputMaybe<Scalars['DateTime']['input']>;
+  segments?: Array<BlockSegmentInput>;
+};
 
 export type CreateDatasetInput = {
-  name: Scalars['String']['input']
-}
+  name: Scalars['String']['input'];
+};
 
 export type CreateExperimentInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  name: Scalars['String']['input']
-  recordingViews: Array<RecordingViewInput>
-  stimulusViews: Array<StimulusViewInput>
-  timeTrace?: InputMaybe<Scalars['ID']['input']>
-}
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  recordingViews: Array<RecordingViewInput>;
+  stimulusViews: Array<StimulusViewInput>;
+  timeTrace?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Input for creating a mod environment */
+export type CreateModEnvironmentInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  mechanisms: Array<MechanismInput>;
+  name: Scalars['String']['input'];
+  zipFile: Scalars['BigFileLike']['input'];
+};
 
 export type CreateModelCollectionInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  models: Array<Scalars['ID']['input']>
-  name: Scalars['String']['input']
-}
+  description?: InputMaybe<Scalars['String']['input']>;
+  models: Array<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+};
 
 export type CreateNeuronModelInput = {
-  config: ModelConfigInput
-  description?: InputMaybe<Scalars['String']['input']>
-  name: Scalars['String']['input']
-  parent?: InputMaybe<Scalars['ID']['input']>
-}
+  config: ModelConfigInput;
+  description?: InputMaybe<Scalars['String']['input']>;
+  environment?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+  parent?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type CreateSimulationInput = {
-  dt?: InputMaybe<Scalars['Milliseconds']['input']>
-  duration: Scalars['Milliseconds']['input']
-  model: Scalars['ID']['input']
-  name: Scalars['String']['input']
-  recordings: Array<RecordingInput>
-  stimuli: Array<StimulusInput>
-  timeTrace?: InputMaybe<Scalars['TraceLike']['input']>
-}
-
-/** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
-export type Credentials = {
-  __typename?: 'Credentials'
-  accessKey: Scalars['String']['output']
-  bucket: Scalars['String']['output']
-  datalayer: Scalars['String']['output']
-  key: Scalars['String']['output']
-  secretKey: Scalars['String']['output']
-  sessionToken: Scalars['String']['output']
-  status: Scalars['String']['output']
-  store: Scalars['String']['output']
-}
+  dt?: InputMaybe<Scalars['Milliseconds']['input']>;
+  duration: Scalars['Milliseconds']['input'];
+  model: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+  recordings: Array<RecordingInput>;
+  stimuli: Array<StimulusInput>;
+  timeTrace?: InputMaybe<Scalars['ArrayLike']['input']>;
+};
 
 export type Dataset = {
-  __typename?: 'Dataset'
-  children: Array<Dataset>
-  createdAt: Scalars['DateTime']['output']
-  creator?: Maybe<User>
-  description?: Maybe<Scalars['String']['output']>
-  files: Array<File>
-  id: Scalars['ID']['output']
-  images: Array<Trace>
-  isDefault: Scalars['Boolean']['output']
-  name: Scalars['String']['output']
-  pinned: Scalars['Boolean']['output']
-  provenanceEntries: Array<ProvenanceEntry>
-  tags: Array<Scalars['String']['output']>
-}
+  __typename?: 'Dataset';
+  children: Array<Dataset>;
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  files: Array<File>;
+  id: Scalars['ID']['output'];
+  images: Array<Trace>;
+  isDefault: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  pinned: Scalars['Boolean']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
+  tags: Array<Scalars['String']['output']>;
+};
+
 
 export type DatasetChildrenArgs = {
-  filters?: InputMaybe<DatasetFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<DatasetFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type DatasetFilesArgs = {
-  filters?: InputMaybe<FileFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<FileFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type DatasetImagesArgs = {
-  filters?: InputMaybe<TraceFilter>
-  order?: InputMaybe<TraceOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<TraceFilter>;
+  order?: InputMaybe<TraceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type DatasetProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type DatasetFilter = {
-  AND?: InputMaybe<DatasetFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<DatasetFilter>
-  OR?: InputMaybe<DatasetFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  name?: InputMaybe<StrFilterLookup>
-}
+  AND?: InputMaybe<DatasetFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<DatasetFilter>;
+  OR?: InputMaybe<DatasetFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<StrFilterLookup>;
+};
 
 export type DeleteBlockInput = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
 
 export type DeleteDatasetInput = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
 
 export type DeleteFileInput = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
 
 export type DeleteRoiInput = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
 
 export type DeleteTraceInput = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
 
 export type DesociateInput = {
-  other: Scalars['ID']['input']
-  selfs: Array<Scalars['ID']['input']>
+  other: Scalars['ID']['input'];
+  selfs: Array<Scalars['ID']['input']>;
+};
+
+export type Effect = {
+  dependencies: Array<Scalars['String']['output']>;
+  function: Scalars['ValidatorFunction']['output'];
+  kind: EffectKind;
+};
+
+/**
+ *
+ *                  An effect is a way to modify a port based on a condition. For example,
+ *     you could have an effect that sets a port to null if another port is null.
+ *
+ *     Or, you could have an effect that hides the port if another port meets a condition.
+ *     E.g when the user selects a certain option in a dropdown, another port is hidden.
+ *
+ *
+ *
+ */
+export type EffectInput = {
+  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  fade?: InputMaybe<Scalars['Boolean']['input']>;
+  function: Scalars['ValidatorFunction']['input'];
+  hook?: InputMaybe<Scalars['String']['input']>;
+  kind: EffectKind;
+  message?: InputMaybe<Scalars['String']['input']>;
+  ward?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** The kind of effect. */
+export enum EffectKind {
+  Custom = 'CUSTOM',
+  Hide = 'HIDE',
+  Message = 'MESSAGE'
 }
 
 export type Exp2Synapse = NetSynapse & {
-  __typename?: 'Exp2Synapse'
-  cell: Scalars['String']['output']
-  delay: Scalars['Float']['output']
-  e: Scalars['Float']['output']
-  id: Scalars['ID']['output']
-  location: Scalars['String']['output']
-  position: Scalars['Float']['output']
-  tau1: Scalars['Float']['output']
-  tau2: Scalars['Float']['output']
-}
+  __typename?: 'Exp2Synapse';
+  cell: Scalars['String']['output'];
+  delay: Scalars['Float']['output'];
+  e: Scalars['Float']['output'];
+  id: Scalars['ID']['output'];
+  location: Scalars['String']['output'];
+  position: Scalars['Float']['output'];
+  tau1: Scalars['Float']['output'];
+  tau2: Scalars['Float']['output'];
+};
 
 export type Experiment = {
-  __typename?: 'Experiment'
-  createdAt: Scalars['DateTime']['output']
-  description?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  recordingViews: Array<ExperimentRecordingView>
-  stimulusViews: Array<ExperimentStimulusView>
-  timeTrace: Trace
-}
+  __typename?: 'Experiment';
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  recordingViews: Array<ExperimentRecordingView>;
+  stimulusViews: Array<ExperimentStimulusView>;
+  timeTrace: Trace;
+};
+
 
 export type ExperimentRecordingViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type ExperimentStimulusViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type ExperimentFilter = {
-  AND?: InputMaybe<ExperimentFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<ExperimentFilter>
-  OR?: InputMaybe<ExperimentFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<ExperimentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ExperimentFilter>;
+  OR?: InputMaybe<ExperimentFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type ExperimentOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type ExperimentRecordingView = {
-  __typename?: 'ExperimentRecordingView'
-  duration?: Maybe<Scalars['Float']['output']>
-  experiment: Experiment
-  id: Scalars['ID']['output']
-  label?: Maybe<Scalars['String']['output']>
-  offset?: Maybe<Scalars['Float']['output']>
-  recording: Recording
-}
+  __typename?: 'ExperimentRecordingView';
+  duration?: Maybe<Scalars['Float']['output']>;
+  experiment: Experiment;
+  id: Scalars['ID']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  offset?: Maybe<Scalars['Float']['output']>;
+  recording: Recording;
+};
 
 export type ExperimentStimulusView = {
-  __typename?: 'ExperimentStimulusView'
-  duration?: Maybe<Scalars['Float']['output']>
-  experiment: Experiment
-  id: Scalars['ID']['output']
-  label?: Maybe<Scalars['String']['output']>
-  offset?: Maybe<Scalars['Float']['output']>
-  stimulus: Stimulus
-}
+  __typename?: 'ExperimentStimulusView';
+  duration?: Maybe<Scalars['Float']['output']>;
+  experiment: Experiment;
+  id: Scalars['ID']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  offset?: Maybe<Scalars['Float']['output']>;
+  stimulus: Stimulus;
+};
 
 export type File = {
-  __typename?: 'File'
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  origins: Array<Trace>
-  store: BigFileStore
-}
+  __typename?: 'File';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  origins: Array<Trace>;
+  store: BigFileStore;
+};
+
 
 export type FileOriginsArgs = {
-  filters?: InputMaybe<TraceFilter>
-  order?: InputMaybe<TraceOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<TraceFilter>;
+  order?: InputMaybe<TraceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type FileEvent = {
-  __typename?: 'FileEvent'
-  create?: Maybe<File>
-  delete?: Maybe<Scalars['ID']['output']>
-  moved?: Maybe<File>
-  update?: Maybe<File>
-}
+  __typename?: 'FileEvent';
+  create?: Maybe<File>;
+  delete?: Maybe<Scalars['ID']['output']>;
+  moved?: Maybe<File>;
+  update?: Maybe<File>;
+};
 
 export type FileFilter = {
-  AND?: InputMaybe<FileFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<FileFilter>
-  OR?: InputMaybe<FileFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<FileFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<FileFilter>;
+  OR?: InputMaybe<FileFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FinishBigFileUploadInput = {
+  storeId: Scalars['String']['input'];
+  valid?: Scalars['Boolean']['input'];
+};
+
+export type FinishMediaUploadInput = {
+  storeId: Scalars['String']['input'];
+  valid?: Scalars['Boolean']['input'];
+};
+
+export type FinishParquetUploadInput = {
+  storeId: Scalars['String']['input'];
+  valid?: Scalars['Boolean']['input'];
+};
+
+export type FinishZarrUploadInput = {
+  storeId: Scalars['String']['input'];
+  valid?: Scalars['Boolean']['input'];
+};
 
 export type FromFileLike = {
-  dataset?: InputMaybe<Scalars['ID']['input']>
-  file: Scalars['FileLike']['input']
-  name: Scalars['String']['input']
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>
-}
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  file: Scalars['FileLike']['input'];
+  name: Scalars['String']['input'];
+  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
 
 /** Input type for creating an image from an array-like object */
 export type FromTraceLikeInput = {
   /** The array-like object to create the image from */
-  array: Scalars['TraceLike']['input']
+  array: Scalars['ArrayLike']['input'];
   /** Optional dataset ID to associate the image with */
-  dataset?: InputMaybe<Scalars['ID']['input']>
+  dataset?: InputMaybe<Scalars['ID']['input']>;
   /** The name of the image */
-  name: Scalars['String']['input']
+  name: Scalars['String']['input'];
   /** Optional list of tags to associate with the image */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>
-}
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+/** Temporary S3 credentials for reading a media object. */
+export type GeneralMediaAccessGrant = {
+  __typename?: 'GeneralMediaAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
 
 export type GlobalParamMap = {
-  __typename?: 'GlobalParamMap'
-  description?: Maybe<Scalars['String']['output']>
-  param: Scalars['String']['output']
-  value: Scalars['Float']['output']
-}
+  __typename?: 'GlobalParamMap';
+  description?: Maybe<Scalars['String']['output']>;
+  param: Scalars['String']['output'];
+  value: Scalars['Float']['output'];
+};
 
 export type GlobalParamMapInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  param: Scalars['String']['input']
-  value: Scalars['Float']['input']
-}
+  description?: InputMaybe<Scalars['String']['input']>;
+  param: Scalars['String']['input'];
+  value: Scalars['Float']['input'];
+};
 
 export enum Granularity {
   Day = 'DAY',
@@ -709,394 +984,616 @@ export enum HistoryKind {
 }
 
 export type IrregularlySampledSignal = Signal & {
-  __typename?: 'IrregularlySampledSignal'
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  segment: BlockSegment
-  trace: Trace
-  unit?: Maybe<Scalars['String']['output']>
-}
+  __typename?: 'IrregularlySampledSignal';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+  trace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
 
 export type IrregularlySampledSignalFilter = {
-  AND?: InputMaybe<IrregularlySampledSignalFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<IrregularlySampledSignalFilter>
-  OR?: InputMaybe<IrregularlySampledSignalFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  label?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-  session?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<IrregularlySampledSignalFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<IrregularlySampledSignalFilter>;
+  OR?: InputMaybe<IrregularlySampledSignalFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type IrregularlySampledSignalInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  name?: InputMaybe<Scalars['String']['input']>
-  times: Scalars['TraceLike']['input']
-  trace: Scalars['TraceLike']['input']
-  unit?: InputMaybe<Scalars['String']['input']>
-}
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  times: Scalars['TraceLike']['input'];
+  trace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Mechanism = {
+  __typename?: 'Mechanism';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  /** The parameter ports of the mechanism */
+  parameters: Array<ArgPort>;
+};
+
+export type MechanismFilter = {
+  AND?: InputMaybe<MechanismFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<MechanismFilter>;
+  OR?: InputMaybe<MechanismFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a mechanism */
+export type MechanismInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  parameters: Array<ArgPortInput>;
+};
+
+export type MechanismOrder =
+  { createdAt: Ordering; };
+
+/** Temporary S3 credentials for reading a media object. */
+export type MediaAccessGrant = {
+  __typename?: 'MediaAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+export type MediaStore = {
+  __typename?: 'MediaStore';
+  /** Get temporary S3 read credentials for the media object. */
+  accessGrant: MediaAccessGrant;
+  bucket: Scalars['String']['output'];
+  contentType?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  /** Compatibility field returning the canonical S3 object path. */
+  presignedUrl: Scalars['String']['output'];
+};
+
+
+export type MediaStoreAccessGrantArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MediaStorePresignedUrlArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** A presigned PUT grant for uploading a media object. */
+export type MediaUploadGrant = {
+  __typename?: 'MediaUploadGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store: Scalars['String']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
+};
+
+export type ModEnvironment = {
+  __typename?: 'ModEnvironment';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  mechanisms: Array<Mechanism>;
+  name: Scalars['String']['output'];
+  store: BigFileStore;
+};
+
+
+export type ModEnvironmentMechanismsArgs = {
+  filters?: InputMaybe<MechanismFilter>;
+  ordering?: Array<MechanismOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ModEnvironmentFilter = {
+  AND?: InputMaybe<ModEnvironmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ModEnvironmentFilter>;
+  OR?: InputMaybe<ModEnvironmentFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ModEnvironmentOrder =
+  { createdAt: Ordering; };
 
 /** A change made to a model. */
 export type ModelChange = {
-  __typename?: 'ModelChange'
+  __typename?: 'ModelChange';
   /** The field that was changed. */
-  field: Scalars['String']['output']
+  field: Scalars['String']['output'];
   /** The new value of the field. */
-  newValue?: Maybe<Scalars['String']['output']>
+  newValue?: Maybe<Scalars['String']['output']>;
   /** The old value of the field. */
-  oldValue?: Maybe<Scalars['String']['output']>
-}
+  oldValue?: Maybe<Scalars['String']['output']>;
+};
 
 export type ModelCollection = {
-  __typename?: 'ModelCollection'
-  description?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  models: Array<NeuronModel>
-  name: Scalars['String']['output']
-}
+  __typename?: 'ModelCollection';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  models: Array<NeuronModel>;
+  name: Scalars['String']['output'];
+};
+
 
 export type ModelCollectionModelsArgs = {
-  filters?: InputMaybe<NeuronModelFilter>
-  order?: InputMaybe<NeuronModelOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<NeuronModelFilter>;
+  order?: InputMaybe<NeuronModelOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type ModelCollectionFilter = {
-  AND?: InputMaybe<ModelCollectionFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<ModelCollectionFilter>
-  OR?: InputMaybe<ModelCollectionFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<ModelCollectionFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ModelCollectionFilter>;
+  OR?: InputMaybe<ModelCollectionFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type ModelConfig = {
-  __typename?: 'ModelConfig'
-  cells: Array<Cell>
-  celsius: Scalars['Float']['output']
-  label?: Maybe<Scalars['String']['output']>
-  netConnections?: Maybe<Array<NetConnection>>
-  netStimulators?: Maybe<Array<NetStimulator>>
-  netSynapses?: Maybe<Array<NetSynapse>>
-  vInit: Scalars['Float']['output']
-}
+  __typename?: 'ModelConfig';
+  cells: Array<Cell>;
+  celsius: Scalars['Float']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  netConnections?: Maybe<Array<NetConnection>>;
+  netStimulators?: Maybe<Array<NetStimulator>>;
+  netSynapses?: Maybe<Array<NetSynapse>>;
+  vInit: Scalars['Float']['output'];
+};
 
 export type ModelConfigInput = {
-  cells?: Array<CellInput>
-  celsius?: Scalars['Float']['input']
-  environments?: Array<Scalars['String']['input']>
-  label?: InputMaybe<Scalars['String']['input']>
-  netConnections?: InputMaybe<Array<NetConnectionInput>>
-  netStimulators?: InputMaybe<Array<NetStimulatorInput>>
-  netSynapses?: InputMaybe<Array<NetSynapseInput>>
-  vInit?: Scalars['Float']['input']
-}
+  cells?: Array<CellInput>;
+  celsius?: Scalars['Float']['input'];
+  environments?: Array<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  netConnections?: InputMaybe<Array<NetConnectionInput>>;
+  netStimulators?: InputMaybe<Array<NetStimulatorInput>>;
+  netSynapses?: InputMaybe<Array<NetSynapseInput>>;
+  vInit?: Scalars['Float']['input'];
+};
 
 export type Mutation = {
-  __typename?: 'Mutation'
+  __typename?: 'Mutation';
   /** Create a new block */
-  createBlock: Block
+  createBlock: Block;
   /** Create a new dataset to organize data */
-  createDataset: Dataset
+  createDataset: Dataset;
   /** Create a new experiment */
-  createExperiment: Experiment
+  createExperiment: Experiment;
+  /** Create a mechanism from a mod file */
+  createModEnvironment: ModEnvironment;
   /** Create a new model collection */
-  createModelCollection: ModelCollection
+  createModelCollection: ModelCollection;
   /** Create a new neuron model */
-  createNeuronModel: NeuronModel
+  createNeuronModel: NeuronModel;
   /** Create a new region of interest */
-  createRoi: Roi
+  createRoi: Roi;
   /** Create a new simulsation */
-  createSimulation: Simulation
+  createSimulation: Simulation;
   /** Delete an existing block */
-  deleteBlock: Scalars['ID']['output']
+  deleteBlock: Scalars['ID']['output'];
   /** Delete an existing dataset */
-  deleteDataset: Scalars['ID']['output']
+  deleteDataset: Scalars['ID']['output'];
   /** Delete an existing file */
-  deleteFile: Scalars['ID']['output']
+  deleteFile: Scalars['ID']['output'];
   /** Delete an existing image */
-  deleteImage: Scalars['ID']['output']
+  deleteImage: Scalars['ID']['output'];
   /** Delete an existing region of interest */
-  deleteRoi: Scalars['ID']['output']
+  deleteRoi: Scalars['ID']['output'];
+  /** Finalize a big file upload after the client has written the object */
+  finishBigfileUpload: BigFileStore;
+  /** Finalize a media upload after the client has written the object */
+  finishMediaUpload: MediaStore;
+  /** Finalize a Parquet upload after the client has written the object */
+  finishParquetUpload: ParquetStore;
+  /** Finalize a Zarr upload after the client has written the object */
+  finishZarrUpload: ZarrStore;
   /** Create a file from file-like data */
-  fromFileLike: File
+  fromFileLike: File;
   /** Create an image from array-like data */
-  fromTraceLike: Trace
+  fromTraceLike: Trace;
   /** Pin a dataset for quick access */
-  pinDataset: Dataset
+  pinDataset: Dataset;
   /** Pin an image for quick access */
-  pinImage: Trace
+  pinImage: Trace;
   /** Pin a region of interest for quick access */
-  pinRoi: Roi
+  pinRoi: Roi;
   /** Add datasets as children of another dataset */
-  putDatasetsInDataset: Dataset
+  putDatasetsInDataset: Dataset;
   /** Add files to a dataset */
-  putFilesInDataset: Dataset
+  putFilesInDataset: Dataset;
   /** Add images to a dataset */
-  putImagesInDataset: Dataset
+  putImagesInDataset: Dataset;
   /** Remove datasets from being children of another dataset */
-  releaseDatasetsFromDataset: Dataset
+  releaseDatasetsFromDataset: Dataset;
   /** Remove files from a dataset */
-  releaseFilesFromDataset: Dataset
+  releaseFilesFromDataset: Dataset;
   /** Remove images from a dataset */
-  releaseImagesFromDataset: Dataset
-  /** Request credentials to access an image */
-  requestAccess: AccessCredentials
-  /** Request credentials to access a file */
-  requestFileAccess: AccessCredentials
-  /** Request credentials to upload a new file */
-  requestFileUpload: Credentials
-  /** Request presigned credentials for file upload */
-  requestFileUploadPresigned: PresignedPostCredentials
-  /** Request credentials for media file upload */
-  requestMediaUpload: PresignedPostCredentials
-  /** Request credentials to upload a new image */
-  requestUpload: Credentials
+  releaseImagesFromDataset: Dataset;
+  /** Request temporary S3 read credentials for a big file */
+  requestBigfileAccess: BigFileAccessGrant;
+  /** Request an upload grant for a big file store */
+  requestBigfileUpload: BigFileUploadGrant;
+  /** Request temporary S3 read credentials for media files in the organization */
+  requestGeneralMediaAccess: GeneralMediaAccessGrant;
+  /** Request temporary S3 read credentials for a media file */
+  requestMediaAccess: MediaAccessGrant;
+  /** Upload media and return a URL for access */
+  requestMediaUpload: MediaUploadGrant;
+  /** Request temporary S3 read credentials for a Parquet file */
+  requestParquetAccess: ParquetAccessGrant;
+  /** Request an upload grant for a Parquet store */
+  requestParquetUpload: ParquetUploadGrant;
+  /** Request temporary S3 read credentials for a Zarr store */
+  requestZarrAccess: ZarrAccessGrant;
+  /** Request an upload grant for a Zarr store */
+  requestZarrUpload: ZarrUploadGrant;
   /** Revert dataset to a previous version */
-  revertDataset: Dataset
+  revertDataset: Dataset;
   /** Update dataset metadata */
-  updateDataset: Dataset
+  updateDataset: Dataset;
   /** Update an existing image's metadata */
-  updateImage: Trace
+  updateImage: Trace;
   /** Update an existing region of interest */
-  updateRoi: Roi
-}
+  updateRoi: Roi;
+};
+
 
 export type MutationCreateBlockArgs = {
-  input: CreateBlockInput
-}
+  input: CreateBlockInput;
+};
+
 
 export type MutationCreateDatasetArgs = {
-  input: CreateDatasetInput
-}
+  input: CreateDatasetInput;
+};
+
 
 export type MutationCreateExperimentArgs = {
-  input: CreateExperimentInput
-}
+  input: CreateExperimentInput;
+};
+
+
+export type MutationCreateModEnvironmentArgs = {
+  input: CreateModEnvironmentInput;
+};
+
 
 export type MutationCreateModelCollectionArgs = {
-  input: CreateModelCollectionInput
-}
+  input: CreateModelCollectionInput;
+};
+
 
 export type MutationCreateNeuronModelArgs = {
-  input: CreateNeuronModelInput
-}
+  input: CreateNeuronModelInput;
+};
+
 
 export type MutationCreateRoiArgs = {
-  input: RoiInput
-}
+  input: RoiInput;
+};
+
 
 export type MutationCreateSimulationArgs = {
-  input: CreateSimulationInput
-}
+  input: CreateSimulationInput;
+};
+
 
 export type MutationDeleteBlockArgs = {
-  input: DeleteBlockInput
-}
+  input: DeleteBlockInput;
+};
+
 
 export type MutationDeleteDatasetArgs = {
-  input: DeleteDatasetInput
-}
+  input: DeleteDatasetInput;
+};
+
 
 export type MutationDeleteFileArgs = {
-  input: DeleteFileInput
-}
+  input: DeleteFileInput;
+};
+
 
 export type MutationDeleteImageArgs = {
-  input: DeleteTraceInput
-}
+  input: DeleteTraceInput;
+};
+
 
 export type MutationDeleteRoiArgs = {
-  input: DeleteRoiInput
-}
+  input: DeleteRoiInput;
+};
+
+
+export type MutationFinishBigfileUploadArgs = {
+  input: FinishBigFileUploadInput;
+};
+
+
+export type MutationFinishMediaUploadArgs = {
+  input: FinishMediaUploadInput;
+};
+
+
+export type MutationFinishParquetUploadArgs = {
+  input: FinishParquetUploadInput;
+};
+
+
+export type MutationFinishZarrUploadArgs = {
+  input: FinishZarrUploadInput;
+};
+
 
 export type MutationFromFileLikeArgs = {
-  input: FromFileLike
-}
+  input: FromFileLike;
+};
+
 
 export type MutationFromTraceLikeArgs = {
-  input: FromTraceLikeInput
-}
+  input: FromTraceLikeInput;
+};
+
 
 export type MutationPinDatasetArgs = {
-  input: PinDatasetInput
-}
+  input: PinDatasetInput;
+};
+
 
 export type MutationPinImageArgs = {
-  input: PinImageInput
-}
+  input: PinImageInput;
+};
+
 
 export type MutationPinRoiArgs = {
-  input: PinRoiInput
-}
+  input: PinRoiInput;
+};
+
 
 export type MutationPutDatasetsInDatasetArgs = {
-  input: AssociateInput
-}
+  input: AssociateInput;
+};
+
 
 export type MutationPutFilesInDatasetArgs = {
-  input: AssociateInput
-}
+  input: AssociateInput;
+};
+
 
 export type MutationPutImagesInDatasetArgs = {
-  input: AssociateInput
-}
+  input: AssociateInput;
+};
+
 
 export type MutationReleaseDatasetsFromDatasetArgs = {
-  input: DesociateInput
-}
+  input: DesociateInput;
+};
+
 
 export type MutationReleaseFilesFromDatasetArgs = {
-  input: DesociateInput
-}
+  input: DesociateInput;
+};
+
 
 export type MutationReleaseImagesFromDatasetArgs = {
-  input: DesociateInput
-}
+  input: DesociateInput;
+};
 
-export type MutationRequestAccessArgs = {
-  input: RequestAccessInput
-}
 
-export type MutationRequestFileAccessArgs = {
-  input: RequestFileAccessInput
-}
+export type MutationRequestBigfileAccessArgs = {
+  input: RequestBigFileAccessInput;
+};
 
-export type MutationRequestFileUploadArgs = {
-  input: RequestFileUploadInput
-}
 
-export type MutationRequestFileUploadPresignedArgs = {
-  input: RequestFileUploadInput
-}
+export type MutationRequestBigfileUploadArgs = {
+  input: RequestBigFileUploadInput;
+};
+
+
+export type MutationRequestGeneralMediaAccessArgs = {
+  input: RequestGeneralMediaAccessInput;
+};
+
+
+export type MutationRequestMediaAccessArgs = {
+  input: RequestMediaAccessInput;
+};
+
 
 export type MutationRequestMediaUploadArgs = {
-  input: RequestMediaUploadInput
-}
+  input: RequestMediaUploadInput;
+};
 
-export type MutationRequestUploadArgs = {
-  input: RequestUploadInput
-}
+
+export type MutationRequestParquetAccessArgs = {
+  input: RequestParquetAccessInput;
+};
+
+
+export type MutationRequestParquetUploadArgs = {
+  input: RequestParquetUploadInput;
+};
+
+
+export type MutationRequestZarrAccessArgs = {
+  input: RequestZarrAccessInput;
+};
+
+
+export type MutationRequestZarrUploadArgs = {
+  input: RequestZarrUploadInput;
+};
+
 
 export type MutationRevertDatasetArgs = {
-  input: RevertInput
-}
+  input: RevertInput;
+};
+
 
 export type MutationUpdateDatasetArgs = {
-  input: ChangeDatasetInput
-}
+  input: ChangeDatasetInput;
+};
+
 
 export type MutationUpdateImageArgs = {
-  input: UpdateTraceInput
-}
+  input: UpdateTraceInput;
+};
+
 
 export type MutationUpdateRoiArgs = {
-  input: UpdateRoiInput
-}
+  input: UpdateRoiInput;
+};
 
 export type NetConnection = {
-  delay?: Maybe<Scalars['Float']['output']>
-  id: Scalars['ID']['output']
-  threshold?: Maybe<Scalars['Float']['output']>
-  weight?: Maybe<Scalars['Float']['output']>
-}
+  delay?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  threshold?: Maybe<Scalars['Float']['output']>;
+  weight?: Maybe<Scalars['Float']['output']>;
+};
 
 export type NetConnectionInput = {
-  delay?: InputMaybe<Scalars['Float']['input']>
-  id: Scalars['ID']['input']
-  kind?: ConnectionKind
-  netStimulator: Scalars['ID']['input']
-  synapse: Scalars['ID']['input']
-  threshold?: InputMaybe<Scalars['Float']['input']>
-  weight?: InputMaybe<Scalars['Float']['input']>
-}
+  delay?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['ID']['input'];
+  kind?: ConnectionKind;
+  netStimulator: Scalars['ID']['input'];
+  synapse: Scalars['ID']['input'];
+  threshold?: InputMaybe<Scalars['Float']['input']>;
+  weight?: InputMaybe<Scalars['Float']['input']>;
+};
 
 export type NetStimulator = {
-  __typename?: 'NetStimulator'
-  id: Scalars['ID']['output']
-  interval?: Maybe<Scalars['Float']['output']>
-  number: Scalars['Int']['output']
-  start: Scalars['Float']['output']
-}
+  __typename?: 'NetStimulator';
+  id: Scalars['ID']['output'];
+  interval?: Maybe<Scalars['Float']['output']>;
+  number: Scalars['Int']['output'];
+  start: Scalars['Float']['output'];
+};
 
 export type NetStimulatorInput = {
-  id: Scalars['ID']['input']
-  interval?: InputMaybe<Scalars['Float']['input']>
-  number?: Scalars['Int']['input']
-  start?: Scalars['Float']['input']
-}
+  id: Scalars['ID']['input'];
+  interval?: InputMaybe<Scalars['Float']['input']>;
+  number?: Scalars['Int']['input'];
+  start?: Scalars['Float']['input'];
+};
 
 export type NetSynapse = {
-  cell: Scalars['String']['output']
-  id: Scalars['ID']['output']
-  location: Scalars['String']['output']
-  position: Scalars['Float']['output']
-}
+  cell: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  location: Scalars['String']['output'];
+  position: Scalars['Float']['output'];
+};
 
 export type NetSynapseInput = {
-  cell: Scalars['ID']['input']
-  e: Scalars['Float']['input']
-  id: Scalars['ID']['input']
-  kind?: SynapseKind
-  location: Scalars['ID']['input']
-  position?: Scalars['Float']['input']
-  tau1: Scalars['Float']['input']
-  tau2: Scalars['Float']['input']
-}
+  cell: Scalars['ID']['input'];
+  e: Scalars['Float']['input'];
+  id: Scalars['ID']['input'];
+  kind?: SynapseKind;
+  location: Scalars['ID']['input'];
+  position?: Scalars['Float']['input'];
+  tau1: Scalars['Float']['input'];
+  tau2: Scalars['Float']['input'];
+};
 
 export type NeuronModel = {
-  __typename?: 'NeuronModel'
-  changes: Array<Change>
-  comparisons: Array<Comparison>
-  config: ModelConfig
-  creator?: Maybe<User>
-  description?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  modelCollections?: Maybe<Array<ModelCollection>>
-  name: Scalars['String']['output']
-  simulations: Array<Simulation>
-}
+  __typename?: 'NeuronModel';
+  changes: Array<Change>;
+  comparisons: Array<Comparison>;
+  config: ModelConfig;
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  environment: ModEnvironment;
+  id: Scalars['ID']['output'];
+  modelCollections?: Maybe<Array<ModelCollection>>;
+  name: Scalars['String']['output'];
+  simulations: Array<Simulation>;
+};
+
 
 export type NeuronModelChangesArgs = {
-  to?: InputMaybe<Scalars['ID']['input']>
-}
+  to?: InputMaybe<Scalars['ID']['input']>;
+};
+
 
 export type NeuronModelModelCollectionsArgs = {
-  filters?: InputMaybe<ModelCollectionFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ModelCollectionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type NeuronModelSimulationsArgs = {
-  filters?: InputMaybe<SimulationFilter>
-  order?: InputMaybe<SimulationOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<SimulationFilter>;
+  order?: InputMaybe<SimulationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type NeuronModelFilter = {
-  AND?: InputMaybe<NeuronModelFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<NeuronModelFilter>
-  OR?: InputMaybe<NeuronModelFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<NeuronModelFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<NeuronModelFilter>;
+  OR?: InputMaybe<NeuronModelFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type NeuronModelOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type OffsetPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>
-  offset?: Scalars['Int']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: Scalars['Int']['input'];
+};
+
+export enum OptionKey {
+  Description = 'DESCRIPTION',
+  Label = 'LABEL',
+  Logo = 'LOGO',
+  Value = 'VALUE'
 }
 
 export enum Ordering {
@@ -1109,317 +1606,446 @@ export enum Ordering {
 }
 
 export type Organization = {
-  __typename?: 'Organization'
-  id: Scalars['String']['output']
-  slug: Scalars['String']['output']
-}
+  __typename?: 'Organization';
+  id: Scalars['ID']['output'];
+  slug: Scalars['String']['output'];
+};
+
+/** Temporary S3 credentials for reading a parquet object. */
+export type ParquetAccessGrant = {
+  __typename?: 'ParquetAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+export type ParquetStore = {
+  __typename?: 'ParquetStore';
+  /** Get temporary S3 read credentials for the parquet object. */
+  accessGrant: ParquetAccessGrant;
+  bucket: Scalars['String']['output'];
+  contentType?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  /** Compatibility field returning the canonical S3 object path. */
+  presignedUrl: Scalars['String']['output'];
+};
+
+
+export type ParquetStoreAccessGrantArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type ParquetStorePresignedUrlArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Temporary S3 credentials for uploading a parquet store. */
+export type ParquetUploadGrant = {
+  __typename?: 'ParquetUploadGrant';
+  accessKey: Scalars['String']['output'];
+  action: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store: Scalars['String']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
+};
 
 export type PinDatasetInput = {
-  id: Scalars['ID']['input']
-  pin: Scalars['Boolean']['input']
-}
+  id: Scalars['ID']['input'];
+  pin: Scalars['Boolean']['input'];
+};
 
 export type PinImageInput = {
-  id: Scalars['ID']['input']
-  pin: Scalars['Boolean']['input']
-}
+  id: Scalars['ID']['input'];
+  pin: Scalars['Boolean']['input'];
+};
 
 export type PinRoiInput = {
-  id: Scalars['ID']['input']
-  pin: Scalars['Boolean']['input']
-}
+  id: Scalars['ID']['input'];
+  pin: Scalars['Boolean']['input'];
+};
 
-/** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
-export type PresignedPostCredentials = {
-  __typename?: 'PresignedPostCredentials'
-  bucket: Scalars['String']['output']
-  datalayer: Scalars['String']['output']
-  key: Scalars['String']['output']
-  policy: Scalars['String']['output']
-  store: Scalars['String']['output']
-  xAmzAlgorithm: Scalars['String']['output']
-  xAmzCredential: Scalars['String']['output']
-  xAmzDate: Scalars['String']['output']
-  xAmzSignature: Scalars['String']['output']
+/** The kind of port. */
+export enum PortKind {
+  Bool = 'BOOL',
+  Date = 'DATE',
+  Dict = 'DICT',
+  Enum = 'ENUM',
+  Float = 'FLOAT',
+  Int = 'INT',
+  Interface = 'INTERFACE',
+  List = 'LIST',
+  MemoryStructure = 'MEMORY_STRUCTURE',
+  Model = 'MODEL',
+  String = 'STRING',
+  Structure = 'STRUCTURE',
+  Union = 'UNION'
 }
 
 /** A provenance event for a model. */
 export type ProvenanceEntry = {
-  __typename?: 'ProvenanceEntry'
-  client?: Maybe<Client>
+  __typename?: 'ProvenanceEntry';
+  client?: Maybe<Client>;
   /** The date of the change. */
-  date: Scalars['DateTime']['output']
+  date: Scalars['DateTime']['output'];
   /** The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None. */
-  during?: Maybe<Scalars['String']['output']>
+  during?: Maybe<Scalars['String']['output']>;
   /** The effective changes made to the model. */
-  effectiveChanges: Array<ModelChange>
+  effectiveChanges: Array<ModelChange>;
   /** The ID of the history entry. */
-  id: Scalars['ID']['output']
+  id: Scalars['ID']['output'];
   /** The type of change that was made. */
-  kind: HistoryKind
+  kind: HistoryKind;
   /** User who made the change. */
-  user?: Maybe<User>
-}
+  user?: Maybe<User>;
+};
 
 export type Query = {
-  __typename?: 'Query'
+  __typename?: 'Query';
+  _entities: Array<Maybe<_Entity>>;
+  _service: _Service;
   /** Returns a list of images */
-  analogSignal: AnalogSignal
+  analogSignal: AnalogSignal;
   /** Returns a list of images */
-  analogSignalChannel: AnalogSignalChannel
-  analogSignalChannels: Array<AnalogSignalChannel>
-  analogSignals: Array<AnalogSignal>
-  block: Block
-  blockStats: BlockStats
-  blocks: Array<Block>
+  analogSignalChannel: AnalogSignalChannel;
+  analogSignalChannels: Array<AnalogSignalChannel>;
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
+  blockStats: BlockStats;
+  blocks: Array<Block>;
   /** Returns a list of cells in a model */
-  cells: Array<Cell>
-  dataset: Dataset
-  datasets: Array<Dataset>
-  experiment: Experiment
-  experiments: Array<Experiment>
-  file: File
-  files: Array<File>
-  modelCollection: ModelCollection
-  modelCollections: Array<ModelCollection>
-  mydatasets: Array<Dataset>
-  myfiles: Array<File>
+  cells: Array<Cell>;
+  dataset: Dataset;
+  datasets: Array<Dataset>;
+  experiment: Experiment;
+  experiments: Array<Experiment>;
+  file: File;
+  files: Array<File>;
+  mechanism: Mechanism;
+  mechanisms: Array<Mechanism>;
+  modEnvironment: ModEnvironment;
+  modEnvironments: Array<ModEnvironment>;
+  modelCollection: ModelCollection;
+  modelCollections: Array<ModelCollection>;
+  mydatasets: Array<Dataset>;
+  myfiles: Array<File>;
   /** Returns a single image by ID */
-  neuronModel: NeuronModel
-  neuronModels: Array<NeuronModel>
-  randomTrace: Trace
+  neuronModel: NeuronModel;
+  neuronModels: Array<NeuronModel>;
+  randomTrace: Trace;
   /** Returns a list of images */
-  recording: Recording
-  recordings: Array<Recording>
-  roi: Roi
-  rois: Array<Roi>
+  recording: Recording;
+  recordings: Array<Recording>;
+  roi: Roi;
+  rois: Array<Roi>;
   /** Returns a list of images */
-  sections: Array<Section>
-  simulation: Simulation
-  simulations: Array<Simulation>
-  stimuli: Array<Stimulus>
+  sections: Array<Section>;
+  simulation: Simulation;
+  simulations: Array<Simulation>;
+  stimuli: Array<Stimulus>;
   /** Returns a list of images */
-  stimulus: Stimulus
+  stimulus: Stimulus;
   /** Returns a single image by ID */
-  trace: Trace
-  traces: Array<Trace>
-}
+  trace: Trace;
+  traces: Array<Trace>;
+};
+
+
+export type Query_EntitiesArgs = {
+  representations: Array<Scalars['_Any']['input']>;
+};
+
 
 export type QueryAnalogSignalArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryAnalogSignalChannelArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryAnalogSignalChannelsArgs = {
-  filters?: InputMaybe<AnalogSignalChannelFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryAnalogSignalsArgs = {
-  filters?: InputMaybe<AnalogSignalFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryBlockArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryBlockStatsArgs = {
-  filters?: InputMaybe<BlockFilter>
-}
+  filters?: InputMaybe<BlockFilter>;
+};
+
 
 export type QueryBlocksArgs = {
-  filters?: InputMaybe<BlockFilter>
-  order?: InputMaybe<BlockOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<BlockFilter>;
+  order?: InputMaybe<BlockOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryCellsArgs = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  modelId: Scalars['ID']['input']
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  modelId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 
 export type QueryDatasetArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryDatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<DatasetFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryExperimentArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryExperimentsArgs = {
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryFileArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryFilesArgs = {
-  filters?: InputMaybe<FileFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<FileFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMechanismArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMechanismsArgs = {
+  filters?: InputMaybe<MechanismFilter>;
+  ordering?: Array<MechanismOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryModEnvironmentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryModEnvironmentsArgs = {
+  filters?: InputMaybe<ModEnvironmentFilter>;
+  ordering?: Array<ModEnvironmentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryModelCollectionArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryModelCollectionsArgs = {
-  filters?: InputMaybe<ModelCollectionFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ModelCollectionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryMydatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<DatasetFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryMyfilesArgs = {
-  filters?: InputMaybe<FileFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<FileFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryNeuronModelArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryNeuronModelsArgs = {
-  filters?: InputMaybe<NeuronModelFilter>
-  order?: InputMaybe<NeuronModelOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<NeuronModelFilter>;
+  order?: InputMaybe<NeuronModelOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryRecordingArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryRecordingsArgs = {
-  filters?: InputMaybe<RecordingFilter>
-  order?: InputMaybe<RecordingOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<RecordingFilter>;
+  order?: InputMaybe<RecordingOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryRoiArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryRoisArgs = {
-  filters?: InputMaybe<RoiFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<RoiFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QuerySectionsArgs = {
-  cellId: Scalars['ID']['input']
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  modelId: Scalars['ID']['input']
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  cellId: Scalars['ID']['input'];
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  modelId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 
 export type QuerySimulationArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QuerySimulationsArgs = {
-  filters?: InputMaybe<SimulationFilter>
-  order?: InputMaybe<SimulationOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<SimulationFilter>;
+  order?: InputMaybe<SimulationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryStimuliArgs = {
-  filters?: InputMaybe<StimulusFilter>
-  order?: InputMaybe<StimulusOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<StimulusFilter>;
+  order?: InputMaybe<StimulusOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type QueryStimulusArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryTraceArgs = {
-  id: Scalars['ID']['input']
-}
+  id: Scalars['ID']['input'];
+};
+
 
 export type QueryTracesArgs = {
-  filters?: InputMaybe<TraceFilter>
-  order?: InputMaybe<TraceOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<TraceFilter>;
+  order?: InputMaybe<TraceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type Roi = {
-  __typename?: 'ROI'
-  createdAt: Scalars['DateTime']['output']
-  creator?: Maybe<User>
-  id: Scalars['ID']['output']
-  kind: RoiKind
-  label?: Maybe<Scalars['String']['output']>
-  name: Scalars['String']['output']
-  pinned: Scalars['Boolean']['output']
-  provenanceEntries: Array<ProvenanceEntry>
-  trace: Trace
-  vectors: Array<Scalars['FiveDVector']['output']>
-}
+  __typename?: 'ROI';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  id: Scalars['ID']['output'];
+  kind: RoiKind;
+  label?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  pinned: Scalars['Boolean']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
+  trace: Trace;
+  vectors: Array<Scalars['FiveDVector']['output']>;
+};
+
 
 export type RoiProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type RoiFilter = {
-  AND?: InputMaybe<RoiFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<RoiFilter>
-  OR?: InputMaybe<RoiFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  kind?: InputMaybe<RoiKindChoices>
-  search?: InputMaybe<Scalars['String']['input']>
-  trace?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<RoiFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RoiFilter>;
+  OR?: InputMaybe<RoiFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<RoiKindChoices>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  trace?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type Recording = {
-  __typename?: 'Recording'
-  cell: Scalars['String']['output']
-  id: Scalars['ID']['output']
-  kind: RecordingKind
-  label: Scalars['String']['output']
-  location: Scalars['String']['output']
-  position: Scalars['Float']['output']
-  simulation: Simulation
-  trace: Trace
-}
+  __typename?: 'Recording';
+  cell: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  kind: RecordingKind;
+  label: Scalars['String']['output'];
+  location: Scalars['String']['output'];
+  position: Scalars['Float']['output'];
+  simulation: Simulation;
+  trace: Trace;
+};
 
 export type RecordingFilter = {
-  AND?: InputMaybe<RecordingFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<RecordingFilter>
-  OR?: InputMaybe<RecordingFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<RecordingFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RecordingFilter>;
+  OR?: InputMaybe<RecordingFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type RecordingInput = {
-  cell?: InputMaybe<Scalars['ID']['input']>
-  kind: RecordingKind
-  location?: InputMaybe<Scalars['ID']['input']>
-  position?: InputMaybe<Scalars['Float']['input']>
-  trace: Scalars['TraceLike']['input']
-}
+  cell?: InputMaybe<Scalars['ID']['input']>;
+  kind: RecordingKind;
+  location?: InputMaybe<Scalars['ID']['input']>;
+  position?: InputMaybe<Scalars['Float']['input']>;
+  trace: Scalars['ArrayLike']['input'];
+};
 
 export enum RecordingKind {
   Current = 'CURRENT',
@@ -1430,64 +2056,120 @@ export enum RecordingKind {
 }
 
 export type RecordingOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type RecordingViewInput = {
-  duration?: InputMaybe<Scalars['Float']['input']>
-  label?: InputMaybe<Scalars['String']['input']>
-  offset?: InputMaybe<Scalars['Float']['input']>
-  recording: Scalars['ID']['input']
-}
+  duration?: InputMaybe<Scalars['Float']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  recording: Scalars['ID']['input'];
+};
 
-export type RequestAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>
-  store: Scalars['ID']['input']
-}
+export type Release = {
+  __typename?: 'Release';
+  app: App;
+  id: Scalars['ID']['output'];
+  version: Scalars['String']['output'];
+};
 
-export type RequestFileAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>
-  store: Scalars['ID']['input']
-}
+export type RequestBigFileAccessInput = {
+  storeId: Scalars['String']['input'];
+};
 
-export type RequestFileUploadInput = {
-  datalayer: Scalars['String']['input']
-  hash?: InputMaybe<Scalars['String']['input']>
-  key: Scalars['String']['input']
-}
+export type RequestBigFileUploadInput = {
+  contentType?: InputMaybe<Scalars['String']['input']>;
+  fileSize?: InputMaybe<Scalars['Int']['input']>;
+  host?: InputMaybe<Scalars['String']['input']>;
+  originalFileName: Scalars['String']['input'];
+  port?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RequestGeneralMediaAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RequestMediaAccessInput = {
+  storeId: Scalars['String']['input'];
+};
 
 export type RequestMediaUploadInput = {
-  datalayer: Scalars['String']['input']
-  key: Scalars['String']['input']
-}
+  contentType?: InputMaybe<Scalars['String']['input']>;
+  fileSize?: InputMaybe<Scalars['Int']['input']>;
+  originalFileName: Scalars['String']['input'];
+};
 
-export type RequestUploadInput = {
-  datalayer: Scalars['String']['input']
-  key: Scalars['String']['input']
+export type RequestParquetAccessInput = {
+  storeId: Scalars['String']['input'];
+};
+
+export type RequestParquetUploadInput = {
+  contentType?: InputMaybe<Scalars['String']['input']>;
+  host?: InputMaybe<Scalars['String']['input']>;
+  originalFileName: Scalars['String']['input'];
+  port?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RequestZarrAccessInput = {
+  storeId: Scalars['String']['input'];
+};
+
+export type RequestZarrUploadInput = {
+  chunks?: InputMaybe<Array<Scalars['Int']['input']>>;
+  host?: InputMaybe<Scalars['String']['input']>;
+  port?: InputMaybe<Scalars['Int']['input']>;
+  shape?: InputMaybe<Array<Scalars['Int']['input']>>;
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Requires = {
+  __typename?: 'Requires';
+  key: Scalars['String']['output'];
+  operator: RequiresOperator;
+  value: Scalars['Arg']['output'];
+};
+
+export type RequiresInput = {
+  key: Scalars['String']['input'];
+  operator: RequiresOperator;
+  value: Scalars['Arg']['input'];
+};
+
+/** The operator for matching descriptors. */
+export enum RequiresOperator {
+  Contains = 'CONTAINS',
+  Equals = 'EQUALS',
+  Exists = 'EXISTS',
+  Gte = 'GTE',
+  In = 'IN',
+  Lte = 'LTE',
+  Matches = 'MATCHES',
+  NotEquals = 'NOT_EQUALS',
+  NotIn = 'NOT_IN'
 }
 
 export type RevertInput = {
-  historyId: Scalars['ID']['input']
-  id: Scalars['ID']['input']
-}
+  historyId: Scalars['ID']['input'];
+  id: Scalars['ID']['input'];
+};
 
 export type RoiEvent = {
-  __typename?: 'RoiEvent'
-  create?: Maybe<Roi>
-  delete?: Maybe<Scalars['ID']['output']>
-  update?: Maybe<Roi>
-}
+  __typename?: 'RoiEvent';
+  create?: Maybe<Roi>;
+  delete?: Maybe<Scalars['ID']['output']>;
+  update?: Maybe<Roi>;
+};
 
 export type RoiInput = {
   /** The type/kind of ROI */
-  kind: RoiKind
+  kind: RoiKind;
   /** The label of the ROI */
-  label?: InputMaybe<Scalars['String']['input']>
+  label?: InputMaybe<Scalars['String']['input']>;
   /** The image this ROI belongs to */
-  trace: Scalars['ID']['input']
+  trace: Scalars['ID']['input'];
   /** The vector coordinates defining the as XY */
-  vectors: Array<Scalars['TwoDVector']['input']>
-}
+  vectors: Array<Scalars['TwoDVector']['input']>;
+};
 
 export enum RoiKind {
   Line = 'LINE',
@@ -1504,176 +2186,185 @@ export enum RoiKindChoices {
 }
 
 export type Section = {
-  __typename?: 'Section'
-  category: Scalars['String']['output']
-  connections: Array<Connection>
-  coords?: Maybe<Array<Coord>>
-  diam: Scalars['Float']['output']
-  id: Scalars['String']['output']
+  __typename?: 'Section';
+  category: Scalars['String']['output'];
+  connections: Array<Connection>;
+  coords?: Maybe<Array<Coord>>;
+  diam: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
   /** Length of the section. Required if coords is not provided. */
-  length?: Maybe<Scalars['Float']['output']>
-  nseg: Scalars['Int']['output']
-}
+  length?: Maybe<Scalars['Float']['output']>;
+  nseg: Scalars['Int']['output'];
+};
 
 export type SectionInput = {
-  category?: InputMaybe<Scalars['String']['input']>
-  connections?: InputMaybe<Array<ConnectionInput>>
-  coords?: InputMaybe<Array<CoordInput>>
-  diam?: Scalars['Float']['input']
-  id: Scalars['String']['input']
+  category?: InputMaybe<Scalars['String']['input']>;
+  connections?: InputMaybe<Array<ConnectionInput>>;
+  coords?: InputMaybe<Array<CoordInput>>;
+  diam?: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
   /** Length of the section. Required if coords is not provided. */
-  length?: InputMaybe<Scalars['Float']['input']>
-  nseg?: Scalars['Int']['input']
-}
+  length?: InputMaybe<Scalars['Float']['input']>;
+  nseg?: Scalars['Int']['input'];
+};
 
 export type SectionParamMap = {
-  __typename?: 'SectionParamMap'
+  __typename?: 'SectionParamMap';
   /** Description of the parameter */
-  description?: Maybe<Scalars['String']['output']>
+  description?: Maybe<Scalars['String']['output']>;
   /** The governing mechanism */
-  mechanism: Scalars['String']['output']
-  param: Scalars['String']['output']
+  mechanism: Scalars['String']['output'];
+  param: Scalars['String']['output'];
   /** The value of the parameter */
-  value: Scalars['Float']['output']
-}
+  value: Scalars['Float']['output'];
+};
 
 export type SectionParamMapInput = {
   /** Description of the parameter */
-  description?: InputMaybe<Scalars['String']['input']>
+  description?: InputMaybe<Scalars['String']['input']>;
   /** The governing mechanism */
-  mechanism: Scalars['String']['input']
-  param: Scalars['String']['input']
+  mechanism: Scalars['String']['input'];
+  param: Scalars['String']['input'];
   /** The value of the parameter */
-  value: Scalars['Float']['input']
-}
+  value: Scalars['Float']['input'];
+};
 
 /** A signal recorded during a recording session */
 export type Signal = {
-  name: Scalars['String']['output']
-  segment: BlockSegment
-}
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+};
 
 export type Simulation = {
-  __typename?: 'Simulation'
-  createdAt: Scalars['DateTime']['output']
-  creator?: Maybe<User>
-  description?: Maybe<Scalars['String']['output']>
-  dt: Scalars['Float']['output']
-  duration: Scalars['Int']['output']
-  id: Scalars['ID']['output']
-  kind: StimulusKind
-  model: NeuronModel
-  name: Scalars['String']['output']
-  recordingViews: Array<ExperimentRecordingView>
-  recordings: Array<Recording>
-  stimuli: Array<Stimulus>
-  stimulusViews: Array<ExperimentStimulusView>
-  timeTrace: Trace
-}
+  __typename?: 'Simulation';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  dt: Scalars['Float']['output'];
+  duration: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  kind: StimulusKind;
+  model: NeuronModel;
+  name: Scalars['String']['output'];
+  recordingViews: Array<ExperimentRecordingView>;
+  recordings: Array<Recording>;
+  stimuli: Array<Stimulus>;
+  stimulusViews: Array<ExperimentStimulusView>;
+  timeTrace: Trace;
+};
+
 
 export type SimulationRecordingViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type SimulationRecordingsArgs = {
-  filters?: InputMaybe<RecordingFilter>
-  order?: InputMaybe<RecordingOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<RecordingFilter>;
+  order?: InputMaybe<RecordingOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type SimulationStimuliArgs = {
-  filters?: InputMaybe<StimulusFilter>
-  order?: InputMaybe<StimulusOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<StimulusFilter>;
+  order?: InputMaybe<StimulusOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type SimulationStimulusViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type SimulationFilter = {
-  AND?: InputMaybe<SimulationFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<SimulationFilter>
-  OR?: InputMaybe<SimulationFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<SimulationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<SimulationFilter>;
+  OR?: InputMaybe<SimulationFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type SimulationOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type SpikeTrain = Signal & {
-  __typename?: 'SpikeTrain'
-  id: Scalars['ID']['output']
-  name: Scalars['String']['output']
-  segment: BlockSegment
-  trace: Trace
-}
+  __typename?: 'SpikeTrain';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+  trace: Trace;
+};
 
 export type SpikeTrainFilter = {
-  AND?: InputMaybe<SpikeTrainFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<SpikeTrainFilter>
-  OR?: InputMaybe<SpikeTrainFilter>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  label?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-  session?: InputMaybe<Scalars['ID']['input']>
-}
+  AND?: InputMaybe<SpikeTrainFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<SpikeTrainFilter>;
+  OR?: InputMaybe<SpikeTrainFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export type SpikeTrainInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  leftSweep?: InputMaybe<Scalars['Float']['input']>
-  name?: InputMaybe<Scalars['String']['input']>
-  tStart: Scalars['Float']['input']
-  tStop: Scalars['Float']['input']
-  times: Scalars['TraceLike']['input']
-  waveforms?: InputMaybe<Scalars['TraceLike']['input']>
-}
+  description?: InputMaybe<Scalars['String']['input']>;
+  leftSweep?: InputMaybe<Scalars['Float']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  tStart: Scalars['Float']['input'];
+  tStop: Scalars['Float']['input'];
+  times: Scalars['TraceLike']['input'];
+  waveforms?: InputMaybe<Scalars['TraceLike']['input']>;
+};
+
+export type StateAccessorInput = {
+  optionKey: OptionKey;
+  subPath?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type Stimulus = {
-  __typename?: 'Stimulus'
-  cell: Scalars['String']['output']
-  id: Scalars['ID']['output']
-  kind: StimulusKind
-  label: Scalars['String']['output']
-  location: Scalars['String']['output']
-  position: Scalars['Float']['output']
-  simulation: Simulation
-  trace: Trace
-}
+  __typename?: 'Stimulus';
+  cell: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  kind: StimulusKind;
+  label: Scalars['String']['output'];
+  location: Scalars['String']['output'];
+  position: Scalars['Float']['output'];
+  simulation: Simulation;
+  trace: Trace;
+};
 
 export type StimulusFilter = {
-  AND?: InputMaybe<StimulusFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<StimulusFilter>
-  OR?: InputMaybe<StimulusFilter>
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>
-  id?: InputMaybe<Scalars['ID']['input']>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<StimulusFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<StimulusFilter>;
+  OR?: InputMaybe<StimulusFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type StimulusInput = {
-  cell?: InputMaybe<Scalars['ID']['input']>
-  kind: StimulusKind
-  location?: InputMaybe<Scalars['ID']['input']>
-  position?: InputMaybe<Scalars['Float']['input']>
-  trace: Scalars['TraceLike']['input']
-}
+  cell?: InputMaybe<Scalars['ID']['input']>;
+  kind: StimulusKind;
+  location?: InputMaybe<Scalars['ID']['input']>;
+  position?: InputMaybe<Scalars['Float']['input']>;
+  trace: Scalars['ArrayLike']['input'];
+};
 
 export enum StimulusKind {
   Current = 'CURRENT',
@@ -1682,57 +2373,60 @@ export enum StimulusKind {
 }
 
 export type StimulusOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type StimulusViewInput = {
-  duration?: InputMaybe<Scalars['Float']['input']>
-  label?: InputMaybe<Scalars['String']['input']>
-  offset?: InputMaybe<Scalars['Float']['input']>
-  stimulus: Scalars['ID']['input']
-}
+  duration?: InputMaybe<Scalars['Float']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  stimulus: Scalars['ID']['input'];
+};
 
 export type StrFilterLookup = {
-  contains?: InputMaybe<Scalars['String']['input']>
-  endsWith?: InputMaybe<Scalars['String']['input']>
-  exact?: InputMaybe<Scalars['String']['input']>
-  gt?: InputMaybe<Scalars['String']['input']>
-  gte?: InputMaybe<Scalars['String']['input']>
-  iContains?: InputMaybe<Scalars['String']['input']>
-  iEndsWith?: InputMaybe<Scalars['String']['input']>
-  iExact?: InputMaybe<Scalars['String']['input']>
-  iRegex?: InputMaybe<Scalars['String']['input']>
-  iStartsWith?: InputMaybe<Scalars['String']['input']>
-  inList?: InputMaybe<Array<Scalars['String']['input']>>
-  isNull?: InputMaybe<Scalars['Boolean']['input']>
-  lt?: InputMaybe<Scalars['String']['input']>
-  lte?: InputMaybe<Scalars['String']['input']>
-  range?: InputMaybe<Array<Scalars['String']['input']>>
-  regex?: InputMaybe<Scalars['String']['input']>
-  startsWith?: InputMaybe<Scalars['String']['input']>
-}
+  contains?: InputMaybe<Scalars['String']['input']>;
+  endsWith?: InputMaybe<Scalars['String']['input']>;
+  exact?: InputMaybe<Scalars['String']['input']>;
+  gt?: InputMaybe<Scalars['String']['input']>;
+  gte?: InputMaybe<Scalars['String']['input']>;
+  iContains?: InputMaybe<Scalars['String']['input']>;
+  iEndsWith?: InputMaybe<Scalars['String']['input']>;
+  iExact?: InputMaybe<Scalars['String']['input']>;
+  iRegex?: InputMaybe<Scalars['String']['input']>;
+  iStartsWith?: InputMaybe<Scalars['String']['input']>;
+  inList?: InputMaybe<Array<Scalars['String']['input']>>;
+  isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  lt?: InputMaybe<Scalars['String']['input']>;
+  lte?: InputMaybe<Scalars['String']['input']>;
+  range?: InputMaybe<Array<Scalars['String']['input']>>;
+  regex?: InputMaybe<Scalars['String']['input']>;
+  startsWith?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type Subscription = {
-  __typename?: 'Subscription'
+  __typename?: 'Subscription';
   /** Subscribe to real-time file updates */
-  files: FileEvent
+  files: FileEvent;
   /** Subscribe to real-time ROI updates */
-  rois: RoiEvent
+  rois: RoiEvent;
   /** Subscribe to real-time image updates */
-  traces: TraceEvent
-}
+  traces: TraceEvent;
+};
+
 
 export type SubscriptionFilesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>
-}
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+};
+
 
 export type SubscriptionRoisArgs = {
-  trace: Scalars['ID']['input']
-}
+  trace: Scalars['ID']['input'];
+};
+
 
 export type SubscriptionTracesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>
-}
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export enum SynapseKind {
   Exp2Syn = 'EXP2SYN',
@@ -1740,2524 +2434,908 @@ export enum SynapseKind {
 }
 
 export type SynapticConnection = NetConnection & {
-  __typename?: 'SynapticConnection'
-  delay?: Maybe<Scalars['Float']['output']>
-  id: Scalars['ID']['output']
-  netStimulator: Scalars['ID']['output']
-  synapse: Scalars['ID']['output']
-  threshold?: Maybe<Scalars['Float']['output']>
-  weight?: Maybe<Scalars['Float']['output']>
-}
+  __typename?: 'SynapticConnection';
+  delay?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  netStimulator: Scalars['ID']['output'];
+  synapse: Scalars['ID']['output'];
+  threshold?: Maybe<Scalars['Float']['output']>;
+  weight?: Maybe<Scalars['Float']['output']>;
+};
 
 export type TimeBucket = {
-  __typename?: 'TimeBucket'
-  avg?: Maybe<Scalars['Float']['output']>
-  count: Scalars['Int']['output']
-  distinctCount: Scalars['Int']['output']
-  max?: Maybe<Scalars['Float']['output']>
-  min?: Maybe<Scalars['Float']['output']>
-  sum?: Maybe<Scalars['Float']['output']>
-  ts: Scalars['DateTime']['output']
-}
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
+};
 
 export type Topology = {
-  __typename?: 'Topology'
-  sections: Array<Section>
-}
+  __typename?: 'Topology';
+  sections: Array<Section>;
+};
 
 export type TopologyInput = {
-  sections: Array<SectionInput>
-}
+  sections: Array<SectionInput>;
+};
 
 export type Trace = {
-  __typename?: 'Trace'
+  __typename?: 'Trace';
   /** Who created this image */
-  creator?: Maybe<User>
+  creator?: Maybe<User>;
   /** The dataset this image belongs to */
-  dataset?: Maybe<Dataset>
-  events: Array<Roi>
-  id: Scalars['ID']['output']
+  dataset?: Maybe<Dataset>;
+  events: Array<Roi>;
+  id: Scalars['ID']['output'];
   /** The name of the image */
-  name: Scalars['String']['output']
+  name: Scalars['String']['output'];
   /** Is this image pinned by the current user */
-  pinned: Scalars['Boolean']['output']
-  provenanceEntries: Array<ProvenanceEntry>
+  pinned: Scalars['Boolean']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
   /** The rois of this image */
-  rois: Array<Roi>
+  rois: Array<Roi>;
   /** The store where the image data is stored. */
-  store: ZarrStore
+  store: ZarrStore;
   /** The tags of this image */
-  tags: Array<Scalars['String']['output']>
-}
+  tags: Array<Scalars['String']['output']>;
+};
+
 
 export type TraceEventsArgs = {
-  filters?: InputMaybe<RoiFilter>
-}
+  filters?: InputMaybe<RoiFilter>;
+};
+
 
 export type TraceProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 
 export type TraceRoisArgs = {
-  filters?: InputMaybe<RoiFilter>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}
+  filters?: InputMaybe<RoiFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type TraceEvent = {
-  __typename?: 'TraceEvent'
-  create?: Maybe<Trace>
-  delete?: Maybe<Scalars['ID']['output']>
-  update?: Maybe<Trace>
-}
+  __typename?: 'TraceEvent';
+  create?: Maybe<Trace>;
+  delete?: Maybe<Scalars['ID']['output']>;
+  update?: Maybe<Trace>;
+};
 
 export type TraceFilter = {
-  AND?: InputMaybe<TraceFilter>
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>
-  NOT?: InputMaybe<TraceFilter>
-  OR?: InputMaybe<TraceFilter>
-  dataset?: InputMaybe<DatasetFilter>
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>
-  name?: InputMaybe<StrFilterLookup>
-  notDerived?: InputMaybe<Scalars['Boolean']['input']>
-  search?: InputMaybe<Scalars['String']['input']>
-}
+  AND?: InputMaybe<TraceFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TraceFilter>;
+  OR?: InputMaybe<TraceFilter>;
+  dataset?: InputMaybe<DatasetFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type TraceOrder = {
-  createdAt?: InputMaybe<Ordering>
-}
+  createdAt?: InputMaybe<Ordering>;
+};
 
 export type UpdateRoiInput = {
-  kind?: InputMaybe<RoiKind>
-  label?: InputMaybe<Scalars['String']['input']>
-  roi: Scalars['ID']['input']
-  vectors?: InputMaybe<Array<Scalars['TwoDVector']['input']>>
-}
+  kind?: InputMaybe<RoiKind>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  roi: Scalars['ID']['input'];
+  vectors?: InputMaybe<Array<Scalars['TwoDVector']['input']>>;
+};
 
 export type UpdateTraceInput = {
-  id: Scalars['ID']['input']
-  name?: InputMaybe<Scalars['String']['input']>
-  tags?: InputMaybe<Array<Scalars['String']['input']>>
-}
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
 
 export type User = {
-  __typename?: 'User'
-  activeOrganization?: Maybe<Organization>
-  preferredUsername: Scalars['String']['output']
-  sub: Scalars['String']['output']
-}
+  __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
+  id: Scalars['ID']['output'];
+  preferredUsername: Scalars['String']['output'];
+  sub: Scalars['String']['output'];
+};
+
+export type Validator = {
+  __typename?: 'Validator';
+  dependencies?: Maybe<Array<Scalars['String']['output']>>;
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  function: Scalars['ValidatorFunction']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/**
+ *
+ * A validating function for a port. Can specify a function that will run when validating values of the port.
+ * If outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax
+ * when transversing the tree of ports.
+ *
+ *
+ */
+export type ValidatorInput = {
+  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  errorMessage?: InputMaybe<Scalars['String']['input']>;
+  function: Scalars['ValidatorFunction']['input'];
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Temporary S3 credentials for reading a Zarr store. */
+export type ZarrAccessGrant = {
+  __typename?: 'ZarrAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
 
 export type ZarrStore = {
-  __typename?: 'ZarrStore'
-  /** The bucket where the data is stored. */
-  bucket: Scalars['String']['output']
-  /** The chunks of the data. */
-  chunks?: Maybe<Array<Scalars['Int']['output']>>
-  /** The dtype of the data. */
-  dtype?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  /** The key where the data is stored. */
-  key: Scalars['String']['output']
-  /** The path to the data. Relative to the bucket. */
-  path?: Maybe<Scalars['String']['output']>
-  /** Whether the zarr store was populated (e.g. was a dataset created). */
-  populated: Scalars['Boolean']['output']
-  /** The shape of the data. */
-  shape?: Maybe<Array<Scalars['Int']['output']>>
-}
+  __typename?: 'ZarrStore';
+  /** Get temporary S3 read credentials for the Zarr object. */
+  accessGrant: ZarrAccessGrant;
+  attributes?: Maybe<Scalars['JSON']['output']>;
+  bucket: Scalars['String']['output'];
+  chunkKeyEncoding?: Maybe<Scalars['JSON']['output']>;
+  chunks: Array<Scalars['Int']['output']>;
+  codecs?: Maybe<Scalars['JSON']['output']>;
+  dimensionNames?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  dtype?: Maybe<Scalars['String']['output']>;
+  fillValue: Scalars['JSON']['output'];
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  shape: Array<Scalars['Int']['output']>;
+  storageTransformers?: Maybe<Scalars['JSON']['output']>;
+  version?: Maybe<Scalars['String']['output']>;
+};
 
-export type StimulusFragment = {
-  __typename?: 'Stimulus'
-  id: string
-  label: string
-  cell: string
-  location: string
-  position: number
-  trace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-}
 
-export type DetailStimulusFragment = {
-  __typename?: 'Stimulus'
-  id: string
-  label: string
-  simulation: {
-    __typename?: 'Simulation'
-    id: string
-    name: string
-    duration: number
-    dt: number
-    createdAt: any
-    model: {
-      __typename?: 'NeuronModel'
-      id: string
-      name: string
-      description?: string | null
-      config: {
-        __typename?: 'ModelConfig'
-        cells: Array<{
-          __typename?: 'Cell'
-          id: string
-          biophysics: {
-            __typename?: 'Biophysics'
-            compartments: Array<{
-              __typename?: 'Compartment'
-              id: string
-              mechanisms: Array<string>
-              globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-              sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-            }>
-          }
-          topology: {
-            __typename?: 'Topology'
-            sections: Array<{
-              __typename?: 'Section'
-              id: string
-              diam: number
-              length?: number | null
-              category: string
-              coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-              connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-            }>
-          }
-        }>
-      }
-      comparisons: Array<{
-        __typename?: 'Comparison'
-        collection: { __typename?: 'ModelCollection'; id: string; name: string }
-        changes: Array<{
-          __typename?: 'Change'
-          type: ChangeType
-          path: Array<string>
-          valueA?: any | null
-          valueB?: any | null
-        }>
-      }>
-      simulations: Array<{
-        __typename?: 'Simulation'
-        id: string
-        name: string
-        duration: number
-        dt: number
-        createdAt: any
-        model: { __typename?: 'NeuronModel'; name: string }
-      }>
-    }
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-    recordings: Array<{
-      __typename?: 'Recording'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-        rois: Array<{
-          __typename?: 'ROI'
-          id: string
-          vectors: Array<any>
-          label?: string | null
-          kind: RoiKind
-        }>
-      }
-    }>
-    stimuli: Array<{
-      __typename?: 'Stimulus'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    creator?: { __typename?: 'User'; sub: string } | null
-  }
-}
+export type ZarrStoreAccessGrantArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
 
-export type ListStimulusFragment = {
-  __typename?: 'Stimulus'
-  id: string
-  label: string
-  cell: string
-  simulation: { __typename?: 'Simulation'; id: string }
-}
+/** Temporary S3 credentials for uploading a Zarr store. */
+export type ZarrUploadGrant = {
+  __typename?: 'ZarrUploadGrant';
+  accessKey: Scalars['String']['output'];
+  action: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  key: Scalars['String']['output'];
+  maxBytes: Scalars['Int']['output'];
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store: Scalars['String']['output'];
+  uploadContentType?: Maybe<Scalars['String']['output']>;
+  uploadFileName: Scalars['String']['output'];
+  uploadFormField: Scalars['String']['output'];
+};
 
-export type BlockGroupFragment = { __typename?: 'BlockGroup'; id: string; name: string }
+export type _Entity = App | BigFileStore | Client | MediaStore | ModEnvironment | Organization | ParquetStore | Release | User | ZarrStore;
 
-export type AnalogSignalChannelFragment = {
-  __typename?: 'AnalogSignalChannel'
-  id: string
-  name?: string | null
-  index: number
-  trace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-}
+export type _Service = {
+  __typename?: '_Service';
+  sdl: Scalars['String']['output'];
+};
 
-export type DetailAnalogSignalChannelFragment = {
-  __typename?: 'AnalogSignalChannel'
-  id: string
-  name?: string | null
-  index: number
-  trace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-  signal: {
-    __typename?: 'AnalogSignal'
-    id: string
-    name: string
-    unit?: string | null
-    channels: Array<{
-      __typename?: 'AnalogSignalChannel'
-      id: string
-      name?: string | null
-      index: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-  }
-}
+export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type AnalogSignalFragment = {
-  __typename?: 'AnalogSignal'
-  id: string
-  name: string
-  unit?: string | null
-  channels: Array<{
-    __typename?: 'AnalogSignalChannel'
-    id: string
-    name?: string | null
-    index: number
-    trace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-  }>
-  timeTrace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-}
+export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
-export type ListAnalogSignalFragment = {
-  __typename?: 'AnalogSignal'
-  id: string
-  name: string
-  segment: { __typename?: 'BlockSegment'; id: string }
-}
+export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
-export type ListAnalogSignalChannelFragment = {
-  __typename?: 'AnalogSignalChannel'
-  id: string
-  name?: string | null
-  signal: { __typename?: 'AnalogSignal'; id: string }
-}
+export type BlockGroupFragment = { __typename?: 'BlockGroup', id: string, name: string };
 
-export type BlockSegmentFragment = {
-  __typename?: 'BlockSegment'
-  id: string
-  analogSignals: Array<{
-    __typename?: 'AnalogSignal'
-    id: string
-    name: string
-    unit?: string | null
-    channels: Array<{
-      __typename?: 'AnalogSignalChannel'
-      id: string
-      name?: string | null
-      index: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-  }>
-}
+export type AnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type BlockFragment = {
-  __typename?: 'Block'
-  id: string
-  name: string
-  description?: string | null
-  segments: Array<{
-    __typename?: 'BlockSegment'
-    id: string
-    analogSignals: Array<{
-      __typename?: 'AnalogSignal'
-      id: string
-      name: string
-      unit?: string | null
-      channels: Array<{
-        __typename?: 'AnalogSignalChannel'
-        id: string
-        name?: string | null
-        index: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }>
-      timeTrace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-  }>
-  groups: Array<{ __typename?: 'BlockGroup'; id: string; name: string }>
-}
+export type DetailAnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, signal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } };
 
-export type ListBlockFragment = { __typename?: 'Block'; id: string; name: string }
+export type AnalogSignalFragment = { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type CredentialsFragment = {
-  __typename?: 'Credentials'
-  accessKey: string
-  status: string
-  secretKey: string
-  bucket: string
-  key: string
-  sessionToken: string
-  store: string
-}
+export type ListAnalogSignalFragment = { __typename?: 'AnalogSignal', id: string, name: string, segment: { __typename?: 'BlockSegment', id: string } };
 
-export type AccessCredentialsFragment = {
-  __typename?: 'AccessCredentials'
-  accessKey: string
-  secretKey: string
-  bucket: string
-  key: string
-  sessionToken: string
-  path: string
-}
+export type ListAnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, signal: { __typename?: 'AnalogSignal', id: string } };
 
-export type PresignedPostCredentialsFragment = {
-  __typename?: 'PresignedPostCredentials'
-  xAmzAlgorithm: string
-  xAmzCredential: string
-  xAmzDate: string
-  xAmzSignature: string
-  key: string
-  bucket: string
-  datalayer: string
-  policy: string
-  store: string
-}
+export type BlockSegmentFragment = { __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }> };
 
-export type ExperimentFragment = {
-  __typename?: 'Experiment'
-  id: string
-  name: string
-  description?: string | null
-  createdAt: any
-  timeTrace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-  stimulusViews: Array<{
-    __typename?: 'ExperimentStimulusView'
-    id: string
-    label?: string | null
-    stimulus: {
-      __typename?: 'Stimulus'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }
-  }>
-  recordingViews: Array<{
-    __typename?: 'ExperimentRecordingView'
-    id: string
-    label?: string | null
-    recording: {
-      __typename?: 'Recording'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-        rois: Array<{
-          __typename?: 'ROI'
-          id: string
-          vectors: Array<any>
-          label?: string | null
-          kind: RoiKind
-        }>
-      }
-    }
-  }>
-}
+export type BlockFragment = { __typename?: 'Block', id: string, name: string, description?: string | null, segments: Array<{ __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }> }>, groups: Array<{ __typename?: 'BlockGroup', id: string, name: string }> };
 
-export type ListExperimentFragment = { __typename?: 'Experiment'; id: string; name: string }
+export type ListBlockFragment = { __typename?: 'Block', id: string, name: string };
 
-export type ModelCollectionFragment = {
-  __typename?: 'ModelCollection'
-  id: string
-  name: string
-  models: Array<{ __typename?: 'NeuronModel'; id: string; name: string }>
-}
+export type ModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> };
 
-export type ListModelCollectionFragment = {
-  __typename?: 'ModelCollection'
-  id: string
-  name: string
-}
+export type ListModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> };
 
-export type CoordFragment = { __typename?: 'Coord'; x: number; y: number; z: number }
+export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, stimulusViews: Array<{ __typename?: 'ExperimentStimulusView', id: string, label?: string | null, stimulus: { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } }>, recordingViews: Array<{ __typename?: 'ExperimentRecordingView', id: string, label?: string | null, recording: { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } }> };
 
-export type SectionFragment = {
-  __typename?: 'Section'
-  id: string
-  diam: number
-  length?: number | null
-  category: string
-  coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-  connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-}
+export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string };
 
-export type ConnectionFragment = { __typename?: 'Connection'; parent: string; location: number }
+export type MechanismFragment = { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> };
 
-export type CompartmentFragment = {
-  __typename?: 'Compartment'
-  id: string
-  mechanisms: Array<string>
-  globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-  sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-}
+export type ListMechanismFragment = { __typename?: 'Mechanism', id: string, name: string };
 
-export type DetailNeuronModelFragment = {
-  __typename?: 'NeuronModel'
-  id: string
-  name: string
-  description?: string | null
-  config: {
-    __typename?: 'ModelConfig'
-    cells: Array<{
-      __typename?: 'Cell'
-      id: string
-      biophysics: {
-        __typename?: 'Biophysics'
-        compartments: Array<{
-          __typename?: 'Compartment'
-          id: string
-          mechanisms: Array<string>
-          globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-          sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-        }>
-      }
-      topology: {
-        __typename?: 'Topology'
-        sections: Array<{
-          __typename?: 'Section'
-          id: string
-          diam: number
-          length?: number | null
-          category: string
-          coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-          connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-        }>
-      }
-    }>
-  }
-  comparisons: Array<{
-    __typename?: 'Comparison'
-    collection: { __typename?: 'ModelCollection'; id: string; name: string }
-    changes: Array<{
-      __typename?: 'Change'
-      type: ChangeType
-      path: Array<string>
-      valueA?: any | null
-      valueB?: any | null
-    }>
-  }>
-  simulations: Array<{
-    __typename?: 'Simulation'
-    id: string
-    name: string
-    duration: number
-    dt: number
-    createdAt: any
-    model: { __typename?: 'NeuronModel'; name: string }
-  }>
-}
+export type ModelCollectionFragment = { __typename?: 'ModelCollection', id: string, name: string, models: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
 
-export type ListNeuronModelFragment = { __typename?: 'NeuronModel'; id: string; name: string }
+export type ListModelCollectionFragment = { __typename?: 'ModelCollection', id: string, name: string };
 
-export type RecordingFragment = {
-  __typename?: 'Recording'
-  id: string
-  label: string
-  cell: string
-  location: string
-  position: number
-  trace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-    rois: Array<{
-      __typename?: 'ROI'
-      id: string
-      vectors: Array<any>
-      label?: string | null
-      kind: RoiKind
-    }>
-  }
-}
+export type CoordFragment = { __typename?: 'Coord', x: number, y: number, z: number };
 
-export type DetailRecordingFragment = {
-  __typename?: 'Recording'
-  id: string
-  label: string
-  simulation: {
-    __typename?: 'Simulation'
-    id: string
-    name: string
-    duration: number
-    dt: number
-    createdAt: any
-    model: {
-      __typename?: 'NeuronModel'
-      id: string
-      name: string
-      description?: string | null
-      config: {
-        __typename?: 'ModelConfig'
-        cells: Array<{
-          __typename?: 'Cell'
-          id: string
-          biophysics: {
-            __typename?: 'Biophysics'
-            compartments: Array<{
-              __typename?: 'Compartment'
-              id: string
-              mechanisms: Array<string>
-              globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-              sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-            }>
-          }
-          topology: {
-            __typename?: 'Topology'
-            sections: Array<{
-              __typename?: 'Section'
-              id: string
-              diam: number
-              length?: number | null
-              category: string
-              coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-              connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-            }>
-          }
-        }>
-      }
-      comparisons: Array<{
-        __typename?: 'Comparison'
-        collection: { __typename?: 'ModelCollection'; id: string; name: string }
-        changes: Array<{
-          __typename?: 'Change'
-          type: ChangeType
-          path: Array<string>
-          valueA?: any | null
-          valueB?: any | null
-        }>
-      }>
-      simulations: Array<{
-        __typename?: 'Simulation'
-        id: string
-        name: string
-        duration: number
-        dt: number
-        createdAt: any
-        model: { __typename?: 'NeuronModel'; name: string }
-      }>
-    }
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-    recordings: Array<{
-      __typename?: 'Recording'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-        rois: Array<{
-          __typename?: 'ROI'
-          id: string
-          vectors: Array<any>
-          label?: string | null
-          kind: RoiKind
-        }>
-      }
-    }>
-    stimuli: Array<{
-      __typename?: 'Stimulus'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    creator?: { __typename?: 'User'; sub: string } | null
-  }
-}
+export type SectionFragment = { __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> };
 
-export type ListRecordingFragment = {
-  __typename?: 'Recording'
-  id: string
-  label: string
-  cell: string
-  simulation: { __typename?: 'Simulation'; id: string }
-}
+export type ConnectionFragment = { __typename?: 'Connection', parent: string, location: number };
 
-export type DetailSimulationFragment = {
-  __typename?: 'Simulation'
-  id: string
-  name: string
-  duration: number
-  dt: number
-  createdAt: any
-  model: {
-    __typename?: 'NeuronModel'
-    id: string
-    name: string
-    description?: string | null
-    config: {
-      __typename?: 'ModelConfig'
-      cells: Array<{
-        __typename?: 'Cell'
-        id: string
-        biophysics: {
-          __typename?: 'Biophysics'
-          compartments: Array<{
-            __typename?: 'Compartment'
-            id: string
-            mechanisms: Array<string>
-            globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-            sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-          }>
-        }
-        topology: {
-          __typename?: 'Topology'
-          sections: Array<{
-            __typename?: 'Section'
-            id: string
-            diam: number
-            length?: number | null
-            category: string
-            coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-            connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-          }>
-        }
-      }>
-    }
-    comparisons: Array<{
-      __typename?: 'Comparison'
-      collection: { __typename?: 'ModelCollection'; id: string; name: string }
-      changes: Array<{
-        __typename?: 'Change'
-        type: ChangeType
-        path: Array<string>
-        valueA?: any | null
-        valueB?: any | null
-      }>
-    }>
-    simulations: Array<{
-      __typename?: 'Simulation'
-      id: string
-      name: string
-      duration: number
-      dt: number
-      createdAt: any
-      model: { __typename?: 'NeuronModel'; name: string }
-    }>
-  }
-  timeTrace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-  recordings: Array<{
-    __typename?: 'Recording'
-    id: string
-    label: string
-    cell: string
-    location: string
-    position: number
-    trace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-      rois: Array<{
-        __typename?: 'ROI'
-        id: string
-        vectors: Array<any>
-        label?: string | null
-        kind: RoiKind
-      }>
-    }
-  }>
-  stimuli: Array<{
-    __typename?: 'Stimulus'
-    id: string
-    label: string
-    cell: string
-    location: string
-    position: number
-    trace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-  }>
-  creator?: { __typename?: 'User'; sub: string } | null
-}
+export type CompartmentFragment = { __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> };
 
-export type ListSimulationFragment = {
-  __typename?: 'Simulation'
-  id: string
-  name: string
-  duration: number
-  dt: number
-  createdAt: any
-  model: { __typename?: 'NeuronModel'; name: string }
-}
+export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } };
 
-export type ZarrStoreFragment = {
-  __typename?: 'ZarrStore'
-  id: string
-  key: string
-  bucket: string
-  path?: string | null
-  shape?: Array<number> | null
-  dtype?: string | null
-}
+export type ListNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string };
 
-export type DetailTraceFragment = {
-  __typename?: 'Trace'
-  id: string
-  name: string
-  store: {
-    __typename?: 'ZarrStore'
-    id: string
-    key: string
-    bucket: string
-    path?: string | null
-    shape?: Array<number> | null
-    dtype?: string | null
-  }
-}
+export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } };
 
-export type ListTraceFragment = { __typename?: 'Trace'; id: string; name: string }
+export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ListRecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
+
+export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
+
+export type ListSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } };
+
+export type ZarrStoreFragment = { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null };
+
+export type DetailTraceFragment = { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } };
+
+export type ListTraceFragment = { __typename?: 'Trace', id: string, name: string };
 
 export type DeleteBlockMutationVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DeleteBlockMutation = { __typename?: 'Mutation'; deleteBlock: string }
+
+export type DeleteBlockMutation = { __typename?: 'Mutation', deleteBlock: string };
 
 export type CreateNeuronModelMutationVariables = Exact<{
-  input: CreateNeuronModelInput
-}>
+  input: CreateNeuronModelInput;
+}>;
 
-export type CreateNeuronModelMutation = {
-  __typename?: 'Mutation'
-  createNeuronModel: {
-    __typename?: 'NeuronModel'
-    id: string
-    name: string
-    config: { __typename?: 'ModelConfig'; cells: Array<{ __typename?: 'Cell'; id: string }> }
-  }
-}
 
-export type RequestUploadMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  datalayer: Scalars['String']['input']
-}>
-
-export type RequestUploadMutation = {
-  __typename?: 'Mutation'
-  requestUpload: {
-    __typename?: 'Credentials'
-    accessKey: string
-    status: string
-    secretKey: string
-    bucket: string
-    key: string
-    sessionToken: string
-    store: string
-  }
-}
-
-export type RequestAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input']
-  duration?: InputMaybe<Scalars['Int']['input']>
-}>
-
-export type RequestAccessMutation = {
-  __typename?: 'Mutation'
-  requestAccess: {
-    __typename?: 'AccessCredentials'
-    accessKey: string
-    secretKey: string
-    bucket: string
-    key: string
-    sessionToken: string
-    path: string
-  }
-}
+export type CreateNeuronModelMutation = { __typename?: 'Mutation', createNeuronModel: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string }> } } };
 
 export type DetailBlockQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailBlockQuery = {
-  __typename?: 'Query'
-  block: {
-    __typename?: 'Block'
-    id: string
-    name: string
-    description?: string | null
-    segments: Array<{
-      __typename?: 'BlockSegment'
-      id: string
-      analogSignals: Array<{
-        __typename?: 'AnalogSignal'
-        id: string
-        name: string
-        unit?: string | null
-        channels: Array<{
-          __typename?: 'AnalogSignalChannel'
-          id: string
-          name?: string | null
-          index: number
-          trace: {
-            __typename?: 'Trace'
-            id: string
-            name: string
-            store: {
-              __typename?: 'ZarrStore'
-              id: string
-              key: string
-              bucket: string
-              path?: string | null
-              shape?: Array<number> | null
-              dtype?: string | null
-            }
-          }
-        }>
-        timeTrace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }>
-    }>
-    groups: Array<{ __typename?: 'BlockGroup'; id: string; name: string }>
-  }
-}
+
+export type DetailBlockQuery = { __typename?: 'Query', block: { __typename?: 'Block', id: string, name: string, description?: string | null, segments: Array<{ __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }> }>, groups: Array<{ __typename?: 'BlockGroup', id: string, name: string }> } };
 
 export type ListBlocksQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<BlockFilter>
-  order?: InputMaybe<BlockOrder>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<BlockFilter>;
+  order?: InputMaybe<BlockOrder>;
+}>;
 
-export type ListBlocksQuery = {
-  __typename?: 'Query'
-  blocks: Array<{ __typename?: 'Block'; id: string; name: string }>
-}
+
+export type ListBlocksQuery = { __typename?: 'Query', blocks: Array<{ __typename?: 'Block', id: string, name: string }> };
+
+export type DetailModEnvironmentQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailModEnvironmentQuery = { __typename?: 'Query', modEnvironment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } };
+
+export type ListModEnvironmentsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ModEnvironmentFilter>;
+  ordering?: InputMaybe<Array<ModEnvironmentOrder> | ModEnvironmentOrder>;
+}>;
+
+
+export type ListModEnvironmentsQuery = { __typename?: 'Query', modEnvironments: Array<{ __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> }> };
 
 export type DetailExperimentQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailExperimentQuery = {
-  __typename?: 'Query'
-  experiment: {
-    __typename?: 'Experiment'
-    id: string
-    name: string
-    description?: string | null
-    createdAt: any
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-    stimulusViews: Array<{
-      __typename?: 'ExperimentStimulusView'
-      id: string
-      label?: string | null
-      stimulus: {
-        __typename?: 'Stimulus'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }
-    }>
-    recordingViews: Array<{
-      __typename?: 'ExperimentRecordingView'
-      id: string
-      label?: string | null
-      recording: {
-        __typename?: 'Recording'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-          rois: Array<{
-            __typename?: 'ROI'
-            id: string
-            vectors: Array<any>
-            label?: string | null
-            kind: RoiKind
-          }>
-        }
-      }
-    }>
-  }
-}
+
+export type DetailExperimentQuery = { __typename?: 'Query', experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, stimulusViews: Array<{ __typename?: 'ExperimentStimulusView', id: string, label?: string | null, stimulus: { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } }>, recordingViews: Array<{ __typename?: 'ExperimentRecordingView', id: string, label?: string | null, recording: { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } }> } };
 
 export type ListExperimentsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<ExperimentFilter>
-  order?: InputMaybe<ExperimentOrder>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ExperimentFilter>;
+  order?: InputMaybe<ExperimentOrder>;
+}>;
 
-export type ListExperimentsQuery = {
-  __typename?: 'Query'
-  experiments: Array<{ __typename?: 'Experiment'; id: string; name: string }>
-}
 
-export type HomePageQueryVariables = Exact<{ [key: string]: never }>
+export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string }> };
 
-export type HomePageQuery = {
-  __typename?: 'Query'
-  blocks: Array<{ __typename?: 'Block'; id: string; name: string }>
-  models: Array<{ __typename?: 'NeuronModel'; id: string; name: string }>
-}
+export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type HomePageStatsQueryVariables = Exact<{ [key: string]: never }>
 
-export type HomePageStatsQuery = {
-  __typename?: 'Query'
-  blockStats: { __typename?: 'BlockStats'; count: number }
-}
+export type HomePageQuery = { __typename?: 'Query', blocks: Array<{ __typename?: 'Block', id: string, name: string }>, models: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', blockStats: { __typename?: 'BlockStats', count: number } };
+
+export type DetailMechanismQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailMechanismQuery = { __typename?: 'Query', mechanism: { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> } };
+
+export type ListMechanismsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<MechanismFilter>;
+  ordering?: InputMaybe<Array<MechanismOrder> | MechanismOrder>;
+}>;
+
+
+export type ListMechanismsQuery = { __typename?: 'Query', mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string }> };
 
 export type DetailModelCollectionQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailModelCollectionQuery = {
-  __typename?: 'Query'
-  modelCollection: {
-    __typename?: 'ModelCollection'
-    id: string
-    name: string
-    models: Array<{ __typename?: 'NeuronModel'; id: string; name: string }>
-  }
-}
+
+export type DetailModelCollectionQuery = { __typename?: 'Query', modelCollection: { __typename?: 'ModelCollection', id: string, name: string, models: Array<{ __typename?: 'NeuronModel', id: string, name: string }> } };
 
 export type ListModelCollectionsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<ModelCollectionFilter>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ModelCollectionFilter>;
+}>;
 
-export type ListModelCollectionsQuery = {
-  __typename?: 'Query'
-  modelCollections: Array<{ __typename?: 'ModelCollection'; id: string; name: string }>
-}
+
+export type ListModelCollectionsQuery = { __typename?: 'Query', modelCollections: Array<{ __typename?: 'ModelCollection', id: string, name: string }> };
 
 export type DetailNeuronModelQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailNeuronModelQuery = {
-  __typename?: 'Query'
-  neuronModel: {
-    __typename?: 'NeuronModel'
-    id: string
-    name: string
-    description?: string | null
-    config: {
-      __typename?: 'ModelConfig'
-      cells: Array<{
-        __typename?: 'Cell'
-        id: string
-        biophysics: {
-          __typename?: 'Biophysics'
-          compartments: Array<{
-            __typename?: 'Compartment'
-            id: string
-            mechanisms: Array<string>
-            globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-            sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-          }>
-        }
-        topology: {
-          __typename?: 'Topology'
-          sections: Array<{
-            __typename?: 'Section'
-            id: string
-            diam: number
-            length?: number | null
-            category: string
-            coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-            connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-          }>
-        }
-      }>
-    }
-    comparisons: Array<{
-      __typename?: 'Comparison'
-      collection: { __typename?: 'ModelCollection'; id: string; name: string }
-      changes: Array<{
-        __typename?: 'Change'
-        type: ChangeType
-        path: Array<string>
-        valueA?: any | null
-        valueB?: any | null
-      }>
-    }>
-    simulations: Array<{
-      __typename?: 'Simulation'
-      id: string
-      name: string
-      duration: number
-      dt: number
-      createdAt: any
-      model: { __typename?: 'NeuronModel'; name: string }
-    }>
-  }
-}
+
+export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } } };
 
 export type ListNeuronModelsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<NeuronModelFilter>
-  order?: InputMaybe<NeuronModelOrder>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<NeuronModelFilter>;
+  order?: InputMaybe<NeuronModelOrder>;
+}>;
 
-export type ListNeuronModelsQuery = {
-  __typename?: 'Query'
-  neuronModels: Array<{ __typename?: 'NeuronModel'; id: string; name: string }>
-}
+
+export type ListNeuronModelsQuery = { __typename?: 'Query', neuronModels: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
 
 export type DetailRecordingQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailRecordingQuery = {
-  __typename?: 'Query'
-  recording: {
-    __typename?: 'Recording'
-    id: string
-    label: string
-    simulation: {
-      __typename?: 'Simulation'
-      id: string
-      name: string
-      duration: number
-      dt: number
-      createdAt: any
-      model: {
-        __typename?: 'NeuronModel'
-        id: string
-        name: string
-        description?: string | null
-        config: {
-          __typename?: 'ModelConfig'
-          cells: Array<{
-            __typename?: 'Cell'
-            id: string
-            biophysics: {
-              __typename?: 'Biophysics'
-              compartments: Array<{
-                __typename?: 'Compartment'
-                id: string
-                mechanisms: Array<string>
-                globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-                sectionParams: Array<{
-                  __typename?: 'SectionParamMap'
-                  param: string
-                  value: number
-                }>
-              }>
-            }
-            topology: {
-              __typename?: 'Topology'
-              sections: Array<{
-                __typename?: 'Section'
-                id: string
-                diam: number
-                length?: number | null
-                category: string
-                coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-                connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-              }>
-            }
-          }>
-        }
-        comparisons: Array<{
-          __typename?: 'Comparison'
-          collection: { __typename?: 'ModelCollection'; id: string; name: string }
-          changes: Array<{
-            __typename?: 'Change'
-            type: ChangeType
-            path: Array<string>
-            valueA?: any | null
-            valueB?: any | null
-          }>
-        }>
-        simulations: Array<{
-          __typename?: 'Simulation'
-          id: string
-          name: string
-          duration: number
-          dt: number
-          createdAt: any
-          model: { __typename?: 'NeuronModel'; name: string }
-        }>
-      }
-      timeTrace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-      recordings: Array<{
-        __typename?: 'Recording'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-          rois: Array<{
-            __typename?: 'ROI'
-            id: string
-            vectors: Array<any>
-            label?: string | null
-            kind: RoiKind
-          }>
-        }
-      }>
-      stimuli: Array<{
-        __typename?: 'Stimulus'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }>
-      creator?: { __typename?: 'User'; sub: string } | null
-    }
-  }
-}
+
+export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListRecordingsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<RecordingFilter>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<RecordingFilter>;
+}>;
 
-export type ListRecordingsQuery = {
-  __typename?: 'Query'
-  recordings: Array<{
-    __typename?: 'Recording'
-    id: string
-    label: string
-    cell: string
-    simulation: { __typename?: 'Simulation'; id: string }
-  }>
-}
+
+export type ListRecordingsQuery = { __typename?: 'Query', recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } }> };
 
 export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>
-  pagination?: InputMaybe<OffsetPaginationInput>
-}>
+  search?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
 
-export type GlobalSearchQuery = {
-  __typename?: 'Query'
-  traces: Array<{ __typename?: 'Trace'; id: string; name: string }>
-}
+
+export type GlobalSearchQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
 
 export type DetailAnalogSignalQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailAnalogSignalQuery = {
-  __typename?: 'Query'
-  analogSignal: {
-    __typename?: 'AnalogSignal'
-    id: string
-    name: string
-    unit?: string | null
-    channels: Array<{
-      __typename?: 'AnalogSignalChannel'
-      id: string
-      name?: string | null
-      index: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-  }
-}
+
+export type DetailAnalogSignalQuery = { __typename?: 'Query', analogSignal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } };
 
 export type ListAnalogSignalQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<AnalogSignalFilter>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<AnalogSignalFilter>;
+}>;
 
-export type ListAnalogSignalQuery = {
-  __typename?: 'Query'
-  analogSignals: Array<{
-    __typename?: 'AnalogSignal'
-    id: string
-    name: string
-    segment: { __typename?: 'BlockSegment'; id: string }
-  }>
-}
+
+export type ListAnalogSignalQuery = { __typename?: 'Query', analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, segment: { __typename?: 'BlockSegment', id: string } }> };
 
 export type DetailAnalogSignalChannelQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailAnalogSignalChannelQuery = {
-  __typename?: 'Query'
-  analogSignalChannel: {
-    __typename?: 'AnalogSignalChannel'
-    id: string
-    name?: string | null
-    index: number
-    trace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-    signal: {
-      __typename?: 'AnalogSignal'
-      id: string
-      name: string
-      unit?: string | null
-      channels: Array<{
-        __typename?: 'AnalogSignalChannel'
-        id: string
-        name?: string | null
-        index: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }>
-      timeTrace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }
-  }
-}
+
+export type DetailAnalogSignalChannelQuery = { __typename?: 'Query', analogSignalChannel: { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, signal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } } };
 
 export type ListAnalogSignalChannelQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<AnalogSignalChannelFilter>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+}>;
 
-export type ListAnalogSignalChannelQuery = {
-  __typename?: 'Query'
-  analogSignalChannels: Array<{
-    __typename?: 'AnalogSignalChannel'
-    id: string
-    name?: string | null
-    signal: { __typename?: 'AnalogSignal'; id: string }
-  }>
-}
+
+export type ListAnalogSignalChannelQuery = { __typename?: 'Query', analogSignalChannels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, signal: { __typename?: 'AnalogSignal', id: string } }> };
 
 export type DetailSimulationQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailSimulationQuery = {
-  __typename?: 'Query'
-  simulation: {
-    __typename?: 'Simulation'
-    id: string
-    name: string
-    duration: number
-    dt: number
-    createdAt: any
-    model: {
-      __typename?: 'NeuronModel'
-      id: string
-      name: string
-      description?: string | null
-      config: {
-        __typename?: 'ModelConfig'
-        cells: Array<{
-          __typename?: 'Cell'
-          id: string
-          biophysics: {
-            __typename?: 'Biophysics'
-            compartments: Array<{
-              __typename?: 'Compartment'
-              id: string
-              mechanisms: Array<string>
-              globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-              sectionParams: Array<{ __typename?: 'SectionParamMap'; param: string; value: number }>
-            }>
-          }
-          topology: {
-            __typename?: 'Topology'
-            sections: Array<{
-              __typename?: 'Section'
-              id: string
-              diam: number
-              length?: number | null
-              category: string
-              coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-              connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-            }>
-          }
-        }>
-      }
-      comparisons: Array<{
-        __typename?: 'Comparison'
-        collection: { __typename?: 'ModelCollection'; id: string; name: string }
-        changes: Array<{
-          __typename?: 'Change'
-          type: ChangeType
-          path: Array<string>
-          valueA?: any | null
-          valueB?: any | null
-        }>
-      }>
-      simulations: Array<{
-        __typename?: 'Simulation'
-        id: string
-        name: string
-        duration: number
-        dt: number
-        createdAt: any
-        model: { __typename?: 'NeuronModel'; name: string }
-      }>
-    }
-    timeTrace: {
-      __typename?: 'Trace'
-      id: string
-      name: string
-      store: {
-        __typename?: 'ZarrStore'
-        id: string
-        key: string
-        bucket: string
-        path?: string | null
-        shape?: Array<number> | null
-        dtype?: string | null
-      }
-    }
-    recordings: Array<{
-      __typename?: 'Recording'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-        rois: Array<{
-          __typename?: 'ROI'
-          id: string
-          vectors: Array<any>
-          label?: string | null
-          kind: RoiKind
-        }>
-      }
-    }>
-    stimuli: Array<{
-      __typename?: 'Stimulus'
-      id: string
-      label: string
-      cell: string
-      location: string
-      position: number
-      trace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-    }>
-    creator?: { __typename?: 'User'; sub: string } | null
-  }
-}
+
+export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListSimulationsQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<SimulationFilter>
-  order?: InputMaybe<SimulationOrder>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<SimulationFilter>;
+  order?: InputMaybe<SimulationOrder>;
+}>;
 
-export type ListSimulationsQuery = {
-  __typename?: 'Query'
-  simulations: Array<{
-    __typename?: 'Simulation'
-    id: string
-    name: string
-    duration: number
-    dt: number
-    createdAt: any
-    model: { __typename?: 'NeuronModel'; name: string }
-  }>
-}
+
+export type ListSimulationsQuery = { __typename?: 'Query', simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }> };
 
 export type DetailStimulusQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailStimulusQuery = {
-  __typename?: 'Query'
-  stimulus: {
-    __typename?: 'Stimulus'
-    id: string
-    label: string
-    simulation: {
-      __typename?: 'Simulation'
-      id: string
-      name: string
-      duration: number
-      dt: number
-      createdAt: any
-      model: {
-        __typename?: 'NeuronModel'
-        id: string
-        name: string
-        description?: string | null
-        config: {
-          __typename?: 'ModelConfig'
-          cells: Array<{
-            __typename?: 'Cell'
-            id: string
-            biophysics: {
-              __typename?: 'Biophysics'
-              compartments: Array<{
-                __typename?: 'Compartment'
-                id: string
-                mechanisms: Array<string>
-                globalParams: Array<{ __typename?: 'GlobalParamMap'; param: string; value: number }>
-                sectionParams: Array<{
-                  __typename?: 'SectionParamMap'
-                  param: string
-                  value: number
-                }>
-              }>
-            }
-            topology: {
-              __typename?: 'Topology'
-              sections: Array<{
-                __typename?: 'Section'
-                id: string
-                diam: number
-                length?: number | null
-                category: string
-                coords?: Array<{ __typename?: 'Coord'; x: number; y: number; z: number }> | null
-                connections: Array<{ __typename?: 'Connection'; parent: string; location: number }>
-              }>
-            }
-          }>
-        }
-        comparisons: Array<{
-          __typename?: 'Comparison'
-          collection: { __typename?: 'ModelCollection'; id: string; name: string }
-          changes: Array<{
-            __typename?: 'Change'
-            type: ChangeType
-            path: Array<string>
-            valueA?: any | null
-            valueB?: any | null
-          }>
-        }>
-        simulations: Array<{
-          __typename?: 'Simulation'
-          id: string
-          name: string
-          duration: number
-          dt: number
-          createdAt: any
-          model: { __typename?: 'NeuronModel'; name: string }
-        }>
-      }
-      timeTrace: {
-        __typename?: 'Trace'
-        id: string
-        name: string
-        store: {
-          __typename?: 'ZarrStore'
-          id: string
-          key: string
-          bucket: string
-          path?: string | null
-          shape?: Array<number> | null
-          dtype?: string | null
-        }
-      }
-      recordings: Array<{
-        __typename?: 'Recording'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-          rois: Array<{
-            __typename?: 'ROI'
-            id: string
-            vectors: Array<any>
-            label?: string | null
-            kind: RoiKind
-          }>
-        }
-      }>
-      stimuli: Array<{
-        __typename?: 'Stimulus'
-        id: string
-        label: string
-        cell: string
-        location: string
-        position: number
-        trace: {
-          __typename?: 'Trace'
-          id: string
-          name: string
-          store: {
-            __typename?: 'ZarrStore'
-            id: string
-            key: string
-            bucket: string
-            path?: string | null
-            shape?: Array<number> | null
-            dtype?: string | null
-          }
-        }
-      }>
-      creator?: { __typename?: 'User'; sub: string } | null
-    }
-  }
-}
+
+export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListStimuliQueryVariables = Exact<{
-  pagination?: InputMaybe<OffsetPaginationInput>
-  filters?: InputMaybe<StimulusFilter>
-}>
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<StimulusFilter>;
+}>;
 
-export type ListStimuliQuery = {
-  __typename?: 'Query'
-  stimuli: Array<{
-    __typename?: 'Stimulus'
-    id: string
-    label: string
-    cell: string
-    simulation: { __typename?: 'Simulation'; id: string }
-  }>
-}
+
+export type ListStimuliQuery = { __typename?: 'Query', stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } }> };
 
 export type DetailTraceQueryVariables = Exact<{
-  id: Scalars['ID']['input']
-}>
+  id: Scalars['ID']['input'];
+}>;
 
-export type DetailTraceQuery = {
-  __typename?: 'Query'
-  trace: {
-    __typename?: 'Trace'
-    id: string
-    name: string
-    store: {
-      __typename?: 'ZarrStore'
-      id: string
-      key: string
-      bucket: string
-      path?: string | null
-      shape?: Array<number> | null
-      dtype?: string | null
-    }
-  }
-}
 
-export type TracesQueryVariables = Exact<{ [key: string]: never }>
+export type DetailTraceQuery = { __typename?: 'Query', trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type TracesQuery = {
-  __typename?: 'Query'
-  traces: Array<{ __typename?: 'Trace'; id: string; name: string }>
-}
+export type TracesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TracesQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
 
 export const CompartmentFragmentDoc = gql`
-  fragment Compartment on Compartment {
-    id
-    mechanisms
-    globalParams {
-      param
-      value
-    }
-    sectionParams {
-      param
-      value
-    }
+    fragment Compartment on Compartment {
+  id
+  mechanisms
+  globalParams {
+    param
+    value
   }
-`
+  sectionParams {
+    param
+    value
+  }
+}
+    `;
 export const CoordFragmentDoc = gql`
-  fragment Coord on Coord {
-    x
-    y
-    z
-  }
-`
+    fragment Coord on Coord {
+  x
+  y
+  z
+}
+    `;
 export const ConnectionFragmentDoc = gql`
-  fragment Connection on Connection {
-    parent
-    location
-  }
-`
+    fragment Connection on Connection {
+  parent
+  location
+}
+    `;
 export const SectionFragmentDoc = gql`
-  fragment Section on Section {
-    id
-    diam
-    length
-    category
-    coords {
-      ...Coord
-    }
-    connections {
-      ...Connection
-    }
+    fragment Section on Section {
+  id
+  diam
+  length
+  category
+  coords {
+    ...Coord
   }
-  ${CoordFragmentDoc}
-  ${ConnectionFragmentDoc}
-`
+  connections {
+    ...Connection
+  }
+}
+    ${CoordFragmentDoc}
+${ConnectionFragmentDoc}`;
 export const ListSimulationFragmentDoc = gql`
-  fragment ListSimulation on Simulation {
-    id
+    fragment ListSimulation on Simulation {
+  id
+  name
+  duration
+  dt
+  createdAt
+  model {
     name
-    duration
-    dt
-    createdAt
-    model {
-      name
-    }
   }
-`
-export const DetailNeuronModelFragmentDoc = gql`
-  fragment DetailNeuronModel on NeuronModel {
-    id
-    name
-    config {
-      cells {
-        id
-        biophysics {
-          compartments {
-            ...Compartment
-          }
-        }
-        topology {
-          sections {
-            ...Section
-          }
-        }
-      }
-    }
-    description
-    comparisons {
-      collection {
-        id
-        name
-      }
-      changes {
-        type
-        path
-        valueA
-        valueB
-      }
-    }
-    simulations {
-      ...ListSimulation
-    }
-  }
-  ${CompartmentFragmentDoc}
-  ${SectionFragmentDoc}
-  ${ListSimulationFragmentDoc}
-`
-export const ZarrStoreFragmentDoc = gql`
-  fragment ZarrStore on ZarrStore {
-    id
+}
+    `;
+export const MechanismFragmentDoc = gql`
+    fragment Mechanism on Mechanism {
+  id
+  name
+  parameters {
     key
-    bucket
-    path
-    shape
-    dtype
+    kind
   }
-`
+}
+    `;
+export const ModEnvironmentFragmentDoc = gql`
+    fragment ModEnvironment on ModEnvironment {
+  id
+  name
+  description
+  mechanisms {
+    ...Mechanism
+  }
+}
+    ${MechanismFragmentDoc}`;
+export const DetailNeuronModelFragmentDoc = gql`
+    fragment DetailNeuronModel on NeuronModel {
+  id
+  name
+  config {
+    cells {
+      id
+      biophysics {
+        compartments {
+          ...Compartment
+        }
+      }
+      topology {
+        sections {
+          ...Section
+        }
+      }
+    }
+  }
+  description
+  comparisons {
+    collection {
+      id
+      name
+    }
+    changes {
+      type
+      path
+      valueA
+      valueB
+    }
+  }
+  simulations {
+    ...ListSimulation
+  }
+  environment {
+    ...ModEnvironment
+  }
+}
+    ${CompartmentFragmentDoc}
+${SectionFragmentDoc}
+${ListSimulationFragmentDoc}
+${ModEnvironmentFragmentDoc}`;
+export const ZarrStoreFragmentDoc = gql`
+    fragment ZarrStore on ZarrStore {
+  id
+  key
+  bucket
+  path
+  shape
+  dtype
+}
+    `;
 export const RecordingFragmentDoc = gql`
-  fragment Recording on Recording {
-    id
-    label
-    cell
-    location
-    position
-    trace {
-      id
-      name
-      store {
-        ...ZarrStore
-      }
-      rois {
-        id
-        vectors
-        label
-        kind
-      }
-    }
-  }
-  ${ZarrStoreFragmentDoc}
-`
-export const StimulusFragmentDoc = gql`
-  fragment Stimulus on Stimulus {
-    id
-    label
-    cell
-    location
-    position
-    trace {
-      id
-      name
-      store {
-        ...ZarrStore
-      }
-    }
-  }
-  ${ZarrStoreFragmentDoc}
-`
-export const DetailSimulationFragmentDoc = gql`
-  fragment DetailSimulation on Simulation {
+    fragment Recording on Recording {
+  id
+  label
+  cell
+  location
+  position
+  trace {
     id
     name
-    model {
-      ...DetailNeuronModel
+    store {
+      ...ZarrStore
     }
-    timeTrace {
+    rois {
       id
-      name
-      store {
-        ...ZarrStore
-      }
-    }
-    duration
-    recordings {
-      ...Recording
-    }
-    stimuli {
-      ...Stimulus
-    }
-    dt
-    createdAt
-    creator {
-      sub
+      vectors
+      label
+      kind
     }
   }
-  ${DetailNeuronModelFragmentDoc}
-  ${ZarrStoreFragmentDoc}
-  ${RecordingFragmentDoc}
-  ${StimulusFragmentDoc}
-`
-export const DetailStimulusFragmentDoc = gql`
-  fragment DetailStimulus on Stimulus {
-    id
-    label
-    simulation {
-      ...DetailSimulation
-    }
-  }
-  ${DetailSimulationFragmentDoc}
-`
-export const ListStimulusFragmentDoc = gql`
-  fragment ListStimulus on Stimulus {
-    id
-    label
-    cell
-    simulation {
-      id
-    }
-  }
-`
-export const DetailTraceFragmentDoc = gql`
-  fragment DetailTrace on Trace {
+}
+    ${ZarrStoreFragmentDoc}`;
+export const StimulusFragmentDoc = gql`
+    fragment Stimulus on Stimulus {
+  id
+  label
+  cell
+  location
+  position
+  trace {
     id
     name
     store {
       ...ZarrStore
     }
   }
-  ${ZarrStoreFragmentDoc}
-`
+}
+    ${ZarrStoreFragmentDoc}`;
+export const DetailSimulationFragmentDoc = gql`
+    fragment DetailSimulation on Simulation {
+  id
+  name
+  model {
+    ...DetailNeuronModel
+  }
+  timeTrace {
+    id
+    name
+    store {
+      ...ZarrStore
+    }
+  }
+  duration
+  recordings {
+    ...Recording
+  }
+  stimuli {
+    ...Stimulus
+  }
+  dt
+  createdAt
+  creator {
+    sub
+  }
+}
+    ${DetailNeuronModelFragmentDoc}
+${ZarrStoreFragmentDoc}
+${RecordingFragmentDoc}
+${StimulusFragmentDoc}`;
+export const DetailStimulusFragmentDoc = gql`
+    fragment DetailStimulus on Stimulus {
+  id
+  label
+  simulation {
+    ...DetailSimulation
+  }
+}
+    ${DetailSimulationFragmentDoc}`;
+export const ListStimulusFragmentDoc = gql`
+    fragment ListStimulus on Stimulus {
+  id
+  label
+  cell
+  simulation {
+    id
+  }
+}
+    `;
+export const DetailTraceFragmentDoc = gql`
+    fragment DetailTrace on Trace {
+  id
+  name
+  store {
+    ...ZarrStore
+  }
+}
+    ${ZarrStoreFragmentDoc}`;
 export const AnalogSignalChannelFragmentDoc = gql`
-  fragment AnalogSignalChannel on AnalogSignalChannel {
-    id
-    name
-    index
-    trace {
-      ...DetailTrace
-    }
+    fragment AnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  index
+  trace {
+    ...DetailTrace
   }
-  ${DetailTraceFragmentDoc}
-`
+}
+    ${DetailTraceFragmentDoc}`;
 export const AnalogSignalFragmentDoc = gql`
-  fragment AnalogSignal on AnalogSignal {
-    id
-    name
-    unit
-    channels {
-      ...AnalogSignalChannel
-    }
-    timeTrace {
-      ...DetailTrace
-    }
+    fragment AnalogSignal on AnalogSignal {
+  id
+  name
+  unit
+  channels {
+    ...AnalogSignalChannel
   }
-  ${AnalogSignalChannelFragmentDoc}
-  ${DetailTraceFragmentDoc}
-`
+  timeTrace {
+    ...DetailTrace
+  }
+}
+    ${AnalogSignalChannelFragmentDoc}
+${DetailTraceFragmentDoc}`;
 export const DetailAnalogSignalChannelFragmentDoc = gql`
-  fragment DetailAnalogSignalChannel on AnalogSignalChannel {
-    id
-    name
-    index
-    trace {
-      ...DetailTrace
-    }
-    signal {
-      ...AnalogSignal
-    }
+    fragment DetailAnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  index
+  trace {
+    ...DetailTrace
   }
-  ${DetailTraceFragmentDoc}
-  ${AnalogSignalFragmentDoc}
-`
+  signal {
+    ...AnalogSignal
+  }
+}
+    ${DetailTraceFragmentDoc}
+${AnalogSignalFragmentDoc}`;
 export const ListAnalogSignalFragmentDoc = gql`
-  fragment ListAnalogSignal on AnalogSignal {
+    fragment ListAnalogSignal on AnalogSignal {
+  id
+  name
+  segment {
     id
-    name
-    segment {
-      id
-    }
   }
-`
+}
+    `;
 export const ListAnalogSignalChannelFragmentDoc = gql`
-  fragment ListAnalogSignalChannel on AnalogSignalChannel {
+    fragment ListAnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  signal {
     id
-    name
-    signal {
-      id
-    }
   }
-`
+}
+    `;
 export const BlockSegmentFragmentDoc = gql`
-  fragment BlockSegment on BlockSegment {
-    id
-    analogSignals {
-      ...AnalogSignal
-    }
+    fragment BlockSegment on BlockSegment {
+  id
+  analogSignals {
+    ...AnalogSignal
   }
-  ${AnalogSignalFragmentDoc}
-`
+}
+    ${AnalogSignalFragmentDoc}`;
 export const BlockGroupFragmentDoc = gql`
-  fragment BlockGroup on BlockGroup {
-    id
-    name
-  }
-`
+    fragment BlockGroup on BlockGroup {
+  id
+  name
+}
+    `;
 export const BlockFragmentDoc = gql`
-  fragment Block on Block {
-    id
-    name
-    description
-    segments {
-      ...BlockSegment
-    }
-    groups {
-      ...BlockGroup
-    }
+    fragment Block on Block {
+  id
+  name
+  description
+  segments {
+    ...BlockSegment
   }
-  ${BlockSegmentFragmentDoc}
-  ${BlockGroupFragmentDoc}
-`
+  groups {
+    ...BlockGroup
+  }
+}
+    ${BlockSegmentFragmentDoc}
+${BlockGroupFragmentDoc}`;
 export const ListBlockFragmentDoc = gql`
-  fragment ListBlock on Block {
-    id
-    name
+    fragment ListBlock on Block {
+  id
+  name
+}
+    `;
+export const ListModEnvironmentFragmentDoc = gql`
+    fragment ListModEnvironment on ModEnvironment {
+  id
+  name
+  description
+  mechanisms {
+    ...Mechanism
   }
-`
-export const CredentialsFragmentDoc = gql`
-  fragment Credentials on Credentials {
-    accessKey
-    status
-    secretKey
-    bucket
-    key
-    sessionToken
-    store
-  }
-`
-export const AccessCredentialsFragmentDoc = gql`
-  fragment AccessCredentials on AccessCredentials {
-    accessKey
-    secretKey
-    bucket
-    key
-    sessionToken
-    path
-  }
-`
-export const PresignedPostCredentialsFragmentDoc = gql`
-  fragment PresignedPostCredentials on PresignedPostCredentials {
-    xAmzAlgorithm
-    xAmzCredential
-    xAmzDate
-    xAmzSignature
-    key
-    bucket
-    datalayer
-    policy
-    store
-  }
-`
+}
+    ${MechanismFragmentDoc}`;
 export const ExperimentFragmentDoc = gql`
-  fragment Experiment on Experiment {
+    fragment Experiment on Experiment {
+  id
+  name
+  description
+  createdAt
+  timeTrace {
     id
     name
-    description
-    createdAt
-    timeTrace {
-      id
-      name
-      store {
-        ...ZarrStore
-      }
-    }
-    stimulusViews {
-      id
-      label
-      stimulus {
-        ...Stimulus
-      }
-    }
-    recordingViews {
-      id
-      label
-      recording {
-        ...Recording
-      }
+    store {
+      ...ZarrStore
     }
   }
-  ${ZarrStoreFragmentDoc}
-  ${StimulusFragmentDoc}
-  ${RecordingFragmentDoc}
-`
+  stimulusViews {
+    id
+    label
+    stimulus {
+      ...Stimulus
+    }
+  }
+  recordingViews {
+    id
+    label
+    recording {
+      ...Recording
+    }
+  }
+}
+    ${ZarrStoreFragmentDoc}
+${StimulusFragmentDoc}
+${RecordingFragmentDoc}`;
 export const ListExperimentFragmentDoc = gql`
-  fragment ListExperiment on Experiment {
-    id
-    name
-  }
-`
+    fragment ListExperiment on Experiment {
+  id
+  name
+}
+    `;
+export const ListMechanismFragmentDoc = gql`
+    fragment ListMechanism on Mechanism {
+  id
+  name
+}
+    `;
 export const ListNeuronModelFragmentDoc = gql`
-  fragment ListNeuronModel on NeuronModel {
-    id
-    name
-  }
-`
+    fragment ListNeuronModel on NeuronModel {
+  id
+  name
+}
+    `;
 export const ModelCollectionFragmentDoc = gql`
-  fragment ModelCollection on ModelCollection {
-    id
-    name
-    models {
-      ...ListNeuronModel
-    }
+    fragment ModelCollection on ModelCollection {
+  id
+  name
+  models {
+    ...ListNeuronModel
   }
-  ${ListNeuronModelFragmentDoc}
-`
+}
+    ${ListNeuronModelFragmentDoc}`;
 export const ListModelCollectionFragmentDoc = gql`
-  fragment ListModelCollection on ModelCollection {
-    id
-    name
-  }
-`
+    fragment ListModelCollection on ModelCollection {
+  id
+  name
+}
+    `;
 export const DetailRecordingFragmentDoc = gql`
-  fragment DetailRecording on Recording {
-    id
-    label
-    simulation {
-      ...DetailSimulation
-    }
+    fragment DetailRecording on Recording {
+  id
+  label
+  simulation {
+    ...DetailSimulation
   }
-  ${DetailSimulationFragmentDoc}
-`
+}
+    ${DetailSimulationFragmentDoc}`;
 export const ListRecordingFragmentDoc = gql`
-  fragment ListRecording on Recording {
+    fragment ListRecording on Recording {
+  id
+  label
+  cell
+  simulation {
     id
-    label
-    cell
-    simulation {
-      id
-    }
   }
-`
+}
+    `;
 export const ListTraceFragmentDoc = gql`
-  fragment ListTrace on Trace {
-    id
-    name
-  }
-`
+    fragment ListTrace on Trace {
+  id
+  name
+}
+    `;
 export const DeleteBlockDocument = gql`
-  mutation DeleteBlock($id: ID!) {
-    deleteBlock(input: { id: $id })
-  }
-`
-export type DeleteBlockMutationFn = Apollo.MutationFunction<
-  DeleteBlockMutation,
-  DeleteBlockMutationVariables
->
+    mutation DeleteBlock($id: ID!) {
+  deleteBlock(input: {id: $id})
+}
+    `;
+export type DeleteBlockMutationFn = Apollo.MutationFunction<DeleteBlockMutation, DeleteBlockMutationVariables>;
 
 /**
  * __useDeleteBlockMutation__
@@ -4276,41 +3354,27 @@ export type DeleteBlockMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useDeleteBlockMutation(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<
-    DeleteBlockMutation,
-    DeleteBlockMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<DeleteBlockMutation, DeleteBlockMutationVariables>(
-    DeleteBlockDocument,
-    options
-  )
-}
-export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>
-export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>
-export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<
-  DeleteBlockMutation,
-  DeleteBlockMutationVariables
->
+export function useDeleteBlockMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteBlockMutation, DeleteBlockMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteBlockMutation, DeleteBlockMutationVariables>(DeleteBlockDocument, options);
+      }
+export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>;
+export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>;
+export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<DeleteBlockMutation, DeleteBlockMutationVariables>;
 export const CreateNeuronModelDocument = gql`
-  mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
-    createNeuronModel(input: $input) {
-      id
-      name
-      config {
-        cells {
-          id
-        }
+    mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
+  createNeuronModel(input: $input) {
+    id
+    name
+    config {
+      cells {
+        id
       }
     }
   }
-`
-export type CreateNeuronModelMutationFn = Apollo.MutationFunction<
-  CreateNeuronModelMutation,
-  CreateNeuronModelMutationVariables
->
+}
+    `;
+export type CreateNeuronModelMutationFn = Apollo.MutationFunction<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>;
 
 /**
  * __useCreateNeuronModelMutation__
@@ -4329,130 +3393,20 @@ export type CreateNeuronModelMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useCreateNeuronModelMutation(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<
-    CreateNeuronModelMutation,
-    CreateNeuronModelMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<
-    CreateNeuronModelMutation,
-    CreateNeuronModelMutationVariables
-  >(CreateNeuronModelDocument, options)
-}
-export type CreateNeuronModelMutationHookResult = ReturnType<typeof useCreateNeuronModelMutation>
-export type CreateNeuronModelMutationResult = Apollo.MutationResult<CreateNeuronModelMutation>
-export type CreateNeuronModelMutationOptions = Apollo.BaseMutationOptions<
-  CreateNeuronModelMutation,
-  CreateNeuronModelMutationVariables
->
-export const RequestUploadDocument = gql`
-  mutation RequestUpload($key: String!, $datalayer: String!) {
-    requestUpload(input: { key: $key, datalayer: $datalayer }) {
-      ...Credentials
-    }
-  }
-  ${CredentialsFragmentDoc}
-`
-export type RequestUploadMutationFn = Apollo.MutationFunction<
-  RequestUploadMutation,
-  RequestUploadMutationVariables
->
-
-/**
- * __useRequestUploadMutation__
- *
- * To run a mutation, you first call `useRequestUploadMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRequestUploadMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [requestUploadMutation, { data, loading, error }] = useRequestUploadMutation({
- *   variables: {
- *      key: // value for 'key'
- *      datalayer: // value for 'datalayer'
- *   },
- * });
- */
-export function useRequestUploadMutation(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<
-    RequestUploadMutation,
-    RequestUploadMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(
-    RequestUploadDocument,
-    options
-  )
-}
-export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>
-export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>
-export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<
-  RequestUploadMutation,
-  RequestUploadMutationVariables
->
-export const RequestAccessDocument = gql`
-  mutation RequestAccess($store: ID!, $duration: Int) {
-    requestAccess(input: { store: $store, duration: $duration }) {
-      ...AccessCredentials
-    }
-  }
-  ${AccessCredentialsFragmentDoc}
-`
-export type RequestAccessMutationFn = Apollo.MutationFunction<
-  RequestAccessMutation,
-  RequestAccessMutationVariables
->
-
-/**
- * __useRequestAccessMutation__
- *
- * To run a mutation, you first call `useRequestAccessMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRequestAccessMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [requestAccessMutation, { data, loading, error }] = useRequestAccessMutation({
- *   variables: {
- *      store: // value for 'store'
- *      duration: // value for 'duration'
- *   },
- * });
- */
-export function useRequestAccessMutation(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<
-    RequestAccessMutation,
-    RequestAccessMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(
-    RequestAccessDocument,
-    options
-  )
-}
-export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>
-export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>
-export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<
-  RequestAccessMutation,
-  RequestAccessMutationVariables
->
+export function useCreateNeuronModelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>(CreateNeuronModelDocument, options);
+      }
+export type CreateNeuronModelMutationHookResult = ReturnType<typeof useCreateNeuronModelMutation>;
+export type CreateNeuronModelMutationResult = Apollo.MutationResult<CreateNeuronModelMutation>;
+export type CreateNeuronModelMutationOptions = Apollo.BaseMutationOptions<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>;
 export const DetailBlockDocument = gql`
-  query DetailBlock($id: ID!) {
-    block(id: $id) {
-      ...Block
-    }
+    query DetailBlock($id: ID!) {
+  block(id: $id) {
+    ...Block
   }
-  ${BlockFragmentDoc}
-`
+}
+    ${BlockFragmentDoc}`;
 
 /**
  * __useDetailBlockQuery__
@@ -4470,35 +3424,24 @@ export const DetailBlockDocument = gql`
  *   },
  * });
  */
-export function useDetailBlockQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailBlockQuery, DetailBlockQueryVariables>(
-    DetailBlockDocument,
-    options
-  )
-}
-export function useDetailBlockLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailBlockQuery, DetailBlockQueryVariables>(
-    DetailBlockDocument,
-    options
-  )
-}
-export type DetailBlockQueryHookResult = ReturnType<typeof useDetailBlockQuery>
-export type DetailBlockLazyQueryHookResult = ReturnType<typeof useDetailBlockLazyQuery>
-export type DetailBlockQueryResult = Apollo.QueryResult<DetailBlockQuery, DetailBlockQueryVariables>
+export function useDetailBlockQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailBlockQuery, DetailBlockQueryVariables>(DetailBlockDocument, options);
+      }
+export function useDetailBlockLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailBlockQuery, DetailBlockQueryVariables>(DetailBlockDocument, options);
+        }
+export type DetailBlockQueryHookResult = ReturnType<typeof useDetailBlockQuery>;
+export type DetailBlockLazyQueryHookResult = ReturnType<typeof useDetailBlockLazyQuery>;
+export type DetailBlockQueryResult = Apollo.QueryResult<DetailBlockQuery, DetailBlockQueryVariables>;
 export const ListBlocksDocument = gql`
-  query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter, $order: BlockOrder) {
-    blocks(pagination: $pagination, filters: $filters, order: $order) {
-      ...ListBlock
-    }
+    query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter, $order: BlockOrder) {
+  blocks(pagination: $pagination, filters: $filters, order: $order) {
+    ...ListBlock
   }
-  ${ListBlockFragmentDoc}
-`
+}
+    ${ListBlockFragmentDoc}`;
 
 /**
  * __useListBlocksQuery__
@@ -4518,35 +3461,96 @@ export const ListBlocksDocument = gql`
  *   },
  * });
  */
-export function useListBlocksQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListBlocksQuery, ListBlocksQueryVariables>(
-    ListBlocksDocument,
-    options
-  )
-}
-export function useListBlocksLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListBlocksQuery, ListBlocksQueryVariables>(
-    ListBlocksDocument,
-    options
-  )
-}
-export type ListBlocksQueryHookResult = ReturnType<typeof useListBlocksQuery>
-export type ListBlocksLazyQueryHookResult = ReturnType<typeof useListBlocksLazyQuery>
-export type ListBlocksQueryResult = Apollo.QueryResult<ListBlocksQuery, ListBlocksQueryVariables>
-export const DetailExperimentDocument = gql`
-  query DetailExperiment($id: ID!) {
-    experiment(id: $id) {
-      ...Experiment
-    }
+export function useListBlocksQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListBlocksQuery, ListBlocksQueryVariables>(ListBlocksDocument, options);
+      }
+export function useListBlocksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListBlocksQuery, ListBlocksQueryVariables>(ListBlocksDocument, options);
+        }
+export type ListBlocksQueryHookResult = ReturnType<typeof useListBlocksQuery>;
+export type ListBlocksLazyQueryHookResult = ReturnType<typeof useListBlocksLazyQuery>;
+export type ListBlocksQueryResult = Apollo.QueryResult<ListBlocksQuery, ListBlocksQueryVariables>;
+export const DetailModEnvironmentDocument = gql`
+    query DetailModEnvironment($id: ID!) {
+  modEnvironment(id: $id) {
+    ...ModEnvironment
   }
-  ${ExperimentFragmentDoc}
-`
+}
+    ${ModEnvironmentFragmentDoc}`;
+
+/**
+ * __useDetailModEnvironmentQuery__
+ *
+ * To run a query within a React component, call `useDetailModEnvironmentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailModEnvironmentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailModEnvironmentQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailModEnvironmentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailModEnvironmentQuery, DetailModEnvironmentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailModEnvironmentQuery, DetailModEnvironmentQueryVariables>(DetailModEnvironmentDocument, options);
+      }
+export function useDetailModEnvironmentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailModEnvironmentQuery, DetailModEnvironmentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailModEnvironmentQuery, DetailModEnvironmentQueryVariables>(DetailModEnvironmentDocument, options);
+        }
+export type DetailModEnvironmentQueryHookResult = ReturnType<typeof useDetailModEnvironmentQuery>;
+export type DetailModEnvironmentLazyQueryHookResult = ReturnType<typeof useDetailModEnvironmentLazyQuery>;
+export type DetailModEnvironmentQueryResult = Apollo.QueryResult<DetailModEnvironmentQuery, DetailModEnvironmentQueryVariables>;
+export const ListModEnvironmentsDocument = gql`
+    query ListModEnvironments($pagination: OffsetPaginationInput, $filters: ModEnvironmentFilter, $ordering: [ModEnvironmentOrder!]) {
+  modEnvironments(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListModEnvironment
+  }
+}
+    ${ListModEnvironmentFragmentDoc}`;
+
+/**
+ * __useListModEnvironmentsQuery__
+ *
+ * To run a query within a React component, call `useListModEnvironmentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListModEnvironmentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListModEnvironmentsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useListModEnvironmentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListModEnvironmentsQuery, ListModEnvironmentsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListModEnvironmentsQuery, ListModEnvironmentsQueryVariables>(ListModEnvironmentsDocument, options);
+      }
+export function useListModEnvironmentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListModEnvironmentsQuery, ListModEnvironmentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListModEnvironmentsQuery, ListModEnvironmentsQueryVariables>(ListModEnvironmentsDocument, options);
+        }
+export type ListModEnvironmentsQueryHookResult = ReturnType<typeof useListModEnvironmentsQuery>;
+export type ListModEnvironmentsLazyQueryHookResult = ReturnType<typeof useListModEnvironmentsLazyQuery>;
+export type ListModEnvironmentsQueryResult = Apollo.QueryResult<ListModEnvironmentsQuery, ListModEnvironmentsQueryVariables>;
+export const DetailExperimentDocument = gql`
+    query DetailExperiment($id: ID!) {
+  experiment(id: $id) {
+    ...Experiment
+  }
+}
+    ${ExperimentFragmentDoc}`;
 
 /**
  * __useDetailExperimentQuery__
@@ -4564,48 +3568,24 @@ export const DetailExperimentDocument = gql`
  *   },
  * });
  */
-export function useDetailExperimentQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailExperimentQuery,
-    DetailExperimentQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(
-    DetailExperimentDocument,
-    options
-  )
-}
-export function useDetailExperimentLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailExperimentQuery,
-    DetailExperimentQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(
-    DetailExperimentDocument,
-    options
-  )
-}
-export type DetailExperimentQueryHookResult = ReturnType<typeof useDetailExperimentQuery>
-export type DetailExperimentLazyQueryHookResult = ReturnType<typeof useDetailExperimentLazyQuery>
-export type DetailExperimentQueryResult = Apollo.QueryResult<
-  DetailExperimentQuery,
-  DetailExperimentQueryVariables
->
+export function useDetailExperimentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+      }
+export function useDetailExperimentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+        }
+export type DetailExperimentQueryHookResult = ReturnType<typeof useDetailExperimentQuery>;
+export type DetailExperimentLazyQueryHookResult = ReturnType<typeof useDetailExperimentLazyQuery>;
+export type DetailExperimentQueryResult = Apollo.QueryResult<DetailExperimentQuery, DetailExperimentQueryVariables>;
 export const ListExperimentsDocument = gql`
-  query ListExperiments(
-    $pagination: OffsetPaginationInput
-    $filters: ExperimentFilter
-    $order: ExperimentOrder
-  ) {
-    experiments(pagination: $pagination, filters: $filters, order: $order) {
-      ...ListExperiment
-    }
+    query ListExperiments($pagination: OffsetPaginationInput, $filters: ExperimentFilter, $order: ExperimentOrder) {
+  experiments(pagination: $pagination, filters: $filters, order: $order) {
+    ...ListExperiment
   }
-  ${ListExperimentFragmentDoc}
-`
+}
+    ${ListExperimentFragmentDoc}`;
 
 /**
  * __useListExperimentsQuery__
@@ -4625,48 +3605,28 @@ export const ListExperimentsDocument = gql`
  *   },
  * });
  */
-export function useListExperimentsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListExperimentsQuery,
-    ListExperimentsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(
-    ListExperimentsDocument,
-    options
-  )
-}
-export function useListExperimentsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListExperimentsQuery,
-    ListExperimentsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(
-    ListExperimentsDocument,
-    options
-  )
-}
-export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>
-export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>
-export type ListExperimentsQueryResult = Apollo.QueryResult<
-  ListExperimentsQuery,
-  ListExperimentsQueryVariables
->
+export function useListExperimentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+      }
+export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+        }
+export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
+export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
+export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
 export const HomePageDocument = gql`
-  query HomePage {
-    blocks: blocks(pagination: { limit: 1 }, order: { createdAt: DESC }) {
-      ...ListBlock
-    }
-    models: neuronModels(pagination: { limit: 1 }, order: { createdAt: DESC }) {
-      ...ListNeuronModel
-    }
+    query HomePage {
+  blocks: blocks(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListBlock
   }
-  ${ListBlockFragmentDoc}
-  ${ListNeuronModelFragmentDoc}
-`
+  models: neuronModels(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListNeuronModel
+  }
+}
+    ${ListBlockFragmentDoc}
+${ListNeuronModelFragmentDoc}`;
 
 /**
  * __useHomePageQuery__
@@ -4683,31 +3643,24 @@ export const HomePageDocument = gql`
  *   },
  * });
  */
-export function useHomePageQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options)
-}
-export function useHomePageLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(
-    HomePageDocument,
-    options
-  )
-}
-export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>
-export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>
-export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>
+export function useHomePageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+      }
+export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+        }
+export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
+export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
+export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
 export const HomePageStatsDocument = gql`
-  query HomePageStats {
-    blockStats {
-      count
-    }
+    query HomePageStats {
+  blockStats {
+    count
   }
-`
+}
+    `;
 
 /**
  * __useHomePageStatsQuery__
@@ -4724,41 +3677,96 @@ export const HomePageStatsDocument = gql`
  *   },
  * });
  */
-export function useHomePageStatsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(
-    HomePageStatsDocument,
-    options
-  )
-}
-export function useHomePageStatsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    HomePageStatsQuery,
-    HomePageStatsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(
-    HomePageStatsDocument,
-    options
-  )
-}
-export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>
-export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>
-export type HomePageStatsQueryResult = Apollo.QueryResult<
-  HomePageStatsQuery,
-  HomePageStatsQueryVariables
->
-export const DetailModelCollectionDocument = gql`
-  query DetailModelCollection($id: ID!) {
-    modelCollection(id: $id) {
-      ...ModelCollection
-    }
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
+export const DetailMechanismDocument = gql`
+    query DetailMechanism($id: ID!) {
+  mechanism(id: $id) {
+    ...Mechanism
   }
-  ${ModelCollectionFragmentDoc}
-`
+}
+    ${MechanismFragmentDoc}`;
+
+/**
+ * __useDetailMechanismQuery__
+ *
+ * To run a query within a React component, call `useDetailMechanismQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailMechanismQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailMechanismQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailMechanismQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailMechanismQuery, DetailMechanismQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailMechanismQuery, DetailMechanismQueryVariables>(DetailMechanismDocument, options);
+      }
+export function useDetailMechanismLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMechanismQuery, DetailMechanismQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailMechanismQuery, DetailMechanismQueryVariables>(DetailMechanismDocument, options);
+        }
+export type DetailMechanismQueryHookResult = ReturnType<typeof useDetailMechanismQuery>;
+export type DetailMechanismLazyQueryHookResult = ReturnType<typeof useDetailMechanismLazyQuery>;
+export type DetailMechanismQueryResult = Apollo.QueryResult<DetailMechanismQuery, DetailMechanismQueryVariables>;
+export const ListMechanismsDocument = gql`
+    query ListMechanisms($pagination: OffsetPaginationInput, $filters: MechanismFilter, $ordering: [MechanismOrder!]) {
+  mechanisms(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListMechanism
+  }
+}
+    ${ListMechanismFragmentDoc}`;
+
+/**
+ * __useListMechanismsQuery__
+ *
+ * To run a query within a React component, call `useListMechanismsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListMechanismsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListMechanismsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useListMechanismsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMechanismsQuery, ListMechanismsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListMechanismsQuery, ListMechanismsQueryVariables>(ListMechanismsDocument, options);
+      }
+export function useListMechanismsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMechanismsQuery, ListMechanismsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListMechanismsQuery, ListMechanismsQueryVariables>(ListMechanismsDocument, options);
+        }
+export type ListMechanismsQueryHookResult = ReturnType<typeof useListMechanismsQuery>;
+export type ListMechanismsLazyQueryHookResult = ReturnType<typeof useListMechanismsLazyQuery>;
+export type ListMechanismsQueryResult = Apollo.QueryResult<ListMechanismsQuery, ListMechanismsQueryVariables>;
+export const DetailModelCollectionDocument = gql`
+    query DetailModelCollection($id: ID!) {
+  modelCollection(id: $id) {
+    ...ModelCollection
+  }
+}
+    ${ModelCollectionFragmentDoc}`;
 
 /**
  * __useDetailModelCollectionQuery__
@@ -4776,46 +3784,24 @@ export const DetailModelCollectionDocument = gql`
  *   },
  * });
  */
-export function useDetailModelCollectionQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailModelCollectionQuery,
-    DetailModelCollectionQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(
-    DetailModelCollectionDocument,
-    options
-  )
-}
-export function useDetailModelCollectionLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailModelCollectionQuery,
-    DetailModelCollectionQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<
-    DetailModelCollectionQuery,
-    DetailModelCollectionQueryVariables
-  >(DetailModelCollectionDocument, options)
-}
-export type DetailModelCollectionQueryHookResult = ReturnType<typeof useDetailModelCollectionQuery>
-export type DetailModelCollectionLazyQueryHookResult = ReturnType<
-  typeof useDetailModelCollectionLazyQuery
->
-export type DetailModelCollectionQueryResult = Apollo.QueryResult<
-  DetailModelCollectionQuery,
-  DetailModelCollectionQueryVariables
->
+export function useDetailModelCollectionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+      }
+export function useDetailModelCollectionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+        }
+export type DetailModelCollectionQueryHookResult = ReturnType<typeof useDetailModelCollectionQuery>;
+export type DetailModelCollectionLazyQueryHookResult = ReturnType<typeof useDetailModelCollectionLazyQuery>;
+export type DetailModelCollectionQueryResult = Apollo.QueryResult<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>;
 export const ListModelCollectionsDocument = gql`
-  query ListModelCollections($pagination: OffsetPaginationInput, $filters: ModelCollectionFilter) {
-    modelCollections(pagination: $pagination, filters: $filters) {
-      ...ListModelCollection
-    }
+    query ListModelCollections($pagination: OffsetPaginationInput, $filters: ModelCollectionFilter) {
+  modelCollections(pagination: $pagination, filters: $filters) {
+    ...ListModelCollection
   }
-  ${ListModelCollectionFragmentDoc}
-`
+}
+    ${ListModelCollectionFragmentDoc}`;
 
 /**
  * __useListModelCollectionsQuery__
@@ -4834,46 +3820,24 @@ export const ListModelCollectionsDocument = gql`
  *   },
  * });
  */
-export function useListModelCollectionsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListModelCollectionsQuery,
-    ListModelCollectionsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(
-    ListModelCollectionsDocument,
-    options
-  )
-}
-export function useListModelCollectionsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListModelCollectionsQuery,
-    ListModelCollectionsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<
-    ListModelCollectionsQuery,
-    ListModelCollectionsQueryVariables
-  >(ListModelCollectionsDocument, options)
-}
-export type ListModelCollectionsQueryHookResult = ReturnType<typeof useListModelCollectionsQuery>
-export type ListModelCollectionsLazyQueryHookResult = ReturnType<
-  typeof useListModelCollectionsLazyQuery
->
-export type ListModelCollectionsQueryResult = Apollo.QueryResult<
-  ListModelCollectionsQuery,
-  ListModelCollectionsQueryVariables
->
+export function useListModelCollectionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+      }
+export function useListModelCollectionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+        }
+export type ListModelCollectionsQueryHookResult = ReturnType<typeof useListModelCollectionsQuery>;
+export type ListModelCollectionsLazyQueryHookResult = ReturnType<typeof useListModelCollectionsLazyQuery>;
+export type ListModelCollectionsQueryResult = Apollo.QueryResult<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>;
 export const DetailNeuronModelDocument = gql`
-  query DetailNeuronModel($id: ID!) {
-    neuronModel(id: $id) {
-      ...DetailNeuronModel
-    }
+    query DetailNeuronModel($id: ID!) {
+  neuronModel(id: $id) {
+    ...DetailNeuronModel
   }
-  ${DetailNeuronModelFragmentDoc}
-`
+}
+    ${DetailNeuronModelFragmentDoc}`;
 
 /**
  * __useDetailNeuronModelQuery__
@@ -4891,48 +3855,24 @@ export const DetailNeuronModelDocument = gql`
  *   },
  * });
  */
-export function useDetailNeuronModelQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailNeuronModelQuery,
-    DetailNeuronModelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(
-    DetailNeuronModelDocument,
-    options
-  )
-}
-export function useDetailNeuronModelLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailNeuronModelQuery,
-    DetailNeuronModelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(
-    DetailNeuronModelDocument,
-    options
-  )
-}
-export type DetailNeuronModelQueryHookResult = ReturnType<typeof useDetailNeuronModelQuery>
-export type DetailNeuronModelLazyQueryHookResult = ReturnType<typeof useDetailNeuronModelLazyQuery>
-export type DetailNeuronModelQueryResult = Apollo.QueryResult<
-  DetailNeuronModelQuery,
-  DetailNeuronModelQueryVariables
->
+export function useDetailNeuronModelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+      }
+export function useDetailNeuronModelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+        }
+export type DetailNeuronModelQueryHookResult = ReturnType<typeof useDetailNeuronModelQuery>;
+export type DetailNeuronModelLazyQueryHookResult = ReturnType<typeof useDetailNeuronModelLazyQuery>;
+export type DetailNeuronModelQueryResult = Apollo.QueryResult<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>;
 export const ListNeuronModelsDocument = gql`
-  query ListNeuronModels(
-    $pagination: OffsetPaginationInput
-    $filters: NeuronModelFilter
-    $order: NeuronModelOrder
-  ) {
-    neuronModels(pagination: $pagination, filters: $filters, order: $order) {
-      ...ListNeuronModel
-    }
+    query ListNeuronModels($pagination: OffsetPaginationInput, $filters: NeuronModelFilter, $order: NeuronModelOrder) {
+  neuronModels(pagination: $pagination, filters: $filters, order: $order) {
+    ...ListNeuronModel
   }
-  ${ListNeuronModelFragmentDoc}
-`
+}
+    ${ListNeuronModelFragmentDoc}`;
 
 /**
  * __useListNeuronModelsQuery__
@@ -4952,44 +3892,24 @@ export const ListNeuronModelsDocument = gql`
  *   },
  * });
  */
-export function useListNeuronModelsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListNeuronModelsQuery,
-    ListNeuronModelsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(
-    ListNeuronModelsDocument,
-    options
-  )
-}
-export function useListNeuronModelsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListNeuronModelsQuery,
-    ListNeuronModelsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(
-    ListNeuronModelsDocument,
-    options
-  )
-}
-export type ListNeuronModelsQueryHookResult = ReturnType<typeof useListNeuronModelsQuery>
-export type ListNeuronModelsLazyQueryHookResult = ReturnType<typeof useListNeuronModelsLazyQuery>
-export type ListNeuronModelsQueryResult = Apollo.QueryResult<
-  ListNeuronModelsQuery,
-  ListNeuronModelsQueryVariables
->
+export function useListNeuronModelsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+      }
+export function useListNeuronModelsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+        }
+export type ListNeuronModelsQueryHookResult = ReturnType<typeof useListNeuronModelsQuery>;
+export type ListNeuronModelsLazyQueryHookResult = ReturnType<typeof useListNeuronModelsLazyQuery>;
+export type ListNeuronModelsQueryResult = Apollo.QueryResult<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>;
 export const DetailRecordingDocument = gql`
-  query DetailRecording($id: ID!) {
-    recording(id: $id) {
-      ...DetailRecording
-    }
+    query DetailRecording($id: ID!) {
+  recording(id: $id) {
+    ...DetailRecording
   }
-  ${DetailRecordingFragmentDoc}
-`
+}
+    ${DetailRecordingFragmentDoc}`;
 
 /**
  * __useDetailRecordingQuery__
@@ -5007,44 +3927,24 @@ export const DetailRecordingDocument = gql`
  *   },
  * });
  */
-export function useDetailRecordingQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailRecordingQuery,
-    DetailRecordingQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(
-    DetailRecordingDocument,
-    options
-  )
-}
-export function useDetailRecordingLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailRecordingQuery,
-    DetailRecordingQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(
-    DetailRecordingDocument,
-    options
-  )
-}
-export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordingQuery>
-export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>
-export type DetailRecordingQueryResult = Apollo.QueryResult<
-  DetailRecordingQuery,
-  DetailRecordingQueryVariables
->
+export function useDetailRecordingQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+      }
+export function useDetailRecordingLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+        }
+export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordingQuery>;
+export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>;
+export type DetailRecordingQueryResult = Apollo.QueryResult<DetailRecordingQuery, DetailRecordingQueryVariables>;
 export const ListRecordingsDocument = gql`
-  query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter) {
-    recordings(pagination: $pagination, filters: $filters) {
-      ...ListRecording
-    }
+    query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter) {
+  recordings(pagination: $pagination, filters: $filters) {
+    ...ListRecording
   }
-  ${ListRecordingFragmentDoc}
-`
+}
+    ${ListRecordingFragmentDoc}`;
 
 /**
  * __useListRecordingsQuery__
@@ -5063,41 +3963,24 @@ export const ListRecordingsDocument = gql`
  *   },
  * });
  */
-export function useListRecordingsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(
-    ListRecordingsDocument,
-    options
-  )
-}
-export function useListRecordingsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListRecordingsQuery,
-    ListRecordingsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(
-    ListRecordingsDocument,
-    options
-  )
-}
-export type ListRecordingsQueryHookResult = ReturnType<typeof useListRecordingsQuery>
-export type ListRecordingsLazyQueryHookResult = ReturnType<typeof useListRecordingsLazyQuery>
-export type ListRecordingsQueryResult = Apollo.QueryResult<
-  ListRecordingsQuery,
-  ListRecordingsQueryVariables
->
+export function useListRecordingsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+      }
+export function useListRecordingsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+        }
+export type ListRecordingsQueryHookResult = ReturnType<typeof useListRecordingsQuery>;
+export type ListRecordingsLazyQueryHookResult = ReturnType<typeof useListRecordingsLazyQuery>;
+export type ListRecordingsQueryResult = Apollo.QueryResult<ListRecordingsQuery, ListRecordingsQueryVariables>;
 export const GlobalSearchDocument = gql`
-  query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
-    traces: traces(filters: { search: $search }, pagination: $pagination) {
-      ...ListTrace
-    }
+    query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
+  traces: traces(filters: {search: $search}, pagination: $pagination) {
+    ...ListTrace
   }
-  ${ListTraceFragmentDoc}
-`
+}
+    ${ListTraceFragmentDoc}`;
 
 /**
  * __useGlobalSearchQuery__
@@ -5116,38 +3999,24 @@ export const GlobalSearchDocument = gql`
  *   },
  * });
  */
-export function useGlobalSearchQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
-    GlobalSearchDocument,
-    options
-  )
-}
-export function useGlobalSearchLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(
-    GlobalSearchDocument,
-    options
-  )
-}
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>
-export type GlobalSearchQueryResult = Apollo.QueryResult<
-  GlobalSearchQuery,
-  GlobalSearchQueryVariables
->
+export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
+export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const DetailAnalogSignalDocument = gql`
-  query DetailAnalogSignal($id: ID!) {
-    analogSignal(id: $id) {
-      ...AnalogSignal
-    }
+    query DetailAnalogSignal($id: ID!) {
+  analogSignal(id: $id) {
+    ...AnalogSignal
   }
-  ${AnalogSignalFragmentDoc}
-`
+}
+    ${AnalogSignalFragmentDoc}`;
 
 /**
  * __useDetailAnalogSignalQuery__
@@ -5165,46 +4034,24 @@ export const DetailAnalogSignalDocument = gql`
  *   },
  * });
  */
-export function useDetailAnalogSignalQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailAnalogSignalQuery,
-    DetailAnalogSignalQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(
-    DetailAnalogSignalDocument,
-    options
-  )
-}
-export function useDetailAnalogSignalLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailAnalogSignalQuery,
-    DetailAnalogSignalQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(
-    DetailAnalogSignalDocument,
-    options
-  )
-}
-export type DetailAnalogSignalQueryHookResult = ReturnType<typeof useDetailAnalogSignalQuery>
-export type DetailAnalogSignalLazyQueryHookResult = ReturnType<
-  typeof useDetailAnalogSignalLazyQuery
->
-export type DetailAnalogSignalQueryResult = Apollo.QueryResult<
-  DetailAnalogSignalQuery,
-  DetailAnalogSignalQueryVariables
->
+export function useDetailAnalogSignalQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(DetailAnalogSignalDocument, options);
+      }
+export function useDetailAnalogSignalLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(DetailAnalogSignalDocument, options);
+        }
+export type DetailAnalogSignalQueryHookResult = ReturnType<typeof useDetailAnalogSignalQuery>;
+export type DetailAnalogSignalLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalLazyQuery>;
+export type DetailAnalogSignalQueryResult = Apollo.QueryResult<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>;
 export const ListAnalogSignalDocument = gql`
-  query ListAnalogSignal($pagination: OffsetPaginationInput, $filters: AnalogSignalFilter) {
-    analogSignals(pagination: $pagination, filters: $filters) {
-      ...ListAnalogSignal
-    }
+    query ListAnalogSignal($pagination: OffsetPaginationInput, $filters: AnalogSignalFilter) {
+  analogSignals(pagination: $pagination, filters: $filters) {
+    ...ListAnalogSignal
   }
-  ${ListAnalogSignalFragmentDoc}
-`
+}
+    ${ListAnalogSignalFragmentDoc}`;
 
 /**
  * __useListAnalogSignalQuery__
@@ -5223,44 +4070,24 @@ export const ListAnalogSignalDocument = gql`
  *   },
  * });
  */
-export function useListAnalogSignalQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListAnalogSignalQuery,
-    ListAnalogSignalQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(
-    ListAnalogSignalDocument,
-    options
-  )
-}
-export function useListAnalogSignalLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListAnalogSignalQuery,
-    ListAnalogSignalQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(
-    ListAnalogSignalDocument,
-    options
-  )
-}
-export type ListAnalogSignalQueryHookResult = ReturnType<typeof useListAnalogSignalQuery>
-export type ListAnalogSignalLazyQueryHookResult = ReturnType<typeof useListAnalogSignalLazyQuery>
-export type ListAnalogSignalQueryResult = Apollo.QueryResult<
-  ListAnalogSignalQuery,
-  ListAnalogSignalQueryVariables
->
+export function useListAnalogSignalQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(ListAnalogSignalDocument, options);
+      }
+export function useListAnalogSignalLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(ListAnalogSignalDocument, options);
+        }
+export type ListAnalogSignalQueryHookResult = ReturnType<typeof useListAnalogSignalQuery>;
+export type ListAnalogSignalLazyQueryHookResult = ReturnType<typeof useListAnalogSignalLazyQuery>;
+export type ListAnalogSignalQueryResult = Apollo.QueryResult<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>;
 export const DetailAnalogSignalChannelDocument = gql`
-  query DetailAnalogSignalChannel($id: ID!) {
-    analogSignalChannel(id: $id) {
-      ...DetailAnalogSignalChannel
-    }
+    query DetailAnalogSignalChannel($id: ID!) {
+  analogSignalChannel(id: $id) {
+    ...DetailAnalogSignalChannel
   }
-  ${DetailAnalogSignalChannelFragmentDoc}
-`
+}
+    ${DetailAnalogSignalChannelFragmentDoc}`;
 
 /**
  * __useDetailAnalogSignalChannelQuery__
@@ -5278,51 +4105,24 @@ export const DetailAnalogSignalChannelDocument = gql`
  *   },
  * });
  */
-export function useDetailAnalogSignalChannelQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailAnalogSignalChannelQuery,
-    DetailAnalogSignalChannelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<
-    DetailAnalogSignalChannelQuery,
-    DetailAnalogSignalChannelQueryVariables
-  >(DetailAnalogSignalChannelDocument, options)
-}
-export function useDetailAnalogSignalChannelLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailAnalogSignalChannelQuery,
-    DetailAnalogSignalChannelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<
-    DetailAnalogSignalChannelQuery,
-    DetailAnalogSignalChannelQueryVariables
-  >(DetailAnalogSignalChannelDocument, options)
-}
-export type DetailAnalogSignalChannelQueryHookResult = ReturnType<
-  typeof useDetailAnalogSignalChannelQuery
->
-export type DetailAnalogSignalChannelLazyQueryHookResult = ReturnType<
-  typeof useDetailAnalogSignalChannelLazyQuery
->
-export type DetailAnalogSignalChannelQueryResult = Apollo.QueryResult<
-  DetailAnalogSignalChannelQuery,
-  DetailAnalogSignalChannelQueryVariables
->
+export function useDetailAnalogSignalChannelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>(DetailAnalogSignalChannelDocument, options);
+      }
+export function useDetailAnalogSignalChannelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>(DetailAnalogSignalChannelDocument, options);
+        }
+export type DetailAnalogSignalChannelQueryHookResult = ReturnType<typeof useDetailAnalogSignalChannelQuery>;
+export type DetailAnalogSignalChannelLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalChannelLazyQuery>;
+export type DetailAnalogSignalChannelQueryResult = Apollo.QueryResult<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>;
 export const ListAnalogSignalChannelDocument = gql`
-  query ListAnalogSignalChannel(
-    $pagination: OffsetPaginationInput
-    $filters: AnalogSignalChannelFilter
-  ) {
-    analogSignalChannels(pagination: $pagination, filters: $filters) {
-      ...ListAnalogSignalChannel
-    }
+    query ListAnalogSignalChannel($pagination: OffsetPaginationInput, $filters: AnalogSignalChannelFilter) {
+  analogSignalChannels(pagination: $pagination, filters: $filters) {
+    ...ListAnalogSignalChannel
   }
-  ${ListAnalogSignalChannelFragmentDoc}
-`
+}
+    ${ListAnalogSignalChannelFragmentDoc}`;
 
 /**
  * __useListAnalogSignalChannelQuery__
@@ -5341,48 +4141,24 @@ export const ListAnalogSignalChannelDocument = gql`
  *   },
  * });
  */
-export function useListAnalogSignalChannelQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListAnalogSignalChannelQuery,
-    ListAnalogSignalChannelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<
-    ListAnalogSignalChannelQuery,
-    ListAnalogSignalChannelQueryVariables
-  >(ListAnalogSignalChannelDocument, options)
-}
-export function useListAnalogSignalChannelLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListAnalogSignalChannelQuery,
-    ListAnalogSignalChannelQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<
-    ListAnalogSignalChannelQuery,
-    ListAnalogSignalChannelQueryVariables
-  >(ListAnalogSignalChannelDocument, options)
-}
-export type ListAnalogSignalChannelQueryHookResult = ReturnType<
-  typeof useListAnalogSignalChannelQuery
->
-export type ListAnalogSignalChannelLazyQueryHookResult = ReturnType<
-  typeof useListAnalogSignalChannelLazyQuery
->
-export type ListAnalogSignalChannelQueryResult = Apollo.QueryResult<
-  ListAnalogSignalChannelQuery,
-  ListAnalogSignalChannelQueryVariables
->
+export function useListAnalogSignalChannelQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>(ListAnalogSignalChannelDocument, options);
+      }
+export function useListAnalogSignalChannelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>(ListAnalogSignalChannelDocument, options);
+        }
+export type ListAnalogSignalChannelQueryHookResult = ReturnType<typeof useListAnalogSignalChannelQuery>;
+export type ListAnalogSignalChannelLazyQueryHookResult = ReturnType<typeof useListAnalogSignalChannelLazyQuery>;
+export type ListAnalogSignalChannelQueryResult = Apollo.QueryResult<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>;
 export const DetailSimulationDocument = gql`
-  query DetailSimulation($id: ID!) {
-    simulation(id: $id) {
-      ...DetailSimulation
-    }
+    query DetailSimulation($id: ID!) {
+  simulation(id: $id) {
+    ...DetailSimulation
   }
-  ${DetailSimulationFragmentDoc}
-`
+}
+    ${DetailSimulationFragmentDoc}`;
 
 /**
  * __useDetailSimulationQuery__
@@ -5400,48 +4176,24 @@ export const DetailSimulationDocument = gql`
  *   },
  * });
  */
-export function useDetailSimulationQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<
-    DetailSimulationQuery,
-    DetailSimulationQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(
-    DetailSimulationDocument,
-    options
-  )
-}
-export function useDetailSimulationLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailSimulationQuery,
-    DetailSimulationQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(
-    DetailSimulationDocument,
-    options
-  )
-}
-export type DetailSimulationQueryHookResult = ReturnType<typeof useDetailSimulationQuery>
-export type DetailSimulationLazyQueryHookResult = ReturnType<typeof useDetailSimulationLazyQuery>
-export type DetailSimulationQueryResult = Apollo.QueryResult<
-  DetailSimulationQuery,
-  DetailSimulationQueryVariables
->
+export function useDetailSimulationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+      }
+export function useDetailSimulationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+        }
+export type DetailSimulationQueryHookResult = ReturnType<typeof useDetailSimulationQuery>;
+export type DetailSimulationLazyQueryHookResult = ReturnType<typeof useDetailSimulationLazyQuery>;
+export type DetailSimulationQueryResult = Apollo.QueryResult<DetailSimulationQuery, DetailSimulationQueryVariables>;
 export const ListSimulationsDocument = gql`
-  query ListSimulations(
-    $pagination: OffsetPaginationInput
-    $filters: SimulationFilter
-    $order: SimulationOrder
-  ) {
-    simulations(pagination: $pagination, filters: $filters, order: $order) {
-      ...ListSimulation
-    }
+    query ListSimulations($pagination: OffsetPaginationInput, $filters: SimulationFilter, $order: SimulationOrder) {
+  simulations(pagination: $pagination, filters: $filters, order: $order) {
+    ...ListSimulation
   }
-  ${ListSimulationFragmentDoc}
-`
+}
+    ${ListSimulationFragmentDoc}`;
 
 /**
  * __useListSimulationsQuery__
@@ -5461,44 +4213,24 @@ export const ListSimulationsDocument = gql`
  *   },
  * });
  */
-export function useListSimulationsQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    ListSimulationsQuery,
-    ListSimulationsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(
-    ListSimulationsDocument,
-    options
-  )
-}
-export function useListSimulationsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    ListSimulationsQuery,
-    ListSimulationsQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(
-    ListSimulationsDocument,
-    options
-  )
-}
-export type ListSimulationsQueryHookResult = ReturnType<typeof useListSimulationsQuery>
-export type ListSimulationsLazyQueryHookResult = ReturnType<typeof useListSimulationsLazyQuery>
-export type ListSimulationsQueryResult = Apollo.QueryResult<
-  ListSimulationsQuery,
-  ListSimulationsQueryVariables
->
+export function useListSimulationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+      }
+export function useListSimulationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+        }
+export type ListSimulationsQueryHookResult = ReturnType<typeof useListSimulationsQuery>;
+export type ListSimulationsLazyQueryHookResult = ReturnType<typeof useListSimulationsLazyQuery>;
+export type ListSimulationsQueryResult = Apollo.QueryResult<ListSimulationsQuery, ListSimulationsQueryVariables>;
 export const DetailStimulusDocument = gql`
-  query DetailStimulus($id: ID!) {
-    stimulus(id: $id) {
-      ...DetailStimulus
-    }
+    query DetailStimulus($id: ID!) {
+  stimulus(id: $id) {
+    ...DetailStimulus
   }
-  ${DetailStimulusFragmentDoc}
-`
+}
+    ${DetailStimulusFragmentDoc}`;
 
 /**
  * __useDetailStimulusQuery__
@@ -5516,41 +4248,24 @@ export const DetailStimulusDocument = gql`
  *   },
  * });
  */
-export function useDetailStimulusQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(
-    DetailStimulusDocument,
-    options
-  )
-}
-export function useDetailStimulusLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    DetailStimulusQuery,
-    DetailStimulusQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(
-    DetailStimulusDocument,
-    options
-  )
-}
-export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQuery>
-export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>
-export type DetailStimulusQueryResult = Apollo.QueryResult<
-  DetailStimulusQuery,
-  DetailStimulusQueryVariables
->
+export function useDetailStimulusQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+      }
+export function useDetailStimulusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+        }
+export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQuery>;
+export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>;
+export type DetailStimulusQueryResult = Apollo.QueryResult<DetailStimulusQuery, DetailStimulusQueryVariables>;
 export const ListStimuliDocument = gql`
-  query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter) {
-    stimuli(pagination: $pagination, filters: $filters) {
-      ...ListStimulus
-    }
+    query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter) {
+  stimuli(pagination: $pagination, filters: $filters) {
+    ...ListStimulus
   }
-  ${ListStimulusFragmentDoc}
-`
+}
+    ${ListStimulusFragmentDoc}`;
 
 /**
  * __useListStimuliQuery__
@@ -5569,35 +4284,24 @@ export const ListStimuliDocument = gql`
  *   },
  * });
  */
-export function useListStimuliQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(
-    ListStimuliDocument,
-    options
-  )
-}
-export function useListStimuliLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(
-    ListStimuliDocument,
-    options
-  )
-}
-export type ListStimuliQueryHookResult = ReturnType<typeof useListStimuliQuery>
-export type ListStimuliLazyQueryHookResult = ReturnType<typeof useListStimuliLazyQuery>
-export type ListStimuliQueryResult = Apollo.QueryResult<ListStimuliQuery, ListStimuliQueryVariables>
+export function useListStimuliQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+      }
+export function useListStimuliLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+        }
+export type ListStimuliQueryHookResult = ReturnType<typeof useListStimuliQuery>;
+export type ListStimuliLazyQueryHookResult = ReturnType<typeof useListStimuliLazyQuery>;
+export type ListStimuliQueryResult = Apollo.QueryResult<ListStimuliQuery, ListStimuliQueryVariables>;
 export const DetailTraceDocument = gql`
-  query DetailTrace($id: ID!) {
-    trace(id: $id) {
-      ...DetailTrace
-    }
+    query DetailTrace($id: ID!) {
+  trace(id: $id) {
+    ...DetailTrace
   }
-  ${DetailTraceFragmentDoc}
-`
+}
+    ${DetailTraceFragmentDoc}`;
 
 /**
  * __useDetailTraceQuery__
@@ -5615,35 +4319,24 @@ export const DetailTraceDocument = gql`
  *   },
  * });
  */
-export function useDetailTraceQuery(
-  baseOptions: ApolloReactHooks.QueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(
-    DetailTraceDocument,
-    options
-  )
-}
-export function useDetailTraceLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(
-    DetailTraceDocument,
-    options
-  )
-}
-export type DetailTraceQueryHookResult = ReturnType<typeof useDetailTraceQuery>
-export type DetailTraceLazyQueryHookResult = ReturnType<typeof useDetailTraceLazyQuery>
-export type DetailTraceQueryResult = Apollo.QueryResult<DetailTraceQuery, DetailTraceQueryVariables>
+export function useDetailTraceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+      }
+export function useDetailTraceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+        }
+export type DetailTraceQueryHookResult = ReturnType<typeof useDetailTraceQuery>;
+export type DetailTraceLazyQueryHookResult = ReturnType<typeof useDetailTraceLazyQuery>;
+export type DetailTraceQueryResult = Apollo.QueryResult<DetailTraceQuery, DetailTraceQueryVariables>;
 export const TracesDocument = gql`
-  query Traces {
-    traces(pagination: { limit: 10 }) {
-      ...ListTrace
-    }
+    query Traces {
+  traces(pagination: {limit: 10}) {
+    ...ListTrace
   }
-  ${ListTraceFragmentDoc}
-`
+}
+    ${ListTraceFragmentDoc}`;
 
 /**
  * __useTracesQuery__
@@ -5660,18 +4353,14 @@ export const TracesDocument = gql`
  *   },
  * });
  */
-export function useTracesQuery(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<TracesQuery, TracesQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options)
-}
-export function useTracesLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<TracesQuery, TracesQueryVariables>
-) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options)
-}
-export type TracesQueryHookResult = ReturnType<typeof useTracesQuery>
-export type TracesLazyQueryHookResult = ReturnType<typeof useTracesLazyQuery>
-export type TracesQueryResult = Apollo.QueryResult<TracesQuery, TracesQueryVariables>
+export function useTracesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<TracesQuery, TracesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+      }
+export function useTracesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<TracesQuery, TracesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+        }
+export type TracesQueryHookResult = ReturnType<typeof useTracesQuery>;
+export type TracesLazyQueryHookResult = ReturnType<typeof useTracesLazyQuery>;
+export type TracesQueryResult = Apollo.QueryResult<TracesQuery, TracesQueryVariables>;

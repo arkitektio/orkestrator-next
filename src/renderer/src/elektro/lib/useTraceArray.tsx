@@ -1,19 +1,51 @@
 import { useDatalayerEndpoint, useElektro } from "@/app/Arkitekt";
-import {
-  AccessCredentialsFragment,
-  RequestAccessDocument,
-  RequestAccessMutation,
-  RequestAccessMutationVariables,
-  ZarrStoreFragment,
-} from "@/elektro/api/graphql";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
-import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { Chunk, DataType, get, open } from "zarrita";
-import { DetailTraceFragment } from "../api/graphql";
-import { S3Store } from "./store";
+import { DetailTraceFragment, ZarrStoreFragment } from "../api/graphql";
+import { CachedS3Store } from "@/mikro-next/components/scene/zarr/zarr_stores/s3Store";
+import { parse } from "graphql";
+
+const RequestZarrAccessDocument = parse(`
+  mutation RequestZarrAccess($input: RequestZarrAccessInput!) {
+    requestZarrAccess(input: $input) {
+      accessKey
+      secretKey
+      sessionToken
+      bucket
+      key
+    }
+  }
+`);
+
+type Slice = {
+  _slice: true;
+  step: number | null;
+  start: number | null;
+  stop: number | null;
+};
+
+type ArraySelection = Slice[];
+
+type ElektroClient = ApolloClient<NormalizedCache> & {
+  mutate: ApolloClient<NormalizedCache>["mutate"];
+};
+
+type RequestZarrAccessMutation = {
+  requestZarrAccess: {
+    accessKey: string;
+    secretKey: string;
+    sessionToken: string;
+    bucket: string;
+    key: string;
+  };
+};
+
+type RequestZarrAccessMutationVariables = {
+  input: {
+    storeId: string;
+  };
+};
 
 
 
@@ -28,29 +60,36 @@ export type DownloadedArray = {
 };
 
 export const downloadSelectionFromStore = async (
-  credentials: AccessCredentialsFragment,
+  client: ElektroClient,
   datalayerUrl: string,
   zarrStore: ZarrStoreFragment,
   selection: ArraySelection,
-  abortSignal?: AbortSignal,
+  _abortSignal?: AbortSignal,
 ): Promise<DownloadedArray> => {
-  const path = datalayerUrl + "/" + zarrStore.bucket + "/" + zarrStore.key;
+  const store = new CachedS3Store(zarrStore.id, client as never, datalayerUrl, {
+    requestAccess: async (storeId: string, accessClient: ElektroClient) => {
+      const access = await accessClient.mutate<
+        RequestZarrAccessMutation,
+        RequestZarrAccessMutationVariables
+      >({
+        mutation: RequestZarrAccessDocument,
+        variables: { input: { storeId } },
+      });
 
-  const aws = new AwsClient({
-    accessKeyId: credentials.accessKey,
-    secretAccessKey: credentials.secretKey,
-    sessionToken: credentials.sessionToken,
-    service: "s3",
+      const credentials = access.data?.requestZarrAccess;
+      if (!credentials) {
+        throw new Error("Failed to obtain Zarr access credentials");
+      }
+
+      return credentials;
+    },
   });
-
-  console.log("Path", path);
-  const store = new S3Store(path, aws);
 
   const array = await open.v3(store, { kind: "array" });
 
   console.log("Array", array);
 
-  const view = await get(array, selection);
+  const view = (await get(array, selection)) as Chunk<DataType>;
 
   console.log("View", view);
 
@@ -85,7 +124,7 @@ export const slicesToString = (slice: Slice[]): string => {
 export type Plot = { [key: string]: number }[];
 
 export const renderArray = async (
-  credentials: AccessCredentialsFragment,
+  client: ElektroClient,
   datalayerUrl: string,
   store: ZarrStoreFragment,
   t: number | null,
@@ -97,7 +136,7 @@ export const renderArray = async (
   console.log("Slices", slices);
 
   const selection = await downloadSelectionFromStore(
-    credentials,
+    client,
     datalayerUrl,
     store,
     slices,
@@ -112,7 +151,7 @@ export const renderArray = async (
 };
 
 const downloadArray = async (
-  client: ApolloClient<NormalizedCache> | undefined,
+  client: ElektroClient | undefined,
   endpoint_url: string | undefined,
   t: number | null,
   left: number | undefined | null,
@@ -124,27 +163,14 @@ const downloadArray = async (
     throw Error("No datalayer found");
   }
 
-  const x = await client?.mutate<
-    RequestAccessMutation,
-    RequestAccessMutationVariables
-  >({
-    mutation: RequestAccessDocument,
-    variables: { store: store.id },
-    context: { fetchOptions: { signal } },
-  });
-  const data = x?.data;
-
-  if (!data?.requestAccess) {
-    throw Error("No credentials loaded");
+  if (!client) {
+    throw Error("No client found");
   }
 
-  return await renderArray(data.requestAccess, endpoint_url, store, t, left, right, signal);
+  return await renderArray(client, endpoint_url, store, t, left, right, signal);
 };
 
 export const useTraceArray = () => {
-  const {
-    settings: { experimentalCache },
-  } = useSettings();
   const client = useElektro();
 
   const endpoint_url = useDatalayerEndpoint();
@@ -168,7 +194,7 @@ export const useTraceArray = () => {
 
 
       const imageData = await downloadArray(
-        client,
+        client as ElektroClient,
         endpoint_url,
         t,
         left, right,
@@ -178,7 +204,7 @@ export const useTraceArray = () => {
 
       return imageData;
     },
-    [client, endpoint_url, experimentalCache],
+    [client, endpoint_url],
   );
 
   return {

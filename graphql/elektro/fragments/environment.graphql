@@ -1,0 +1,18 @@
+fragment ModEnvironment on ModEnvironment {
+  id
+  name
+  description
+  mechanisms {
+    ...Mechanism
+  }
+}
+
+
+fragment ListModEnvironment on ModEnvironment {
+  id
+  name
+  description
+  mechanisms {
+    ...Mechanism
+  }
+}

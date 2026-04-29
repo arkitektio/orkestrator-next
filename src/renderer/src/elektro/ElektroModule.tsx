@@ -20,6 +20,8 @@ import StimulusPage from "./pages/StimulusPage";
 import TracePage from "./pages/TracePage";
 import TracesPage from "./pages/TracesPage";
 import StandardPane from "./panes/StandardPane";
+import { MechanismPage } from "./pages/MechanismPage";
+import { EnvironmentPage } from "./pages/EnvironmentPage";
 interface Props { }
 
 export const ElektroModule: React.FC<Props> = (props) => {
@@ -49,6 +51,8 @@ export const ElektroModule: React.FC<Props> = (props) => {
           <Route path="simulations" element={<SimulationsPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
           <Route path="neuronmodels" element={<NeuronModelsPage />} />
+          <Route path="mechanisms/:id" element={<MechanismPage />} />
+          <Route path="environments/:id" element={<EnvironmentPage />} />
           <Route path="modelcollections" element={<ModelCollectionsPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>

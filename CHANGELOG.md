@@ -1,3 +1,10 @@
+## [1.57.3](https://github.com/arkitektio/orkestrator-next/compare/v1.57.2...v1.57.3) (2026-04-29)
+
+
+### Bug Fixes
+
+* hotfix simulation ([2feda2b](https://github.com/arkitektio/orkestrator-next/commit/2feda2b9a1efe7c2f059211ae9170b5e2c0bd2d8))
+
 ## [1.57.2](https://github.com/arkitektio/orkestrator-next/compare/v1.57.1...v1.57.2) (2026-04-24)
 
 

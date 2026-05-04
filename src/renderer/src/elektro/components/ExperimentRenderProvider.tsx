@@ -12,7 +12,6 @@ import {
 } from "./ExperimentRender.utils";
 import {
   createExperimentViewerStore,
-  DEFAULT_RANGE,
   ExperimentViewerStoreContext,
   RangeSelection,
   useExperimentViewerStore,
@@ -28,110 +27,42 @@ const ExperimentDataLoader: React.FC = () => {
   const range = useExperimentViewerStore((s) => s.range);
   const forcedStepSize = useExperimentViewerStore((s) => s.forcedStepSize);
 
-  // Load overview data (full trace, downsampled)
+  // Load all trace data for the current range — both recording (detail) and stimulus (overview)
   useEffect(() => {
     if (!experiment) return;
     let cancelled = false;
+    store.getState().setDetailLoading(true);
     store.getState().setOverviewLoading(true);
 
     const load = async () => {
       try {
         const totalLength = getTraceLength(experiment);
-        const nextStepSize = getStepSizeForRange(totalLength, DEFAULT_RANGE);
-
-        const data = await Promise.all([
-          ...experiment.recordingViews.map((view) =>
-            renderView(
-              view.recording.trace,
-              nextStepSize,
-              DEFAULT_RANGE.left,
-              DEFAULT_RANGE.right,
-            ),
-          ),
-          ...experiment.stimulusViews.map((view) =>
-            renderView(
-              view.stimulus.trace,
-              nextStepSize,
-              DEFAULT_RANGE.left,
-              DEFAULT_RANGE.right,
-            ),
-          ),
-          renderView(
-            experiment.timeTrace,
-            nextStepSize,
-            DEFAULT_RANGE.left,
-            DEFAULT_RANGE.right,
-          ),
-        ]);
-
-        if (cancelled) return;
-
-        const overviewData = buildOverviewData(experiment, data);
-        store.getState().setOverviewData(overviewData, nextStepSize);
-      } finally {
-        if (!cancelled) store.getState().setOverviewLoading(false);
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [experiment, renderView, store]);
-
-  // Load detail data (zoomed range)
-  useEffect(() => {
-    if (!experiment) return;
-    let cancelled = false;
-    store.getState().setDetailLoading(true);
-
-    const load = async () => {
-      try {
-        const totalLength = getTraceLength(experiment);
-        const nextStepSize = getStepSizeForRange(
-          totalLength,
-          range,
-          forcedStepSize,
-        );
+        const nextStepSize = getStepSizeForRange(totalLength, range, forcedStepSize);
 
         const rawArrays = await Promise.all([
           ...experiment.recordingViews.map((view) =>
-            renderView(
-              view.recording.trace,
-              nextStepSize,
-              range.left,
-              range.right,
-            ),
+            renderView(view.recording.trace, nextStepSize, range.left, range.right),
           ),
           ...experiment.stimulusViews.map((view) =>
-            renderView(
-              view.stimulus.trace,
-              nextStepSize,
-              range.left,
-              range.right,
-            ),
+            renderView(view.stimulus.trace, nextStepSize, range.left, range.right),
           ),
-          renderView(
-            experiment.timeTrace,
-            nextStepSize,
-            range.left,
-            range.right,
-          ),
+          renderView(experiment.timeTrace, nextStepSize, range.left, range.right),
         ]);
 
         if (cancelled) return;
 
-        const { data, timeTrace } = buildDetailData(experiment, rawArrays);
-        const spikes = buildSpikeTimes(
-          experiment,
-          timeTrace,
-          nextStepSize,
-        );
+        const { data: detailData, timeTrace } = buildDetailData(experiment, rawArrays);
+        const overviewData = buildOverviewData(experiment, rawArrays);
+        const spikes = buildSpikeTimes(experiment, timeTrace, nextStepSize);
 
-        store.getState().setDetailData(data, nextStepSize);
+        store.getState().setDetailData(detailData, nextStepSize);
+        store.getState().setOverviewData(overviewData, nextStepSize);
         store.getState().setSpikeTimes(spikes);
       } finally {
-        if (!cancelled) store.getState().setDetailLoading(false);
+        if (!cancelled) {
+          store.getState().setDetailLoading(false);
+          store.getState().setOverviewLoading(false);
+        }
       }
     };
 

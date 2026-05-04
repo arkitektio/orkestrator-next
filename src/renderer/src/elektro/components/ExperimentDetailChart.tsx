@@ -1,8 +1,7 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import uPlot from "uplot";
 import UplotReact from "uplot-react";
 import {
-  buildScaleRange,
   CHART_SYNC_KEY,
   createAxisStyle,
   createRecordingSeries,
@@ -24,6 +23,7 @@ export const ExperimentDetailChart: React.FC = () => {
   const detailData = useExperimentViewerStore((s) => s.detailData);
   const detailLoading = useExperimentViewerStore((s) => s.detailLoading);
 
+  const chartInstanceRef = useRef<uPlot | null>(null);
   const { ref: chartRef, size: chartSize } = useElementSize<HTMLDivElement>();
 
   const visibleRecordings = useMemo(
@@ -53,15 +53,6 @@ export const ExperimentDetailChart: React.FC = () => {
     );
     return [timeCol, ...yCols] as uPlot.AlignedData;
   }, [detailData, recordingEntries]);
-
-  const mainYRange = useMemo(
-    () =>
-      buildScaleRange(
-        recordingEntries.map((e) => detailData[e.colIndex] ?? []),
-        0.08,
-      ),
-    [detailData, recordingEntries],
-  );
 
   const axes = useMemo(() => {
     const xAxis: uPlot.Axis = {
@@ -168,7 +159,6 @@ export const ExperimentDetailChart: React.FC = () => {
     chartSize.height,
     chartSize.width,
     handleSelection,
-    mainYRange,
     onCursorMove,
     recordingEntries,
   ]);
@@ -185,7 +175,16 @@ export const ExperimentDetailChart: React.FC = () => {
       ) : null}
       {mainOptions ? (
         <div className="absolute inset-0 overflow-hidden">
-          <UplotReact options={mainOptions} data={mainData} />
+          <UplotReact
+            options={mainOptions}
+            data={mainData}
+            onCreate={(chart) => {
+              chartInstanceRef.current = chart;
+            }}
+            onDelete={() => {
+              chartInstanceRef.current = null;
+            }}
+          />
         </div>
       ) : null}
     </div>

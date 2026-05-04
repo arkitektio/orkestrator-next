@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import uPlot from "uplot";
 import UplotReact from "uplot-react";
 import {
   buildScaleRange,
   CHART_SYNC_KEY,
-  clampIndex,
   createAxisStyle,
   createStimulusSeries,
   getColorForStimulusView,
@@ -23,8 +22,6 @@ export const ExperimentOverviewChart: React.FC = () => {
   const highlight = useExperimentViewerStore((s) => s.highlight);
   const overviewData = useExperimentViewerStore((s) => s.overviewData);
   const overviewLoading = useExperimentViewerStore((s) => s.overviewLoading);
-  const range = useExperimentViewerStore((s) => s.range);
-  const overviewStepSize = useExperimentViewerStore((s) => s.overviewStepSize);
 
   const overviewChartInstanceRef = useRef<uPlot | null>(null);
   const { ref: chartRef, size: chartSize } = useElementSize<HTMLDivElement>();
@@ -137,41 +134,6 @@ export const ExperimentOverviewChart: React.FC = () => {
     },
     [overviewData, stimulusData, stimulusEntries, store],
   );
-
-  // Draw brush selection on overview chart when range changes
-  useEffect(() => {
-    const chart = overviewChartInstanceRef.current;
-    const xValues = overviewData[0];
-    if (!chart || !xValues || xValues.length === 0) return;
-
-    if (range.right == null) {
-      clearChartSelection(chart);
-      return;
-    }
-
-    const leftIndex = clampIndex(
-      Math.floor((range.left ?? 0) / overviewStepSize),
-      xValues.length,
-    );
-    const rightIndex = clampIndex(
-      Math.ceil(range.right / overviewStepSize),
-      xValues.length,
-    );
-    const leftValue = xValues[leftIndex];
-    const rightValue = xValues[rightIndex] ?? xValues[leftIndex];
-    const leftPosition = chart.valToPos(leftValue, "x");
-    const rightPosition = chart.valToPos(rightValue, "x");
-
-    chart.setSelect(
-      {
-        left: Math.min(leftPosition, rightPosition),
-        top: 0,
-        width: Math.abs(rightPosition - leftPosition),
-        height: chartSize.height,
-      },
-      false,
-    );
-  }, [clearChartSelection, overviewData, overviewStepSize, range, chartSize.height]);
 
   const stimulusOptions = useMemo<uPlot.Options | null>(() => {
     if (chartSize.width < 10 || chartSize.height < 10) return null;

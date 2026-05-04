@@ -1,3 +1,17 @@
+# [1.58.0](https://github.com/arkitektio/orkestrator-next/compare/v1.57.3...v1.58.0) (2026-05-04)
+
+
+### Bug Fixes
+
+* more stuff done ([36a0905](https://github.com/arkitektio/orkestrator-next/commit/36a0905399d75a2712863f96e05c8e8bbe2c1eb4))
+* renderer ([ca108a4](https://github.com/arkitektio/orkestrator-next/commit/ca108a4bf2563a46911866d8cc79242937ac8f82))
+* stuff ([2976ab7](https://github.com/arkitektio/orkestrator-next/commit/2976ab78dbeee455f6138beb7d9370eccc44ff94))
+
+
+### Features
+
+* initial uplottification ([399f6bd](https://github.com/arkitektio/orkestrator-next/commit/399f6bdeec5d65508f8aac5b4aa432d4711c76f2))
+
 ## [1.57.3](https://github.com/arkitektio/orkestrator-next/compare/v1.57.2...v1.57.3) (2026-04-29)
 
 

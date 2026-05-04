@@ -129,7 +129,6 @@ export const ClickContextual = (props: {
   addStagingNode: (params: StagingNodeParams) => void;
   onCancel: () => void;
 }) => {
-  const [search, setSearch] = useState(undefined);
 
 
 

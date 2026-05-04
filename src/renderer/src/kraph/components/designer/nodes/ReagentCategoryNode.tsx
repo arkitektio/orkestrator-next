@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphReagentCategory } from "@/linkers";
@@ -8,7 +7,7 @@ import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { ReagentNode } from "../types";
 
-export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
+export const ReagentCategoryNode = memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
   const resolve = useResolve();
 
   return (
@@ -52,3 +51,6 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
     </>
   );
 });
+
+
+export default ReagentCategoryNode;

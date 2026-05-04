@@ -10,7 +10,6 @@ import {
 } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import OntologyGraph from "../components/designer/OntologyGraph";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
@@ -37,7 +36,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
 
   return (
     <KraphGraph.ModelPage
-      object={data.graph.id}
+      object={data.graph}
       title={data.graph.name}
       pageActions={
         <>
@@ -51,8 +50,8 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
           >
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
-          <KraphGraph.ObjectButton object={data.graph.id} />
-          <KraphGraph.DetailLink object={data.graph.id} subroute="queries">
+          <KraphGraph.ObjectButton object={data.graph} />
+          <KraphGraph.DetailLink object={data.graph} subroute="queries">
             <Button variant="outline" size="sm">
               Queries
             </Button>
@@ -71,10 +70,10 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KraphGraph.Komments object={data.graph.id} />,
+            Comments: <KraphGraph.Komments object={data.graph} />,
             Plots: (
               <>
-                <ScatterPlotList filters={{ graph: data.graph.id }} />
+                <ScatterPlotList />
               </>
             ),
           }}

@@ -1,4 +1,3 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
@@ -290,7 +289,6 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
 
   });
 
-  const dialog = useGraphQlFormDialog(add);
 
   const form = useForm<CreateEntityCategoryFormValues>({
     defaultValues: {

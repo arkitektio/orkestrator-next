@@ -453,7 +453,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           </Button>
 
           <KraphGraph.DetailLink
-            object={graph.id}
+            object={graph}
             subroute={"reagentcategories"}
             className="text-sm"
           >

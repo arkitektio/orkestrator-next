@@ -32,7 +32,7 @@ export const Page = asDetailQueryRoute(
           entityCategory: data.entityCategory.id,
         },
       },
-      refetchQueries: [{ query: EntityNodesDocument, }],
+      refetchQueries: [{ query: EntityNodesDocument, variables: { entityCategory: data.entityCategory.id } }],
     });
 
     const resolve = useKraphMediaResolve();
@@ -68,14 +68,14 @@ export const Page = asDetailQueryRoute(
 
     return (
       <KraphEntityCategory.ModelPage
-        object={data.entityCategory.id}
+        object={data.entityCategory}
         title={data?.entityCategory.label}
         sidebars={
           <MultiSidebar
             map={{
               Stats: <EntityCategorySidebar category={data.entityCategory.id} />,
               Comments: (
-                <KraphEntityCategory.Komments object={data.entityCategory.id} />
+                <KraphEntityCategory.Komments object={data.entityCategory} />
               ),
 
             }}
@@ -114,7 +114,7 @@ export const Page = asDetailQueryRoute(
               <Settings2 className="h-3 w-3 mr-2" />
               Schema Builder
             </Button>
-            <EnhanceButton identifier="@kraph/entitycategory" object={data.entityCategory.id} refetch={refetch} />
+            <EnhanceButton identifier="@kraph/entitycategory" object={data.entityCategory} refetch={refetch} />
 
             <Button
               variant="outline"
@@ -128,7 +128,7 @@ export const Page = asDetailQueryRoute(
               Create {data.entityCategory.label || "Entity"}
             </Button>
             <KraphEntityCategory.ObjectButton
-              object={data.entityCategory.id}
+              object={data.entityCategory}
             />
           </>
         }

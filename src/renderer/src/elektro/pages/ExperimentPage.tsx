@@ -11,19 +11,18 @@ import React from "react";
 import Timestamp from "react-timestamp";
 import { useDetailExperimentQuery } from "../api/graphql";
 import {
-  ExperimentRender,
   getColorForRecordingView,
   getColorForStimulusView,
   recordingViewToLabel,
   stimulusViewToLabel,
+} from "../components/ExperimentRender.utils";
+import {
+  ExperimentRender,
 } from "../components/ExperimentRender";
-
-export type IRepresentationScreenProps = {};
 
 export const ExperimentPage = asDetailQueryRoute(
   useDetailExperimentQuery,
-  ({ data, subscribeToMore }) => {
-    const [show, setShow] = React.useState(false);
+  ({ data, subscribeToMore: _subscribeToMore }) => {
     const [hidden, setHidden] = React.useState<string[]>([]);
     const [hiddenStimuli, setHiddenStimuli] = React.useState<string[]>([]);
 

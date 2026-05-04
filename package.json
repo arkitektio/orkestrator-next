@@ -49,6 +49,8 @@
     "just-throttle": "^4.2.0",
     "nuqs": "^2.8.1",
     "reselect": "^5.1.1",
+    "uplot": "^1.6.32",
+    "uplot-react": "^1.2.4",
     "zundo": "^2.3.0",
     "zustand": "^5.0.12"
   },

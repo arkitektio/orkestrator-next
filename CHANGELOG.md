@@ -1,3 +1,10 @@
+## [1.58.1](https://github.com/arkitektio/orkestrator-next/compare/v1.58.0...v1.58.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* defective mikro actions ([bd9fe55](https://github.com/arkitektio/orkestrator-next/commit/bd9fe556cfde2d5e5242c95eb56651a004b80c67))
+
 # [1.58.0](https://github.com/arkitektio/orkestrator-next/compare/v1.57.3...v1.58.0) (2026-05-04)
 
 

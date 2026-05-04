@@ -39,7 +39,6 @@ const chartConfig = {
 };
 
 const TheCard = ({ view }: Props) => {
-  const [deleteHistogram] = useDeleteHistogramViewMutation();
 
   return (
     <MikroHistogramView.Smart object={view} >
@@ -47,18 +46,7 @@ const TheCard = ({ view }: Props) => {
         <CardHeader>
           <CardTitle>
             <p className="font-bold text-xs">
-              {view.id && (
-                <MikroHistogramView.DetailLink object={view}>
-                  Histogram
-                </MikroHistogramView.DetailLink>
-              )}
-              <Button
-                onClick={() => deleteHistogram({ variables: { id: view.id } })}
-                variant={"outline"}
-                size={"sm"}
-              >
-                x
-              </Button>
+              {view.cMin}
               <div className="w-full h-[80px] mt-2">
                 <ChartContainer
                   config={chartConfig}

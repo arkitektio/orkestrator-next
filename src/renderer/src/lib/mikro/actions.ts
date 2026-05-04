@@ -82,10 +82,10 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       await client.mutate<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>({
         mutation: PutDatasetsInDatasetDocument,
         variables: {
-          selfs: datasets.map((i) => i.object),
-          other: inside.object // Assuming 'inside' is the dataset where images will be moved
+          selfs: datasets.map((i) => i.object.id),
+          other: inside.object.id // Assuming 'inside' is the dataset where images will be moved
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((d) => ({ typename: "Dataset", id: d.object })))
+        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((d) => ({ typename: "Dataset", id: d.object.id })))
       })
     }
   },
@@ -124,10 +124,10 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       await client.mutate<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>({
         mutation: PutImagesInDatasetDocument,
         variables: {
-          selfs: images.map((i) => i.object),
-          other: inside.object // Assuming 'inside' is the dataset where images will be moved
+          selfs: images.map((i) => i.object.id),
+          other: inside.object.id // Assuming 'inside' is the dataset where images will be moved
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, images.map((f) => ({ typename: "Image", id: f.object })))
+        refetchQueries: getRefetchableQueriesForEntities(client, images.map((f) => ({ typename: "Image", id: f.object.id })))
      })
 
 
@@ -173,10 +173,10 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       await client.mutate<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>({
         mutation:   PutFilesInDatasetDocument,
         variables: {
-          selfs: files.map((i) => i.object),
-          other: inside.object // Assuming 'inside' is the dataset where files will be moved
+          selfs: files.map((i) => i.object.id),
+          other: inside.object.id // Assuming 'inside' is the dataset where files will be moved
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, files.map((f) => ({ typename: "File", id: f.object })))
+        refetchQueries: getRefetchableQueriesForEntities(client, files.map((f) => ({ typename: "File", id: f.object.id })))
       })
 
 

@@ -1,3 +1,10 @@
+## [1.58.2](https://github.com/arkitektio/orkestrator-next/compare/v1.58.1...v1.58.2) (2026-05-04)
+
+
+### Bug Fixes
+
+* kraph pages ([bd1b91d](https://github.com/arkitektio/orkestrator-next/commit/bd1b91d892f4c360fffe52210c0267b18920eb60))
+
 ## [1.58.1](https://github.com/arkitektio/orkestrator-next/compare/v1.58.0...v1.58.1) (2026-05-04)
 
 

@@ -5,7 +5,7 @@ import {
 } from "@/mikro-next/api/graphql";
 import { useMySelect } from "@/providers/selection/SelectionContext";
 import { Line, Text, useCursor } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { ThreeEvent, useThree } from "@react-three/fiber";
 import { useCallback, useRef, useState } from "react";
 import * as THREE from "three";
 import { useViewerState } from "../ViewerStateProvider";
@@ -33,7 +33,6 @@ export const ROIPolygon = (props: {
   imageWidth: number;
   imageHeight: number;
 }) => {
-  if (!props.roi.vectors || props.roi.vectors.length == 0) return null;
 
   const { roi } = props;
   const meshRef = useRef<THREE.Mesh>(null);
@@ -61,9 +60,9 @@ export const ROIPolygon = (props: {
 
   // Create shape from vertices
   const shape = new THREE.Shape();
-  shape.moveTo(vertices[0][0], vertices[0][1]);
-  vertices.slice(1).forEach(([x, y]) => shape.lineTo(x, y));
-  shape.lineTo(vertices[0][0], vertices[0][1]); // Close the shape
+  shape.moveTo(vertices[0][1], vertices[0][0]);
+  vertices.slice(1).forEach(([x, y]) => shape.lineTo(y, x));
+  shape.lineTo(vertices[0][1], vertices[0][0]); // Close the shape
 
   console.log("Vertices:", vertices);
   console.log("Shape:", shape);
@@ -84,6 +83,12 @@ export const ROIPolygon = (props: {
 
   // Labels: show b-selection number near the ROI (if present),
   // and show the normal selection number centered inside the ROI when selected.
+
+
+
+  if (!props.roi.vectors || props.roi.vectors.length == 0) return null;
+
+
   const bLabel = isBSelected ? (
     <Text
       position={[center.x, center.y, 1]}
@@ -384,25 +389,39 @@ export const ROIPolygon = (props: {
   if (roi.kind == RoiKind.Path) {
     const pathPoints = vertices.map(([x, y]) => new THREE.Vector2(x, y));
 
+    // Split into individual segments so each can be coloured based on z.
+    // A segment is "active" when either endpoint's z matches the current viewer z.
+    const segments = roi.vectors.slice(0, -1).map((vec, i) => {
+      const startZ = vec[2];
+      const endZ = roi.vectors[i + 1][2];
+      const isActive = startZ === z || endZ === z;
+      return {
+        pts: [pathPoints[i], pathPoints[i + 1]] as THREE.Vector2[],
+        isActive,
+      };
+    });
+
+    const segmentHandlers = {
+      onClick,
+      onPointerUp: (e: ThreeEvent<PointerEvent>) => e.stopPropagation(),
+      onContextMenu: onRightClick,
+      onPointerOver: (e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); setHovered(true); },
+      onPointerOut:  (e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); setHovered(false); },
+    };
+
     return (
       <>
-        <Line
-          points={pathPoints}
-          color={color}
-          lineWidth={hovered ? 5 : 3}
-          onClick={onClick}
-          onPointerUp={(e) => e.stopPropagation()}
-          onContextMenu={onRightClick}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            setHovered(true);
-          }}
-          onPointerOut={(e) => {
-            e.stopPropagation();
-            setHovered(false);
-          }}
-        />
-
+        {segments.map((seg, i) => (
+          <Line
+            key={i}
+            points={seg.pts}
+            color={seg.isActive ? color : "#666666"}
+            lineWidth={seg.isActive ? (hovered ? 10 : 5) : 3}
+            transparent
+            opacity={seg.isActive ? 1.0 : 0.4}
+            {...segmentHandlers}
+          />
+        ))}
         {bLabel}
         {selectedLabel}
       </>

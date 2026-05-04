@@ -9,23 +9,84 @@ import {
 import { cn } from "@udecode/cn";
 import React from "react";
 import Timestamp from "react-timestamp";
+import { useSearchParams } from "react-router-dom";
 import { useDetailExperimentQuery } from "../api/graphql";
 import {
-  ExperimentRender,
   getColorForRecordingView,
   getColorForStimulusView,
   recordingViewToLabel,
   stimulusViewToLabel,
+} from "../components/ExperimentRender.utils";
+import {
+  ExperimentRender,
 } from "../components/ExperimentRender";
 
-export type IRepresentationScreenProps = {};
+type RangeSelection = {
+  left: number | null;
+  right: number | null;
+};
+
+const DEFAULT_RANGE: RangeSelection = { left: 0, right: null };
+
+const parseBrushRange = (rawBrushRange: string | null): RangeSelection => {
+  if (!rawBrushRange) {
+    return DEFAULT_RANGE;
+  }
+
+  const [rawLeft, rawRight] = rawBrushRange.split(":");
+  const left = Number.parseInt(rawLeft, 10);
+  const right = Number.parseInt(rawRight, 10);
+
+  if (Number.isNaN(left) || Number.isNaN(right) || right <= left) {
+    return DEFAULT_RANGE;
+  }
+
+  return {
+    left: Math.max(0, left),
+    right,
+  };
+};
+
+const encodeBrushRange = (range: RangeSelection) => {
+  if (range.right == null || range.right <= (range.left ?? 0)) {
+    return null;
+  }
+
+  return `${range.left ?? 0}:${range.right}`;
+};
 
 export const ExperimentPage = asDetailQueryRoute(
   useDetailExperimentQuery,
-  ({ data, subscribeToMore }) => {
-    const [show, setShow] = React.useState(false);
+  ({ data, subscribeToMore: _subscribeToMore }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [hidden, setHidden] = React.useState<string[]>([]);
     const [hiddenStimuli, setHiddenStimuli] = React.useState<string[]>([]);
+    const selectedRange = React.useMemo(
+      () => parseBrushRange(searchParams.get("brush")),
+      [searchParams],
+    );
+
+    const setSelectedRange = React.useCallback(
+      (range: RangeSelection) => {
+        const encodedRange = encodeBrushRange(range);
+        const currentRange = searchParams.get("brush");
+
+        if ((encodedRange ?? null) === currentRange) {
+          return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams);
+
+        if (encodedRange) {
+          nextParams.set("brush", encodedRange);
+        } else {
+          nextParams.delete("brush");
+        }
+
+        setSearchParams(nextParams, { replace: true });
+      },
+      [searchParams, setSearchParams],
+    );
 
     return (
       <ElektroExperiment.ModelPage
@@ -64,6 +125,8 @@ export const ExperimentPage = asDetailQueryRoute(
             experiment={data.experiment}
             hidden={hidden}
             hiddenStimuli={hiddenStimuli}
+            selectedRange={selectedRange}
+            onSelectedRangeChange={setSelectedRange}
           />
         </div>
         <div className="flex-initial flex flex-row gap-2 mb-6">

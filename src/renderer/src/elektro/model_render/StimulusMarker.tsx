@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { ListStimulusFragment } from "../api/graphql"; // adjust path as needed
-import { getColorForStimulus } from "../components/SImulationRender";
+import { getColorForStimulus } from "../components/SimulationRender";
 
 export const StimulusMarker = ({ stimulus, position }: { stimulus: ListStimulusFragment; position: THREE.Vector3 }) => (
   <group position={position}>

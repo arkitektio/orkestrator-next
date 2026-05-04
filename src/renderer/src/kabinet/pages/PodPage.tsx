@@ -34,7 +34,7 @@ export const AssignButton = (props: {
     console.log(
       await assign({
         args: {
-          pod: props.pod,
+          pod: {__identifier: KabinetPod.identifier, object: props.pod},
         },
       }),
       props.refetch(),

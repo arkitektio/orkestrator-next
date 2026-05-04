@@ -20,7 +20,7 @@ import {
   recordingToLabel,
   SimulationRender,
   stimulusToLabel,
-} from "../components/SImulationRender";
+} from "../components/SimulationRender";
 
 
 export const RecordingPage = asDetailQueryRoute(

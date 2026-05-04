@@ -704,7 +704,7 @@ export const FinalRender = (props: RGBDProps) => {
         showGrid: false,
         z: props.z || 0,
         t: props.t || 0,
-        allowRoiDrawing: false,
+        allowRoiDrawing: true,
       }}
     >
       <FinalRenderInner {...props} />

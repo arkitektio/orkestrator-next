@@ -7,6 +7,7 @@ import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
 import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
+import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
 import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
@@ -20,6 +21,8 @@ import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
 export const { DisplayProvider, useDisplay, useDisplayComponent } =
   createDisplayProvider({
     "@mikro-next/image": ImageDisplay,
+    "@mikro-next/file": FileDisplay,
+    "@mikro/file": FileDisplay,
     "@mikro/image": ImageDisplay,
     "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
     "@mikro-next/roi": RoiDisplay,

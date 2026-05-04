@@ -87,11 +87,8 @@ export const downloadSelectionFromStore = async (
 
   const array = await open.v3(store, { kind: "array" });
 
-  console.log("Array", array);
 
   const view = (await get(array, selection)) as Chunk<DataType>;
-
-  console.log("View", view);
 
   return {
     shape: array.shape as [number, number, number, number, number],
@@ -133,7 +130,6 @@ export const renderArray = async (
   abortSignal?: AbortSignal,
 ): Promise<number[]> => {
   const slices = viewToSlices(t, left, right);
-  console.log("Slices", slices);
 
   const selection = await downloadSelectionFromStore(
     client,
@@ -142,10 +138,6 @@ export const renderArray = async (
     slices,
     abortSignal,
   );
-
-  console.log("Array is", selection.out.data);
-
-  console.log("Reduced array", selection.out.data);
 
   return selection.out.data as number[];
 };

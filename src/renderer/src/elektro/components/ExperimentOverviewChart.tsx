@@ -34,12 +34,10 @@ export const ExperimentOverviewChart: React.FC = () => {
     [experiment.stimulusViews, hiddenStimuli],
   );
 
-  // Map each visible stimulus to its column index in overviewData
   // overviewData layout: [timeTrace, stim0, stim1, ...] (all stimuli, in order)
   const stimulusEntries = useMemo(
     () =>
       visibleStimuli.map((view) => ({
-        // +1 because overviewData[0] is the time trace
         colIndex: experiment.stimulusViews.indexOf(view) + 1,
         label: view.stimulus.label,
         color: getColorForStimulusView(view, highlight),
@@ -47,7 +45,7 @@ export const ExperimentOverviewChart: React.FC = () => {
     [experiment.stimulusViews, highlight, visibleStimuli],
   );
 
-  // Assemble only visible columns in uPlot order: [time, visibleStim0, ...]
+  // [time, visibleStim0, ...]
   const stimulusData = useMemo<uPlot.AlignedData>(() => {
     const timeCol = overviewData[0] ?? [];
     const yCols = stimulusEntries.map(
@@ -65,20 +63,6 @@ export const ExperimentOverviewChart: React.FC = () => {
     [overviewData, stimulusEntries],
   );
 
-  const axes = useMemo(() => {
-    const xAxis: uPlot.Axis = {
-      ...createAxisStyle(),
-      label: "Time (s)",
-      values: (_self, splits) =>
-        splits.map((value) => Number(value).toFixed(1)),
-    };
-    const yAxis: uPlot.Axis = {
-      ...createAxisStyle(),
-      label: "Stimulus value",
-    };
-    return { xAxis, yAxis };
-  }, []);
-
   const clearChartSelection = useCallback((chart: uPlot) => {
     chart.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
   }, []);
@@ -86,12 +70,8 @@ export const ExperimentOverviewChart: React.FC = () => {
   const handleSelection = useCallback(
     (chart: uPlot) => {
       if (chart.select.width <= 1) return;
-
       const leftIndex = chart.posToIdx(chart.select.left);
-      const rightIndex = chart.posToIdx(
-        chart.select.left + chart.select.width,
-      );
-
+      const rightIndex = chart.posToIdx(chart.select.left + chart.select.width);
       if (Math.abs(leftIndex - rightIndex) > 1) {
         store.getState().zoomOnRange({
           left: leftIndex,
@@ -100,7 +80,6 @@ export const ExperimentOverviewChart: React.FC = () => {
           sourceStepSize: store.getState().overviewStepSize,
         });
       }
-
       clearChartSelection(chart);
     },
     [clearChartSelection, store],
@@ -110,24 +89,20 @@ export const ExperimentOverviewChart: React.FC = () => {
     (chart: uPlot) => {
       const idx = chart.cursor.idx ?? null;
       const timeTrace = overviewData[0];
-
       if (idx == null || !timeTrace || idx >= timeTrace.length) {
         store.getState().setHover(null);
         return;
       }
-
       const timeVal = timeTrace[idx];
       if (timeVal == null) {
         store.getState().setHover(null);
         return;
       }
-
       store.getState().setHover({
         time: timeVal,
         values: stimulusEntries.map((entry, i) => ({
           label: entry.label,
           color: entry.color,
-          // stimulusData[0] = time, stimulusData[i+1] = series i
           value: (stimulusData[i + 1] as number[])?.[idx] ?? null,
         })),
       });
@@ -135,12 +110,25 @@ export const ExperimentOverviewChart: React.FC = () => {
     [overviewData, stimulusData, stimulusEntries, store],
   );
 
+  // Rebuild options (and re-resolve CSS vars) whenever size or series change
   const stimulusOptions = useMemo<uPlot.Options | null>(() => {
     if (chartSize.width < 10 || chartSize.height < 10) return null;
+
+    const xAxis: uPlot.Axis = {
+      ...createAxisStyle(),
+      label: "Time (s)",
+      values: (_self, splits) =>
+        splits.map((value) => Number(value).toFixed(2)),
+    };
+    const yAxis: uPlot.Axis = {
+      ...createAxisStyle(),
+      label: "Stimulus value",
+    };
 
     return {
       width: chartSize.width,
       height: chartSize.height,
+      padding: [8, 10, 0, 0],
       legend: { show: false },
       select: {
         show: true,
@@ -159,7 +147,7 @@ export const ExperimentOverviewChart: React.FC = () => {
         x: { time: false },
         y: { range: stimulusYRange as [number, number] },
       },
-      axes: [axes.xAxis, axes.yAxis],
+      axes: [xAxis, yAxis],
       series: [
         { label: "Time" },
         ...stimulusEntries.map((entry) =>
@@ -172,8 +160,6 @@ export const ExperimentOverviewChart: React.FC = () => {
       },
     };
   }, [
-    axes.xAxis,
-    axes.yAxis,
     chartSize.height,
     chartSize.width,
     handleSelection,
@@ -185,7 +171,7 @@ export const ExperimentOverviewChart: React.FC = () => {
   return (
     <div
       ref={chartRef}
-      className="relative h-32 flex-none overflow-hidden rounded-md border border-border/50 bg-background text-xs [&_.u-axis]:text-muted-foreground [&_.u-grid]:border-border/50 [&_.u-over]:cursor-crosshair [&_.u-select]:border [&_.u-select]:border-amber-300/40 [&_.u-select]:bg-amber-300/20"
+      className="relative h-32 flex-none overflow-hidden rounded-md border border-border/50 bg-background text-xs [&_.u-over]:cursor-crosshair [&_.u-select]:border [&_.u-select]:border-amber-300/40 [&_.u-select]:bg-amber-300/20"
     >
       {overviewLoading ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
@@ -209,4 +195,3 @@ export const ExperimentOverviewChart: React.FC = () => {
     </div>
   );
 };
-

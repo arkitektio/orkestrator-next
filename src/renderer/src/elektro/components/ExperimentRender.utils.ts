@@ -132,15 +132,32 @@ export const buildSpikeTimes = (
 
 // ─── uPlot series factories ───────────────────────────────────────────────────
 
-export const createAxisStyle = (): uPlot.Axis => ({
-  stroke: "hsl(var(--muted-foreground))",
-  grid: { show: false },
-  ticks: { stroke: "hsl(var(--border))" },
-  font: "12px system-ui, sans-serif",
-  labelFont: "12px system-ui, sans-serif",
-  labelGap: 6,
-  labelSize: 20,
-});
+/**
+ * Resolve a shadcn/Tailwind CSS variable to a usable canvas color.
+ * Variables like --muted-foreground are defined as bare HSL values ("215 16% 47%"),
+ * so we wrap with hsl(). Falls back to a neutral grey if the variable is absent.
+ */
+const resolveCssVar = (name: string, fallback: string): string => {
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return val ? `hsl(${val})` : fallback;
+};
+
+export const createAxisStyle = (): uPlot.Axis => {
+  const stroke = resolveCssVar("--muted-foreground", "#9ca3af");
+  const gridStroke = resolveCssVar("--border", "#374151");
+  return {
+    stroke,
+    grid: { show: true, stroke: gridStroke, width: 0.5 },
+    ticks: { stroke: gridStroke, size: 4, width: 0.5 },
+    font: "12px system-ui, sans-serif",
+    labelFont: "bold 11px system-ui, sans-serif",
+    labelGap: 8,
+    labelSize: 22,
+    gap: 6,
+  };
+};
 
 export const createRecordingSeries = (
   label: string,

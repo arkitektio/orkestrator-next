@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { ElektroStimulus } from "@/linkers";
 import { useDetailStimulusQuery } from "../api/graphql";
-import { SimulationRender } from "../components/SImulationRender";
+import { SimulationRender } from "../components/SimulationRender";
 import { useTraceArray } from "../lib/useTraceArray";
 
 export type IRepresentationScreenProps = {};

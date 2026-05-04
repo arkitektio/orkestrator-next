@@ -10,20 +10,17 @@ import { cn } from "@udecode/cn";
 import React from "react";
 import { useDetailSimulationQuery } from "../api/graphql";
 import {
-  getColorForRecording,
-  getColorForStimulus,
-  recordingToLabel,
-  SimulationRender,
-  stimulusToLabel,
-} from "../components/SImulationRender";
+  getColorForRecordingView,
+  getColorForStimulusView,
+} from "../components/ExperimentRender.utils";
+import { SimulationRender } from "../components/SimulationRender";
 
 export type IRepresentationScreenProps = {};
 
 export const SimulationPage = asDetailQueryRoute(
   useDetailSimulationQuery,
   ({ data, subscribeToMore }) => {
-    const [show, setShow] = React.useState(false);
-    const [hidden, setHidden] = React.useState<string[]>([]);
+  const [hidden, setHidden] = React.useState<string[]>([]);
     const [hiddenStimuli, setHiddenStimuli] = React.useState<string[]>([]);
 
     return (
@@ -82,10 +79,10 @@ export const SimulationPage = asDetailQueryRoute(
               <div className="flex flex-row gap-2 my-auto">
                 <div
                   className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: getColorForRecording(view) }}
+                  style={{ backgroundColor: getColorForRecordingView(view) }}
                 />
                 <div className="text-sm text-muted-foreground my-auto">
-                  {recordingToLabel(view)}
+                  {view.label}
                 </div>
                 <ElektroRecording.DetailLink
                   object={view}
@@ -115,10 +112,10 @@ export const SimulationPage = asDetailQueryRoute(
               <div className="flex flex-row gap-2 my-auto">
                 <div
                   className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: getColorForStimulus(view) }}
+                  style={{ backgroundColor: getColorForStimulusView(view) }}
                 />
                 <div className="text-sm text-muted-foreground my-auto">
-                  {stimulusToLabel(view)}
+                  {view.label}
                 </div>
                 <ElektroStimulus.DetailLink
                   object={view}

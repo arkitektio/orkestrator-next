@@ -36,6 +36,8 @@
     "@aws-sdk/lib-storage": "^3.1010.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@fideus-labs/fizarrita": "^1.4.1",
+    "@fideus-labs/worker-pool": "^1.0.0",
     "@moq/hang": "^0.1.2",
     "@moq/lite": "^0.1.2",
     "@radix-ui/react-dialog": "^1.1.15",

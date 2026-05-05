@@ -2,6 +2,8 @@ import { useViewerStore } from '../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
 import { open } from 'zarrita';
+import { getWorker } from '@fideus-labs/fizarrita';
+import { workerPool } from '../../../workers/pool';
 import type { ChunkData } from '../stores/types';
 import { useSceneStore } from '../store/sceneStore';
 import { useShallow } from 'zustand/shallow';
@@ -197,7 +199,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const totalX = getDimArraySize(xIdx) * scaleX;
   const totalY = getDimArraySize(yIdx) * scaleY;
   const totalZ = getDimArraySize(zIdx) * scaleZ;
-  
+
   const widthScaled = chunkWidth * scaleX;
   const heightScaled = chunkHeight * scaleY;
   const zSizeScaled = chunkZSize * scaleZ;
@@ -207,7 +209,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const baseGridZ = gridZ * scaleZ;
 
   const getChunkCoord = (idx: number) => idx !== -1 ? chunk.chunkCoords[idx] : 0;
-  
+
   const xPos = getChunkCoord(xIdx) * baseGridX + widthScaled / 2 - totalX / 2;
   const yPos = -(getChunkCoord(yIdx) * baseGridY + heightScaled / 2 - totalY / 2);
   const zPos = getChunkCoord(zIdx) * baseGridZ + zSizeScaled / 2 - totalZ / 2;

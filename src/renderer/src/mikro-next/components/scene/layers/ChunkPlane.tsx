@@ -38,6 +38,24 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const tStart = useViewerStore((s) => s.tStart);
   const tEnd = useViewerStore((s) => s.tEnd);
 
+  // Report rendering state to store automatically
+  const setChunkStatus = useViewerStore((s) => s.setChunkStatus);
+  useEffect(() => {
+    // Only report when mounting
+    setChunkStatus(chunk.chunkKey, {
+      layerId: chunk.frame_id,
+      chunkKey: chunk.chunkKey,
+      level: chunk.level || 0,
+      status: texture ? 'rendered' : 'loading'
+    });
+
+    return () => {
+      // Unmount
+      setChunkStatus(chunk.chunkKey, null);
+    };
+  }, [chunk.chunkKey, chunk.frame_id, chunk.level, texture, setChunkStatus]);
+
+
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
   const gridX = xIdx !== -1 ? chunk.chunk_shape[xIdx] : 1;

@@ -12,6 +12,7 @@ import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
+import { DebugPanel } from "./panels/DebugPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { ScenePlane } from "./layers/two_d/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
@@ -110,6 +111,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
             <ScenePanel/>
             <LayerControlPanel />
+            <DebugPanel />
             <ZSliderPanel />
             <VisibilityManager/>
             <ScaleBar />

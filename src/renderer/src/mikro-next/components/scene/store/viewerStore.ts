@@ -56,6 +56,8 @@ interface ViewerState {
   cullRadius: number;
   setCullRadius: (radius: number) => void;
   setLodBias: (bias: number) => void;
+  renderedChunks: Record<string, { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' }>;
+  setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
   lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
   setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
 
@@ -99,6 +101,16 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     cullRadius: 4000,
     setCullRadius: (radius) => set({ cullRadius: radius }),
     setLodBias: (bias) => set({ lodBias: bias }),
+    renderedChunks: {},
+    setChunkStatus: (chunkId, info) => set((state) => {
+      const next = { ...state.renderedChunks };
+      if (!info) {
+        delete next[chunkId];
+      } else {
+        next[chunkId] = info;
+      }
+      return { renderedChunks: next };
+    }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
      register: (ref) => set((state) => {

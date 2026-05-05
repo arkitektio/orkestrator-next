@@ -172,14 +172,27 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
 
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
-  const totalX = getDimArraySize(xIdx);
-  const totalY = getDimArraySize(yIdx);
-  const totalZ = getDimArraySize(zIdx);
+  const scaleX = chunk.scaleFactors && xIdx !== -1 ? chunk.scaleFactors[xIdx] : 1;
+  const scaleY = chunk.scaleFactors && yIdx !== -1 ? chunk.scaleFactors[yIdx] : 1;
+  const scaleZ = chunk.scaleFactors && zIdx !== -1 ? chunk.scaleFactors[zIdx] : 1;
+
+  const totalX = getDimArraySize(xIdx) * scaleX;
+  const totalY = getDimArraySize(yIdx) * scaleY;
+  const totalZ = getDimArraySize(zIdx) * scaleZ;
+  
+  const widthScaled = chunkWidth * scaleX;
+  const heightScaled = chunkHeight * scaleY;
+  const zSizeScaled = chunkZSize * scaleZ;
+
+  const baseGridX = gridX * scaleX;
+  const baseGridY = gridY * scaleY;
+  const baseGridZ = gridZ * scaleZ;
 
   const getChunkCoord = (idx: number) => idx !== -1 ? chunk.chunkCoords[idx] : 0;
-  const xPos = getChunkCoord(xIdx) * gridX + chunkWidth / 2 - totalX / 2;
-  const yPos = -(getChunkCoord(yIdx) * gridY + chunkHeight / 2 - totalY / 2);
-  const zPos = getChunkCoord(zIdx) * gridZ + chunkZSize / 2 - totalZ / 2;
+  
+  const xPos = getChunkCoord(xIdx) * baseGridX + widthScaled / 2 - totalX / 2;
+  const yPos = -(getChunkCoord(yIdx) * baseGridY + heightScaled / 2 - totalY / 2);
+  const zPos = getChunkCoord(zIdx) * baseGridZ + zSizeScaled / 2 - totalZ / 2;
 
 
   if (!isVisible) return null;
@@ -187,7 +200,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   if (!texture) {
     return (
       <mesh position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
-        <boxGeometry args={[chunkWidth, chunkHeight, chunkZSize]} />
+        <boxGeometry args={[widthScaled, heightScaled, zSizeScaled]} />
         <meshBasicMaterial color="gray" wireframe={true} />
       </mesh>
     );
@@ -195,7 +208,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
   return (
     <group position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
-      <mesh scale={[chunkWidth, chunkHeight, chunkZSize]} renderOrder={1}>
+      <mesh scale={[widthScaled, heightScaled, zSizeScaled]} renderOrder={1}>
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial
           ref={materialRef} // FIXED: Attach the ref
@@ -260,7 +273,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
           `}
         />
       </mesh>
-      {isDebug && <mesh scale={[chunkWidth, chunkHeight, chunkZSize]}>
+      {isDebug && <mesh scale={[widthScaled, heightScaled, zSizeScaled]}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial color="cyan" wireframe={true} opacity={0.3} transparent={true} depthWrite={false} />
       </mesh>}

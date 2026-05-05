@@ -23,6 +23,7 @@ interface ZarrLevel {
   store: any;
   arr: any;
   scale: number[];
+  scaleFactors?: number[];
 }
 
 interface ZarrCache {
@@ -102,8 +103,15 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
       if (zPos !== -1 && currentZ !== undefined) {
         const layerAffine = buildAffineMatrix(layer);
+        const inv = layerAffine.clone().invert();
+        const pt = new THREE.Vector3(0, 0, currentZ);
+        pt.applyMatrix4(inv);
+        
+        const scaleZ = level.scaleFactors && level.scaleFactors.length > zPos ? level.scaleFactors[zPos] : 1;
+        const downscaledZ = Math.round(pt.z / scaleZ);
+        
         const maxVoxelZ = arr.shape[zPos] - 1;
-        selection[zPos] = physicalToVoxelZ(layerAffine, currentZ, maxVoxelZ);
+        selection[zPos] = Math.max(0, Math.min(maxVoxelZ, downscaledZ));
       }
 
       const [minVal, maxVal] = mapDTypeToMinMax(arr.dtype);
@@ -123,7 +131,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
         cLimMin: Math.ceil(minVal * (layer.climMin || 0)),
         cLimMax: Math.floor(maxVal * (layer.climMax || 1)),
         colormapTexture: colormapTexture,
-        level: levelIdx
+        level: levelIdx,
+        scaleFactors: level.scaleFactors
       }));
       allGeneratedChunks = [...allGeneratedChunks, ...levelChunks];
     });
@@ -161,6 +170,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
               store,
               arr,
               scale: arr.shape, // Use shape as reference scale for now
+              scaleFactors: zarrArray.scaleFactors,
             };
           })
         );

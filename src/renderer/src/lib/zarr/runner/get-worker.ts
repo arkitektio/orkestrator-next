@@ -20,7 +20,7 @@ import type {
 } from "zarrita"
 
 import { create_codec_pipeline } from "./internals/codec-pipeline"
-import { BasicIndexer } from "./internals/indexer"
+import { BasicIndexer, slice } from "./internals/indexer"
 import { setter } from "./internals/setter"
 import {
   assertSharedArrayBufferAvailable,
@@ -645,6 +645,45 @@ export async function probeActualChunkShape<
   } catch {
     return metadataChunkShape
   }
+}
+
+// ---------------------------------------------------------------------------
+// getChunkWorker
+// ---------------------------------------------------------------------------
+
+/**
+ * Read a single chunk from a zarrita Array with codec decoding offloaded to
+ * Web Workers.
+ *
+ * Mirrors zarrita's `arr.getChunk(chunkCoords)` API but uses the same worker
+ * decode pipeline as {@link getWorker}.
+ */
+export async function getChunkWorker<D extends DataType, Store extends Readable>(
+  arr: ZarrArray<D, Store>,
+  chunkCoords: number[],
+  opts: GetWorkerOptions<Parameters<Store["get"]>[1]>,
+): Promise<Chunk<D>> {
+  const { codecMeta, encodeChunkKey } = await readArrayMetadata(arr)
+
+  const Ctr = get_ctr(arr.dtype)
+  const bytesPerElement = (Ctr as unknown as { BYTES_PER_ELEMENT: number })
+    .BYTES_PER_ELEMENT
+
+  const actualChunkShape = await probeActualChunkShape(
+    arr,
+    encodeChunkKey,
+    codecMeta,
+    bytesPerElement,
+    opts.opts,
+  )
+
+  const selection = actualChunkShape.map((chunkSize, dim) => {
+    const start = chunkCoords[dim] * chunkSize
+    const stop = Math.min(start + chunkSize, arr.shape[dim])
+    return slice(start, stop)
+  })
+
+  return getWorker(arr, selection, opts) as Promise<Chunk<D>>
 }
 
 // ---------------------------------------------------------------------------

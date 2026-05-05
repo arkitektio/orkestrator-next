@@ -12,6 +12,7 @@ export {
   createDefaultWorker,
   /** @deprecated Use {@link createDefaultWorker} instead. */
   DEFAULT_WORKER_URL,
+  getChunkWorker,
   getStoreId,
   getWorker,
   inferChunkShape,

@@ -1758,18 +1758,6 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-3.2.0.tgz#13ed8212f3b9ba697611529d15347f8528058cea"
   integrity sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==
 
-"@fideus-labs/fizarrita@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@fideus-labs/fizarrita/-/fizarrita-1.4.1.tgz#b6202eee02b4a366804624d11c0e2606246615f0"
-  integrity sha512-71HTW4cTDeUnm2f3MU3352MMlpzUAFHhDmEajaASpUywVDe7RdY8ImjeXwRllKjvfPcukfz/aEmdPs67esSngA==
-  dependencies:
-    "@fideus-labs/worker-pool" "^1.0.0"
-
-"@fideus-labs/worker-pool@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@fideus-labs/worker-pool/-/worker-pool-1.0.0.tgz#28f98223b56bb582f3a11b2fdb43b25a19471dcd"
-  integrity sha512-Mwx8fFKKpTUcEtR7w45MQJ/RnZFUPBtefEvGTZGlZMAVSfD7W61rpB8ZdgS4V0CXfppwcb90BF7F/aANWvupnA==
-
 "@floating-ui/core@^1.6.7", "@floating-ui/core@^1.7.1", "@floating-ui/core@^1.7.3":
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.7.3.tgz#462d722f001e23e46d86fd2bd0d21b7693ccb8b7"

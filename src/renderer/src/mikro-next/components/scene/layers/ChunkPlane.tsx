@@ -2,11 +2,11 @@ import { useViewerStore } from '../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
 import { open } from 'zarrita';
-import { getWorker } from '@fideus-labs/fizarrita';
 import { workerPool } from '../../../workers/pool';
 import type { ChunkData } from '../stores/types';
 import { useSceneStore } from '../store/sceneStore';
 import { useShallow } from 'zustand/shallow';
+import { getWorker } from '@/lib/zarr/runner/get-worker';
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {
@@ -110,7 +110,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     const loadData = async () => {
       try {
         const arr = await open.v3(chunk.store, { kind: "array" });
-        const chunkData = await arr.getChunk(chunk.chunkCoords);
+        const chunkData = await getWorker(arr, chunk.chunkCoords, { pool: workerPool });
 
         if (!isMounted || !chunkData) return;
 

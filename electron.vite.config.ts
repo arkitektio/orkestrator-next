@@ -21,10 +21,6 @@ export default defineConfig({
         "Cross-Origin-Embedder-Policy": "require-corp",
       }
     },
-    optimizeDeps: {
-      // Force Vite to exclude the worker if it's being mismanaged by the optimizer
-      exclude: ['@numcodecs/zarr', 'numcodecs']
-    },
     worker: {
       // Required for many modern codec workers to function in an Electron/Vite env
       format: 'es',

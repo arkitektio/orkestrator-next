@@ -53,6 +53,8 @@ interface ViewerState {
   layerViewRanges: Record<string, LayerViewRange>
 
   lodBias: number;
+  cullRadius: number;
+  setCullRadius: (radius: number) => void;
   setLodBias: (bias: number) => void;
   lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
   setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
@@ -94,6 +96,8 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     visibleLayers: [],
     layerViewRanges: {},
     lodBias: 1.0,
+    cullRadius: 4000,
+    setCullRadius: (radius) => set({ cullRadius: radius }),
     setLodBias: (bias) => set({ lodBias: bias }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),

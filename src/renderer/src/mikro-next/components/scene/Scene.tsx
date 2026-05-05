@@ -28,6 +28,7 @@ import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawin
 import { RoiDrawer } from "./interactions/RoiDrawer";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { SceneDataRois } from "./layers/SceneDataRois";
+import { CullingDebugRing } from "./layers/debug/CullingDebugRing";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas
@@ -86,6 +87,8 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <SceneAxis/>
               <ScaleGrid />
 
+
+              <CullingDebugRing />
 
 
 

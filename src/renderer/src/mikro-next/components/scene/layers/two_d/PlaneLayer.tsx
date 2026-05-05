@@ -1,21 +1,19 @@
-import { open } from 'zarrita';
+import { open, Slice } from 'zarrita';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+
 import type { ChunkData } from '../../stores/types';
 import { mapDTypeToMinMax } from '../../stores/utils';
-import { ChunkPlane } from '../ChunkPlane';
 import { getColorMapTexture } from '../../zarr/colormaps';
-import { Slice } from "zarrita";
+import { calculateChunkGrid } from '../../zarr/utils';
+import { buildAffineMatrix } from '../../panels/layer/affine-utils';
+
+import { ChunkPlane } from '../ChunkPlane';
 import { useSelectionStore } from '../../store/layerStore';
 import { useViewerStore } from '../../store/viewerStore';
-import {
-  DimSliceFragment,
-} from '@/mikro-next/api/graphql';
-import { calculateChunkGrid } from '../../zarr/utils';
 import { useSceneStore } from '../../store/sceneStore';
-import { useShallow } from 'zustand/shallow';
-import { buildAffineMatrix, physicalToVoxelZ } from '../../panels/layer/affine-utils';
+import { DimSliceFragment } from '@/mikro-next/api/graphql';
 
 // --- 1. Types & Cache ---
 
@@ -37,6 +35,12 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
   const [activeLod, setActiveLod] = useState<number>(0);
 
+  // Triggers React to update the chunk list when camera crosses a movement threshold
+  const [cameraPanTick, setCameraPanTick] = useState(0);
+
+  const lastCameraRef = useRef(new THREE.Vector2(0, 0));
+  const lastZoomRef = useRef(1);
+
   const zarrCache = useRef<ZarrCache | null>(null);
   const groupRef = useRef<THREE.Group>(null!);
 
@@ -45,13 +49,12 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const unregister = useViewerStore((s) => s.unregister);
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
   const currentZ = useViewerStore((s) => s.currentZ);
-  const isDebug = useViewerStore((state) => state.debug);
   const lodBias = useViewerStore((state) => state.lodBias);
+  const cullRadius = useViewerStore((state) => state.cullRadius);
   const setLodDebugInfo = useViewerStore((s) => s.setLodDebugInfo);
 
-  // Visibility Guard: Check if this specific layer is in the "visible" set
-
-  const layer = useSceneStore(useShallow((s) => s.layers.find((l) => l.id === layerId)));
+  // Safely grab the specific layer
+  const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
 
   const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -85,9 +88,11 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     const intensityPos = dims.indexOf(layer.intensityDim);
 
     const colormapTexture = getColorMapTexture(layer);
-    let allGeneratedChunks: ChunkData[] = [];
 
-    levelsToRender.forEach((levelIdx, index) => {
+    // We attach chunkRadius temporarily for the culling calculation
+    let allGeneratedChunks: { worldX: number; worldY: number; chunkRadius: number; data: ChunkData }[] = [];
+
+    levelsToRender.forEach((levelIdx) => {
       const level = zarrCache.current!.levels[levelIdx];
       if (!level) return;
       const { arr, store } = level;
@@ -106,43 +111,89 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
         const inv = layerAffine.clone().invert();
         const pt = new THREE.Vector3(0, 0, currentZ);
         pt.applyMatrix4(inv);
-        
+
         const scaleZ = level.scaleFactors && level.scaleFactors.length > zPos ? level.scaleFactors[zPos] : 1;
         const downscaledZ = Math.round(pt.z / scaleZ);
-        
+
         const maxVoxelZ = arr.shape[zPos] - 1;
         selection[zPos] = Math.max(0, Math.min(maxVoxelZ, downscaledZ));
       }
 
       const [minVal, maxVal] = mapDTypeToMinMax(arr.dtype);
       const grid = calculateChunkGrid(selection, arr.shape, arr.chunks);
+      const layerAffine = buildAffineMatrix(layer);
 
-      const levelChunks: ChunkData[] = grid.map(({ chunk_coords, mapping }) => ({
-        frame_id: layer.id,
-        dimensionOrder: [xPos, yPos, intensityPos],
-        store: store,
-        chunkCoords: chunk_coords,
-        chunkKey: `${levelIdx}-${chunk_coords.join("/")}`,
-        indexer: mapping,
-        chunk_shape: arr.chunks,
-        arrayShape: arr.shape,
-        min_value: minVal,
-        max_value: maxVal,
-        cLimMin: Math.ceil(minVal * (layer.climMin || 0)),
-        cLimMax: Math.floor(maxVal * (layer.climMax || 1)),
-        colormapTexture: colormapTexture,
-        level: levelIdx,
-        scaleFactors: level.scaleFactors
-      }));
+      const levelChunks = grid.map(({ chunk_coords, mapping }) => {
+        const getDimArraySize = (idx: number) => idx !== -1 ? arr.shape[idx] : 1;
+        const scaleX = level.scaleFactors && xPos !== -1 ? level.scaleFactors[xPos] : 1;
+        const scaleY = level.scaleFactors && yPos !== -1 ? level.scaleFactors[yPos] : 1;
+
+        const totalX = getDimArraySize(xPos) * scaleX;
+        const totalY = getDimArraySize(yPos) * scaleY;
+        const gridX = xPos !== -1 ? arr.chunks[xPos] : 1;
+        const gridY = yPos !== -1 ? arr.chunks[yPos] : 1;
+
+        const widthScaled = gridX * scaleX;
+        const heightScaled = gridY * scaleY;
+
+        // Calculate maximum physical radius of chunk to prevent early popping
+        const chunkRadius = Math.sqrt(Math.pow(widthScaled, 2) + Math.pow(heightScaled, 2)) / 2;
+
+        const getChunkCoord = (idx: number) => idx !== -1 ? chunk_coords[idx] : 0;
+        const cx = getChunkCoord(xPos) * widthScaled + widthScaled / 2 - totalX / 2;
+        const cy = -(getChunkCoord(yPos) * heightScaled + heightScaled / 2 - totalY / 2);
+
+        // Transform the local XY plane coordinate up into World space
+        const worldPt = new THREE.Vector3(cx, cy, 0);
+        worldPt.applyMatrix4(layerAffine);
+
+        return {
+          worldX: worldPt.x,
+          worldY: worldPt.y,
+          chunkRadius,
+          data: {
+            frame_id: layer.id,
+            dimensionOrder: [xPos, yPos, intensityPos],
+            store: store,
+            chunkCoords: chunk_coords,
+            chunkKey: `${levelIdx}-${chunk_coords.join("/")}`,
+            indexer: mapping,
+            chunk_shape: arr.chunks,
+            arrayShape: arr.shape,
+            min_value: minVal,
+            max_value: maxVal,
+            cLimMin: Math.ceil(minVal * (layer.climMin || 0)),
+            cLimMax: Math.floor(maxVal * (layer.climMax || 1)),
+            colormapTexture: colormapTexture,
+            level: levelIdx,
+            scaleFactors: level.scaleFactors
+          }
+        };
+      });
+
       allGeneratedChunks = [...allGeneratedChunks, ...levelChunks];
     });
 
+    // Final Distance check logic for Frustum Culling
+    const culledChunks = allGeneratedChunks
+      .filter(({ worldX, worldY, chunkRadius }) => {
+        if (cullRadius <= 0) return true; // Culling disabled
+
+        const effectiveRadius = cullRadius / lastZoomRef.current;
+        const dist = Math.sqrt(Math.pow(worldX - lastCameraRef.current.x, 2) + Math.pow(worldY - lastCameraRef.current.y, 2));
+
+        // Add the chunk's radius to allow it to stay visible if its edge is still in view
+        return dist <= (effectiveRadius * 1.5) + chunkRadius;
+      })
+      .map(c => c.data);
+
     setChunks(prev => {
       const pKeys = prev?.map(c => c.chunkKey).join(',') || '';
-      const nKeys = allGeneratedChunks.map(c => c.chunkKey).join(',');
-      return pKeys === nKeys ? prev : allGeneratedChunks;
+      const nKeys = culledChunks.map(c => c.chunkKey).join(',');
+      // Only trigger a React update if the exact list of chunks has changed
+      return pKeys === nKeys ? prev : culledChunks;
     });
-  }, [layer, currentZ, activeLod]);
+  }, [layer, currentZ, activeLod, cullRadius, cameraPanTick]);
 
   // --- Effect: Initialize Zarr with AbortController ---
   useEffect(() => {
@@ -169,19 +220,19 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
             return {
               store,
               arr,
-              scale: arr.shape, // Use shape as reference scale for now
+              scale: arr.shape,
               scaleFactors: zarrArray.scaleFactors,
             };
           })
         );
 
+        // Guard against writing state if component unmounted
         if (!signal.aborted) {
           zarrCache.current = {
             levels,
             dims: layer.lens.dataset.dims
           };
-
-          setActiveLod(Math.max(0, levels.length - 1)); // Start with lowest resolution
+          setActiveLod(Math.max(0, levels.length - 1));
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -205,19 +256,13 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     updateChunks();
   }, [updateChunks]);
 
-  // --- LOD Frame Loop ---
+  // --- LOD & Camera Tracking Frame Loop ---
   useFrame((state) => {
     if (!zarrCache.current || !layer || !groupRef.current) return;
 
     const camera = state.camera;
-    const numLevels = zarrCache.current.levels.length;
-    if (numLevels <= 1) return;
 
-    let targetLod = numLevels - 1;
-    // check fixedLOD override
-    if ('fixedLOD' in layer && typeof layer.fixedLOD === 'number' && layer.fixedLOD >= 0 && layer.fixedLOD < numLevels) {
-      targetLod = layer.fixedLOD;
-    } else {
+    if (camera) {
       let zoomScale = 1;
       if (camera instanceof THREE.OrthographicCamera) {
           zoomScale = camera.zoom;
@@ -226,6 +271,29 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
           zoomScale = 1 / Math.max(0.001, distance);
       }
 
+      const effectiveRadius = cullRadius / zoomScale;
+
+      // Threshold update: Only trigger state changes if camera moves significantly
+      if (Math.abs(camera.position.x - lastCameraRef.current.x) > (effectiveRadius * 0.1) ||
+          Math.abs(camera.position.y - lastCameraRef.current.y) > (effectiveRadius * 0.1) ||
+          Math.abs(zoomScale - lastZoomRef.current) > (lastZoomRef.current * 0.1)) {
+
+        lastCameraRef.current.set(camera.position.x, camera.position.y);
+        lastZoomRef.current = zoomScale;
+
+        // Triggers the updateChunks useCallback on the next render
+        setCameraPanTick((tick) => tick + 1);
+      }
+    }
+
+    const numLevels = zarrCache.current.levels.length;
+    if (numLevels <= 1) return;
+
+    let targetLod = numLevels - 1;
+    if ('fixedLOD' in layer && typeof layer.fixedLOD === 'number' && layer.fixedLOD >= 0 && layer.fixedLOD < numLevels) {
+      targetLod = layer.fixedLOD;
+    } else {
+      let zoomScale = lastZoomRef.current;
       zoomScale = zoomScale * lodBias;
 
       if (zoomScale > 2.0) {
@@ -241,16 +309,14 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     if (targetLod !== activeLod) {
       setActiveLod(targetLod);
       if (setLodDebugInfo) {
-        
         const levelsToRender = [targetLod];
         if (targetLod + 1 < numLevels) levelsToRender.push(targetLod + 1);
         if (targetLod + 2 < numLevels) levelsToRender.push(targetLod + 2);
-        setLodDebugInfo(layerId, { 
-          currentLOD: targetLod, 
+        setLodDebugInfo(layerId, {
+          currentLOD: targetLod,
           targetResolution: zarrCache.current.levels[targetLod].scale?.[0] || 0,
           renderedLevels: levelsToRender
         });
-
       }
     }
   });
@@ -266,7 +332,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [layer?.colormap]);
 
   if (layer?.visible === false) return null;
-  // If not visible, we return null to unmount the meshes and save GPU memory
   if (!chunks) return null;
 
   return (

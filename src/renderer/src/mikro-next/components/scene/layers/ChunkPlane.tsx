@@ -186,7 +186,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
   if (!texture) {
     return (
-      <mesh position={[xPos, yPos, zPos]}>
+      <mesh position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
         <boxGeometry args={[chunkWidth, chunkHeight, chunkZSize]} />
         <meshBasicMaterial color="gray" wireframe={true} />
       </mesh>
@@ -194,7 +194,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   }
 
   return (
-    <group position={[xPos, yPos, zPos]}>
+    <group position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
       <mesh scale={[chunkWidth, chunkHeight, chunkZSize]} renderOrder={1}>
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial

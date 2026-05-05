@@ -14,20 +14,27 @@ export type ReportedContrast = {
 
 
 
+export type LayerState = SceneLayerFragment & {
+  fixedLOD?: number | null;
+  visible?: boolean;
+};
+
 interface SceneState {
   spatialUnit: string;
-  layers: SceneLayerFragment[];
-  originalLayers: SceneLayerFragment[];
-  updateLayer: (updatedLayer: SceneLayerFragment) => void;
+  layers: LayerState[];
+  originalLayers: LayerState[];
+  updateLayer: (updatedLayer: LayerState) => void;
   markLayerClean: (layerId: string) => void;
   reportContrast: (contrast: ReportedContrast) => void;
   reportedContrasts: Record<string, ReportedContrast>;
 }
 
-const normalizeLayer = (layer: SceneLayerFragment): SceneLayerFragment => ({
+const normalizeLayer = (layer: SceneLayerFragment): LayerState => ({
   ...layer,
   climMin: layer.climMin ?? 0,
   climMax: layer.climMax ?? 1,
+  fixedLOD: null,
+  visible: true,
 });
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) =>

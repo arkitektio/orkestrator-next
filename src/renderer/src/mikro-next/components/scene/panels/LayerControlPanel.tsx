@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+
 import {
   SceneLayerFragment,
   useUpdateLaterMutation,
@@ -19,6 +21,8 @@ export const LayerControlPanel = () => {
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
+  const lodBias = useViewerStore((s) => s.lodBias);
+  const setLodBias = useViewerStore((s) => s.setLodBias);
   const [updateLater] = useUpdateLaterMutation();
   const [open, setOpen] = useState(false);
 
@@ -73,6 +77,20 @@ export const LayerControlPanel = () => {
 
       {open && (
         <div className="w-60 max-h-[calc(100vh-5rem)] overflow-y-auto flex flex-col gap-1.5 pb-1">
+          <div className="flex flex-col gap-1.5 p-2 mb-1 border border-border/50 rounded bg-background/50 backdrop-blur-sm shadow-sm shrink-0">
+            <div className="flex justify-between items-center text-[10px] text-muted-foreground font-medium">
+              <span>LOD Aggressiveness</span>
+              <span className="font-mono bg-accent px-1 rounded">{lodBias.toFixed(1)}x</span>
+            </div>
+            <Slider
+              min={0.1}
+              max={5.0}
+              step={0.1}
+              value={[lodBias]}
+              onValueChange={([v]) => setLodBias(v)}
+              className="py-1"
+            />
+          </div>
           {layers.map((layer) => (
             <LayerCard
               key={layer.id}

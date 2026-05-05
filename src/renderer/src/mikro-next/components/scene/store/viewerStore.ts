@@ -52,6 +52,11 @@ interface ViewerState {
   // Visible image-coordinate ranges per layer
   layerViewRanges: Record<string, LayerViewRange>
 
+  lodBias: number;
+  setLodBias: (bias: number) => void;
+  lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
+  setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
+
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
   setVisible: (visibleSet: Set<string>) => void
@@ -88,6 +93,10 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
+    lodBias: 1.0,
+    setLodBias: (bias) => set({ lodBias: bias }),
+    lodDebugInfo: {},
+    setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
      register: (ref) => set((state) => {
       state.trackables.add(ref);
       return state;

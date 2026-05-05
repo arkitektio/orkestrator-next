@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, Focus } from "lucide-react";
+import { LayerState } from "../../store/sceneStore";
+import { Save, Focus, Eye, EyeOff } from "lucide-react";
 import {
   COLORMAP_OPTIONS,
   colormapGradientCSS,
@@ -20,6 +21,7 @@ import {
 } from "./colormap-utils";
 import { HistogramSlider } from "./HistogramSlider";
 import { DimPill } from "./DimPill";
+import { useViewerStore } from "../../store/viewerStore";
 
 export const LayerCard = ({
   layer,
@@ -30,17 +32,19 @@ export const LayerCard = ({
   onSave,
   onFocus,
 }: {
-  layer: SceneLayerFragment;
-  originalLayer: SceneLayerFragment | undefined;
+  layer: LayerState;
+  originalLayer: LayerState | undefined;
   isSelected: boolean;
   onSelect: () => void;
-  onUpdate: (updated: SceneLayerFragment) => void;
-  onSave: (layer: SceneLayerFragment) => void;
+  onUpdate: (updated: LayerState) => void;
+  onSave: (layer: LayerState) => void;
   onFocus: (layerId: string) => void;
 }) => {
   const climMin = layer.climMin ?? 0;
   const climMax = layer.climMax ?? 1;
   const dirty = isLayerDirty(layer, originalLayer);
+  const lodDebugInfo = useViewerStore((s) => s.lodDebugInfo);
+  const currentLodInfo = lodDebugInfo[layer.id];
 
   const dims: { label: string; key: keyof SceneLayerFragment }[] = [
     { label: "X", key: "xDim" },
@@ -57,7 +61,7 @@ export const LayerCard = ({
       ...layer,
       [keyA]: layer[keyB],
       [keyB]: layer[keyA],
-    } as SceneLayerFragment);
+    } as LayerState);
   };
 
   return (
@@ -66,11 +70,23 @@ export const LayerCard = ({
         isSelected
           ? "ring-1 ring-primary/70 bg-accent/60 border-primary/30"
           : "hover:bg-accent/30 border-transparent"
-      }`}
+      } ${layer.visible === false ? "opacity-50 grayscale" : ""}`}
       onClick={onSelect}
     >
       {/* Header */}
       <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="xs"
+          className="h-5 w-5 p-0 shrink-0"
+          title="Toggle Visibility"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate({ ...layer, visible: layer.visible === false ? true : false });
+          }}
+        >
+          {layer.visible !== false ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3 text-muted-foreground" />}
+        </Button>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-medium truncate">
             {layer.lens.dataset.name}
@@ -164,6 +180,46 @@ export const LayerCard = ({
           );
         })()}
       </div>
+
+      {/* LOD selector */}
+      {layer.lens.dataset.dataArrays.length > 1 && (
+        <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>Resolution Level (LOD)</span>
+          </div>
+          <Select
+            value={layer.fixedLOD == null ? "auto" : layer.fixedLOD.toString()}
+            onValueChange={(val) =>
+              onUpdate({ ...layer, fixedLOD: val === "auto" ? null : parseInt(val) })
+            }
+          >
+            <SelectTrigger className="h-6 text-[10px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto" className="text-xs">Auto (Responsive)</SelectItem>
+              {layer.lens.dataset.dataArrays.map((arr, idx) => (
+                <SelectItem key={idx} value={idx.toString()} className="text-xs">
+                  Level {idx} {arr.store.shape ? `(${arr.store.shape.join('x')})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {currentLodInfo?.renderedLevels && (
+            <div className="flex gap-1 mt-1 text-[9px] flex-wrap">
+              {currentLodInfo.renderedLevels.map((lvl, index) => (
+                <div 
+                  key={lvl} 
+                  className={`px-1.5 py-0.5 rounded ${index === 0 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground opacity-70"}`}
+                  title={index === 0 ? "Primary LOD" : "Z-buffered fallback LOD"}
+                >
+                  LOD {lvl} {index > 0 && " (Z-Buf)"}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Colormap selector with preview gradient */}
       <div

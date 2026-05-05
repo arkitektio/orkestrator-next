@@ -21,6 +21,7 @@ fragment SceneLens on Lens {
         store {
           ...ZarrStore
         }
+        scaleFactors
       }
     }
     activeAnchors {

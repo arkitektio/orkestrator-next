@@ -1,22 +1,9 @@
-import { open } from 'zarrita';
-import type { Slice } from 'zarrita';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import type { ChunkData } from '../stores/types';
-import { mapDTypeToMinMax } from '../stores/utils';
-import { getColorMapTexture } from '../zarr/colormaps';
-import { useSelectionStore } from '../store/layerStore';
-import { useViewerStore } from '../store/viewerStore';
+import { open } from 'zarrita';
 import { useSceneStore } from '../store/sceneStore'; // Added to fetch layer properties
-import {
-  DimSliceFragment,
-  RequestZarrAccessDocument,
-  RequestZarrAccessMutation,
-  RequestZarrAccessMutationVariables,
-  SceneLayerFragment
-} from '@/mikro-next/api/graphql';
-import { useDatalayerEndpoint, useMikro } from '@/app/Arkitekt';
-import { calculateChunkGrid } from '../zarr/utils';
+import { useViewerStore } from '../store/viewerStore';
+import type { ChunkData } from '../stores/types';
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {

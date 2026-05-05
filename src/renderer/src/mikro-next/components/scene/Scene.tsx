@@ -13,7 +13,7 @@ import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
-import { ScenePlane } from "./layers/ScenePlane";
+import { ScenePlane } from "./layers/two_d/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";

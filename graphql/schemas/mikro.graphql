@@ -617,9 +617,10 @@ input CoordinateAnchorInput {
 """Input type for creating an image from an array-like object"""
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
+  data: ArrayLike!
   dimDescriptors: [DimensionDescriptorInput!]!
   name: String!
-  scales: [ArrayLike!]!
+  scales: [ScaleInput!]!
 }
 
 """Input type for creating an image from an array-like object"""
@@ -4022,7 +4023,6 @@ input ROIFilter {
   ids: [ID!]
   image: ID = null
   kind: RoiKindChoices
-  owner: ID = null
   search: String
 }
 
@@ -4211,12 +4211,10 @@ input RequestBigFileAccessInput {
 
 input RequestBigFileUploadInput {
   contentType: String = null
-  datalayer: String! = "s3"
   fileSize: Int = null
   host: String = null
   originalFileName: String!
   port: Int = null
-  protocol: String! = "https"
 }
 
 input RequestGeneralMediaAccessInput {
@@ -4252,10 +4250,8 @@ input RequestZarrAccessInput {
 
 input RequestZarrUploadInput {
   chunks: [Int!] = null
-  datalayer: String! = "s3"
   host: String = null
   port: Int = null
-  protocol: String! = "https"
   shape: [Int!] = null
   version: String = null
 }
@@ -4337,6 +4333,25 @@ type SampleElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+"""
+Input type for a scale, which specifies an array-like object to create the image from and optional scale factors for each dimension of the image
+"""
+input ScaleInput {
+  """The array-like object to create the image from"""
+  array: ArrayLike!
+  level: Int!
+
+  """
+  The scale factors for each dimension of the image, which specify the physical size of each pixel along each dimension and can be used to provide additional context about the spatial resolution of the image
+  """
+  scaleFactors: [Float!]
+
+  """
+  The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic', etc. This can be used to provide additional context about how the scale was created and the expected quality of the scale
+  """
+  scaleMethod: String = null
 }
 
 type ScaleView implements View {

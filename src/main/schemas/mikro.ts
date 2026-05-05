@@ -657,9 +657,10 @@ export type CoordinateAnchorInput = {
 /** Input type for creating an image from an array-like object */
 export type CreateADatasetInput = {
   anchors?: InputMaybe<Array<CoordinateAnchorInput>>;
+  data: Scalars['ArrayLike']['input'];
   dimDescriptors: Array<DimensionDescriptorInput>;
   name: Scalars['String']['input'];
-  scales: Array<Scalars['ArrayLike']['input']>;
+  scales: Array<ScaleInput>;
 };
 
 /** Input type for creating an image from an array-like object */
@@ -4662,7 +4663,6 @@ export type RoiFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
-  owner?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4842,12 +4842,10 @@ export type RequestBigFileAccessInput = {
 
 export type RequestBigFileUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
-  datalayer?: Scalars['String']['input'];
   fileSize?: InputMaybe<Scalars['Int']['input']>;
   host?: InputMaybe<Scalars['String']['input']>;
   originalFileName: Scalars['String']['input'];
   port?: InputMaybe<Scalars['Int']['input']>;
-  protocol?: Scalars['String']['input'];
 };
 
 export type RequestGeneralMediaAccessInput = {
@@ -4883,10 +4881,8 @@ export type RequestZarrAccessInput = {
 
 export type RequestZarrUploadInput = {
   chunks?: InputMaybe<Array<Scalars['Int']['input']>>;
-  datalayer?: Scalars['String']['input'];
   host?: InputMaybe<Scalars['String']['input']>;
   port?: InputMaybe<Scalars['Int']['input']>;
-  protocol?: Scalars['String']['input'];
   shape?: InputMaybe<Array<Scalars['Int']['input']>>;
   version?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4966,6 +4962,17 @@ export type SampleElement = OpticalElement & {
   /** 3D pose of the element */
   pose?: Maybe<Pose3D>;
   serialNumber?: Maybe<Scalars['String']['output']>;
+};
+
+/** Input type for a scale, which specifies an array-like object to create the image from and optional scale factors for each dimension of the image */
+export type ScaleInput = {
+  /** The array-like object to create the image from */
+  array: Scalars['ArrayLike']['input'];
+  level: Scalars['Int']['input'];
+  /** The scale factors for each dimension of the image, which specify the physical size of each pixel along each dimension and can be used to provide additional context about the spatial resolution of the image */
+  scaleFactors?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic', etc. This can be used to provide additional context about how the scale was created and the expected quality of the scale */
+  scaleMethod?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ScaleView = View & {

@@ -1,20 +1,20 @@
 import { open } from 'zarrita';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import type { ChunkData } from '../stores/types';
-import { mapDTypeToMinMax } from '../stores/utils';
-import { ChunkPlane } from './ChunkPlane';
-import { getColorMapTexture } from '../zarr/colormaps';
+import type { ChunkData } from '../../stores/types';
+import { mapDTypeToMinMax } from '../../stores/utils';
+import { ChunkPlane } from '../ChunkPlane';
+import { getColorMapTexture } from '../../zarr/colormaps';
 import { Slice } from "zarrita";
-import { useSelectionStore } from '../store/layerStore';
-import { useViewerStore } from '../store/viewerStore';
+import { useSelectionStore } from '../../store/layerStore';
+import { useViewerStore } from '../../store/viewerStore';
 import {
   DimSliceFragment,
 } from '@/mikro-next/api/graphql';
-import { calculateChunkGrid } from '../zarr/utils';
-import { useSceneStore } from '../store/sceneStore';
+import { calculateChunkGrid } from '../../zarr/utils';
+import { useSceneStore } from '../../store/sceneStore';
 import { useShallow } from 'zustand/shallow';
-import { buildAffineMatrix, physicalToVoxelZ } from '../panels/layer/affine-utils';
+import { buildAffineMatrix, physicalToVoxelZ } from '../../panels/layer/affine-utils';
 
 // --- 1. Types & Cache ---
 
@@ -156,7 +156,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   // --- Effect: Reactive Updates ---
   useEffect(() => {
     updateChunks();
-  }, [updateChunks, layer?.climMin, layer?.climMax, layer?.colormap]);
+  }, [updateChunks]);
 
   const affineMatrix = useMemo(() => {
     if (!layer) return new THREE.Matrix4().identity();

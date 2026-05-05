@@ -1,3 +1,10 @@
+## [1.58.3](https://github.com/arkitektio/orkestrator-next/compare/v1.58.2...v1.58.3) (2026-05-05)
+
+
+### Bug Fixes
+
+* before ([58836f8](https://github.com/arkitektio/orkestrator-next/commit/58836f8e98f5f9b76b36da4e4eb366a1d71607cf))
+
 ## [1.58.2](https://github.com/arkitektio/orkestrator-next/compare/v1.58.1...v1.58.2) (2026-05-04)
 
 

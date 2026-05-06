@@ -1,10 +1,13 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { MikroClient, ZarrStore } from "../zarr/zarr_stores/type";
-import { CachedS3Store } from "../zarr/zarr_stores/s3Store";
+import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStore } from "../zarr/zarr_stores/type";
+import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
 import { RefObject } from "react";
-export type StoreBuilder = (storeId: string, signal?: AbortSignal) => Promise<ZarrStore>;
+import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import * as THREE from 'three';
+import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
+
+type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -40,7 +43,8 @@ interface ViewerState {
   showScaleBar: boolean;
   showScaleGrid: boolean;
   worldUnitsPerPixel: number;
-  storeBuilder: StoreBuilder;
+  getArray: (store: ZarrStore) => OpenedZarrArray;
+  getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   currentZ: number;
   frustumNear: number;
   frustumFar: number;
@@ -53,7 +57,11 @@ interface ViewerState {
   layerViewRanges: Record<string, LayerViewRange>
 
   lodBias: number;
+  cullRadius: number;
+  setCullRadius: (radius: number) => void;
   setLodBias: (bias: number) => void;
+  renderedChunks: Record<string, { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' }>;
+  setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
   lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
   setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
 
@@ -77,27 +85,96 @@ interface ViewerState {
 }
 
 
-export const createS3Builder = (client: MikroClient, datalayer: string): StoreBuilder => {
-  return async (storeId: string, _signal?: AbortSignal) => {
-    return new CachedS3Store(storeId, client, datalayer);
-  };
-};
+function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZarrStoreDescriptor> {
+  const descriptors = new Map<string, SceneZarrStoreDescriptor>();
 
+  for (const layer of scene.layers) {
+    for (const dataArray of layer.lens.dataset.dataArrays) {
+      descriptors.set(dataArray.store.id, {
+        bucket: dataArray.store.bucket,
+        key: dataArray.store.key,
+        path: dataArray.store.path,
+        storeId: dataArray.store.id,
+      });
+    }
+  }
 
+  return descriptors;
+}
 
-export const createViewerStore = (storeBuilder: StoreBuilder) =>
-  createStore<ViewerState>((set, get) => ({
+async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
+  const access = await client.mutate({
+    mutation: RequestGeneralZarrAccessDocument,
+    variables: { input: {} },
+  }) as { data?: RequestGeneralZarrAccessMutation };
+
+  const credentials = access.data?.requestGeneralZarrAccess;
+  if (!credentials) {
+    throw new Error("Failed to obtain general Zarr access credentials");
+  }
+
+  return credentials;
+}
+
+async function createConfiguredSceneStores(
+  scene: SceneFragment,
+  client: MikroClient,
+  datalayer: string,
+): Promise<Map<string, ZarrStore>> {
+  const descriptors = collectSceneStoreDescriptors(scene);
+  const credentials = await requestGeneralAccess(client);
+  const expiresAt = Date.now() + credentials.expiresIn * 1000;
+
+  const stores = await Promise.all(
+    Array.from(descriptors.values()).map(async (descriptor) => {
+      const store = new ConfiguredS3Store(
+        {
+          accessKey: credentials.accessKey,
+          baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
+          expiresAt,
+          region: credentials.region,
+          secretKey: credentials.secretKey,
+          sessionToken: credentials.sessionToken,
+          storeId: descriptor.storeId,
+        },
+        { preloadMetadata: true },
+      );
+      await store.ready();
+      return [descriptor.storeId, store] as const;
+    }),
+  );
+
+  return new Map(stores);
+}
+
+function createViewerStoreInternal(
+  arraysByStoreId: Map<string, OpenedZarrArray>,
+  arraysByStore: WeakMap<object, OpenedZarrArray>,
+) {
+  return createStore<ViewerState>((set, get) => ({
     zStart: 0,
     zEnd: 100,
     tStart: null,
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
-    lodBias: 1.0,
+    lodBias: 0.2,
+    cullRadius: 4000,
+    setCullRadius: (radius) => set({ cullRadius: radius }),
     setLodBias: (bias) => set({ lodBias: bias }),
+    renderedChunks: {},
+    setChunkStatus: (chunkId, info) => set((state) => {
+      const next = { ...state.renderedChunks };
+      if (!info) {
+        delete next[chunkId];
+      } else {
+        next[chunkId] = info;
+      }
+      return { renderedChunks: next };
+    }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
-     register: (ref) => set((state) => {
+    register: (ref) => set((state) => {
       state.trackables.add(ref);
       return state;
     }),
@@ -119,7 +196,30 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     frustumNear: 0.1,
     frustumFar: 100000,
     canvas: null,
-    storeBuilder: storeBuilder,
+    getArray: (store) => {
+      const key = store as object;
+      const cachedByStore = arraysByStore.get(key);
+      if (cachedByStore) {
+        return cachedByStore;
+      }
+
+      if ("storeId" in store && typeof (store as { storeId?: unknown }).storeId === "string") {
+        const cachedByStoreId = arraysByStoreId.get((store as { storeId: string }).storeId);
+        if (cachedByStoreId) {
+          arraysByStore.set(key, cachedByStoreId);
+          return cachedByStoreId;
+        }
+      }
+
+      throw new Error("Zarr array is not initialized for this store")
+    },
+    getArrayForStoreId: (storeId) => {
+      const array = arraysByStoreId.get(storeId);
+      if (!array) {
+        throw new Error(`Zarr array for store ${storeId} is not initialized`);
+      }
+      return array;
+    },
     setZRange: (start, end) => set({ zStart: start, zEnd: end }),
     setTRange: (start, end) => set({ tStart: start, tEnd: end }),
     setCurrentZ: (z) => set({ currentZ: z }),
@@ -180,6 +280,32 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     setShowScaleGrid: (show) => set({ showScaleGrid: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
+}
+
+export async function createViewerStore(
+  scene: SceneFragment,
+  client: MikroClient,
+  datalayer: string,
+) {
+  const storesById = await createConfiguredSceneStores(scene, client, datalayer);
+  const arraysByStoreId = new Map<string, OpenedZarrArray>();
+  const arraysByStore = new WeakMap<object, OpenedZarrArray>();
+
+  for (const [storeId, store] of storesById) {
+    const opened = await (open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>);
+    arraysByStoreId.set(storeId, opened);
+    arraysByStore.set(store as object, opened);
+  }
+
+  return createViewerStoreInternal(arraysByStoreId, arraysByStore);
+}
+
+export function createViewerStoreSync() {
+  return createViewerStoreInternal(
+    new Map<string, OpenedZarrArray>(),
+    new WeakMap<object, OpenedZarrArray>(),
+  );
+}
 
 const {
   StoreContext: ViewerStoreContext,

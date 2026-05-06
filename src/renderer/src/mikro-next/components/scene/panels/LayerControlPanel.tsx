@@ -22,6 +22,8 @@ export const LayerControlPanel = () => {
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const lodBias = useViewerStore((s) => s.lodBias);
+  const cullRadius = useViewerStore((s) => s.cullRadius);
+  const setCullRadius = useViewerStore((s) => s.setCullRadius);
   const setLodBias = useViewerStore((s) => s.setLodBias);
   const [updateLater] = useUpdateLaterMutation();
   const [open, setOpen] = useState(false);
@@ -90,6 +92,19 @@ export const LayerControlPanel = () => {
               onValueChange={([v]) => setLodBias(v)}
               className="py-1"
             />
+            <div className="flex justify-between items-center text-[10px] text-muted-foreground font-medium mt-2">
+              <span>Cull Radius (Debug)</span>
+              <span className="font-mono bg-accent px-1 rounded">{cullRadius} units</span>
+            </div>
+            <Slider
+              min={40}
+              max={900}
+              step={10}
+              value={[cullRadius]}
+              onValueChange={([v]) => setCullRadius(v)}
+              className="py-1"
+            />
+
           </div>
           {layers.map((layer) => (
             <LayerCard

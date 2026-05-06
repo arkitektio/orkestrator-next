@@ -14,5 +14,17 @@ export default defineConfig({
         "@": resolve(__dirname, 'src/renderer/src')
       },
     },
+    assetsInclude: ['**/*.js?worker_file*'],
+    server: {
+      headers: {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+      }
+    },
+    worker: {
+      // Required for many modern codec workers to function in an Electron/Vite env
+      format: 'es',
+    }
+
   },
 });

@@ -13,13 +13,13 @@ import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
  */
 export const CanvasSync = () => {
   const registerCanvas = useViewerStore((s) => s.registerCanvas);
-  const get = useThree((s) => s.get);
+  const camera = useThree((s) => s.camera);
+  const controls = useThree((s) => s.controls);
+  const size = useThree((s) => s.size);
+  const invalidate = useThree((s) => s.invalidate);
   const storeApi = useViewerStoreApi();
 
   useEffect(() => {
-    // Re-register whenever the R3F root state changes
-    const state = get();
-    const controls = state.controls;
     const ctrl =
       controls && "target" in controls
         ? (controls as unknown as {
@@ -29,12 +29,12 @@ export const CanvasSync = () => {
         : null;
 
     registerCanvas({
-      camera: state.camera,
+      camera,
       controls: ctrl,
-      size: state.size,
-      invalidate: state.invalidate,
+      size,
+      invalidate,
     });
-  }, [registerCanvas, get]);
+  }, [camera, controls, invalidate, registerCanvas, size]);
 
   // Push worldUnitsPerPixel into the store each frame
   useFrame(({ camera, size }) => {

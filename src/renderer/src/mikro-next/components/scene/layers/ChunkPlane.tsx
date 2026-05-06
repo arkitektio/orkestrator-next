@@ -1,10 +1,13 @@
 import { useViewerStore } from '../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
-import { open } from 'zarrita';
+import { useFrame } from '@react-three/fiber';
+import { getChunkWorker } from '../../../../lib/zarr/runner';
+import { workerPool } from '../../../workers/pool';
 import type { ChunkData } from '../stores/types';
 import { useSceneStore } from '../store/sceneStore';
-import { useShallow } from 'zustand/shallow';
+
+const CHUNK_FADE_IN_MS = 220;
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {
@@ -15,9 +18,7 @@ function getTextureConfig(rawData: any) {
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
   }
 
-  console.warn("Promoting TypedArray to Float32Array for strict WebGL2 compatibility.");
-  const floatData = new Float32Array(rawData);
-  return { data: floatData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+  throw new Error(`Unexpected chunk data type: ${rawData?.constructor?.name ?? typeof rawData}`);
 }
 
 // --- 1. Individual Chunk Renderer with Single Texture Lookup ---
@@ -25,9 +26,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
+  const getArray = useViewerStore((s) => s.getArray);
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const fadeStartedAtRef = useRef<number | null>(null);
 
   // Grab the [0, 1] contrast limits from the store
   const layer = useSceneStore((s) => {
@@ -37,6 +40,24 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
   const tStart = useViewerStore((s) => s.tStart);
   const tEnd = useViewerStore((s) => s.tEnd);
+
+  // Report rendering state to store automatically
+  const setChunkStatus = useViewerStore((s) => s.setChunkStatus);
+  useEffect(() => {
+    // Only report when mounting
+    setChunkStatus(chunk.chunkKey, {
+      layerId: chunk.frame_id,
+      chunkKey: chunk.chunkKey,
+      level: chunk.level || 0,
+      status: texture ? 'rendered' : 'loading'
+    });
+
+    return () => {
+      // Unmount
+      setChunkStatus(chunk.chunkKey, null);
+    };
+  }, [chunk.chunkKey, chunk.frame_id, chunk.level, texture, setChunkStatus]);
+
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
 
@@ -86,13 +107,26 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     if (!isVisible && !texture) return;
     if (texture) return;
 
-    let isMounted = true;
+    const abortController = new AbortController();
     const loadData = async () => {
+      const chunkLoadStartedAt = performance.now();
       try {
-        const arr = await open.v3(chunk.store, { kind: "array" });
-        const chunkData = await arr.getChunk(chunk.chunkCoords);
+        const arrayLookupStartedAt = performance.now();
+        const arr = getArray(chunk.store);
+        const arrayLookupMs = performance.now() - arrayLookupStartedAt;
+        if (abortController.signal.aborted) return;
 
-        if (!isMounted || !chunkData) return;
+        const chunkReadStartedAt = performance.now();
+        const chunkData = await getChunkWorker(arr, chunk.chunkCoords, {
+          pool: workerPool,
+          priority: chunk.level,
+          signal: abortController.signal,
+          useSharedArrayBuffer: true,
+        });
+        const chunkReadMs = performance.now() - chunkReadStartedAt;
+
+
+        if (abortController.signal.aborted || !chunkData) return;
 
         const rawShape = chunkData.shape;
         const actualX = xIdx !== -1 ? rawShape[xIdx] : 1;
@@ -104,8 +138,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
+        const texturePrepStartedAt = performance.now();
         const { data, type, dataScale } = getTextureConfig(chunkData.data);
+        const textureConfigMs = performance.now() - texturePrepStartedAt;
 
+        const textureCreateStartedAt = performance.now();
         const tex = new THREE.Data3DTexture(data, texWidth, texHeight, texDepth);
         tex.format = THREE.RedFormat;
         tex.type = type;
@@ -116,10 +153,26 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         tex.wrapR = THREE.ClampToEdgeWrapping;
         tex.flipY = false;
         tex.needsUpdate = true;
+        const textureCreateMs = performance.now() - textureCreateStartedAt;
+
+        console.log('[chunk plane timing]', {
+          chunkKey: chunk.chunkKey,
+          chunkCoords: [...chunk.chunkCoords],
+          arrayLookupMs: Number(arrayLookupMs.toFixed(2)),
+          getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
+          textureConfigMs: Number(textureConfigMs.toFixed(2)),
+          textureCreateMs: Number(textureCreateMs.toFixed(2)),
+          totalMs: Number((performance.now() - chunkLoadStartedAt).toFixed(2)),
+          dataType: chunkData.data?.constructor?.name ?? typeof chunkData.data,
+          shape: [...rawShape],
+        });
 
         setDataScale(dataScale);
         setTexture(tex);
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error(`Failed to load chunk: ${chunk.chunkKey}`, error);
       }
     };
@@ -127,15 +180,44 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     loadData();
 
     return () => {
-      isMounted = false;
+      abortController.abort();
     };
-  }, [chunk]);
+  }, [chunk, getArray]);
 
   useEffect(() => {
     return () => {
       if (texture) texture.dispose();
     };
   }, [texture]);
+
+  useEffect(() => {
+    if (!texture) {
+      fadeStartedAtRef.current = null;
+      return;
+    }
+
+    fadeStartedAtRef.current = performance.now();
+    if (materialRef.current) {
+      materialRef.current.uniforms.opacity.value = 0.0;
+    }
+  }, [texture]);
+
+  useFrame(() => {
+    if (!texture || !materialRef.current) return;
+
+    const startedAt = fadeStartedAtRef.current;
+    if (startedAt == null) {
+      materialRef.current.uniforms.opacity.value = 1.0;
+      return;
+    }
+
+    const progress = Math.min((performance.now() - startedAt) / CHUNK_FADE_IN_MS, 1);
+    materialRef.current.uniforms.opacity.value = progress;
+
+    if (progress >= 1) {
+      fadeStartedAtRef.current = null;
+    }
+  });
 
   // FIXED: The high-performance update loop.
   // Pushes new values straight to the GPU without re-rendering the component structure.
@@ -179,7 +261,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const totalX = getDimArraySize(xIdx) * scaleX;
   const totalY = getDimArraySize(yIdx) * scaleY;
   const totalZ = getDimArraySize(zIdx) * scaleZ;
-  
+
   const widthScaled = chunkWidth * scaleX;
   const heightScaled = chunkHeight * scaleY;
   const zSizeScaled = chunkZSize * scaleZ;
@@ -189,7 +271,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const baseGridZ = gridZ * scaleZ;
 
   const getChunkCoord = (idx: number) => idx !== -1 ? chunk.chunkCoords[idx] : 0;
-  
+
   const xPos = getChunkCoord(xIdx) * baseGridX + widthScaled / 2 - totalX / 2;
   const yPos = -(getChunkCoord(yIdx) * baseGridY + heightScaled / 2 - totalY / 2);
   const zPos = getChunkCoord(zIdx) * baseGridZ + zSizeScaled / 2 - totalZ / 2;
@@ -198,6 +280,10 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   if (!isVisible) return null;
 
   if (!texture) {
+    if (!isDebug) {
+      return null;
+    }
+
     return (
       <mesh position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
         <boxGeometry args={[widthScaled, heightScaled, zSizeScaled]} />

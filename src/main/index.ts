@@ -16,7 +16,7 @@ import { AppManager } from "./modules/AppManager";
 import { UploadService } from "./modules/UploadService";
 import { BigFileUploadService } from "./modules/BigFileUploadService";
 import { BigFileDownloadService } from "./modules/BigFileDownloadService";
-
+import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
@@ -97,6 +97,18 @@ if (!gotTheLock) {
         windowManager.handleOrkestratorUrl(url);
       }
     }
+
+    // Inside your app.whenReady() or before creating the window
+session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  callback({
+    responseHeaders: {
+      ...details.responseHeaders,
+      'Cross-Origin-Embedder-Policy': ['require-corp'],
+      'Cross-Origin-Opener-Policy': ['same-origin']
+    }
+  })
+})
+
   });
 }
 
@@ -161,3 +173,4 @@ if (process.platform == "darwin") {
     windowManager.handleOrkestratorUrl(url);
   });
 }
+

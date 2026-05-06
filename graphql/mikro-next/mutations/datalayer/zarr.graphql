@@ -17,3 +17,9 @@ mutation RequestZarrAccess($input: RequestZarrAccessInput!) {
     ...ZarrAccessGrant
   }
 }
+
+mutation RequestGeneralZarrAccess($input: RequestGeneralZarrAccessInput!) {
+  requestGeneralZarrAccess(input: $input) {
+     ...GeneralZarrAccessGrant
+  }
+}

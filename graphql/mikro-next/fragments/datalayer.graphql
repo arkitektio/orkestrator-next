@@ -92,6 +92,16 @@ fragment ZarrAccessGrant on ZarrAccessGrant {
   bucket
 }
 
+fragment GeneralZarrAccessGrant on GeneralZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}
+
+
 
 fragment ParquetAccessGrant on ParquetAccessGrant {
   accessKey

@@ -2,12 +2,13 @@ import { type AbsolutePath } from "@zarrita/storage";
 import { FetchStore } from "zarrita";
 import { LRUCache } from "../caches/in_memory_lru";
 import { AwsClient } from "aws4fetch";
+import { fetchS3Path, isExpiredS3FetchConfig, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import {
   RequestZarrAccessDocument,
   RequestZarrAccessMutation,
   RequestZarrAccessMutationVariables,
 } from "@/mikro-next/api/graphql";
-import type { MikroClient } from "./type";
+import type { MikroClient, ZarrStore } from "./type";
 
 
 type ZarrAccessGrant = {
@@ -25,9 +26,9 @@ type AccessRequester = (
 
 
 class AsyncLockManager {
-  private locks = new Map<string, Promise<Uint8Array<ArrayBufferLike>>>();
+  private locks = new Map<string, Promise<Uint8Array | undefined>>();
 
-  async withLock(key: string, fn: () => Promise<Uint8Array<ArrayBufferLike>>): Promise<Uint8Array<ArrayBufferLike>> {
+  async withLock(key: string, fn: () => Promise<Uint8Array | undefined>): Promise<Uint8Array | undefined> {
     if (this.locks.has(key)) {
       return await this.locks.get(key)!;
     }
@@ -100,6 +101,91 @@ async function handle_response(
 }
 
 const global_cache = new LRUCache<string, ArrayBuffer>(500);
+
+const defaultMetadataKeys: AbsolutePath[] = ["/zarr.json"];
+
+export class ConfiguredS3Store implements ZarrStore {
+  url: string | URL;
+  private cache: LRUCache<string, ArrayBuffer>;
+  private lockManager: AsyncLockManager;
+  private metadataPromise: Promise<void>;
+  private workerFetchConfig: S3FetchConfig;
+
+  constructor(workerFetchConfig: S3FetchConfig, options: { preloadMetadata?: boolean } = {}) {
+    this.url = workerFetchConfig.baseUrl;
+    this.cache = global_cache;
+    this.lockManager = new AsyncLockManager();
+    this.workerFetchConfig = workerFetchConfig;
+    this.metadataPromise = options.preloadMetadata === false
+      ? Promise.resolve()
+      : this.primeMetadata();
+  }
+
+  async ready(): Promise<void> {
+    await this.metadataPromise;
+  }
+
+  getWorkerFetchConfig(): S3FetchConfig {
+    return this.workerFetchConfig;
+  }
+
+  async get(key: AbsolutePath, options: RequestInit = {}): Promise<Uint8Array | undefined> {
+    await this.metadataPromise;
+
+    return this.getInternal(key, options);
+  }
+
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  private async getInternal(key: AbsolutePath, options: RequestInit = {}): Promise<Uint8Array | undefined> {
+
+    if (isExpiredS3FetchConfig(this.workerFetchConfig)) {
+      throw new Error(`S3 credentials for ${this.workerFetchConfig.storeId} have expired`);
+    }
+
+    const cacheKey = `${this.workerFetchConfig.storeId}:${key}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return new Uint8Array(cached);
+    }
+
+    return this.lockManager.withLock(cacheKey, async () => {
+      const cachedAfterLock = this.cache.get(cacheKey);
+      if (cachedAfterLock) {
+        return new Uint8Array(cachedAfterLock);
+      }
+
+      const response = await fetchS3Path(this.workerFetchConfig, key, options);
+      const result = await handle_response(response);
+
+      if (result) {
+        const bufferToCache = result.buffer.slice(
+          result.byteOffset,
+          result.byteOffset + result.byteLength,
+        );
+        this.cache.set(cacheKey, bufferToCache as ArrayBuffer);
+      }
+
+      return result;
+    });
+  }
+
+  private async primeMetadata(): Promise<void> {
+    await Promise.all(
+      defaultMetadataKeys.map(async (metadataKey) => {
+        try {
+          await this.getInternal(metadataKey);
+        } catch (error) {
+          if (!(error instanceof Error) || !error.message.includes("Unexpected response status 404")) {
+            throw error;
+          }
+        }
+      }),
+    );
+  }
+}
 
 export class CachedS3Store extends FetchStore {
   private aws: AwsClient | null = null;

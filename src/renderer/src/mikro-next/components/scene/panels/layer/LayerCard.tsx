@@ -22,6 +22,13 @@ import {
 import { HistogramSlider } from "./HistogramSlider";
 import { DimPill } from "./DimPill";
 import { useViewerStore } from "../../store/viewerStore";
+import {
+  absoluteToNormalized,
+  clampAbsoluteRange,
+  formatContrastValue,
+  getLayerDtypeRange,
+  normalizedToAbsolute,
+} from "./contrast-utils";
 
 export const LayerCard = ({
   layer,
@@ -45,6 +52,9 @@ export const LayerCard = ({
   const dirty = isLayerDirty(layer, originalLayer);
   const lodDebugInfo = useViewerStore((s) => s.lodDebugInfo);
   const currentLodInfo = lodDebugInfo[layer.id];
+  const [dtypeMin, dtypeMax] = getLayerDtypeRange(layer);
+  const absoluteClimMin = normalizedToAbsolute(climMin, dtypeMin, dtypeMax);
+  const absoluteClimMax = normalizedToAbsolute(climMax, dtypeMin, dtypeMax);
 
   const dims: { label: string; key: keyof SceneLayerFragment }[] = [
     { label: "X", key: "xDim" },
@@ -62,6 +72,15 @@ export const LayerCard = ({
       [keyA]: layer[keyB],
       [keyB]: layer[keyA],
     } as LayerState);
+  };
+
+  const updateAbsoluteContrast = (nextMin: number, nextMax: number) => {
+    const [clampedMin, clampedMax] = clampAbsoluteRange(nextMin, nextMax, dtypeMin, dtypeMax);
+    onUpdate({
+      ...layer,
+      climMin: absoluteToNormalized(clampedMin, dtypeMin, dtypeMax),
+      climMax: absoluteToNormalized(clampedMax, dtypeMin, dtypeMax),
+    });
   };
 
   return (
@@ -146,16 +165,16 @@ export const LayerCard = ({
               <HistogramSlider
                 bins={vh.bins}
                 histogram={vh.histogram}
-                climMin={climMin}
-                climMax={climMax}
+                valueMin={absoluteClimMin}
+                valueMax={absoluteClimMax}
                 colormap={layer.colormap}
                 p1={vh.p1}
                 p99={vh.p99}
                 histMin={vh.min}
                 histMax={vh.max}
-                onChange={(newMin, newMax) =>
-                  onUpdate({ ...layer, climMin: newMin, climMax: newMax })
-                }
+                dtypeMin={dtypeMin}
+                dtypeMax={dtypeMax}
+                onChange={updateAbsoluteContrast}
               />
             );
           }
@@ -164,17 +183,15 @@ export const LayerCard = ({
               <div className="flex items-center justify-between text-[10px]">
                 <span className="text-muted-foreground">Contrast</span>
                 <span className="font-mono">
-                  {climMin.toFixed(3)} – {climMax.toFixed(3)}
+                  {formatContrastValue(absoluteClimMin)} – {formatContrastValue(absoluteClimMax)}
                 </span>
               </div>
               <Slider
-                min={0}
-                max={1}
-                step={0.001}
-                value={[climMin, climMax]}
-                onValueChange={([newMin, newMax]) =>
-                  onUpdate({ ...layer, climMin: newMin, climMax: newMax })
-                }
+                min={dtypeMin}
+                max={dtypeMax}
+                step={Math.max((dtypeMax - dtypeMin) / 1000, 0.000001)}
+                value={[absoluteClimMin, absoluteClimMax]}
+                onValueChange={([newMin, newMax]) => updateAbsoluteContrast(newMin, newMax)}
               />
             </>
           );
@@ -208,8 +225,8 @@ export const LayerCard = ({
           {currentLodInfo?.renderedLevels && (
             <div className="flex gap-1 mt-1 text-[9px] flex-wrap">
               {currentLodInfo.renderedLevels.map((lvl, index) => (
-                <div 
-                  key={lvl} 
+                <div
+                  key={lvl}
                   className={`px-1.5 py-0.5 rounded ${index === 0 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground opacity-70"}`}
                   title={index === 0 ? "Primary LOD" : "Z-buffered fallback LOD"}
                 >

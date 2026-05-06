@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { CameraController } from "./cameras/CameraController";
 import { CanvasSync } from "./cameras/CanvasSync";
@@ -37,25 +37,93 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
 };
 
 
+type SceneScope = {
+  modeStore: ReturnType<typeof createModeStore>;
+  viewStore: ReturnType<typeof createViewStore>;
+  viewerStore: ReturnType<typeof createViewerStore>;
+  selectionStore: ReturnType<typeof createSelectionStore>;
+  sceneStore: ReturnType<typeof createSceneStore>;
+  roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
+};
+
+
 
 export const Scene = (props: { scene: SceneFragment }) => {
 
   const client = useMikro();
   const datalayer = useDatalayerEndpoint();
+  const [scope, setScope] = useState<SceneScope | null>(null);
+  const [sceneInitializationError, setSceneInitializationError] = useState<string | null>(null);
 
-  const scope = useMemo(() => {
-        const localScope = {
-      modeStore: createModeStore(),
-      viewStore: createViewStore(),
-      viewerStore: createViewerStore(createS3Builder(props.scene, client, datalayer!)),
-      selectionStore: createSelectionStore(),
-      sceneStore: createSceneStore({ scene: props.scene }),
-      roiDrawingStore: createRoiDrawingStore(),
+  useEffect(() => {
+    let cancelled = false;
+
+    const initializeSceneScope = async () => {
+      setScope(null);
+      setSceneInitializationError(null);
+
+      try {
+        if (!datalayer) {
+          throw new Error("No datalayer endpoint configured");
+        }
+
+        const localScope: SceneScope = {
+          modeStore: createModeStore(),
+          viewStore: createViewStore(),
+          viewerStore: createViewerStore(createS3Builder(props.scene, client, datalayer)),
+          selectionStore: createSelectionStore(),
+          sceneStore: createSceneStore({ scene: props.scene }),
+          roiDrawingStore: createRoiDrawingStore(),
+        };
+
+        const storeIds = Array.from(
+          new Set(
+            props.scene.layers.flatMap((layer) =>
+              layer.lens.dataset.dataArrays.map((dataArray) => dataArray.store.id),
+            ),
+          ),
+        );
+
+        const viewerState = localScope.viewerStore.getState();
+
+        await Promise.all(
+          storeIds.map(async (storeId) => {
+            const store = await viewerState.storeBuilder(storeId);
+            await viewerState.getArray(store);
+          }),
+        );
+
+        if (!cancelled) {
+          setScope(localScope);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSceneInitializationError(
+            error instanceof Error ? error.message : String(error),
+          );
+        }
+      }
     };
 
-    return localScope;
+    initializeSceneScope();
 
+    return () => {
+      cancelled = true;
+    };
   }, [props.scene, client, datalayer]);
+
+
+    if (!scope) {
+      return (
+        <div className="relative h-full w-full overflow-hidden rounded-lg bg-black">
+          <div className="flex h-full w-full items-center justify-center text-sm text-zinc-300">
+            {sceneInitializationError
+              ? `Scene initialization failed: ${sceneInitializationError}`
+              : "Initializing scene data..."}
+          </div>
+        </div>
+      );
+    }
 
 
 

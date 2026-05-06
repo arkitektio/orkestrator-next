@@ -1,5 +1,4 @@
-import { get, open } from 'zarrita';
-import type { AbsolutePath } from '@zarrita/storage';
+import { get } from 'zarrita';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { ChunkData } from '../stores/types';
@@ -86,6 +85,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
+  const getArray = useViewerStore((s) => s.getArray);
 
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
   const isDebug = useViewerStore((state) => state.debug);
@@ -104,7 +104,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
         }
 
         const store = await storeBuilder(zarrArray.store.id);
-        const arr = await open.v3(store, { kind: "array" });
+        const arr = await getArray(store);
 
         const sliceMap = layer.lens.slices.reduce((acc, slice) => {
           acc[slice.dim] = slice;
@@ -187,7 +187,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder]);
+  }, [layer, storeBuilder, getArray]);
 
   const affineMatrix = useMemo(() => {
     return buildAffineMatrix(layer);

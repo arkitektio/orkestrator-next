@@ -1,4 +1,4 @@
-import { open, Slice } from 'zarrita';
+import { Slice } from 'zarrita';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -48,6 +48,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
   const storeBuilder = useViewerStore((s) => s.storeBuilder);
+  const getArray = useViewerStore((s) => s.getArray);
   const currentZ = useViewerStore((s) => s.currentZ);
   const lodBias = useViewerStore((state) => state.lodBias);
   const cullRadius = useViewerStore((state) => state.cullRadius);
@@ -216,7 +217,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
         const levels = await Promise.all(
           dataArrays.map(async (zarrArray) => {
             const store = await storeBuilder(zarrArray.store.id, signal);
-            const arr = await open.v3(store, { kind: "array" });
+            const arr = await getArray(store);
             return {
               store,
               arr,
@@ -249,7 +250,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       controller.abort();
       zarrCache.current = null;
     };
-  }, [layerId]);
+  }, [layerId, layer, storeBuilder, getArray]);
 
   // --- Effect: Reactive Updates ---
   useEffect(() => {

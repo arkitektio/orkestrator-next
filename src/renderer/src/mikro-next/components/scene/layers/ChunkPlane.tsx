@@ -1,11 +1,13 @@
 import { useViewerStore } from '../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { getChunkWorker } from '../../../../lib/zarr/runner';
 import { workerPool } from '../../../workers/pool';
 import type { ChunkData } from '../stores/types';
 import { useSceneStore } from '../store/sceneStore';
-import { useShallow } from 'zustand/shallow';
+
+const CHUNK_FADE_IN_MS = 220;
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {
@@ -28,6 +30,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const fadeStartedAtRef = useRef<number | null>(null);
 
   // Grab the [0, 1] contrast limits from the store
   const layer = useSceneStore((s) => {
@@ -187,6 +190,35 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     };
   }, [texture]);
 
+  useEffect(() => {
+    if (!texture) {
+      fadeStartedAtRef.current = null;
+      return;
+    }
+
+    fadeStartedAtRef.current = performance.now();
+    if (materialRef.current) {
+      materialRef.current.uniforms.opacity.value = 0.0;
+    }
+  }, [texture]);
+
+  useFrame(() => {
+    if (!texture || !materialRef.current) return;
+
+    const startedAt = fadeStartedAtRef.current;
+    if (startedAt == null) {
+      materialRef.current.uniforms.opacity.value = 1.0;
+      return;
+    }
+
+    const progress = Math.min((performance.now() - startedAt) / CHUNK_FADE_IN_MS, 1);
+    materialRef.current.uniforms.opacity.value = progress;
+
+    if (progress >= 1) {
+      fadeStartedAtRef.current = null;
+    }
+  });
+
   // FIXED: The high-performance update loop.
   // Pushes new values straight to the GPU without re-rendering the component structure.
   useEffect(() => {
@@ -248,6 +280,10 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   if (!isVisible) return null;
 
   if (!texture) {
+    if (!isDebug) {
+      return null;
+    }
+
     return (
       <mesh position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
         <boxGeometry args={[widthScaled, heightScaled, zSizeScaled]} />

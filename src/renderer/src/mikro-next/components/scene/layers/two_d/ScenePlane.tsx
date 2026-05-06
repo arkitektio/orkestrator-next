@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { PlaneLayer } from "./PlaneLayer";
-import { useViewerStore } from "../../store/viewerStore";
-import * as THREE from "three";
 const MAX_DISPLAYABLE = 10;
 
 

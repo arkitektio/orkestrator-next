@@ -56,12 +56,41 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   // Safely grab the specific layer
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
 
+  const zarrSourceSignature = useMemo(() => {
+    if (!layer) return null;
+
+    return JSON.stringify({
+      dims: layer.lens.dataset.dims,
+      dataArrayStoreIds: layer.lens.dataset.dataArrays.map((dataArray) => dataArray.store.id),
+      scaleFactors: layer.lens.dataset.dataArrays.map((dataArray) => dataArray.scaleFactors ?? null),
+    });
+  }, [layer]);
+
+  const chunkLayoutSignature = useMemo(() => {
+    if (!layer) return null;
+
+    return JSON.stringify({
+      xDim: layer.xDim,
+      yDim: layer.yDim,
+      zDim: layer.zDim,
+      intensityDim: layer.intensityDim,
+      fixedLOD: 'fixedLOD' in layer ? layer.fixedLOD : undefined,
+      affineMatrix: layer.affineMatrix ?? null,
+      slices: layer.lens.slices.map((slice) => ({
+        dim: slice.dim,
+        start: slice.start ?? null,
+        stop: slice.stop ?? null,
+        step: slice.step ?? null,
+      })),
+    });
+  }, [layer]);
+
   const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   // Scene Registration
   useEffect(() => {
-    const refProxy = { kind: "layer", id: layerId, ref: groupRef };
+    const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
     register(refProxy);
     return () => unregister(refProxy);
   }, [layerId, register, unregister]);
@@ -193,7 +222,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       // Only trigger a React update if the exact list of chunks has changed
       return pKeys === nKeys ? prev : culledChunks;
     });
-  }, [layer, currentZ, activeLod, cullRadius, cameraPanTick]);
+  }, [layer, currentZ, activeLod, cullRadius, cameraPanTick, chunkLayoutSignature]);
 
   // --- Effect: Initialize Zarr with AbortController ---
   useEffect(() => {
@@ -221,7 +250,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
               store,
               arr,
               scale: arr.shape,
-              scaleFactors: zarrArray.scaleFactors,
+              scaleFactors: zarrArray.scaleFactors ?? undefined,
             };
           })
         );
@@ -249,7 +278,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       controller.abort();
       zarrCache.current = null;
     };
-  }, [layerId, layer, getArrayForStoreId]);
+  }, [layerId, getArrayForStoreId, zarrSourceSignature]);
 
   // --- Effect: Reactive Updates ---
   useEffect(() => {

@@ -1,5 +1,5 @@
 import WorkerPool from "@/lib/zarr/pool/workerpool";
+import { ZARR_WORKER_POOL_SIZE } from "./config";
 
 
-// Create a unified pool, sizing it to hardware concurrency (fallback to 4 if unavailable)
-export const workerPool = new WorkerPool(24);
+export const workerPool = new WorkerPool(ZARR_WORKER_POOL_SIZE);

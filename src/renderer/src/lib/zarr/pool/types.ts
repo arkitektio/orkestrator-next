@@ -7,6 +7,18 @@ export type WorkerPoolTask<T> = (
   worker: Worker | null
 ) => Promise<{ worker: Worker; result: T }>
 
+export interface WorkerPoolTaskOptions {
+  priority?: number
+}
+
+export interface WorkerPoolTaskDescriptor<T> extends WorkerPoolTaskOptions {
+  task: WorkerPoolTask<T>
+}
+
+export type WorkerPoolTaskInput<T> =
+  | WorkerPoolTask<T>
+  | WorkerPoolTaskDescriptor<T>
+
 /**
  * Progress callback invoked after each task completes.
  */
@@ -30,15 +42,15 @@ export interface WorkerPoolRunTasksResult<T> {
  * @internal
  */
 export interface RunInfo<T> {
-  taskQueue: Array<[resultIndex: number, task: WorkerPoolTask<T>]>
   results: T[]
-  addingTasks: boolean
-  postponed: boolean
+  totalTasks: number
+  queuedTasks: number
   runningWorkers: number
   index: number
   completedTasks: number
   progressCallback: WorkerPoolProgressCallback | null
   canceled: boolean | null
+  settled: boolean
   resolve?: (results: T[]) => void
   reject?: (error: unknown) => void
 }

@@ -110,7 +110,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     const loadData = async () => {
       try {
         const arr = await open.v3(chunk.store, { kind: "array" });
-        const chunkData = await getChunkWorker(arr, chunk.chunkCoords, { pool: workerPool, useSharedArrayBuffer: true });
+        const chunkData = await getChunkWorker(arr, chunk.chunkCoords, {
+          pool: workerPool,
+          priority: chunk.level,
+          useSharedArrayBuffer: true,
+        });
 
 
         if (!isMounted || !chunkData) return;

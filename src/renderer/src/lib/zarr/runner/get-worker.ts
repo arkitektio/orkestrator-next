@@ -10,6 +10,7 @@
  */
 
 import type { WorkerPoolTask } from "../pool/types"
+import type { WorkerPoolTaskInput } from "../pool/types"
 import type {
   Chunk,
   DataType,
@@ -789,7 +790,8 @@ export async function getWorker<
   const chunkShape = actualChunkShape
 
   // Build tasks — one per chunk
-  const tasks: WorkerPoolTask<void>[] = []
+  const tasks: WorkerPoolTaskInput<void>[] = []
+  const taskPriority = opts.priority ?? 0
 
   for (const { chunk_coords, mapping } of indexer) {
     const chunkKey = encodeChunkKey(chunk_coords)
@@ -812,98 +814,101 @@ export async function getWorker<
       continue
     }
 
-    tasks.push(async (workerSlot: Worker | null) => {
-      const worker =
-        workerSlot ??
-        (workerUrl
-          ? new Worker(workerUrl, { type: "module" })
-          : createDefaultWorker())
+    tasks.push({
+      priority: taskPriority,
+      task: async (workerSlot: Worker | null) => {
+        const worker =
+          workerSlot ??
+          (workerUrl
+            ? new Worker(workerUrl, { type: "module" })
+            : createDefaultWorker())
 
-      // Fetch raw bytes from store on main thread
-      const rawBytes = await arr.store.get(chunkPath, opts.opts)
+        // Fetch raw bytes from store on main thread
+        const rawBytes = await arr.store.get(chunkPath, opts.opts)
 
-      if (!rawBytes) {
-        // Missing chunk — fill value, no worker needed
-        const fillChunkShape = edgeChunkShape
-        const fillChunkStrides = get_strides(fillChunkShape)
-        const fillChunkSize = fillChunkShape.reduce(
-          (a: number, b: number) => a * b,
-          1,
-        )
-        const chunkData = new Ctr(fillChunkSize)
-        if (fillValue != null) {
-          // @ts-expect-error: fill_value type is union
-          chunkData.fill(fillValue)
-        }
-        const chunk: Chunk<D> = {
-          data: chunkData as Chunk<D>["data"],
-          shape: fillChunkShape,
-          stride: fillChunkStrides,
-        }
-        // Cache the fill-value chunk
-        cache.set(cacheKey, chunk)
-        // Copy fill-value chunk into output on main thread
-        setter.set_from_chunk(out, chunk, mapping)
-      } else if (useShared && !opts.cache) {
-        // SAB path (no cache): worker decodes AND writes directly into the
-        // SharedArrayBuffer output — no transfer back, no main-thread copy.
-        try {
-          await workerDecodeInto(
-            worker,
-            rawBytes,
-            metaId,
-            correctedCodecMeta,
-            buffer as SharedArrayBuffer,
-            size * bytesPerElement,
-            outStride,
-            mapping,
-            bytesPerElement,
-            isEdgeChunk ? edgeChunkShape : undefined,
+        if (!rawBytes) {
+          // Missing chunk — fill value, no worker needed
+          const fillChunkShape = edgeChunkShape
+          const fillChunkStrides = get_strides(fillChunkShape)
+          const fillChunkSize = fillChunkShape.reduce(
+            (a: number, b: number) => a * b,
+            1,
           )
-        } catch (error) {
-          worker.terminate()
-          throw error
+          const chunkData = new Ctr(fillChunkSize)
+          if (fillValue != null) {
+            // @ts-expect-error: fill_value type is union
+            chunkData.fill(fillValue)
+          }
+          const chunk: Chunk<D> = {
+            data: chunkData as Chunk<D>["data"],
+            shape: fillChunkShape,
+            stride: fillChunkStrides,
+          }
+          // Cache the fill-value chunk
+          cache.set(cacheKey, chunk)
+          // Copy fill-value chunk into output on main thread
+          setter.set_from_chunk(out, chunk, mapping)
+        } else if (useShared && !opts.cache) {
+          // SAB path (no cache): worker decodes AND writes directly into the
+          // SharedArrayBuffer output — no transfer back, no main-thread copy.
+          try {
+            await workerDecodeInto(
+              worker,
+              rawBytes,
+              metaId,
+              correctedCodecMeta,
+              buffer as SharedArrayBuffer,
+              size * bytesPerElement,
+              outStride,
+              mapping,
+              bytesPerElement,
+              isEdgeChunk ? edgeChunkShape : undefined,
+            )
+          } catch (error) {
+            worker.terminate()
+            throw error
+          }
+        } else if (useShared && opts.cache) {
+          // SAB path with cache: use workerDecode to get a standalone chunk
+          // so we can cache it, then copy into the SAB output. The small
+          // overhead of transfer + copy on first access is repaid by
+          // subsequent cache hits that skip the worker entirely.
+          let chunk: Chunk<D>
+          try {
+            chunk = await workerDecode<D>(
+              worker,
+              rawBytes,
+              metaId,
+              correctedCodecMeta,
+              isEdgeChunk ? edgeChunkShape : undefined,
+            )
+          } catch (error) {
+            worker.terminate()
+            throw error
+          }
+          cache.set(cacheKey, chunk)
+          setter.set_from_chunk(out, chunk, mapping)
+        } else {
+          // Standard path: worker decodes, transfers back, main thread copies
+          let chunk: Chunk<D>
+          try {
+            chunk = await workerDecode<D>(
+              worker,
+              rawBytes,
+              metaId,
+              correctedCodecMeta,
+              isEdgeChunk ? edgeChunkShape : undefined,
+            )
+          } catch (error) {
+            worker.terminate()
+            throw error
+          }
+          cache.set(cacheKey, chunk)
+          setter.set_from_chunk(out, chunk, mapping)
         }
-      } else if (useShared && opts.cache) {
-        // SAB path with cache: use workerDecode to get a standalone chunk
-        // so we can cache it, then copy into the SAB output. The small
-        // overhead of transfer + copy on first access is repaid by
-        // subsequent cache hits that skip the worker entirely.
-        let chunk: Chunk<D>
-        try {
-          chunk = await workerDecode<D>(
-            worker,
-            rawBytes,
-            metaId,
-            correctedCodecMeta,
-            isEdgeChunk ? edgeChunkShape : undefined,
-          )
-        } catch (error) {
-          worker.terminate()
-          throw error
-        }
-        cache.set(cacheKey, chunk)
-        setter.set_from_chunk(out, chunk, mapping)
-      } else {
-        // Standard path: worker decodes, transfers back, main thread copies
-        let chunk: Chunk<D>
-        try {
-          chunk = await workerDecode<D>(
-            worker,
-            rawBytes,
-            metaId,
-            correctedCodecMeta,
-            isEdgeChunk ? edgeChunkShape : undefined,
-          )
-        } catch (error) {
-          worker.terminate()
-          throw error
-        }
-        cache.set(cacheKey, chunk)
-        setter.set_from_chunk(out, chunk, mapping)
-      }
 
-      return { worker, result: undefined as void }
+        return { worker, result: undefined as void }
+      },
     })
   }
 

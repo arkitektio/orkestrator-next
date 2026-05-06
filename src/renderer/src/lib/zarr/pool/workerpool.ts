@@ -1,9 +1,20 @@
 import type {
+  WorkerPoolTaskDescriptor,
+  WorkerPoolTaskInput,
+  WorkerPoolTaskOptions,
   WorkerPoolTask,
   WorkerPoolProgressCallback,
   WorkerPoolRunTasksResult,
   RunInfo,
 } from './types'
+
+type QueuedTask<T> = {
+  infoIndex: number
+  resultIndex: number
+  task: WorkerPoolTask<T>
+  priority: number
+  sequence: number
+}
 
 /**
  * A pool of Web Workers that schedules tasks with bounded concurrency.
@@ -25,11 +36,16 @@ export class WorkerPool {
   /** Bookkeeping for each `runTasks` / `onIdle` invocation. */
   private runInfo: Array<RunInfo<unknown>>
 
+  /** Globally scheduled tasks across all active runs. */
+  private taskQueue: Array<QueuedTask<unknown>>
+
   /**
    * Accumulated tasks from `add()` calls, drained by the next `onIdle()`.
    * @internal
    */
-  private pendingTasks: Array<WorkerPoolTask<unknown>>
+  private pendingTasks: Array<WorkerPoolTaskDescriptor<unknown>>
+
+  private nextSequence: number
 
   /**
    * @param poolSize - Maximum number of concurrent web workers.
@@ -39,6 +55,8 @@ export class WorkerPool {
     this.workerQueue.fill(null)
     this.runInfo = []
     this.pendingTasks = []
+    this.taskQueue = []
+    this.nextSequence = 0
   }
 
   // ---------------------------------------------------------------------------
@@ -56,8 +74,11 @@ export class WorkerPool {
    *
    * @param fn - Task function.
    */
-  add<T>(fn: WorkerPoolTask<T>): void {
-    this.pendingTasks.push(fn as WorkerPoolTask<unknown>)
+  add<T>(fn: WorkerPoolTask<T>, options?: WorkerPoolTaskOptions): void
+  add<T>(taskInput: WorkerPoolTaskInput<T>, options?: WorkerPoolTaskOptions): void {
+    this.pendingTasks.push(
+      this.normalizeTaskInput(taskInput, options) as WorkerPoolTaskDescriptor<unknown>,
+    )
   }
 
   /**
@@ -71,7 +92,7 @@ export class WorkerPool {
     if (tasks.length === 0) {
       return []
     }
-    const { promise } = this.runTasks<unknown>(tasks as Array<WorkerPoolTask<unknown>>)
+    const { promise } = this.runTasks<unknown>(tasks as Array<WorkerPoolTaskInput<unknown>>)
     return promise as Promise<T[]>
   }
 
@@ -89,19 +110,19 @@ export class WorkerPool {
    *          a `runId` for cancellation.
    */
   runTasks<T>(
-    taskFns: Array<WorkerPoolTask<T>>,
+    taskFns: Array<WorkerPoolTaskInput<T>>,
     progressCallback: WorkerPoolProgressCallback | null = null
   ): WorkerPoolRunTasksResult<T> {
     const info: RunInfo<T> = {
-      taskQueue: [],
       results: [],
-      addingTasks: false,
-      postponed: false,
+      totalTasks: taskFns.length,
+      queuedTasks: taskFns.length,
       runningWorkers: 0,
       index: 0,
       completedTasks: 0,
       progressCallback,
       canceled: false,
+      settled: false,
     }
     this.runInfo.push(info as RunInfo<unknown>)
     info.index = this.runInfo.length - 1
@@ -113,12 +134,18 @@ export class WorkerPool {
 
         info.results = new Array<T>(taskFns.length)
         info.completedTasks = 0
+        if (taskFns.length === 0) {
+          info.settled = true
+          resolve([])
+          this.clearTask(info.index)
+          return
+        }
 
-        info.addingTasks = true
-        taskFns.forEach((fn, index) => {
-          this.addTask<T>(info.index, index, fn)
+        taskFns.forEach((taskInput, index) => {
+          this.enqueueTask<T>(info.index, index, taskInput)
         })
-        info.addingTasks = false
+
+        this.pumpQueue()
       }),
       runId: info.index,
     }
@@ -147,9 +174,26 @@ export class WorkerPool {
    */
   cancel(runId: number): void {
     const info = this.runInfo[runId]
-    if (info != null) {
+    if (info != null && !info.settled) {
       info.canceled = true
+      this.removeQueuedTasks(runId)
+      this.settleRun(runId)
     }
+  }
+
+  updatePriority(runId: number, resultIndex: number, priority: number): boolean {
+    const queuedIndex = this.taskQueue.findIndex(
+      (task) => task.infoIndex === runId && task.resultIndex === resultIndex,
+    )
+
+    if (queuedIndex === -1) {
+      return false
+    }
+
+    const [queuedTask] = this.taskQueue.splice(queuedIndex, 1)
+    queuedTask.priority = priority
+    this.insertTask(queuedTask)
+    return true
   }
 
   // ---------------------------------------------------------------------------
@@ -168,63 +212,148 @@ export class WorkerPool {
    *
    * @internal
    */
-  private addTask<T>(
+  private enqueueTask<T>(
     infoIndex: number,
     resultIndex: number,
-    task: WorkerPoolTask<T>
+    taskInput: WorkerPoolTaskInput<T>,
   ): void {
-    const info = this.runInfo[infoIndex] as RunInfo<T> | undefined
+    const descriptor = this.normalizeTaskInput(taskInput)
+    this.insertTask({
+      infoIndex,
+      resultIndex,
+      task: descriptor.task,
+      priority: descriptor.priority ?? 0,
+      sequence: this.nextSequence++,
+    })
+  }
 
-    if (info?.canceled === true) {
-      info.reject!('Remaining tasks canceled')
-      this.clearTask(info.index)
-      return
-    }
+  private pumpQueue(): void {
+    while (this.workerQueue.length > 0 && this.taskQueue.length > 0) {
+      const queuedTask = this.taskQueue.shift()!
+      const info = this.runInfo[queuedTask.infoIndex]
 
-    if (this.workerQueue.length > 0) {
+      if (info == null || info.settled) {
+        continue
+      }
+
+      if (info.canceled === true) {
+        info.queuedTasks = Math.max(0, info.queuedTasks - 1)
+        this.settleRun(queuedTask.infoIndex)
+        continue
+      }
+
       const worker = this.workerQueue.pop() as Worker | null
-      info!.runningWorkers++
+      info.queuedTasks = Math.max(0, info.queuedTasks - 1)
+      info.runningWorkers++
 
-      task(worker)
+      queuedTask
+        .task(worker)
         .then(({ worker: returnedWorker, result }) => {
           this.workerQueue.push(returnedWorker)
 
-          // Guard: the run may have been cleared while this task was in-flight.
-          if (this.runInfo[infoIndex] != null) {
-            info!.runningWorkers--
-            info!.results[resultIndex] = result
-            info!.completedTasks++
+          const activeInfo = this.runInfo[queuedTask.infoIndex]
+          if (activeInfo != null && !activeInfo.settled) {
+            activeInfo.runningWorkers--
 
-            if (info!.progressCallback != null) {
-              info!.progressCallback(info!.completedTasks, info!.results.length)
+            if (activeInfo.canceled !== true) {
+              ;(activeInfo.results as Array<unknown>)[queuedTask.resultIndex] = result
+              activeInfo.completedTasks++
+
+              if (activeInfo.progressCallback != null) {
+                activeInfo.progressCallback(
+                  activeInfo.completedTasks,
+                  activeInfo.totalTasks,
+                )
+              }
             }
 
-            if (info!.taskQueue.length > 0) {
-              const [nextResultIndex, nextTask] = info!.taskQueue.shift()!
-              this.addTask<T>(infoIndex, nextResultIndex, nextTask as WorkerPoolTask<T>)
-            } else if (!info!.addingTasks && info!.runningWorkers === 0) {
-              const results = info!.results
-              info!.resolve!(results)
-              this.clearTask(info!.index)
-            }
+            this.settleRun(queuedTask.infoIndex)
           }
+
+          this.pumpQueue()
         })
         .catch((error: unknown) => {
-          info!.reject!(error)
-          this.clearTask(info!.index)
+          const failedInfo = this.runInfo[queuedTask.infoIndex]
+
+          if (failedInfo != null && !failedInfo.settled) {
+            failedInfo.runningWorkers--
+            failedInfo.reject!(error)
+            this.clearTask(failedInfo.index)
+          }
+
+          if (worker != null) {
+            worker.terminate()
+          }
+          this.workerQueue.push(null)
+          this.pumpQueue()
         })
-    } else {
-      if (info!.runningWorkers !== 0 || info!.postponed) {
-        // A running worker will pick up the next item when it completes.
-        info!.taskQueue.push([resultIndex, task as WorkerPoolTask<unknown>] as [number, WorkerPoolTask<T>])
-      } else {
-        // Retry after a short delay.
-        info!.postponed = true
-        setTimeout(() => {
-          info!.postponed = false
-          this.addTask<T>(info!.index, resultIndex, task)
-        }, 50)
+    }
+  }
+
+  private normalizeTaskInput<T>(
+    taskInput: WorkerPoolTaskInput<T>,
+    options?: WorkerPoolTaskOptions,
+  ): WorkerPoolTaskDescriptor<T> {
+    if (typeof taskInput === 'function') {
+      return { task: taskInput, priority: options?.priority }
+    }
+
+    return taskInput
+  }
+
+  private insertTask(task: QueuedTask<unknown>): void {
+    const insertionIndex = this.taskQueue.findIndex((queuedTask) => {
+      if (queuedTask.priority !== task.priority) {
+        return queuedTask.priority < task.priority
       }
+
+      return queuedTask.sequence > task.sequence
+    })
+
+    if (insertionIndex === -1) {
+      this.taskQueue.push(task)
+      return
+    }
+
+    this.taskQueue.splice(insertionIndex, 0, task)
+  }
+
+  private removeQueuedTasks(runId: number): void {
+    let removedTasks = 0
+    this.taskQueue = this.taskQueue.filter((task) => {
+      const shouldRemove = task.infoIndex === runId
+      if (shouldRemove) {
+        removedTasks++
+      }
+      return !shouldRemove
+    })
+
+    const info = this.runInfo[runId]
+    if (info != null) {
+      info.queuedTasks = Math.max(0, info.queuedTasks - removedTasks)
+    }
+  }
+
+  private settleRun(runId: number): void {
+    const info = this.runInfo[runId]
+
+    if (info == null || info.settled) {
+      return
+    }
+
+    if (info.canceled === true) {
+      if (info.runningWorkers === 0 && info.queuedTasks === 0) {
+        info.settled = true
+        info.reject!('Remaining tasks canceled')
+        this.clearTask(runId)
+      }
+      return
+    }
+
+    if (info.completedTasks === info.totalTasks) {
+      info.settled = true
+      info.resolve!(info.results)
+      this.clearTask(runId)
     }
   }
 
@@ -235,10 +364,15 @@ export class WorkerPool {
    */
   private clearTask(clearIndex: number): void {
     const info = this.runInfo[clearIndex]
+    this.removeQueuedTasks(clearIndex)
     info.results = []
-    info.taskQueue = []
+    info.totalTasks = 0
+    info.queuedTasks = 0
     info.progressCallback = null
     info.canceled = null
+    info.runningWorkers = 0
+    info.completedTasks = 0
+    info.settled = true
     info.reject = () => {}
     info.resolve = () => {}
   }

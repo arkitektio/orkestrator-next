@@ -155,6 +155,8 @@ export interface ChunkCache {
 export interface GetWorkerOptions<StoreOpts = unknown> {
   /** The WorkerPool to use for codec decode operations. */
   pool: WorkerPool
+  /** Higher values are scheduled ahead of lower values when the pool is saturated. */
+  priority?: number
   /** Pass-through options for the store's `get` method (e.g., RequestInit for FetchStore). */
   opts?: StoreOpts
   /**

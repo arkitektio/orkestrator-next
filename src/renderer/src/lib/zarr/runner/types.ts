@@ -157,6 +157,8 @@ export interface GetWorkerOptions<StoreOpts = unknown> {
   pool: WorkerPool
   /** Higher values are scheduled ahead of lower values when the pool is saturated. */
   priority?: number
+  /** Cancel queued work and abort in-flight worker tasks when aborted. */
+  signal?: AbortSignal
   /** Pass-through options for the store's `get` method (e.g., RequestInit for FetchStore). */
   opts?: StoreOpts
   /**

@@ -106,18 +106,21 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     if (!isVisible && !texture) return;
     if (texture) return;
 
-    let isMounted = true;
+    const abortController = new AbortController();
     const loadData = async () => {
       try {
         const arr = await open.v3(chunk.store, { kind: "array" });
+        if (abortController.signal.aborted) return;
+
         const chunkData = await getChunkWorker(arr, chunk.chunkCoords, {
           pool: workerPool,
           priority: chunk.level,
+          signal: abortController.signal,
           useSharedArrayBuffer: true,
         });
 
 
-        if (!isMounted || !chunkData) return;
+        if (abortController.signal.aborted || !chunkData) return;
 
         const rawShape = chunkData.shape;
         const actualX = xIdx !== -1 ? rawShape[xIdx] : 1;
@@ -145,6 +148,9 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         setDataScale(dataScale);
         setTexture(tex);
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error(`Failed to load chunk: ${chunk.chunkKey}`, error);
       }
     };
@@ -152,7 +158,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     loadData();
 
     return () => {
-      isMounted = false;
+      abortController.abort();
     };
   }, [chunk]);
 

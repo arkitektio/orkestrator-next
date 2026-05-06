@@ -31,7 +31,7 @@ import {
   get_strides,
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
-import { getMetaId, workerDecode, workerDecodeInto, workerFetchDecode, workerFetchDecodeInto, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
+import { disposeWorker, getMetaId, workerDecode, workerDecodeInto, workerFetchDecode, workerFetchDecodeInto, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
 import { isWorkerFetchCapableStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type"
 import { serializeRequestInit } from "./s3-request"
 
@@ -64,6 +64,124 @@ export function createDefaultWorker(): Worker {
 
 /** Shared TextDecoder instance. */
 const decoder = new TextDecoder()
+
+function createAbortError(): Error {
+  if (typeof DOMException !== "undefined") {
+    return new DOMException("Aborted", "AbortError")
+  }
+
+  const error = new Error("Aborted")
+  error.name = "AbortError"
+  return error
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw createAbortError()
+  }
+}
+
+function withAbortSignal<StoreOpts>(
+  storeOpts: StoreOpts | undefined,
+  signal?: AbortSignal,
+): StoreOpts | undefined {
+  if (!signal) {
+    return storeOpts
+  }
+
+  if (storeOpts == null) {
+    return { signal } as StoreOpts
+  }
+
+  if (typeof storeOpts !== "object") {
+    return storeOpts
+  }
+
+  if ("signal" in (storeOpts as Record<string, unknown>)) {
+    return storeOpts
+  }
+
+  return {
+    ...(storeOpts as Record<string, unknown>),
+    signal,
+  } as StoreOpts
+}
+
+async function abortable<T>(
+  signal: AbortSignal | undefined,
+  promiseFactory: () => Promise<T>,
+  onAbort?: () => void,
+): Promise<T> {
+  throwIfAborted(signal)
+
+  if (!signal) {
+    return promiseFactory()
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    const abortHandler = () => {
+      try {
+        onAbort?.()
+      } finally {
+        reject(createAbortError())
+      }
+    }
+
+    signal.addEventListener("abort", abortHandler, { once: true })
+
+    Promise.resolve()
+      .then(promiseFactory)
+      .then(
+        (value) => {
+          signal.removeEventListener("abort", abortHandler)
+          resolve(value)
+        },
+        (error) => {
+          signal.removeEventListener("abort", abortHandler)
+          reject(error)
+        },
+      )
+  })
+}
+
+async function runPoolTasks<T>(
+  pool: GetWorkerOptions["pool"],
+  tasks: Array<WorkerPoolTaskInput<T>>,
+  signal?: AbortSignal,
+): Promise<T[]> {
+  throwIfAborted(signal)
+
+  const { promise, runId } = pool.runTasks(tasks)
+  return abortable(signal, () => promise, () => {
+    pool.cancel(runId)
+  })
+}
+
+function createWorkerTask<T>(
+  workerUrl: string | URL | undefined,
+  signal: AbortSignal | undefined,
+  task: (worker: Worker) => Promise<T>,
+  priority?: number,
+): WorkerPoolTaskInput<T> {
+  return {
+    priority,
+    task: async (workerSlot: Worker | null) => {
+      const worker =
+        workerSlot ??
+        (workerUrl
+          ? new Worker(workerUrl, { type: "module" })
+          : createDefaultWorker())
+
+      return abortable(
+        signal,
+        async () => ({ worker, result: await task(worker) }),
+        () => {
+          disposeWorker(worker, createAbortError())
+        },
+      )
+    },
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Chunk cache helpers — store-scoped key generation
@@ -109,14 +227,17 @@ export interface ArrayMetadata {
 export async function readArrayMetadata<
   D extends DataType,
   Store extends Readable,
->(arr: ZarrArray<D, Store>): Promise<ArrayMetadata> {
+>(
+  arr: ZarrArray<D, Store>,
+  storeOpts?: Parameters<Store["get"]>[1],
+): Promise<ArrayMetadata> {
   const store = arr.store
 
   // Try v3 first: read zarr.json
   const v3Path = (
     arr.path === "/" ? "/zarr.json" : `${arr.path}/zarr.json`
   ) as `/${string}`
-  const v3Bytes = await store.get(v3Path)
+  const v3Bytes = await store.get(v3Path, storeOpts)
   if (v3Bytes) {
     const metadata = JSON.parse(decoder.decode(v3Bytes))
     return {
@@ -478,7 +599,7 @@ async function validateCandidateChunkShape<
   encodeChunkKey: (chunk_coords: number[]) => string,
   candidate: number[],
   storeOpts?: Parameters<Store["get"]>[1],
-  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl">,
+  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl" | "signal">,
 ): Promise<boolean> {
   const ndim = candidate.length
 
@@ -513,24 +634,23 @@ async function validateCandidateChunkShape<
   try {
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
       const storeConfig = arr.store.getWorkerFetchConfig()
-      const tasks: WorkerPoolTask<boolean>[] = [async (workerSlot: Worker | null) => {
-        const worker =
-          workerSlot ??
-          (workerOpts.workerUrl
-            ? new Worker(workerOpts.workerUrl, { type: "module" })
-            : createDefaultWorker())
-
-        const exists = await workerFetchExists(
-          worker,
-          storeConfig,
-          probePath,
-          serializeRequestInit(storeOpts as RequestInit | undefined),
-        )
-
-        return { worker, result: exists }
-      }]
-      const { promise } = workerOpts.pool.runTasks(tasks)
-      const [exists] = await promise
+      const [exists] = await runPoolTasks(
+        workerOpts.pool,
+        [
+          createWorkerTask(
+            workerOpts.workerUrl,
+            workerOpts.signal,
+            (worker) =>
+              workerFetchExists(
+                worker,
+                storeConfig,
+                probePath,
+                serializeRequestInit(storeOpts as RequestInit | undefined),
+              ),
+          ),
+        ],
+        workerOpts.signal,
+      )
       return !exists
     }
 
@@ -569,8 +689,10 @@ export async function probeActualChunkShape<
   codecMeta: CodecChunkMeta,
   bytesPerElement: number,
   storeOpts?: Parameters<Store["get"]>[1],
-  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl">,
+  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl" | "signal">,
 ): Promise<number[]> {
+  throwIfAborted(workerOpts?.signal)
+
   const metadataChunkShape = codecMeta.chunk_shape
   const metaElements = metadataChunkShape.reduce((a, b) => a * b, 1)
 
@@ -585,28 +707,26 @@ export async function probeActualChunkShape<
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
       const storeConfig = arr.store.getWorkerFetchConfig()
       const metaId = getMetaId(codecMeta)
-      const tasks: WorkerPoolTask<number | null>[] = [async (workerSlot: Worker | null) => {
-        const worker =
-          workerSlot ??
-          (workerOpts.workerUrl
-            ? new Worker(workerOpts.workerUrl, { type: "module" })
-            : createDefaultWorker())
-
-        const size = await workerFetchProbeDecompressedSize(
-          worker,
-          storeConfig,
-          chunkPath,
-          metaId,
-          codecMeta,
-          bytesPerElement,
-          serializeRequestInit(storeOpts as RequestInit | undefined),
-        )
-
-        return { worker, result: size }
-      }]
-
-      const { promise } = workerOpts.pool.runTasks(tasks)
-      ;[decompressedBytes] = await promise
+      ;[decompressedBytes] = await runPoolTasks(
+        workerOpts.pool,
+        [
+          createWorkerTask(
+            workerOpts.workerUrl,
+            workerOpts.signal,
+            (worker) =>
+              workerFetchProbeDecompressedSize(
+                worker,
+                storeConfig,
+                chunkPath,
+                metaId,
+                codecMeta,
+                bytesPerElement,
+                serializeRequestInit(storeOpts as RequestInit | undefined),
+              ),
+          ),
+        ],
+        workerOpts.signal,
+      )
     } else {
       const rawBytes = await arr.store.get(chunkPath, storeOpts)
       if (!rawBytes) return metadataChunkShape
@@ -690,7 +810,11 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   chunkCoords: number[],
   opts: GetWorkerOptions<Parameters<Store["get"]>[1]>,
 ): Promise<Chunk<D>> {
-  const { codecMeta, encodeChunkKey } = await readArrayMetadata(arr)
+  const storeOptsWithSignal = withAbortSignal(opts.opts, opts.signal)
+  const { codecMeta, encodeChunkKey } = await readArrayMetadata(
+    arr,
+    storeOptsWithSignal,
+  )
 
   const Ctr = get_ctr(arr.dtype)
   const bytesPerElement = (Ctr as unknown as { BYTES_PER_ELEMENT: number })
@@ -701,7 +825,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     encodeChunkKey,
     codecMeta,
     bytesPerElement,
-    opts.opts,
+    storeOptsWithSignal,
     opts,
   )
 
@@ -762,13 +886,19 @@ export async function getWorker<
   const { pool, workerUrl } = opts
   const useShared = !!opts.useSharedArrayBuffer
   const cache = opts.cache ?? NULL_CACHE
+  const storeOptsWithSignal = withAbortSignal(opts.opts, opts.signal)
+
+  throwIfAborted(opts.signal)
 
   if (useShared) {
     assertSharedArrayBufferAvailable()
   }
 
   // Read metadata from store — single read, single parse
-  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(arr)
+  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
+    arr,
+    storeOptsWithSignal,
+  )
 
   const Ctr = get_ctr(arr.dtype)
   const bytesPerElement = (Ctr as unknown as { BYTES_PER_ELEMENT: number })
@@ -780,7 +910,7 @@ export async function getWorker<
     encodeChunkKey,
     codecMeta,
     bytesPerElement,
-    opts.opts,
+    storeOptsWithSignal,
     opts,
   )
 
@@ -835,15 +965,10 @@ export async function getWorker<
       continue
     }
 
-    tasks.push({
-      priority: taskPriority,
-      task: async (workerSlot: Worker | null) => {
-        const worker =
-          workerSlot ??
-          (workerUrl
-            ? new Worker(workerUrl, { type: "module" })
-            : createDefaultWorker())
-
+    tasks.push(createWorkerTask(
+      workerUrl,
+      opts.signal,
+      async (worker) => {
         const workerStore = isWorkerFetchCapableStore(arr.store)
           ? arr.store.getWorkerFetchConfig()
           : null
@@ -859,7 +984,7 @@ export async function getWorker<
             outStride,
             mapping,
             bytesPerElement,
-            serializeRequestInit(opts.opts as RequestInit | undefined),
+            serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
             isEdgeChunk ? edgeChunkShape : undefined,
           )
 
@@ -890,7 +1015,7 @@ export async function getWorker<
                 chunkPath,
                 metaId,
                 correctedCodecMeta,
-                serializeRequestInit(opts.opts as RequestInit | undefined),
+                serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
                 isEdgeChunk ? edgeChunkShape : undefined,
               )
             : null
@@ -899,7 +1024,9 @@ export async function getWorker<
             cache.set(cacheKey, rawChunk)
             setter.set_from_chunk(out, rawChunk, mapping)
           } else {
-            const rawBytes = workerStore ? undefined : await arr.store.get(chunkPath, opts.opts)
+            const rawBytes = workerStore
+              ? undefined
+              : await arr.store.get(chunkPath, storeOptsWithSignal)
 
         if (!rawBytes) {
           // Missing chunk — fill value, no worker needed
@@ -940,7 +1067,7 @@ export async function getWorker<
               isEdgeChunk ? edgeChunkShape : undefined,
             )
           } catch (error) {
-            worker.terminate()
+            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
             throw error
           }
         } else if (useShared && opts.cache) {
@@ -958,7 +1085,7 @@ export async function getWorker<
               isEdgeChunk ? edgeChunkShape : undefined,
             )
           } catch (error) {
-            worker.terminate()
+            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
             throw error
           }
           cache.set(cacheKey, chunk)
@@ -975,7 +1102,7 @@ export async function getWorker<
               isEdgeChunk ? edgeChunkShape : undefined,
             )
           } catch (error) {
-            worker.terminate()
+            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
             throw error
           }
           cache.set(cacheKey, chunk)
@@ -983,16 +1110,14 @@ export async function getWorker<
         }
           }
         }
-
-        return { worker, result: undefined as void }
       },
-    })
+      taskPriority,
+    ))
   }
 
   // Execute all tasks with bounded concurrency via WorkerPool
   if (tasks.length > 0) {
-    const { promise } = pool.runTasks(tasks)
-    await promise
+    await runPoolTasks(pool, tasks, opts.signal)
   }
 
   // If the final shape is empty (all integer selections), return a scalar

@@ -51,10 +51,7 @@ class WorkerDispatcher {
   private onError = (err: ErrorEvent): void => {
     // Reject all pending requests on worker error
     const error = new Error(err.message ?? 'Worker error')
-    for (const req of this.pending.values()) {
-      req.reject(error)
-    }
-    this.pending.clear()
+    this.rejectAll(error)
   }
 
   send(id: number, message: unknown, transfer: Transferable[]): Promise<unknown> {
@@ -70,6 +67,13 @@ class WorkerDispatcher {
 
   markMeta(metaId: number): void {
     this.sentMetas.add(metaId)
+  }
+
+  rejectAll(error: Error): void {
+    for (const req of this.pending.values()) {
+      req.reject(error)
+    }
+    this.pending.clear()
   }
 
   destroy(): void {
@@ -90,6 +94,19 @@ function getDispatcher(worker: Worker): WorkerDispatcher {
     dispatchers.set(worker, d)
   }
   return d
+}
+
+export function disposeWorker(
+  worker: Worker,
+  error: Error = new Error('Worker terminated'),
+): void {
+  const dispatcher = dispatchers.get(worker)
+  if (dispatcher) {
+    dispatcher.rejectAll(error)
+    dispatcher.destroy()
+    dispatchers.delete(worker)
+  }
+  worker.terminate()
 }
 
 // ---------------------------------------------------------------------------

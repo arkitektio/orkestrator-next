@@ -1,3 +1,29 @@
+# [1.59.0](https://github.com/arkitektio/orkestrator-next/compare/v1.58.4...v1.59.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* add 3d ([5ebb279](https://github.com/arkitektio/orkestrator-next/commit/5ebb279898c370ebef7a524414d54bcf14b394c9))
+* added pool? ([4691770](https://github.com/arkitektio/orkestrator-next/commit/46917706b10462a4dbace47e555969aae8db45f2))
+* async store creation ([b8a5053](https://github.com/arkitektio/orkestrator-next/commit/b8a50530be5a73e7cd95f4d488ccef42e0aa583b))
+* culling? ([35fd83d](https://github.com/arkitektio/orkestrator-next/commit/35fd83d8599b7096d45f9decaebecdaa6073aec4))
+* intermitten without pool ([c79734a](https://github.com/arkitektio/orkestrator-next/commit/c79734aa66bbfcca11977e1b797717ef6b4eb9f4))
+* major performance boost ([12ca7a5](https://github.com/arkitektio/orkestrator-next/commit/12ca7a5f5d9b31de99060be5925f35f4d4684621))
+* more stuff ([5e6000f](https://github.com/arkitektio/orkestrator-next/commit/5e6000fdc29eb4b56459275cd210a4f0b6ae348c))
+* new items ([cd95fac](https://github.com/arkitektio/orkestrator-next/commit/cd95fac8bb07686f519e5162a65e6a7acc8c0067))
+* perforamnce ([927d5e1](https://github.com/arkitektio/orkestrator-next/commit/927d5e16ccebf5f3e0f240db14bfa1b2b7d808d3))
+* priority based ([7d463a5](https://github.com/arkitektio/orkestrator-next/commit/7d463a558135de41c7ab00f5bf94386426624f2a))
+* remove some stuff ([d052312](https://github.com/arkitektio/orkestrator-next/commit/d052312950c36bd5549e5ae3f8c9ed1dba2dfa49))
+* stuff ([044327f](https://github.com/arkitektio/orkestrator-next/commit/044327f4852cc45d9ee0e06a2101a03f85015850))
+* stuff ([f2adb35](https://github.com/arkitektio/orkestrator-next/commit/f2adb35e5bcd354574fa216ea60c9394d2b9f737))
+* stuff ([b8e2795](https://github.com/arkitektio/orkestrator-next/commit/b8e2795076a1bf4b4385eb00075a913ff877473f))
+* workerpool tests ([aad0803](https://github.com/arkitektio/orkestrator-next/commit/aad08032802e9b0a7edfe3ee8d7954e6db43b198))
+
+
+### Features
+
+* with abort controller? ([004c80d](https://github.com/arkitektio/orkestrator-next/commit/004c80d17c7006c94e7c324efab79b937ea58e57))
+
 ## [1.58.4](https://github.com/arkitektio/orkestrator-next/compare/v1.58.3...v1.58.4) (2026-05-05)
 
 

@@ -32,3 +32,22 @@ export const mapDTypeToMinMax = (dtype: DataType): [number, number] => {
       throw new Error(`Unsupported dtype: ${dtype}`);
   }
 };
+
+export const mapDTypeToTextureBytes = (dtype: DataType): number => {
+  switch (dtype) {
+    case "uint8":
+      return 1;
+    case "float32":
+      return 4;
+    case "uint16":
+    case "uint32":
+    case "int8":
+    case "int16":
+    case "int32":
+    case "float64":
+    case "bool":
+      return 4;
+    default:
+      return 4;
+  }
+};

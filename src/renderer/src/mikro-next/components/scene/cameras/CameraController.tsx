@@ -18,6 +18,7 @@ export const CameraController = () => {
       {/* Camera Rig */}
       {displayMode === "3D" ? (
         <PerspectiveCamera
+          key="perspective-camera"
           makeDefault
           position={[0, -200, 200]}
           fov={45}
@@ -27,6 +28,7 @@ export const CameraController = () => {
         />
       ) : (
         <OrthographicCamera
+          key="orthographic-camera"
           makeDefault
           zoom={5}
           position={[0, 0, 50000]}
@@ -41,6 +43,7 @@ export const CameraController = () => {
             */}
       {displayMode === "3D" ? (
         <OrbitControls
+          key="orbit-controls-3d"
           makeDefault
           enableRotate={displayMode === "3D"}
           enablePan={interactionMode === "PAN"}
@@ -48,6 +51,7 @@ export const CameraController = () => {
         />
       ) : (
         <OrbitControls
+          key="orbit-controls-2d"
           makeDefault
           enableRotate={false}
           enablePan={interactionMode === "PAN"}

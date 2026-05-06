@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
+import { SceneFragment } from '@/mikro-next/api/graphql';
 import {
   createSelectionStore,
   SelectionStoreContext,
@@ -11,33 +12,34 @@ import {
 import { createKubeStore, KubeStoreContext } from './kubeStore';
 import { createModeStore, ModeStoreContext } from './modeStore';
 import {
-  createScansStore,
-  ScansStoreContext,
+  createSceneStore,
+  SceneStoreContext,
 } from './sceneStore';
 import { createTimeStore, TimeStoreContext } from './timeStore';
 import { createViewStore, ViewStoreContext } from './viewStore';
-import { createViewerStore, ViewerStoreContext, StoreBuilder } from './viewerStore';
+import { createViewerStoreSync, ViewerStoreContext } from './viewerStore';
+
+const EMPTY_SCENE = {
+  spatialUnit: 'px',
+  layers: [],
+} as unknown as SceneFragment;
 
 export interface LocalStoreBundle {
   modeStore: ReturnType<typeof createModeStore>;
   viewStore: ReturnType<typeof createViewStore>;
-  viewerStore: ReturnType<typeof createViewerStore>;
-  scansStore: ReturnType<typeof createScansStore>;
+  viewerStore: ReturnType<typeof createViewerStoreSync>;
+  sceneStore: ReturnType<typeof createSceneStore>;
   kubeStore: ReturnType<typeof createKubeStore>;
   kubeStateStore: ReturnType<typeof createKubeStateStore>;
   selectionStore: ReturnType<typeof createSelectionStore>;
   timeStore: ReturnType<typeof createTimeStore>;
 }
 
-const noopBuilder: StoreBuilder = async () => {
-  throw new Error("StoreBuilder not configured");
-};
-
 const createLocalStoreBundle = (): LocalStoreBundle => ({
   modeStore: createModeStore(),
   viewStore: createViewStore(),
-  viewerStore: createViewerStore(noopBuilder),
-  scansStore: createScansStore(),
+  viewerStore: createViewerStoreSync(),
+  sceneStore: createSceneStore({ scene: EMPTY_SCENE }),
   kubeStore: createKubeStore(),
   kubeStateStore: createKubeStateStore(),
   selectionStore: createSelectionStore(),
@@ -73,7 +75,7 @@ export function LocalStoreProvider({
     <ModeStoreContext.Provider value={stores.modeStore}>
       <ViewStoreContext.Provider value={stores.viewStore}>
         <ViewerStoreContext.Provider value={stores.viewerStore}>
-          <ScansStoreContext.Provider value={stores.scansStore}>
+          <SceneStoreContext.Provider value={stores.sceneStore}>
             <KubeStoreContext.Provider value={stores.kubeStore}>
               <KubeStateStoreContext.Provider value={stores.kubeStateStore}>
                 <SelectionStoreContext.Provider value={stores.selectionStore}>
@@ -83,7 +85,7 @@ export function LocalStoreProvider({
                 </SelectionStoreContext.Provider>
               </KubeStateStoreContext.Provider>
             </KubeStoreContext.Provider>
-          </ScansStoreContext.Provider>
+          </SceneStoreContext.Provider>
         </ViewerStoreContext.Provider>
       </ViewStoreContext.Provider>
     </ModeStoreContext.Provider>

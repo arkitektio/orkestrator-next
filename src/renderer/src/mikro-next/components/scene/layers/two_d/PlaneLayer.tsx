@@ -47,8 +47,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   // Store Hooks
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
-  const storeBuilder = useViewerStore((s) => s.storeBuilder);
-  const getArray = useViewerStore((s) => s.getArray);
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
   const currentZ = useViewerStore((s) => s.currentZ);
   const lodBias = useViewerStore((state) => state.lodBias);
   const cullRadius = useViewerStore((state) => state.cullRadius);
@@ -216,8 +215,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
         const levels = await Promise.all(
           dataArrays.map(async (zarrArray) => {
-            const store = await storeBuilder(zarrArray.store.id, signal);
-            const arr = await getArray(store);
+            const arr = getArrayForStoreId(zarrArray.store.id);
+            const store = arr.store;
             return {
               store,
               arr,
@@ -250,7 +249,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       controller.abort();
       zarrCache.current = null;
     };
-  }, [layerId, layer, storeBuilder, getArray]);
+  }, [layerId, layer, getArrayForStoreId]);
 
   // --- Effect: Reactive Updates ---
   useEffect(() => {

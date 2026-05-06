@@ -108,9 +108,9 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     const loadData = async () => {
       const chunkLoadStartedAt = performance.now();
       try {
-        const openStartedAt = performance.now();
-        const arr = await getArray(chunk.store);
-        const openMs = performance.now() - openStartedAt;
+        const arrayLookupStartedAt = performance.now();
+        const arr = getArray(chunk.store);
+        const arrayLookupMs = performance.now() - arrayLookupStartedAt;
         if (abortController.signal.aborted) return;
 
         const chunkReadStartedAt = performance.now();
@@ -155,7 +155,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         console.log('[chunk plane timing]', {
           chunkKey: chunk.chunkKey,
           chunkCoords: [...chunk.chunkCoords],
-          openArrayMs: Number(openMs.toFixed(2)),
+          arrayLookupMs: Number(arrayLookupMs.toFixed(2)),
           getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
           textureConfigMs: Number(textureConfigMs.toFixed(2)),
           textureCreateMs: Number(textureCreateMs.toFixed(2)),

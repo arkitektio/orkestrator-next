@@ -18,7 +18,7 @@ import { ScenePlane } from "./layers/two_d/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { createViewerStore, createS3Builder, ViewerStoreContext } from "./store/viewerStore";
+import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
 import { SceneVolume } from "./layers/SceneVolume";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
@@ -40,7 +40,7 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
 type SceneScope = {
   modeStore: ReturnType<typeof createModeStore>;
   viewStore: ReturnType<typeof createViewStore>;
-  viewerStore: ReturnType<typeof createViewerStore>;
+  viewerStore: Awaited<ReturnType<typeof createViewerStore>>;
   selectionStore: ReturnType<typeof createSelectionStore>;
   sceneStore: ReturnType<typeof createSceneStore>;
   roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
@@ -70,28 +70,11 @@ export const Scene = (props: { scene: SceneFragment }) => {
         const localScope: SceneScope = {
           modeStore: createModeStore(),
           viewStore: createViewStore(),
-          viewerStore: createViewerStore(createS3Builder(props.scene, client, datalayer)),
+          viewerStore: await createViewerStore(props.scene, client, datalayer),
           selectionStore: createSelectionStore(),
           sceneStore: createSceneStore({ scene: props.scene }),
           roiDrawingStore: createRoiDrawingStore(),
         };
-
-        const storeIds = Array.from(
-          new Set(
-            props.scene.layers.flatMap((layer) =>
-              layer.lens.dataset.dataArrays.map((dataArray) => dataArray.store.id),
-            ),
-          ),
-        );
-
-        const viewerState = localScope.viewerStore.getState();
-
-        await Promise.all(
-          storeIds.map(async (storeId) => {
-            const store = await viewerState.storeBuilder(storeId);
-            await viewerState.getArray(store);
-          }),
-        );
 
         if (!cancelled) {
           setScope(localScope);
@@ -150,32 +133,23 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <CameraController />
               <CanvasSync />
 
-
               {/* Interaction Layers */}
               {/* The SceneAxis is a simple XYZ axis helper that also shows the scale of the scene */}
               <SceneAxis/>
               <ScaleGrid />
 
-
               <CullingDebugRing />
 
-
-
-
-
-
               {/* Layers */}
-
               <ScenePlane />
               <SceneVolume />
               <SceneDataRois />
               <RoiDrawer />
 
-                  <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
-              <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
-            </GizmoHelper>
+              <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
+                <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
+              </GizmoHelper>
             </SceneWrapper>
-
 
             <ScenePanel/>
             <LayerControlPanel />
@@ -197,3 +171,4 @@ export const Scene = (props: { scene: SceneFragment }) => {
     </ModeStoreContext.Provider>
   );
 };
+

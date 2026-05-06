@@ -1,5 +1,4 @@
 import { useViewerStore } from '@/store/viewerStore';
-import { open } from 'zarrita';
 import type { AbsolutePath } from '@zarrita/storage';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -79,7 +78,7 @@ const InvertedHullOutline = ({
 export const FrameVolume = ({ frame }: { frame: Frame }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
-  const storeBuilder = useViewerStore((s) => s.storeBuilder);
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
 
   const isSelected = useSelectionStore((s) => s.selectedFrameId === frame.id);
   const setSelectedFrameId = useSelectionStore((s) => s.setSelectedFrameId);
@@ -89,8 +88,9 @@ export const FrameVolume = ({ frame }: { frame: Frame }) => {
 
     const initializeZarr = async () => {
       try {
-        const store = storeBuilder(frame);
-        const arr = await open.v3(store, { kind: "array" });
+        const storeId = (frame as { store?: { id?: string } }).store?.id ?? frame.id;
+        const arr = getArrayForStoreId(storeId);
+        const store = arr.store;
 
         if (!isMounted) return;
         console.log(`Initialized Zarr for Frame ${frame.id}: shape=${arr.shape}, dtype=${arr.dtype}`);
@@ -140,7 +140,7 @@ export const FrameVolume = ({ frame }: { frame: Frame }) => {
     return () => {
       isMounted = false;
     };
-  }, [frame, storeBuilder]);
+  }, [frame, getArrayForStoreId]);
 
   // Extract Affine Matrix from metadata
   const affineMatrix = useMemo(() => {

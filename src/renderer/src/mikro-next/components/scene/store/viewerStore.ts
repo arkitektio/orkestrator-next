@@ -4,9 +4,8 @@ import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStor
 import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
 import { RefObject } from "react";
 import { open, type Array as ZarrArray, type DataType } from "zarrita";
-export type StoreBuilder = (storeId: string, signal?: AbortSignal) => Promise<ZarrStore>;
 import * as THREE from 'three';
-import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables, SceneFragment } from "@/mikro-next/api/graphql";
+import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
 
 type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 
@@ -44,8 +43,8 @@ interface ViewerState {
   showScaleBar: boolean;
   showScaleGrid: boolean;
   worldUnitsPerPixel: number;
-  storeBuilder: StoreBuilder;
-  getArray: (store: ZarrStore) => Promise<OpenedZarrArray>;
+  getArray: (store: ZarrStore) => OpenedZarrArray;
+  getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   currentZ: number;
   frustumNear: number;
   frustumFar: number;
@@ -104,10 +103,10 @@ function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZa
 }
 
 async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
-  const access = await client.mutate<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>({
+  const access = await client.mutate({
     mutation: RequestGeneralZarrAccessDocument,
     variables: { input: {} },
-  });
+  }) as { data?: RequestGeneralZarrAccessMutation };
 
   const credentials = access.data?.requestGeneralZarrAccess;
   if (!credentials) {
@@ -117,53 +116,42 @@ async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAcc
   return credentials;
 }
 
-export const createS3Builder = (scene: SceneFragment, client: MikroClient, datalayer: string): StoreBuilder => {
+async function createConfiguredSceneStores(
+  scene: SceneFragment,
+  client: MikroClient,
+  datalayer: string,
+): Promise<Map<string, ZarrStore>> {
   const descriptors = collectSceneStoreDescriptors(scene);
-  const storeMapPromise = (async () => {
-    const credentials = await requestGeneralAccess(client);
-    const expiresAt = Date.now() + credentials.expiresIn * 1000;
+  const credentials = await requestGeneralAccess(client);
+  const expiresAt = Date.now() + credentials.expiresIn * 1000;
 
-    const stores = await Promise.all(
-      Array.from(descriptors.values()).map(async (descriptor) => {
-        const store = new ConfiguredS3Store(
-          {
-            accessKey: credentials.accessKey,
-            baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
-            expiresAt,
-            region: credentials.region,
-            secretKey: credentials.secretKey,
-            sessionToken: credentials.sessionToken,
-            storeId: descriptor.storeId,
-          },
-          { preloadMetadata: true },
-        );
-        await store.ready();
-        return [descriptor.storeId, store] as const;
-      }),
-    );
+  const stores = await Promise.all(
+    Array.from(descriptors.values()).map(async (descriptor) => {
+      const store = new ConfiguredS3Store(
+        {
+          accessKey: credentials.accessKey,
+          baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
+          expiresAt,
+          region: credentials.region,
+          secretKey: credentials.secretKey,
+          sessionToken: credentials.sessionToken,
+          storeId: descriptor.storeId,
+        },
+        { preloadMetadata: true },
+      );
+      await store.ready();
+      return [descriptor.storeId, store] as const;
+    }),
+  );
 
-    return new Map(stores);
-  })();
+  return new Map(stores);
+}
 
-  return async (storeId: string, _signal?: AbortSignal) => {
-    const stores = await storeMapPromise;
-    const store = stores.get(storeId);
-
-    if (!store) {
-      throw new Error(`No preconfigured Zarr store found for ${storeId}`);
-    }
-
-    return store;
-  };
-};
-
-
-
-export const createViewerStore = (storeBuilder: StoreBuilder) =>
-  {
-    const openedArrayPromises = new WeakMap<object, Promise<OpenedZarrArray>>();
-
-    return createStore<ViewerState>((set, get) => ({
+function createViewerStoreInternal(
+  arraysByStoreId: Map<string, OpenedZarrArray>,
+  arraysByStore: WeakMap<object, OpenedZarrArray>,
+) {
+  return createStore<ViewerState>((set, get) => ({
     zStart: 0,
     zEnd: 100,
     tStart: null,
@@ -186,7 +174,7 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
-     register: (ref) => set((state) => {
+    register: (ref) => set((state) => {
       state.trackables.add(ref);
       return state;
     }),
@@ -208,22 +196,29 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     frustumNear: 0.1,
     frustumFar: 100000,
     canvas: null,
-    storeBuilder: storeBuilder,
     getArray: (store) => {
       const key = store as object;
-      const cached = openedArrayPromises.get(key);
-      if (cached) {
-        return cached;
+      const cachedByStore = arraysByStore.get(key);
+      if (cachedByStore) {
+        return cachedByStore;
       }
 
-      const opened = open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>;
-      openedArrayPromises.set(key, opened);
-      opened.catch(() => {
-        if (openedArrayPromises.get(key) === opened) {
-          openedArrayPromises.delete(key);
+      if ("storeId" in store && typeof (store as { storeId?: unknown }).storeId === "string") {
+        const cachedByStoreId = arraysByStoreId.get((store as { storeId: string }).storeId);
+        if (cachedByStoreId) {
+          arraysByStore.set(key, cachedByStoreId);
+          return cachedByStoreId;
         }
-      });
-      return opened;
+      }
+
+      throw new Error("Zarr array is not initialized for this store")
+    },
+    getArrayForStoreId: (storeId) => {
+      const array = arraysByStoreId.get(storeId);
+      if (!array) {
+        throw new Error(`Zarr array for store ${storeId} is not initialized`);
+      }
+      return array;
     },
     setZRange: (start, end) => set({ zStart: start, zEnd: end }),
     setTRange: (start, end) => set({ tStart: start, tEnd: end }),
@@ -285,7 +280,32 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     setShowScaleGrid: (show) => set({ showScaleGrid: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
-};
+}
+
+export async function createViewerStore(
+  scene: SceneFragment,
+  client: MikroClient,
+  datalayer: string,
+) {
+  const storesById = await createConfiguredSceneStores(scene, client, datalayer);
+  const arraysByStoreId = new Map<string, OpenedZarrArray>();
+  const arraysByStore = new WeakMap<object, OpenedZarrArray>();
+
+  for (const [storeId, store] of storesById) {
+    const opened = await (open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>);
+    arraysByStoreId.set(storeId, opened);
+    arraysByStore.set(store as object, opened);
+  }
+
+  return createViewerStoreInternal(arraysByStoreId, arraysByStore);
+}
+
+export function createViewerStoreSync() {
+  return createViewerStoreInternal(
+    new Map<string, OpenedZarrArray>(),
+    new WeakMap<object, OpenedZarrArray>(),
+  );
+}
 
 const {
   StoreContext: ViewerStoreContext,

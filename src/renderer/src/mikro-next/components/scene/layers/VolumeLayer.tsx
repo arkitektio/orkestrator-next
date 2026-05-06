@@ -84,8 +84,7 @@ const InvertedHullOutline = ({
 export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
 
-  const storeBuilder = useViewerStore((s) => s.storeBuilder);
-  const getArray = useViewerStore((s) => s.getArray);
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
 
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
   const isDebug = useViewerStore((state) => state.debug);
@@ -103,8 +102,8 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
           return;
         }
 
-        const store = await storeBuilder(zarrArray.store.id);
-        const arr = await getArray(store);
+        const arr = getArrayForStoreId(zarrArray.store.id);
+        const store = arr.store;
 
         const sliceMap = layer.lens.slices.reduce((acc, slice) => {
           acc[slice.dim] = slice;
@@ -187,7 +186,7 @@ export const VolumeLayer = ({ layer }: { layer: SceneLayerFragment }) => {
     return () => {
       isMounted = false;
     };
-  }, [layer, storeBuilder, getArray]);
+  }, [layer, getArrayForStoreId]);
 
   const affineMatrix = useMemo(() => {
     return buildAffineMatrix(layer);

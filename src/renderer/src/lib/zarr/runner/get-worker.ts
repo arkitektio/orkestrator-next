@@ -27,7 +27,6 @@ import {
   assertSharedArrayBufferAvailable,
   create_chunk_key_encoder,
   createBuffer,
-  get_ctr,
   get_strides,
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
@@ -206,6 +205,14 @@ function getTextureOutputConstructor(dataType: DataType):
   | Uint8ArrayConstructor
   | Float32ArrayConstructor {
   return dataType === "uint8" ? Uint8Array : Float32Array
+}
+
+function roundTiming(ms: number): number {
+  return Number(ms.toFixed(2))
+}
+
+function logChunkTiming(label: string, timings: Record<string, unknown>): void {
+  console.log(label, timings)
 }
 
 // ---------------------------------------------------------------------------
@@ -842,18 +849,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     storeOptsWithSignal,
   )
 
-  const Ctr = get_ctr(arr.dtype)
-  const bytesPerElement = (Ctr as unknown as { BYTES_PER_ELEMENT: number })
-    .BYTES_PER_ELEMENT
-
-  const actualChunkShape = await probeActualChunkShape(
-    arr,
-    encodeChunkKey,
-    codecMeta,
-    bytesPerElement,
-    storeOptsWithSignal,
-    opts,
-  )
+  const actualChunkShape = codecMeta.chunk_shape
 
   const selection = actualChunkShape.map((chunkSize, dim) => {
     const start = chunkCoords[dim] * chunkSize
@@ -909,6 +905,7 @@ export async function getWorker<
       ? Chunk<D>
       : Scalar<D>
 > {
+  const startedAt = performance.now()
   const { pool, workerUrl } = opts
   const useShared = opts.useSharedArrayBuffer !== false
   const cache = opts.cache ?? DEFAULT_CHUNK_CACHE
@@ -923,30 +920,17 @@ export async function getWorker<
   assertSharedArrayBufferAvailable()
 
   // Read metadata from store — single read, single parse
+  const metadataReadStartedAt = performance.now()
   const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
     arr,
     storeOptsWithSignal,
   )
+  const metadataReadMs = performance.now() - metadataReadStartedAt
 
-  const Ctr = get_ctr(arr.dtype)
-  const bytesPerElement = (Ctr as unknown as { BYTES_PER_ELEMENT: number })
-    .BYTES_PER_ELEMENT
-
-  // Probe actual chunk shape — detects metadata vs data mismatch
-  const actualChunkShape = await probeActualChunkShape(
-    arr,
-    encodeChunkKey,
-    codecMeta,
-    bytesPerElement,
-    storeOptsWithSignal,
-    opts,
-  )
+  const actualChunkShape = codecMeta.chunk_shape
 
   // Update codecMeta to use the actual chunk shape for codec pipeline
-  const correctedCodecMeta =
-    actualChunkShape !== codecMeta.chunk_shape
-      ? { ...codecMeta, chunk_shape: actualChunkShape }
-      : codecMeta
+  const correctedCodecMeta = codecMeta
 
   const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
   const outputBytesPerElement = OutputCtr.BYTES_PER_ELEMENT
@@ -980,6 +964,7 @@ export async function getWorker<
   const taskPriority = opts.priority ?? 0
 
   for (const { chunk_coords, mapping } of indexer) {
+    const chunkStartedAt = performance.now()
     const chunkKey = encodeChunkKey(chunk_coords)
     const chunkPath = arr.resolve(chunkKey).path
 
@@ -991,14 +976,38 @@ export async function getWorker<
 
     // Check cache before building the task — cache hits skip the worker entirely
     const cacheKey = createCacheKey(arr, encodeChunkKey, chunk_coords)
+    const cacheLookupStartedAt = performance.now()
     const cachedChunk = cache.get(cacheKey)
+    const cacheLookupMs = performance.now() - cacheLookupStartedAt
 
     if (cachedChunk) {
       // Cache hit — copy cached decoded chunk into output on main thread.
       // No worker needed, no fetch, no decompression.
+      const writeStartedAt = performance.now()
       setter.set_from_chunk(out, cachedChunk as Chunk<D>, mapping)
+      const mainThreadWriteMs = performance.now() - writeStartedAt
+      logChunkTiming("[zarr chunk timing]", {
+        chunkPath,
+        chunkCoords: [...chunk_coords],
+        cacheStatus: "hit",
+        metadataReadMs: roundTiming(metadataReadMs),
+        cacheLookupMs: roundTiming(cacheLookupMs),
+        queueWaitMs: 0,
+        workerMetaInitMs: 0,
+        workerRoundTripMs: 0,
+        workerFetchMs: 0,
+        workerDecodeMs: 0,
+        workerReshapeMs: 0,
+        workerPromoteMs: 0,
+        workerTotalMs: 0,
+        fillChunkMs: 0,
+        mainThreadWriteMs: roundTiming(mainThreadWriteMs),
+        totalMs: roundTiming(performance.now() - chunkStartedAt),
+      })
       continue
     }
+
+    const enqueuedAt = performance.now()
 
     tasks.push(
       enqueueWorkerTask(
@@ -1006,7 +1015,8 @@ export async function getWorker<
         workerUrl,
         opts.signal,
         async (worker) => {
-          const fetchedChunk = await workerFetchDecode<D>(
+          const queueWaitMs = performance.now() - enqueuedAt
+          const { chunk: fetchedChunk, timings: workerTimings } = await workerFetchDecode<D>(
             worker,
             workerStore,
             chunkPath,
@@ -1017,10 +1027,12 @@ export async function getWorker<
           )
 
           let chunkToWrite: Chunk<D>
+          let fillChunkMs = 0
           if (fetchedChunk) {
             cache.set(cacheKey, fetchedChunk)
             chunkToWrite = fetchedChunk
           } else {
+            const fillStartedAt = performance.now()
             const fillChunkShape = edgeChunkShape
             const fillChunkStrides = get_strides(fillChunkShape)
             const fillChunkSize = fillChunkShape.reduce(
@@ -1037,9 +1049,30 @@ export async function getWorker<
               stride: fillChunkStrides,
             }
             cache.set(cacheKey, chunkToWrite)
+            fillChunkMs = performance.now() - fillStartedAt
           }
 
+          const writeStartedAt = performance.now()
           setter.set_from_chunk(out, chunkToWrite, mapping)
+          const mainThreadWriteMs = performance.now() - writeStartedAt
+          logChunkTiming("[zarr chunk timing]", {
+            chunkPath,
+            chunkCoords: [...chunk_coords],
+            cacheStatus: fetchedChunk ? "miss" : "missing-fill",
+            metadataReadMs: roundTiming(metadataReadMs),
+            cacheLookupMs: roundTiming(cacheLookupMs),
+            queueWaitMs: roundTiming(queueWaitMs),
+            workerMetaInitMs: roundTiming(workerTimings.metaInitMs),
+            workerRoundTripMs: roundTiming(workerTimings.roundTripMs),
+            workerFetchMs: roundTiming(workerTimings.fetchMs),
+            workerDecodeMs: roundTiming(workerTimings.decodeMs),
+            workerReshapeMs: roundTiming(workerTimings.reshapeMs),
+            workerPromoteMs: roundTiming(workerTimings.promoteMs),
+            workerTotalMs: roundTiming(workerTimings.totalWorkerMs),
+            fillChunkMs: roundTiming(fillChunkMs),
+            mainThreadWriteMs: roundTiming(mainThreadWriteMs),
+            totalMs: roundTiming(performance.now() - chunkStartedAt),
+          })
         },
         taskPriority,
       ),
@@ -1050,6 +1083,13 @@ export async function getWorker<
   if (tasks.length > 0) {
     await waitForTaskHandles(tasks, opts.signal)
   }
+
+  logChunkTiming("[zarr get timing]", {
+    selectionShape: [...indexer.shape],
+    chunkCount: tasks.length,
+    metadataReadMs: roundTiming(metadataReadMs),
+    totalMs: roundTiming(performance.now() - startedAt),
+  })
 
   // If the final shape is empty (all integer selections), return a scalar
   if (indexer.shape.length === 0) {

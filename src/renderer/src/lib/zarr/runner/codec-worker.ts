@@ -18,6 +18,10 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope
 
 type TextureCompatibleDataType = 'uint8' | 'float32'
 
+function now(): number {
+  return performance.now()
+}
+
 function fixEdgeChunkShapeStride<D extends DataType>(
   chunk: Chunk<D>,
   actualChunkShape?: number[],
@@ -343,16 +347,38 @@ ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
     }
 
     if (msg.type === 'fetch_decode') {
+      const workerStartedAt = now()
       const pipeline = getPipeline(msg.metaId)
+      const fetchStartedAt = now()
       const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
+      const fetchMs = now() - fetchStartedAt
       if (!rawBytes) {
-        ctx.postMessage({ type: 'fetch_decode_ok', id: msg.id, missing: true })
+        ctx.postMessage({
+          type: 'fetch_decode_ok',
+          id: msg.id,
+          missing: true,
+          timings: {
+            fetchMs,
+            decodeMs: 0,
+            reshapeMs: 0,
+            promoteMs: 0,
+            totalMs: now() - workerStartedAt,
+          },
+        })
         return
       }
 
+      const decodeStartedAt = now()
       let chunk = (await pipeline.decode(rawBytes)) as Chunk<DataType>
+      const decodeMs = now() - decodeStartedAt
+
+      const reshapeStartedAt = now()
       chunk = fixEdgeChunkShapeStride(chunk, msg.actualChunkShape)
+      const reshapeMs = now() - reshapeStartedAt
+
+      const promoteStartedAt = now()
       const promoted = promoteChunkForTexture(chunk)
+      const promoteMs = now() - promoteStartedAt
 
       const dataView = promoted.chunk.data as unknown as {
         buffer: ArrayBuffer
@@ -375,6 +401,13 @@ ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
           data: transferBuffer,
           shape: promoted.chunk.shape,
           stride: promoted.chunk.stride,
+          timings: {
+            fetchMs,
+            decodeMs,
+            reshapeMs,
+            promoteMs,
+            totalMs: now() - workerStartedAt,
+          },
         },
         [transferBuffer],
       )

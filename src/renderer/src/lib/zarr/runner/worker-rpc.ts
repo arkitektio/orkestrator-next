@@ -9,6 +9,21 @@ import type { S3FetchConfig, SerializedRequestInit } from './s3-request.js'
 
 type TextureCompatibleDataType = 'uint8' | 'float32'
 
+export interface WorkerDecodeTimings {
+  metaInitMs: number
+  roundTripMs: number
+  fetchMs: number
+  decodeMs: number
+  reshapeMs: number
+  promoteMs: number
+  totalWorkerMs: number
+}
+
+export interface WorkerFetchDecodeResult<D extends DataType> {
+  chunk: Chunk<D> | undefined
+  timings: WorkerDecodeTimings
+}
+
 function createPromotedArray<D extends DataType>(
   promotedType: TextureCompatibleDataType | undefined,
   buffer: ArrayBuffer,
@@ -134,15 +149,17 @@ let nextRequestId = 0
 async function ensureMeta(
   dispatcher: WorkerDispatcher,
   metaId: number,
-): Promise<void> {
-  if (dispatcher.hasMeta(metaId)) return
+): Promise<number> {
+  if (dispatcher.hasMeta(metaId)) return 0
   const meta = metaIdToMeta.get(metaId)
   if (!meta) {
     throw new Error(`No metadata registered for metaId ${metaId}`)
   }
   const id = nextRequestId++
+  const startedAt = performance.now()
   await dispatcher.send(id, { type: 'init', id, metaId, meta })
   dispatcher.markMeta(metaId)
+  return performance.now() - startedAt
 }
 
 export async function workerFetchDecode<D extends DataType>(
@@ -153,11 +170,12 @@ export async function workerFetchDecode<D extends DataType>(
   meta: CodecChunkMeta,
   requestInit?: SerializedRequestInit,
   actualChunkShape?: number[],
-): Promise<Chunk<D> | undefined> {
+): Promise<WorkerFetchDecodeResult<D>> {
   const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
+  const metaInitMs = await ensureMeta(dispatcher, metaId)
 
   const id = nextRequestId++
+  const roundTripStartedAt = performance.now()
   const response = await dispatcher.send(id, {
     type: 'fetch_decode' as const,
     id,
@@ -172,10 +190,30 @@ export async function workerFetchDecode<D extends DataType>(
     data?: ArrayBuffer
     shape?: number[]
     stride?: number[]
+    timings?: {
+      fetchMs?: number
+      decodeMs?: number
+      reshapeMs?: number
+      promoteMs?: number
+      totalMs?: number
+    }
+  }
+
+  const timings: WorkerDecodeTimings = {
+    metaInitMs,
+    roundTripMs: performance.now() - roundTripStartedAt,
+    fetchMs: response.timings?.fetchMs ?? 0,
+    decodeMs: response.timings?.decodeMs ?? 0,
+    reshapeMs: response.timings?.reshapeMs ?? 0,
+    promoteMs: response.timings?.promoteMs ?? 0,
+    totalWorkerMs: response.timings?.totalMs ?? 0,
   }
 
   if (response.missing) {
-    return undefined
+    return {
+      chunk: undefined,
+      timings,
+    }
   }
 
   const data = createPromotedArray<D>(
@@ -183,7 +221,10 @@ export async function workerFetchDecode<D extends DataType>(
     response.data!,
     meta,
   )
-  return { data, shape: response.shape!, stride: response.stride! }
+  return {
+    chunk: { data, shape: response.shape!, stride: response.stride! },
+    timings,
+  }
 }
 
 export async function workerFetchExists(

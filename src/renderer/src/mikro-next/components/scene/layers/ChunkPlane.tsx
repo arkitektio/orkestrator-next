@@ -106,16 +106,21 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
     const abortController = new AbortController();
     const loadData = async () => {
+      const chunkLoadStartedAt = performance.now();
       try {
+        const openStartedAt = performance.now();
         const arr = await open.v3(chunk.store, { kind: "array" });
+        const openMs = performance.now() - openStartedAt;
         if (abortController.signal.aborted) return;
 
+        const chunkReadStartedAt = performance.now();
         const chunkData = await getChunkWorker(arr, chunk.chunkCoords, {
           pool: workerPool,
           priority: chunk.level,
           signal: abortController.signal,
           useSharedArrayBuffer: true,
         });
+        const chunkReadMs = performance.now() - chunkReadStartedAt;
 
 
         if (abortController.signal.aborted || !chunkData) return;
@@ -130,8 +135,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
+        const texturePrepStartedAt = performance.now();
         const { data, type, dataScale } = getTextureConfig(chunkData.data);
+        const textureConfigMs = performance.now() - texturePrepStartedAt;
 
+        const textureCreateStartedAt = performance.now();
         const tex = new THREE.Data3DTexture(data, texWidth, texHeight, texDepth);
         tex.format = THREE.RedFormat;
         tex.type = type;
@@ -142,6 +150,19 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         tex.wrapR = THREE.ClampToEdgeWrapping;
         tex.flipY = false;
         tex.needsUpdate = true;
+        const textureCreateMs = performance.now() - textureCreateStartedAt;
+
+        console.log('[chunk plane timing]', {
+          chunkKey: chunk.chunkKey,
+          chunkCoords: [...chunk.chunkCoords],
+          openArrayMs: Number(openMs.toFixed(2)),
+          getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
+          textureConfigMs: Number(textureConfigMs.toFixed(2)),
+          textureCreateMs: Number(textureCreateMs.toFixed(2)),
+          totalMs: Number((performance.now() - chunkLoadStartedAt).toFixed(2)),
+          dataType: chunkData.data?.constructor?.name ?? typeof chunkData.data,
+          shape: [...rawShape],
+        });
 
         setDataScale(dataScale);
         setTexture(tex);

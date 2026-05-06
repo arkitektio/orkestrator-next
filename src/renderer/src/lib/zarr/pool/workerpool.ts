@@ -1,161 +1,121 @@
 import type {
   WorkerPoolTaskDescriptor,
+  WorkerPoolTaskHandle,
   WorkerPoolTaskInput,
   WorkerPoolTaskOptions,
-  WorkerPoolTask,
-  WorkerPoolProgressCallback,
-  WorkerPoolRunTasksResult,
-  RunInfo,
 } from './types'
 
-type QueuedTask<T> = {
-  infoIndex: number
-  resultIndex: number
-  task: WorkerPoolTask<T>
-  priority: number
+type QueuedTask<T> = WorkerPoolTaskDescriptor<T> & {
+  id: number
   sequence: number
+  started: boolean
+  settled: boolean
+  canceled: boolean
+  resolve: (result: T) => void
+  reject: (error: unknown) => void
 }
 
-/**
- * A pool of Web Workers that schedules tasks with bounded concurrency.
- *
- * Provides two usage patterns:
- *
- * 1. **ChunkQueue interface** — `add()` to enqueue individual tasks, then
- *    `await onIdle()` to wait for all of them to complete.
- *
- * 2. **Batch interface** — `runTasks()` to submit an array of tasks at once,
- *    with optional progress reporting and cancellation support.
- *
- * Ported from the itk-wasm `WebWorkerPool` implementation.
- */
+function createCanceledError(): Error {
+  if (typeof DOMException !== 'undefined') {
+    return new DOMException('Aborted', 'AbortError')
+  }
+
+  const error = new Error('Aborted')
+  error.name = 'AbortError'
+  return error
+}
+
 export class WorkerPool {
-  /** Available (idle) workers. Uses LIFO (push/pop) for warm reuse. */
   workerQueue: Array<Worker | null>
 
-  /** Bookkeeping for each `runTasks` / `onIdle` invocation. */
-  private runInfo: Array<RunInfo<unknown>>
-
-  /** Globally scheduled tasks across all active runs. */
   private taskQueue: Array<QueuedTask<unknown>>
 
-  /**
-   * Accumulated tasks from `add()` calls, drained by the next `onIdle()`.
-   * @internal
-   */
-  private pendingTasks: Array<WorkerPoolTaskDescriptor<unknown>>
+  private tasks: Map<number, QueuedTask<unknown>>
+
+  private nextTaskId: number
 
   private nextSequence: number
 
-  /**
-   * @param poolSize - Maximum number of concurrent web workers.
-   */
   constructor(poolSize: number) {
     this.workerQueue = new Array<Worker | null>(poolSize)
     this.workerQueue.fill(null)
-    this.runInfo = []
-    this.pendingTasks = []
     this.taskQueue = []
+    this.tasks = new Map()
+    this.nextTaskId = 0
     this.nextSequence = 0
   }
 
-  // ---------------------------------------------------------------------------
-  // ChunkQueue-compatible interface
-  // ---------------------------------------------------------------------------
+  enqueue<T>(
+    taskInput: WorkerPoolTaskInput<T>,
+    options?: WorkerPoolTaskOptions,
+  ): WorkerPoolTaskHandle<T> {
+    const descriptor = this.normalizeTaskInput(taskInput, options)
+    const id = this.nextTaskId++
 
-  /**
-   * Enqueue a single task for execution.
-   *
-   * The provided function receives an available `Worker` (or `null` when a new
-   * worker should be created) and must return `{ worker, result }` so the pool
-   * can recycle the worker.
-   *
-   * Tasks are not started until {@link onIdle} is called.
-   *
-   * @param fn - Task function.
-   */
-  add<T>(fn: WorkerPoolTask<T>, options?: WorkerPoolTaskOptions): void
-  add<T>(taskInput: WorkerPoolTaskInput<T>, options?: WorkerPoolTaskOptions): void {
-    this.pendingTasks.push(
-      this.normalizeTaskInput(taskInput, options) as WorkerPoolTaskDescriptor<unknown>,
-    )
-  }
+    let resolve!: (result: T) => void
+    let reject!: (error: unknown) => void
+    const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+      resolve = resolvePromise
+      reject = rejectPromise
+    })
 
-  /**
-   * Execute all tasks previously enqueued via {@link add} and wait for them
-   * to complete.
-   *
-   * @returns An array of results in the same order tasks were added.
-   */
-  async onIdle<T>(): Promise<T[]> {
-    const tasks = this.pendingTasks.splice(0)
-    if (tasks.length === 0) {
-      return []
-    }
-    const { promise } = this.runTasks<unknown>(tasks as Array<WorkerPoolTaskInput<unknown>>)
-    return promise as Promise<T[]>
-  }
-
-  // ---------------------------------------------------------------------------
-  // Batch interface (itk-wasm style)
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Submit an array of tasks for execution.
-   *
-   * @param taskFns          - Array of task functions.
-   * @param progressCallback - Optional callback invoked after each task
-   *                           completes.
-   * @returns An object with a `promise` that resolves with ordered results and
-   *          a `runId` for cancellation.
-   */
-  runTasks<T>(
-    taskFns: Array<WorkerPoolTaskInput<T>>,
-    progressCallback: WorkerPoolProgressCallback | null = null
-  ): WorkerPoolRunTasksResult<T> {
-    const info: RunInfo<T> = {
-      results: [],
-      totalTasks: taskFns.length,
-      queuedTasks: taskFns.length,
-      runningWorkers: 0,
-      index: 0,
-      completedTasks: 0,
-      progressCallback,
-      canceled: false,
+    const queuedTask: QueuedTask<T> = {
+      ...descriptor,
+      id,
+      sequence: this.nextSequence++,
+      started: false,
       settled: false,
+      canceled: false,
+      resolve,
+      reject,
     }
-    this.runInfo.push(info as RunInfo<unknown>)
-    info.index = this.runInfo.length - 1
+
+    this.tasks.set(id, queuedTask as QueuedTask<unknown>)
+    this.insertTask(queuedTask as QueuedTask<unknown>)
+    this.pumpQueue()
 
     return {
-      promise: new Promise<T[]>((resolve, reject) => {
-        info.resolve = resolve
-        info.reject = reject
-
-        info.results = new Array<T>(taskFns.length)
-        info.completedTasks = 0
-        if (taskFns.length === 0) {
-          info.settled = true
-          resolve([])
-          this.clearTask(info.index)
-          return
-        }
-
-        taskFns.forEach((taskInput, index) => {
-          this.enqueueTask<T>(info.index, index, taskInput)
-        })
-
-        this.pumpQueue()
-      }),
-      runId: info.index,
+      id,
+      promise,
+      cancel: () => this.cancel(id),
+      updatePriority: (priority) => this.updatePriority(id, priority),
     }
   }
 
-  /**
-   * Terminate all idle workers in the pool. Workers currently executing tasks
-   * are not affected — they will be replaced with `null` slots once they
-   * complete.
-   */
+  cancel(taskId: number): boolean {
+    const task = this.tasks.get(taskId)
+    if (!task || task.settled) {
+      return false
+    }
+
+    task.canceled = true
+
+    if (!task.started) {
+      this.removeQueuedTask(taskId)
+      this.rejectTask(task, createCanceledError())
+      this.pumpQueue()
+    }
+
+    return true
+  }
+
+  updatePriority(taskId: number, priority: number): boolean {
+    const task = this.tasks.get(taskId)
+    if (!task || task.settled || task.started) {
+      return false
+    }
+
+    const removed = this.removeQueuedTask(taskId)
+    if (!removed) {
+      return false
+    }
+
+    task.priority = priority
+    this.insertTask(task)
+    this.pumpQueue()
+    return true
+  }
+
   terminateWorkers(): void {
     for (let i = 0; i < this.workerQueue.length; i++) {
       const worker = this.workerQueue[i]
@@ -166,125 +126,40 @@ export class WorkerPool {
     }
   }
 
-  /**
-   * Cancel a pending `runTasks` batch. The returned promise will reject with
-   * `'Remaining tasks canceled'`.
-   *
-   * @param runId - The `runId` returned by {@link runTasks}.
-   */
-  cancel(runId: number): void {
-    const info = this.runInfo[runId]
-    if (info != null && !info.settled) {
-      info.canceled = true
-      this.removeQueuedTasks(runId)
-      this.settleRun(runId)
-    }
-  }
-
-  updatePriority(runId: number, resultIndex: number, priority: number): boolean {
-    const queuedIndex = this.taskQueue.findIndex(
-      (task) => task.infoIndex === runId && task.resultIndex === resultIndex,
-    )
-
-    if (queuedIndex === -1) {
-      return false
-    }
-
-    const [queuedTask] = this.taskQueue.splice(queuedIndex, 1)
-    queuedTask.priority = priority
-    this.insertTask(queuedTask)
-    return true
-  }
-
-  // ---------------------------------------------------------------------------
-  // Internal scheduling — ported from itk-wasm
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Core scheduler. Three branches:
-   *
-   * 1. **Worker available** — pop it, run the task, recycle the worker on
-   *    completion, then chain-schedule the next queued task.
-   * 2. **No worker, but work in progress** — push onto the overflow queue;
-   *    a completing worker will pick it up.
-   * 3. **No worker, nothing in progress** — retry after a short delay (handles
-   *    a race when multiple concurrent `runTasks` calls compete for workers).
-   *
-   * @internal
-   */
-  private enqueueTask<T>(
-    infoIndex: number,
-    resultIndex: number,
-    taskInput: WorkerPoolTaskInput<T>,
-  ): void {
-    const descriptor = this.normalizeTaskInput(taskInput)
-    this.insertTask({
-      infoIndex,
-      resultIndex,
-      task: descriptor.task,
-      priority: descriptor.priority ?? 0,
-      sequence: this.nextSequence++,
-    })
-  }
-
   private pumpQueue(): void {
     while (this.workerQueue.length > 0 && this.taskQueue.length > 0) {
       const queuedTask = this.taskQueue.shift()!
-      const info = this.runInfo[queuedTask.infoIndex]
 
-      if (info == null || info.settled) {
+      if (queuedTask.settled) {
         continue
       }
 
-      if (info.canceled === true) {
-        info.queuedTasks = Math.max(0, info.queuedTasks - 1)
-        this.settleRun(queuedTask.infoIndex)
+      if (queuedTask.canceled) {
+        this.rejectTask(queuedTask, createCanceledError())
         continue
       }
 
-      const worker = this.workerQueue.pop() as Worker | null
-      info.queuedTasks = Math.max(0, info.queuedTasks - 1)
-      info.runningWorkers++
+      const worker = this.workerQueue.pop() ?? null
+      queuedTask.started = true
 
-      queuedTask
-        .task(worker)
+      queuedTask.task(worker)
         .then(({ worker: returnedWorker, result }) => {
-          this.workerQueue.push(returnedWorker)
+          this.workerQueue.push(returnedWorker ?? null)
 
-          const activeInfo = this.runInfo[queuedTask.infoIndex]
-          if (activeInfo != null && !activeInfo.settled) {
-            activeInfo.runningWorkers--
-
-            if (activeInfo.canceled !== true) {
-              ;(activeInfo.results as Array<unknown>)[queuedTask.resultIndex] = result
-              activeInfo.completedTasks++
-
-              if (activeInfo.progressCallback != null) {
-                activeInfo.progressCallback(
-                  activeInfo.completedTasks,
-                  activeInfo.totalTasks,
-                )
-              }
-            }
-
-            this.settleRun(queuedTask.infoIndex)
+          if (queuedTask.canceled) {
+            this.rejectTask(queuedTask, createCanceledError())
+          } else {
+            this.resolveTask(queuedTask, result)
           }
 
           this.pumpQueue()
         })
         .catch((error: unknown) => {
-          const failedInfo = this.runInfo[queuedTask.infoIndex]
-
-          if (failedInfo != null && !failedInfo.settled) {
-            failedInfo.runningWorkers--
-            failedInfo.reject!(error)
-            this.clearTask(failedInfo.index)
-          }
-
-          if (worker != null) {
-            worker.terminate()
-          }
           this.workerQueue.push(null)
+          this.rejectTask(
+            queuedTask,
+            queuedTask.canceled ? createCanceledError() : error,
+          )
           this.pumpQueue()
         })
     }
@@ -303,8 +178,8 @@ export class WorkerPool {
 
   private insertTask(task: QueuedTask<unknown>): void {
     const insertionIndex = this.taskQueue.findIndex((queuedTask) => {
-      if (queuedTask.priority !== task.priority) {
-        return queuedTask.priority < task.priority
+      if ((queuedTask.priority ?? 0) !== (task.priority ?? 0)) {
+        return (queuedTask.priority ?? 0) < (task.priority ?? 0)
       }
 
       return queuedTask.sequence > task.sequence
@@ -318,63 +193,34 @@ export class WorkerPool {
     this.taskQueue.splice(insertionIndex, 0, task)
   }
 
-  private removeQueuedTasks(runId: number): void {
-    let removedTasks = 0
-    this.taskQueue = this.taskQueue.filter((task) => {
-      const shouldRemove = task.infoIndex === runId
-      if (shouldRemove) {
-        removedTasks++
-      }
-      return !shouldRemove
-    })
-
-    const info = this.runInfo[runId]
-    if (info != null) {
-      info.queuedTasks = Math.max(0, info.queuedTasks - removedTasks)
+  private removeQueuedTask(taskId: number): boolean {
+    const index = this.taskQueue.findIndex((task) => task.id === taskId)
+    if (index === -1) {
+      return false
     }
+
+    this.taskQueue.splice(index, 1)
+    return true
   }
 
-  private settleRun(runId: number): void {
-    const info = this.runInfo[runId]
-
-    if (info == null || info.settled) {
+  private resolveTask<T>(task: QueuedTask<T>, result: T): void {
+    if (task.settled) {
       return
     }
 
-    if (info.canceled === true) {
-      if (info.runningWorkers === 0 && info.queuedTasks === 0) {
-        info.settled = true
-        info.reject!('Remaining tasks canceled')
-        this.clearTask(runId)
-      }
+    task.settled = true
+    this.tasks.delete(task.id)
+    task.resolve(result)
+  }
+
+  private rejectTask(task: QueuedTask<unknown>, error: unknown): void {
+    if (task.settled) {
       return
     }
 
-    if (info.completedTasks === info.totalTasks) {
-      info.settled = true
-      info.resolve!(info.results)
-      this.clearTask(runId)
-    }
-  }
-
-  /**
-   * Clean up a completed/canceled run's bookkeeping without removing it from
-   * the array (indices are used as run IDs).
-   * @internal
-   */
-  private clearTask(clearIndex: number): void {
-    const info = this.runInfo[clearIndex]
-    this.removeQueuedTasks(clearIndex)
-    info.results = []
-    info.totalTasks = 0
-    info.queuedTasks = 0
-    info.progressCallback = null
-    info.canceled = null
-    info.runningWorkers = 0
-    info.completedTasks = 0
-    info.settled = true
-    info.reject = () => {}
-    info.resolve = () => {}
+    task.settled = true
+    this.tasks.delete(task.id)
+    task.reject(error)
   }
 }
 

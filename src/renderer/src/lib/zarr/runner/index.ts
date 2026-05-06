@@ -1,9 +1,8 @@
 /**
- * @fideus-labs/fizarrita — Worker-pool-accelerated get/set for zarrita.
+ * @fideus-labs/fizarrita — Worker-pool-accelerated chunk reads for zarrita.
  *
- * Provides `getWorker` and `setWorker` as drop-in replacements for zarrita's
- * `get` and `set` that offload codec encode/decode to Web Workers via a
- * WorkerPool with bounded concurrency.
+ * Provides worker-backed chunk reads that offload fetch and decode to a
+ * persistent WorkerPool queue with bounded concurrency.
  */
 
 export type { ArrayMetadata } from "./get-worker"
@@ -43,19 +42,15 @@ export {
   get_ctr,
   get_strides,
 } from "./internals/util.js"
-export { setWorker } from "./set-worker.js"
 export type {
   ChunkCache,
   CodecChunkMeta,
   GetWorkerOptions,
-  Indices,
-  Projection,
-  SetWorkerOptions,
 } from "./types.js"
 // Worker RPC helpers — for composing custom workers
 export {
   getMetaId,
-  workerDecode,
-  workerDecodeInto,
-  workerEncode,
+  workerFetchDecode,
+  workerFetchExists,
+  workerFetchProbeDecompressedSize,
 } from "./worker-rpc.js"

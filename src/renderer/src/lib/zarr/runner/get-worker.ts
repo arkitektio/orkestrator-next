@@ -6,11 +6,10 @@
  * them to a worker for decoding, then copies the decoded chunk into the
  * output array on the main thread.
  *
- * Uses WorkerPool.runTasks() for bounded-concurrency scheduling.
+ * Uses a persistent WorkerPool queue for bounded-concurrency scheduling.
  */
 
-import type { WorkerPoolTask } from "../pool/types"
-import type { WorkerPoolTaskInput } from "../pool/types"
+import type { WorkerPoolTaskHandle, WorkerPoolTaskInput } from "../pool/types"
 import type {
   Chunk,
   DataType,
@@ -20,6 +19,7 @@ import type {
   Array as ZarrArray,
 } from "zarrita"
 
+import { LRUCache } from "@/mikro-next/components/scene/zarr/caches/in_memory_lru"
 import { create_codec_pipeline } from "./internals/codec-pipeline"
 import { BasicIndexer, slice } from "./internals/indexer"
 import { setter } from "./internals/setter"
@@ -31,7 +31,7 @@ import {
   get_strides,
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
-import { disposeWorker, getMetaId, workerDecode, workerDecodeInto, workerFetchDecode, workerFetchDecodeInto, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
+import { disposeWorker, getMetaId, workerFetchDecode, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
 import { isWorkerFetchCapableStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type"
 import { serializeRequestInit } from "./s3-request"
 
@@ -144,17 +144,27 @@ async function abortable<T>(
   })
 }
 
-async function runPoolTasks<T>(
-  pool: GetWorkerOptions["pool"],
-  tasks: Array<WorkerPoolTaskInput<T>>,
+async function waitForTaskHandles<T>(
+  handles: Array<WorkerPoolTaskHandle<T>>,
   signal?: AbortSignal,
 ): Promise<T[]> {
   throwIfAborted(signal)
 
-  const { promise, runId } = pool.runTasks(tasks)
-  return abortable(signal, () => promise, () => {
-    pool.cancel(runId)
+  return abortable(signal, () => Promise.all(handles.map((handle) => handle.promise)), () => {
+    handles.forEach((handle) => {
+      handle.cancel()
+    })
   })
+}
+
+function enqueueWorkerTask<T>(
+  pool: GetWorkerOptions["pool"],
+  workerUrl: string | URL | undefined,
+  signal: AbortSignal | undefined,
+  task: (worker: Worker) => Promise<T>,
+  priority?: number,
+): WorkerPoolTaskHandle<T> {
+  return pool.enqueue(createWorkerTask(workerUrl, signal, task, priority))
 }
 
 function createWorkerTask<T>(
@@ -179,18 +189,36 @@ function createWorkerTask<T>(
           disposeWorker(worker, createAbortError())
         },
       )
+        .catch((error) => {
+          if (!(error instanceof Error && error.name === "AbortError")) {
+            disposeWorker(
+              worker,
+              error instanceof Error ? error : new Error(String(error)),
+            )
+          }
+          throw error
+        })
     },
   }
+}
+
+function getTextureOutputConstructor(dataType: DataType):
+  | Uint8ArrayConstructor
+  | Float32ArrayConstructor {
+  return dataType === "uint8" ? Uint8Array : Float32Array
 }
 
 // ---------------------------------------------------------------------------
 // Chunk cache helpers — store-scoped key generation
 // ---------------------------------------------------------------------------
 
-/** No-op cache used when the caller doesn't provide one. */
-const NULL_CACHE: ChunkCache = {
-  get: () => undefined,
-  set: () => {},
+const globalChunkCache = new LRUCache<string, Chunk<DataType>>(500)
+
+const DEFAULT_CHUNK_CACHE: ChunkCache = {
+  get: (key) => globalChunkCache.get(key) as Chunk<DataType> | undefined,
+  set: (key, value) => {
+    globalChunkCache.set(key, value as Chunk<DataType>)
+  },
 }
 
 /** WeakMap to assign unique IDs to store instances, preventing cache collisions. */
@@ -634,21 +662,20 @@ async function validateCandidateChunkShape<
   try {
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
       const storeConfig = arr.store.getWorkerFetchConfig()
-      const [exists] = await runPoolTasks(
+      const handle = enqueueWorkerTask(
         workerOpts.pool,
-        [
-          createWorkerTask(
-            workerOpts.workerUrl,
-            workerOpts.signal,
-            (worker) =>
-              workerFetchExists(
-                worker,
-                storeConfig,
-                probePath,
-                serializeRequestInit(storeOpts as RequestInit | undefined),
-              ),
+        workerOpts.workerUrl,
+        workerOpts.signal,
+        (worker) =>
+          workerFetchExists(
+            worker,
+            storeConfig,
+            probePath,
+            serializeRequestInit(storeOpts as RequestInit | undefined),
           ),
-        ],
+      )
+      const [exists] = await waitForTaskHandles(
+        [handle],
         workerOpts.signal,
       )
       return !exists
@@ -707,24 +734,23 @@ export async function probeActualChunkShape<
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
       const storeConfig = arr.store.getWorkerFetchConfig()
       const metaId = getMetaId(codecMeta)
-      ;[decompressedBytes] = await runPoolTasks(
+      const handle = enqueueWorkerTask(
         workerOpts.pool,
-        [
-          createWorkerTask(
-            workerOpts.workerUrl,
-            workerOpts.signal,
-            (worker) =>
-              workerFetchProbeDecompressedSize(
-                worker,
-                storeConfig,
-                chunkPath,
-                metaId,
-                codecMeta,
-                bytesPerElement,
-                serializeRequestInit(storeOpts as RequestInit | undefined),
-              ),
+        workerOpts.workerUrl,
+        workerOpts.signal,
+        (worker) =>
+          workerFetchProbeDecompressedSize(
+            worker,
+            storeConfig,
+            chunkPath,
+            metaId,
+            codecMeta,
+            bytesPerElement,
+            serializeRequestInit(storeOpts as RequestInit | undefined),
           ),
-        ],
+      )
+      ;[decompressedBytes] = await waitForTaskHandles(
+        [handle],
         workerOpts.signal,
       )
     } else {
@@ -884,15 +910,17 @@ export async function getWorker<
       : Scalar<D>
 > {
   const { pool, workerUrl } = opts
-  const useShared = !!opts.useSharedArrayBuffer
-  const cache = opts.cache ?? NULL_CACHE
+  const useShared = opts.useSharedArrayBuffer !== false
+  const cache = opts.cache ?? DEFAULT_CHUNK_CACHE
   const storeOptsWithSignal = withAbortSignal(opts.opts, opts.signal)
 
   throwIfAborted(opts.signal)
 
-  if (useShared) {
-    assertSharedArrayBufferAvailable()
+  if (!useShared) {
+    throw new Error("Worker chunk loading requires SharedArrayBuffer output")
   }
+
+  assertSharedArrayBufferAvailable()
 
   // Read metadata from store — single read, single parse
   const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
@@ -920,6 +948,9 @@ export async function getWorker<
       ? { ...codecMeta, chunk_shape: actualChunkShape }
       : codecMeta
 
+  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
+  const outputBytesPerElement = OutputCtr.BYTES_PER_ELEMENT
+
   // Get stable metaId for the codec metadata (used by worker-rpc meta-init)
   const metaId = getMetaId(correctedCodecMeta)
 
@@ -932,16 +963,20 @@ export async function getWorker<
 
   // Allocate output — backed by SharedArrayBuffer when requested
   const size = indexer.shape.reduce((a: number, b: number) => a * b, 1)
-  const buffer = createBuffer(size * bytesPerElement, useShared)
-  const data = new Ctr(buffer as ArrayBuffer, 0, size)
+  const buffer = createBuffer(size * outputBytesPerElement, useShared)
+  const data = new OutputCtr(buffer as ArrayBufferLike, 0, size)
   const outStride = get_strides(indexer.shape)
   const out = setter.prepare(data, indexer.shape, outStride) as Chunk<D>
 
   // Pre-compute chunk invariants (hoisted out of loop)
   const chunkShape = actualChunkShape
+  if (!isWorkerFetchCapableStore(arr.store)) {
+    throw new Error("Worker chunk loading requires a worker-fetch-capable store")
+  }
+  const workerStore = arr.store.getWorkerFetchConfig()
 
   // Build tasks — one per chunk
-  const tasks: WorkerPoolTaskInput<void>[] = []
+  const tasks: Array<WorkerPoolTaskHandle<void>> = []
   const taskPriority = opts.priority ?? 0
 
   for (const { chunk_coords, mapping } of indexer) {
@@ -965,159 +1000,55 @@ export async function getWorker<
       continue
     }
 
-    tasks.push(createWorkerTask(
-      workerUrl,
-      opts.signal,
-      async (worker) => {
-        const workerStore = isWorkerFetchCapableStore(arr.store)
-          ? arr.store.getWorkerFetchConfig()
-          : null
-
-        if (workerStore && useShared && !opts.cache) {
-          const hasChunk = await workerFetchDecodeInto(
+    tasks.push(
+      enqueueWorkerTask(
+        pool,
+        workerUrl,
+        opts.signal,
+        async (worker) => {
+          const fetchedChunk = await workerFetchDecode<D>(
             worker,
             workerStore,
             chunkPath,
             metaId,
-            buffer as SharedArrayBuffer,
-            size * bytesPerElement,
-            outStride,
-            mapping,
-            bytesPerElement,
+            correctedCodecMeta,
             serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
             isEdgeChunk ? edgeChunkShape : undefined,
           )
 
-          if (!hasChunk) {
+          let chunkToWrite: Chunk<D>
+          if (fetchedChunk) {
+            cache.set(cacheKey, fetchedChunk)
+            chunkToWrite = fetchedChunk
+          } else {
             const fillChunkShape = edgeChunkShape
             const fillChunkStrides = get_strides(fillChunkShape)
             const fillChunkSize = fillChunkShape.reduce(
               (a: number, b: number) => a * b,
               1,
             )
-            const chunkData = new Ctr(fillChunkSize)
+            const chunkData = new OutputCtr(fillChunkSize)
             if (fillValue != null) {
-              // @ts-expect-error: fill_value type is union
-              chunkData.fill(fillValue)
+              chunkData.fill(Number(fillValue))
             }
-            const chunk: Chunk<D> = {
+            chunkToWrite = {
               data: chunkData as Chunk<D>["data"],
               shape: fillChunkShape,
               stride: fillChunkStrides,
             }
-            setter.set_from_chunk(out, chunk, mapping)
+            cache.set(cacheKey, chunkToWrite)
           }
-        } else {
-          const rawChunk = workerStore
-            ? await workerFetchDecode<D>(
-                worker,
-                workerStore,
-                chunkPath,
-                metaId,
-                correctedCodecMeta,
-                serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
-                isEdgeChunk ? edgeChunkShape : undefined,
-              )
-            : null
 
-          if (rawChunk) {
-            cache.set(cacheKey, rawChunk)
-            setter.set_from_chunk(out, rawChunk, mapping)
-          } else {
-            const rawBytes = workerStore
-              ? undefined
-              : await arr.store.get(chunkPath, storeOptsWithSignal)
-
-        if (!rawBytes) {
-          // Missing chunk — fill value, no worker needed
-          const fillChunkShape = edgeChunkShape
-          const fillChunkStrides = get_strides(fillChunkShape)
-          const fillChunkSize = fillChunkShape.reduce(
-            (a: number, b: number) => a * b,
-            1,
-          )
-          const chunkData = new Ctr(fillChunkSize)
-          if (fillValue != null) {
-            // @ts-expect-error: fill_value type is union
-            chunkData.fill(fillValue)
-          }
-          const chunk: Chunk<D> = {
-            data: chunkData as Chunk<D>["data"],
-            shape: fillChunkShape,
-            stride: fillChunkStrides,
-          }
-          // Cache the fill-value chunk
-          cache.set(cacheKey, chunk)
-          // Copy fill-value chunk into output on main thread
-          setter.set_from_chunk(out, chunk, mapping)
-        } else if (useShared && !opts.cache) {
-          // SAB path (no cache): worker decodes AND writes directly into the
-          // SharedArrayBuffer output — no transfer back, no main-thread copy.
-          try {
-            await workerDecodeInto(
-              worker,
-              rawBytes,
-              metaId,
-              correctedCodecMeta,
-              buffer as SharedArrayBuffer,
-              size * bytesPerElement,
-              outStride,
-              mapping,
-              bytesPerElement,
-              isEdgeChunk ? edgeChunkShape : undefined,
-            )
-          } catch (error) {
-            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
-            throw error
-          }
-        } else if (useShared && opts.cache) {
-          // SAB path with cache: use workerDecode to get a standalone chunk
-          // so we can cache it, then copy into the SAB output. The small
-          // overhead of transfer + copy on first access is repaid by
-          // subsequent cache hits that skip the worker entirely.
-          let chunk: Chunk<D>
-          try {
-            chunk = await workerDecode<D>(
-              worker,
-              rawBytes,
-              metaId,
-              correctedCodecMeta,
-              isEdgeChunk ? edgeChunkShape : undefined,
-            )
-          } catch (error) {
-            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
-            throw error
-          }
-          cache.set(cacheKey, chunk)
-          setter.set_from_chunk(out, chunk, mapping)
-        } else {
-          // Standard path: worker decodes, transfers back, main thread copies
-          let chunk: Chunk<D>
-          try {
-            chunk = await workerDecode<D>(
-              worker,
-              rawBytes,
-              metaId,
-              correctedCodecMeta,
-              isEdgeChunk ? edgeChunkShape : undefined,
-            )
-          } catch (error) {
-            disposeWorker(worker, error instanceof Error ? error : new Error(String(error)))
-            throw error
-          }
-          cache.set(cacheKey, chunk)
-          setter.set_from_chunk(out, chunk, mapping)
-        }
-          }
-        }
-      },
-      taskPriority,
-    ))
+          setter.set_from_chunk(out, chunkToWrite, mapping)
+        },
+        taskPriority,
+      ),
+    )
   }
 
   // Execute all tasks with bounded concurrency via WorkerPool
   if (tasks.length > 0) {
-    await runPoolTasks(pool, tasks, opts.signal)
+    await waitForTaskHandles(tasks, opts.signal)
   }
 
   // If the final shape is empty (all integer selections), return a scalar

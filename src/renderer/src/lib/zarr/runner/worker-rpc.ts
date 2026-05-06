@@ -1,33 +1,41 @@
 /**
- * Main-thread helpers for communicating with the codec worker via postMessage.
- *
- * Optimizations over the naive approach:
- *   - Persistent message dispatcher: one listener per worker, routed by request ID
- *   - Meta-init protocol: codec metadata sent once per worker, referenced by ID thereafter
- *   - Zero-copy buffer transfer when the TypedArray already owns its buffer
+ * Main-thread helpers for communicating with the read-only codec worker.
  */
 
 import type { Chunk, DataType, TypedArray } from 'zarrita'
 import { get_ctr } from './internals/util.js'
-import { deserializeRequestInit, type S3FetchConfig, type SerializedRequestInit } from './s3-request.js'
-import type { CodecChunkMeta, Projection } from './types.js'
+import type { CodecChunkMeta } from './types.js'
+import type { S3FetchConfig, SerializedRequestInit } from './s3-request.js'
 
-// ---------------------------------------------------------------------------
-// Persistent message dispatcher
-// ---------------------------------------------------------------------------
+type TextureCompatibleDataType = 'uint8' | 'float32'
+
+function createPromotedArray<D extends DataType>(
+  promotedType: TextureCompatibleDataType | undefined,
+  buffer: ArrayBuffer,
+  meta: CodecChunkMeta,
+): TypedArray<D> {
+  if (promotedType === 'uint8') {
+    return new Uint8Array(buffer) as TypedArray<D>
+  }
+
+  if (promotedType === 'float32') {
+    return new Float32Array(buffer) as TypedArray<D>
+  }
+
+  const Ctr = get_ctr(meta.data_type) as unknown as {
+    new (buf: ArrayBuffer, off: number, len: number): TypedArray<D>
+    BYTES_PER_ELEMENT: number
+  }
+  return new Ctr(buffer, 0, buffer.byteLength / Ctr.BYTES_PER_ELEMENT)
+}
 
 interface PendingRequest {
   resolve: (data: unknown) => void
   reject: (err: Error) => void
 }
 
-/**
- * Per-worker dispatcher. Installs a single persistent `message` and `error`
- * listener and routes responses by request ID.
- */
 class WorkerDispatcher {
   private pending = new Map<number, PendingRequest>()
-  /** Tracks which metaIds have been sent to this worker. */
   private sentMetas = new Set<number>()
 
   constructor(private worker: Worker) {
@@ -49,15 +57,13 @@ class WorkerDispatcher {
   }
 
   private onError = (err: ErrorEvent): void => {
-    // Reject all pending requests on worker error
-    const error = new Error(err.message ?? 'Worker error')
-    this.rejectAll(error)
+    this.rejectAll(new Error(err.message ?? 'Worker error'))
   }
 
-  send(id: number, message: unknown, transfer: Transferable[]): Promise<unknown> {
+  send(id: number, message: unknown): Promise<unknown> {
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject })
-      this.worker.postMessage(message, transfer)
+      this.worker.postMessage(message)
     })
   }
 
@@ -84,16 +90,15 @@ class WorkerDispatcher {
   }
 }
 
-/** Map from Worker to its dispatcher. WeakMap so dispatchers are GC'd with workers. */
 const dispatchers = new WeakMap<Worker, WorkerDispatcher>()
 
 function getDispatcher(worker: Worker): WorkerDispatcher {
-  let d = dispatchers.get(worker)
-  if (!d) {
-    d = new WorkerDispatcher(worker)
-    dispatchers.set(worker, d)
+  let dispatcher = dispatchers.get(worker)
+  if (!dispatcher) {
+    dispatcher = new WorkerDispatcher(worker)
+    dispatchers.set(worker, dispatcher)
   }
-  return d
+  return dispatcher
 }
 
 export function disposeWorker(
@@ -109,18 +114,10 @@ export function disposeWorker(
   worker.terminate()
 }
 
-// ---------------------------------------------------------------------------
-// Meta ID registry — assigns stable IDs to unique codec metadata
-// ---------------------------------------------------------------------------
-
 let nextMetaId = 0
 const metaKeyToId = new Map<string, number>()
 const metaIdToMeta = new Map<number, CodecChunkMeta>()
 
-/**
- * Get or create a stable metaId for the given codec metadata.
- * Uses JSON.stringify as the dedup key — called once per unique array config.
- */
 export function getMetaId(meta: CodecChunkMeta): number {
   const key = JSON.stringify(meta)
   let id = metaKeyToId.get(key)
@@ -132,242 +129,20 @@ export function getMetaId(meta: CodecChunkMeta): number {
   return id
 }
 
-// ---------------------------------------------------------------------------
-// Request ID
-// ---------------------------------------------------------------------------
-
 let nextRequestId = 0
-
-// ---------------------------------------------------------------------------
-// Buffer transfer helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Prepare a buffer for zero-copy transfer.
- * If the view already owns the full buffer AND we're certain it won't be
- * reused, we can transfer directly. Otherwise, slice to get a standalone copy.
- *
- * @param ownedExclusively - set to true only when the caller created the buffer
- *   and no other code holds a reference (e.g., encode output). Store-fetched
- *   bytes must always be copied because the store may cache the buffer.
- */
-function prepareTransferBuffer(
-  buffer: ArrayBuffer,
-  byteOffset: number,
-  byteLength: number,
-  ownedExclusively: boolean,
-): ArrayBuffer {
-  if (
-    ownedExclusively &&
-    byteOffset === 0 &&
-    byteLength === buffer.byteLength
-  ) {
-    return buffer
-  }
-  return buffer.slice(byteOffset, byteOffset + byteLength)
-}
-
-// ---------------------------------------------------------------------------
-// Ensure meta is initialized on the worker
-// ---------------------------------------------------------------------------
 
 async function ensureMeta(
   dispatcher: WorkerDispatcher,
   metaId: number,
 ): Promise<void> {
   if (dispatcher.hasMeta(metaId)) return
-  const meta = metaIdToMeta.get(metaId)!
+  const meta = metaIdToMeta.get(metaId)
+  if (!meta) {
+    throw new Error(`No metadata registered for metaId ${metaId}`)
+  }
   const id = nextRequestId++
-  await dispatcher.send(id, { type: 'init', id, metaId, meta }, [])
+  await dispatcher.send(id, { type: 'init', id, metaId, meta })
   dispatcher.markMeta(metaId)
-}
-
-// ---------------------------------------------------------------------------
-// workerDecode
-// ---------------------------------------------------------------------------
-
-/**
- * Send raw bytes to a codec worker for decoding and return the decoded Chunk.
- *
- * @param actualChunkShape - The actual shape of this chunk, accounting for
- *   edge chunks that may be smaller than chunk_shape from metadata.
- */
-export async function workerDecode<D extends DataType>(
-  worker: Worker,
-  bytes: Uint8Array,
-  metaId: number,
-  meta: CodecChunkMeta,
-  actualChunkShape?: number[],
-): Promise<Chunk<D>> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  // Always copy: store-fetched bytes may be cached/shared
-  const transferBuffer = prepareTransferBuffer(
-    bytes.buffer as ArrayBuffer,
-    bytes.byteOffset,
-    bytes.byteLength,
-    false,
-  )
-
-  const response = await dispatcher.send(
-    id,
-    { type: 'decode', id, bytes: transferBuffer, metaId, actualChunkShape },
-    [transferBuffer],
-  ) as { data: ArrayBuffer; shape: number[]; stride: number[] }
-
-  // Reconstruct the TypedArray from the transferred buffer
-  const Ctr = get_ctr(meta.data_type) as unknown as {
-    new (buffer: ArrayBuffer, byteOffset: number, length: number): TypedArray<D>
-    BYTES_PER_ELEMENT: number
-  }
-  const data = new Ctr(
-    response.data,
-    0,
-    response.data.byteLength / Ctr.BYTES_PER_ELEMENT,
-  )
-  return { data, shape: response.shape, stride: response.stride }
-}
-
-// ---------------------------------------------------------------------------
-// workerEncode
-// ---------------------------------------------------------------------------
-
-/**
- * Send chunk data to a codec worker for encoding and return the encoded bytes.
- */
-export async function workerEncode<D extends DataType>(
-  worker: Worker,
-  data: TypedArray<D>,
-  metaId: number,
-  meta: CodecChunkMeta,
-): Promise<Uint8Array> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  const view = data as unknown as {
-    buffer: ArrayBuffer
-    byteOffset: number
-    byteLength: number
-  }
-  // Encode data is owned by us — safe to transfer without copy
-  const transferBuffer = prepareTransferBuffer(
-    view.buffer,
-    view.byteOffset,
-    view.byteLength,
-    true,
-  )
-
-  const response = await dispatcher.send(
-    id,
-    { type: 'encode', id, data: transferBuffer, metaId },
-    [transferBuffer],
-  ) as { bytes: ArrayBuffer }
-
-  return new Uint8Array(response.bytes)
-}
-
-// ---------------------------------------------------------------------------
-// workerEncodeShared — encode from SharedArrayBuffer (no transfer needed)
-// ---------------------------------------------------------------------------
-
-/**
- * Send chunk data on a SharedArrayBuffer to a codec worker for encoding.
- *
- * Unlike `workerEncode`, this does NOT transfer the data buffer (SABs cannot
- * be transferred). The worker reads directly from shared memory. The encoded
- * result is still transferred back as a regular ArrayBuffer.
- */
-export async function workerEncodeShared<D extends DataType>(
-  worker: Worker,
-  data: TypedArray<D>,
-  metaId: number,
-  meta: CodecChunkMeta,
-): Promise<Uint8Array> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  const view = data as unknown as {
-    buffer: ArrayBufferLike
-    byteOffset: number
-    byteLength: number
-  }
-  // Copy out of SAB into a regular ArrayBuffer for transfer.
-  // SharedArrayBuffer.slice() returns another SAB, so we must manually copy.
-  const copy = new ArrayBuffer(view.byteLength)
-  new Uint8Array(copy).set(
-    new Uint8Array(view.buffer as ArrayBuffer, view.byteOffset, view.byteLength),
-  )
-
-  const response = await dispatcher.send(
-    id,
-    { type: 'encode', id, data: copy, metaId },
-    [copy],
-  ) as { bytes: ArrayBuffer }
-
-  return new Uint8Array(response.bytes)
-}
-
-// ---------------------------------------------------------------------------
-// workerDecodeInto — decode and write directly into SharedArrayBuffer
-// ---------------------------------------------------------------------------
-
-/**
- * Send raw bytes to a codec worker for decoding, with the worker writing
- * the decoded data directly into a SharedArrayBuffer output.
- *
- * This eliminates the transfer-back step and the main-thread copy — the
- * worker decodes the chunk, then runs setter.set_from_chunk to write
- * directly into the shared output memory.
- *
- * Only usable when the output is backed by SharedArrayBuffer.
- */
-export async function workerDecodeInto(
-  worker: Worker,
-  bytes: Uint8Array,
-  metaId: number,
-  meta: CodecChunkMeta,
-  output: SharedArrayBuffer,
-  outputByteLength: number,
-  outputStride: number[],
-  projections: Projection[],
-  bytesPerElement: number,
-  actualChunkShape?: number[],
-): Promise<void> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  // Always copy: store-fetched bytes may be cached/shared
-  const transferBuffer = prepareTransferBuffer(
-    bytes.buffer as ArrayBuffer,
-    bytes.byteOffset,
-    bytes.byteLength,
-    false,
-  )
-
-  // SharedArrayBuffer goes in the message but NOT in the transfer list.
-  // postMessage shares SABs via structured clone automatically.
-  // Only the raw bytes ArrayBuffer is transferred (one-way, neutered on main thread).
-  await dispatcher.send(
-    id,
-    {
-      type: 'decode_into' as const,
-      id,
-      bytes: transferBuffer,
-      metaId,
-      output,
-      outputByteLength,
-      outputStride,
-      projections,
-      bytesPerElement,
-      actualChunkShape,
-    },
-    [transferBuffer],
-  )
 }
 
 export async function workerFetchDecode<D extends DataType>(
@@ -383,73 +158,32 @@ export async function workerFetchDecode<D extends DataType>(
   await ensureMeta(dispatcher, metaId)
 
   const id = nextRequestId++
-  const response = await dispatcher.send(
+  const response = await dispatcher.send(id, {
+    type: 'fetch_decode' as const,
     id,
-    {
-      type: 'fetch_decode' as const,
-      id,
-      store,
-      path,
-      metaId,
-      requestInit,
-      actualChunkShape,
-    },
-    [],
-  ) as { missing?: boolean; data?: ArrayBuffer; shape?: number[]; stride?: number[] }
+    store,
+    path,
+    metaId,
+    requestInit,
+    actualChunkShape,
+  }) as {
+    missing?: boolean
+    promotedType?: TextureCompatibleDataType
+    data?: ArrayBuffer
+    shape?: number[]
+    stride?: number[]
+  }
 
   if (response.missing) {
     return undefined
   }
 
-  const Ctr = get_ctr(meta.data_type) as unknown as {
-    new (buffer: ArrayBuffer, byteOffset: number, length: number): TypedArray<D>
-    BYTES_PER_ELEMENT: number
-  }
-  const data = new Ctr(
+  const data = createPromotedArray<D>(
+    response.promotedType,
     response.data!,
-    0,
-    response.data!.byteLength / Ctr.BYTES_PER_ELEMENT,
+    meta,
   )
   return { data, shape: response.shape!, stride: response.stride! }
-}
-
-export async function workerFetchDecodeInto(
-  worker: Worker,
-  store: S3FetchConfig,
-  path: `/${string}`,
-  metaId: number,
-  output: SharedArrayBuffer,
-  outputByteLength: number,
-  outputStride: number[],
-  projections: Projection[],
-  bytesPerElement: number,
-  requestInit?: SerializedRequestInit,
-  actualChunkShape?: number[],
-): Promise<boolean> {
-  const dispatcher = getDispatcher(worker)
-  await ensureMeta(dispatcher, metaId)
-
-  const id = nextRequestId++
-  const response = await dispatcher.send(
-    id,
-    {
-      type: 'fetch_decode_into' as const,
-      id,
-      store,
-      path,
-      metaId,
-      output,
-      outputByteLength,
-      outputStride,
-      projections,
-      bytesPerElement,
-      requestInit,
-      actualChunkShape,
-    },
-    [],
-  ) as { missing?: boolean }
-
-  return !response.missing
 }
 
 export async function workerFetchExists(
@@ -460,17 +194,13 @@ export async function workerFetchExists(
 ): Promise<boolean> {
   const dispatcher = getDispatcher(worker)
   const id = nextRequestId++
-  const response = await dispatcher.send(
+  const response = await dispatcher.send(id, {
+    type: 'fetch_exists' as const,
     id,
-    {
-      type: 'fetch_exists' as const,
-      id,
-      store,
-      path,
-      requestInit,
-    },
-    [],
-  ) as { exists: boolean }
+    store,
+    path,
+    requestInit,
+  }) as { exists: boolean }
 
   return response.exists
 }
@@ -480,7 +210,7 @@ export async function workerFetchProbeDecompressedSize(
   store: S3FetchConfig,
   path: `/${string}`,
   metaId: number,
-  meta: CodecChunkMeta,
+  _meta: CodecChunkMeta,
   bytesPerElement: number,
   requestInit?: SerializedRequestInit,
 ): Promise<number | null> {
@@ -488,19 +218,15 @@ export async function workerFetchProbeDecompressedSize(
   await ensureMeta(dispatcher, metaId)
 
   const id = nextRequestId++
-  const response = await dispatcher.send(
+  const response = await dispatcher.send(id, {
+    type: 'fetch_probe_size' as const,
     id,
-    {
-      type: 'fetch_probe_size' as const,
-      id,
-      store,
-      path,
-      metaId,
-      bytesPerElement,
-      requestInit,
-    },
-    [],
-  ) as { decompressedBytes: number | null }
+    store,
+    path,
+    metaId,
+    bytesPerElement,
+    requestInit,
+  }) as { decompressedBytes: number | null }
 
   return response.decompressedBytes
 }

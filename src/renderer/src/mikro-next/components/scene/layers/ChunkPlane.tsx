@@ -17,9 +17,7 @@ function getTextureConfig(rawData: any) {
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
   }
 
-  console.warn("Promoting TypedArray to Float32Array for strict WebGL2 compatibility.");
-  const floatData = new Float32Array(rawData);
-  return { data: floatData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+  throw new Error(`Unexpected chunk data type: ${rawData?.constructor?.name ?? typeof rawData}`);
 }
 
 // --- 1. Individual Chunk Renderer with Single Texture Lookup ---

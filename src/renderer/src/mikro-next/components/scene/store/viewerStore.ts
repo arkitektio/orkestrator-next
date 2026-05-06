@@ -3,9 +3,12 @@ import { createScopedStoreHooks } from "./createScopedStore"
 import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStore } from "../zarr/zarr_stores/type";
 import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
 import { RefObject } from "react";
+import { open, type Array as ZarrArray, type DataType } from "zarrita";
 export type StoreBuilder = (storeId: string, signal?: AbortSignal) => Promise<ZarrStore>;
 import * as THREE from 'three';
 import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables, SceneFragment } from "@/mikro-next/api/graphql";
+
+type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -42,6 +45,7 @@ interface ViewerState {
   showScaleGrid: boolean;
   worldUnitsPerPixel: number;
   storeBuilder: StoreBuilder;
+  getArray: (store: ZarrStore) => Promise<OpenedZarrArray>;
   currentZ: number;
   frustumNear: number;
   frustumFar: number;
@@ -156,7 +160,10 @@ export const createS3Builder = (scene: SceneFragment, client: MikroClient, datal
 
 
 export const createViewerStore = (storeBuilder: StoreBuilder) =>
-  createStore<ViewerState>((set, get) => ({
+  {
+    const openedArrayPromises = new WeakMap<object, Promise<OpenedZarrArray>>();
+
+    return createStore<ViewerState>((set, get) => ({
     zStart: 0,
     zEnd: 100,
     tStart: null,
@@ -202,6 +209,22 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     frustumFar: 100000,
     canvas: null,
     storeBuilder: storeBuilder,
+    getArray: (store) => {
+      const key = store as object;
+      const cached = openedArrayPromises.get(key);
+      if (cached) {
+        return cached;
+      }
+
+      const opened = open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>;
+      openedArrayPromises.set(key, opened);
+      opened.catch(() => {
+        if (openedArrayPromises.get(key) === opened) {
+          openedArrayPromises.delete(key);
+        }
+      });
+      return opened;
+    },
     setZRange: (start, end) => set({ zStart: start, zEnd: end }),
     setTRange: (start, end) => set({ tStart: start, tEnd: end }),
     setCurrentZ: (z) => set({ currentZ: z }),
@@ -262,6 +285,7 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     setShowScaleGrid: (show) => set({ showScaleGrid: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
+};
 
 const {
   StoreContext: ViewerStoreContext,

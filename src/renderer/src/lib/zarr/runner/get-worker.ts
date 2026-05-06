@@ -21,7 +21,7 @@ import type {
 
 import { LRUCache } from "@/mikro-next/components/scene/zarr/caches/in_memory_lru"
 import { create_codec_pipeline } from "./internals/codec-pipeline"
-import { BasicIndexer, slice } from "./internals/indexer"
+import { BasicIndexer } from "./internals/indexer"
 import { setter } from "./internals/setter"
 import {
   assertSharedArrayBufferAvailable,
@@ -843,21 +843,155 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   chunkCoords: number[],
   opts: GetWorkerOptions<Parameters<Store["get"]>[1]>,
 ): Promise<Chunk<D>> {
+  const startedAt = performance.now()
+  const { pool, workerUrl } = opts
+  const useShared = opts.useSharedArrayBuffer !== false
+  const cache = opts.cache ?? DEFAULT_CHUNK_CACHE
   const storeOptsWithSignal = withAbortSignal(opts.opts, opts.signal)
-  const { codecMeta, encodeChunkKey } = await readArrayMetadata(
+
+  throwIfAborted(opts.signal)
+
+  if (!useShared) {
+    throw new Error("Worker chunk loading requires SharedArrayBuffer output")
+  }
+
+  assertSharedArrayBufferAvailable()
+
+  const metadataReadStartedAt = performance.now()
+  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
     arr,
     storeOptsWithSignal,
   )
+  const metadataReadMs = performance.now() - metadataReadStartedAt
 
   const actualChunkShape = codecMeta.chunk_shape
+  const correctedCodecMeta = codecMeta
+  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
+  const metaId = getMetaId(correctedCodecMeta)
 
-  const selection = actualChunkShape.map((chunkSize, dim) => {
-    const start = chunkCoords[dim] * chunkSize
-    const stop = Math.min(start + chunkSize, arr.shape[dim])
-    return slice(start, stop)
+  if (!isWorkerFetchCapableStore(arr.store)) {
+    throw new Error("Worker chunk loading requires a worker-fetch-capable store")
+  }
+
+  const workerStore = arr.store.getWorkerFetchConfig()
+  const chunkKey = encodeChunkKey(chunkCoords)
+  const chunkPath = arr.resolve(chunkKey).path
+  const edgeChunkShape = chunkCoords.map((coord, dim) =>
+    Math.min(actualChunkShape[dim], arr.shape[dim] - coord * actualChunkShape[dim]),
+  )
+  const isEdgeChunk = edgeChunkShape.some((size, index) => size !== actualChunkShape[index])
+
+  const cacheKey = createCacheKey(arr, encodeChunkKey, chunkCoords)
+  const cacheLookupStartedAt = performance.now()
+  const cachedChunk = cache.get(cacheKey)
+  const cacheLookupMs = performance.now() - cacheLookupStartedAt
+
+  if (cachedChunk) {
+    logChunkTiming("[zarr chunk timing]", {
+      chunkPath,
+      chunkCoords: [...chunkCoords],
+      cacheStatus: "hit",
+      metadataReadMs: roundTiming(metadataReadMs),
+      cacheLookupMs: roundTiming(cacheLookupMs),
+      queueWaitMs: 0,
+      workerMetaInitMs: 0,
+      workerRoundTripMs: 0,
+      workerFetchMs: 0,
+      workerDecodeMs: 0,
+      workerReshapeMs: 0,
+      workerPromoteMs: 0,
+      workerTotalMs: 0,
+      fillChunkMs: 0,
+      mainThreadWriteMs: 0,
+      totalMs: roundTiming(performance.now() - startedAt),
+    })
+    logChunkTiming("[zarr get timing]", {
+      selectionShape: [...cachedChunk.shape],
+      chunkCount: 1,
+      metadataReadMs: roundTiming(metadataReadMs),
+      totalMs: roundTiming(performance.now() - startedAt),
+    })
+    return cachedChunk as Chunk<D>
+  }
+
+  const enqueuedAt = performance.now()
+  const taskPriority = opts.priority ?? 0
+  const handle = enqueueWorkerTask(
+    pool,
+    workerUrl,
+    opts.signal,
+    async (worker) => {
+      const queueWaitMs = performance.now() - enqueuedAt
+      const { chunk: fetchedChunk, timings: workerTimings } = await workerFetchDecode<D>(
+        worker,
+        workerStore,
+        chunkPath,
+        metaId,
+        correctedCodecMeta,
+        serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
+        isEdgeChunk ? edgeChunkShape : undefined,
+      )
+
+      let chunkToReturn: Chunk<D>
+      let fillChunkMs = 0
+
+      if (fetchedChunk) {
+        cache.set(cacheKey, fetchedChunk)
+        chunkToReturn = fetchedChunk
+      } else {
+        const fillStartedAt = performance.now()
+        const fillChunkStrides = get_strides(edgeChunkShape)
+        const fillChunkSize = edgeChunkShape.reduce(
+          (accumulator: number, dimension: number) => accumulator * dimension,
+          1,
+        )
+        const chunkData = new OutputCtr(fillChunkSize)
+        if (fillValue != null) {
+          chunkData.fill(Number(fillValue))
+        }
+        chunkToReturn = {
+          data: chunkData as Chunk<D>["data"],
+          shape: edgeChunkShape,
+          stride: fillChunkStrides,
+        }
+        cache.set(cacheKey, chunkToReturn)
+        fillChunkMs = performance.now() - fillStartedAt
+      }
+
+      logChunkTiming("[zarr chunk timing]", {
+        chunkPath,
+        chunkCoords: [...chunkCoords],
+        cacheStatus: fetchedChunk ? "miss" : "missing-fill",
+        metadataReadMs: roundTiming(metadataReadMs),
+        cacheLookupMs: roundTiming(cacheLookupMs),
+        queueWaitMs: roundTiming(queueWaitMs),
+        workerMetaInitMs: roundTiming(workerTimings.metaInitMs),
+        workerRoundTripMs: roundTiming(workerTimings.roundTripMs),
+        workerFetchMs: roundTiming(workerTimings.fetchMs),
+        workerDecodeMs: roundTiming(workerTimings.decodeMs),
+        workerReshapeMs: roundTiming(workerTimings.reshapeMs),
+        workerPromoteMs: roundTiming(workerTimings.promoteMs),
+        workerTotalMs: roundTiming(workerTimings.totalWorkerMs),
+        fillChunkMs: roundTiming(fillChunkMs),
+        mainThreadWriteMs: 0,
+        totalMs: roundTiming(performance.now() - startedAt),
+      })
+
+      return chunkToReturn
+    },
+    taskPriority,
+  )
+
+  const [chunk] = await waitForTaskHandles([handle], opts.signal)
+
+  logChunkTiming("[zarr get timing]", {
+    selectionShape: [...chunk.shape],
+    chunkCount: 1,
+    metadataReadMs: roundTiming(metadataReadMs),
+    totalMs: roundTiming(performance.now() - startedAt),
   })
 
-  return getWorker(arr, selection, opts) as Promise<Chunk<D>>
+  return chunk
 }
 
 // ---------------------------------------------------------------------------

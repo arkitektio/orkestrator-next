@@ -1,7 +1,6 @@
 import { useViewerStore } from '../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
-import { open } from 'zarrita';
 import { getChunkWorker } from '../../../../lib/zarr/runner';
 import { workerPool } from '../../../workers/pool';
 import type { ChunkData } from '../stores/types';
@@ -25,6 +24,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
+  const getArray = useViewerStore((s) => s.getArray);
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -109,7 +109,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
       const chunkLoadStartedAt = performance.now();
       try {
         const openStartedAt = performance.now();
-        const arr = await open.v3(chunk.store, { kind: "array" });
+        const arr = await getArray(chunk.store);
         const openMs = performance.now() - openStartedAt;
         if (abortController.signal.aborted) return;
 
@@ -179,7 +179,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     return () => {
       abortController.abort();
     };
-  }, [chunk]);
+  }, [chunk, getArray]);
 
   useEffect(() => {
     return () => {

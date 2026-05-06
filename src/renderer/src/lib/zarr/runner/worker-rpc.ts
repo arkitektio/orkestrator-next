@@ -27,21 +27,23 @@ export interface WorkerFetchDecodeResult<D extends DataType> {
 function createPromotedArray<D extends DataType>(
   promotedType: TextureCompatibleDataType | undefined,
   buffer: ArrayBuffer,
+  byteOffset: number,
+  byteLength: number,
   meta: CodecChunkMeta,
 ): TypedArray<D> {
   if (promotedType === 'uint8') {
-    return new Uint8Array(buffer) as TypedArray<D>
+    return new Uint8Array(buffer, byteOffset, byteLength) as TypedArray<D>
   }
 
   if (promotedType === 'float32') {
-    return new Float32Array(buffer) as TypedArray<D>
+    return new Float32Array(buffer, byteOffset, byteLength / Float32Array.BYTES_PER_ELEMENT) as TypedArray<D>
   }
 
   const Ctr = get_ctr(meta.data_type) as unknown as {
     new (buf: ArrayBuffer, off: number, len: number): TypedArray<D>
     BYTES_PER_ELEMENT: number
   }
-  return new Ctr(buffer, 0, buffer.byteLength / Ctr.BYTES_PER_ELEMENT)
+  return new Ctr(buffer, byteOffset, byteLength / Ctr.BYTES_PER_ELEMENT)
 }
 
 interface PendingRequest {
@@ -188,6 +190,8 @@ export async function workerFetchDecode<D extends DataType>(
     missing?: boolean
     promotedType?: TextureCompatibleDataType
     data?: ArrayBuffer
+    byteOffset?: number
+    byteLength?: number
     shape?: number[]
     stride?: number[]
     timings?: {
@@ -219,6 +223,8 @@ export async function workerFetchDecode<D extends DataType>(
   const data = createPromotedArray<D>(
     response.promotedType,
     response.data!,
+    response.byteOffset ?? 0,
+    response.byteLength ?? response.data!.byteLength,
     meta,
   )
   return {

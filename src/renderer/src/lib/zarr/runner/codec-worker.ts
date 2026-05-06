@@ -14,7 +14,9 @@ import {
 } from './s3-request.js'
 import type { CodecChunkMeta } from './types.js'
 
-const ctx = self as unknown as DedicatedWorkerGlobalScope
+const ctx = self as unknown as DedicatedWorkerGlobalScope & {
+  onmessage: ((event: MessageEvent<WorkerMessage>) => void | Promise<void>) | null
+}
 
 type TextureCompatibleDataType = 'uint8' | 'float32'
 
@@ -38,7 +40,7 @@ function fixEdgeChunkShapeStride<D extends DataType>(
     }
     if (actualElements > expectedElements) {
       const src = chunk.data as unknown as { readonly [i: number]: unknown; readonly length: number }
-      const Ctr = (chunk.data as { constructor: new (n: number) => typeof chunk.data }).constructor
+      const Ctr = (chunk.data as unknown as { constructor: new (n: number) => typeof chunk.data }).constructor
       const dst = new Ctr(expectedElements)
       const srcStrides = get_strides(chunk.shape, 'C')
       copySubRegion(src, srcStrides, dst as unknown as { [i: number]: unknown; length: number }, actualChunkShape)
@@ -56,9 +58,13 @@ function promoteChunkForTexture(
   chunk: Chunk<DataType>,
 ): { chunk: Chunk<'uint8'> | Chunk<'float32'>; promotedType: TextureCompatibleDataType } {
   if (chunk.data instanceof Uint8Array || chunk.data instanceof Uint8ClampedArray) {
+    const uint8Data =
+      chunk.data instanceof Uint8Array
+        ? chunk.data
+        : new Uint8Array(chunk.data.buffer, chunk.data.byteOffset, chunk.data.byteLength)
     return {
       chunk: {
-        data: chunk.data instanceof Uint8Array ? chunk.data : new Uint8Array(chunk.data),
+        data: uint8Data,
         shape: chunk.shape,
         stride: chunk.stride,
       } as Chunk<'uint8'>,
@@ -297,7 +303,7 @@ type WorkerMessage =
       requestInit?: SerializedRequestInit
     }
 
-ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
+ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const msg = event.data
 
   try {
@@ -388,17 +394,15 @@ ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       const buffer = dataView.buffer
       const byteOffset = dataView.byteOffset
       const byteLength = dataView.byteLength
-      const transferBuffer =
-        byteOffset === 0 && byteLength === buffer.byteLength
-          ? buffer
-          : buffer.slice(byteOffset, byteOffset + byteLength)
 
       ctx.postMessage(
         {
           type: 'fetch_decoded' as const,
           id: msg.id,
           promotedType: promoted.promotedType,
-          data: transferBuffer,
+          data: buffer,
+          byteOffset,
+          byteLength,
           shape: promoted.chunk.shape,
           stride: promoted.chunk.stride,
           timings: {
@@ -409,7 +413,7 @@ ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
             totalMs: now() - workerStartedAt,
           },
         },
-        [transferBuffer],
+        [buffer],
       )
     }
   } catch (error) {
@@ -419,4 +423,4 @@ ctx.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       error: error instanceof Error ? error.message : String(error),
     })
   }
-})
+}

@@ -17,7 +17,9 @@ export const ScenePlane = (props) => {
     return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
   }, [layers?.length]);
 
-
+  if (mode != "2D") {
+    return null;
+  }
 
   // 2. Map over them. React handles all mounting, fetching, and unmounting automatically.
   return (

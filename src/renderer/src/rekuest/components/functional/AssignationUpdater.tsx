@@ -109,7 +109,8 @@ export const AssignationToaster = (props: { id: string }) => {
             )}
             {ass.done && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 my-auto" />}
             {ass.cancelled && <XCircle className="h-4 w-4 text-orange-500 flex-shrink-0 my-auto" />}
-            {ass.error && <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 my-auto" />}
+            {ass.error && <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 my-auto" onClick={() => toast.dismiss(props.id)}/>}
+
             <div className="ml-2 text-xs my-auto">{ass.event?.kind}</div>
             {ass.message && !ass.error && <div className="ml-2 font-light text-xs my-auto">{ass.message}</div>}
             {ass.progress != undefined && ass.progress != 0 && (

@@ -1399,6 +1399,19 @@ type GeneralMediaAccessGrant {
   store: String
 }
 
+"""Temporary S3 credentials for reading a Zarr store."""
+type GeneralZarrAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
 enum Granularity {
   DAY
   HOUR
@@ -2632,6 +2645,11 @@ type Mutation {
   Request temporary S3 read credentials for media files in the organization
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Zarr files in the organization
+  """
+  requestGeneralZarrAccess(input: RequestGeneralZarrAccessInput!): GeneralZarrAccessGrant!
 
   """Request temporary S3 read credentials for a media file"""
   requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
@@ -4218,6 +4236,10 @@ input RequestBigFileUploadInput {
 }
 
 input RequestGeneralMediaAccessInput {
+  expiresIn: Int = null
+}
+
+input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
 }
 

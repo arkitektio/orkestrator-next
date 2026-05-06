@@ -1420,6 +1420,20 @@ export type GeneralMediaAccessGrant = {
   store?: Maybe<Scalars['String']['output']>;
 };
 
+/** Temporary S3 credentials for reading a Zarr store. */
+export type GeneralZarrAccessGrant = {
+  __typename?: 'GeneralZarrAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
 export enum Granularity {
   Day = 'DAY',
   Hour = 'HOUR',
@@ -2594,6 +2608,8 @@ export type Mutation = {
   requestBigfileUpload: BigFileUploadGrant;
   /** Request temporary S3 read credentials for media files in the organization */
   requestGeneralMediaAccess: GeneralMediaAccessGrant;
+  /** Request temporary S3 read credentials for Zarr files in the organization */
+  requestGeneralZarrAccess: GeneralZarrAccessGrant;
   /** Request temporary S3 read credentials for a media file */
   requestMediaAccess: MediaAccessGrant;
   /** Upload media and return a URL for access */
@@ -3071,6 +3087,11 @@ export type MutationRequestBigfileUploadArgs = {
 
 export type MutationRequestGeneralMediaAccessArgs = {
   input: RequestGeneralMediaAccessInput;
+};
+
+
+export type MutationRequestGeneralZarrAccessArgs = {
+  input: RequestGeneralZarrAccessInput;
 };
 
 
@@ -4853,6 +4874,10 @@ export type RequestGeneralMediaAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RequestGeneralZarrAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type RequestMediaAccessInput = {
   storeId: Scalars['String']['input'];
 };
@@ -5828,6 +5853,8 @@ export type GeneralMediaAccessGrantFragment = { __typename?: 'GeneralMediaAccess
 
 export type ZarrAccessGrantFragment = { __typename?: 'ZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
+export type GeneralZarrAccessGrantFragment = { __typename?: 'GeneralZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string };
+
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
 export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, vectorDims: Array<string>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
@@ -6146,6 +6173,13 @@ export type RequestZarrAccessMutationVariables = Exact<{
 
 
 export type RequestZarrAccessMutation = { __typename?: 'Mutation', requestZarrAccess: { __typename?: 'ZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type RequestGeneralZarrAccessMutationVariables = Exact<{
+  input: RequestGeneralZarrAccessInput;
+}>;
+
+
+export type RequestGeneralZarrAccessMutation = { __typename?: 'Mutation', requestGeneralZarrAccess: { __typename?: 'GeneralZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string } };
 
 export type CreateDataRoiMutationVariables = Exact<{
   input: CreateDataRoiInput;
@@ -6981,6 +7015,16 @@ export const ZarrAccessGrantFragmentDoc = gql`
   expiresIn
   path
   key
+  bucket
+}
+    `;
+export const GeneralZarrAccessGrantFragmentDoc = gql`
+    fragment GeneralZarrAccessGrant on GeneralZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
   bucket
 }
     `;
@@ -8473,6 +8517,39 @@ export function useRequestZarrAccessMutation(baseOptions?: ApolloReactHooks.Muta
 export type RequestZarrAccessMutationHookResult = ReturnType<typeof useRequestZarrAccessMutation>;
 export type RequestZarrAccessMutationResult = Apollo.MutationResult<RequestZarrAccessMutation>;
 export type RequestZarrAccessMutationOptions = Apollo.BaseMutationOptions<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>;
+export const RequestGeneralZarrAccessDocument = gql`
+    mutation RequestGeneralZarrAccess($input: RequestGeneralZarrAccessInput!) {
+  requestGeneralZarrAccess(input: $input) {
+    ...GeneralZarrAccessGrant
+  }
+}
+    ${GeneralZarrAccessGrantFragmentDoc}`;
+export type RequestGeneralZarrAccessMutationFn = Apollo.MutationFunction<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>;
+
+/**
+ * __useRequestGeneralZarrAccessMutation__
+ *
+ * To run a mutation, you first call `useRequestGeneralZarrAccessMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestGeneralZarrAccessMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestGeneralZarrAccessMutation, { data, loading, error }] = useRequestGeneralZarrAccessMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRequestGeneralZarrAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>(RequestGeneralZarrAccessDocument, options);
+      }
+export type RequestGeneralZarrAccessMutationHookResult = ReturnType<typeof useRequestGeneralZarrAccessMutation>;
+export type RequestGeneralZarrAccessMutationResult = Apollo.MutationResult<RequestGeneralZarrAccessMutation>;
+export type RequestGeneralZarrAccessMutationOptions = Apollo.BaseMutationOptions<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>;
 export const CreateDataRoiDocument = gql`
     mutation CreateDataRoi($input: CreateDataRoiInput!) {
   createDataRoi(input: $input) {

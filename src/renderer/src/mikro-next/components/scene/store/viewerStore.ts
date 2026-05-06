@@ -97,7 +97,7 @@ export const createViewerStore = (storeBuilder: StoreBuilder) =>
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
-    lodBias: 1.0,
+    lodBias: 0.2,
     cullRadius: 4000,
     setCullRadius: (radius) => set({ cullRadius: radius }),
     setLodBias: (bias) => set({ lodBias: bias }),

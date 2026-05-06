@@ -1,10 +1,11 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { MikroClient, ZarrStore } from "../zarr/zarr_stores/type";
-import { CachedS3Store } from "../zarr/zarr_stores/s3Store";
+import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStore } from "../zarr/zarr_stores/type";
+import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
 import { RefObject } from "react";
 export type StoreBuilder = (storeId: string, signal?: AbortSignal) => Promise<ZarrStore>;
 import * as THREE from 'three';
+import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables, SceneFragment } from "@/mikro-next/api/graphql";
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -81,9 +82,74 @@ interface ViewerState {
 }
 
 
-export const createS3Builder = (client: MikroClient, datalayer: string): StoreBuilder => {
+function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZarrStoreDescriptor> {
+  const descriptors = new Map<string, SceneZarrStoreDescriptor>();
+
+  for (const layer of scene.layers) {
+    for (const dataArray of layer.lens.dataset.dataArrays) {
+      descriptors.set(dataArray.store.id, {
+        bucket: dataArray.store.bucket,
+        key: dataArray.store.key,
+        path: dataArray.store.path,
+        storeId: dataArray.store.id,
+      });
+    }
+  }
+
+  return descriptors;
+}
+
+async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
+  const access = await client.mutate<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>({
+    mutation: RequestGeneralZarrAccessDocument,
+    variables: { input: {} },
+  });
+
+  const credentials = access.data?.requestGeneralZarrAccess;
+  if (!credentials) {
+    throw new Error("Failed to obtain general Zarr access credentials");
+  }
+
+  return credentials;
+}
+
+export const createS3Builder = (scene: SceneFragment, client: MikroClient, datalayer: string): StoreBuilder => {
+  const descriptors = collectSceneStoreDescriptors(scene);
+  const storeMapPromise = (async () => {
+    const credentials = await requestGeneralAccess(client);
+    const expiresAt = Date.now() + credentials.expiresIn * 1000;
+
+    const stores = await Promise.all(
+      Array.from(descriptors.values()).map(async (descriptor) => {
+        const store = new ConfiguredS3Store(
+          {
+            accessKey: credentials.accessKey,
+            baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
+            expiresAt,
+            region: credentials.region,
+            secretKey: credentials.secretKey,
+            sessionToken: credentials.sessionToken,
+            storeId: descriptor.storeId,
+          },
+          { preloadMetadata: true },
+        );
+        await store.ready();
+        return [descriptor.storeId, store] as const;
+      }),
+    );
+
+    return new Map(stores);
+  })();
+
   return async (storeId: string, _signal?: AbortSignal) => {
-    return new CachedS3Store(storeId, client, datalayer);
+    const stores = await storeMapPromise;
+    const store = stores.get(storeId);
+
+    if (!store) {
+      throw new Error(`No preconfigured Zarr store found for ${storeId}`);
+    }
+
+    return store;
   };
 };
 

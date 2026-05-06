@@ -25,6 +25,7 @@ import type { Chunk, DataType } from "zarrita"
 import { create_codec_pipeline } from "./internals/codec-pipeline.js"
 import { compat_chunk, set_from_chunk_binary } from "./internals/setter.js"
 import { get_ctr, get_strides } from "./internals/util.js"
+import { deserializeRequestInit, fetchS3Path, type S3FetchConfig, type SerializedRequestInit } from "./s3-request.js"
 import type { CodecChunkMeta, Projection } from "./types.js"
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
@@ -155,12 +156,186 @@ function getOrCreatePipelineLegacy(meta: CodecChunkMeta) {
   return pipeline
 }
 
+function readZstdFrameContentSize(compressed: Uint8Array): number | null {
+  if (compressed.length < 6) return null
+
+  const magic =
+    compressed[0] |
+    (compressed[1] << 8) |
+    (compressed[2] << 16) |
+    (compressed[3] << 24)
+  if (magic >>> 0 !== 0xfd2fb528) return null
+
+  const fhd = compressed[4]
+  const fcsFlag = (fhd >> 6) & 3
+  const singleSegment = (fhd >> 5) & 1
+  const dictIdFlag = fhd & 3
+  const dictIdSize = [0, 1, 2, 4][dictIdFlag]
+  const windowDescSize = singleSegment ? 0 : 1
+
+  let fcsFieldSize: number
+  if (fcsFlag === 0) fcsFieldSize = singleSegment ? 1 : 0
+  else if (fcsFlag === 1) fcsFieldSize = 2
+  else if (fcsFlag === 2) fcsFieldSize = 4
+  else fcsFieldSize = 8
+
+  if (fcsFieldSize === 0) return null
+
+  const offset = 5 + windowDescSize + dictIdSize
+  if (compressed.length < offset + fcsFieldSize) return null
+
+  if (fcsFieldSize === 1) return compressed[offset]
+  if (fcsFieldSize === 2) {
+    return (compressed[offset] | (compressed[offset + 1] << 8)) + 256
+  }
+  if (fcsFieldSize === 4) {
+    return (
+      (compressed[offset] |
+        (compressed[offset + 1] << 8) |
+        (compressed[offset + 2] << 16) |
+        (compressed[offset + 3] << 24)) >>>
+      0
+    )
+  }
+
+  const dv = new DataView(compressed.buffer, compressed.byteOffset + offset, 8)
+  return Number(dv.getBigUint64(0, true))
+}
+
+function readBloscFrameContentSize(compressed: Uint8Array): number | null {
+  if (compressed.length < 16) return null
+
+  const version = compressed[0]
+  if (version < 1 || version > 2) return null
+
+  const typesize = compressed[3]
+  if (typesize === 0 || typesize > 8) return null
+
+  const nbytes =
+    (compressed[4] |
+      (compressed[5] << 8) |
+      (compressed[6] << 16) |
+      (compressed[7] << 24)) >>>
+    0
+  const cbytes =
+    (compressed[12] |
+      (compressed[13] << 8) |
+      (compressed[14] << 16) |
+      (compressed[15] << 24)) >>>
+    0
+
+  if (cbytes === 0 || cbytes > compressed.length + 16) return null
+  if (nbytes === 0) return null
+
+  return nbytes
+}
+
+async function probeDecompressedSize(
+  rawBytes: Uint8Array,
+  codecMeta: CodecChunkMeta,
+  bytesPerElement: number,
+): Promise<number | null> {
+  const zstdSize = readZstdFrameContentSize(rawBytes)
+  if (zstdSize != null) return zstdSize
+
+  const bloscSize = readBloscFrameContentSize(rawBytes)
+  if (bloscSize != null) return bloscSize
+
+  const hasCompression = codecMeta.codecs.some((codec) => {
+    const name = codec.name.toLowerCase()
+    return (
+      name === 'gzip' ||
+      name === 'zlib' ||
+      name === 'blosc' ||
+      name === 'zstd' ||
+      name === 'lz4' ||
+      name === 'bz2' ||
+      name === 'lzma' ||
+      name === 'snappy'
+    )
+  })
+
+  if (!hasCompression) {
+    return rawBytes.byteLength
+  }
+
+  try {
+    const pipeline = create_codec_pipeline({
+      data_type: codecMeta.data_type,
+      shape: codecMeta.chunk_shape,
+      codecs: codecMeta.codecs,
+    })
+    const chunk = await pipeline.decode(rawBytes)
+    const data = chunk.data as unknown as ArrayLike<unknown>
+    return data.length * bytesPerElement
+  } catch {
+    return null
+  }
+}
+
+async function fetchChunkBytes(
+  store: S3FetchConfig,
+  path: `/${string}`,
+  requestInit?: SerializedRequestInit,
+): Promise<Uint8Array | undefined> {
+  const response = await fetchS3Path(store, path, deserializeRequestInit(requestInit) ?? {})
+
+  if (response.status === 404) {
+    return undefined
+  }
+
+  if (response.status !== 200 && response.status !== 206) {
+    throw new Error(`Unexpected response status ${response.status} ${response.statusText}`)
+  }
+
+  return new Uint8Array(await response.arrayBuffer())
+}
+
 // ---------------------------------------------------------------------------
 // Message handler
 // ---------------------------------------------------------------------------
 
 type WorkerMessage =
   | { type: "init"; id: number; metaId: number; meta: CodecChunkMeta }
+  | {
+      type: "fetch_decode"
+      id: number
+      store: S3FetchConfig
+      path: `/${string}`
+      metaId: number
+      requestInit?: SerializedRequestInit
+      actualChunkShape?: number[]
+    }
+  | {
+      type: "fetch_decode_into"
+      id: number
+      store: S3FetchConfig
+      path: `/${string}`
+      metaId: number
+      output: SharedArrayBuffer
+      outputByteLength: number
+      outputStride: number[]
+      projections: Projection[]
+      bytesPerElement: number
+      requestInit?: SerializedRequestInit
+      actualChunkShape?: number[]
+    }
+  | {
+      type: "fetch_exists"
+      id: number
+      store: S3FetchConfig
+      path: `/${string}`
+      requestInit?: SerializedRequestInit
+    }
+  | {
+      type: "fetch_probe_size"
+      id: number
+      store: S3FetchConfig
+      path: `/${string}`
+      metaId: number
+      bytesPerElement: number
+      requestInit?: SerializedRequestInit
+    }
   | {
       type: "decode"
       id: number
@@ -203,6 +378,99 @@ ctx.addEventListener("message", async (event: MessageEvent<WorkerMessage>) => {
       })
       pipelineByMetaId.set(msg.metaId, pipeline)
       ctx.postMessage({ type: "init_ok", id: msg.id })
+      return
+    }
+
+    if (msg.type === "fetch_exists") {
+      const response = await fetchS3Path(
+        msg.store,
+        msg.path,
+        { ...(deserializeRequestInit(msg.requestInit) ?? {}), method: 'HEAD' },
+      )
+      ctx.postMessage({ type: 'fetch_exists_ok', id: msg.id, exists: response.status !== 404 })
+      return
+    }
+
+    if (msg.type === "fetch_probe_size") {
+      const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
+      if (!rawBytes) {
+        ctx.postMessage({ type: 'fetch_probe_size_ok', id: msg.id, decompressedBytes: null })
+        return
+      }
+
+      const meta = metaByMetaId.get(msg.metaId)
+      if (!meta) {
+        throw new Error(`No metadata registered for metaId ${msg.metaId}`)
+      }
+
+      const decompressedBytes = await probeDecompressedSize(
+        rawBytes,
+        meta,
+        msg.bytesPerElement,
+      )
+      ctx.postMessage({ type: 'fetch_probe_size_ok', id: msg.id, decompressedBytes })
+      return
+    }
+
+    if (msg.type === "fetch_decode") {
+      const pipeline = getPipeline(msg.metaId)
+      const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
+      if (!rawBytes) {
+        ctx.postMessage({ type: 'fetch_decode_ok', id: msg.id, missing: true })
+        return
+      }
+
+      let chunk = (await pipeline.decode(rawBytes)) as Chunk<DataType>
+      chunk = fixEdgeChunkShapeStride(chunk, msg.actualChunkShape)
+
+      const dataView = chunk.data as unknown as {
+        buffer: ArrayBuffer
+        byteOffset: number
+        byteLength: number
+      }
+      const buffer = dataView.buffer
+      const byteOffset = dataView.byteOffset
+      const byteLength = dataView.byteLength
+      const transferBuffer = byteOffset === 0 && byteLength === buffer.byteLength
+        ? buffer
+        : buffer.slice(byteOffset, byteOffset + byteLength)
+
+      ctx.postMessage(
+        {
+          type: 'fetch_decoded' as const,
+          id: msg.id,
+          data: transferBuffer,
+          shape: chunk.shape,
+          stride: chunk.stride,
+        },
+        [transferBuffer],
+      )
+      return
+    }
+
+    if (msg.type === "fetch_decode_into") {
+      const pipeline = getPipeline(msg.metaId)
+      const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)
+      if (!rawBytes) {
+        ctx.postMessage({ type: 'fetch_decode_into_ok', id: msg.id, missing: true })
+        return
+      }
+
+      let chunk = (await pipeline.decode(rawBytes)) as Chunk<DataType>
+      chunk = fixEdgeChunkShapeStride(chunk, msg.actualChunkShape)
+
+      const destView = new Uint8Array(msg.output, 0, msg.outputByteLength)
+      set_from_chunk_binary(
+        {
+          data: destView,
+          stride: msg.outputStride,
+        },
+        compat_chunk(chunk),
+        msg.bytesPerElement,
+        msg.projections,
+      )
+
+      ctx.postMessage({ type: 'fetch_decode_into_ok', id: msg.id, missing: false })
       return
     }
 

@@ -31,7 +31,9 @@ import {
   get_strides,
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
-import { getMetaId, workerDecode, workerDecodeInto } from "./worker-rpc"
+import { getMetaId, workerDecode, workerDecodeInto, workerFetchDecode, workerFetchDecodeInto, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
+import { isWorkerFetchCapableStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type"
+import { serializeRequestInit } from "./s3-request"
 
 /**
  * Default URL for the codec worker. Uses `import.meta.url` to resolve
@@ -124,44 +126,6 @@ export async function readArrayMetadata<
         codecs: metadata.codecs,
       },
       encodeChunkKey: create_chunk_key_encoder(metadata.chunk_key_encoding),
-      fillValue: metadata.fill_value ?? null,
-    }
-  }
-
-  // Try v2: read .zarray
-  const v2Path = (
-    arr.path === "/" ? "/.zarray" : `${arr.path}/.zarray`
-  ) as `/${string}`
-  const v2Bytes = await store.get(v2Path)
-  if (v2Bytes) {
-    const metadata = JSON.parse(decoder.decode(v2Bytes))
-    const codecs: Array<{
-      name: string
-      configuration: Record<string, unknown>
-    }> = []
-    if (metadata.order === "F") {
-      codecs.push({ name: "transpose", configuration: { order: "F" } })
-    }
-    if (metadata.compressor) {
-      const { id, ...configuration } = metadata.compressor
-      codecs.push({ name: id, configuration })
-    }
-    for (const { id, ...configuration } of metadata.filters ?? []) {
-      codecs.push({ name: id, configuration })
-    }
-    return {
-      codecMeta: {
-        data_type: arr.dtype,
-        chunk_shape: arr.chunks,
-        codecs:
-          codecs.length > 0
-            ? codecs
-            : [{ name: "bytes", configuration: { endian: "little" } }],
-      },
-      encodeChunkKey: create_chunk_key_encoder({
-        name: "v2",
-        configuration: { separator: metadata.dimension_separator ?? "." },
-      }),
       fillValue: metadata.fill_value ?? null,
     }
   }
@@ -514,6 +478,7 @@ async function validateCandidateChunkShape<
   encodeChunkKey: (chunk_coords: number[]) => string,
   candidate: number[],
   storeOpts?: Parameters<Store["get"]>[1],
+  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl">,
 ): Promise<boolean> {
   const ndim = candidate.length
 
@@ -546,6 +511,29 @@ async function validateCandidateChunkShape<
   const probePath = arr.resolve(probeKey).path
 
   try {
+    if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
+      const storeConfig = arr.store.getWorkerFetchConfig()
+      const tasks: WorkerPoolTask<boolean>[] = [async (workerSlot: Worker | null) => {
+        const worker =
+          workerSlot ??
+          (workerOpts.workerUrl
+            ? new Worker(workerOpts.workerUrl, { type: "module" })
+            : createDefaultWorker())
+
+        const exists = await workerFetchExists(
+          worker,
+          storeConfig,
+          probePath,
+          serializeRequestInit(storeOpts as RequestInit | undefined),
+        )
+
+        return { worker, result: exists }
+      }]
+      const { promise } = workerOpts.pool.runTasks(tasks)
+      const [exists] = await promise
+      return !exists
+    }
+
     const probeBytes = await arr.store.get(probePath, storeOpts)
     // If data returned, there's a chunk beyond our expected grid → reject
     return !probeBytes
@@ -581,6 +569,7 @@ export async function probeActualChunkShape<
   codecMeta: CodecChunkMeta,
   bytesPerElement: number,
   storeOpts?: Parameters<Store["get"]>[1],
+  workerOpts?: Pick<GetWorkerOptions<Parameters<Store["get"]>[1]>, "pool" | "workerUrl">,
 ): Promise<number[]> {
   const metadataChunkShape = codecMeta.chunk_shape
   const metaElements = metadataChunkShape.reduce((a, b) => a * b, 1)
@@ -591,15 +580,44 @@ export async function probeActualChunkShape<
   const chunkPath = arr.resolve(chunkKey).path
 
   try {
-    const rawBytes = await arr.store.get(chunkPath, storeOpts)
-    if (!rawBytes) return metadataChunkShape
+    let decompressedBytes: number | null
 
-    // Determine decompressed size via hybrid strategy
-    const decompressedBytes = await probeDecompressedSize(
-      rawBytes,
-      codecMeta,
-      bytesPerElement,
-    )
+    if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
+      const storeConfig = arr.store.getWorkerFetchConfig()
+      const metaId = getMetaId(codecMeta)
+      const tasks: WorkerPoolTask<number | null>[] = [async (workerSlot: Worker | null) => {
+        const worker =
+          workerSlot ??
+          (workerOpts.workerUrl
+            ? new Worker(workerOpts.workerUrl, { type: "module" })
+            : createDefaultWorker())
+
+        const size = await workerFetchProbeDecompressedSize(
+          worker,
+          storeConfig,
+          chunkPath,
+          metaId,
+          codecMeta,
+          bytesPerElement,
+          serializeRequestInit(storeOpts as RequestInit | undefined),
+        )
+
+        return { worker, result: size }
+      }]
+
+      const { promise } = workerOpts.pool.runTasks(tasks)
+      ;[decompressedBytes] = await promise
+    } else {
+      const rawBytes = await arr.store.get(chunkPath, storeOpts)
+      if (!rawBytes) return metadataChunkShape
+
+      decompressedBytes = await probeDecompressedSize(
+        rawBytes,
+        codecMeta,
+        bytesPerElement,
+      )
+    }
+
     if (decompressedBytes == null) return metadataChunkShape
 
     const actualElements = decompressedBytes / bytesPerElement
@@ -624,6 +642,7 @@ export async function probeActualChunkShape<
         encodeChunkKey,
         candidate,
         storeOpts,
+        workerOpts,
       )
       if (isValid) {
         console.warn(
@@ -683,6 +702,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     codecMeta,
     bytesPerElement,
     opts.opts,
+    opts,
   )
 
   const selection = actualChunkShape.map((chunkSize, dim) => {
@@ -761,6 +781,7 @@ export async function getWorker<
     codecMeta,
     bytesPerElement,
     opts.opts,
+    opts,
   )
 
   // Update codecMeta to use the actual chunk shape for codec pipeline
@@ -823,8 +844,62 @@ export async function getWorker<
             ? new Worker(workerUrl, { type: "module" })
             : createDefaultWorker())
 
-        // Fetch raw bytes from store on main thread
-        const rawBytes = await arr.store.get(chunkPath, opts.opts)
+        const workerStore = isWorkerFetchCapableStore(arr.store)
+          ? arr.store.getWorkerFetchConfig()
+          : null
+
+        if (workerStore && useShared && !opts.cache) {
+          const hasChunk = await workerFetchDecodeInto(
+            worker,
+            workerStore,
+            chunkPath,
+            metaId,
+            buffer as SharedArrayBuffer,
+            size * bytesPerElement,
+            outStride,
+            mapping,
+            bytesPerElement,
+            serializeRequestInit(opts.opts as RequestInit | undefined),
+            isEdgeChunk ? edgeChunkShape : undefined,
+          )
+
+          if (!hasChunk) {
+            const fillChunkShape = edgeChunkShape
+            const fillChunkStrides = get_strides(fillChunkShape)
+            const fillChunkSize = fillChunkShape.reduce(
+              (a: number, b: number) => a * b,
+              1,
+            )
+            const chunkData = new Ctr(fillChunkSize)
+            if (fillValue != null) {
+              // @ts-expect-error: fill_value type is union
+              chunkData.fill(fillValue)
+            }
+            const chunk: Chunk<D> = {
+              data: chunkData as Chunk<D>["data"],
+              shape: fillChunkShape,
+              stride: fillChunkStrides,
+            }
+            setter.set_from_chunk(out, chunk, mapping)
+          }
+        } else {
+          const rawChunk = workerStore
+            ? await workerFetchDecode<D>(
+                worker,
+                workerStore,
+                chunkPath,
+                metaId,
+                correctedCodecMeta,
+                serializeRequestInit(opts.opts as RequestInit | undefined),
+                isEdgeChunk ? edgeChunkShape : undefined,
+              )
+            : null
+
+          if (rawChunk) {
+            cache.set(cacheKey, rawChunk)
+            setter.set_from_chunk(out, rawChunk, mapping)
+          } else {
+            const rawBytes = workerStore ? undefined : await arr.store.get(chunkPath, opts.opts)
 
         if (!rawBytes) {
           // Missing chunk — fill value, no worker needed
@@ -905,6 +980,8 @@ export async function getWorker<
           }
           cache.set(cacheKey, chunk)
           setter.set_from_chunk(out, chunk, mapping)
+        }
+          }
         }
 
         return { worker, result: undefined as void }

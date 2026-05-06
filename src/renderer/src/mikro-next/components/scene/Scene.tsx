@@ -47,7 +47,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
         const localScope = {
       modeStore: createModeStore(),
       viewStore: createViewStore(),
-      viewerStore: createViewerStore(createS3Builder(client, datalayer!)),
+      viewerStore: createViewerStore(createS3Builder(props.scene, client, datalayer!)),
       selectionStore: createSelectionStore(),
       sceneStore: createSceneStore({ scene: props.scene }),
       roiDrawingStore: createRoiDrawingStore(),

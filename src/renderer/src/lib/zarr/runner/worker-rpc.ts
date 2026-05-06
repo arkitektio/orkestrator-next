@@ -9,6 +9,7 @@
 
 import type { Chunk, DataType, TypedArray } from 'zarrita'
 import { get_ctr } from './internals/util.js'
+import { deserializeRequestInit, type S3FetchConfig, type SerializedRequestInit } from './s3-request.js'
 import type { CodecChunkMeta, Projection } from './types.js'
 
 // ---------------------------------------------------------------------------
@@ -350,4 +351,139 @@ export async function workerDecodeInto(
     },
     [transferBuffer],
   )
+}
+
+export async function workerFetchDecode<D extends DataType>(
+  worker: Worker,
+  store: S3FetchConfig,
+  path: `/${string}`,
+  metaId: number,
+  meta: CodecChunkMeta,
+  requestInit?: SerializedRequestInit,
+  actualChunkShape?: number[],
+): Promise<Chunk<D> | undefined> {
+  const dispatcher = getDispatcher(worker)
+  await ensureMeta(dispatcher, metaId)
+
+  const id = nextRequestId++
+  const response = await dispatcher.send(
+    id,
+    {
+      type: 'fetch_decode' as const,
+      id,
+      store,
+      path,
+      metaId,
+      requestInit,
+      actualChunkShape,
+    },
+    [],
+  ) as { missing?: boolean; data?: ArrayBuffer; shape?: number[]; stride?: number[] }
+
+  if (response.missing) {
+    return undefined
+  }
+
+  const Ctr = get_ctr(meta.data_type) as unknown as {
+    new (buffer: ArrayBuffer, byteOffset: number, length: number): TypedArray<D>
+    BYTES_PER_ELEMENT: number
+  }
+  const data = new Ctr(
+    response.data!,
+    0,
+    response.data!.byteLength / Ctr.BYTES_PER_ELEMENT,
+  )
+  return { data, shape: response.shape!, stride: response.stride! }
+}
+
+export async function workerFetchDecodeInto(
+  worker: Worker,
+  store: S3FetchConfig,
+  path: `/${string}`,
+  metaId: number,
+  output: SharedArrayBuffer,
+  outputByteLength: number,
+  outputStride: number[],
+  projections: Projection[],
+  bytesPerElement: number,
+  requestInit?: SerializedRequestInit,
+  actualChunkShape?: number[],
+): Promise<boolean> {
+  const dispatcher = getDispatcher(worker)
+  await ensureMeta(dispatcher, metaId)
+
+  const id = nextRequestId++
+  const response = await dispatcher.send(
+    id,
+    {
+      type: 'fetch_decode_into' as const,
+      id,
+      store,
+      path,
+      metaId,
+      output,
+      outputByteLength,
+      outputStride,
+      projections,
+      bytesPerElement,
+      requestInit,
+      actualChunkShape,
+    },
+    [],
+  ) as { missing?: boolean }
+
+  return !response.missing
+}
+
+export async function workerFetchExists(
+  worker: Worker,
+  store: S3FetchConfig,
+  path: `/${string}`,
+  requestInit?: SerializedRequestInit,
+): Promise<boolean> {
+  const dispatcher = getDispatcher(worker)
+  const id = nextRequestId++
+  const response = await dispatcher.send(
+    id,
+    {
+      type: 'fetch_exists' as const,
+      id,
+      store,
+      path,
+      requestInit,
+    },
+    [],
+  ) as { exists: boolean }
+
+  return response.exists
+}
+
+export async function workerFetchProbeDecompressedSize(
+  worker: Worker,
+  store: S3FetchConfig,
+  path: `/${string}`,
+  metaId: number,
+  meta: CodecChunkMeta,
+  bytesPerElement: number,
+  requestInit?: SerializedRequestInit,
+): Promise<number | null> {
+  const dispatcher = getDispatcher(worker)
+  await ensureMeta(dispatcher, metaId)
+
+  const id = nextRequestId++
+  const response = await dispatcher.send(
+    id,
+    {
+      type: 'fetch_probe_size' as const,
+      id,
+      store,
+      path,
+      metaId,
+      bytesPerElement,
+      requestInit,
+    },
+    [],
+  ) as { decompressedBytes: number | null }
+
+  return response.decompressedBytes
 }

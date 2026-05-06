@@ -89,44 +89,6 @@ async function readArrayMetadata<D extends DataType>(
     }
   }
 
-  // Try v2: read .zarray
-  const v2Path = (
-    arr.path === "/" ? "/.zarray" : `${arr.path}/.zarray`
-  ) as `/${string}`
-  const v2Bytes = await store.get(v2Path)
-  if (v2Bytes) {
-    const metadata = JSON.parse(decoder.decode(v2Bytes))
-    const codecs: Array<{
-      name: string
-      configuration: Record<string, unknown>
-    }> = []
-    if (metadata.order === "F") {
-      codecs.push({ name: "transpose", configuration: { order: "F" } })
-    }
-    if (metadata.compressor) {
-      const { id, ...configuration } = metadata.compressor
-      codecs.push({ name: id, configuration })
-    }
-    for (const { id, ...configuration } of metadata.filters ?? []) {
-      codecs.push({ name: id, configuration })
-    }
-    return {
-      codecMeta: {
-        data_type: arr.dtype,
-        chunk_shape: arr.chunks,
-        codecs:
-          codecs.length > 0
-            ? codecs
-            : [{ name: "bytes", configuration: { endian: "little" } }],
-      },
-      encodeChunkKey: create_chunk_key_encoder({
-        name: "v2",
-        configuration: { separator: metadata.dimension_separator ?? "." },
-      }),
-      fillValue: metadata.fill_value ?? null,
-    }
-  }
-
   // Fallback: BytesCodec only, default v3 key encoding
   return {
     codecMeta: {

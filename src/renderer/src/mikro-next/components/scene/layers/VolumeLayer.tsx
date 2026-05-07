@@ -11,6 +11,7 @@ import { get_strides } from '../../../../lib/zarr/runner/internals/util';
 import { workerPool } from '../../../workers/pool';
 import { buildAffineMatrix } from '../panels/layer/affine-utils';
 import { useSelectionStore } from '../store/layerStore';
+import { useModeStore } from '../store/modeStore';
 import { LayerState } from '../store/sceneStore';
 import { useViewerStore } from '../store/viewerStore';
 import { BasicIndexer } from '../stores/indexer';
@@ -114,6 +115,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
   const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
+  const interactionMode = useModeStore((s) => s.interactionMode);
   const isDebug = useViewerStore((state) => state.debug);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const invalidate = useThree((state) => state.invalidate);
@@ -495,6 +497,9 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onClick={(event) => {
+        if (interactionMode === 'PAN') {
+          return;
+        }
         event.stopPropagation();
         setSelectedLayerId(isSelected ? null : layer.id);
       }}

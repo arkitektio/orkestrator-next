@@ -11,6 +11,7 @@ import { buildAffineMatrix } from '../../panels/layer/affine-utils';
 
 import { ChunkPlane } from '../ChunkPlane';
 import { useSelectionStore } from '../../store/layerStore';
+import { useModeStore } from '../../store/modeStore';
 import { useViewerStore } from '../../store/viewerStore';
 import { useSceneStore } from '../../store/sceneStore';
 import { DimSliceFragment } from '@/mikro-next/api/graphql';
@@ -86,6 +87,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [layer]);
 
   const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
+  const interactionMode = useModeStore((s) => s.interactionMode);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   // Scene Registration
@@ -368,6 +370,9 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onClick={(e) => {
+        if (interactionMode === 'PAN') {
+          return;
+        }
         e.stopPropagation();
         setSelectedLayerId(isSelected ? null : layerId);
       }}

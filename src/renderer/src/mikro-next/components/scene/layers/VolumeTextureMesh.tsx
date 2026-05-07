@@ -232,18 +232,6 @@ export const VolumeTextureMesh = ({
         />
       </mesh>
 
-      <mesh scale={boundsScale} renderOrder={3}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial
-          color={isDebug ? '#22d3ee' : '#67e8f9'}
-          wireframe={true}
-          opacity={isDebug ? 0.55 : 0.22}
-          transparent={true}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
-
       {isDebug && (
         <mesh scale={volumeSize} renderOrder={2}>
           <boxGeometry args={[1, 1, 1]} />

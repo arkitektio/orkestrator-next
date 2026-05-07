@@ -143,7 +143,7 @@ export const LayerCard = ({
     <Card
       className={`group cursor-pointer overflow-hidden border transition-all ${
         isSelected
-          ? "ring-1 ring-primary/70 border-primary/40 shadow-lg shadow-black/25"
+          ? "border-white/40 shadow-lg shadow-black/25"
           : "border-white/10 hover:border-white/20 hover:shadow-md hover:shadow-black/20"
       } ${layer.visible === false ? "opacity-60" : ""}`}
       style={cardStyle}

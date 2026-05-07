@@ -369,13 +369,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     <group
       matrix={affineMatrix}
       matrixAutoUpdate={false}
-      onClick={(e) => {
-        if (interactionMode === 'PAN') {
-          return;
-        }
-        e.stopPropagation();
-        setSelectedLayerId(isSelected ? null : layerId);
-      }}
       ref={groupRef}
     >
       {chunks.map((chunk) => (

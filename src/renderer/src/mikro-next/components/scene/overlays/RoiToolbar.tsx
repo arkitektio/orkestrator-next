@@ -25,15 +25,20 @@ export const RoiToolbar = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
-  const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
+  const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
+  const armedLayerCount = armedLayerIds.length;
 
   if (interactionMode !== "EDIT") return null;
 
   return (
     <div className="absolute bottom-12 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1">
-      {!selectedLayerId && (
+      {armedLayerCount === 0 ? (
         <span className="text-[10px] text-white/50">
-          Select a layer to draw ROIs
+          Arm one or more layers to draw ROIs
+        </span>
+      ) : (
+        <span className="text-[10px] text-white/50">
+          Drawing ROI constraints for {armedLayerCount} armed {armedLayerCount === 1 ? "layer" : "layers"}
         </span>
       )}
       <ButtonGroup>
@@ -42,7 +47,7 @@ export const RoiToolbar = () => {
             key={tool}
             variant={activeTool === tool ? "default" : "outline"}
             size="xs"
-            disabled={!selectedLayerId}
+            disabled={armedLayerCount === 0}
             onClick={() =>
               setActiveTool(activeTool === tool ? null : tool)
             }

@@ -21,7 +21,7 @@ export const RoiDrawer = () => {
   const drawnRois = useRoiDrawingStore((s) => s.drawnRois);
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
   const layers = useSceneStore((s) => s.layers);
-  const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
+  const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
 
   const [createDataRoi] = useCreateDataRoiMutation();
 
@@ -30,56 +30,70 @@ export const RoiDrawer = () => {
   const [currentPos, setCurrentPos] = useState<THREE.Vector3 | null>(null);
   const [polyPoints, setPolyPoints] = useState<THREE.Vector3[]>([]);
 
-  const selectedLayer = useMemo(
-    () => layers.find((l) => l.id === selectedLayerId),
-    [layers, selectedLayerId],
+  const armedLayers = useMemo(
+    () => layers.filter((layer) => armedLayerIds.includes(layer.id)),
+    [armedLayerIds, layers],
   );
 
-  const invAffine = useMemo(() => {
-    if (!selectedLayer) return new THREE.Matrix4().identity();
-    return affineToMatrix4(selectedLayer.affineMatrix).invert();
-  }, [selectedLayer]);
+  const primaryArmedLayer = armedLayers[0];
+
+  const previewInvAffine = useMemo(() => {
+    if (!primaryArmedLayer) return new THREE.Matrix4().identity();
+    return affineToMatrix4(primaryArmedLayer.affineMatrix).invert();
+  }, [primaryArmedLayer]);
 
   const submitRoi = useCallback(
     async (roi: DrawnRoi) => {
-      if (!selectedLayer) return;
-      const layer = selectedLayer;
-      const slices = layer.lens.slices.map((s) => ({
-        dim: s.dim,
-        start: s.start,
-        stop: s.stop,
-        step: s.step,
-      }));
+      if (armedLayers.length === 0) return;
 
       try {
-        await createDataRoi({
-          variables: {
-            input: {
-              dataset: layer.lens.dataset.id,
-              drawnOnLens: layer.lens.dataset.dataArrays[0]?.id,
-              kind: roi.kind,
-              vectors: roi.vectors.map((v) => [v.x, v.y, v.z]),
-              slices,
-              xDim: layer.xDim,
-              yDim: layer.yDim,
-              zDim: layer.zDim,
-            },
-          },
-        });
-        console.log("Data ROI created successfully");
+        await Promise.all(
+          armedLayers.map(async (layer) => {
+            const invAffine = affineToMatrix4(layer.affineMatrix).invert();
+            const voxelVectors = roi.worldVectors.map((worldVector) => {
+              const vector = worldToVoxel(
+                new THREE.Vector3(worldVector.x, worldVector.y, worldVector.z),
+                invAffine,
+              );
+              return [Math.round(vector.x), Math.round(vector.y), Math.round(vector.z)] as [number, number, number];
+            });
+            const slices = layer.lens.slices.map((slice) => ({
+              dim: slice.dim,
+              start: slice.start,
+              stop: slice.stop,
+              step: slice.step,
+            }));
+
+            await createDataRoi({
+              variables: {
+                input: {
+                  dataset: layer.lens.dataset.id,
+                  drawnOnLens: layer.lens.id,
+                  kind: roi.kind,
+                  vectors: voxelVectors,
+                  slices,
+                  xDim: layer.xDim,
+                  yDim: layer.yDim,
+                  zDim: layer.zDim,
+                },
+              },
+            });
+          }),
+        );
+        console.log(`Data ROI created successfully for ${armedLayers.length} layer(s)`);
         removeDrawnRoi(roi.id);
       } catch (err) {
         console.error("Failed to create data ROI:", err);
       }
     },
-    [selectedLayer, createDataRoi, removeDrawnRoi],
+    [armedLayers, createDataRoi, removeDrawnRoi],
   );
 
   const finishShape = useCallback(
     (worldVectors: THREE.Vector3[]) => {
-      if (!activeTool || !selectedLayer) return;
+      if (!activeTool || !primaryArmedLayer) return;
       const voxelVectors = worldVectors.map((wv) => {
-        const v = worldToVoxel(wv, invAffine);
+        const v = worldToVoxel(wv, previewInvAffine);
         return { x: Math.round(v.x), y: Math.round(v.y), z: Math.round(v.z) };
       });
       const worldVecs = worldVectors.map((wv) => ({
@@ -90,7 +104,7 @@ export const RoiDrawer = () => {
 
       const roi: DrawnRoi = {
         id: Math.random().toString(36).substring(2, 9),
-        layerId: selectedLayer.id,
+        layerId: primaryArmedLayer.id,
         kind: DRAWING_TOOL_TO_ROI_KIND[activeTool],
         vectors: voxelVectors,
         worldVectors: worldVecs,
@@ -99,11 +113,11 @@ export const RoiDrawer = () => {
       addDrawnRoi(roi);
       submitRoi(roi);
     },
-    [activeTool, selectedLayer, invAffine, addDrawnRoi, submitRoi],
+    [activeTool, primaryArmedLayer, previewInvAffine, addDrawnRoi, submitRoi],
   );
 
-  // Only render when in EDIT mode with an active tool and selected layer
-  if (interactionMode !== "EDIT" || !activeTool || !selectedLayer) return null;
+  // Only render when in EDIT mode with an active tool and at least one armed layer
+  if (interactionMode !== "EDIT" || !activeTool || armedLayers.length === 0) return null;
 
   const isPolygonLike = activeTool === "POLYGON" || activeTool === "PATH";
 

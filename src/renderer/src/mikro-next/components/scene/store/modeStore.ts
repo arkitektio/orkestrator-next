@@ -69,7 +69,7 @@ export const createModeStore = () =>
   createStore<ModeState>()(
     immer((set) => ({
     interactionMode: "PAN", // Default starting mode
-    displayMode: "3D", // Active when holding a modifier key
+    displayMode: "2D", // Active when holding a modifier key
     interactionModeOptions,
     displayModeOptions,
     setInteractionMode: (mode) =>

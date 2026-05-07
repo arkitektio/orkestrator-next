@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -19,11 +18,11 @@ import {
 import { LayerState } from "../../store/sceneStore";
 import {
   ChevronDown,
+  Crosshair,
   Focus,
   Eye,
   EyeOff,
   Save,
-  SlidersHorizontal,
 } from "lucide-react";
 import { RgbColorPicker } from "react-colorful";
 import { useMemo, useState } from "react";
@@ -38,7 +37,6 @@ import { useViewerStore } from "../../store/viewerStore";
 import {
   absoluteToNormalized,
   clampAbsoluteRange,
-  formatContrastValue,
   getLayerDtypeRange,
   normalizedToAbsolute,
 } from "./contrast-utils";
@@ -64,22 +62,27 @@ const formatColormapLabel = (colormap: ColorMap | null | undefined) => {
 export const LayerCard = ({
   layer,
   originalLayer,
+  isArmed,
   isSelected,
   onSelect,
+  onToggleArm,
   onUpdate,
   onSave,
   onFocus,
 }: {
   layer: LayerState;
   originalLayer: LayerState | undefined;
+  isArmed: boolean;
   isSelected: boolean;
   onSelect: () => void;
+  onToggleArm: () => void;
   onUpdate: (updated: LayerState) => void;
   onSave: (layer: LayerState) => void;
   onFocus: (layerId: string) => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(isSelected);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [isLodDebugOpen, setIsLodDebugOpen] = useState(false);
   const climMin = layer.climMin ?? 0;
   const climMax = layer.climMax ?? 1;
   const dirty = isLayerDirty(layer, originalLayer);
@@ -137,11 +140,11 @@ export const LayerCard = ({
     });
   };
 
-  const isOpen = isSelected || isExpanded;
+  const isOpen = isExpanded;
 
   return (
-    <Card
-      className={`group cursor-pointer overflow-hidden border transition-all ${
+    <div
+      className={`group cursor-pointer overflow-hidden border transition-all rounded rounded-xl overflow-hidden ${
         isSelected
           ? "border-white/40 shadow-lg shadow-black/25"
           : "border-white/10 hover:border-white/20 hover:shadow-md hover:shadow-black/20"
@@ -150,11 +153,11 @@ export const LayerCard = ({
       onClick={onSelect}
     >
       <Collapsible open={isOpen} onOpenChange={setIsExpanded}>
-        <div className="border border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="border border-white/10 bg-black/20 backdrop-blur-sm rounded rounded-xl">
           <div className="px-2.5 py-2">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 h-full my-auto">
               <span
-                className="mt-0.5 h-3 w-3 shrink-0 rounded-full ring-1 ring-black/20"
+                className=" h-3 w-3 shrink-0 rounded-full ring-1 ring-black/20 my-auto"
                 style={{
                   background:
                     layer.colormap === ColorMap.Intensity
@@ -162,18 +165,11 @@ export const LayerCard = ({
                       : colormapGradientCSS(layer.colormap ?? ColorMap.Viridis, 12),
                 }}
               />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-medium text-white/95">
-                  {layer.lens.dataset.name}
+              <div className="min-w-0 flex-1 gap-2 flex flex-row h-full my-auto">
+                <div className="truncate text-xs font-bold text-white/95 my-auto">
+                  {layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel?.label ?? "Untitled Layer"}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-white/60">
-                  <span className="rounded-full border border-white/10 bg-black/20 px-1.5 py-0.5">
-                    {formatColormapLabel(layer.colormap)}
-                  </span>
-                  <span className="flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-1.5 py-0.5 font-mono">
-                    <SlidersHorizontal className="h-2.5 w-2.5" />
-                    {formatContrastValue(absoluteClimMin)}-{formatContrastValue(absoluteClimMax)}
-                  </span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-white/60">
                   {dirty && (
                     <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-1.5 py-0.5 text-yellow-100">
                       Unsaved
@@ -181,7 +177,23 @@ export const LayerCard = ({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-0.5 my-auto">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className={`h-6 px-1.5 shrink-0 text-[9px] transition-colors ${
+                    isArmed
+                      ? "bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/20 hover:text-cyan-50"
+                      : "text-white/75 hover:bg-white/10 hover:text-white"
+                  }`}
+                  title={isArmed ? "Disarm ROI constraints for this layer" : "Arm this layer for ROI constraints"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleArm();
+                  }}
+                >
+                  <Crosshair className="h-3 w-3" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="xs"
@@ -382,21 +394,38 @@ export const LayerCard = ({
                             </SelectContent>
                           </Select>
                           {currentLodInfo?.renderedLevels && (
-                            <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
-                              {currentLodInfo.renderedLevels.map((lvl, index) => (
-                                <div
-                                  key={lvl}
-                                  className={`rounded px-1.5 py-0.5 ${
-                                    index === 0
-                                      ? "bg-primary/20 text-primary"
-                                      : "bg-white/10 text-white/50"
-                                  }`}
-                                  title={index === 0 ? "Primary LOD" : "Z-buffered fallback LOD"}
-                                >
-                                  LOD {lvl} {index > 0 && "(Z-Buf)"}
-                                </div>
-                              ))}
-                            </div>
+                            <Collapsible open={isLodDebugOpen} onOpenChange={setIsLodDebugOpen}>
+                              <div className="mt-1 rounded border border-white/10 bg-black/10">
+                                <CollapsibleTrigger asChild>
+                                  <button className="flex w-full items-center gap-1.5 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/45 transition-colors hover:text-white/75">
+                                    <span>LOD Debug</span>
+                                    <span className="text-white/30">{currentLodInfo.renderedLevels.length} levels</span>
+                                    <ChevronDown
+                                      className={`ml-auto h-3 w-3 transition-transform duration-200 ${
+                                        isLodDebugOpen ? "rotate-180" : ""
+                                      }`}
+                                    />
+                                  </button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                  <div className="flex flex-wrap gap-1 border-t border-white/10 px-2 py-2 text-[9px]">
+                                    {currentLodInfo.renderedLevels.map((lvl, index) => (
+                                      <div
+                                        key={lvl}
+                                        className={`rounded px-1.5 py-0.5 ${
+                                          index === 0
+                                            ? "bg-primary/20 text-primary"
+                                            : "bg-white/10 text-white/50"
+                                        }`}
+                                        title={index === 0 ? "Primary LOD" : "Z-buffered fallback LOD"}
+                                      >
+                                        LOD {lvl} {index > 0 && "(Z-Buf)"}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </CollapsibleContent>
+                              </div>
+                            </Collapsible>
                           )}
                         </div>
                       )}
@@ -423,6 +452,6 @@ export const LayerCard = ({
           </CollapsibleContent>
         </div>
       </Collapsible>
-    </Card>
+    </div>
   );
 };

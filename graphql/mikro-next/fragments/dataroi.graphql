@@ -7,7 +7,6 @@ fragment DataRoi on DataRoi {
     name
   }
   vectors
-  vectorDims
   xDim
   yDim
   zDim
@@ -23,7 +22,6 @@ fragment ListDataRoi on DataRoi {
     name
   }
   vectors
-  vectorDims
   xDim
   yDim
   zDim

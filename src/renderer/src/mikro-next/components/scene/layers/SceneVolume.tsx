@@ -25,7 +25,10 @@ export const SceneVolume = () => {
   return (
     <group>
       {renderedAbleFrames?.map((frame) => (
-        <VolumeLayer key={frame.id} layer={frame} />
+        <VolumeLayer
+          key={`${frame.id}:${frame.fixedLOD == null ? 'auto' : frame.fixedLOD}`}
+          layer={frame}
+        />
       ))}
     </group>
   );

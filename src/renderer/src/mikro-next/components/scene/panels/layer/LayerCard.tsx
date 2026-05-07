@@ -5,7 +5,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Slider } from "@/components/ui/slider";
 import {
   SceneLayerFragment,
   ColorMap,
@@ -94,6 +93,9 @@ export const LayerCard = ({
     18,
     layer.color,
   );
+
+
+
   const cardStyle = useMemo(
     () => ({
       backgroundImage: `linear-gradient(135deg, rgba(9, 9, 11, 0.90) 0%, rgba(24, 24, 27, 0.72) 48%, rgba(9, 9, 11, 0.92) 100%), ${previewGradient}`,
@@ -257,36 +259,30 @@ export const LayerCard = ({
                     );
                   }
                   return (
-                    <>
-                      <div className="flex items-center justify-between text-[10px] text-white/60">
-                        <span>Contrast</span>
-                        <span className="font-mono text-white/80">
-                          {formatContrastValue(absoluteClimMin)} - {formatContrastValue(absoluteClimMax)}
-                        </span>
-                      </div>
-                      <Slider
-                        min={dtypeMin}
-                        max={dtypeMax}
-                        step={Math.max((dtypeMax - dtypeMin) / 1000, 0.000001)}
-                        value={[absoluteClimMin, absoluteClimMax]}
-                        onValueChange={([newMin, newMax]) => updateAbsoluteContrast(newMin, newMax)}
-                      />
-                    </>
+                    <HistogramSlider
+                      bins={[]}
+                      histogram={[]}
+                      valueMin={absoluteClimMin}
+                      valueMax={absoluteClimMax}
+                      colormap={layer.colormap}
+                      baseColor={layer.color}
+                      p1={null}
+                      p99={null}
+                      histMin={dtypeMin}
+                      histMax={dtypeMax}
+                      dtypeMin={dtypeMin}
+                      dtypeMax={dtypeMax}
+                      onChange={updateAbsoluteContrast}
+                    />
                   );
                 })()}
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-md border border-white/10 bg-black/20 p-2">
-                <div
-                  className="h-2 w-full rounded-sm"
-                  style={{
-                    background: colormapGradientCSS(
-                      layer.colormap ?? ColorMap.Viridis,
-                      32,
-                      layer.color,
-                    ),
-                  }}
-                />
+                <div className="mt-1 border-t border-white/10 pt-2">
+                  <div className="mb-1 flex items-center justify-between text-[10px] text-white/60">
+                    <span>Colormap</span>
+                    <span className="text-white/35">
+                      {formatColormapLabel(layer.colormap)}
+                    </span>
+                  </div>
                 <Select
                   value={layer.colormap ?? ColorMap.Viridis}
                   onValueChange={(val) =>
@@ -310,6 +306,7 @@ export const LayerCard = ({
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
               </div>
 
               {layer.colormap === ColorMap.Intensity && (

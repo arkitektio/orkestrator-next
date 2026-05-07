@@ -159,6 +159,17 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     [layer.colormap, layer.color],
   );
 
+  const materialSignature = useMemo(
+    () => [
+      layer.id,
+      layer.climMin ?? 0,
+      layer.climMax ?? 1,
+      layer.colormap ?? 'viridis',
+      ...(layer.color ?? []),
+    ].join(':'),
+    [layer.climMax, layer.climMin, layer.color, layer.colormap, layer.id],
+  );
+
   useEffect(() => {
     let isMounted = true;
     let uploadFrame = 0;
@@ -490,6 +501,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     >
       <InvertedHullOutline enabled={isSelected && isDebug}>
         <VolumeTextureMesh
+          key={materialSignature}
           texture={volumeTexture.texture}
           colorMapTexture={colorMapTexture}
           layerId={layer.id}

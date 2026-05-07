@@ -10,7 +10,9 @@ import { ScaledView } from "../FInalRender";
 import { useViewerState } from "../ViewerStateProvider";
 import {
   blueColormap,
+  coolColormap,
   createColormapTexture,
+  grayColormap,
   greenColormap,
   infernoColormap,
   magmaColormap,
@@ -19,52 +21,57 @@ import {
   redColormap,
   viridisColormap,
 } from "./colormaps";
+import { resolveBaseColorRgb, sampleColorMapRgb } from "../../scene/zarr/colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
 
 const VIEW_RADIUS = 20000; // Render radius around camera center
 
-const getColormapForView = (view: RgbViewFragment) => {
-  switch (view.colorMap) {
-    case ColorMap.Blue: {
-      return blueColormap;
-    }
-    case ColorMap.Green: {
-      return greenColormap;
-    }
-    case ColorMap.Red: {
-      return redColormap;
-    }
-    case ColorMap.Plasma: {
-      return plasmaColormap;
-    }
-    case ColorMap.Magma: {
-      return magmaColormap;
-    }
-    case ColorMap.Inferno: {
-      return infernoColormap;
-    }
-    case ColorMap.Rainbow: {
-      return rainbowColormap;
-    }
-    case ColorMap.Intensity: {
-      const base = view.baseColor ?? [1, 1, 1];
+const staticColormaps: Partial<Record<ColorMap, THREE.Texture>> = {
+  [ColorMap.Blue]: blueColormap,
+  [ColorMap.Cool]: coolColormap,
+  [ColorMap.Green]: greenColormap,
+  [ColorMap.Grey]: grayColormap,
+  [ColorMap.Inferno]: infernoColormap,
+  [ColorMap.Magma]: magmaColormap,
+  [ColorMap.Plasma]: plasmaColormap,
+  [ColorMap.Red]: redColormap,
+  [ColorMap.Viridis]: viridisColormap,
+};
 
-      return createColormapTexture(
-        Array.from({ length: 256 }, (_, i) => {
-          const v = i / 255; // intensity [0,1]
-          return [
-            (v * base[0]) / 255,
-            (v * base[1]) / 255,
-            (v * base[2]) / 255,
-          ];
-        }),
-      );
-    }
+const continuousColormapCache = new Map<string, THREE.Texture>();
 
-    default: {
-      return viridisColormap;
-    }
+const getContinuousColormapTexture = (
+  colormap: ColorMap,
+  baseColor?: number[] | null,
+) => {
+  const cacheKey = `${colormap}:${resolveBaseColorRgb(baseColor).join(",")}`;
+  const cached = continuousColormapCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
+
+  const texture = createColormapTexture(
+    Array.from({ length: 256 }, (_, i) =>
+      sampleColorMapRgb(colormap, i / 255, baseColor),
+    ),
+  );
+
+  continuousColormapCache.set(cacheKey, texture);
+  return texture;
+};
+
+const getColormapForView = (view: RgbViewFragment) => {
+  const colormap = view.colorMap ?? ColorMap.Viridis;
+
+  if (colormap === ColorMap.Rainbow) {
+    return rainbowColormap;
+  }
+
+  if (colormap === ColorMap.Intensity) {
+    return getContinuousColormapTexture(colormap, view.baseColor);
+  }
+
+  return staticColormaps[colormap] ?? getContinuousColormapTexture(colormap);
 };
 
 // Function to get edge color and thickness based on scale level
@@ -107,7 +114,7 @@ const getEdgePropertiesForScale = (
   return scaleProperties[closestScale] || { color: "#666666", thickness: 0.01 }; // Default gray
 };
 
-export const useShouldRender = ({
+const useShouldRender = ({
   availableScales,
   selfScale,
   chunkCoords,

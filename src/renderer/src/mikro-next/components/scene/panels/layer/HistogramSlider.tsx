@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { ColorMap } from "@/mikro-next/api/graphql";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LocateFixed, RotateCcw } from "lucide-react";
 import { sampleColormapCSS } from "./colormap-utils";
 import { formatContrastValue, toPercentString } from "./contrast-utils";
@@ -15,6 +15,7 @@ export const HistogramSlider = ({
   valueMin,
   valueMax,
   colormap,
+  baseColor,
   p1,
   p99,
   histMin,
@@ -28,6 +29,7 @@ export const HistogramSlider = ({
   valueMin: number;
   valueMax: number;
   colormap: ColorMap | null | undefined;
+  baseColor?: number[] | null;
   p1: number | null | undefined;
   p99: number | null | undefined;
   histMin: number | null | undefined;
@@ -75,27 +77,24 @@ export const HistogramSlider = ({
     end: domainMax,
   });
 
-  const [draftMin, setDraftMin] = useState("");
-  const [draftMax, setDraftMax] = useState("");
+  const [draftRange, setDraftRange] = useState<{
+    min?: string;
+    max?: string;
+  }>({});
 
-  useEffect(() => {
-    setViewRange((current) => {
-      const nextStart = Math.max(domainMin, Math.min(current.start, domainMax));
-      const nextEnd = Math.min(domainMax, Math.max(current.end, domainMin));
-      if (nextEnd - nextStart < minimumViewSpan) {
-        return { start: domainMin, end: domainMax };
-      }
-      return { start: nextStart, end: nextEnd };
-    });
-  }, [domainMin, domainMax, minimumViewSpan]);
+  const clampedViewRange = useMemo(() => {
+    const nextStart = Math.max(domainMin, Math.min(viewRange.start, domainMax));
+    const nextEnd = Math.min(domainMax, Math.max(viewRange.end, domainMin));
+    if (nextEnd - nextStart < minimumViewSpan) {
+      return { start: domainMin, end: domainMax };
+    }
+    return { start: nextStart, end: nextEnd };
+  }, [viewRange, domainMin, domainMax, minimumViewSpan]);
 
-  useEffect(() => {
-    setDraftMin(String(valueMin));
-    setDraftMax(String(valueMax));
-  }, [valueMin, valueMax]);
-
-  const viewStart = viewRange.start;
-  const viewEnd = viewRange.end;
+  const draftMin = draftRange.min ?? String(valueMin);
+  const draftMax = draftRange.max ?? String(valueMax);
+  const viewStart = clampedViewRange.start;
+  const viewEnd = clampedViewRange.end;
 
   const visibleIndices = useMemo(() => {
     const indices = binValues.reduce<number[]>((acc, value, index) => {
@@ -132,9 +131,10 @@ export const HistogramSlider = ({
         sampleColormapCSS(
           colormap,
           n > 1 ? globalIndex / (n - 1) : 0,
+          baseColor,
         ),
       ),
-    [visibleIndices, n, colormap],
+    [visibleIndices, n, colormap, baseColor],
   );
 
   const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
@@ -218,11 +218,11 @@ export const HistogramSlider = ({
     const parsedMax = Number.parseFloat(draftMax);
 
     if (!Number.isFinite(parsedMin) || !Number.isFinite(parsedMax)) {
-      setDraftMin(String(valueMin));
-      setDraftMax(String(valueMax));
+      setDraftRange({});
       return;
     }
 
+    setDraftRange({});
     onChange(parsedMin, parsedMax);
   };
 
@@ -395,7 +395,9 @@ export const HistogramSlider = ({
       <div className="grid grid-cols-2 gap-1">
         <Input
           value={draftMin}
-          onChange={(event) => setDraftMin(event.target.value)}
+          onChange={(event) =>
+            setDraftRange((current) => ({ ...current, min: event.target.value }))
+          }
           onBlur={commitDraft}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
@@ -407,7 +409,9 @@ export const HistogramSlider = ({
         />
         <Input
           value={draftMax}
-          onChange={(event) => setDraftMax(event.target.value)}
+          onChange={(event) =>
+            setDraftRange((current) => ({ ...current, max: event.target.value }))
+          }
           onBlur={commitDraft}
           onKeyDown={(event) => {
             if (event.key === "Enter") {

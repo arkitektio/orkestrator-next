@@ -10,6 +10,7 @@ import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
 import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
+import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
 
 // Import your display components here
@@ -23,6 +24,7 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@mikro-next/image": ImageDisplay,
     "@mikro-next/file": FileDisplay,
     "@mikro/file": FileDisplay,
+    "@mikro/scene": SceneDisplay,
     "@mikro/image": ImageDisplay,
     "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
     "@mikro-next/roi": RoiDisplay,

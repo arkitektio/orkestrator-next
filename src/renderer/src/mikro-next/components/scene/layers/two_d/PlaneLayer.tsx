@@ -116,7 +116,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
     const intensityPos = dims.indexOf(layer.intensityDim);
 
-    const colormapTexture = getColorMapTexture(layer);
+    const colormapTexture = getColorMapTexture(layer.colormap, layer.color);
 
     // We attach chunkRadius temporarily for the culling calculation
     let allGeneratedChunks: { worldX: number; worldY: number; chunkRadius: number; data: ChunkData }[] = [];
@@ -357,7 +357,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const colorMapTexture = useMemo(() => {
     if (!layer) return null;
-    return getColorMapTexture(layer);
+    return getColorMapTexture(layer.colormap, layer.color);
   }, [layer?.colormap]);
 
   if (layer?.visible === false) return null;

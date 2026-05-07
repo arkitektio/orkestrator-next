@@ -154,7 +154,10 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     ],
   );
 
-  const colorMapTexture = useMemo(() => getColorMapTexture(layer), [layer]);
+  const colorMapTexture = useMemo(
+    () => getColorMapTexture(layer.colormap, layer.color),
+    [layer.colormap, layer.color],
+  );
 
   useEffect(() => {
     let isMounted = true;

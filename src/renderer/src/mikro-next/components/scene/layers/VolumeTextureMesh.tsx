@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useSceneStore } from '../store/sceneStore';
@@ -31,6 +32,7 @@ export const VolumeTextureMesh = ({
   const isDebug = useViewerStore((s) => s.debug);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const layer = useSceneStore((s) => s.layers.find((candidate) => candidate.id === layerId));
+  const invalidate = useThree((state) => state.invalidate);
   const boundsScale = useMemo(
     () => volumeSize.map((axis) => axis * 1.002) as [number, number, number],
     [volumeSize],
@@ -78,7 +80,9 @@ export const VolumeTextureMesh = ({
 
     materialRef.current.uniforms.colorTexture.value = texture;
     materialRef.current.uniforms.dataScale.value = dataScale;
-  }, [dataScale, texture]);
+    materialRef.current.uniformsNeedUpdate = true;
+    invalidate();
+  }, [dataScale, invalidate, texture]);
 
   useEffect(() => {
     if (!materialRef.current) return;
@@ -92,7 +96,9 @@ export const VolumeTextureMesh = ({
     if (colorMapTexture) {
       materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
     }
-  }, [colorMapTexture, layer?.climMax, layer?.climMin]);
+    materialRef.current.uniformsNeedUpdate = true;
+    invalidate();
+  }, [colorMapTexture, invalidate, layer?.climMax, layer?.climMin]);
 
   const initialUniforms = useMemo(
     () => ({

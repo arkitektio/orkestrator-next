@@ -35,6 +35,7 @@ export const LayerControlPanel = () => {
           id: layer.id,
           climMin: layer.climMin,
           climMax: layer.climMax,
+          color: layer.color,
           colormap: layer.colormap,
           xDim: layer.xDim,
           yDim: layer.yDim,

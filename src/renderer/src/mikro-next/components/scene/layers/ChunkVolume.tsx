@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { open } from 'zarrita';
 import { useSceneStore } from '../store/sceneStore'; // Added to fetch layer properties
@@ -6,7 +7,7 @@ import { useViewerStore } from '../store/viewerStore';
 import type { ChunkData } from '../stores/types';
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
-function getTextureConfig(rawData: any) {
+function getTextureConfig(rawData: ArrayLike<number>) {
   if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
     return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 255.0 };
   }
@@ -27,6 +28,7 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
 
   // Reference for direct GPU uniform updates
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const invalidate = useThree((state) => state.invalidate);
 
   // Grab live layer state for contrast limits
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === chunk.frame_id));
@@ -148,8 +150,10 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
       if (colorMapTexture) {
         materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
       }
+      materialRef.current.uniformsNeedUpdate = true;
+      invalidate();
     }
-  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
+  }, [colorMapTexture, invalidate, layer?.climMin, layer?.climMax]);
 
   // Memoize static or heavily-dependent initial uniforms
   const initialUniforms = useMemo(() => ({

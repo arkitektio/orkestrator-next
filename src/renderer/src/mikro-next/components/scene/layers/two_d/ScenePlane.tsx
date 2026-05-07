@@ -5,15 +5,14 @@ import { PlaneLayer } from "./PlaneLayer";
 const MAX_DISPLAYABLE = 10;
 
 
-export const ScenePlane = (props) => {
+export const ScenePlane = () => {
   // 1. Get the descriptors directly from your backend state hook
   const mode = useModeStore((s) => s.displayMode);
   const layers = useSceneStore((s) => s.layers);
 
   const renderedAbleFrames = useMemo(() => {
-    console.log("renderedAbleFrames recalculated:", layers?.length);
-    return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
-  }, [layers?.length]);
+    return layers.slice(0, MAX_DISPLAYABLE);
+  }, [layers]);
 
   if (mode != "2D") {
     return null;

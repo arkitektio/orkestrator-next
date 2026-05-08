@@ -1408,6 +1408,19 @@ type GeneralMediaAccessGrant {
 }
 
 """Temporary S3 credentials for reading a Zarr store."""
+type GeneralParquetAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""Temporary S3 credentials for reading a Zarr store."""
 type GeneralZarrAccessGrant {
   accessKey: String!
   bucket: String!
@@ -2665,6 +2678,11 @@ type Mutation {
   Request temporary S3 read credentials for media files in the organization
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Parquet files in the organization
+  """
+  requestGeneralParquetAccess(input: RequestGeneralParquetAccessInput!): GeneralParquetAccessGrant!
 
   """
   Request temporary S3 read credentials for Zarr files in the organization
@@ -4259,6 +4277,10 @@ input RequestGeneralMediaAccessInput {
   expiresIn: Int = null
 }
 
+input RequestGeneralParquetAccessInput {
+  expiresIn: Int = null
+}
+
 input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
 }
@@ -4279,11 +4301,8 @@ input RequestParquetAccessInput {
 
 input RequestParquetUploadInput {
   contentType: String = null
-  datalayer: String! = "s3"
   host: String = null
-  originalFileName: String!
   port: Int = null
-  protocol: String! = "https"
 }
 
 input RequestZarrAccessInput {

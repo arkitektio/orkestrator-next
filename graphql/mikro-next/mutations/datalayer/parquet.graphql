@@ -16,3 +16,10 @@ mutation RequestParquetAccess($input: RequestParquetAccessInput!) {
     ...ParquetAccessGrant
   }
 }
+
+
+mutation RequestGeneralParquetAccess($input: RequestGeneralParquetAccessInput!) {
+  requestGeneralParquetAccess(input: $input) {
+     ...GeneralParquetAccessGrant
+  }
+}

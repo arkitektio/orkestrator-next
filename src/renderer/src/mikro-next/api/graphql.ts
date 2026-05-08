@@ -1430,6 +1430,20 @@ export type GeneralMediaAccessGrant = {
 };
 
 /** Temporary S3 credentials for reading a Zarr store. */
+export type GeneralParquetAccessGrant = {
+  __typename?: 'GeneralParquetAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+/** Temporary S3 credentials for reading a Zarr store. */
 export type GeneralZarrAccessGrant = {
   __typename?: 'GeneralZarrAccessGrant';
   accessKey: Scalars['String']['output'];
@@ -2628,6 +2642,8 @@ export type Mutation = {
   requestBigfileUpload: BigFileUploadGrant;
   /** Request temporary S3 read credentials for media files in the organization */
   requestGeneralMediaAccess: GeneralMediaAccessGrant;
+  /** Request temporary S3 read credentials for Parquet files in the organization */
+  requestGeneralParquetAccess: GeneralParquetAccessGrant;
   /** Request temporary S3 read credentials for Zarr files in the organization */
   requestGeneralZarrAccess: GeneralZarrAccessGrant;
   /** Request temporary S3 read credentials for a media file */
@@ -3107,6 +3123,11 @@ export type MutationRequestBigfileUploadArgs = {
 
 export type MutationRequestGeneralMediaAccessArgs = {
   input: RequestGeneralMediaAccessInput;
+};
+
+
+export type MutationRequestGeneralParquetAccessArgs = {
+  input: RequestGeneralParquetAccessInput;
 };
 
 
@@ -4894,6 +4915,10 @@ export type RequestGeneralMediaAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RequestGeneralParquetAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type RequestGeneralZarrAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -4914,11 +4939,8 @@ export type RequestParquetAccessInput = {
 
 export type RequestParquetUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
-  datalayer?: Scalars['String']['input'];
   host?: InputMaybe<Scalars['String']['input']>;
-  originalFileName: Scalars['String']['input'];
   port?: InputMaybe<Scalars['Int']['input']>;
-  protocol?: Scalars['String']['input'];
 };
 
 export type RequestZarrAccessInput = {
@@ -5879,6 +5901,8 @@ export type GeneralZarrAccessGrantFragment = { __typename?: 'GeneralZarrAccessGr
 
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
+export type GeneralParquetAccessGrantFragment = { __typename?: 'GeneralParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string };
+
 export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
 
 export type ListDataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
@@ -6174,6 +6198,13 @@ export type RequestParquetAccessMutationVariables = Exact<{
 
 
 export type RequestParquetAccessMutation = { __typename?: 'Mutation', requestParquetAccess: { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type RequestGeneralParquetAccessMutationVariables = Exact<{
+  input: RequestGeneralParquetAccessInput;
+}>;
+
+
+export type RequestGeneralParquetAccessMutation = { __typename?: 'Mutation', requestGeneralParquetAccess: { __typename?: 'GeneralParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string } };
 
 export type RequestZarrUploadMutationVariables = Exact<{
   input: RequestZarrUploadInput;
@@ -7058,6 +7089,16 @@ export const ParquetAccessGrantFragmentDoc = gql`
   expiresIn
   path
   key
+  bucket
+}
+    `;
+export const GeneralParquetAccessGrantFragmentDoc = gql`
+    fragment GeneralParquetAccessGrant on GeneralParquetAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
   bucket
 }
     `;
@@ -8448,6 +8489,39 @@ export function useRequestParquetAccessMutation(baseOptions?: ApolloReactHooks.M
 export type RequestParquetAccessMutationHookResult = ReturnType<typeof useRequestParquetAccessMutation>;
 export type RequestParquetAccessMutationResult = Apollo.MutationResult<RequestParquetAccessMutation>;
 export type RequestParquetAccessMutationOptions = Apollo.BaseMutationOptions<RequestParquetAccessMutation, RequestParquetAccessMutationVariables>;
+export const RequestGeneralParquetAccessDocument = gql`
+    mutation RequestGeneralParquetAccess($input: RequestGeneralParquetAccessInput!) {
+  requestGeneralParquetAccess(input: $input) {
+    ...GeneralParquetAccessGrant
+  }
+}
+    ${GeneralParquetAccessGrantFragmentDoc}`;
+export type RequestGeneralParquetAccessMutationFn = Apollo.MutationFunction<RequestGeneralParquetAccessMutation, RequestGeneralParquetAccessMutationVariables>;
+
+/**
+ * __useRequestGeneralParquetAccessMutation__
+ *
+ * To run a mutation, you first call `useRequestGeneralParquetAccessMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestGeneralParquetAccessMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestGeneralParquetAccessMutation, { data, loading, error }] = useRequestGeneralParquetAccessMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRequestGeneralParquetAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestGeneralParquetAccessMutation, RequestGeneralParquetAccessMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestGeneralParquetAccessMutation, RequestGeneralParquetAccessMutationVariables>(RequestGeneralParquetAccessDocument, options);
+      }
+export type RequestGeneralParquetAccessMutationHookResult = ReturnType<typeof useRequestGeneralParquetAccessMutation>;
+export type RequestGeneralParquetAccessMutationResult = Apollo.MutationResult<RequestGeneralParquetAccessMutation>;
+export type RequestGeneralParquetAccessMutationOptions = Apollo.BaseMutationOptions<RequestGeneralParquetAccessMutation, RequestGeneralParquetAccessMutationVariables>;
 export const RequestZarrUploadDocument = gql`
     mutation RequestZarrUpload($input: RequestZarrUploadInput!) {
   requestZarrUpload(input: $input) {

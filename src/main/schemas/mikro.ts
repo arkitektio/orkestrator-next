@@ -1429,6 +1429,20 @@ export type GeneralMediaAccessGrant = {
 };
 
 /** Temporary S3 credentials for reading a Zarr store. */
+export type GeneralParquetAccessGrant = {
+  __typename?: 'GeneralParquetAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+/** Temporary S3 credentials for reading a Zarr store. */
 export type GeneralZarrAccessGrant = {
   __typename?: 'GeneralZarrAccessGrant';
   accessKey: Scalars['String']['output'];
@@ -2627,6 +2641,8 @@ export type Mutation = {
   requestBigfileUpload: BigFileUploadGrant;
   /** Request temporary S3 read credentials for media files in the organization */
   requestGeneralMediaAccess: GeneralMediaAccessGrant;
+  /** Request temporary S3 read credentials for Parquet files in the organization */
+  requestGeneralParquetAccess: GeneralParquetAccessGrant;
   /** Request temporary S3 read credentials for Zarr files in the organization */
   requestGeneralZarrAccess: GeneralZarrAccessGrant;
   /** Request temporary S3 read credentials for a media file */
@@ -3106,6 +3122,11 @@ export type MutationRequestBigfileUploadArgs = {
 
 export type MutationRequestGeneralMediaAccessArgs = {
   input: RequestGeneralMediaAccessInput;
+};
+
+
+export type MutationRequestGeneralParquetAccessArgs = {
+  input: RequestGeneralParquetAccessInput;
 };
 
 
@@ -4893,6 +4914,10 @@ export type RequestGeneralMediaAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RequestGeneralParquetAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type RequestGeneralZarrAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -4913,11 +4938,8 @@ export type RequestParquetAccessInput = {
 
 export type RequestParquetUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
-  datalayer?: Scalars['String']['input'];
   host?: InputMaybe<Scalars['String']['input']>;
-  originalFileName: Scalars['String']['input'];
   port?: InputMaybe<Scalars['Int']['input']>;
-  protocol?: Scalars['String']['input'];
 };
 
 export type RequestZarrAccessInput = {
@@ -5878,6 +5900,8 @@ export type GeneralZarrAccessGrantFragment = { __typename?: 'GeneralZarrAccessGr
 
 export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
+export type GeneralParquetAccessGrantFragment = { __typename?: 'GeneralParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string };
+
 export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
 
 export type ListDataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
@@ -6173,6 +6197,13 @@ export type RequestParquetAccessMutationVariables = Exact<{
 
 
 export type RequestParquetAccessMutation = { __typename?: 'Mutation', requestParquetAccess: { __typename?: 'ParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type RequestGeneralParquetAccessMutationVariables = Exact<{
+  input: RequestGeneralParquetAccessInput;
+}>;
+
+
+export type RequestGeneralParquetAccessMutation = { __typename?: 'Mutation', requestGeneralParquetAccess: { __typename?: 'GeneralParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string } };
 
 export type RequestZarrUploadMutationVariables = Exact<{
   input: RequestZarrUploadInput;
@@ -7057,6 +7088,16 @@ export const ParquetAccessGrantFragmentDoc = gql`
   expiresIn
   path
   key
+  bucket
+}
+    `;
+export const GeneralParquetAccessGrantFragmentDoc = gql`
+    fragment GeneralParquetAccessGrant on GeneralParquetAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
   bucket
 }
     `;
@@ -8125,6 +8166,13 @@ export const RequestParquetAccessDocument = gql`
   }
 }
     ${ParquetAccessGrantFragmentDoc}`;
+export const RequestGeneralParquetAccessDocument = gql`
+    mutation RequestGeneralParquetAccess($input: RequestGeneralParquetAccessInput!) {
+  requestGeneralParquetAccess(input: $input) {
+    ...GeneralParquetAccessGrant
+  }
+}
+    ${GeneralParquetAccessGrantFragmentDoc}`;
 export const RequestZarrUploadDocument = gql`
     mutation RequestZarrUpload($input: RequestZarrUploadInput!) {
   requestZarrUpload(input: $input) {
@@ -9010,6 +9058,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     RequestParquetAccess(variables: RequestParquetAccessMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestParquetAccessMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestParquetAccessMutation>({ document: RequestParquetAccessDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestParquetAccess', 'mutation', variables);
+    },
+    RequestGeneralParquetAccess(variables: RequestGeneralParquetAccessMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestGeneralParquetAccessMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestGeneralParquetAccessMutation>({ document: RequestGeneralParquetAccessDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestGeneralParquetAccess', 'mutation', variables);
     },
     RequestZarrUpload(variables: RequestZarrUploadMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestZarrUploadMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestZarrUploadMutation>({ document: RequestZarrUploadDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestZarrUpload', 'mutation', variables);

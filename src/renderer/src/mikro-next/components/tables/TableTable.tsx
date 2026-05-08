@@ -1,14 +1,11 @@
 "use client";
 
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
@@ -34,115 +31,64 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
-import { MikroPixelView } from "@/linkers";
 import {
-  ChildrenQuery,
-  ImageAccessorFragment,
-  LabelAccessorFragment,
-  TableFragment,
-  useRowsQuery,
+  type ImageAccessorFragment,
+  type LabelAccessorFragment,
+  type TableFragment,
 } from "@/mikro-next/api/graphql";
 import { TooltipContent } from "@radix-ui/react-tooltip";
-import { useForm } from "react-hook-form";
 
-export type Item = ChildrenQuery["rows"][0];
+import { useDuckDbTable } from "./useDuckDbTable";
 
-export const columns: ColumnDef<Item>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        className="ring-0 border-gray-500 bg-background"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="ring-0 border-gray-500 bg-background"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-];
-
-const endColumns = [
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-export type ValueAccessorProps<T extends any> = {
-  accessor: T;
-  value?: any;
+type Item = Record<string, unknown> & {
+  id?: string;
 };
 
-export const LabelAccessor = ({
+type ValueAccessorProps<T> = {
+  accessor: T;
+  value?: unknown;
+};
+
+const formatCellValue = (value: unknown) => {
+  if (value == null) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
+
+const LabelAccessor = ({
   accessor,
   value,
 }: ValueAccessorProps<LabelAccessorFragment>) => {
   return (
-    <MikroPixelView.DetailLink
-      object={accessor.pixelView}
-      subroute={`value/${parseInt(value?.toString() ?? "0")}`}
-    >
+    <div>
       <div className="text-sm font-semibold">{accessor.__typename}</div>
-      <div className="text-xs text-muted-foreground">{value}</div>
-    </MikroPixelView.DetailLink>
+      <div className="text-xs text-muted-foreground">{formatCellValue(value)}</div>
+    </div>
   );
 };
 
-export const ImageAccessor = ({
+const ImageAccessor = ({
   accessor,
   value,
 }: ValueAccessorProps<ImageAccessorFragment>) => {
   return (
     <div>
       <div className="text-sm font-semibold">{accessor.__typename}</div>
-      <div className="text-xs text-muted-foreground">{value}</div>
+      <div className="text-xs text-muted-foreground">{formatCellValue(value)}</div>
     </div>
   );
 };
 
-export const AccessorDiplay = (props: {
+const AccessorDisplay = (props: {
   accessor: TableFragment["accessors"][0];
-  value?: any;
+  value?: unknown;
 }) => {
   if (props.accessor.__typename === "LabelAccessor") {
     return <LabelAccessor accessor={props.accessor} value={props.value} />;
@@ -155,19 +101,21 @@ export const AccessorDiplay = (props: {
   return (
     <div>
       <div className="text-sm font-semibold">{props.accessor.__typename}</div>
-      <div className="text-xs text-muted-foreground">{props.value}</div>
+      <div className="text-xs text-muted-foreground">
+        {formatCellValue(props.value)}
+      </div>
     </div>
   );
 };
 
-export const DelegatinAccessorDisplay = (props: {
+const DelegatingAccessorDisplay = (props: {
   accessors: TableFragment["accessors"];
-  value: any;
+  value: unknown;
 }) => {
   return (
     <div className="flex flex-row gap-2">
       {props.accessors.map((accessor) => (
-        <AccessorDiplay
+        <AccessorDisplay
           key={accessor.id}
           accessor={accessor}
           value={props.value}
@@ -177,29 +125,93 @@ export const DelegatinAccessorDisplay = (props: {
   );
 };
 
-const calculateColumns = (table: TableFragment) => {
-  const calculated_columns = [...columns];
+const selectionColumn: ColumnDef<Item> = {
+  id: "select",
+  header: ({ table }) => (
+    <Checkbox
+      checked={
+        table.getIsAllPageRowsSelected() ||
+        (table.getIsSomePageRowsSelected() && "indeterminate")
+      }
+      onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      aria-label="Select all"
+      className="ring-0 border-gray-500 bg-background"
+    />
+  ),
+  cell: ({ row }) => (
+    <Checkbox
+      checked={row.getIsSelected()}
+      onCheckedChange={(value) => row.toggleSelected(!!value)}
+      aria-label="Select row"
+      className="ring-0 border-gray-500 bg-background"
+    />
+  ),
+  enableSorting: false,
+  enableHiding: false,
+};
 
-  table.columns.forEach((col, index) => {
-    calculated_columns.push({
-      id: col.name,
-      accessorKey: col.name,
-      header: ({ column }) => {
+const actionColumns: ColumnDef<Item>[] = [
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const selectedRowId =
+        typeof row.original.id === "string" ? row.original.id : undefined;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              disabled={!selectedRowId}
+              onClick={() => {
+                if (selectedRowId) {
+                  navigator.clipboard.writeText(selectedRowId);
+                }
+              }}
+            >
+              Copy row ID
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>View row details</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];
+
+const calculateColumns = (table: TableFragment): ColumnDef<Item>[] => {
+  const calculatedColumns: ColumnDef<Item>[] = [selectionColumn];
+
+  table.columns.forEach((column) => {
+    calculatedColumns.push({
+      id: column.name,
+      accessorKey: column.name,
+      header: ({ column: headerColumn }) => {
         return (
           <Tooltip>
             <TooltipTrigger>
               <Button
                 onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
+                  headerColumn.toggleSorting(
+                    headerColumn.getIsSorted() === "asc",
+                  )
                 }
                 variant="ghost"
               >
-                {col.name}
+                {column.name}
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" align="center">
-              {col.accessors.map((accessor) => (
+              {column.accessors.map((accessor) => (
                 <div key={accessor.keys.join("")}>{accessor.__typename}</div>
               ))}
             </TooltipContent>
@@ -208,13 +220,13 @@ const calculateColumns = (table: TableFragment) => {
       },
       cell: ({ row }) => {
         return (
-          <div className="text-center mx-auto">
-            {col.accessors.length == 0 ? (
-              <div>{row.getValue(col.name)}</div>
+          <div className="mx-auto text-center">
+            {column.accessors.length === 0 ? (
+              <div>{formatCellValue(row.getValue(column.name))}</div>
             ) : (
-              <DelegatinAccessorDisplay
-                accessors={col.accessors}
-                value={row.getValue(col.name)}
+              <DelegatingAccessorDisplay
+                accessors={column.accessors}
+                value={row.getValue(column.name)}
               />
             )}
           </div>
@@ -223,96 +235,74 @@ const calculateColumns = (table: TableFragment) => {
     });
   });
 
-  return calculated_columns.concat(endColumns);
-};
-
-export type FormValues = {
-  metrics?: string[];
-  kinds?: string[];
-  search?: string | null;
+  return calculatedColumns.concat(actionColumns);
 };
 
 export const TableTable = (props: { table: TableFragment }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
-    pageSize: 15,
+    pageSize: 25,
   });
-
-  const form = useForm<FormValues>({
-    defaultValues: {},
-  });
-
-  const initialVariables = {};
-
-  const { kinds, search } = form.watch();
-
-  const { data, loading, refetch, error } = useRowsQuery({
-    variables: {
-      table: props.table.id,
-      ...initialVariables,
-    },
-  });
-
-  React.useEffect(() => {
-    const variables = {
-      table: props.table.id,
-      pagination: {
-        limit: pagination.pageSize,
-        offset: pagination.pageIndex * pagination.pageSize,
-      },
-    };
-    refetch(variables);
-
-    console.log(variables);
-    setColumns(calculateColumns(props.table));
-  }, [pagination, kinds, search, refetch]);
-
-  const [columns, setColumns] = React.useState<ColumnDef<Item>[]>(() =>
-    calculateColumns(props.table),
-  );
-
+  const [search, setSearch] = React.useState("");
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  const columns = React.useMemo(() => calculateColumns(props.table), [props.table]);
+  const { rows, totalRowCount, loading, error } = useDuckDbTable({
+    table: props.table,
+    pagination,
+    sorting,
+    search,
+  });
+
+  React.useEffect(() => {
+    setPagination((current) => ({ ...current, pageIndex: 0 }));
+  }, [props.table.id, search]);
+
+  const pageCount = Math.max(1, Math.ceil(totalRowCount / pagination.pageSize));
+  const pageStart = totalRowCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
+  const pageEnd = Math.min(
+    totalRowCount,
+    (pagination.pageIndex + 1) * pagination.pageSize,
+  );
+
   const table = useReactTable({
-    data: data?.rows ?? [],
+    data: rows,
     columns,
-    pageCount: -1,
+    pageCount,
     manualPagination: true,
+    manualSorting: true,
     onPaginationChange: setPagination,
+    getRowId: (row, index) =>
+      typeof row.id === "string"
+        ? row.id
+        : `${pagination.pageIndex}:${index}`,
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
       pagination,
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
   });
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex items-center py-4 gap-2 flex-initial">
-        {JSON.stringify(error)}
+    <div className="flex h-full w-full flex-col">
+      <div className="flex flex-initial items-center gap-2 py-4">
         <Input
           placeholder="Search..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
           className="max-w-sm w-full bg-background"
         />
+        {error && (
+          <div className="text-xs text-destructive">{error.message}</div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -341,23 +331,22 @@ export const TableTable = (props: { table: TableFragment }) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="flex-grow flex flex-col">
+
+      <div className="flex flex-grow flex-col">
         <Table className="flex-grow">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
                           header.column.columnDef.header,
                           header.getContext(),
                         )}
-                    </TableHead>
-                  );
-                })}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -368,7 +357,7 @@ export const TableTable = (props: { table: TableFragment }) => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -386,10 +375,7 @@ export const TableTable = (props: { table: TableFragment }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -397,31 +383,25 @@ export const TableTable = (props: { table: TableFragment }) => {
           </TableBody>
         </Table>
       </div>
+
       <div className="flex flex-initial items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getSelectedRowModel().rows.length} selected. Showing {pageStart}-{pageEnd} of {totalRowCount} rows.
         </div>
         <div className="space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              table.previousPage();
-              refetch();
-            }}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+            disabled={pagination.pageIndex === 0 || loading}
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              table.nextPage();
-              refetch();
-            }}
-            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+            disabled={pagination.pageIndex + 1 >= pageCount || loading}
           >
             Next
           </Button>

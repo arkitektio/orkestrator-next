@@ -8,8 +8,10 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   type TableFragment,
+  useRequestParquetAccessMutation,
   useRequestGeneralParquetAccessMutation,
 } from "@/mikro-next/api/graphql";
+import { useDatalayerEndpoint } from "@/app/Arkitekt";
 
 type PaginationState = {
   pageIndex: number;
@@ -29,6 +31,7 @@ type CachedGrant = {
   sessionToken: string;
   region: string;
   bucket: string;
+  key: string;
   expiresAt: number;
 };
 
@@ -44,6 +47,7 @@ const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
 };
 
 let duckDbPromise: Promise<duckdb.AsyncDuckDB> | null = null;
+let httpfsReadyPromise: Promise<void> | null = null;
 
 const escapeSqlIdentifier = (value: string) =>
   `"${value.replaceAll('"', '""')}"`;
@@ -51,16 +55,51 @@ const escapeSqlIdentifier = (value: string) =>
 const escapeSqlLiteral = (value: string) =>
   `'${value.replaceAll("'", "''")}'`;
 
-const resolveParquetKey = (table: TableFragment) => {
-  if (table.store.key) {
-    return table.store.key;
+const resolveParquetUrl = (grant: CachedGrant) =>
+  `s3://${grant.bucket}/${grant.key}`;
+
+const resolveDuckDbEndpoint = (datalayerEndpoint?: string) => {
+  if (!datalayerEndpoint) {
+    return null;
   }
 
-  return table.store.path.replace(/^\/+/, "");
+  const parsedEndpoint = new URL(datalayerEndpoint);
+  const path = parsedEndpoint.pathname.replace(/\/+$/, "");
+
+  return {
+    endpoint: `${parsedEndpoint.host}${path === "/" ? "" : path}`,
+    useSsl: parsedEndpoint.protocol === "https:",
+  };
 };
 
-const resolveParquetUrl = (table: TableFragment, bucket: string) =>
-  `s3://${bucket}/${resolveParquetKey(table)}`;
+const buildCreateSecretQuery = (
+  grant: CachedGrant,
+  datalayerEndpoint?: string,
+) => {
+  const duckDbEndpoint = resolveDuckDbEndpoint(datalayerEndpoint);
+  const secretOptions = [
+    "TYPE s3",
+    "PROVIDER config",
+    `KEY_ID ${escapeSqlLiteral(grant.accessKey)}`,
+    `SECRET ${escapeSqlLiteral(grant.secretKey)}`,
+    `SESSION_TOKEN ${escapeSqlLiteral(grant.sessionToken)}`,
+    `REGION ${escapeSqlLiteral(grant.region)}`,
+  ];
+
+  if (duckDbEndpoint) {
+    secretOptions.push(`ENDPOINT ${escapeSqlLiteral(duckDbEndpoint.endpoint)}`);
+    secretOptions.push(`URL_STYLE ${escapeSqlLiteral("path")}`);
+    secretOptions.push(
+      `USE_SSL ${escapeSqlLiteral(duckDbEndpoint.useSsl ? "true" : "false")}`,
+    );
+  }
+
+  return [
+    "CREATE OR REPLACE SECRET parquet_access (",
+    secretOptions.join(",\n"),
+    ")",
+  ].join("\n");
+};
 
 const normalizeValue = (value: unknown): unknown => {
   if (typeof value === "bigint") {
@@ -128,6 +167,20 @@ const getDuckDb = async () => {
   return duckDbPromise;
 };
 
+const ensureHttpfs = async (connection: duckdb.AsyncDuckDBConnection) => {
+  if (!httpfsReadyPromise) {
+    httpfsReadyPromise = (async () => {
+      await connection.query("INSTALL httpfs");
+      await connection.query("LOAD httpfs");
+    })().catch((error) => {
+      httpfsReadyPromise = null;
+      throw error;
+    });
+  }
+
+  await httpfsReadyPromise;
+};
+
 const buildSearchClause = (table: TableFragment, search: string) => {
   const trimmedSearch = search.trim();
   if (!trimmedSearch) {
@@ -154,21 +207,25 @@ const buildSortingClause = (sorting: SortingState) => {
   return `ORDER BY ${escapeSqlIdentifier(primarySort.id)} ${primarySort.desc ? "DESC" : "ASC"}`;
 };
 
-const buildCountQuery = (table: TableFragment, bucket: string, search: string) => {
-  const fromClause = `FROM read_parquet(${escapeSqlLiteral(resolveParquetUrl(table, bucket))})`;
+const buildCountQuery = (
+  table: TableFragment,
+  parquetUrl: string,
+  search: string,
+) => {
+  const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
   const searchClause = buildSearchClause(table, search);
   return `SELECT COUNT(*) AS total_row_count ${fromClause} ${searchClause}`;
 };
 
 const buildRowsQuery = (
   table: TableFragment,
-  bucket: string,
+  parquetUrl: string,
   search: string,
   sorting: SortingState,
   pageIndex: number,
   pageSize: number,
 ) => {
-  const fromClause = `FROM read_parquet(${escapeSqlLiteral(resolveParquetUrl(table, bucket))})`;
+  const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
   const searchClause = buildSearchClause(table, search);
   const sortingClause = buildSortingClause(sorting);
   const offset = pageIndex * pageSize;
@@ -184,22 +241,6 @@ const buildRowsQuery = (
     .join(" ");
 };
 
-const applyS3Settings = async (
-  connection: duckdb.AsyncDuckDBConnection,
-  grant: CachedGrant,
-) => {
-  await connection.query(`SET s3_region=${escapeSqlLiteral(grant.region)}`);
-  await connection.query(
-    `SET s3_access_key_id=${escapeSqlLiteral(grant.accessKey)}`,
-  );
-  await connection.query(
-    `SET s3_secret_access_key=${escapeSqlLiteral(grant.secretKey)}`,
-  );
-  await connection.query(
-    `SET s3_session_token=${escapeSqlLiteral(grant.sessionToken)}`,
-  );
-};
-
 export const useDuckDbTable = ({
   table,
   pagination,
@@ -211,6 +252,7 @@ export const useDuckDbTable = ({
   sorting: SortingState;
   search: string;
 }): DuckDbTableState => {
+  const [requestParquetAccess] = useRequestParquetAccessMutation();
   const [requestGeneralParquetAccess] = useRequestGeneralParquetAccessMutation();
   const grantRef = useRef<CachedGrant | null>(null);
   const [state, setState] = useState<DuckDbTableState>({
@@ -219,6 +261,7 @@ export const useDuckDbTable = ({
     loading: true,
     error: null,
   });
+  const datalayer = useDatalayerEndpoint();
 
   useEffect(() => {
     let cancelled = false;
@@ -229,22 +272,33 @@ export const useDuckDbTable = ({
         return cachedGrant;
       }
 
-      const response = await requestGeneralParquetAccess({
-        variables: { input: {} },
-      });
-      const grant = response.data?.requestGeneralParquetAccess;
+      const [parquetResponse, generalResponse] = await Promise.all([
+        requestParquetAccess({
+          variables: { input: { storeId: table.store.id } },
+        }),
+        requestGeneralParquetAccess({
+          variables: { input: {} },
+        }),
+      ]);
+      const parquetGrant = parquetResponse.data?.requestParquetAccess;
+      const generalGrant = generalResponse.data?.requestGeneralParquetAccess;
 
-      if (!grant) {
+      if (!parquetGrant) {
+        throw new Error("Failed to request parquet access");
+      }
+
+      if (!generalGrant) {
         throw new Error("Failed to request general parquet access");
       }
 
       const resolvedGrant: CachedGrant = {
-        accessKey: grant.accessKey,
-        secretKey: grant.secretKey,
-        sessionToken: grant.sessionToken,
-        region: grant.region,
-        bucket: grant.bucket,
-        expiresAt: Date.now() + grant.expiresIn * 1000,
+        accessKey: parquetGrant.accessKey,
+        secretKey: parquetGrant.secretKey,
+        sessionToken: parquetGrant.sessionToken,
+        region: generalGrant.region,
+        bucket: parquetGrant.bucket,
+        key: parquetGrant.key,
+        expiresAt: Date.now() + parquetGrant.expiresIn * 1000,
       };
 
       grantRef.current = resolvedGrant;
@@ -259,16 +313,18 @@ export const useDuckDbTable = ({
       try {
         const db = await getDuckDb();
         const grant = await ensureGrant();
+        const parquetUrl = resolveParquetUrl(grant);
 
         connection = await db.connect();
-        await applyS3Settings(connection, grant);
+        await ensureHttpfs(connection);
+        await connection.query(buildCreateSecretQuery(grant, datalayer));
 
         const [countResult, rowsResult] = await Promise.all([
-          connection.query(buildCountQuery(table, grant.bucket, search)),
+          connection.query(buildCountQuery(table, parquetUrl, search)),
           connection.query(
             buildRowsQuery(
               table,
-              grant.bucket,
+              parquetUrl,
               search,
               sorting,
               pagination.pageIndex,
@@ -313,6 +369,8 @@ export const useDuckDbTable = ({
   }, [
     pagination.pageIndex,
     pagination.pageSize,
+    datalayer,
+    requestParquetAccess,
     requestGeneralParquetAccess,
     search,
     sorting,

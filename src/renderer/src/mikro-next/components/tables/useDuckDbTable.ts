@@ -4,7 +4,7 @@ import duckdbEhWasm from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url";
 import duckdbMvpWasm from "@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url";
 import duckdbEhWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url";
 import duckdbMvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type TableFragment,
@@ -23,6 +23,21 @@ type DuckDbTableState = {
   totalRowCount: number;
   loading: boolean;
   error: Error | null;
+};
+
+export type DuckDbColumnFilters = Record<string, string>;
+
+export type DuckDbHistogramBucket = {
+  value: string;
+  count: number;
+};
+
+type DuckDbTableResult = DuckDbTableState & {
+  loadColumnHistogram: (
+    columnName: string,
+    limit?: number,
+  ) => Promise<DuckDbHistogramBucket[]>;
+  exportAsCsv: (selectedColumns?: string[]) => Promise<string>;
 };
 
 type CachedGrant = {
@@ -99,6 +114,11 @@ const buildCreateSecretQuery = (
     secretOptions.join(",\n"),
     ")",
   ].join("\n");
+};
+
+const resolveHistogramValueExpression = (columnName: string) => {
+  const identifier = escapeSqlIdentifier(columnName);
+  return `COALESCE(TRY_CAST(${identifier} AS VARCHAR), '(null)')`;
 };
 
 const normalizeValue = (value: unknown): unknown => {
@@ -198,44 +218,142 @@ const buildSearchClause = (table: TableFragment, search: string) => {
     : "";
 };
 
+const buildWhereClause = (
+  table: TableFragment,
+  search: string,
+  columnFilters: DuckDbColumnFilters,
+) => {
+  const predicates: string[] = [];
+  const globalSearchClause = buildSearchClause(table, search);
+
+  if (globalSearchClause) {
+    predicates.push(globalSearchClause.replace(/^WHERE\s+/u, ""));
+  }
+
+  Object.entries(columnFilters).forEach(([columnName, rawValue]) => {
+    const trimmedValue = rawValue.trim();
+    if (!trimmedValue) {
+      return;
+    }
+
+    predicates.push(
+      `TRY_CAST(${escapeSqlIdentifier(columnName)} AS VARCHAR) ILIKE ${escapeSqlLiteral(`%${trimmedValue}%`)}`,
+    );
+  });
+
+  return predicates.length ? `WHERE ${predicates.join(" AND ")}` : "";
+};
+
 const buildSortingClause = (sorting: SortingState) => {
-  const primarySort = sorting[0];
-  if (!primarySort) {
+  if (!sorting.length) {
     return "";
   }
 
-  return `ORDER BY ${escapeSqlIdentifier(primarySort.id)} ${primarySort.desc ? "DESC" : "ASC"}`;
+  return `ORDER BY ${sorting
+    .map(
+      (entry) =>
+        `${escapeSqlIdentifier(entry.id)} ${entry.desc ? "DESC" : "ASC"}`,
+    )
+    .join(", ")}`;
 };
 
 const buildCountQuery = (
   table: TableFragment,
   parquetUrl: string,
   search: string,
+  columnFilters: DuckDbColumnFilters,
 ) => {
   const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
-  const searchClause = buildSearchClause(table, search);
-  return `SELECT COUNT(*) AS total_row_count ${fromClause} ${searchClause}`;
+  const whereClause = buildWhereClause(table, search, columnFilters);
+  return `SELECT COUNT(*) AS total_row_count ${fromClause} ${whereClause}`;
 };
 
 const buildRowsQuery = (
   table: TableFragment,
   parquetUrl: string,
   search: string,
+  columnFilters: DuckDbColumnFilters,
   sorting: SortingState,
   pageIndex: number,
   pageSize: number,
 ) => {
   const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
-  const searchClause = buildSearchClause(table, search);
+  const whereClause = buildWhereClause(table, search, columnFilters);
   const sortingClause = buildSortingClause(sorting);
   const offset = pageIndex * pageSize;
 
   return [
     `SELECT * ${fromClause}`,
-    searchClause,
+    whereClause,
     sortingClause,
     `LIMIT ${pageSize}`,
     `OFFSET ${offset}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const buildExportQuery = (
+  table: TableFragment,
+  parquetUrl: string,
+  search: string,
+  columnFilters: DuckDbColumnFilters,
+  sorting: SortingState,
+  selectedColumns?: string[],
+) => {
+  const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
+  const whereClause = buildWhereClause(table, search, columnFilters);
+  const sortingClause = buildSortingClause(sorting);
+  const availableColumns = new Set(table.columns.map((column) => column.name));
+  const exportColumns =
+    selectedColumns?.filter((columnName) => availableColumns.has(columnName)) ??
+    table.columns.map((column) => column.name);
+
+  return [
+    `SELECT ${exportColumns.map((columnName) => escapeSqlIdentifier(columnName)).join(", ")}`,
+    fromClause,
+    whereClause,
+    sortingClause,
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const escapeCsvValue = (value: unknown) => {
+  const normalized = normalizeValue(value);
+  const text = normalized == null ? "" : String(normalized);
+
+  if (
+    text.includes(",") ||
+    text.includes('"') ||
+    text.includes("\n") ||
+    text.includes("\r")
+  ) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  return text;
+};
+
+const buildHistogramQuery = (
+  table: TableFragment,
+  parquetUrl: string,
+  search: string,
+  columnFilters: DuckDbColumnFilters,
+  columnName: string,
+  limit: number,
+) => {
+  const fromClause = `FROM read_parquet(${escapeSqlLiteral(parquetUrl)})`;
+  const whereClause = buildWhereClause(table, search, columnFilters);
+  const valueExpression = resolveHistogramValueExpression(columnName);
+
+  return [
+    `SELECT ${valueExpression} AS histogram_value, COUNT(*) AS histogram_count`,
+    fromClause,
+    whereClause,
+    `GROUP BY ${valueExpression}`,
+    "ORDER BY histogram_count DESC, histogram_value ASC",
+    `LIMIT ${limit}`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -246,12 +364,14 @@ export const useDuckDbTable = ({
   pagination,
   sorting,
   search,
+  columnFilters,
 }: {
   table: TableFragment;
   pagination: PaginationState;
   sorting: SortingState;
   search: string;
-}): DuckDbTableState => {
+  columnFilters: DuckDbColumnFilters;
+}): DuckDbTableResult => {
   const [requestParquetAccess] = useRequestParquetAccessMutation();
   const [requestGeneralParquetAccess] = useRequestGeneralParquetAccessMutation();
   const grantRef = useRef<CachedGrant | null>(null);
@@ -263,75 +383,149 @@ export const useDuckDbTable = ({
   });
   const datalayer = useDatalayerEndpoint();
 
+  const ensureGrant = useCallback(async () => {
+    const cachedGrant = grantRef.current;
+    if (cachedGrant && cachedGrant.expiresAt > Date.now() + 30_000) {
+      return cachedGrant;
+    }
+
+    const [parquetResponse, generalResponse] = await Promise.all([
+      requestParquetAccess({
+        variables: { input: { storeId: table.store.id } },
+      }),
+      requestGeneralParquetAccess({
+        variables: { input: {} },
+      }),
+    ]);
+    const parquetGrant = parquetResponse.data?.requestParquetAccess;
+    const generalGrant = generalResponse.data?.requestGeneralParquetAccess;
+
+    if (!parquetGrant) {
+      throw new Error("Failed to request parquet access");
+    }
+
+    if (!generalGrant) {
+      throw new Error("Failed to request general parquet access");
+    }
+
+    const resolvedGrant: CachedGrant = {
+      accessKey: parquetGrant.accessKey,
+      secretKey: parquetGrant.secretKey,
+      sessionToken: parquetGrant.sessionToken,
+      region: generalGrant.region,
+      bucket: parquetGrant.bucket,
+      key: parquetGrant.key,
+      expiresAt: Date.now() + parquetGrant.expiresIn * 1000,
+    };
+
+    grantRef.current = resolvedGrant;
+    return resolvedGrant;
+  }, [requestGeneralParquetAccess, requestParquetAccess, table.store.id]);
+
+  const withDuckDbConnection = useCallback(
+    async <T,>(run: (args: {
+      connection: duckdb.AsyncDuckDBConnection;
+      parquetUrl: string;
+    }) => Promise<T>) => {
+      const db = await getDuckDb();
+      const grant = await ensureGrant();
+      const parquetUrl = resolveParquetUrl(grant);
+      const connection = await db.connect();
+
+      try {
+        await ensureHttpfs(connection);
+        await connection.query(buildCreateSecretQuery(grant, datalayer));
+        return await run({ connection, parquetUrl });
+      } finally {
+        await connection.close();
+      }
+    },
+    [datalayer, ensureGrant],
+  );
+
+  const loadColumnHistogram = useCallback(
+    async (columnName: string, limit = 8) => {
+      const histogramRows = await withDuckDbConnection(async ({ connection, parquetUrl }) => {
+        const result = await connection.query(
+          buildHistogramQuery(
+            table,
+            parquetUrl,
+            search,
+            columnFilters,
+            columnName,
+            limit,
+          ),
+        );
+
+        return result.toArray().map((row) => rowToRecord(row));
+      });
+
+      return histogramRows.map((row) => ({
+        value: String(row.histogram_value ?? "(null)"),
+        count: Number(row.histogram_count ?? 0),
+      }));
+    },
+    [columnFilters, search, table, withDuckDbConnection],
+  );
+
+  const exportAsCsv = useCallback(
+    async (selectedColumns?: string[]) => {
+      const exportRows = await withDuckDbConnection(async ({ connection, parquetUrl }) => {
+        const result = await connection.query(
+          buildExportQuery(
+            table,
+            parquetUrl,
+            search,
+            columnFilters,
+            sorting,
+            selectedColumns,
+          ),
+        );
+
+        return result.toArray().map((row) => rowToRecord(row));
+      });
+
+      const availableColumns = new Set(table.columns.map((column) => column.name));
+      const exportColumns =
+        selectedColumns?.filter((columnName) => availableColumns.has(columnName)) ??
+        table.columns.map((column) => column.name);
+
+      const headerRow = exportColumns.map((columnName) => escapeCsvValue(columnName)).join(",");
+      const csvRows = exportRows.map((row) =>
+        exportColumns.map((columnName) => escapeCsvValue(row[columnName])).join(","),
+      );
+
+      return [headerRow, ...csvRows].join("\n");
+    },
+    [columnFilters, search, sorting, table, withDuckDbConnection],
+  );
+
   useEffect(() => {
     let cancelled = false;
-
-    const ensureGrant = async () => {
-      const cachedGrant = grantRef.current;
-      if (cachedGrant && cachedGrant.expiresAt > Date.now() + 30_000) {
-        return cachedGrant;
-      }
-
-      const [parquetResponse, generalResponse] = await Promise.all([
-        requestParquetAccess({
-          variables: { input: { storeId: table.store.id } },
-        }),
-        requestGeneralParquetAccess({
-          variables: { input: {} },
-        }),
-      ]);
-      const parquetGrant = parquetResponse.data?.requestParquetAccess;
-      const generalGrant = generalResponse.data?.requestGeneralParquetAccess;
-
-      if (!parquetGrant) {
-        throw new Error("Failed to request parquet access");
-      }
-
-      if (!generalGrant) {
-        throw new Error("Failed to request general parquet access");
-      }
-
-      const resolvedGrant: CachedGrant = {
-        accessKey: parquetGrant.accessKey,
-        secretKey: parquetGrant.secretKey,
-        sessionToken: parquetGrant.sessionToken,
-        region: generalGrant.region,
-        bucket: parquetGrant.bucket,
-        key: parquetGrant.key,
-        expiresAt: Date.now() + parquetGrant.expiresIn * 1000,
-      };
-
-      grantRef.current = resolvedGrant;
-      return resolvedGrant;
-    };
 
     const load = async () => {
       setState((current) => ({ ...current, loading: true, error: null }));
 
-      let connection: duckdb.AsyncDuckDBConnection | null = null;
-
       try {
-        const db = await getDuckDb();
-        const grant = await ensureGrant();
-        const parquetUrl = resolveParquetUrl(grant);
-
-        connection = await db.connect();
-        await ensureHttpfs(connection);
-        await connection.query(buildCreateSecretQuery(grant, datalayer));
-
-        const [countResult, rowsResult] = await Promise.all([
-          connection.query(buildCountQuery(table, parquetUrl, search)),
-          connection.query(
-            buildRowsQuery(
-              table,
-              parquetUrl,
-              search,
-              sorting,
-              pagination.pageIndex,
-              pagination.pageSize,
-            ),
-          ),
-        ]);
+        const [countResult, rowsResult] = await withDuckDbConnection(
+          async ({ connection, parquetUrl }) =>
+            Promise.all([
+              connection.query(
+                buildCountQuery(table, parquetUrl, search, columnFilters),
+              ),
+              connection.query(
+                buildRowsQuery(
+                  table,
+                  parquetUrl,
+                  search,
+                  columnFilters,
+                  sorting,
+                  pagination.pageIndex,
+                  pagination.pageSize,
+                ),
+              ),
+            ]),
+        );
 
         const totalRow = rowToRecord(countResult.toArray()[0]);
         const totalRowCount = Number(totalRow.total_row_count ?? 0);
@@ -354,10 +548,6 @@ export const useDuckDbTable = ({
             error: error instanceof Error ? error : new Error(String(error)),
           });
         }
-      } finally {
-        if (connection) {
-          await connection.close();
-        }
       }
     };
 
@@ -369,13 +559,16 @@ export const useDuckDbTable = ({
   }, [
     pagination.pageIndex,
     pagination.pageSize,
-    datalayer,
-    requestParquetAccess,
-    requestGeneralParquetAccess,
+    columnFilters,
+    withDuckDbConnection,
     search,
     sorting,
     table,
   ]);
 
-  return state;
+  return {
+    ...state,
+    exportAsCsv,
+    loadColumnHistogram,
+  };
 };

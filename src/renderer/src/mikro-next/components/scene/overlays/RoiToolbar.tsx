@@ -48,9 +48,7 @@ export const RoiToolbar = () => {
             variant={activeTool === tool ? "default" : "outline"}
             size="xs"
             disabled={armedLayerCount === 0}
-            onClick={() =>
-              setActiveTool(activeTool === tool ? null : tool)
-            }
+            onClick={() => setActiveTool(tool)}
             title={label}
           >
             <Icon className="h-3.5 w-3.5" />

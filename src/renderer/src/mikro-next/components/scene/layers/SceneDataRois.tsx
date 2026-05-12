@@ -4,6 +4,7 @@ import { Line } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
+import { useModeStore } from "../store/modeStore";
 import {
   type RoiBounds,
   useRoiSelectionStore,
@@ -16,61 +17,109 @@ import {
 import { buildAffineMatrix } from "../panels/layer/affine-utils";
 
 const ROI_RENDER_Z = 0.15;
+const MIN_DEPTH = 0.001;
 
-function getRoiSelectionPoints(roi: ListDataRoiFragment): [number, number, number][] {
-  const vectors = roi.vectors;
-  if (!vectors || vectors.length === 0) return [];
+function getVectorPoint(vector: number[], flattenToPlane: boolean): [number, number, number] {
+  return [vector[0] ?? 0, vector[1] ?? 0, flattenToPlane ? ROI_RENDER_Z : (vector[2] ?? 0)];
+}
 
-  if (roi.kind === RoiKind.Point && vectors.length >= 1) {
-    const [x, y] = vectors[0];
-    return [[x, y, ROI_RENDER_Z]];
-  }
+function getRectangleCorners(
+  start: number[],
+  end: number[],
+  flattenToPlane: boolean,
+): [number, number, number][] {
+  const [x0, y0, z0] = getVectorPoint(start, flattenToPlane);
+  const [x1, y1, z1] = getVectorPoint(end, flattenToPlane);
 
-  if (roi.kind === RoiKind.Line && vectors.length >= 2) {
-    return vectors.map((v) => [v[0], v[1], ROI_RENDER_Z] as [number, number, number]);
-  }
-
-  if (roi.kind === RoiKind.Rectangle && vectors.length >= 2) {
-    const [x0, y0] = vectors[0];
-    const [x1, y1] = vectors[1];
+  if (flattenToPlane || Math.abs(z1 - z0) < MIN_DEPTH) {
     return [
-      [x0, y0, ROI_RENDER_Z],
-      [x1, y0, ROI_RENDER_Z],
-      [x1, y1, ROI_RENDER_Z],
-      [x0, y1, ROI_RENDER_Z],
+      [x0, y0, z0],
+      [x1, y0, z0],
+      [x1, y1, z0],
+      [x0, y1, z0],
     ];
   }
 
-  if (roi.kind === RoiKind.Ellipsis && vectors.length >= 2) {
-    const [x0, y0] = vectors[0];
-    const [x1, y1] = vectors[1];
-    const cx = (x0 + x1) / 2;
-    const cy = (y0 + y1) / 2;
-    const rx = Math.abs(x1 - x0) / 2;
-    const ry = Math.abs(y1 - y0) / 2;
-    const segments = 24;
-    const points: [number, number, number][] = [];
+  return [
+    [x0, y0, z0],
+    [x1, y0, z0],
+    [x1, y1, z0],
+    [x0, y1, z0],
+    [x0, y0, z1],
+    [x1, y0, z1],
+    [x1, y1, z1],
+    [x0, y1, z1],
+  ];
+}
 
+function getEllipsisPoints(
+  start: number[],
+  end: number[],
+  flattenToPlane: boolean,
+  segments = 24,
+): [number, number, number][] {
+  const [x0, y0, z0] = getVectorPoint(start, flattenToPlane);
+  const [x1, y1, z1] = getVectorPoint(end, flattenToPlane);
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  const rx = Math.abs(x1 - x0) / 2;
+  const ry = Math.abs(y1 - y0) / 2;
+  const points: [number, number, number][] = [];
+
+  for (let index = 0; index < segments; index += 1) {
+    const theta = (index / segments) * Math.PI * 2;
+    points.push([
+      cx + rx * Math.cos(theta),
+      cy + ry * Math.sin(theta),
+      z0,
+    ]);
+  }
+
+  if (!flattenToPlane && Math.abs(z1 - z0) >= MIN_DEPTH) {
     for (let index = 0; index < segments; index += 1) {
       const theta = (index / segments) * Math.PI * 2;
       points.push([
         cx + rx * Math.cos(theta),
         cy + ry * Math.sin(theta),
-        ROI_RENDER_Z,
+        z1,
       ]);
     }
-
-    return points;
   }
 
-  return vectors.map((v) => [v[0], v[1], ROI_RENDER_Z] as [number, number, number]);
+  return points;
+}
+
+function getRoiSelectionPoints(
+  roi: ListDataRoiFragment,
+  flattenToPlane: boolean,
+): [number, number, number][] {
+  const vectors = roi.vectors;
+  if (!vectors || vectors.length === 0) return [];
+
+  if (roi.kind === RoiKind.Point && vectors.length >= 1) {
+    return [getVectorPoint(vectors[0], flattenToPlane)];
+  }
+
+  if (roi.kind === RoiKind.Line && vectors.length >= 2) {
+    return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
+  }
+
+  if (roi.kind === RoiKind.Rectangle && vectors.length >= 2) {
+    return getRectangleCorners(vectors[0], vectors[1], flattenToPlane);
+  }
+
+  if (roi.kind === RoiKind.Ellipsis && vectors.length >= 2) {
+    return getEllipsisPoints(vectors[0], vectors[1], flattenToPlane);
+  }
+
+  return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
 }
 
 function getWorldBounds(
   roi: ListDataRoiFragment,
   affineMatrix: THREE.Matrix4,
 ): RoiBounds | null {
-  const points = getRoiSelectionPoints(roi);
+  const points = getRoiSelectionPoints(roi, false);
   if (points.length === 0) return null;
 
   let minX = Infinity;
@@ -92,6 +141,7 @@ function getWorldBounds(
 /** Renders all DataROIs for a single layer, queried by the layer's slices + dataset */
 const LayerDataRois = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
+  const displayMode = useModeStore((s) => s.displayMode);
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
   const selectOnlyRoi = useRoiSelectionStore((s) => s.selectOnlyRoi);
   const toggleSelectedRoi = useRoiSelectionStore((s) => s.toggleSelectedRoi);
@@ -161,6 +211,7 @@ const LayerDataRois = ({ layerId }: { layerId: string }) => {
         <DataRoiShape
           key={roi.id}
           roi={roi}
+          flattenToPlane={displayMode !== "3D"}
           isActive={selectedRoiIds.has(roi.id)}
           onSelect={(appendSelection) => {
             const selectedRoi = {
@@ -186,17 +237,18 @@ const LayerDataRois = ({ layerId }: { layerId: string }) => {
 /** Renders a single DataROI in voxel-space (parent group applies the affine) */
 const DataRoiShape = ({
   roi,
+  flattenToPlane,
   isActive,
   onSelect,
 }: {
   roi: ListDataRoiFragment;
+  flattenToPlane: boolean;
   isActive: boolean;
   onSelect: (appendSelection: boolean) => void;
 }) => {
   const vectors = roi.vectors; // Array of [x, y, z]
   if (!vectors || vectors.length === 0) return null;
 
-  const Z = ROI_RENDER_Z; // slightly above the image plane for visibility
   const strokeColor = isActive ? "#f59e0b" : "#38bdf8";
 
   const handleSelect = (event: ThreeEvent<MouseEvent>) => {
@@ -205,9 +257,9 @@ const DataRoiShape = ({
   };
 
   if (roi.kind === RoiKind.Point && vectors.length >= 1) {
-    const [x, y] = vectors[0];
+    const [x, y, z] = getVectorPoint(vectors[0], flattenToPlane);
     return (
-      <mesh position={[x, y, Z]} onClick={handleSelect}>
+      <mesh position={[x, y, z]} onClick={handleSelect}>
         <circleGeometry args={[1.5, 16]} />
         <meshBasicMaterial
           color={strokeColor}
@@ -222,7 +274,7 @@ const DataRoiShape = ({
   if (roi.kind === RoiKind.Line && vectors.length >= 2) {
     return (
       <Line
-        points={vectors.map((v) => [v[0], v[1], Z] as [number, number, number])}
+        points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
         color={strokeColor}
         lineWidth={2}
         onClick={handleSelect}
@@ -231,12 +283,46 @@ const DataRoiShape = ({
   }
 
   if (roi.kind === RoiKind.Rectangle && vectors.length >= 2) {
-    const [x0, y0] = vectors[0];
-    const [x1, y1] = vectors[1];
+    const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
+      getVectorPoint(vector, flattenToPlane),
+    );
+    const width = Math.abs(x1 - x0);
+    const height = Math.abs(y1 - y0);
+    const depth = Math.abs(z1 - z0);
+
+    if (!flattenToPlane && depth >= MIN_DEPTH) {
+      const centerX = (x0 + x1) / 2;
+      const centerY = (y0 + y1) / 2;
+      const centerZ = (z0 + z1) / 2;
+
+      return (
+        <group onClick={handleSelect}>
+          <mesh position={[centerX, centerY, centerZ]}>
+            <boxGeometry args={[width, height, depth]} />
+            <meshBasicMaterial
+              color={strokeColor}
+              transparent
+              opacity={0.08}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <mesh position={[centerX, centerY, centerZ]}>
+            <boxGeometry args={[width, height, depth]} />
+            <meshBasicMaterial
+              color={strokeColor}
+              wireframe
+              transparent
+              opacity={0.85}
+            />
+          </mesh>
+        </group>
+      );
+    }
+
     return (
       <group onClick={handleSelect}>
-        <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, Z]}>
-          <planeGeometry args={[Math.abs(x1 - x0), Math.abs(y1 - y0)]} />
+        <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, z0]}>
+          <planeGeometry args={[width, height]} />
           <meshBasicMaterial
             color={strokeColor}
             transparent
@@ -246,11 +332,11 @@ const DataRoiShape = ({
         </mesh>
         <Line
           points={[
-            [x0, y0, Z],
-            [x1, y0, Z],
-            [x1, y1, Z],
-            [x0, y1, Z],
-            [x0, y0, Z],
+            [x0, y0, z0],
+            [x1, y0, z0],
+            [x1, y1, z0],
+            [x0, y1, z0],
+            [x0, y0, z0],
           ]}
           color={strokeColor}
           lineWidth={1.5}
@@ -260,18 +346,46 @@ const DataRoiShape = ({
   }
 
   if (roi.kind === RoiKind.Ellipsis && vectors.length >= 2) {
-    const [x0, y0] = vectors[0];
-    const [x1, y1] = vectors[1];
+    const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
+      getVectorPoint(vector, flattenToPlane),
+    );
     const cx = (x0 + x1) / 2;
     const cy = (y0 + y1) / 2;
+    const cz = (z0 + z1) / 2;
     const rx = Math.abs(x1 - x0) / 2;
     const ry = Math.abs(y1 - y0) / 2;
-    const segments = 48;
-    const points: [number, number, number][] = [];
-    for (let i = 0; i <= segments; i++) {
-      const theta = (i / segments) * Math.PI * 2;
-      points.push([cx + rx * Math.cos(theta), cy + ry * Math.sin(theta), Z]);
+    const rz = Math.abs(z1 - z0) / 2;
+
+    if (!flattenToPlane && rz >= MIN_DEPTH) {
+      return (
+        <group onClick={handleSelect}>
+          <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]}>
+            <sphereGeometry args={[1, 24, 16]} />
+            <meshBasicMaterial
+              color={strokeColor}
+              transparent
+              opacity={0.08}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]}>
+            <sphereGeometry args={[1, 24, 16]} />
+            <meshBasicMaterial
+              color={strokeColor}
+              wireframe
+              transparent
+              opacity={0.85}
+            />
+          </mesh>
+        </group>
+      );
     }
+
+    const points = getEllipsisPoints(vectors[0], vectors[1], flattenToPlane, 48);
+    if (flattenToPlane || Math.abs(z1 - z0) < MIN_DEPTH) {
+      points.push(points[0]);
+    }
+
     return <Line points={points} color={strokeColor} lineWidth={1.5} onClick={handleSelect} />;
   }
 
@@ -279,9 +393,7 @@ const DataRoiShape = ({
     (roi.kind === RoiKind.Polygon || roi.kind === RoiKind.Path) &&
     vectors.length >= 2
   ) {
-    const pts = vectors.map(
-      (v) => [v[0], v[1], Z] as [number, number, number],
-    );
+    const pts = vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
     if (roi.kind === RoiKind.Polygon) pts.push(pts[0]); // close polygon
     return <Line points={pts} color={strokeColor} lineWidth={1.5} onClick={handleSelect} />;
   }
@@ -290,7 +402,7 @@ const DataRoiShape = ({
   if (vectors.length >= 2) {
     return (
       <Line
-        points={vectors.map((v) => [v[0], v[1], Z] as [number, number, number])}
+        points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
         color={strokeColor}
         lineWidth={1.5}
         onClick={handleSelect}
@@ -305,11 +417,15 @@ const DataRoiShape = ({
 export const SceneDataRois = () => {
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
   const layers = useSceneStore((s) => s.layers);
+  const displayMode = useModeStore((s) => s.displayMode);
 
   // Only render for layers that are currently visible
   const visibleLayerIds = useMemo(
-    () => layers.filter((l) => visibleLayers.includes(l.id)).map((l) => l.id),
-    [layers, visibleLayers],
+    () => layers
+      .filter((layer) => layer.visible !== false)
+      .filter((layer) => displayMode === "3D" || visibleLayers.includes(layer.id))
+      .map((layer) => layer.id),
+    [displayMode, layers, visibleLayers],
   );
 
   return (

@@ -5,6 +5,7 @@ import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/layerStore";
+import { useViewerStore } from "../store/viewerStore";
 import { affineToMatrix4 } from "../panels/layer/affine-utils";
 import { useCreateDataRoiMutation } from "@/mikro-next/api/graphql";
 import type { DrawnRoi } from "../store/roiDrawingStore";
@@ -22,6 +23,7 @@ export const RoiDrawer = () => {
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
   const layers = useSceneStore((s) => s.layers);
   const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
+  const currentZ = useViewerStore((s) => s.currentZ);
 
   const [createDataRoi] = useCreateDataRoiMutation();
 
@@ -36,6 +38,11 @@ export const RoiDrawer = () => {
   );
 
   const primaryArmedLayer = armedLayers[0];
+
+  const pointOnCurrentSlice = useCallback(
+    (point: THREE.Vector3) => new THREE.Vector3(point.x, point.y, currentZ),
+    [currentZ],
+  );
 
   const previewInvAffine = useMemo(() => {
     if (!primaryArmedLayer) return new THREE.Matrix4().identity();
@@ -126,59 +133,56 @@ export const RoiDrawer = () => {
       {/* Invisible interaction plane */}
       <mesh
         position={[0, 0, 0.01]}
-        onPointerDown={(e) => {
-          if (isPolygonLike) return; // polygon uses click
-          e.stopPropagation();
-          if (activeTool === "POINT") {
-            finishShape([e.point.clone()]);
-            return;
-          }
-          setStartPos(e.point.clone());
-        }}
         onPointerMove={(e) => {
           if (isPolygonLike) {
             if (polyPoints.length > 0) {
-              setCurrentPos(e.point.clone());
+              setCurrentPos(pointOnCurrentSlice(e.point));
             }
             return;
           }
+
           if (startPos) {
             e.stopPropagation();
-            setCurrentPos(e.point.clone());
+            setCurrentPos(pointOnCurrentSlice(e.point));
           }
-        }}
-        onPointerUp={(e) => {
-          if (isPolygonLike) return;
-          if (startPos && currentPos) {
-            e.stopPropagation();
-            if (activeTool === "LINE") {
-              finishShape([startPos, currentPos]);
-            } else {
-              // Rectangle / Ellipsis: 2 corner vectors
-              finishShape([startPos, currentPos]);
-            }
-          }
-          setStartPos(null);
-          setCurrentPos(null);
         }}
         onClick={(e) => {
-          if (!isPolygonLike) return;
           e.stopPropagation();
-          // Double-click to finish polygon
-          if (e.detail >= 2 && polyPoints.length >= 2) {
-            finishShape([...polyPoints]);
-            setPolyPoints([]);
-            setCurrentPos(null);
+          const anchorPoint = pointOnCurrentSlice(e.point);
+
+          if (isPolygonLike) {
+            // Double-click to finish polygon
+            if (e.detail >= 2 && polyPoints.length >= 2) {
+              finishShape([...polyPoints]);
+              setPolyPoints([]);
+              setCurrentPos(null);
+              return;
+            }
+            setPolyPoints((prev) => [...prev, anchorPoint]);
             return;
           }
-          setPolyPoints((prev) => [...prev, e.point.clone()]);
+
+          if (activeTool === "POINT") {
+            finishShape([anchorPoint]);
+            return;
+          }
+
+          if (!startPos) {
+            setStartPos(anchorPoint);
+            setCurrentPos(anchorPoint);
+            return;
+          }
+
+          finishShape([startPos, anchorPoint]);
+          setStartPos(null);
+          setCurrentPos(null);
         }}
       >
         <planeGeometry args={[80000, 80000]} />
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      {/* Live preview for rectangle / ellipsis drag */}
+      {/* Live preview for click-anchored line / rectangle / ellipsis */}
       {startPos && currentPos && !isPolygonLike && activeTool !== "POINT" && (
         activeTool === "LINE" ? (
           <Line

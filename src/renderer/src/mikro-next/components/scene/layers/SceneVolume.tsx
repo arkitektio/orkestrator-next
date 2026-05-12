@@ -13,7 +13,9 @@ export const SceneVolume = () => {
 
 
   const renderedAbleFrames = useMemo(() => {
-    return layers.slice(0, MAX_DISPLAYABLE);
+    return layers
+      .filter((layer) => layer.visible !== false)
+      .slice(0, MAX_DISPLAYABLE);
   }, [layers]);
 
   if (mode == "2D") return null;

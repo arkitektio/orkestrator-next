@@ -2,6 +2,7 @@ import { useModeStore } from "../store/modeStore";
 import { useViewerStore } from "../store/viewerStore";
 
 import {
+  ArcballControls,
   OrbitControls,
   OrthographicCamera,
   PerspectiveCamera,
@@ -10,8 +11,11 @@ import {
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
+  const cameraControllerMode = useModeStore((s) => s.cameraControllerMode);
   const frustumNear = useViewerStore((s) => s.frustumNear);
   const frustumFar = useViewerStore((s) => s.frustumFar);
+
+  const enablePan = interactionMode === "PAN";
 
   return (
     <>
@@ -42,13 +46,21 @@ export const CameraController = () => {
             Disable panning/rotating while another interaction mode is active so the scene doesn't drag while selecting.
             */}
       {displayMode === "3D" ? (
-        <OrbitControls
-          key="orbit-controls-3d"
-          makeDefault
-          enableRotate={displayMode === "3D"}
-          enablePan={interactionMode === "PAN"}
-          enableZoom={true}
-        />
+        cameraControllerMode === "ARCBALL" ? (
+          <ArcballControls
+            key="arcball-controls-3d"
+            makeDefault
+          />
+        ) : (
+          <OrbitControls
+            key={`orbit-controls-3d:${cameraControllerMode}`}
+            makeDefault
+            enableRotate={true}
+            enablePan={enablePan}
+            enableZoom={true}
+            zoomToCursor={cameraControllerMode === "CURSOR_ORBIT"}
+          />
+        )
       ) : (
         <OrbitControls
           key="orbit-controls-2d"

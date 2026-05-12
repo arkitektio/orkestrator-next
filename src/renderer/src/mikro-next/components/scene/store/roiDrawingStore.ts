@@ -46,7 +46,7 @@ export interface RoiDrawingState {
 export const createRoiDrawingStore = () =>
   createStore<RoiDrawingState>()(
     immer((set) => ({
-      activeTool: null,
+      activeTool: "RECTANGLE",
       drawnRois: [],
       setActiveTool: (tool) =>
         set((state) => {

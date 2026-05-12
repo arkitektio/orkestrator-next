@@ -4,6 +4,7 @@ import { createScopedStoreHooks } from "./createScopedStore";
 
 export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META";
 export type DisplayMode = "2D" | "3D";
+export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL";
 
 export type DisplayModeOption = {
   label: string;
@@ -14,6 +15,12 @@ export type DisplayModeOption = {
 export type InteractionModeOption = {
   label: string;
   value: InteractionMode;
+  description?: string;
+};
+
+export type CameraControllerModeOption = {
+  label: string;
+  value: CameraControllerMode;
   description?: string;
 };
 
@@ -50,13 +57,34 @@ export const displayModeOptions: DisplayModeOption[] = [
   { label: "3D View", value: "3D", description: "Display in 3D mode" },
 ];
 
+export const cameraControllerModeOptions: CameraControllerModeOption[] = [
+  {
+    label: "Orbit",
+    value: "ORBIT",
+    description: "Classic orbit camera around the current target",
+  },
+  {
+    label: "Cursor Orbit",
+    value: "CURSOR_ORBIT",
+    description: "Orbit camera with cursor-focused zoom behavior",
+  },
+  {
+    label: "Arcball",
+    value: "ARCBALL",
+    description: "Arcball controller for pointer-centered 3D rotation",
+  },
+];
+
 export interface ModeState {
   interactionMode: InteractionMode;
   displayMode: DisplayMode;
+  cameraControllerMode: CameraControllerMode;
   interactionModeOptions: InteractionModeOption[];
   displayModeOptions: DisplayModeOption[];
+  cameraControllerModeOptions: CameraControllerModeOption[];
   setInteractionMode: (mode: InteractionMode) => void;
   setDisplayMode: (mode: DisplayMode) => void;
+  setCameraControllerMode: (mode: CameraControllerMode) => void;
 }
 
 
@@ -70,8 +98,10 @@ export const createModeStore = () =>
     immer((set) => ({
     interactionMode: "PAN", // Default starting mode
     displayMode: "2D", // Active when holding a modifier key
+    cameraControllerMode: "ORBIT",
     interactionModeOptions,
     displayModeOptions,
+    cameraControllerModeOptions,
     setInteractionMode: (mode) =>
       set((state) => {
         state.interactionMode = mode;
@@ -79,6 +109,10 @@ export const createModeStore = () =>
     setDisplayMode: (mode) =>
       set((state) => {
         state.displayMode = mode;
+      }),
+    setCameraControllerMode: (mode) =>
+      set((state) => {
+        state.cameraControllerMode = mode;
       }),
     })),
   );

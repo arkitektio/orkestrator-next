@@ -10,7 +10,7 @@ import {
 
 /**
  * Listens for key holds to temporarily override the mode.
- * e.g., Holding 'D' switches to SELECT mode. Releasing it reverts back.
+ * e.g., Holding 'D' switches to SCAN mode. Releasing it reverts back.
  */
 export const KeyboardModeController = () => {
   const displayMode = useModeStore((s) => s.displayMode);
@@ -59,7 +59,7 @@ export const KeyboardModeController = () => {
       if (e.repeat) return; // Ignore auto-repeat when key is held
       const key = e.key.toLowerCase();
 
-      if (key === "d") setInteractionMode("SELECT");
+      if (key === "s") setInteractionMode("SELECT");
       if (key === "e") setInteractionMode("EDIT");
       if (key === "m") setInteractionMode("MOVE");
     };
@@ -67,7 +67,7 @@ export const KeyboardModeController = () => {
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
 
-      if (key === "d" || key === "e" || key === "m") {
+      if (key === "s" || key === "e" || key === "m") {
         setInteractionMode("PAN"); // Revert to base mode
       }
     };
@@ -79,8 +79,6 @@ export const KeyboardModeController = () => {
       if (!(target instanceof Element) || !target.closest("canvas")) return;
 
       e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
 
       const { currentZ } = viewerStoreApi.getState();
       const delta = e.deltaY > 0 ? zNavigation.step : -zNavigation.step;
@@ -96,15 +94,12 @@ export const KeyboardModeController = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("wheel", handleWheel, {
-      passive: false,
-      capture: true,
-    });
+    window.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("wheel", handleWheel, true);
+      window.removeEventListener("wheel", handleWheel);
     };
   }, [setCurrentZ, setInteractionMode, viewerStoreApi, zNavigation]);
 

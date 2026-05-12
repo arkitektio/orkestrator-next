@@ -852,6 +852,12 @@ export type DeleteCameraInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Delete a DataRoi by ID */
+export type DeleteDataRoiInput = {
+  /** The ID of the DataRoi to delete */
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteDatasetInput = {
   id: Scalars['ID']['input'];
 };
@@ -2536,6 +2542,8 @@ export type Mutation = {
   deleteCamera: Scalars['ID']['output'];
   /** Delete an existing channel view */
   deleteChannelView: Scalars['ID']['output'];
+  /** Delete an existing data ROI */
+  deleteDataRoi: Scalars['Boolean']['output'];
   /** Delete an existing dataset */
   deleteDataset: Scalars['ID']['output'];
   /** Delete an existing era */
@@ -2857,6 +2865,11 @@ export type MutationDeleteCameraArgs = {
 
 export type MutationDeleteChannelViewArgs = {
   input: DeleteViewInput;
+};
+
+
+export type MutationDeleteDataRoiArgs = {
+  input: DeleteDataRoiInput;
 };
 
 
@@ -6241,6 +6254,13 @@ export type CreateDataRoiMutationVariables = Exact<{
 
 export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } };
 
+export type DeleteDataRoiMutationVariables = Exact<{
+  input: DeleteDataRoiInput;
+}>;
+
+
+export type DeleteDataRoiMutation = { __typename?: 'Mutation', deleteDataRoi: boolean };
+
 export type CreateDatasetMutationVariables = Exact<{
   input: CreateDatasetInput;
 }>;
@@ -8687,6 +8707,37 @@ export function useCreateDataRoiMutation(baseOptions?: ApolloReactHooks.Mutation
 export type CreateDataRoiMutationHookResult = ReturnType<typeof useCreateDataRoiMutation>;
 export type CreateDataRoiMutationResult = Apollo.MutationResult<CreateDataRoiMutation>;
 export type CreateDataRoiMutationOptions = Apollo.BaseMutationOptions<CreateDataRoiMutation, CreateDataRoiMutationVariables>;
+export const DeleteDataRoiDocument = gql`
+    mutation DeleteDataRoi($input: DeleteDataRoiInput!) {
+  deleteDataRoi(input: $input)
+}
+    `;
+export type DeleteDataRoiMutationFn = Apollo.MutationFunction<DeleteDataRoiMutation, DeleteDataRoiMutationVariables>;
+
+/**
+ * __useDeleteDataRoiMutation__
+ *
+ * To run a mutation, you first call `useDeleteDataRoiMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDataRoiMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDataRoiMutation, { data, loading, error }] = useDeleteDataRoiMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteDataRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDataRoiMutation, DeleteDataRoiMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteDataRoiMutation, DeleteDataRoiMutationVariables>(DeleteDataRoiDocument, options);
+      }
+export type DeleteDataRoiMutationHookResult = ReturnType<typeof useDeleteDataRoiMutation>;
+export type DeleteDataRoiMutationResult = Apollo.MutationResult<DeleteDataRoiMutation>;
+export type DeleteDataRoiMutationOptions = Apollo.BaseMutationOptions<DeleteDataRoiMutation, DeleteDataRoiMutationVariables>;
 export const CreateDatasetDocument = gql`
     mutation CreateDataset($input: CreateDatasetInput!) {
   createDataset(input: $input) {

@@ -782,6 +782,12 @@ input DeleteCameraInput {
   id: ID!
 }
 
+"""Delete a DataRoi by ID"""
+input DeleteDataRoiInput {
+  """The ID of the DataRoi to delete"""
+  id: ID!
+}
+
 input DeleteDatasetInput {
   id: ID!
 }
@@ -2517,6 +2523,9 @@ type Mutation {
 
   """Delete an existing channel view"""
   deleteChannelView(input: DeleteViewInput!): ID!
+
+  """Delete an existing data ROI"""
+  deleteDataRoi(input: DeleteDataRoiInput!): Boolean!
 
   """Delete an existing dataset"""
   deleteDataset(input: DeleteDatasetInput!): ID!

@@ -3,3 +3,8 @@ mutation CreateDataRoi($input: CreateDataRoiInput!) {
     ...DataRoi
   }
 }
+
+
+mutation DeleteDataRoi($input: DeleteDataRoiInput!) {
+  deleteDataRoi(input: $input)
+}

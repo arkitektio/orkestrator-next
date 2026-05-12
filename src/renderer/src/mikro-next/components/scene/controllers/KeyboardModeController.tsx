@@ -10,7 +10,7 @@ import {
 
 /**
  * Listens for key holds to temporarily override the mode.
- * e.g., Holding 'D' switches to SCAN mode. Releasing it reverts back.
+ * e.g., Holding 'D' switches to SELECT mode. Releasing it reverts back.
  */
 export const KeyboardModeController = () => {
   const displayMode = useModeStore((s) => s.displayMode);
@@ -59,7 +59,7 @@ export const KeyboardModeController = () => {
       if (e.repeat) return; // Ignore auto-repeat when key is held
       const key = e.key.toLowerCase();
 
-      if (key === "d") setInteractionMode("SCAN");
+      if (key === "d") setInteractionMode("SELECT");
       if (key === "e") setInteractionMode("EDIT");
       if (key === "m") setInteractionMode("MOVE");
     };

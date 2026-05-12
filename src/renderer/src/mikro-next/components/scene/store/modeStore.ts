@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "./createScopedStore";
 
-export type InteractionMode = "PAN" | "EDIT" | "SCAN" | "MOVE" | "META";
+export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META";
 export type DisplayMode = "2D" | "3D";
 
 export type DisplayModeOption = {
@@ -29,9 +29,9 @@ export const interactionModeOptions: InteractionModeOption[] = [
     description: "Mode for selecting and modifying objects",
   },
   {
-    label: "Scan Mode",
-    value: "SCAN",
-    description: "Mode for drawing selection boxes and scanning areas",
+    label: "Select Mode",
+    value: "SELECT",
+    description: "Mode for selecting ROIs directly or with a drag box",
   },
   {
     label: "Move Mode",

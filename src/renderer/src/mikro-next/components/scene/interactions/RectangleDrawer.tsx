@@ -2,23 +2,54 @@ import { useModeStore } from "../store/modeStore";
 import { Line } from "@react-three/drei";
 import { useMemo, useState } from "react";
 import * as THREE from "three";
+import { useRoiSelectionStore } from "../store/roiSelectionStore";
 
-// --- Path Generation Component ---
+function normalizeBounds(start: THREE.Vector3, end: THREE.Vector3) {
+  return {
+    minX: Math.min(start.x, end.x),
+    maxX: Math.max(start.x, end.x),
+    minY: Math.min(start.y, end.y),
+    maxY: Math.max(start.y, end.y),
+  };
+}
+
+function isContained(
+  selectionBounds: ReturnType<typeof normalizeBounds>,
+  roiBounds: { minX: number; maxX: number; minY: number; maxY: number },
+) {
+  return (
+    roiBounds.minX >= selectionBounds.minX &&
+    roiBounds.maxX <= selectionBounds.maxX &&
+    roiBounds.minY >= selectionBounds.minY &&
+    roiBounds.maxY <= selectionBounds.maxY
+  );
+}
+
 export const RectangleDrawer = () => {
-  // Mode store state
   const interactionMode = useModeStore((s) => s.interactionMode);
-
-  // Scans store global state
-  const regions = useScansStore((s) => s.regions);
-  const selectedRegionId = useScansStore((s) => s.selectedRegionId);
-  const addRegion = useScansStore((s) => s.addRegion);
-  const setSelectedRegionId = useScansStore((s) => s.setSelectedRegionId);
-
-  // Local transient state for the drawing interaction only
+  const displayMode = useModeStore((s) => s.displayMode);
+  const visibleRoiMap = useRoiSelectionStore((s) => s.visibleRois);
+  const replaceSelectedRois = useRoiSelectionStore((s) => s.replaceSelectedRois);
+  const mergeSelectedRois = useRoiSelectionStore((s) => s.mergeSelectedRois);
+  const clearSelectedRois = useRoiSelectionStore((s) => s.clearSelectedRois);
   const [startPos, setStartPos] = useState<THREE.Vector3 | null>(null);
   const [currentPos, setCurrentPos] = useState<THREE.Vector3 | null>(null);
 
-  if (interactionMode !== "SCAN") return null;
+  const visibleRois = useMemo(() => Object.values(visibleRoiMap), [visibleRoiMap]);
+
+  const previewPoints = useMemo(() => {
+    if (!startPos || !currentPos) return null;
+
+    return [
+      [startPos.x, startPos.y, 0.1],
+      [currentPos.x, startPos.y, 0.1],
+      [currentPos.x, currentPos.y, 0.1],
+      [startPos.x, currentPos.y, 0.1],
+      [startPos.x, startPos.y, 0.1],
+    ] as [number, number, number][];
+  }, [currentPos, startPos]);
+
+  if (displayMode !== "2D" || interactionMode !== "SELECT") return null;
 
   return (
     <group>
@@ -26,34 +57,35 @@ export const RectangleDrawer = () => {
         position={[0, 0, 0]}
         onClick={(e) => {
           e.stopPropagation();
-          setSelectedRegionId(null);
+          if (!startPos) {
+            clearSelectedRois();
+          }
         }}
         onPointerDown={(e) => {
-          if (!e.ctrlKey && !e.metaKey) return;
           e.stopPropagation();
-          setStartPos(e.point);
-          setSelectedRegionId(null);
+          setStartPos(e.point.clone());
+          setCurrentPos(e.point.clone());
         }}
         onPointerMove={(e) => {
           if (startPos) {
             e.stopPropagation();
-            setCurrentPos(e.point);
+            setCurrentPos(e.point.clone());
           }
         }}
         onPointerUp={(e) => {
-          if (startPos && currentPos) {
+          if (startPos) {
             e.stopPropagation();
-            const newId = Math.random().toString(36).substring(2, 9);
+            const endPos = currentPos ?? e.point;
+            const selectionBounds = normalizeBounds(startPos, endPos);
+            const containedRois = visibleRois
+              .filter((roi) => isContained(selectionBounds, roi.bounds))
+              .map(({ bounds: _bounds, ...roi }) => roi);
 
-            addRegion({
-              id: newId,
-              start: startPos,
-              end: currentPos,
-              pattern: "SNAKE_ROW",
-              overlap: 10,
-            });
-
-            setSelectedRegionId(newId);
+            if (e.shiftKey) {
+              mergeSelectedRois(containedRois);
+            } else {
+              replaceSelectedRois(containedRois);
+            }
           }
           setStartPos(null);
           setCurrentPos(null);
@@ -62,60 +94,9 @@ export const RectangleDrawer = () => {
         <planeGeometry args={[80000, 80000]} />
         <meshBasicMaterial visible={false} />
       </mesh>
-
-      {regions.map((region) => {
-        const isSelected = selectedRegionId === region.id;
-
-        const width = Math.abs(region.end.x - region.start.x);
-        const height = Math.abs(region.end.y - region.start.y);
-        const centerX = (region.start.x + region.end.x) / 2;
-        const centerY = (region.start.y + region.end.y) / 2;
-
-        return (
-          <group key={region.id}>
-            <mesh
-              position={[centerX, centerY, 0.05]}
-              onClick={(e) => {
-                if (e.ctrlKey || e.metaKey) return;
-                e.stopPropagation();
-                setSelectedRegionId(region.id);
-              }}
-            >
-              <planeGeometry args={[width, height]} />
-              <meshBasicMaterial
-                color={isSelected ? "#fafafa" : "#a1a1aa"}
-                transparent
-                opacity={isSelected ? 0.1 : 0.05}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
-
-            <Line
-              points={[
-                [region.start.x, region.start.y, 0.1],
-                [region.end.x, region.start.y, 0.1],
-                [region.end.x, region.end.y, 0.1],
-                [region.start.x, region.end.y, 0.1],
-                [region.start.x, region.start.y, 0.1],
-              ]}
-              color={isSelected ? "#fafafa" : "#52525b"}
-              lineWidth={isSelected ? 3 : 2}
-            />
-
-            {isSelected && <ScanPathPreview region={region} />}
-          </group>
-        );
-      })}
-
-      {startPos && currentPos && (
+      {previewPoints && (
         <Line
-          points={[
-            [startPos.x, startPos.y, 0.1],
-            [currentPos.x, startPos.y, 0.1],
-            [currentPos.x, currentPos.y, 0.1],
-            [startPos.x, currentPos.y, 0.1],
-            [startPos.x, startPos.y, 0.1],
-          ]}
+          points={previewPoints}
           color="#fafafa"
           lineWidth={2}
         />

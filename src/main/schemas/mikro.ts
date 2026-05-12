@@ -851,6 +851,12 @@ export type DeleteCameraInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Delete a DataRoi by ID */
+export type DeleteDataRoiInput = {
+  /** The ID of the DataRoi to delete */
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteDatasetInput = {
   id: Scalars['ID']['input'];
 };
@@ -2535,6 +2541,8 @@ export type Mutation = {
   deleteCamera: Scalars['ID']['output'];
   /** Delete an existing channel view */
   deleteChannelView: Scalars['ID']['output'];
+  /** Delete an existing data ROI */
+  deleteDataRoi: Scalars['Boolean']['output'];
   /** Delete an existing dataset */
   deleteDataset: Scalars['ID']['output'];
   /** Delete an existing era */
@@ -2856,6 +2864,11 @@ export type MutationDeleteCameraArgs = {
 
 export type MutationDeleteChannelViewArgs = {
   input: DeleteViewInput;
+};
+
+
+export type MutationDeleteDataRoiArgs = {
+  input: DeleteDataRoiInput;
 };
 
 
@@ -6240,6 +6253,13 @@ export type CreateDataRoiMutationVariables = Exact<{
 
 export type CreateDataRoiMutation = { __typename?: 'Mutation', createDataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } };
 
+export type DeleteDataRoiMutationVariables = Exact<{
+  input: DeleteDataRoiInput;
+}>;
+
+
+export type DeleteDataRoiMutation = { __typename?: 'Mutation', deleteDataRoi: boolean };
+
 export type CreateDatasetMutationVariables = Exact<{
   input: CreateDatasetInput;
 }>;
@@ -8208,6 +8228,11 @@ export const CreateDataRoiDocument = gql`
   }
 }
     ${DataRoiFragmentDoc}`;
+export const DeleteDataRoiDocument = gql`
+    mutation DeleteDataRoi($input: DeleteDataRoiInput!) {
+  deleteDataRoi(input: $input)
+}
+    `;
 export const CreateDatasetDocument = gql`
     mutation CreateDataset($input: CreateDatasetInput!) {
   createDataset(input: $input) {
@@ -9076,6 +9101,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     CreateDataRoi(variables: CreateDataRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDataRoiMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateDataRoiMutation>({ document: CreateDataRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDataRoi', 'mutation', variables);
+    },
+    DeleteDataRoi(variables: DeleteDataRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteDataRoiMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteDataRoiMutation>({ document: DeleteDataRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteDataRoi', 'mutation', variables);
     },
     CreateDataset(variables: CreateDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDatasetMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateDatasetMutation>({ document: CreateDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDataset', 'mutation', variables);

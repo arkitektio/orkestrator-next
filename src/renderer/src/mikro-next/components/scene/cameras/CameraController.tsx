@@ -39,7 +39,7 @@ export const CameraController = () => {
       )}
 
       {/* Orbit Controls
-                Disable panning/rotating when scanning so the screen doesn't drag while drawing.
+            Disable panning/rotating while another interaction mode is active so the scene doesn't drag while selecting.
             */}
       {displayMode === "3D" ? (
         <OrbitControls

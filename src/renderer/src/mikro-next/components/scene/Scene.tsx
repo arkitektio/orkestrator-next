@@ -13,6 +13,7 @@ import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { DebugPanel } from "./panels/DebugPanel";
+import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { ScenePlane } from "./layers/two_d/ScenePlane";
@@ -161,6 +162,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <ScenePanel/>
             <LayerControlPanel />
             <DebugPanel />
+            <SelectedPointPanel />
             <SelectedRoiPanel />
             <ZSliderPanel />
             <VisibilityManager/>

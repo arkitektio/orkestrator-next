@@ -32,6 +32,12 @@ export interface LayerViewRange {
   scale: number;
 }
 
+export interface ProbedCoordinate {
+  layerId: string;
+  localPos: [number, number, number];
+  voxelIndex: [number, number, number];
+}
+
 
 interface ViewerState {
   // We store the combined projection + view matrix
@@ -55,6 +61,9 @@ interface ViewerState {
   visibleLayers: string[]
   // Visible image-coordinate ranges per layer
   layerViewRanges: Record<string, LayerViewRange>
+  probedCoordinate: ProbedCoordinate | null;
+  savedProbes: ProbedCoordinate[];
+  probeThreshold: number;
 
   lodBias: number;
   cullRadius: number;
@@ -69,6 +78,11 @@ interface ViewerState {
   unregister: (ref: TrackableObject) => void
   setVisible: (visibleSet: Set<string>) => void
   setLayerViewRanges: (ranges: Record<string, LayerViewRange>) => void
+  setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
+  addSavedProbe: (coordinate: ProbedCoordinate) => void
+  removeSavedProbe: (coordinate: ProbedCoordinate) => void
+  clearSavedProbes: () => void
+  setProbeThreshold: (threshold: number) => void
 
 
   setZRange: (start: number | null, end: number | null) => void;
@@ -158,6 +172,9 @@ function createViewerStoreInternal(
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
+    probedCoordinate: null,
+    savedProbes: [],
+    probeThreshold: 0.01,
     lodBias: 0.2,
     cullRadius: 4000,
     setCullRadius: (radius) => set({ cullRadius: radius }),
@@ -187,6 +204,18 @@ function createViewerStoreInternal(
       return state;
     }),
     setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
+    setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
+    addSavedProbe: (coordinate) => set((state) => {
+      if (state.savedProbes.some((probe) => isSameProbe(probe, coordinate))) {
+        return state;
+      }
+      return { savedProbes: [...state.savedProbes, coordinate] };
+    }),
+    removeSavedProbe: (coordinate) => set((state) => ({
+      savedProbes: state.savedProbes.filter((probe) => !isSameProbe(probe, coordinate)),
+    })),
+    clearSavedProbes: () => set({ savedProbes: [] }),
+    setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     currentZ: 0,
     tEnd: null,
     debug: false,
@@ -304,6 +333,15 @@ export function createViewerStoreSync() {
   return createViewerStoreInternal(
     new Map<string, OpenedZarrArray>(),
     new WeakMap<object, OpenedZarrArray>(),
+  );
+}
+
+function isSameProbe(left: ProbedCoordinate, right: ProbedCoordinate): boolean {
+  return (
+    left.layerId === right.layerId &&
+    left.voxelIndex[0] === right.voxelIndex[0] &&
+    left.voxelIndex[1] === right.voxelIndex[1] &&
+    left.voxelIndex[2] === right.voxelIndex[2]
   );
 }
 

@@ -62,12 +62,14 @@ export const KeyboardModeController = () => {
       if (key === "s") setInteractionMode("SELECT");
       if (key === "e") setInteractionMode("EDIT");
       if (key === "m") setInteractionMode("MOVE");
+      if (key === "p") setInteractionMode("PROBE");
+      if (key === "a") setInteractionMode("AUTO_PROBE");
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
 
-      if (key === "s" || key === "e" || key === "m") {
+      if (key === "s" || key === "e" || key === "m" || key === "p" || key === "a") {
         setInteractionMode("PAN"); // Revert to base mode
       }
     };

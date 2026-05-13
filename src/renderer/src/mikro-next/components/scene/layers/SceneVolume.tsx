@@ -1,4 +1,5 @@
 import { VolumeLayer } from "./VolumeLayer";
+import { SceneProbedPoint } from "./SceneProbedPoint";
 import { useMemo } from "react";
 import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
@@ -32,6 +33,7 @@ export const SceneVolume = () => {
           layer={frame}
         />
       ))}
+      <SceneProbedPoint />
     </group>
   );
 };

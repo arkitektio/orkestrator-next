@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "./createScopedStore";
 
-export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META";
+export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META" | "PROBE" | "AUTO_PROBE";
 export type DisplayMode = "2D" | "3D";
 export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL";
 
@@ -49,6 +49,16 @@ export const interactionModeOptions: InteractionModeOption[] = [
     label: "Meta Mode",
     value: "META",
     description: "Mode for accessing meta-level controls and settings",
+  },
+  {
+    label: "Probe Mode",
+    value: "PROBE",
+    description: "Click volumes to place or update the active probe",
+  },
+  {
+    label: "Auto Probe Mode",
+    value: "AUTO_PROBE",
+    description: "Hover volumes to update the active probe continuously",
   },
 ];
 

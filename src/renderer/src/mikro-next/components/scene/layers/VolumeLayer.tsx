@@ -13,11 +13,17 @@ import { buildAffineMatrix } from '../panels/layer/affine-utils';
 import { useSelectionStore } from '../store/layerStore';
 import { useModeStore } from '../store/modeStore';
 import { LayerState } from '../store/sceneStore';
-import { useViewerStore } from '../store/viewerStore';
+import { useViewerStore, useViewerStoreApi } from '../store/viewerStore';
 import { BasicIndexer } from '../stores/indexer';
 import { mapDTypeToMinMax } from '../stores/utils';
 import { getColorMapTexture } from '../zarr/colormaps';
-import { VolumeTextureMesh } from './VolumeTextureMesh';
+import { VolumeTextureMesh, type VolumeRenderMesh } from './VolumeTextureMesh';
+
+type AxisSelection = {
+  start: number;
+  step: number;
+  length: number;
+};
 
 type TextureBufferConfig = {
   data: Uint8Array | Float32Array;
@@ -34,12 +40,14 @@ type VolumeTextureState = {
   maxValue: number;
   volumePosition: [number, number, number];
   volumeSize: [number, number, number];
+  spatialSelections: [AxisSelection, AxisSelection, AxisSelection];
 };
 
 const MIN_VOLUME_CHUNK_CONCURRENCY = 4;
 const MAX_VOLUME_CHUNK_CONCURRENCY = 8;
 const VOLUME_UPLOAD_BATCH_CHUNKS = 6;
 const VOLUME_UPLOAD_MAX_DELAY_MS = 40;
+const VOLUME_PROBE_STEPS = 32;
 
 const InvertedHullOutline = ({
   children,
@@ -112,8 +120,12 @@ const InvertedHullOutline = ({
 
 export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
   const [volumeTexture, setVolumeTexture] = useState<VolumeTextureState | null>(null);
+  const volumeMeshRef = useRef<VolumeRenderMesh | null>(null);
+  const skipSelectionClickRef = useRef(false);
 
   const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
+  const probeThreshold = useViewerStore((s) => s.probeThreshold);
+  const viewerStoreApi = useViewerStoreApi();
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const isDebug = useViewerStore((state) => state.debug);
@@ -383,6 +395,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
           maxValue,
           volumePosition: [xCenter, yCenter, zCenter],
           volumeSize: [width, height, depth],
+          spatialSelections: [xSelection, ySelection, zSelection],
         });
 
         queueTextureUpload(createdTexture, 'initial');
@@ -484,9 +497,112 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
         Math.min(MAX_VOLUME_CHUNK_CONCURRENCY, Math.floor(hardwareConcurrency / 2)),
       );
     }
-  }, [getArrayForStoreId, invalidate, layer.id, resolvedVolumeLod, volumeDataSignature]);
+  }, [
+    getArrayForStoreId,
+    invalidate,
+    isDebug,
+    layer.id,
+    layer.lens.dataset.dataArrays,
+    layer.lens.dataset.dims,
+    layer.lens.slices,
+    layer.xDim,
+    layer.yDim,
+    layer.zDim,
+    resolvedVolumeLod,
+    volumeDataSignature,
+  ]);
 
   const affineMatrix = useMemo(() => buildAffineMatrix(layer), [layer]);
+
+  const probeCoordinateFromRay = (ray: THREE.Ray): [number, number, number] | null => {
+    if (!volumeTexture) {
+      return null;
+    }
+
+    const mesh = volumeMeshRef.current;
+    if (!mesh) {
+      return null;
+    }
+
+    const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+    const localOrigin = ray.origin.clone().applyMatrix4(inverseMatrix);
+    const localDirection = ray.direction.clone().transformDirection(inverseMatrix).normalize();
+    const bounds = intersectLocalVolumeBox(localOrigin, localDirection);
+    if (!bounds) {
+      return null;
+    }
+
+    const localHit = marchVolumeTexture({
+      colorMapTexture,
+      dataScale: volumeTexture.dataScale,
+      direction: localDirection,
+      dimensionOrder: volumeTexture.dimensionOrder,
+      maxValue: volumeTexture.maxValue,
+      minValue: volumeTexture.minValue,
+      origin: localOrigin,
+      texture: volumeTexture.texture,
+      bounds,
+      climMax: layer.climMax ?? 1,
+      climMin: layer.climMin ?? 0,
+      threshold: probeThreshold,
+    });
+
+    if (!localHit) {
+      return null;
+    }
+
+    return [
+      THREE.MathUtils.clamp(localHit[0], -0.5, 0.5),
+      THREE.MathUtils.clamp(localHit[1], -0.5, 0.5),
+      THREE.MathUtils.clamp(localHit[2], -0.5, 0.5),
+    ];
+  };
+
+  const updateProbe = (localPos: [number, number, number] | null) => {
+    const currentProbe = viewerStoreApi.getState().probedCoordinate;
+
+    if (!localPos) {
+      if (currentProbe?.layerId === layer.id) {
+        viewerStoreApi.getState().setProbedCoordinate(null);
+      }
+      return;
+    }
+
+    const [xSelection, ySelection, zSelection] = volumeTexture?.spatialSelections ?? [];
+    if (!xSelection || !ySelection || !zSelection) {
+      return;
+    }
+
+    const nextProbe = {
+      layerId: layer.id,
+      localPos,
+      voxelIndex: [
+        resolveVoxelIndex(localPos[0] + 0.5, xSelection),
+        resolveVoxelIndex(0.5 - localPos[1], ySelection),
+        resolveVoxelIndex(localPos[2] + 0.5, zSelection),
+      ] as [number, number, number],
+    };
+
+    if (
+      currentProbe?.layerId === nextProbe.layerId &&
+      currentProbe.voxelIndex[0] === nextProbe.voxelIndex[0] &&
+      currentProbe.voxelIndex[1] === nextProbe.voxelIndex[1] &&
+      currentProbe.voxelIndex[2] === nextProbe.voxelIndex[2]
+    ) {
+      return;
+    }
+
+    viewerStoreApi.getState().setProbedCoordinate(nextProbe);
+  };
+
+  const saveCurrentProbe = () => {
+    const currentProbe = viewerStoreApi.getState().probedCoordinate;
+    if (!currentProbe || currentProbe.layerId !== layer.id) {
+      return;
+    }
+
+    viewerStoreApi.getState().addSavedProbe(currentProbe);
+  };
 
   if (!volumeTexture) {
     return null;
@@ -496,8 +612,55 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     <group
       matrix={affineMatrix}
       matrixAutoUpdate={false}
+      onPointerMove={(event) => {
+        if (interactionMode !== 'AUTO_PROBE') {
+          return;
+        }
+
+        if (event.buttons !== 0) {
+          return;
+        }
+
+        const localPos = probeCoordinateFromRay(event.ray);
+        updateProbe(localPos);
+
+        if (localPos) {
+          event.stopPropagation();
+        }
+      }}
+      onPointerOut={() => {
+        if (interactionMode !== 'AUTO_PROBE') {
+          return;
+        }
+
+        updateProbe(null);
+      }}
+      onPointerDown={(event) => {
+        if (interactionMode !== 'PROBE' && interactionMode !== 'AUTO_PROBE') {
+          return;
+        }
+
+        event.stopPropagation();
+        skipSelectionClickRef.current = true;
+
+        const localPos = probeCoordinateFromRay(event.ray);
+        updateProbe(localPos);
+
+        if (event.shiftKey && localPos) {
+          saveCurrentProbe();
+        }
+      }}
       onClick={(event) => {
-        if (interactionMode === 'PAN') {
+        if (skipSelectionClickRef.current) {
+          skipSelectionClickRef.current = false;
+          return;
+        }
+
+        if (interactionMode === 'PROBE' || interactionMode === 'AUTO_PROBE') {
+          return;
+        }
+
+        if (event.altKey) {
           return;
         }
         event.stopPropagation();
@@ -507,6 +670,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       <InvertedHullOutline enabled={isSelected && isDebug}>
         <VolumeTextureMesh
           key={materialSignature}
+          volumeMeshRef={volumeMeshRef}
           texture={volumeTexture.texture}
           colorMapTexture={colorMapTexture}
           layerId={layer.id}
@@ -559,7 +723,7 @@ function getTextureDimensions(
 function resolveSpatialSelection(
   selection: null | Slice | number,
   axisLength: number,
-): { start: number; step: number; length: number } {
+): AxisSelection {
   if (typeof selection === 'number') {
     const index = Math.max(0, Math.min(axisLength - 1, selection));
     return { start: index, step: 1, length: 1 };
@@ -659,4 +823,183 @@ async function runChunkLoaderQueue<T>(
   });
 
   await Promise.all(runners);
+}
+
+function resolveVoxelIndex(normalizedPosition: number, selection: AxisSelection): number {
+  const clampedPosition = THREE.MathUtils.clamp(normalizedPosition, 0, 0.999999);
+  const relativeIndex = Math.min(
+    selection.length - 1,
+    Math.max(0, Math.floor(clampedPosition * selection.length)),
+  );
+
+  return selection.start + relativeIndex * selection.step;
+}
+
+function intersectLocalVolumeBox(
+  origin: THREE.Vector3,
+  direction: THREE.Vector3,
+): { start: number; end: number } | null {
+  const min = new THREE.Vector3(-0.5, -0.5, -0.5);
+  const max = new THREE.Vector3(0.5, 0.5, 0.5);
+  let start = -Infinity;
+  let end = Infinity;
+
+  for (const axis of ['x', 'y', 'z'] as const) {
+    const axisDirection = direction[axis];
+    const axisOrigin = origin[axis];
+
+    if (Math.abs(axisDirection) < Number.EPSILON) {
+      if (axisOrigin < min[axis] || axisOrigin > max[axis]) {
+        return null;
+      }
+      continue;
+    }
+
+    const invDirection = 1 / axisDirection;
+    const t1 = (min[axis] - axisOrigin) * invDirection;
+    const t2 = (max[axis] - axisOrigin) * invDirection;
+    start = Math.max(start, Math.min(t1, t2));
+    end = Math.min(end, Math.max(t1, t2));
+  }
+
+  if (start > end) {
+    return null;
+  }
+
+  return {
+    start: Math.max(start, 0),
+    end,
+  };
+}
+
+function marchVolumeTexture({
+  colorMapTexture,
+  dataScale,
+  direction,
+  dimensionOrder,
+  maxValue,
+  minValue,
+  origin,
+  texture,
+  bounds,
+  climMax,
+  climMin,
+  threshold,
+}: {
+  colorMapTexture: THREE.Texture | null;
+  dataScale: number;
+  direction: THREE.Vector3;
+  dimensionOrder: [number, number, number];
+  maxValue: number;
+  minValue: number;
+  origin: THREE.Vector3;
+  texture: THREE.Data3DTexture;
+  bounds: { start: number; end: number };
+  climMax: number;
+  climMin: number;
+  threshold: number;
+}): [number, number, number] | null {
+  const image = texture.image as {
+    data?: Uint8Array | Float32Array;
+    width?: number;
+    height?: number;
+    depth?: number;
+  };
+  const textureData = image.data;
+  const width = image.width ?? 1;
+  const height = image.height ?? 1;
+  const depth = image.depth ?? 1;
+
+  if (!textureData || width <= 0 || height <= 0 || depth <= 0) {
+    return null;
+  }
+
+  const axisOrder = getTextureAxisOrder(dimensionOrder);
+  const delta = Math.sqrt(3) / VOLUME_PROBE_STEPS;
+  const step = direction.clone().multiplyScalar(delta);
+  let distance = bounds.start + delta * 0.5;
+  const position = origin.clone().addScaledVector(direction, distance);
+
+  while (distance <= bounds.end) {
+    const uvw = position.clone().addScalar(0.5);
+    uvw.y = 1.0 - uvw.y;
+
+    if (uvw.x >= 0 && uvw.x <= 1 && uvw.y >= 0 && uvw.y <= 1 && uvw.z >= 0 && uvw.z <= 1) {
+      const texCoord = getTextureCoordinate(uvw, axisOrder);
+      const texX = Math.min(width - 1, Math.max(0, Math.floor(texCoord.x * width)));
+      const texY = Math.min(height - 1, Math.max(0, Math.floor(texCoord.y * height)));
+      const texZ = Math.min(depth - 1, Math.max(0, Math.floor(texCoord.z * depth)));
+      const rawValue = textureData[(texZ * height + texY) * width + texX] * dataScale;
+      const normalized = computeProbeNormalized(rawValue, minValue, maxValue, climMin, climMax);
+
+      if (computeProbeVisibility(normalized, colorMapTexture) > threshold) {
+        return [position.x, position.y, position.z];
+      }
+    }
+
+    position.add(step);
+    distance += delta;
+  }
+
+  return null;
+}
+
+function getTextureAxisOrder(dimensionOrder: [number, number, number]) {
+  const sorted = [...dimensionOrder].sort((left, right) => left - right);
+  return {
+    depthAxis: sorted[sorted.length - 3] ?? 0,
+    heightAxis: sorted[sorted.length - 2] ?? 0,
+    widthAxis: sorted[sorted.length - 1] ?? 0,
+  };
+}
+
+function getTextureCoordinate(
+  uvw: THREE.Vector3,
+  axisOrder: { widthAxis: number; heightAxis: number; depthAxis: number },
+): THREE.Vector3 {
+  const components = [uvw.x, uvw.y, uvw.z];
+  return new THREE.Vector3(
+    components[axisOrder.widthAxis] ?? 0,
+    components[axisOrder.heightAxis] ?? 0,
+    components[axisOrder.depthAxis] ?? 0,
+  );
+}
+
+function computeProbeNormalized(
+  rawValue: number,
+  minValue: number,
+  maxValue: number,
+  climMin: number,
+  climMax: number,
+): number {
+  const baseNorm = THREE.MathUtils.clamp(
+    (rawValue - minValue) / Math.max(maxValue - minValue, 0.00001),
+    0,
+    1,
+  );
+  const climRange = Math.max(climMax - climMin, 0.00001);
+  return THREE.MathUtils.clamp((baseNorm - climMin) / climRange, 0, 0.999);
+}
+
+function computeProbeVisibility(normalized: number, colorMapTexture: THREE.Texture | null): number {
+  return sampleColorMapAlpha(colorMapTexture, normalized) * normalized;
+}
+
+function sampleColorMapAlpha(colorMapTexture: THREE.Texture | null, normalized: number): number {
+  const image = colorMapTexture?.image as { data?: Uint8Array; width?: number } | undefined;
+  const colorData = image?.data;
+  const width = image?.width ?? 0;
+
+  if (!colorData || width <= 0) {
+    return 1;
+  }
+
+  const scaledIndex = THREE.MathUtils.clamp(normalized, 0, 0.999999) * (width - 1);
+  const leftIndex = Math.floor(scaledIndex);
+  const rightIndex = Math.min(width - 1, leftIndex + 1);
+  const mix = scaledIndex - leftIndex;
+  const leftAlpha = (colorData[leftIndex * 4 + 3] ?? 255) / 255;
+  const rightAlpha = (colorData[rightIndex * 4 + 3] ?? 255) / 255;
+
+  return THREE.MathUtils.lerp(leftAlpha, rightAlpha, mix);
 }

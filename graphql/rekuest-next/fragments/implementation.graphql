@@ -10,10 +10,23 @@ fragment DetailImplementation on Implementation {
     id
     name
   }
-  
+
   dependencies {
     ...ListDependency
   }
+  tracks {
+    dependencyKey
+    stateKey
+    valueKey
+    description
+  }
+  manipulates {
+    id
+    interface
+  }
+
+
+
   myLatestAssignation {
     ...PostmanAssignation
   }

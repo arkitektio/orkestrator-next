@@ -1515,6 +1515,9 @@ type Implementation {
   """Interface string representing the implementation entrypoint."""
   interface: String!
 
+  """States that this implementation manipulates."""
+  manipulates: [State!]!
+
   """Get the latest completed assignation created by the current user."""
   myLatestAssignation: Assignation
 
@@ -1532,6 +1535,9 @@ type Implementation {
 
   """Tests"""
   tests: [Implementation!]!
+
+  """List of action demands"""
+  tracks: [Track!]!
 }
 
 input ImplementationActionFilter {
@@ -1588,12 +1594,14 @@ input ImplementationInput {
   interface: String
   locks: [String!] = null
   logo: String = null
+  manipulates: [String!]
 
   """
   The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
   """
   optimistics: [OptimisticInput!] = null
   params: AnyDefault = null
+  tracks: [TrackInput!] = null
 }
 
 type ImplementationMapping {
@@ -2755,7 +2763,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "01297193-e4fa-4874-9800-b46e0cd7afda"
+  reference: String = "1125070e-61e2-4618-afa2-48529925f5ba"
   title: String = null
 }
 
@@ -3534,6 +3542,30 @@ input ToolboxOrder {
   name: Ordering
 }
 
+"""
+A value that is being tracked over time during the runtime of an action. This is the state of a dependency
+"""
+type Track {
+  dependencyKey: String
+  description: String
+  label: String
+  stateKey: String!
+  valueKey: String!
+  windows: [Window!]
+}
+
+"""
+A value that is being tracked over time during the runtime of an action. This is the state of a dependency
+"""
+input TrackInput {
+  dependencyKey: String = null
+  description: String = null
+  label: String = null
+  stateKey: String!
+  valueKey: String!
+  windows: [WindowInput!] = null
+}
+
 interface UIChild {
   kind: UIChildKind!
 }
@@ -3688,6 +3720,18 @@ input WaiterFilter {
   OR: WaiterFilter
   ids: [ID!]
   instanceId: InstanceId!
+}
+
+"""A window that is calculated"""
+type Window {
+  label: String
+  windowFunction: String!
+}
+
+"""A window that is calculated"""
+input WindowInput {
+  label: String = null
+  windowFunction: String!
 }
 
 scalar _Any

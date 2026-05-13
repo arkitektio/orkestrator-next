@@ -2,11 +2,11 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { ActionDescription, useActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestAction, RekuestAgent, RekuestAssignation, RekuestImplementation } from "@/linkers";
+import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAction, RekuestAgent, RekuestImplementation, RekuestState } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
@@ -20,18 +20,15 @@ import {
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import DependencyCard from "../components/cards/DependencyCard";
 import TaskList from "../components/lists/TaskList";
 import { useImplementationAction } from "../hooks/useImplementationAction";
-import { usePortForm } from "../hooks/usePortForm";
+import { useImplementationForm } from "../hooks/useImplementationForm";
 import { ImplementationStatsSidebar } from "../sidebars/ImplementationStatistics";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
-import { useImplementationForm } from "../hooks/useImplementationForm";
 
 
 export const DoForm = ({ id }: { id: string }) => {
@@ -215,6 +212,17 @@ export const DefaultRenderer = (props: {
       <div className="my-2">Dependencies</div>
       <ListRender array={props?.implementation?.dependencies}>
         {(implementation, key) => <DependencyCard item={implementation} key={key} />}
+      </ListRender>
+
+
+       <div className="my-2">Manipulates</div>
+      <ListRender array={props?.implementation?.manipulates}>
+        {(implementation, key) => <Card key={key}><RekuestState.DetailLink object={implementation}>{implementation.interface}</RekuestState.DetailLink></Card>}
+      </ListRender>
+
+       <div className="my-2">Tracks</div>
+      <ListRender array={props?.implementation?.tracks}>
+        {(implementation, key) => <Card key={key}>{implementation.description}ss</Card>}
       </ListRender>
 
       <TaskList filters={{ implementation: props.implementation.id }} />

@@ -15,7 +15,11 @@ function getTextureConfig(rawData: unknown) {
     return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 1.0 };
   }
   if (rawData instanceof Uint16Array) {
-    return { data: rawData, type: THREE.UnsignedShortType, internalFormat: null, dataScale: 1.0 };
+    const normalizedData = new Float32Array(rawData.length);
+    for (let index = 0; index < rawData.length; index++) {
+      normalizedData[index] = rawData[index] / 65535;
+    }
+    return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
   }
   if (rawData instanceof Float32Array) {
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };

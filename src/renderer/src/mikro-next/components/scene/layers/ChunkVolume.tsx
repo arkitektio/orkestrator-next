@@ -8,7 +8,12 @@ import type { ChunkData } from '../stores/types';
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: Uint16Array) {
-  return { data: rawData, type: THREE.UnsignedShortType, internalFormat: null, dataScale: 1.0 };
+  const normalizedData = new Float32Array(rawData.length);
+  for (let index = 0; index < rawData.length; index++) {
+    normalizedData[index] = rawData[index] / 65535;
+  }
+
+  return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
 }
 
 function computeChunkLocalBounds(rawData: ArrayLike<number>): { localMin: number; localMax: number } {

@@ -490,6 +490,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
             useSharedArrayBuffer: true,
             textureFidelity: volumeTextureFidelity,
           });
+          const uploadChunk = prepareVolumeChunkForUpload(chunk, volumeTextureFidelity);
 
           if (!isMounted || abortController.signal.aborted) return;
 
@@ -500,7 +501,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
           setter.set_from_chunk(
             destination,
-            chunk,
+            uploadChunk,
             mapping as unknown as Parameters<typeof setter.set_from_chunk>[2],
           );
 
@@ -788,10 +789,10 @@ function createVolumeTextureBuffer(fidelity: VolumeTextureFidelity, elementCount
 
   if (fidelity === 'high') {
     return {
-      data: new Uint16Array(elementCount),
+      data: new Float32Array(elementCount),
       dataScale: 1.0,
-      type: THREE.UnsignedShortType,
-      internalFormat: null,
+      type: THREE.FloatType,
+      internalFormat: 'R32F',
     };
   }
 
@@ -826,6 +827,25 @@ function createBoundsChunk(shape: number[], absoluteValue: number): Chunk<'float
     data,
     shape,
     stride: get_strides(shape),
+  };
+}
+
+function prepareVolumeChunkForUpload(
+  chunk: Chunk<DataType> & { textureBounds?: { localMin: number; localMax: number } },
+  fidelity: VolumeTextureFidelity,
+): Chunk<DataType> {
+  if (fidelity !== 'high' || !(chunk.data instanceof Uint16Array)) {
+    return chunk;
+  }
+
+  const normalizedData = new Float32Array(chunk.data.length);
+  for (let index = 0; index < chunk.data.length; index++) {
+    normalizedData[index] = chunk.data[index] / 65535;
+  }
+
+  return {
+    ...chunk,
+    data: normalizedData as Chunk<DataType>['data'],
   };
 }
 

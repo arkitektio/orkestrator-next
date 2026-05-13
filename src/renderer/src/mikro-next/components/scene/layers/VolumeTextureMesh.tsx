@@ -9,6 +9,8 @@ export type VolumeRenderMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMateria
 
 type VolumeTextureMeshProps = {
   texture: THREE.Data3DTexture;
+  localMinTexture: THREE.Data3DTexture;
+  localMaxTexture: THREE.Data3DTexture;
   colorMapTexture: THREE.Texture | null;
   layerId: string;
   dimensionOrder: [number, number, number];
@@ -22,6 +24,8 @@ type VolumeTextureMeshProps = {
 
 export const VolumeTextureMesh = ({
   texture,
+  localMinTexture,
+  localMaxTexture,
   colorMapTexture,
   layerId,
   dimensionOrder,
@@ -79,10 +83,12 @@ export const VolumeTextureMesh = ({
     if (!materialRef.current) return;
 
     materialRef.current.uniforms.colorTexture.value = texture;
+    materialRef.current.uniforms.chunkMinTexture.value = localMinTexture;
+    materialRef.current.uniforms.chunkMaxTexture.value = localMaxTexture;
     materialRef.current.uniforms.dataScale.value = dataScale;
     materialRef.current.uniformsNeedUpdate = true;
     invalidate();
-  }, [dataScale, invalidate, texture]);
+  }, [dataScale, invalidate, localMaxTexture, localMinTexture, texture]);
 
   useEffect(() => {
     if (!materialRef.current) return;
@@ -103,6 +109,8 @@ export const VolumeTextureMesh = ({
   const initialUniforms = useMemo(
     () => ({
       colorTexture: { value: texture },
+      chunkMinTexture: { value: localMinTexture },
+      chunkMaxTexture: { value: localMaxTexture },
       colormapTexture: { value: colorMapTexture },
       minValue: { value: minValue },
       maxValue: { value: maxValue },
@@ -115,7 +123,18 @@ export const VolumeTextureMesh = ({
       dimRemap: { value: dimRemapMat },
       uPickingPass: { value: false },
     }),
-    [colorMapTexture, dataScale, dimRemapMat, layer?.climMax, layer?.climMin, maxValue, minValue, texture],
+    [
+      colorMapTexture,
+      dataScale,
+      dimRemapMat,
+      layer?.climMax,
+      layer?.climMin,
+      localMaxTexture,
+      localMinTexture,
+      maxValue,
+      minValue,
+      texture,
+    ],
   );
 
   return (
@@ -157,6 +176,8 @@ export const VolumeTextureMesh = ({
             in vec3 vDirection;
 
             uniform sampler3D colorTexture;
+            uniform sampler3D chunkMinTexture;
+            uniform sampler3D chunkMaxTexture;
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
@@ -186,6 +207,17 @@ export const VolumeTextureMesh = ({
               float t0 = max(tmin.x, max(tmin.y, tmin.z));
               float t1 = min(tmax.x, min(tmax.y, tmax.z));
               return vec2(t0, t1);
+            }
+
+            float reconstructRawValue(float encodedValue, vec3 texCoord) {
+              float localMin = texture(chunkMinTexture, texCoord).r;
+              float localMax = texture(chunkMaxTexture, texCoord).r;
+              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
+              if (abs(localMax - localMin) < 0.00001) {
+                return localMin;
+              }
+
+              return mix(localMin, localMax, encoded);
             }
 
             float computeNormalized(float rawValue) {
@@ -232,7 +264,8 @@ export const VolumeTextureMesh = ({
                 uvw.y = 1.0 - uvw.y;
 
                 vec3 texCoord = dimRemap * uvw;
-                float rawValue = texture(colorTexture, texCoord).r * dataScale;
+                float encodedValue = texture(colorTexture, texCoord).r;
+                float rawValue = reconstructRawValue(encodedValue, texCoord);
 
                 if (uPickingPass) {
                   float sampleNormalized = computeNormalized(rawValue);

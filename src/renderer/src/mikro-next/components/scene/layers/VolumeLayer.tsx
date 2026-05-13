@@ -26,14 +26,16 @@ type AxisSelection = {
 };
 
 type TextureBufferConfig = {
-  data: Uint8Array | Float32Array;
+  data: Uint8Array | Uint16Array | Float32Array;
   dataScale: number;
   type: THREE.TextureDataType;
-  internalFormat: 'R8' | 'R32F';
+  internalFormat: 'R8' | 'R32F' | null;
 };
 
 type VolumeTextureState = {
   texture: THREE.Data3DTexture;
+  localMinTexture: THREE.Data3DTexture;
+  localMaxTexture: THREE.Data3DTexture;
   dataScale: number;
   dimensionOrder: [number, number, number];
   minValue: number;
@@ -48,6 +50,7 @@ const MAX_VOLUME_CHUNK_CONCURRENCY = 8;
 const VOLUME_UPLOAD_BATCH_CHUNKS = 6;
 const VOLUME_UPLOAD_MAX_DELAY_MS = 40;
 const VOLUME_PROBE_STEPS = 32;
+type VolumeTextureFidelity = 'low' | 'high';
 
 const InvertedHullOutline = ({
   children,
@@ -143,6 +146,11 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     return highestAvailableLod;
   }, [layer.defaultVolumeLOD, layer.fixedLOD, layer.lens.dataset.dataArrays.length]);
 
+  const volumeTextureFidelity = useMemo<VolumeTextureFidelity>(
+    () => (resolvedVolumeLod === 0 ? 'high' : 'low'),
+    [resolvedVolumeLod],
+  );
+
   const volumeDataSignature = useMemo(
     () => JSON.stringify({
       dataArrayStoreId: layer.lens.dataset.dataArrays[resolvedVolumeLod]?.store.id ?? null,
@@ -209,7 +217,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     };
 
     const queueTextureUpload = (
-      texture: THREE.Data3DTexture,
+      textures: THREE.Data3DTexture[],
       reason: 'initial' | 'batch' | 'final',
     ) => {
       if (abortController.signal.aborted) return;
@@ -224,7 +232,9 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       uploadFrame = requestAnimationFrame(() => {
         uploadFramePending = false;
         if (abortController.signal.aborted) return;
-        texture.needsUpdate = true;
+        textures.forEach((texture) => {
+          texture.needsUpdate = true;
+        });
         invalidate();
 
         if (!firstUploadedBatchLogged && reason !== 'initial') {
@@ -236,24 +246,26 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       });
     };
 
-    const scheduleTextureUpload = (texture: THREE.Data3DTexture, force = false) => {
+    const scheduleTextureUpload = (textures: THREE.Data3DTexture[], force = false) => {
       if (abortController.signal.aborted) return;
 
       pendingDirtyChunks += 1;
       if (force || pendingDirtyChunks >= VOLUME_UPLOAD_BATCH_CHUNKS) {
-        queueTextureUpload(texture, force ? 'final' : 'batch');
+        queueTextureUpload(textures, force ? 'final' : 'batch');
         return;
       }
 
       if (uploadTimer) return;
       uploadTimer = setTimeout(() => {
         uploadTimer = null;
-        queueTextureUpload(texture, 'batch');
+        queueTextureUpload(textures, 'batch');
       }, VOLUME_UPLOAD_MAX_DELAY_MS);
     };
 
     const initializeVolume = async () => {
       let createdTexture: THREE.Data3DTexture | null = null;
+      let createdLocalMinTexture: THREE.Data3DTexture | null = null;
+      let createdLocalMaxTexture: THREE.Data3DTexture | null = null;
 
       try {
         const dataArray = layer.lens.dataset.dataArrays[resolvedVolumeLod];
@@ -334,7 +346,9 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
         }
 
         const outputShape = [...indexer.shape] as [number, number, number];
-        const textureConfig = createVolumeTextureBuffer(arr.dtype, outputShape.reduce((total, size) => total * size, 1));
+        const elementCount = outputShape.reduce((total, size) => total * size, 1);
+        const textureConfig = createVolumeTextureBuffer(volumeTextureFidelity, elementCount);
+        const boundsTextureConfig = createVolumeBoundsTextureBuffer(elementCount);
         const textureDimensions = getTextureDimensions(outputShape, [xOut, yOut, zOut]);
         const [minValue, maxValue] = mapDTypeToMinMax(arr.dtype);
         const chunkConcurrency = getPreferredVolumeChunkConcurrency();
@@ -357,8 +371,54 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
         createdTexture.flipY = false;
         createdTexture.needsUpdate = true;
 
+        createdLocalMinTexture = new THREE.Data3DTexture(
+          boundsTextureConfig.localMinData,
+          textureDimensions.width,
+          textureDimensions.height,
+          textureDimensions.depth,
+        );
+        createdLocalMinTexture.format = THREE.RedFormat;
+        createdLocalMinTexture.type = boundsTextureConfig.type;
+        createdLocalMinTexture.internalFormat = boundsTextureConfig.internalFormat;
+        createdLocalMinTexture.unpackAlignment = 1;
+        createdLocalMinTexture.minFilter = THREE.NearestFilter;
+        createdLocalMinTexture.magFilter = THREE.NearestFilter;
+        createdLocalMinTexture.wrapS = THREE.ClampToEdgeWrapping;
+        createdLocalMinTexture.wrapT = THREE.ClampToEdgeWrapping;
+        createdLocalMinTexture.wrapR = THREE.ClampToEdgeWrapping;
+        createdLocalMinTexture.flipY = false;
+        createdLocalMinTexture.needsUpdate = true;
+
+        createdLocalMaxTexture = new THREE.Data3DTexture(
+          boundsTextureConfig.localMaxData,
+          textureDimensions.width,
+          textureDimensions.height,
+          textureDimensions.depth,
+        );
+        createdLocalMaxTexture.format = THREE.RedFormat;
+        createdLocalMaxTexture.type = boundsTextureConfig.type;
+        createdLocalMaxTexture.internalFormat = boundsTextureConfig.internalFormat;
+        createdLocalMaxTexture.unpackAlignment = 1;
+        createdLocalMaxTexture.minFilter = THREE.NearestFilter;
+        createdLocalMaxTexture.magFilter = THREE.NearestFilter;
+        createdLocalMaxTexture.wrapS = THREE.ClampToEdgeWrapping;
+        createdLocalMaxTexture.wrapT = THREE.ClampToEdgeWrapping;
+        createdLocalMaxTexture.wrapR = THREE.ClampToEdgeWrapping;
+        createdLocalMaxTexture.flipY = false;
+        createdLocalMaxTexture.needsUpdate = true;
+
         const destination = setter.prepare(
           textureConfig.data as unknown as Chunk<DataType>['data'],
+          outputShape,
+          get_strides(outputShape),
+        );
+        const localMinDestination = setter.prepare(
+          boundsTextureConfig.localMinData as unknown as Chunk<DataType>['data'],
+          outputShape,
+          get_strides(outputShape),
+        );
+        const localMaxDestination = setter.prepare(
+          boundsTextureConfig.localMaxData as unknown as Chunk<DataType>['data'],
           outputShape,
           get_strides(outputShape),
         );
@@ -384,11 +444,15 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
         if (!isMounted || abortController.signal.aborted) {
           createdTexture.dispose();
+          createdLocalMinTexture.dispose();
+          createdLocalMaxTexture.dispose();
           return;
         }
 
         setVolumeTexture({
           texture: createdTexture,
+          localMinTexture: createdLocalMinTexture,
+          localMaxTexture: createdLocalMaxTexture,
           dataScale: textureConfig.dataScale,
           dimensionOrder: [xOut, yOut, zOut],
           minValue,
@@ -398,7 +462,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
           spatialSelections: [xSelection, ySelection, zSelection],
         });
 
-        queueTextureUpload(createdTexture, 'initial');
+        queueTextureUpload([createdTexture, createdLocalMinTexture, createdLocalMaxTexture], 'initial');
 
         const chunkLoaders = prioritizeChunkLoaders(
           Array.from(indexer),
@@ -424,6 +488,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
             priority: resolvedVolumeLod,
             signal: abortController.signal,
             useSharedArrayBuffer: true,
+            textureFidelity: volumeTextureFidelity,
           });
 
           if (!isMounted || abortController.signal.aborted) return;
@@ -439,6 +504,18 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
             mapping as unknown as Parameters<typeof setter.set_from_chunk>[2],
           );
 
+          const textureBounds = chunk.textureBounds ?? { localMin: minValue, localMax: maxValue };
+          setter.set_from_chunk(
+            localMinDestination,
+            createBoundsChunk(chunk.shape, textureBounds.localMin),
+            mapping as unknown as Parameters<typeof setter.set_from_chunk>[2],
+          );
+          setter.set_from_chunk(
+            localMaxDestination,
+            createBoundsChunk(chunk.shape, textureBounds.localMax),
+            mapping as unknown as Parameters<typeof setter.set_from_chunk>[2],
+          );
+
           completedChunks += 1;
           while (progressMilestones.length > 0 && completedChunks >= progressMilestones[0]) {
             const milestone = progressMilestones.shift() as number;
@@ -448,16 +525,24 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
             });
           }
 
-          scheduleTextureUpload(createdTexture as THREE.Data3DTexture);
+          scheduleTextureUpload(
+            [createdTexture as THREE.Data3DTexture, createdLocalMinTexture as THREE.Data3DTexture, createdLocalMaxTexture as THREE.Data3DTexture],
+          );
         });
 
-        if (createdTexture && !abortController.signal.aborted) {
+        if (createdTexture && createdLocalMinTexture && createdLocalMaxTexture && !abortController.signal.aborted) {
           logLoadEvent('completed aggregate volume fill');
-          scheduleTextureUpload(createdTexture, true);
+          scheduleTextureUpload([createdTexture, createdLocalMinTexture, createdLocalMaxTexture], true);
         }
       } catch (error) {
         if (createdTexture) {
           createdTexture.dispose();
+        }
+        if (createdLocalMinTexture) {
+          createdLocalMinTexture.dispose();
+        }
+        if (createdLocalMaxTexture) {
+          createdLocalMaxTexture.dispose();
         }
 
         if (error instanceof Error && error.name === 'AbortError') {
@@ -509,6 +594,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     layer.yDim,
     layer.zDim,
     resolvedVolumeLod,
+    volumeTextureFidelity,
     volumeDataSignature,
   ]);
 
@@ -537,6 +623,8 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       dataScale: volumeTexture.dataScale,
       direction: localDirection,
       dimensionOrder: volumeTexture.dimensionOrder,
+      localMaxTexture: volumeTexture.localMaxTexture,
+      localMinTexture: volumeTexture.localMinTexture,
       maxValue: volumeTexture.maxValue,
       minValue: volumeTexture.minValue,
       origin: localOrigin,
@@ -672,6 +760,8 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
           key={materialSignature}
           volumeMeshRef={volumeMeshRef}
           texture={volumeTexture.texture}
+          localMinTexture={volumeTexture.localMinTexture}
+          localMaxTexture={volumeTexture.localMaxTexture}
           colorMapTexture={colorMapTexture}
           layerId={layer.id}
           dimensionOrder={volumeTexture.dimensionOrder}
@@ -686,13 +776,22 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
   );
 };
 
-function createVolumeTextureBuffer(dataType: DataType, elementCount: number): TextureBufferConfig {
-  if (dataType === 'uint8') {
+function createVolumeTextureBuffer(fidelity: VolumeTextureFidelity, elementCount: number): TextureBufferConfig {
+  if (fidelity === 'low') {
     return {
       data: new Uint8Array(elementCount),
-      dataScale: 255.0,
+      dataScale: 1.0,
       type: THREE.UnsignedByteType,
       internalFormat: 'R8',
+    };
+  }
+
+  if (fidelity === 'high') {
+    return {
+      data: new Uint16Array(elementCount),
+      dataScale: 1.0,
+      type: THREE.UnsignedShortType,
+      internalFormat: null,
     };
   }
 
@@ -701,6 +800,32 @@ function createVolumeTextureBuffer(dataType: DataType, elementCount: number): Te
     dataScale: 1.0,
     type: THREE.FloatType,
     internalFormat: 'R32F',
+  };
+}
+
+function createVolumeBoundsTextureBuffer(elementCount: number): {
+  localMinData: Float32Array;
+  localMaxData: Float32Array;
+  type: THREE.TextureDataType;
+  internalFormat: 'R32F';
+} {
+  return {
+    localMinData: new Float32Array(elementCount),
+    localMaxData: new Float32Array(elementCount),
+    type: THREE.FloatType,
+    internalFormat: 'R32F',
+  };
+}
+
+function createBoundsChunk(shape: number[], absoluteValue: number): Chunk<'float32'> {
+  const elementCount = shape.reduce((total, size) => total * size, 1);
+  const data = new Float32Array(elementCount);
+  data.fill(absoluteValue);
+
+  return {
+    data,
+    shape,
+    stride: get_strides(shape),
   };
 }
 
@@ -877,6 +1002,8 @@ function marchVolumeTexture({
   dataScale,
   direction,
   dimensionOrder,
+  localMaxTexture,
+  localMinTexture,
   maxValue,
   minValue,
   origin,
@@ -890,6 +1017,8 @@ function marchVolumeTexture({
   dataScale: number;
   direction: THREE.Vector3;
   dimensionOrder: [number, number, number];
+  localMaxTexture: THREE.Data3DTexture;
+  localMinTexture: THREE.Data3DTexture;
   maxValue: number;
   minValue: number;
   origin: THREE.Vector3;
@@ -900,7 +1029,7 @@ function marchVolumeTexture({
   threshold: number;
 }): [number, number, number] | null {
   const image = texture.image as {
-    data?: Uint8Array | Float32Array;
+    data?: Uint8Array | Uint16Array | Float32Array;
     width?: number;
     height?: number;
     depth?: number;
@@ -909,8 +1038,16 @@ function marchVolumeTexture({
   const width = image.width ?? 1;
   const height = image.height ?? 1;
   const depth = image.depth ?? 1;
+  const localMinImage = localMinTexture.image as {
+    data?: Uint8Array | Uint16Array | Float32Array;
+  };
+  const localMaxImage = localMaxTexture.image as {
+    data?: Uint8Array | Uint16Array | Float32Array;
+  };
+  const localMinData = localMinImage.data;
+  const localMaxData = localMaxImage.data;
 
-  if (!textureData || width <= 0 || height <= 0 || depth <= 0) {
+  if (!textureData || !localMinData || !localMaxData || width <= 0 || height <= 0 || depth <= 0) {
     return null;
   }
 
@@ -929,7 +1066,11 @@ function marchVolumeTexture({
       const texX = Math.min(width - 1, Math.max(0, Math.floor(texCoord.x * width)));
       const texY = Math.min(height - 1, Math.max(0, Math.floor(texCoord.y * height)));
       const texZ = Math.min(depth - 1, Math.max(0, Math.floor(texCoord.z * depth)));
-      const rawValue = textureData[(texZ * height + texY) * width + texX] * dataScale;
+      const voxelIndex = (texZ * height + texY) * width + texX;
+      const sampleValue = textureData[voxelIndex] ?? 0;
+      const localMinValue = Number(localMinData[voxelIndex] ?? minValue);
+      const localMaxValue = Number(localMaxData[voxelIndex] ?? maxValue);
+      const rawValue = reconstructTextureSampleValue(sampleValue, textureData, dataScale, localMinValue, localMaxValue);
       const normalized = computeProbeNormalized(rawValue, minValue, maxValue, climMin, climMax);
 
       if (computeProbeVisibility(normalized, colorMapTexture) > threshold) {
@@ -983,6 +1124,34 @@ function computeProbeNormalized(
 
 function computeProbeVisibility(normalized: number, colorMapTexture: THREE.Texture | null): number {
   return sampleColorMapAlpha(colorMapTexture, normalized) * normalized;
+}
+
+function decodeTextureSampleValue(
+  sampleValue: number,
+  textureData: Uint8Array | Uint16Array | Float32Array,
+  dataScale: number,
+): number {
+  if (textureData instanceof Float32Array) {
+    return sampleValue * dataScale;
+  }
+
+  const maxEncodedValue = textureData instanceof Uint16Array ? 65535 : 255;
+  return (sampleValue / maxEncodedValue) * dataScale;
+}
+
+function reconstructTextureSampleValue(
+  sampleValue: number,
+  textureData: Uint8Array | Uint16Array | Float32Array,
+  dataScale: number,
+  localMinValue: number,
+  localMaxValue: number,
+): number {
+  const encodedValue = decodeTextureSampleValue(sampleValue, textureData, dataScale);
+  if (Math.abs(localMaxValue - localMinValue) < 0.00001) {
+    return localMinValue;
+  }
+
+  return THREE.MathUtils.lerp(localMinValue, localMaxValue, THREE.MathUtils.clamp(encodedValue, 0, 1));
 }
 
 function sampleColorMapAlpha(colorMapTexture: THREE.Texture | null, normalized: number): number {

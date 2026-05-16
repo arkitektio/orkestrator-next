@@ -19,14 +19,41 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     undefined,
   );
 
-  const setSettings = (settings: Settings) => {
-    console.log("Saving settings", settings);
-    if (settings) {
-      localStorage.setItem("wasser-settings", JSON.stringify(settings));
+  const normalizeSettings = useCallback(
+    (value: unknown): Settings | undefined => {
+      if (!value || typeof value !== "object") {
+        return undefined;
+      }
+
+      // Filter out undefined entries so they never silently overwrite defaults
+      const definedEntries = Object.fromEntries(
+        Object.entries(value as object).filter(([, v]) => v !== undefined),
+      );
+
+      const result = settingsValidator.safeParse({
+        ...defaultSettings,
+        ...definedEntries,
+      });
+
+      if (!result.success) {
+        console.error("Invalid settings", result.error);
+        return undefined;
+      }
+
+      return result.data;
+    },
+    [defaultSettings],
+  );
+
+  const setSettings = useCallback((settings: Settings) => {
+    const normalizedSettings = normalizeSettings(settings);
+    console.log("Saving settings", normalizedSettings);
+    if (normalizedSettings) {
+      localStorage.setItem("wasser-settings", JSON.stringify(normalizedSettings));
       console.log("Settings saved to local storage");
     }
-    setLocalSettings(settings);
-  };
+    setLocalSettings(normalizedSettings);
+  }, [normalizeSettings]);
 
   // Debounced zoom level application
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -95,8 +122,10 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
         const l = localStorage.getItem("wasser-settings");
         console.log("Loaded Settings", l);
         if (l) {
-          localSettings = await settingsValidator.parseAsync(JSON.parse(l));
-          console.log("Settings loaded from local storage");
+          localSettings = normalizeSettings(JSON.parse(l));
+          if (localSettings) {
+            console.log("Settings loaded from local storage");
+          }
         }
       } catch (e) {
         console.error(e);
@@ -121,7 +150,7 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     };
 
     loadValidateSettings();
-  }, [applyZoomLevel, defaultSettings]);
+  }, [applyZoomLevel, defaultSettings, normalizeSettings]);
 
   // Cleanup debounce timeout on unmount
   useEffect(() => {

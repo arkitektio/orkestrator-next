@@ -29,7 +29,7 @@ const TheCard = ({ item }: Props) => {
             }
             object={item}
           >
-            {item?.label}
+            {item?.key || item?.label}
           </KraphMeasurementCategory.DetailLink>
           <p className="text-sm text-muted-foreground">{item?.description}</p>
         </div>

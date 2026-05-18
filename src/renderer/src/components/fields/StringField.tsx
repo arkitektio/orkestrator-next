@@ -7,7 +7,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useFormContext } from "react-hook-form";
+import { useEffect } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { FieldProps } from "./types";
 
 export const StringField = (props: FieldProps & { placeholder?: string }) => {
@@ -36,4 +37,53 @@ export const StringField = (props: FieldProps & { placeholder?: string }) => {
       )}
     />
   );
+};
+
+type AutoDerivedStringFieldProps = FieldProps & {
+  sourceName: string;
+  deriveValue: (sourceValue: string) => string;
+  normalizeValue?: (value: string) => string;
+  placeholder?: string;
+};
+
+export const AutoDerivedStringField = ({
+  sourceName,
+  deriveValue,
+  normalizeValue = (value) => value,
+  ...props
+}: AutoDerivedStringFieldProps) => {
+  const form = useFormContext();
+  const sourceValue = useWatch({ control: form.control, name: sourceName });
+  const fieldValue = useWatch({ control: form.control, name: props.name });
+
+  useEffect(() => {
+    const normalizedValue = typeof fieldValue === "string"
+      ? normalizeValue(fieldValue)
+      : fieldValue;
+
+    if (typeof normalizedValue === "string" && fieldValue !== normalizedValue) {
+      const { isDirty } = form.getFieldState(props.name);
+      form.setValue(props.name, normalizedValue, {
+        shouldValidate: true,
+        shouldDirty: isDirty,
+      });
+      return;
+    }
+
+    if (typeof sourceValue !== "string") {
+      return;
+    }
+
+    const { isDirty } = form.getFieldState(props.name);
+    if (!isDirty) {
+      const nextValue = normalizeValue(deriveValue(sourceValue));
+      if (fieldValue !== nextValue) {
+        form.setValue(props.name, nextValue, {
+          shouldValidate: true,
+        });
+      }
+    }
+  }, [deriveValue, fieldValue, form, normalizeValue, props.name, sourceValue]);
+
+  return <StringField {...props} />;
 };

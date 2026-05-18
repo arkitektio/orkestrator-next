@@ -801,7 +801,7 @@ input CreateMeasurementDefinitionInput {
   sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
-  source: StructureDefinitionInput!
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
@@ -2953,6 +2953,9 @@ input MeasurementCategoryFilter {
 
   """Filter by list of IDs"""
   search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
 }
 
 input MeasurementCategoryOrder @oneOf {
@@ -3015,7 +3018,7 @@ input MeasurementDefinitionInput {
   sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
-  source: StructureDefinitionInput!
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
@@ -5617,43 +5620,6 @@ type StructureCategoryStats {
   sum(field: StructureCategoryField!): Float
 }
 
-"""Definition of a structure type in the graph schema"""
-input StructureDefinitionInput {
-  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
-  color: [Int!] = null
-
-  """Description of this node role"""
-  description: String = null
-
-  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
-  identifier: String!
-
-  """Optional media store ID for an image representing this node role"""
-  image: String = null
-
-  """The label of the node participating in the event"""
-  key: String!
-
-  """
-  Optional human-readable label for this node role (defaults to 'key' if not provided)
-  """
-  label: String = null
-
-  """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
-
-  """Whether to pin this node role in the UI"""
-  pin: Boolean = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
-  """
-  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
-  """
-  tags: [String!]! = []
-}
-
 """Input type for creating a new graph query"""
 type StructureDescriptor {
   """Default category to link to if no entities match the filters"""
@@ -6297,7 +6263,7 @@ input UpdateMeasurementDefinitionInput {
   sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
-  source: StructureDefinitionInput!
+  source: StructureDescriptorInput!
 
   """
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')

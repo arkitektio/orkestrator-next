@@ -16,6 +16,7 @@ import {
   ListMeasurementCategoryFragment,
   useCreateEntityInlineMutation,
   useCreateMeasurementMutation,
+  useListMaterializedEdgesQuery,
   useListMeasurmentCategoryQuery,
 } from "@/kraph/api/graphql";
 import CreateMeasurementCategoryForm from "@/kraph/forms/CreateMeasurementCategoryForm";
@@ -116,11 +117,10 @@ export const ConnectableAs = ({
   graphId,
   onConnect,
 }: ConnectableAsProps) => {
-  const { data, refetch } = useListMeasurmentCategoryQuery({
+  const { data, refetch, error } = useListMaterializedEdgesQuery({
     variables: {
       filters: {
-        graph: {id: graphId},
-        source: identifier,
+        sourceIdentifier: identifier,
       },
     },
   });
@@ -139,7 +139,7 @@ export const ConnectableAs = ({
     setIsCreating(false);
   };
 
-  const selectedMeasurement = data?.measurementCategories.find(
+  const selectedMeasurement = data?.materializedEdges.find(
     (c) => c.id === selectedCategory,
   );
 
@@ -155,6 +155,7 @@ export const ConnectableAs = ({
         <Button variant="outline" className="w-full gap-2">
           <Link className="h-4 w-4" />
           Connect
+          {JSON.stringify(error)}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -200,17 +201,17 @@ export const ConnectableAs = ({
           />
         ) : (
           <div className="flex flex-col gap-2">
-            {data?.measurementCategories.map((category) => (
+            {data?.materializedEdges.map((category) => (
               <Button
                 key={category.id}
                 variant="outline"
                 className="justify-start"
                 onClick={() => setSelectedCategory(category.id)}
               >
-                {category.label}
+                {category.id}
               </Button>
             ))}
-            {data?.measurementCategories.length === 0 && (
+            {data?.materializedEdges.length === 0 && (
               <div className="p-2 text-xs text-muted-foreground text-center">
                 No categories available
               </div>

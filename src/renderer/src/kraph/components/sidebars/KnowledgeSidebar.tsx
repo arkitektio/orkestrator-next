@@ -34,7 +34,7 @@ export const GraphKnowledgeView = (props: {
   const { data, refetch, error, loading } = useGetInformedStructureQuery({
     variables: {
       identifier: props.identifier,
-      object: props.object,
+      object: props.object.id,
       graph: props.graph.id,
     },
   });
@@ -73,7 +73,7 @@ export const GraphKnowledgeView = (props: {
               partners={[
                 {
                   identifier: "@kraph/graph",
-                  object: props.graph.id,
+                  object: props.graph,
                 },
               ]}
               disableKraph={true}

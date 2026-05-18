@@ -360,7 +360,7 @@ const calculateColumns = (
         const label = row.getValue("id") as string;
 
         return (
-          <KraphNode.DetailLink object={label} className={"items-center justify-center flex"}>
+          <KraphNode.DetailLink object={{ id: label }} className={"items-center justify-center flex"}>
             Open
           </KraphNode.DetailLink>
         );

@@ -84,7 +84,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphNode.DetailLink object={row.getValue("id")} className="lowercase">
+      <KraphNode.DetailLink object={{ id: row.getValue("id") }} className="lowercase">
         {row.getValue("id")}
       </KraphNode.DetailLink>
     ),
@@ -103,7 +103,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphNode.DetailLink object={row.getValue("id")} className="lowercase">
+      <KraphNode.DetailLink object={{ id: row.getValue("id") }} className="lowercase">
         {row.getValue("name")}
       </KraphNode.DetailLink>
     ),

@@ -694,7 +694,7 @@ export type CreateMeasurementDefinitionInput = {
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
-  source: EntityDescriptorInput;
+  source: StructureDefinitionInput;
   /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
   tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
@@ -2563,7 +2563,7 @@ export type MeasurementDefinitionInput = {
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
-  source: EntityDescriptorInput;
+  source: StructureDefinitionInput;
   /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
   tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
@@ -5943,6 +5943,30 @@ export type StructureCategoryStatsSumArgs = {
   field: StructureCategoryField;
 };
 
+/** Definition of a structure type in the graph schema */
+export type StructureDefinitionInput = {
+  /** Optional RGBA color for this node role (e.g. [255, 0, 0, 128]) */
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** Description of this node role */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Optional schema identifier for this structure (e.g. '@mikro/roi') */
+  identifier: Scalars['String']['input'];
+  /** Optional media store ID for an image representing this node role */
+  image?: InputMaybe<Scalars['String']['input']>;
+  /** The label of the node participating in the event */
+  key: Scalars['String']['input'];
+  /** Optional human-readable label for this node role (defaults to 'key' if not provided) */
+  label?: InputMaybe<Scalars['String']['input']>;
+  /** Ontology references for this event */
+  ontologyReferences?: Array<OntologyReferenceInput>;
+  /** Whether to pin this node role in the UI */
+  pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sequence mappings for this node */
+  sequences?: Array<SequenceMappingInput>;
+  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
+  tags?: Array<Scalars['String']['input']>;
+};
+
 /** Input type for creating a new graph query */
 export type StructureDescriptor = {
   __typename?: 'StructureDescriptor';
@@ -6443,7 +6467,7 @@ export type UpdateMeasurementDefinitionInput = {
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
-  source: EntityDescriptorInput;
+  source: StructureDefinitionInput;
   /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
   tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */

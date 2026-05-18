@@ -119,8 +119,8 @@ export const ConnectableAs = ({
   const { data, refetch } = useListMeasurmentCategoryQuery({
     variables: {
       filters: {
-        graph: graphId,
-        sourceIdentifier: identifier,
+        graph: {id: graphId},
+        source: identifier,
       },
     },
   });

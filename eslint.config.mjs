@@ -63,7 +63,8 @@ export default defineConfig(
       "react/display-name": "off",
       "react/no-unknown-property": "off",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-      "@typescript-eslint/explicit-function-return-type": "off"
+      "@typescript-eslint/explicit-function-return-type": "off",
+       'react-refresh/only-export-components': 'off',
     }
   },
 )

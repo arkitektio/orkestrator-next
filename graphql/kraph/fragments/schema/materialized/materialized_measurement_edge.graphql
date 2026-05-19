@@ -1,0 +1,35 @@
+fragment ListMaterializedMeasurementEdge on MaterializedMeasurementEdge {
+  id
+  graph {
+    id
+    name
+  }
+  target {
+    id
+    key
+    label
+  }
+  edge {
+    id
+    key
+    label
+    description
+  }
+}
+
+
+fragment MaterializedMeasurementEdge on MaterializedMeasurementEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    identifier
+  }
+  target {
+    id
+    key
+  }
+}

@@ -98,6 +98,7 @@
       "GraphPathQuery",
       "GraphTableQuery",
       "MaterializedEdge",
+      "MaterializedMeasurementEdge",
       "MaterializedRelationEdge",
       "MaterializedStructureRelationEdge",
       "MeasurementCategory",

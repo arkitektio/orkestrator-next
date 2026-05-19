@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
+  ListMaterializedMeasurementEdgeFragment,
   ListMeasurementCategoryFragment,
   useCreateEntityInlineMutation,
   useCreateMeasurementMutation,
   useListMaterializedEdgesQuery,
+  useListMaterializedMeasurementsQuery,
   useListMeasurmentCategoryQuery,
 } from "@/kraph/api/graphql";
 import CreateMeasurementCategoryForm from "@/kraph/forms/CreateMeasurementCategoryForm";
@@ -27,7 +29,7 @@ import { toast } from "sonner";
 
 const FindEntity = (props: {
   structure: string;
-  measurement: ListMeasurementCategoryFragment;
+  measurement: ListMaterializedMeasurementEdgeFragment;
   refetch?: () => void;
   onSuccess?: () => void;
 }) => {
@@ -46,7 +48,7 @@ const FindEntity = (props: {
     refetchQueries: ["SearchEntitiesForRole"],
   });
 
-  const createCategory = props.measurement.targetDefinition.defaultUseNew;
+  const createCategory = props.measurement.target.defaultUseNew;
 
   return (
     <Form {...form}>
@@ -117,7 +119,7 @@ export const ConnectableAs = ({
   graphId,
   onConnect,
 }: ConnectableAsProps) => {
-  const { data, refetch, error } = useListMaterializedEdgesQuery({
+  const { data, refetch, error } = useListMaterializedMeasurementsQuery({
     variables: {
       filters: {
         sourceIdentifier: identifier,
@@ -139,7 +141,7 @@ export const ConnectableAs = ({
     setIsCreating(false);
   };
 
-  const selectedMeasurement = data?.materializedEdges.find(
+  const selectedMeasurement = data?.materializedMeasurementEdges.find(
     (c) => c.id === selectedCategory,
   );
 
@@ -201,17 +203,17 @@ export const ConnectableAs = ({
           />
         ) : (
           <div className="flex flex-col gap-2">
-            {data?.materializedEdges.map((category) => (
+            {data?.materializedMeasurementEdges.map((edge) => (
               <Button
-                key={category.id}
+                key={edge.id}
                 variant="outline"
                 className="justify-start"
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(edge.id)}
               >
-                {category.id}
+                {edge.edge.label || edge.edge.key} - {edge.target.key}
               </Button>
             ))}
-            {data?.materializedEdges.length === 0 && (
+            {data?.materializedMeasurementEdges.length === 0 && (
               <div className="p-2 text-xs text-muted-foreground text-center">
                 No categories available
               </div>

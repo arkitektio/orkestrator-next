@@ -1,0 +1,15 @@
+query ListMaterializedMeasurements(
+  $filters: MaterializedMeasurementEdgeFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [MaterializedMeasurementEdgeOrder!]
+) {
+  materializedMeasurementEdges(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListMaterializedMeasurementEdge
+  }
+}
+
+query GetMaterializedMeasurementEdge($id: ID!) {
+  materializedMeasurementEdge(id: $id) {
+    ...MaterializedMeasurementEdge
+  }
+}

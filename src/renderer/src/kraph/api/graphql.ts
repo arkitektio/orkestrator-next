@@ -2339,6 +2339,36 @@ export type MaterializedEdgeOrder =
   { id: Ordering; };
 
 /** A materialized edge representing a relationship in the graph */
+export type MaterializedMeasurementEdge = {
+  __typename?: 'MaterializedMeasurementEdge';
+  edge: MeasurementCategory;
+  graph: Graph;
+  /** Database ID of the edge */
+  id: Scalars['ID']['output'];
+  source: StructureCategory;
+  target: EntityCategory;
+};
+
+export type MaterializedMeasurementEdgeFilter = {
+  AND?: InputMaybe<MaterializedMeasurementEdgeFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<MaterializedMeasurementEdgeFilter>;
+  OR?: InputMaybe<MaterializedMeasurementEdgeFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Full-text search over connected category labels */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of IDs */
+  sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of IDs */
+  targetIdentifier?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MaterializedMeasurementEdgeOrder =
+  { id: Ordering; };
+
+/** A materialized edge representing a relationship in the graph */
 export type MaterializedRelationEdge = {
   __typename?: 'MaterializedRelationEdge';
   edge: StructureRelationCategory;
@@ -4645,6 +4675,10 @@ export type Query = {
   materializedEdge: MaterializedEdge;
   /** List all materialized edges in the graph */
   materializedEdges: Array<MaterializedEdge>;
+  /** Get a single materialized measurement edge by ID */
+  materializedMeasurementEdge: MaterializedMeasurementEdge;
+  /** List all materialized measurement edges in the graph */
+  materializedMeasurementEdges: Array<MaterializedMeasurementEdge>;
   /** Get a single materialized relation edge by ID */
   materializedRelationEdge: MaterializedRelationEdge;
   /** List all materialized relation edges in the graph */
@@ -4970,6 +5004,18 @@ export type QueryMaterializedEdgeArgs = {
 export type QueryMaterializedEdgesArgs = {
   filters?: InputMaybe<MaterializedEdgeFilter>;
   ordering?: Array<MaterializedEdgeOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMaterializedMeasurementEdgeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMaterializedMeasurementEdgesArgs = {
+  filters?: InputMaybe<MaterializedMeasurementEdgeFilter>;
+  ordering?: Array<MaterializedMeasurementEdgeOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -6931,7 +6977,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore;
+export type _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -7351,6 +7397,10 @@ export type BaseListEdgeCategoryFragment = BaseListEdgeCategory_MeasurementCateg
 export type ListMaterializedEdgeFragment = { __typename?: 'MaterializedEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string } };
 
 export type MaterializedEdgeFragment = { __typename?: 'MaterializedEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string } };
+
+export type ListMaterializedMeasurementEdgeFragment = { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null } };
+
+export type MaterializedMeasurementEdgeFragment = { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'StructureCategory', id: string, identifier: string }, target: { __typename?: 'EntityCategory', id: string, key: string } };
 
 export type ListMaterializedRelationEdgeFragment = { __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string } };
 
@@ -8179,6 +8229,22 @@ export type GetMaterializedEdgeQueryVariables = Exact<{
 
 
 export type GetMaterializedEdgeQuery = { __typename?: 'Query', materializedEdge: { __typename?: 'MaterializedEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string } } };
+
+export type ListMaterializedMeasurementsQueryVariables = Exact<{
+  filters?: InputMaybe<MaterializedMeasurementEdgeFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<MaterializedMeasurementEdgeOrder> | MaterializedMeasurementEdgeOrder>;
+}>;
+
+
+export type ListMaterializedMeasurementsQuery = { __typename?: 'Query', materializedMeasurementEdges: Array<{ __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null } }> };
+
+export type GetMaterializedMeasurementEdgeQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetMaterializedMeasurementEdgeQuery = { __typename?: 'Query', materializedMeasurementEdge: { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'StructureCategory', id: string, identifier: string }, target: { __typename?: 'EntityCategory', id: string, key: string } } };
 
 export type ListMaterializedRelationEdgesQueryVariables = Exact<{
   filters?: InputMaybe<MaterializedRelationEdgeFilter>;
@@ -9574,6 +9640,43 @@ export const MaterializedEdgeFragmentDoc = gql`
   graph {
     id
     name
+  }
+}
+    `;
+export const ListMaterializedMeasurementEdgeFragmentDoc = gql`
+    fragment ListMaterializedMeasurementEdge on MaterializedMeasurementEdge {
+  id
+  graph {
+    id
+    name
+  }
+  target {
+    id
+    key
+    label
+  }
+  edge {
+    id
+    key
+    label
+    description
+  }
+}
+    `;
+export const MaterializedMeasurementEdgeFragmentDoc = gql`
+    fragment MaterializedMeasurementEdge on MaterializedMeasurementEdge {
+  id
+  graph {
+    id
+    name
+  }
+  source {
+    id
+    identifier
+  }
+  target {
+    id
+    key
   }
 }
     `;
@@ -13456,6 +13559,82 @@ export function useGetMaterializedEdgeLazyQuery(baseOptions?: ApolloReactHooks.L
 export type GetMaterializedEdgeQueryHookResult = ReturnType<typeof useGetMaterializedEdgeQuery>;
 export type GetMaterializedEdgeLazyQueryHookResult = ReturnType<typeof useGetMaterializedEdgeLazyQuery>;
 export type GetMaterializedEdgeQueryResult = Apollo.QueryResult<GetMaterializedEdgeQuery, GetMaterializedEdgeQueryVariables>;
+export const ListMaterializedMeasurementsDocument = gql`
+    query ListMaterializedMeasurements($filters: MaterializedMeasurementEdgeFilter, $pagination: OffsetPaginationInput, $ordering: [MaterializedMeasurementEdgeOrder!]) {
+  materializedMeasurementEdges(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    ...ListMaterializedMeasurementEdge
+  }
+}
+    ${ListMaterializedMeasurementEdgeFragmentDoc}`;
+
+/**
+ * __useListMaterializedMeasurementsQuery__
+ *
+ * To run a query within a React component, call `useListMaterializedMeasurementsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListMaterializedMeasurementsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListMaterializedMeasurementsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useListMaterializedMeasurementsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMaterializedMeasurementsQuery, ListMaterializedMeasurementsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListMaterializedMeasurementsQuery, ListMaterializedMeasurementsQueryVariables>(ListMaterializedMeasurementsDocument, options);
+      }
+export function useListMaterializedMeasurementsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMaterializedMeasurementsQuery, ListMaterializedMeasurementsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListMaterializedMeasurementsQuery, ListMaterializedMeasurementsQueryVariables>(ListMaterializedMeasurementsDocument, options);
+        }
+export type ListMaterializedMeasurementsQueryHookResult = ReturnType<typeof useListMaterializedMeasurementsQuery>;
+export type ListMaterializedMeasurementsLazyQueryHookResult = ReturnType<typeof useListMaterializedMeasurementsLazyQuery>;
+export type ListMaterializedMeasurementsQueryResult = Apollo.QueryResult<ListMaterializedMeasurementsQuery, ListMaterializedMeasurementsQueryVariables>;
+export const GetMaterializedMeasurementEdgeDocument = gql`
+    query GetMaterializedMeasurementEdge($id: ID!) {
+  materializedMeasurementEdge(id: $id) {
+    ...MaterializedMeasurementEdge
+  }
+}
+    ${MaterializedMeasurementEdgeFragmentDoc}`;
+
+/**
+ * __useGetMaterializedMeasurementEdgeQuery__
+ *
+ * To run a query within a React component, call `useGetMaterializedMeasurementEdgeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMaterializedMeasurementEdgeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMaterializedMeasurementEdgeQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetMaterializedMeasurementEdgeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMaterializedMeasurementEdgeQuery, GetMaterializedMeasurementEdgeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetMaterializedMeasurementEdgeQuery, GetMaterializedMeasurementEdgeQueryVariables>(GetMaterializedMeasurementEdgeDocument, options);
+      }
+export function useGetMaterializedMeasurementEdgeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMaterializedMeasurementEdgeQuery, GetMaterializedMeasurementEdgeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetMaterializedMeasurementEdgeQuery, GetMaterializedMeasurementEdgeQueryVariables>(GetMaterializedMeasurementEdgeDocument, options);
+        }
+export type GetMaterializedMeasurementEdgeQueryHookResult = ReturnType<typeof useGetMaterializedMeasurementEdgeQuery>;
+export type GetMaterializedMeasurementEdgeLazyQueryHookResult = ReturnType<typeof useGetMaterializedMeasurementEdgeLazyQuery>;
+export type GetMaterializedMeasurementEdgeQueryResult = Apollo.QueryResult<GetMaterializedMeasurementEdgeQuery, GetMaterializedMeasurementEdgeQueryVariables>;
 export const ListMaterializedRelationEdgesDocument = gql`
     query ListMaterializedRelationEdges($filters: MaterializedRelationEdgeFilter, $pagination: OffsetPaginationInput, $ordering: [MaterializedRelationEdgeOrder!]) {
   materializedRelationEdges(

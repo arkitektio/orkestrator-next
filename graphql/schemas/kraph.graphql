@@ -2767,6 +2767,41 @@ input MaterializedEdgeOrder @oneOf {
 }
 
 """A materialized edge representing a relationship in the graph"""
+type MaterializedMeasurementEdge {
+  edge: MeasurementCategory!
+  graph: Graph!
+
+  """Database ID of the edge"""
+  id: ID!
+  source: StructureCategory!
+  target: EntityCategory!
+}
+
+input MaterializedMeasurementEdgeFilter {
+  AND: MaterializedMeasurementEdgeFilter
+  DISTINCT: Boolean
+  NOT: MaterializedMeasurementEdgeFilter
+  OR: MaterializedMeasurementEdgeFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Full-text search over connected category labels"""
+  search: String
+
+  """Filter by list of IDs"""
+  sourceIdentifier: String
+
+  """Filter by list of IDs"""
+  targetIdentifier: String
+}
+
+input MaterializedMeasurementEdgeOrder @oneOf {
+  id: Ordering
+}
+
+"""A materialized edge representing a relationship in the graph"""
 type MaterializedRelationEdge {
   edge: StructureRelationCategory!
   graph: Graph!
@@ -4735,6 +4770,12 @@ type Query {
 
   """List all materialized edges in the graph"""
   materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+
+  """Get a single materialized measurement edge by ID"""
+  materializedMeasurementEdge(id: ID!): MaterializedMeasurementEdge!
+
+  """List all materialized measurement edges in the graph"""
+  materializedMeasurementEdges(filters: MaterializedMeasurementEdgeFilter, ordering: [MaterializedMeasurementEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedMeasurementEdge!]!
 
   """Get a single materialized relation edge by ID"""
   materializedRelationEdge(id: ID!): MaterializedRelationEdge!
@@ -6924,7 +6965,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore
+union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore
 
 type _Service {
   sdl: String!

@@ -22,6 +22,7 @@ import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 // 1. Import from nuqs
 import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
+import { MoQPlayer } from "@/components/moq/MoQPlayer";
 
 
 export interface IRepresentationScreenProps { }
@@ -99,6 +100,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
       title="Home"
     >
       <CommandMenu />
+
 
       <UploadWrapper
         uploadFile={performDataLayerUpload}

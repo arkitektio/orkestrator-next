@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { MetricsTable } from "../tables/MetricsTable";
 import { Identifier, Object } from "@/types";
-import { ConnectableAs } from "../ConnectableAs";
+import { ConnectableAs } from "@/kraph/components/ConnectableAs";
 
 
 export type KnowledgeSidebarProps = {
@@ -42,6 +42,9 @@ export const GraphKnowledgeView = (props: {
   const [addStructure] = useEnsureStructureMutation({
     onCompleted: () => refetch(),
   });
+
+  const hasConnections =
+    (data?.structureByIdentifier?.metrics.length || 0) > 0;
 
   return (
     <div className="flex flex-col p-2 h-full">
@@ -87,13 +90,26 @@ export const GraphKnowledgeView = (props: {
               </Button>
             </ObjectButton>
 
-            <ConnectableAs
-              identifier={props.identifier}
-              structure={data?.structureByIdentifier.id || ""}
-              graphId={props.graph.id}
-              onConnect={refetch}
-            />
+            {hasConnections && (
+              <ConnectableAs
+                identifier={props.identifier}
+                structure={data?.structureByIdentifier.id || ""}
+                graphId={props.graph.id}
+                onConnect={refetch}
+              />
+            )}
           </div>
+          {!hasConnections && (
+            <div className="mt-4">
+              <ConnectableAs
+                identifier={props.identifier}
+                structure={data?.structureByIdentifier.id || ""}
+                graphId={props.graph.id}
+                onConnect={refetch}
+                variant="inline"
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-2 p-2">
             {data.structureByIdentifier.metrics.length > 0 && <MetricsTable metrics={data?.structureByIdentifier.metrics || []} />}
           </div>
@@ -155,11 +171,11 @@ export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
 
 
   return (
-    <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="h-full p-2" >
+    <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="h-full p-2 flex border-0" >
       {data?.graphs.map((g) => (
-        <AccordionItem value={g.id} key={g.id}>
+        <AccordionItem value={g.id} key={g.id} className="flex-grow border-0 data-open:bg-pane">
           <AccordionTrigger>{g.name}</AccordionTrigger>
-          <AccordionContent className="flex-grow">
+          <AccordionContent className="flex-grow h-full  p-0 mt-2">
             {openItems.includes(g.id) && (
               <GraphKnowledgeView
                 identifier={props.identifier}

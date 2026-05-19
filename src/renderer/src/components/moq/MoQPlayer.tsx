@@ -77,6 +77,7 @@ export const MoQPlayer: React.FC<MoQPlayerProps> = ({
 
         // Fetch certificate hash for development
         const certHash = await fetchCertificateHash(relayHost, relayPort);
+        console.log('Fetched certificate hash:', certHash);
 
         // Establish connection using @moq/lite
         const serverUrl = new URL(`https://${relayHost}:${relayPort}/anon`);
@@ -119,7 +120,6 @@ export const MoQPlayer: React.FC<MoQPlayerProps> = ({
             try {
               // Read the next frame (JPEG data)
               const frameData = await track.readFrame();
-              console.log('Received frame data:', frameData);
 
               if (!frameData || !isMounted) break;
 
@@ -165,7 +165,8 @@ export const MoQPlayer: React.FC<MoQPlayerProps> = ({
                 }
               };
 
-              img.onerror = () => {
+              img.onerror = (err) => {
+                console.error("Failed to decode frame! The data is not a valid JPEG.", err);
                 URL.revokeObjectURL(url);
               };
 

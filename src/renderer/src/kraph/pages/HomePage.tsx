@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { KraphGraph } from "@/linkers";
 import {
   Activity,
@@ -23,7 +23,6 @@ import { PiGraph } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { useHomePageQuery } from "../api/graphql";
 import GraphCard from "../components/cards/GraphCard";
-import CreateGraphForm from "../forms/CreateGraphForm";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
 export type IRepresentationScreenProps = Record<string, never>;
@@ -116,24 +115,19 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
               {/* Action Section */}
               <div className="mt-12 space-y-6">
-                <FormDialogAction
+                <DialogButton
+                  name="creategraph"
                   variant={"default"}
                   size={"lg"}
-                  label="Create"
-                  description="Create a new Graph"
-                  buttonChildren={
-                    <Button className="flex items-center gap-3 px-6 py-2 ">
-                      <PlusIcon className="h-5 w-5" />
-                      <span className="text-lg">Create Your First Graph</span>
-                    </Button>
-                  }
-                  onSubmit={(item) => {
-                    console.log(item);
-                    navigate(KraphGraph.linkBuilder(item.createGraph.id));
+                  dialogProps={{
+                    onSuccess: (data) => navigate(KraphGraph.linkBuilder(data.createGraph.id)),
                   }}
                 >
-                  <CreateGraphForm />
-                </FormDialogAction>
+                  <Button className="flex items-center gap-3 px-6 py-2 ">
+                    <PlusIcon className="h-5 w-5" />
+                    <span className="text-lg">Create Your First Graph</span>
+                  </Button>
+                </DialogButton>
 
                 <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">

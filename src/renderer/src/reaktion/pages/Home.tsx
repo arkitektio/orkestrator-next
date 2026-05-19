@@ -1,10 +1,9 @@
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { FlussWorkspace } from "@/linkers";
 import { useNavigate } from "react-router-dom";
-import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import RunList from "../components/lists/RunList";
 import WorkspaceList from "../components/lists/WorkspaceList";
 import WorkspaceCarousel from "../edit/carousels/WorkspaceCarousel";
@@ -18,16 +17,15 @@ const Page = () => {
       title="Fluss Home"
       pageActions={
         <>
-          <FormDialogAction
-            label="Create"
+          <DialogButton
+            name="createworkspace"
             variant={"outline"}
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(FlussWorkspace.linkBuilder(item.createWorkspace.id));
+            dialogProps={{
+              onSuccess: (data) => navigate(FlussWorkspace.linkBuilder(data.createWorkspace.id)),
             }}
           >
-            <CreateWorkspaceForm />
-          </FormDialogAction>
+            Create
+          </DialogButton>
         </>
       }
       sidebars={

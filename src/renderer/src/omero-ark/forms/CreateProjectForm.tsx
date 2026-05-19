@@ -1,15 +1,15 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { CreateProjectMutationVariables, useCreateProjectMutation } from "../api/graphql";
+import { CreateProjectMutation, CreateProjectMutationVariables, useCreateProjectMutation } from "../api/graphql";
 
-export const CreateProjectForm = (props) => {
+export const CreateProjectForm = (props: { onSuccess?: (data: CreateProjectMutation) => void }) => {
   const [add] = useCreateProjectMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Project created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateProjectMutationVariables["input"]>({
     defaultValues: {
@@ -21,7 +21,7 @@ export const CreateProjectForm = (props) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data

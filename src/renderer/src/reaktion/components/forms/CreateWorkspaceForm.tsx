@@ -1,9 +1,10 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
+  CreateWorkspaceMutation,
   useCreateWorkspaceMutation,
   WorkspaceCarouselDocument,
   WorkspacesDocument,
@@ -11,12 +12,12 @@ import {
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 
-export const CreateWorkspaceForm = (props: {}) => {
+export const CreateWorkspaceForm = (props: { onSuccess?: (data: CreateWorkspaceMutation) => void }) => {
   const [add] = useCreateWorkspaceMutation({
     refetchQueries: [WorkspacesDocument, WorkspaceCarouselDocument],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Workspace created", onSuccess: props.onSuccess });
 
   const form = useForm({});
 
@@ -25,7 +26,7 @@ export const CreateWorkspaceForm = (props: {}) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 ...data,
               },

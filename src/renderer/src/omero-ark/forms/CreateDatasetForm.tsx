@@ -1,15 +1,15 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { CreateDatasetMutationVariables, ListProjectFragment, useCreateDatasetMutation } from "../api/graphql";
+import { CreateDatasetMutation, CreateDatasetMutationVariables, ListProjectFragment, useCreateDatasetMutation } from "../api/graphql";
 
-export const CreateDatasetForm = (props: { project?: ListProjectFragment }) => {
+export const CreateDatasetForm = (props: { project?: ListProjectFragment; onSuccess?: (data: CreateDatasetMutation) => void }) => {
   const [add] = useCreateDatasetMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Dataset created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateDatasetMutationVariables["input"]>({
     defaultValues: {
@@ -22,7 +22,7 @@ export const CreateDatasetForm = (props: { project?: ListProjectFragment }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data

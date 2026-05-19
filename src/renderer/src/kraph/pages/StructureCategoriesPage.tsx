@@ -1,11 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { KraphEntityCategory, KraphStructureCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import StructureCategoryList from "../components/lists/StructureCategoryList";
-import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -18,24 +17,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <DialogButton
+              name="createentitycategory"
               variant={"outline"}
               size={"sm"}
-              label="Create"
-              description="Create a new Structure Category"
-              buttonChildren={
-                <>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create
-                </>
-              }
-              onSubmit={(item) => {
-                console.log(item);
-                navigate(KraphEntityCategory.linkBuilder(item.createGraph.id));
+              dialogProps={{
+                onSuccess: (data) => navigate(KraphEntityCategory.linkBuilder(data.createEntityCategory.id)),
               }}
             >
-              <CreateEntityCategoryForm />
-            </FormDialogAction>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create
+            </DialogButton>
           </>
         </div>
       }

@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +14,7 @@ export const CreateDatasetForm = (props: { parentDatasetId?: string }) => {
         refetchQueries: ["Children", "GetDatasets"],
     });
 
-    const dialog = useGraphQlFormDialog(createDataset);
+    const submit = useGraphQLDialog(createDataset, { successMessage: "Dataset created" });
 
     const form = useForm<CreateDatasetInput>({
         defaultValues: {
@@ -27,7 +27,7 @@ export const CreateDatasetForm = (props: { parentDatasetId?: string }) => {
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(async (data) => {
-                        dialog({
+                        submit({
                             variables: {
                                 input: {
                                     name: data.name,

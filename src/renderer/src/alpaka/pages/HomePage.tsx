@@ -1,7 +1,6 @@
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
-import { ActionButton } from "@/components/ui/action";
 import { AlpakaRoom } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
@@ -13,6 +12,7 @@ import LLMModelList from "../components/lists/LLMModelList";
 import ProviderList from "../components/lists/ProviderList";
 import RoomList from "../components/lists/RoomList";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { Button } from "@/components/ui/button";
 
 export type IRepresentationScreenProps = {};
 
@@ -48,14 +48,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       }
       pageActions={
         <>
-          <ActionButton
-            run={handleCreateRoom}
+          <Button
+            onClick={handleCreateRoom}
             title="Create Room"
             variant={"outline"}
-            label="Create Room"
+
           >
             Create Room
-          </ActionButton>
+          </Button>
         </>
       }
     >

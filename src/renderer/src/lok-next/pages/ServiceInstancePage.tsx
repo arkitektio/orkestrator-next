@@ -2,14 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { FormSheetAction } from "@/components/ui/form-sheet-action";
+import { SheetButton } from "@/components/ui/sheetbutton";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import { useGetServiceInstanceQuery } from "../api/graphql";
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 import InstanceCompositionGraph from "../components/graphs/InstanceCompositionGraph";
-import { UpdateServiceInstanceForm } from "../forms/UpdateServiceInstanceForm";
 
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -23,20 +22,15 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
       title="Lok"
       pageActions={
         <>
-          <FormSheetAction
+          <SheetButton
+            name="updateserviceinstance"
             variant={"outline"}
             size={"sm"}
-            label="Create"
-            description="Update a new Graph"
-            buttonChildren={
-              <>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Update Service
-              </>
-            }
+            dialogProps={{ instance: data.serviceInstance }}
           >
-            <UpdateServiceInstanceForm instance={data.serviceInstance} />
-          </FormSheetAction>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Update Service
+          </SheetButton>
         </>
       }
     >

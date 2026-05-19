@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -6,13 +6,14 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateServiceInstanceInput,
+  CreateServiceInstanceMutation,
   useCreateServiceInstanceMutation
 } from "../api/graphql";
 
-export const CreateServiceInstanceForm = (props: { identifier?: string }) => {
+export const CreateServiceInstanceForm = (props: { identifier?: string; onSuccess?: (data: CreateServiceInstanceMutation) => void }) => {
   const [createServiceInstance] = useCreateServiceInstanceMutation();
 
-  const cre = useGraphQlFormDialog(createServiceInstance);
+  const submit = useGraphQLDialog(createServiceInstance, { successMessage: "Service Instance created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateServiceInstanceInput>({
     defaultValues: {
@@ -25,8 +26,7 @@ export const CreateServiceInstanceForm = (props: { identifier?: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            console.log("dd");
-            return await cre({
+            return await submit({
               variables: {
                 input: data,
               },

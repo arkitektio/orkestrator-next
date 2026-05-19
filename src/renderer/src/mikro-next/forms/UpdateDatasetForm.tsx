@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -9,7 +9,7 @@ import { DatasetFragment, useUpdateImageMutation } from "../api/graphql";
 export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
   const [add] = useUpdateImageMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Dataset updated" });
 
   const form = useForm({
     defaultValues: {
@@ -22,7 +22,7 @@ export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   id: props.dataset.id,

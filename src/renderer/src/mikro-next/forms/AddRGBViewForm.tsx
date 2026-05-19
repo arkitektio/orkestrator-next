@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { FloatField } from "@/components/fields/FloatField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ export const AddRGBViewForm = (props: { image: string }) => {
 
   const [searchStage] = useRgbContextOptionsLazyQuery();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Saved" });
 
   const form = useForm({
     defaultValues: {
@@ -31,7 +31,7 @@ export const AddRGBViewForm = (props: { image: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 image: props.image,
                 ...data,

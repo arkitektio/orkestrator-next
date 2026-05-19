@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -9,11 +9,11 @@ import { StageFragment, useUpdateImageMutation } from "../api/graphql";
 export const UpdateStageForm = (props: { stage: StageFragment }) => {
   const [add] = useUpdateImageMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Stage updated" });
 
   const form = useForm({
     defaultValues: {
-      name: props.image.name,
+      name: props.stage.name,
     },
   });
 
@@ -22,7 +22,7 @@ export const UpdateStageForm = (props: { stage: StageFragment }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   id: props.stage.id,

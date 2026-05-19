@@ -43,6 +43,7 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import {
   AggregationFunction,
+  CreateEntityCategoryMutation,
   CreateEntityCategoryMutationVariables,
   DerivationType,
   GetGraphDocument,
@@ -286,7 +287,7 @@ export const PropertyDefinitions = () => {
 
 
 
-const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
+const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (data: CreateEntityCategoryMutation) => void }) => {
   const [add] = useCreateEntityCategoryMutation({
     refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
 
@@ -300,7 +301,7 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
   });
 
   const [search] = useSearchGraphsLazyQuery();
-  const  submit = useGraphQLDialog(add, { successMessage: "Entity Category created" });
+  const  submit = useGraphQLDialog(add, { successMessage: "Entity Category created", onSuccess: props.onSuccess });
 
 
 

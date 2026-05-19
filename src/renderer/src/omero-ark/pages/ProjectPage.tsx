@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import {
   DetailPane,
   DetailPaneHeader,
@@ -11,7 +11,6 @@ import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useGetProjectQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
-import { CreateDatasetForm } from "../forms/CreateDatasetForm";
 
 
 const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
@@ -21,24 +20,20 @@ const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
     <OmeroArkProject.ModelPage
       object={data?.project}
       title={data?.project?.name}
-      pageActions={<> <FormDialogAction
-        variant={"outline"}
-        size={"sm"}
-        label="Create"
-        description="Create a new Graph"
-        buttonChildren={
-          <>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Create
-          </>
-        }
-        onSubmit={(item) => {
-          console.log(item);
-          refetch();
-        }}
-      >
-        <CreateDatasetForm project={data?.project} />
-      </FormDialogAction></>}>
+      pageActions={<>
+        <DialogButton
+          name="createomeroarkcataset"
+          variant={"outline"}
+          size={"sm"}
+          dialogProps={{
+            project: data?.project,
+            onSuccess: () => refetch(),
+          }}
+        >
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Create
+        </DialogButton>
+      </>}>
 
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>

@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -6,17 +6,18 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
+  CreateGraphMutation,
   CreateGraphMutationVariables,
   HomePageDocument,
   useCreateGraphMutation,
 } from "../api/graphql";
 
-const TForm = () => {
+const TForm = (props: { onSuccess?: (data: CreateGraphMutation) => void }) => {
   const [add] = useCreateGraphMutation({
     refetchQueries: [HomePageDocument],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Graph created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateGraphMutationVariables["input"]>({
     defaultValues: {
@@ -30,7 +31,7 @@ const TForm = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data,

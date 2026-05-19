@@ -7,29 +7,32 @@ import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
 import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
+import { DatasetDisplay } from "@/mikro-next/displays/DatasetDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
 import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
 import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
+import { StageDisplay } from "@/mikro-next/displays/StageDisplay";
 
 // Import your display components here
 // Example:
 // import { UserDisplay } from "@/components/displays/UserDisplay";
-// import { ImageDisplay } from "@/components/displays/ImageDisplay";
-// import { DatasetDisplay } from "@/components/displays/DatasetDisplay";
 
 export const { DisplayProvider, useDisplay, useDisplayComponent } =
   createDisplayProvider({
     "@mikro-next/image": ImageDisplay,
     "@mikro-next/file": FileDisplay,
+    "@mikro-next/dataset": DatasetDisplay,
+    "@mikro-next/stage": StageDisplay,
+    "@mikro-next/roi": RoiDisplay,
+    "@mikro-next/snapshot": SnapshotDisplay,
     "@mikro/file": FileDisplay,
     "@mikro/scene": SceneDisplay,
     "@mikro/image": ImageDisplay,
-    "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
-    "@mikro-next/roi": RoiDisplay,
     "@mikro/roi": RoiDisplay,
     "@mikro/snapshot": SnapshotDisplay,
+    "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
     "@kraph/entitycategory": EntityCategoryDisplay,
     "@kraph/metric": MetricDisplay,
     "@kabinet/pod": PodDisplay,

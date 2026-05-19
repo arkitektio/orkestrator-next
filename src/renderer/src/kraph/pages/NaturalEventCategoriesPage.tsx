@@ -1,11 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { KraphNaturalEventCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import NaturalEventCategoryList from "../components/lists/NaturalEventCategoryList";
-import CreateNaturalEventCategoryForm from "../forms/CreateNaturalEventCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -18,28 +17,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <DialogButton
+              name="createnaturaleventcategory"
               variant={"outline"}
               size={"sm"}
-              label="Create"
-              description="Create a new Protocol Category"
-              buttonChildren={
-                <>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create
-                </>
-              }
-              onSubmit={(item) => {
-                console.log(item);
-                navigate(
-                  KraphNaturalEventCategory.linkBuilder(
-                    item.createProtocolEventCategory.id,
-                  ),
-                );
+              dialogProps={{
+                onSuccess: (data) => navigate(KraphNaturalEventCategory.linkBuilder(data.createNaturalEventCategory.id)),
               }}
             >
-              <CreateNaturalEventCategoryForm />
-            </FormDialogAction>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create
+            </DialogButton>
           </>
         </div>
       }

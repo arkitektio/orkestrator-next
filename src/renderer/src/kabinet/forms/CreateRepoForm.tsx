@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog";
@@ -6,17 +6,18 @@ import { Form } from "@/components/ui/form";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 import {
+  CreateGithubRepoMutation,
   ListDefinitionsDocument,
   ListReleasesDocument,
   useCreateGithubRepoMutation,
 } from "../api/graphql";
 
-export const CreateRepoForm = (props: {}) => {
+export const CreateRepoForm = (props: { onSuccess?: (data: CreateGithubRepoMutation) => void }) => {
   const [add] = useCreateGithubRepoMutation({
     refetchQueries: [ListReleasesDocument, ListDefinitionsDocument],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Repo added", onSuccess: props.onSuccess });
 
   const form = useForm({});
 
@@ -25,7 +26,7 @@ export const CreateRepoForm = (props: {}) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 identifier: data.identifier,
               },

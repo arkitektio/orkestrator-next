@@ -1,15 +1,5 @@
 import React, { useContext } from "react";
 
-export type Settings = {
-  autoResolve: boolean;
-  allowAutoRequest: boolean;
-  darkMode: boolean;
-  colorScheme: "red" | "green" | "blue";
-  allowBatch: boolean;
-  experimental: boolean;
-  pollInterval: number;
-  instanceId: string;
-};
 
 export type DebugContextType = {
   debug: boolean;

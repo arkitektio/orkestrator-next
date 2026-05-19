@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -17,7 +17,7 @@ export const UpdateServiceInstanceForm = (props: {
 }) => {
   const [createServiceInstance] = useUpdateServiceInstanceMutation();
 
-  const cre = useGraphQlFormDialog(createServiceInstance);
+  const cre = useGraphQLDialog(createServiceInstance);
 
   const [userSearch] = useUserOptionsLazyQuery();
   const [groupSearch] = useGroupOptionsLazyQuery();
@@ -37,7 +37,6 @@ export const UpdateServiceInstanceForm = (props: {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            console.log("dd");
             return await cre({
               variables: {
                 input: data,

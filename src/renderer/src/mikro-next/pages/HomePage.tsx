@@ -18,11 +18,9 @@ import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
-
-// 1. Import from nuqs
 import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
-import { MoQPlayer } from "@/components/moq/MoQPlayer";
+import BlokRenderer from "@/blok/renderer/BlokRenderer";
 
 
 export interface IRepresentationScreenProps { }
@@ -102,6 +100,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
       <CommandMenu />
 
 
+
       <UploadWrapper
         uploadFile={performDataLayerUpload}
         createFile={createFile}
@@ -129,6 +128,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
                   data relationships.
                 </p>
               </div>
+
+
+
 
               {/* Action Section */}
               <div className="mt-12 space-y-6">
@@ -161,6 +163,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               </CardDescription>
             </CardHeader>
 
+            <BlokRenderer/>
             <ImageList
               filters={{ notDerived: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
             />

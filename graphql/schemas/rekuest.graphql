@@ -88,6 +88,13 @@ type Action {
   version: String!
 }
 
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+input ActionArgumentInput {
+  key: String!
+  valueLiteral: String = null
+  valuePath: String = null
+}
+
 """Input model for action demand."""
 type ActionDemand {
   argMatches: [PortMatch!]
@@ -206,15 +213,6 @@ scalar ActionHash
 enum ActionKind {
   FUNCTION
   GENERATOR
-}
-
-type ActionMapping {
-  createdAt: DateTime!
-  id: ID!
-  implementation: Implementation!
-  key: String!
-  materializedBlok: MaterializedBlok!
-  updatedAt: DateTime!
 }
 
 input ActionOrder {
@@ -390,6 +388,7 @@ input AgentFilter {
 
   """Filter using app identifier"""
   appIdentifier: ID
+  blokDependency: ID
 
   """Filter by client ID of the app the agent is registered to"""
   clientId: String
@@ -894,22 +893,101 @@ input BlockInput {
 }
 
 type Blok {
-  """Get the actions that this blok can run."""
-  actionDemands: [ActionDemand!]!
   creator: User!
+
+  """Dependencies that need to be resolved for this blok."""
+  dependencies(filters: BlokDependencyFilter, pagination: OffsetPaginationInput): [BlokDependency!]!
   description: String
   id: ID!
 
   """Materialized bloks that are instances of this blok."""
   materializedBloks: [MaterializedBlok!]!
   name: String!
-
-  """Get the agents that this blok can be implemented against."""
-  possibleAgents: [Agent!]!
-
-  """Get the actions that this blok can run."""
-  stateDemands: [StateDemand!]!
   url: String!
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+input BlokAgentActionInput {
+  arguments: [ActionArgumentInput!] = null
+  operationName: String!
+  targetDependencyKey: String!
+}
+
+type BlokAgentMapping {
+  agent: Agent!
+  createdAt: DateTime!
+  id: ID!
+  key: String!
+  materializedBlok: MaterializedBlok!
+  updatedAt: DateTime!
+}
+
+"""The input for updating a blok."""
+input BlokAgentMappingInput {
+  agent: ID!
+  key: String!
+}
+
+"""Represents a dependency between implementations and actions."""
+type BlokDependency {
+  """List of action demands"""
+  actionDemands: [ActionDemand!]!
+
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the app they belong to. The filter string should be in the format 'app_identifier:version' where version can be a specific version or a wildcard '*'. For example, 'my_app:*' would allow any agent belonging to 'my_app' regardless of version, while 'my_app:1.0.0' would only allow agents with that specific version.
+  """
+  appFilter: String
+
+  """
+  Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable
+  """
+  autoResolvable: Boolean!
+
+  """Optional description of the dependency."""
+  description: String
+
+  """Unique ID of the dependency."""
+  id: ID!
+
+  """The implementation this dependency belongs to."""
+  implementation: Implementation!
+
+  """Optional string identifier or tag for reference."""
+  key: String!
+
+  """
+  Maximum number of viable agent instances that can be bound to this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is greater than this number, the dependency will not be considered auto resolvable.
+  """
+  maxViableInstances: Int
+
+  """
+  Minimum number of viable agent instances required to resolve this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is less than this number, the dependency will not be considered auto resolvable.
+  """
+  minViableInstances: Int
+
+  """Indicates if the dependency is optional."""
+  optional: Boolean!
+
+  """List of action demands specified in this dependency."""
+  singular: Boolean!
+
+  """List of state demands"""
+  stateDemands: [StateDemand!]!
+
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
+  """
+  versionFilter: String
+}
+
+input BlokDependencyFilter {
+  AND: BlokDependencyFilter
+  DISTINCT: Boolean
+  NOT: BlokDependencyFilter
+  OR: BlokDependencyFilter
+  ids: [ID!]
 }
 
 """The input for bouncing an agent."""
@@ -1006,35 +1084,46 @@ type Collection {
   name: String!
 }
 
-"""The input for creating a blok."""
-input CreateBlokInput {
-  """
-  The action demands of the blok. This is used to identify the blok in the system.
-  """
-  actionDemands: [ActionDemandInput!] = null
-
-  """
-  The description of the blok. This can described the blok and its purpose.
-  """
-  description: String = null
-  name: String!
-
-  """
-  The state demands of the blok. This is used to identify the blok in the system.
-  """
-  stateDemands: [SchemaDemandInput!] = null
-
-  """
-  The URL of the blok. This can be used to link to the blok in the system.
-  """
-  url: String!
+"""
+An abstract structural visual element inside a Blok blueprint manifest.
+"""
+input ComponentNodeInput {
+  children: [String!] = null
+  component: String!
+  id: String!
+  props: [ComponentPropInput!] = null
 }
 
-"""The input for creating a dashboard."""
+"""A single key-value prop configuration for a component layout node."""
+input ComponentPropInput {
+  agentAction: BlokAgentActionInput = null
+  dynamicValue: DynamicValueInput = null
+  key: String!
+  staticValue: String = null
+}
+
+"""The input for creating a blok."""
+input CreateBlokInput {
+  catalog: String = null
+  components: [ComponentNodeInput!] = null
+  dependencies: [AgentDependencyInput!] = null
+  description: String = null
+  name: String!
+  uri: String!
+}
+
+"""
+Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation.
+"""
 input CreateDashboardInput {
-  name: String = null
-  panels: [ID!] = null
-  tree: UITreeInput = null
+  """The list of blok IDs to include in the dashboard."""
+  bloks: [String!]! = []
+
+  """The name of the dashboard."""
+  name: String!
+
+  """The organization ID to associate with the dashboard."""
+  organization: String = null
 }
 
 """The input for creating a implementation in another agents extension."""
@@ -1152,7 +1241,6 @@ type Dashboard {
   id: ID!
   materializedBloks: [MaterializedBlok!]!
   name: String
-  uiTree: UITree
 }
 
 """Date with time (isoformat)"""
@@ -1318,6 +1406,9 @@ type Dependency {
   """List of action demands specified in this dependency."""
   singular: Boolean!
 
+  """List of state demands"""
+  stateDemands: [StateDemand!]!
+
   """
   Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
   """
@@ -1339,6 +1430,14 @@ type Device {
 
   """Unique ID of the device."""
   id: ID!
+}
+
+"""
+A bound state pointer referencing a variable inside a Blok state instance.
+"""
+input DynamicValueInput {
+  literal: String = null
+  path: String = null
 }
 
 interface Effect {
@@ -1775,9 +1874,9 @@ input MappedAgentInput {
 """The input for creating a blok."""
 input MaterializeBlokInput {
   """
-  The agent ID to materialize the blok in. If not provided, the blok will be materialized in the default agent
+  The agent mappings for the blok. This is used to map the blok dependencies to agents in the system.
   """
-  agent: ID = null
+  agentMappings: [BlokAgentMappingInput!] = null
   blok: ID!
 
   """
@@ -1787,18 +1886,15 @@ input MaterializeBlokInput {
 }
 
 type MaterializedBlok {
-  """Mappings of actions to this materialized blok."""
-  actionMappings: [ActionMapping!]!
-  agent: Agent!
   blok: Blok!
   createdAt: DateTime!
   dashboard: Dashboard!
   description: String
   id: ID!
-  name: String
 
   """Mappings of states to this materialized blok."""
-  stateMappings: [StateMapping!]!
+  mappedAgents: [BlokAgentMapping!]!
+  name: String
   updatedAt: DateTime!
 }
 
@@ -2763,7 +2859,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "1125070e-61e2-4618-afa2-48529925f5ba"
+  reference: String = "69578361-19ef-4475-8ed1-f31172651cc8"
   title: String = null
 }
 
@@ -3213,15 +3309,6 @@ input StateImplementationInput {
   interface: String!
 }
 
-type StateMapping {
-  crreatedAt: DateTime!
-  id: ID!
-  implementation: Implementation!
-  key: String!
-  state: State!
-  updatedAt: DateTime!
-}
-
 """A plain patch event with no model cross-references."""
 type StatePatchEvent {
   agentId: ID!
@@ -3564,62 +3651,6 @@ input TrackInput {
   stateKey: String!
   valueKey: String!
   windows: [WindowInput!] = null
-}
-
-interface UIChild {
-  kind: UIChildKind!
-}
-
-input UIChildInput {
-  children: [UIChildInput!]
-  hidden: Boolean
-  kind: UIChildKind!
-  left: UIChildInput
-  right: UIChildInput
-  state: String = null
-}
-
-enum UIChildKind {
-  GRID
-  RESERVATION
-  SPLIT
-  STATE
-}
-
-type UIGrid implements UIChild {
-  children: [UIGridItem!]!
-  columns: Int!
-  kind: UIChildKind!
-  rowHeight: Int!
-}
-
-type UIGridItem {
-  child: UIChild!
-  h: Int!
-  maxW: Int!
-  minW: Int!
-  w: Int!
-  x: Int!
-  y: Int!
-}
-
-type UISplit implements UIChild {
-  kind: UIChildKind!
-  left: UIChild!
-  right: UIChild!
-}
-
-type UIState implements UIChild {
-  kind: UIChildKind!
-  state: String!
-}
-
-type UITree {
-  child: UIChild!
-}
-
-input UITreeInput {
-  child: UIChildInput!
 }
 
 """The input for bouncing an agent."""

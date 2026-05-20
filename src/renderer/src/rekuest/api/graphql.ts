@@ -163,6 +163,13 @@ export type ActionTestsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** A JSON-serializable argument entry for a multi-agent action trigger. */
+export type ActionArgumentInput = {
+  key: Scalars['String']['input'];
+  valueLiteral?: InputMaybe<Scalars['String']['input']>;
+  valuePath?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input model for action demand. */
 export type ActionDemand = {
   __typename?: 'ActionDemand';
@@ -248,16 +255,6 @@ export enum ActionKind {
   Function = 'FUNCTION',
   Generator = 'GENERATOR'
 }
-
-export type ActionMapping = {
-  __typename?: 'ActionMapping';
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  implementation: Implementation;
-  key: Scalars['String']['output'];
-  materializedBlok: MaterializedBlok;
-  updatedAt: Scalars['DateTime']['output'];
-};
 
 export type ActionOrder = {
   definedAt?: InputMaybe<Ordering>;
@@ -477,6 +474,7 @@ export type AgentFilter = {
   actionDemands?: InputMaybe<Array<ActionDemandInput>>;
   /** Filter using app identifier */
   appIdentifier?: InputMaybe<Scalars['ID']['input']>;
+  blokDependency?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by client ID of the app the agent is registered to */
   clientId?: InputMaybe<Scalars['String']['input']>;
   dependency?: InputMaybe<Scalars['ID']['input']>;
@@ -974,19 +972,83 @@ export type BlockInput = {
 
 export type Blok = {
   __typename?: 'Blok';
-  /** Get the actions that this blok can run. */
-  actionDemands: Array<ActionDemand>;
   creator: User;
+  /** Dependencies that need to be resolved for this blok. */
+  dependencies: Array<BlokDependency>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Materialized bloks that are instances of this blok. */
   materializedBloks: Array<MaterializedBlok>;
   name: Scalars['String']['output'];
-  /** Get the agents that this blok can be implemented against. */
-  possibleAgents: Array<Agent>;
-  /** Get the actions that this blok can run. */
-  stateDemands: Array<StateDemand>;
   url: Scalars['String']['output'];
+};
+
+
+export type BlokDependenciesArgs = {
+  filters?: InputMaybe<BlokDependencyFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest. */
+export type BlokAgentActionInput = {
+  arguments?: InputMaybe<Array<ActionArgumentInput>>;
+  operationName: Scalars['String']['input'];
+  targetDependencyKey: Scalars['String']['input'];
+};
+
+export type BlokAgentMapping = {
+  __typename?: 'BlokAgentMapping';
+  agent: Agent;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  materializedBlok: MaterializedBlok;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** The input for updating a blok. */
+export type BlokAgentMappingInput = {
+  agent: Scalars['ID']['input'];
+  key: Scalars['String']['input'];
+};
+
+/** Represents a dependency between implementations and actions. */
+export type BlokDependency = {
+  __typename?: 'BlokDependency';
+  /** List of action demands */
+  actionDemands: Array<ActionDemand>;
+  /** Optional filter string to limit which agents can be bound to this dependency based on the app they belong to. The filter string should be in the format 'app_identifier:version' where version can be a specific version or a wildcard '*'. For example, 'my_app:*' would allow any agent belonging to 'my_app' regardless of version, while 'my_app:1.0.0' would only allow agents with that specific version. */
+  appFilter?: Maybe<Scalars['String']['output']>;
+  /** Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable */
+  autoResolvable: Scalars['Boolean']['output'];
+  /** Optional description of the dependency. */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Unique ID of the dependency. */
+  id: Scalars['ID']['output'];
+  /** The implementation this dependency belongs to. */
+  implementation: Implementation;
+  /** Optional string identifier or tag for reference. */
+  key: Scalars['String']['output'];
+  /** Maximum number of viable agent instances that can be bound to this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is greater than this number, the dependency will not be considered auto resolvable. */
+  maxViableInstances?: Maybe<Scalars['Int']['output']>;
+  /** Minimum number of viable agent instances required to resolve this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is less than this number, the dependency will not be considered auto resolvable. */
+  minViableInstances?: Maybe<Scalars['Int']['output']>;
+  /** Indicates if the dependency is optional. */
+  optional: Scalars['Boolean']['output'];
+  /** List of action demands specified in this dependency. */
+  singular: Scalars['Boolean']['output'];
+  /** List of state demands */
+  stateDemands: Array<StateDemand>;
+  /** Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version. */
+  versionFilter?: Maybe<Scalars['String']['output']>;
+};
+
+export type BlokDependencyFilter = {
+  AND?: InputMaybe<BlokDependencyFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlokDependencyFilter>;
+  OR?: InputMaybe<BlokDependencyFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 /** The input for bouncing an agent. */
@@ -1101,24 +1163,40 @@ export type CollectionActionsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** The input for creating a blok. */
-export type CreateBlokInput = {
-  /** The action demands of the blok. This is used to identify the blok in the system. */
-  actionDemands?: InputMaybe<Array<ActionDemandInput>>;
-  /** The description of the blok. This can described the blok and its purpose. */
-  description?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  /** The state demands of the blok. This is used to identify the blok in the system. */
-  stateDemands?: InputMaybe<Array<SchemaDemandInput>>;
-  /** The URL of the blok. This can be used to link to the blok in the system. */
-  url: Scalars['String']['input'];
+/** An abstract structural visual element inside a Blok blueprint manifest. */
+export type ComponentNodeInput = {
+  children?: InputMaybe<Array<Scalars['String']['input']>>;
+  component: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  props?: InputMaybe<Array<ComponentPropInput>>;
 };
 
-/** The input for creating a dashboard. */
+/** A single key-value prop configuration for a component layout node. */
+export type ComponentPropInput = {
+  agentAction?: InputMaybe<BlokAgentActionInput>;
+  dynamicValue?: InputMaybe<DynamicValueInput>;
+  key: Scalars['String']['input'];
+  staticValue?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** The input for creating a blok. */
+export type CreateBlokInput = {
+  catalog?: InputMaybe<Scalars['String']['input']>;
+  components?: InputMaybe<Array<ComponentNodeInput>>;
+  dependencies?: InputMaybe<Array<AgentDependencyInput>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  uri: Scalars['String']['input'];
+};
+
+/** Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation. */
 export type CreateDashboardInput = {
-  name?: InputMaybe<Scalars['String']['input']>;
-  panels?: InputMaybe<Array<Scalars['ID']['input']>>;
-  tree?: InputMaybe<UiTreeInput>;
+  /** The list of blok IDs to include in the dashboard. */
+  bloks?: Array<Scalars['String']['input']>;
+  /** The name of the dashboard. */
+  name: Scalars['String']['input'];
+  /** The organization ID to associate with the dashboard. */
+  organization?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The input for creating a implementation in another agents extension. */
@@ -1233,7 +1311,6 @@ export type Dashboard = {
   id: Scalars['ID']['output'];
   materializedBloks: Array<MaterializedBlok>;
   name?: Maybe<Scalars['String']['output']>;
-  uiTree?: Maybe<UiTree>;
 };
 
 /**
@@ -1348,6 +1425,8 @@ export type Dependency = {
   optional: Scalars['Boolean']['output'];
   /** List of action demands specified in this dependency. */
   singular: Scalars['Boolean']['output'];
+  /** List of state demands */
+  stateDemands: Array<StateDemand>;
   /** Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version. */
   versionFilter?: Maybe<Scalars['String']['output']>;
 };
@@ -1367,6 +1446,12 @@ export type Device = {
   deviceId: Scalars['ID']['output'];
   /** Unique ID of the device. */
   id: Scalars['ID']['output'];
+};
+
+/** A bound state pointer referencing a variable inside a Blok state instance. */
+export type DynamicValueInput = {
+  literal?: InputMaybe<Scalars['String']['input']>;
+  path?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Effect = {
@@ -1816,8 +1901,8 @@ export type MappedAgentInput = {
 
 /** The input for creating a blok. */
 export type MaterializeBlokInput = {
-  /** The agent ID to materialize the blok in. If not provided, the blok will be materialized in the default agent */
-  agent?: InputMaybe<Scalars['ID']['input']>;
+  /** The agent mappings for the blok. This is used to map the blok dependencies to agents in the system. */
+  agentMappings?: InputMaybe<Array<BlokAgentMappingInput>>;
   blok: Scalars['ID']['input'];
   /** The dashboard ID to materialize the blok in. If not provided, the blok will be materialized in the default dashboard. */
   dashboard?: InputMaybe<Scalars['ID']['input']>;
@@ -1825,17 +1910,14 @@ export type MaterializeBlokInput = {
 
 export type MaterializedBlok = {
   __typename?: 'MaterializedBlok';
-  /** Mappings of actions to this materialized blok. */
-  actionMappings: Array<ActionMapping>;
-  agent: Agent;
   blok: Blok;
   createdAt: Scalars['DateTime']['output'];
   dashboard: Dashboard;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  name?: Maybe<Scalars['String']['output']>;
   /** Mappings of states to this materialized blok. */
-  stateMappings: Array<StateMapping>;
+  mappedAgents: Array<BlokAgentMapping>;
+  name?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -3863,16 +3945,6 @@ export type StateImplementationInput = {
   interface: Scalars['String']['input'];
 };
 
-export type StateMapping = {
-  __typename?: 'StateMapping';
-  crreatedAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  implementation: Implementation;
-  key: Scalars['String']['output'];
-  state: State;
-  updatedAt: Scalars['DateTime']['output'];
-};
-
 /** A plain patch event with no model cross-references. */
 export type StatePatchEvent = {
   __typename?: 'StatePatchEvent';
@@ -4305,67 +4377,6 @@ export type TrackInput = {
   windows?: InputMaybe<Array<WindowInput>>;
 };
 
-export type UiChild = {
-  kind: UiChildKind;
-};
-
-export type UiChildInput = {
-  children?: InputMaybe<Array<UiChildInput>>;
-  hidden?: InputMaybe<Scalars['Boolean']['input']>;
-  kind: UiChildKind;
-  left?: InputMaybe<UiChildInput>;
-  right?: InputMaybe<UiChildInput>;
-  state?: InputMaybe<Scalars['String']['input']>;
-};
-
-export enum UiChildKind {
-  Grid = 'GRID',
-  Reservation = 'RESERVATION',
-  Split = 'SPLIT',
-  State = 'STATE'
-}
-
-export type UiGrid = UiChild & {
-  __typename?: 'UIGrid';
-  children: Array<UiGridItem>;
-  columns: Scalars['Int']['output'];
-  kind: UiChildKind;
-  rowHeight: Scalars['Int']['output'];
-};
-
-export type UiGridItem = {
-  __typename?: 'UIGridItem';
-  child: UiChild;
-  h: Scalars['Int']['output'];
-  maxW: Scalars['Int']['output'];
-  minW: Scalars['Int']['output'];
-  w: Scalars['Int']['output'];
-  x: Scalars['Int']['output'];
-  y: Scalars['Int']['output'];
-};
-
-export type UiSplit = UiChild & {
-  __typename?: 'UISplit';
-  kind: UiChildKind;
-  left: UiChild;
-  right: UiChild;
-};
-
-export type UiState = UiChild & {
-  __typename?: 'UIState';
-  kind: UiChildKind;
-  state: Scalars['String']['output'];
-};
-
-export type UiTree = {
-  __typename?: 'UITree';
-  child: UiChild;
-};
-
-export type UiTreeInput = {
-  child: UiChildInput;
-};
-
 /** The input for bouncing an agent. */
 export type UnblockInput = {
   agent: Scalars['ID']['input'];
@@ -4521,19 +4532,17 @@ export type ChildAssignationEventFragment = { __typename?: 'ChildAssignationEven
 
 export type ListAsssignationFragment = { __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } };
 
-export type PortMatchFragment = { __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null };
+export type BlokFragment = { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> };
 
-export type BlokFragment = { __typename?: 'Blok', id: string, name: string, actionDemands: Array<{ __typename?: 'ActionDemand', key: string, argMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null, returnMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, stateDemands: Array<{ __typename?: 'StateDemand', key: string, matches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> }>, possibleAgents: Array<{ __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } }> };
+export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> };
 
-export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> };
-
-export type ListBlokFragment = { __typename?: 'Blok', id: string, name: string, actionDemands: Array<{ __typename?: 'ActionDemand', key: string }>, stateDemands: Array<{ __typename?: 'StateDemand', key: string }> };
+export type ListBlokFragment = { __typename?: 'Blok', id: string, name: string };
 
 export type ClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
 export type ListClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
-export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, uiTree?: { __typename?: 'UITree', child: { __typename?: 'UIGrid', rowHeight: number, children: Array<{ __typename?: 'UIGridItem', x: number, y: number, w: number, h: number }> } | { __typename?: 'UISplit' } | { __typename?: 'UIState', state: string } } | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> }> };
+export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> };
 
 export type ListDashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null };
 
@@ -4805,14 +4814,14 @@ export type CreateBlokMutationVariables = Exact<{
 }>;
 
 
-export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, actionDemands: Array<{ __typename?: 'ActionDemand', key: string, argMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null, returnMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, stateDemands: Array<{ __typename?: 'StateDemand', key: string, matches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> }>, possibleAgents: Array<{ __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } }> } };
+export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> } };
 
 export type MaterializeBlokMutationVariables = Exact<{
   input: MaterializeBlokInput;
 }>;
 
 
-export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> } };
+export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type CreateDashboardMutationVariables = Exact<{
   input: CreateDashboardInput;
@@ -5111,12 +5120,12 @@ export type GetBlokQueryVariables = Exact<{
 }>;
 
 
-export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, actionDemands: Array<{ __typename?: 'ActionDemand', key: string, argMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null, returnMatches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, stateDemands: Array<{ __typename?: 'StateDemand', key: string, matches?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null, children?: Array<{ __typename?: 'PortMatch', at?: number | null, key?: string | null, kind?: PortKind | null, identifier?: string | null, nullable?: boolean | null }> | null }> | null }>, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> }>, possibleAgents: Array<{ __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } }> } };
+export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> } };
 
 export type ListBloksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListBloksQuery = { __typename?: 'Query', bloks: Array<{ __typename?: 'Blok', id: string, name: string, actionDemands: Array<{ __typename?: 'ActionDemand', key: string }>, stateDemands: Array<{ __typename?: 'StateDemand', key: string }> }> };
+export type ListBloksQuery = { __typename?: 'Query', bloks: Array<{ __typename?: 'Blok', id: string, name: string }> };
 
 export type ClientsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -5132,7 +5141,7 @@ export type GetDashboardQueryVariables = Exact<{
 }>;
 
 
-export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, uiTree?: { __typename?: 'UITree', child: { __typename?: 'UIGrid', rowHeight: number, children: Array<{ __typename?: 'UIGridItem', x: number, y: number, w: number, h: number }> } | { __typename?: 'UISplit' } | { __typename?: 'UIState', state: string } } | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, agent: { __typename?: 'Agent', id: string }, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, actionMappings: Array<{ __typename?: 'ActionMapping', key: string, implementation: { __typename?: 'Implementation', id: string } }>, stateMappings: Array<{ __typename?: 'StateMapping', key: string, state: { __typename?: 'State', id: string } }> }> } };
+export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> } };
 
 export type ListDashboardsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6324,28 +6333,9 @@ export const ChildAssignationEventFragmentDoc = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export const PortMatchFragmentDoc = gql`
-    fragment PortMatch on PortMatch {
-  at
-  key
-  kind
-  identifier
-  nullable
-  children {
-    at
-    key
-    kind
-    identifier
-    nullable
-  }
-}
-    `;
 export const MaterializedBlokFragmentDoc = gql`
     fragment MaterializedBlok on MaterializedBlok {
   id
-  agent {
-    id
-  }
   blok {
     id
     name
@@ -6354,15 +6344,9 @@ export const MaterializedBlokFragmentDoc = gql`
   dashboard {
     id
   }
-  actionMappings {
+  mappedAgents {
     key
-    implementation {
-      id
-    }
-  }
-  stateMappings {
-    key
-    state {
+    agent {
       id
     }
   }
@@ -6372,41 +6356,19 @@ export const BlokFragmentDoc = gql`
     fragment Blok on Blok {
   id
   name
-  actionDemands {
-    key
-    argMatches {
-      ...PortMatch
-    }
-    returnMatches {
-      ...PortMatch
-    }
-  }
-  stateDemands {
-    key
-    matches {
-      ...PortMatch
-    }
-  }
   materializedBloks {
     ...MaterializedBlok
   }
-  possibleAgents {
-    ...ListAgent
+  dependencies {
+    id
+    key
   }
 }
-    ${PortMatchFragmentDoc}
-${MaterializedBlokFragmentDoc}
-${ListAgentFragmentDoc}`;
+    ${MaterializedBlokFragmentDoc}`;
 export const ListBlokFragmentDoc = gql`
     fragment ListBlok on Blok {
   id
   name
-  actionDemands {
-    key
-  }
-  stateDemands {
-    key
-  }
 }
     `;
 export const ClientFragmentDoc = gql`
@@ -6427,22 +6389,6 @@ export const DashboardFragmentDoc = gql`
     fragment Dashboard on Dashboard {
   id
   name
-  uiTree {
-    child {
-      ... on UIGrid {
-        rowHeight
-        children {
-          x
-          y
-          w
-          h
-        }
-      }
-      ... on UIState {
-        state
-      }
-    }
-  }
   materializedBloks {
     ...MaterializedBlok
   }

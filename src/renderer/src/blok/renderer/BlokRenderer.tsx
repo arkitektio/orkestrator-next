@@ -47,6 +47,34 @@ const isString = (value: unknown): value is string => {
   return typeof value === 'string';
 };
 
+const decodeJsonLiteralString = (value: string): unknown => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return value;
+  }
+
+  const firstCharacter = trimmed[0];
+  const looksLikeJsonLiteral =
+    firstCharacter === '"' ||
+    firstCharacter === '[' ||
+    firstCharacter === '{' ||
+    firstCharacter === '-' ||
+    (firstCharacter >= '0' && firstCharacter <= '9') ||
+    trimmed === 'true' ||
+    trimmed === 'false' ||
+    trimmed === 'null';
+
+  if (!looksLikeJsonLiteral) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return value;
+  }
+};
+
 const isFunctionCallEnvelope = (
   value: unknown,
 ): value is {
@@ -142,6 +170,10 @@ const resolveDynamicValue = (
   value: unknown,
   runtimeContext: BlokRuntimeContext,
 ): unknown => {
+  if (isString(value)) {
+    return decodeJsonLiteralString(value);
+  }
+
   if (isWrappedFunctionCallEnvelope(value)) {
     return resolveDynamicValue(value.functionCall, runtimeContext);
   }
@@ -226,6 +258,31 @@ const createActionHandler = (
   return () => invokeAction(action, component, runtimeContext);
 };
 
+const materializeRuntimeValue = (
+  value: unknown,
+  component: ComponentNode,
+  runtimeContext: BlokRuntimeContext,
+): unknown => {
+  if (isActionValue(value)) {
+    return createActionHandler(value, component, runtimeContext);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(item => materializeRuntimeValue(item, component, runtimeContext));
+  }
+
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, itemValue]) => [
+        key,
+        materializeRuntimeValue(itemValue, component, runtimeContext),
+      ]),
+    );
+  }
+
+  return value;
+};
+
 const normalizeComponentNode = (component: unknown): ComponentNodeLike | null => {
   if (!isRecord(component) || !isString(component.id) || !isString(component.component)) {
     return null;
@@ -247,7 +304,9 @@ const normalizeComponentNode = (component: unknown): ComponentNodeLike | null =>
     : undefined;
 
   const props = Object.fromEntries(
-    Object.entries(flattenedComponent).filter(([key]) => key !== 'id' && key !== 'component'),
+    Object.entries(flattenedComponent).filter(
+      ([key, value]) => key !== 'id' && key !== 'component' && value !== null,
+    ),
   );
 
   return {
@@ -258,13 +317,16 @@ const normalizeComponentNode = (component: unknown): ComponentNodeLike | null =>
   };
 };
 
-const collectChildReferences = (value: unknown): string[] => {
-  if (isString(value)) {
+const collectChildReferences = (
+  value: unknown,
+  allowDirectString = false,
+): string[] => {
+  if (allowDirectString && isString(value)) {
     return [value];
   }
 
   if (Array.isArray(value)) {
-    return value.flatMap(item => collectChildReferences(item));
+    return value.flatMap(item => collectChildReferences(item, true));
   }
 
   if (isRecord(value)) {
@@ -331,6 +393,8 @@ const prepareComponents = (
     .map(component => normalizeComponentNode(component))
     .filter((component): component is ComponentNodeLike => component !== null);
 
+  const declaredComponentIds = new Set(normalizedComponents.map(component => component.id));
+
   normalizedComponents.forEach((component, componentIndex) => {
     const basePath = `components[${componentIndex}]`;
     const catalogComponent = myCatalog.components.get(component.component);
@@ -357,10 +421,6 @@ const prepareComponents = (
           return [key, value];
         }
 
-        if (isActionValue(value)) {
-          return [key, createActionHandler(value, graphComponent, runtimeContext)];
-        }
-
         return [key, resolveDynamicValue(value, runtimeContext)];
       }),
     );
@@ -380,22 +440,38 @@ const prepareComponents = (
       id: component.id,
       component: component.component,
       raw: graphComponent,
-      props: schemaResult.data,
+      props: materializeRuntimeValue(schemaResult.data, graphComponent, runtimeContext) as Record<string, unknown>,
     });
   });
 
   const componentIds = new Set(componentMap.keys());
-  componentMap.forEach((component, componentId) => {
-    const childFields = ['child', 'children', 'header', 'footer', 'content', 'trigger'];
-    childFields.forEach(field => {
-      collectChildReferences(component.props[field]).forEach(childId => {
-        if (!componentIds.has(childId)) {
-          errors.push({
-            path: `component.${componentId}.${field}`,
-            message: `Referenced child "${childId}" is missing from the component list.`,
-          });
-        }
+  const pushChildReferenceError = (path: string, childId: string) => {
+    if (!declaredComponentIds.has(childId)) {
+      errors.push({
+        path,
+        message: `Referenced child "${childId}" is missing from the payload.`,
       });
+      return;
+    }
+
+    if (!componentIds.has(childId)) {
+      errors.push({
+        path,
+        message: `Referenced child "${childId}" exists in the payload but failed validation.`,
+      });
+    }
+  };
+
+  componentMap.forEach((component, componentId) => {
+    const childFields = ['child', 'header', 'footer', 'content', 'trigger'] as const;
+    childFields.forEach(field => {
+      collectChildReferences(component.props[field], true).forEach(childId => {
+        pushChildReferenceError(`component.${componentId}.${field}`, childId);
+      });
+    });
+
+    collectChildReferences(component.props.children).forEach(childId => {
+      pushChildReferenceError(`component.${componentId}.children`, childId);
     });
   });
 
@@ -403,7 +479,7 @@ const prepareComponents = (
   componentMap.forEach(component => {
     collectChildReferences(component.props.children).forEach(childId => referencedChildren.add(childId));
     ['child', 'header', 'footer', 'content', 'trigger'].forEach(field => {
-      collectChildReferences(component.props[field]).forEach(childId => referencedChildren.add(childId));
+      collectChildReferences(component.props[field], true).forEach(childId => referencedChildren.add(childId));
     });
   });
 

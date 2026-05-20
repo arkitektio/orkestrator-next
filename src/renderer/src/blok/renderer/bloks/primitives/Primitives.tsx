@@ -22,6 +22,7 @@ const sizeSchema = z.string().optional();
 const spacingSchema = z.string().optional();
 const boolSchema = z.boolean().optional();
 const numberSchema = z.number().optional();
+const classNameSchema = z.string().optional();
 const justifySchema = z
   .enum(['start', 'center', 'end', 'between', 'around', 'evenly'])
   .optional();
@@ -53,6 +54,17 @@ type BaseLayoutProps = {
 
 type ChildDescriptor = string | {id: string; basePath?: string};
 
+const childDescriptorSchema = z.union([
+  z.string(),
+  z.object({
+    id: z.string(),
+    basePath: z.string().optional(),
+  }),
+]);
+
+const childListSchema = z.array(childDescriptorSchema).optional();
+const contentSchema = z.union([BlokSchemas.DynamicString, childDescriptorSchema, z.array(childDescriptorSchema)]).optional();
+
 const renderChildList = (
   childList: unknown,
   buildChild: ChildBuilder,
@@ -77,6 +89,26 @@ const renderChildList = (
 
     return null;
   });
+};
+
+const renderContent = (
+  content: unknown,
+  buildChild: ChildBuilder,
+): React.ReactNode => {
+  if (typeof content === 'string' || typeof content === 'number') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return renderChildList(content, buildChild);
+  }
+
+  if (content && typeof content === 'object' && 'id' in content) {
+    const child = content as Extract<ChildDescriptor, {id: string}>;
+    return buildChild(child.id, child.basePath);
+  }
+
+  return null;
 };
 
 const buildLayoutStyle = (props: BaseLayoutProps): React.CSSProperties => ({
@@ -309,13 +341,47 @@ export const Grid = createBlokComponent(
   },
 );
 
+export const Div = createBlokComponent(
+  {
+    name: 'div',
+    schema: z.object({
+      children: contentSchema,
+      className: classNameSchema,
+      gap: spacingSchema,
+      padding: spacingSchema,
+      margin: spacingSchema,
+      width: sizeSchema,
+      minWidth: sizeSchema,
+      maxWidth: sizeSchema,
+      height: sizeSchema,
+      minHeight: sizeSchema,
+      maxHeight: sizeSchema,
+      background: BlokSchemas.DynamicString.optional(),
+      color: BlokSchemas.DynamicString.optional(),
+      borderColor: BlokSchemas.DynamicString.optional(),
+      radius: sizeSchema,
+      overflow: overflowSchema,
+      grow: numberSchema,
+      shrink: numberSchema,
+    }),
+  },
+  ({props, buildChild}) => {
+    return (
+      <div className={cn('min-w-0', props.className)} style={buildLayoutStyle(props)}>
+        {renderContent(props.children, buildChild)}
+      </div>
+    );
+  },
+);
+
 export const Card = createBlokComponent(
   {
     name: 'Card',
     schema: z.object({
       child: BlokSchemas.ComponentId.optional(),
-      children: BlokSchemas.ChildList,
+      children: childListSchema,
       size: z.enum(['default', 'sm']).optional(),
+      className: classNameSchema,
       padding: spacingSchema,
       width: sizeSchema,
       minHeight: sizeSchema,
@@ -330,7 +396,7 @@ export const Card = createBlokComponent(
       <ShadCard
         size={props.size ?? 'default'}
         style={buildLayoutStyle(props)}
-        className="min-w-0"
+        className={cn('min-w-0', props.className)}
       >
         {props.child ? buildChild(props.child) : null}
         {renderChildList(props.children, buildChild)}
@@ -343,14 +409,15 @@ export const CardHeader = createBlokComponent(
   {
     name: 'CardHeader',
     schema: z.object({
-      children: BlokSchemas.ChildList,
+      children: childListSchema,
+      className: classNameSchema,
       padding: spacingSchema,
       gap: spacingSchema,
     }),
   },
   ({props, buildChild}) => {
     return (
-      <ShadCardHeader style={buildLayoutStyle(props)}>
+      <ShadCardHeader className={props.className} style={buildLayoutStyle(props)}>
         {renderChildList(props.children, buildChild)}
       </ShadCardHeader>
     );
@@ -361,12 +428,18 @@ export const CardTitle = createBlokComponent(
   {
     name: 'CardTitle',
     schema: z.object({
-      text: BlokSchemas.DynamicString,
+      text: BlokSchemas.DynamicString.optional(),
+      children: contentSchema,
+      className: classNameSchema,
       align: z.enum(['start', 'center', 'end']).optional(),
     }),
   },
-  ({props}) => {
-    return <ShadCardTitle className={mapTextAlign(props.align)}>{props.text}</ShadCardTitle>;
+  ({props, buildChild}) => {
+    return (
+      <ShadCardTitle className={cn(mapTextAlign(props.align), props.className)}>
+        {renderContent(props.children ?? props.text, buildChild)}
+      </ShadCardTitle>
+    );
   },
 );
 
@@ -374,14 +447,16 @@ export const CardDescription = createBlokComponent(
   {
     name: 'CardDescription',
     schema: z.object({
-      text: BlokSchemas.DynamicString,
+      text: BlokSchemas.DynamicString.optional(),
+      children: contentSchema,
+      className: classNameSchema,
       align: z.enum(['start', 'center', 'end']).optional(),
     }),
   },
-  ({props}) => {
+  ({props, buildChild}) => {
     return (
-      <ShadCardDescription className={mapTextAlign(props.align)}>
-        {props.text}
+      <ShadCardDescription className={cn(mapTextAlign(props.align), props.className)}>
+        {renderContent(props.children ?? props.text, buildChild)}
       </ShadCardDescription>
     );
   },
@@ -391,14 +466,15 @@ export const CardContent = createBlokComponent(
   {
     name: 'CardContent',
     schema: z.object({
-      children: BlokSchemas.ChildList,
+      children: childListSchema,
+      className: classNameSchema,
       padding: spacingSchema,
       gap: spacingSchema,
     }),
   },
   ({props, buildChild}) => {
     return (
-      <ShadCardContent style={buildLayoutStyle(props)}>
+      <ShadCardContent className={props.className} style={buildLayoutStyle(props)}>
         <div className="flex min-w-0 flex-col" style={{gap: props.gap}}>
           {renderChildList(props.children, buildChild)}
         </div>
@@ -411,7 +487,8 @@ export const CardFooter = createBlokComponent(
   {
     name: 'CardFooter',
     schema: z.object({
-      children: BlokSchemas.ChildList,
+      children: childListSchema,
+      className: classNameSchema,
       justify: justifySchema,
       align: alignSchema,
       gap: spacingSchema,
@@ -421,7 +498,7 @@ export const CardFooter = createBlokComponent(
   ({props, buildChild}) => {
     return (
       <ShadCardFooter
-        className={cn(mapJustify(props.justify), mapAlign(props.align))}
+        className={cn(mapJustify(props.justify), mapAlign(props.align), props.className)}
         style={buildLayoutStyle(props)}
       >
         {renderChildList(props.children, buildChild)}
@@ -492,6 +569,8 @@ export const Badge = createBlokComponent(
     schema: z.object({
       text: BlokSchemas.DynamicString.optional(),
       child: BlokSchemas.ComponentId.optional(),
+      children: contentSchema,
+      className: classNameSchema,
       variant: z
         .enum(['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
         .optional(),
@@ -499,8 +578,10 @@ export const Badge = createBlokComponent(
   },
   ({props, buildChild}) => {
     return (
-      <ShadBadge variant={props.variant ?? 'secondary'}>
-        {props.child ? buildChild(props.child) : props.text}
+      <ShadBadge variant={props.variant ?? 'secondary'} className={props.className}>
+        {props.child
+          ? buildChild(props.child)
+          : renderContent(props.children ?? props.text, buildChild)}
       </ShadBadge>
     );
   },
@@ -512,7 +593,9 @@ export const Button = createBlokComponent(
     schema: z.object({
       label: BlokSchemas.DynamicString.optional(),
       child: BlokSchemas.ComponentId.optional(),
+      children: contentSchema,
       action: BlokSchemas.Action.optional(),
+      className: classNameSchema,
       variant: z
         .enum([
           'default',
@@ -545,11 +628,17 @@ export const Button = createBlokComponent(
       <ShadButton
         variant={variant ?? 'default'}
         size={props.size ?? 'default'}
-        className={cn(props.fullWidth && 'w-full', buttonVariants({variant, size: props.size ?? 'default'}))}
+        className={cn(
+          props.fullWidth && 'w-full',
+          buttonVariants({variant, size: props.size ?? 'default'}),
+          props.className,
+        )}
         onClick={props.action}
         disabled={props.disabled || props.isValid === false}
       >
-        {props.child ? buildChild(props.child) : props.label}
+        {props.child
+          ? buildChild(props.child)
+          : renderContent(props.children ?? props.label, buildChild)}
       </ShadButton>
     );
   },
@@ -572,6 +661,7 @@ export const shadcnComposableComponents = [
   Row,
   Column,
   Grid,
+  Div,
   Card,
   CardHeader,
   CardTitle,

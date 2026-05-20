@@ -106,10 +106,35 @@ export const BlokSchemas = {
     .optional(),
   DynamicString: z.string(),
   DynamicBoolean: z.boolean(),
-  Action: z.object({
-    targetDependencyKey: z.string().optional(),
-    payload: z.record(z.string(), z.unknown()).optional(),
-  }),
+  Action: z.union([
+    z.function().optional().transform(fn => fn),
+    z.object({
+      actionType: z.literal('rekuestCall'),
+      operationName: z.string(),
+      targetDependencyKey: z.string().optional(),
+      arguments: z.record(z.string(), z.unknown()).optional(),
+    }),
+    z.object({
+      event: z.object({
+        name: z.string(),
+        context: z.record(z.string(), z.unknown()).optional(),
+      }),
+    }),
+    z.object({
+      call: z.string(),
+      args: z.record(z.string(), z.unknown()).optional(),
+    }),
+    z.object({
+      functionCall: z.object({
+        call: z.string(),
+        args: z.record(z.string(), z.unknown()).optional(),
+      }),
+    }),
+    z.object({
+      targetDependencyKey: z.string().optional(),
+      payload: z.record(z.string(), z.unknown()).optional(),
+    }),
+  ]),
   Checkable: z.object({
     checks: z.array(z.any()).optional(),
   }),

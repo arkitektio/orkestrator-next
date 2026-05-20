@@ -4,25 +4,35 @@ fragment Blok on Blok {
   id
   name
   materializedBloks {
-    ...MaterializedBlok
+    ...ListMaterializedBlok
   }
   dependencies {
     id
     key
   }
+  catalog {
+    id
+    name
+  }
+  components {
+    id
+    component
+    props
+    children
+  }
+  uiComponents
+  demoState
 }
 
 fragment MaterializedBlok on MaterializedBlok {
   id
   blok {
-    id
-    name
-    url
+    ...Blok
   }
   dashboard {
     id
   }
-  mappedAgents {
+  agentMappings {
     key
     agent {
       id
@@ -34,4 +44,17 @@ fragment ListBlok on Blok {
   id
   name
 
+}
+
+
+fragment ListMaterializedBlok on MaterializedBlok {
+  id
+  blok {
+    id
+    name
+
+  }
+  dashboard {
+    id
+  }
 }

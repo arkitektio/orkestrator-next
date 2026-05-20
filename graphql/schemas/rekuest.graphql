@@ -893,7 +893,14 @@ input BlockInput {
 }
 
 type Blok {
+  catalog: UICatalog!
+
+  """List of action demands specified in this blok."""
+  components: [ComponentNode!]!
   creator: User!
+
+  """List of action demands specified in this blok."""
+  demoState: Props!
 
   """Dependencies that need to be resolved for this blok."""
   dependencies(filters: BlokDependencyFilter, pagination: OffsetPaginationInput): [BlokDependency!]!
@@ -903,7 +910,9 @@ type Blok {
   """Materialized bloks that are instances of this blok."""
   materializedBloks: [MaterializedBlok!]!
   name: String!
-  url: String!
+
+  """List of action demands specified in this blok."""
+  uiComponents: Props!
 }
 
 """
@@ -1084,6 +1093,16 @@ type Collection {
   name: String!
 }
 
+type ComponentNode {
+  """List of child component node IDs."""
+  children: [String!]
+  component: String!
+  id: String!
+
+  """Properties or configuration for the component."""
+  props: Props
+}
+
 """
 An abstract structural visual element inside a Blok blueprint manifest.
 """
@@ -1106,6 +1125,7 @@ input ComponentPropInput {
 input CreateBlokInput {
   catalog: String = null
   components: [ComponentNodeInput!] = null
+  demoState: Args = null
   dependencies: [AgentDependencyInput!] = null
   description: String = null
   name: String!
@@ -1886,14 +1906,13 @@ input MaterializeBlokInput {
 }
 
 type MaterializedBlok {
+  """Mappings of states to this materialized blok."""
+  agentMappings: [BlokAgentMapping!]!
   blok: Blok!
   createdAt: DateTime!
   dashboard: Dashboard!
   description: String
   id: ID!
-
-  """Mappings of states to this materialized blok."""
-  mappedAgents: [BlokAgentMapping!]!
   name: String
   updatedAt: DateTime!
 }
@@ -2432,6 +2451,9 @@ input PortMatchInput {
   object: Arg = null
 }
 
+"""The `Args` scalar type represents a Dictionary of arguments"""
+scalar Props
+
 """A set of related actions forming a protocol."""
 type Protocol {
   """Associated actions."""
@@ -2859,7 +2881,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "69578361-19ef-4475-8ed1-f31172651cc8"
+  reference: String = "16ffc8c7-2f95-4a25-bcf0-a18396721535"
   title: String = null
 }
 
@@ -3651,6 +3673,12 @@ input TrackInput {
   stateKey: String!
   valueKey: String!
   windows: [WindowInput!] = null
+}
+
+type UICatalog {
+  description: String
+  id: ID!
+  name: String!
 }
 
 """The input for bouncing an agent."""

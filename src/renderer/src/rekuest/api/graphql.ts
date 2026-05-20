@@ -34,6 +34,8 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   /** A type representing a media store reference, which can be either a string ID or a more complex object. */
   MediaLike: { input: any; output: any; }
+  /** The `Args` scalar type represents a Dictionary of arguments */
+  Props: { input: any; output: any; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   SearchQuery: { input: any; output: any; }
   /**
@@ -972,7 +974,12 @@ export type BlockInput = {
 
 export type Blok = {
   __typename?: 'Blok';
+  catalog: UiCatalog;
+  /** List of action demands specified in this blok. */
+  components: Array<ComponentNode>;
   creator: User;
+  /** List of action demands specified in this blok. */
+  demoState: Scalars['Props']['output'];
   /** Dependencies that need to be resolved for this blok. */
   dependencies: Array<BlokDependency>;
   description?: Maybe<Scalars['String']['output']>;
@@ -980,7 +987,8 @@ export type Blok = {
   /** Materialized bloks that are instances of this blok. */
   materializedBloks: Array<MaterializedBlok>;
   name: Scalars['String']['output'];
-  url: Scalars['String']['output'];
+  /** List of action demands specified in this blok. */
+  uiComponents: Scalars['Props']['output'];
 };
 
 
@@ -1163,6 +1171,16 @@ export type CollectionActionsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type ComponentNode = {
+  __typename?: 'ComponentNode';
+  /** List of child component node IDs. */
+  children?: Maybe<Array<Scalars['String']['output']>>;
+  component: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  /** Properties or configuration for the component. */
+  props?: Maybe<Scalars['Props']['output']>;
+};
+
 /** An abstract structural visual element inside a Blok blueprint manifest. */
 export type ComponentNodeInput = {
   children?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1183,6 +1201,7 @@ export type ComponentPropInput = {
 export type CreateBlokInput = {
   catalog?: InputMaybe<Scalars['String']['input']>;
   components?: InputMaybe<Array<ComponentNodeInput>>;
+  demoState?: InputMaybe<Scalars['Args']['input']>;
   dependencies?: InputMaybe<Array<AgentDependencyInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -1910,13 +1929,13 @@ export type MaterializeBlokInput = {
 
 export type MaterializedBlok = {
   __typename?: 'MaterializedBlok';
+  /** Mappings of states to this materialized blok. */
+  agentMappings: Array<BlokAgentMapping>;
   blok: Blok;
   createdAt: Scalars['DateTime']['output'];
   dashboard: Dashboard;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  /** Mappings of states to this materialized blok. */
-  mappedAgents: Array<BlokAgentMapping>;
   name?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -4377,6 +4396,13 @@ export type TrackInput = {
   windows?: InputMaybe<Array<WindowInput>>;
 };
 
+export type UiCatalog = {
+  __typename?: 'UICatalog';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
 /** The input for bouncing an agent. */
 export type UnblockInput = {
   agent: Scalars['ID']['input'];
@@ -4532,17 +4558,19 @@ export type ChildAssignationEventFragment = { __typename?: 'ChildAssignationEven
 
 export type ListAsssignationFragment = { __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } };
 
-export type BlokFragment = { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> };
+export type BlokFragment = { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> };
 
-export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> };
+export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> };
 
 export type ListBlokFragment = { __typename?: 'Blok', id: string, name: string };
+
+export type ListMaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } };
 
 export type ClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
 export type ListClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
-export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> };
+export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> };
 
 export type ListDashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null };
 
@@ -4814,14 +4842,14 @@ export type CreateBlokMutationVariables = Exact<{
 }>;
 
 
-export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> } };
+export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> } };
 
 export type MaterializeBlokMutationVariables = Exact<{
   input: MaterializeBlokInput;
 }>;
 
 
-export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type CreateDashboardMutationVariables = Exact<{
   input: CreateDashboardInput;
@@ -5120,7 +5148,7 @@ export type GetBlokQueryVariables = Exact<{
 }>;
 
 
-export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }> } };
+export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> } };
 
 export type ListBloksQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5141,7 +5169,7 @@ export type GetDashboardQueryVariables = Exact<{
 }>;
 
 
-export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, url: string }, dashboard: { __typename?: 'Dashboard', id: string }, mappedAgents: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> } };
+export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: any | null, children?: Array<string> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> } };
 
 export type ListDashboardsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6333,38 +6361,6 @@ export const ChildAssignationEventFragmentDoc = gql`
   }
 }
     ${PostmanAssignationFragmentDoc}`;
-export const MaterializedBlokFragmentDoc = gql`
-    fragment MaterializedBlok on MaterializedBlok {
-  id
-  blok {
-    id
-    name
-    url
-  }
-  dashboard {
-    id
-  }
-  mappedAgents {
-    key
-    agent {
-      id
-    }
-  }
-}
-    `;
-export const BlokFragmentDoc = gql`
-    fragment Blok on Blok {
-  id
-  name
-  materializedBloks {
-    ...MaterializedBlok
-  }
-  dependencies {
-    id
-    key
-  }
-}
-    ${MaterializedBlokFragmentDoc}`;
 export const ListBlokFragmentDoc = gql`
     fragment ListBlok on Blok {
   id
@@ -6385,6 +6381,60 @@ export const ListClientFragmentDoc = gql`
   clientId
 }
     `;
+export const ListMaterializedBlokFragmentDoc = gql`
+    fragment ListMaterializedBlok on MaterializedBlok {
+  id
+  blok {
+    id
+    name
+  }
+  dashboard {
+    id
+  }
+}
+    `;
+export const BlokFragmentDoc = gql`
+    fragment Blok on Blok {
+  id
+  name
+  materializedBloks {
+    ...ListMaterializedBlok
+  }
+  dependencies {
+    id
+    key
+  }
+  catalog {
+    id
+    name
+  }
+  components {
+    id
+    component
+    props
+    children
+  }
+  uiComponents
+  demoState
+}
+    ${ListMaterializedBlokFragmentDoc}`;
+export const MaterializedBlokFragmentDoc = gql`
+    fragment MaterializedBlok on MaterializedBlok {
+  id
+  blok {
+    ...Blok
+  }
+  dashboard {
+    id
+  }
+  agentMappings {
+    key
+    agent {
+      id
+    }
+  }
+}
+    ${BlokFragmentDoc}`;
 export const DashboardFragmentDoc = gql`
     fragment Dashboard on Dashboard {
   id

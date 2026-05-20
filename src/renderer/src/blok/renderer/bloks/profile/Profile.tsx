@@ -1,6 +1,6 @@
 import {createComponentImplementation} from '@a2ui/react/v0_9';
 
-import {z} from 'zod';
+import { z} from "zod";
 import {CommonSchemas} from '@a2ui/web_core/v0_9';
 
 

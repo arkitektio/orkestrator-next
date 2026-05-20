@@ -1,6 +1,5 @@
 import {createBinderlessComponentImplementation} from '@a2ui/react/v0_9';
-import zod from "zod";
-
+import * as z from "zod";
 
 export const RawInspector = createBinderlessComponentImplementation({
   name: 'RawInspector',

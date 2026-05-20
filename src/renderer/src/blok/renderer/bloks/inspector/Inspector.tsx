@@ -1,21 +1,17 @@
-import {createBinderlessComponentImplementation} from '@a2ui/react/v0_9';
-import * as z from "zod";
+import {createBinderlessBlokComponent} from '../../runtime';
+import * as zod from 'zod';
 
-export const RawInspector = createBinderlessComponentImplementation({
+export const RawInspector = createBinderlessBlokComponent({
   name: 'RawInspector',
   schema: zod.object({
     name: zod.string(),
-  })
+  }),
 
-}, ({context}) => {
-  // Access the raw, unresolved component model and the data model directly
-  const rawData = context.componentModel.properties;
-  const componentId = context.componentModel.id;
-
+}, ({component}) => {
   return (
     <details>
-      <summary>Raw Component State (ID: {componentId})</summary>
-      <pre>{JSON.stringify(rawData, null, 2)}</pre>
+      <summary>Raw Component State (ID: {component.id})</summary>
+      <pre>{JSON.stringify(component.props ?? {}, null, 2)}</pre>
     </details>
   );
 });

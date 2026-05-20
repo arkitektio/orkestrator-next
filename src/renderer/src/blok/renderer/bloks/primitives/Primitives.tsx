@@ -14,14 +14,12 @@ import {
 } from '@/components/ui/card';
 import {Separator as ShadSeparator} from '@/components/ui/separator';
 import {cn} from '@/lib/utils';
-import {createComponentImplementation} from '@a2ui/react/v0_9';
-import {CommonSchemas} from '@a2ui/web_core/v0_9';
 import {cva} from 'class-variance-authority';
-import { z} from "zod";
+import * as z from 'zod';
+import {BlokSchemas, createBlokComponent} from '../../runtime';
 
 const sizeSchema = z.string().optional();
 const spacingSchema = z.string().optional();
-const stringSchema = z.string().optional();
 const boolSchema = z.boolean().optional();
 const numberSchema = z.number().optional();
 const justifySchema = z
@@ -174,33 +172,35 @@ const textVariants = cva('text-sm leading-relaxed', {
   },
 });
 
-export const Flex = createComponentImplementation(
+const flexSchema = z.object({
+  children: BlokSchemas.ChildList,
+  direction: z.enum(['row', 'column']).optional(),
+  wrap: boolSchema,
+  justify: justifySchema,
+  align: alignSchema,
+  bordered: boolSchema,
+  gap: spacingSchema,
+  padding: spacingSchema,
+  margin: spacingSchema,
+  width: sizeSchema,
+  minWidth: sizeSchema,
+  maxWidth: sizeSchema,
+  height: sizeSchema,
+  minHeight: sizeSchema,
+  maxHeight: sizeSchema,
+  background: BlokSchemas.DynamicString.optional(),
+  color: BlokSchemas.DynamicString.optional(),
+  borderColor: BlokSchemas.DynamicString.optional(),
+  radius: sizeSchema,
+  overflow: overflowSchema,
+  grow: numberSchema,
+  shrink: numberSchema,
+});
+
+export const Flex = createBlokComponent(
   {
     name: 'Flex',
-    schema: z.object({
-      children: CommonSchemas.ChildList.optional(),
-      direction: z.enum(['row', 'column']).optional(),
-      wrap: boolSchema,
-      justify: justifySchema,
-      align: alignSchema,
-      bordered: boolSchema,
-      gap: spacingSchema,
-      padding: spacingSchema,
-      margin: spacingSchema,
-      width: sizeSchema,
-      minWidth: sizeSchema,
-      maxWidth: sizeSchema,
-      height: sizeSchema,
-      minHeight: sizeSchema,
-      maxHeight: sizeSchema,
-      background: CommonSchemas.DynamicString.optional(),
-      color: CommonSchemas.DynamicString.optional(),
-      borderColor: CommonSchemas.DynamicString.optional(),
-      radius: sizeSchema,
-      overflow: overflowSchema,
-      grow: numberSchema,
-      shrink: numberSchema,
-    }),
+    schema: flexSchema,
   },
   ({props, buildChild}) => {
     return (
@@ -221,11 +221,57 @@ export const Flex = createComponentImplementation(
   },
 );
 
-export const Grid = createComponentImplementation(
+export const Row = createBlokComponent(
+  {
+    name: 'Row',
+    schema: flexSchema,
+  },
+  ({props, buildChild}) => {
+    return (
+      <div
+        className={cn(
+          'flex min-w-0 flex-row',
+          props.wrap && 'flex-wrap',
+          mapJustify(props.justify),
+          mapAlign(props.align),
+          props.bordered && 'border border-border/70',
+        )}
+        style={buildLayoutStyle(props)}
+      >
+        {renderChildList(props.children, buildChild)}
+      </div>
+    );
+  },
+);
+
+export const Column = createBlokComponent(
+  {
+    name: 'Column',
+    schema: flexSchema,
+  },
+  ({props, buildChild}) => {
+    return (
+      <div
+        className={cn(
+          'flex min-w-0 flex-col',
+          props.wrap && 'flex-wrap',
+          mapJustify(props.justify),
+          mapAlign(props.align),
+          props.bordered && 'border border-border/70',
+        )}
+        style={buildLayoutStyle(props)}
+      >
+        {renderChildList(props.children, buildChild)}
+      </div>
+    );
+  },
+);
+
+export const Grid = createBlokComponent(
   {
     name: 'Grid',
     schema: z.object({
-      children: CommonSchemas.ChildList.optional(),
+      children: BlokSchemas.ChildList,
       columns: z.number().int().min(1).optional(),
       minColumnWidth: sizeSchema,
       gap: spacingSchema,
@@ -237,8 +283,8 @@ export const Grid = createComponentImplementation(
       height: sizeSchema,
       minHeight: sizeSchema,
       maxHeight: sizeSchema,
-      background: CommonSchemas.DynamicString.optional(),
-      borderColor: CommonSchemas.DynamicString.optional(),
+      background: BlokSchemas.DynamicString.optional(),
+      borderColor: BlokSchemas.DynamicString.optional(),
       radius: sizeSchema,
       overflow: overflowSchema,
       bordered: boolSchema,
@@ -263,19 +309,19 @@ export const Grid = createComponentImplementation(
   },
 );
 
-export const Card = createComponentImplementation(
+export const Card = createBlokComponent(
   {
     name: 'Card',
     schema: z.object({
-      child: CommonSchemas.ComponentId.optional(),
-      children: CommonSchemas.ChildList.optional(),
+      child: BlokSchemas.ComponentId.optional(),
+      children: BlokSchemas.ChildList,
       size: z.enum(['default', 'sm']).optional(),
       padding: spacingSchema,
       width: sizeSchema,
       minHeight: sizeSchema,
       height: sizeSchema,
-      background: CommonSchemas.DynamicString.optional(),
-      borderColor: CommonSchemas.DynamicString.optional(),
+      background: BlokSchemas.DynamicString.optional(),
+      borderColor: BlokSchemas.DynamicString.optional(),
       radius: sizeSchema,
     }),
   },
@@ -293,11 +339,11 @@ export const Card = createComponentImplementation(
   },
 );
 
-export const CardHeader = createComponentImplementation(
+export const CardHeader = createBlokComponent(
   {
     name: 'CardHeader',
     schema: z.object({
-      children: CommonSchemas.ChildList.optional(),
+      children: BlokSchemas.ChildList,
       padding: spacingSchema,
       gap: spacingSchema,
     }),
@@ -311,11 +357,11 @@ export const CardHeader = createComponentImplementation(
   },
 );
 
-export const CardTitle = createComponentImplementation(
+export const CardTitle = createBlokComponent(
   {
     name: 'CardTitle',
     schema: z.object({
-      text: CommonSchemas.DynamicString,
+      text: BlokSchemas.DynamicString,
       align: z.enum(['start', 'center', 'end']).optional(),
     }),
   },
@@ -324,11 +370,11 @@ export const CardTitle = createComponentImplementation(
   },
 );
 
-export const CardDescription = createComponentImplementation(
+export const CardDescription = createBlokComponent(
   {
     name: 'CardDescription',
     schema: z.object({
-      text: CommonSchemas.DynamicString,
+      text: BlokSchemas.DynamicString,
       align: z.enum(['start', 'center', 'end']).optional(),
     }),
   },
@@ -341,11 +387,11 @@ export const CardDescription = createComponentImplementation(
   },
 );
 
-export const CardContent = createComponentImplementation(
+export const CardContent = createBlokComponent(
   {
     name: 'CardContent',
     schema: z.object({
-      children: CommonSchemas.ChildList.optional(),
+      children: BlokSchemas.ChildList,
       padding: spacingSchema,
       gap: spacingSchema,
     }),
@@ -361,11 +407,11 @@ export const CardContent = createComponentImplementation(
   },
 );
 
-export const CardFooter = createComponentImplementation(
+export const CardFooter = createBlokComponent(
   {
     name: 'CardFooter',
     schema: z.object({
-      children: CommonSchemas.ChildList.optional(),
+      children: BlokSchemas.ChildList,
       justify: justifySchema,
       align: alignSchema,
       gap: spacingSchema,
@@ -384,11 +430,11 @@ export const CardFooter = createComponentImplementation(
   },
 );
 
-export const Text = createComponentImplementation(
+export const Text = createBlokComponent(
   {
     name: 'Text',
     schema: z.object({
-      text: CommonSchemas.DynamicString,
+      text: BlokSchemas.DynamicString,
       tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
       size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
       weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
@@ -415,17 +461,17 @@ export const Text = createComponentImplementation(
   },
 );
 
-export const Heading = createComponentImplementation(
+export const Heading = createBlokComponent(
   {
     name: 'Heading',
     schema: z.object({
-      text: CommonSchemas.DynamicString,
+      text: BlokSchemas.DynamicString,
       level: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']).optional(),
       align: z.enum(['start', 'center', 'end']).optional(),
     }),
   },
   ({props}) => {
-    const Comp = (props.level ?? 'h3') as keyof React.JSX.IntrinsicElements;
+    const Comp = (props.level ?? 'h3') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
     const className = cn(
       mapTextAlign(props.align),
       props.level === 'h1' && 'text-4xl font-extrabold tracking-tight',
@@ -440,12 +486,12 @@ export const Heading = createComponentImplementation(
   },
 );
 
-export const Badge = createComponentImplementation(
+export const Badge = createBlokComponent(
   {
     name: 'Badge',
     schema: z.object({
-      text: CommonSchemas.DynamicString.optional(),
-      child: CommonSchemas.ComponentId.optional(),
+      text: BlokSchemas.DynamicString.optional(),
+      child: BlokSchemas.ComponentId.optional(),
       variant: z
         .enum(['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
         .optional(),
@@ -460,13 +506,13 @@ export const Badge = createComponentImplementation(
   },
 );
 
-export const Button = createComponentImplementation(
+export const Button = createBlokComponent(
   {
     name: 'Button',
     schema: z.object({
-      label: CommonSchemas.DynamicString.optional(),
-      child: CommonSchemas.ComponentId.optional(),
-      action: CommonSchemas.Action.optional(),
+      label: BlokSchemas.DynamicString.optional(),
+      child: BlokSchemas.ComponentId.optional(),
+      action: BlokSchemas.Action.optional(),
       variant: z
         .enum([
           'default',
@@ -483,8 +529,8 @@ export const Button = createComponentImplementation(
         .enum(['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'])
         .optional(),
       fullWidth: boolSchema,
-      disabled: CommonSchemas.DynamicBoolean.optional(),
-      checks: CommonSchemas.Checkable.shape.checks,
+      disabled: BlokSchemas.DynamicBoolean.optional(),
+      checks: BlokSchemas.Checkable.shape.checks,
     }),
   },
   ({props, buildChild}) => {
@@ -509,7 +555,7 @@ export const Button = createComponentImplementation(
   },
 );
 
-export const Separator = createComponentImplementation(
+export const Separator = createBlokComponent(
   {
     name: 'Separator',
     schema: z.object({
@@ -523,6 +569,8 @@ export const Separator = createComponentImplementation(
 
 export const shadcnComposableComponents = [
   Flex,
+  Row,
+  Column,
   Grid,
   Card,
   CardHeader,

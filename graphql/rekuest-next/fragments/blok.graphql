@@ -17,8 +17,44 @@ fragment Blok on Blok {
   components {
     id
     component
-    props
-    children
+    props {
+      staticValue
+      dynamicValue {
+        path
+        literal
+      }
+      agentCall {
+         operation
+         dependency
+         arguments {
+          key
+          valueLiteral
+          valuePath
+          valueDict {
+            key
+            valueLiteral
+            valuePath
+          }
+         }
+      }
+      utilCall {
+          operation
+        arguments {
+          key
+          valueLiteral
+          valuePath
+          valueDict {
+            key
+            valueLiteral
+            valuePath
+          }
+         }
+      }
+    }
+    children {
+      id
+      component
+    }
   }
   uiComponents
   demoState

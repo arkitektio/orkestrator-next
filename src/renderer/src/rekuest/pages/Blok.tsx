@@ -64,7 +64,6 @@ export const BlokPage = asDetailQueryRoute(useGetBlokQuery, ({ data }) => {
             <div className="min-h-0 flex-1 overflow-hidden">
               <BlokRenderer
                 surfaceId={data.blok.id}
-                components={data.blok.components}
                 uiComponents={data.blok.uiComponents}
                 demoState={data.blok.demoState}
               />

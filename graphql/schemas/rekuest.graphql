@@ -89,9 +89,24 @@ type Action {
 }
 
 """A JSON-serializable argument entry for a multi-agent action trigger."""
+type ActionArgument {
+  agentCall: AgentCall
+  key: String
+  utilCall: UtilCall
+  valueDict: [ActionArgument!]
+  valueList: [ActionArgument!]
+  valueLiteral: JSONSerializable
+  valuePath: String
+}
+
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
 input ActionArgumentInput {
-  key: String!
-  valueLiteral: String = null
+  agentCall: AgentCallInput = null
+  key: String = null
+  utilCall: UtilCallInput = null
+  valueDict: [ActionArgumentInput!] = null
+  valueList: [ActionArgumentInput!] = null
+  valueLiteral: JSONSerializable = null
   valuePath: String = null
 }
 
@@ -342,6 +357,24 @@ type Agent {
 
   """User associated with the agent."""
   user: User!
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+type AgentCall {
+  arguments: [ActionArgument!]
+  dependency: String!
+  operation: String!
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+input AgentCallInput {
+  arguments: [ActionArgumentInput!] = null
+  dependency: String!
+  operation: String!
 }
 
 type AgentChangeEvent {
@@ -915,15 +948,6 @@ type Blok {
   uiComponents: Props!
 }
 
-"""
-Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
-"""
-input BlokAgentActionInput {
-  arguments: [ActionArgumentInput!] = null
-  operationName: String!
-  targetDependencyKey: String!
-}
-
 type BlokAgentMapping {
   agent: Agent!
   createdAt: DateTime!
@@ -1093,32 +1117,42 @@ type Collection {
   name: String!
 }
 
+"""
+An abstract structural visual element inside a Blok blueprint manifest.
+"""
 type ComponentNode {
-  """List of child component node IDs."""
-  children: [String!]
+  children: [ComponentNode!]
   component: String!
   id: String!
-
-  """Properties or configuration for the component."""
-  props: Props
+  props: [ComponentProp!]
 }
 
 """
 An abstract structural visual element inside a Blok blueprint manifest.
 """
 input ComponentNodeInput {
-  children: [String!] = null
+  children: [ComponentNodeInput!] = null
   component: String!
   id: String!
   props: [ComponentPropInput!] = null
 }
 
 """A single key-value prop configuration for a component layout node."""
+type ComponentProp {
+  agentCall: AgentCall
+  dynamicValue: DynamicValue
+  key: String!
+  staticValue: JSONSerializable
+  utilCall: UtilCall
+}
+
+"""A single key-value prop configuration for a component layout node."""
 input ComponentPropInput {
-  agentAction: BlokAgentActionInput = null
+  agentCall: AgentCallInput = null
   dynamicValue: DynamicValueInput = null
   key: String!
-  staticValue: String = null
+  staticValue: JSONSerializable = null
+  utilCall: UtilCallInput = null
 }
 
 """The input for creating a blok."""
@@ -1455,8 +1489,15 @@ type Device {
 """
 A bound state pointer referencing a variable inside a Blok state instance.
 """
+type DynamicValue {
+  literal: String
+  path: String
+}
+
+"""
+A bound state pointer referencing a variable inside a Blok state instance.
+"""
 input DynamicValueInput {
-  literal: String = null
   path: String = null
 }
 
@@ -1838,6 +1879,9 @@ enum JSONPatchOperation {
   replace
   test
 }
+
+"""The `Args` scalar type represents a Dictionary of arguments"""
+scalar JSONSerializable
 
 """The input for bouncing an agent."""
 input KickInput {
@@ -2881,7 +2925,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "16ffc8c7-2f95-4a25-bcf0-a18396721535"
+  reference: String = "00f4f56b-f106-4e6a-9ffc-acb5bcf1f9de"
   title: String = null
 }
 
@@ -3739,6 +3783,18 @@ type User {
 
   """The subject identifier of the user."""
   sub: ID!
+}
+
+"""Defines a utility call that can be invoked within the system."""
+type UtilCall {
+  arguments: [ActionArgument!]
+  operation: String!
+}
+
+"""Defines a utility call that can be invoked within the system."""
+input UtilCallInput {
+  arguments: [ActionArgumentInput!] = null
+  operation: String!
 }
 
 type Validator {

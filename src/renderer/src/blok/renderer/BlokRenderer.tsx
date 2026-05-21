@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import type {ComponentNode, ComponentProp} from '@/rekuest/api/graphql';
+import type {ActionArgument, ComponentNode, ComponentProp} from '@/rekuest/api/graphql';
 import {toast} from 'sonner';
 import {createStore} from 'zustand/vanilla';
 import { myCatalog } from './catalog';
@@ -32,8 +32,12 @@ type ComponentNodeLike = {
 
 type ComponentPropLike = {
   key: string;
+  utilCall?: unknown;
+  util_call?: unknown;
   agentAction?: unknown;
   agent_action?: unknown;
+  agentCall?: unknown;
+  agent_call?: unknown;
   dynamicValue?: unknown;
   dynamic_value?: unknown;
   staticValue?: unknown;
@@ -74,6 +78,10 @@ const isComponentNodeInput = (
 
 const pickString = (...values: unknown[]): string | undefined => {
   return values.find(isString);
+};
+
+const pickDefined = (...values: unknown[]): unknown => {
+  return values.find(value => value !== undefined);
 };
 
 const decodeJsonLiteralString = (value: string): unknown => {
@@ -134,20 +142,61 @@ const isRekuestActionEnvelope = (
   );
 };
 
+const normalizeArgumentValue = (value: unknown): unknown => {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const utilCall = value.utilCall ?? value.util_call;
+  if (utilCall !== undefined && utilCall !== null) {
+    return normalizeUtilCall(utilCall);
+  }
+
+  const agentCall = value.agentCall ?? value.agent_call;
+  if (agentCall !== undefined && agentCall !== null) {
+    return normalizeRekuestAction(agentCall);
+  }
+
+  if (Array.isArray(value.value_dict)) {
+    return Object.fromEntries(
+      value.value_dict.flatMap((item, index) => {
+        if (!isRecord(item)) {
+          return [];
+        }
+
+        const entryKey = pickString(item.key) ?? String(index);
+        return [[entryKey, normalizeArgumentValue(item)] as const];
+      }),
+    );
+  }
+
+  if (Array.isArray(value.value_list)) {
+    return value.value_list.map(item => normalizeArgumentValue(item));
+  }
+
+  const valuePath = pickString(value.valuePath, value.value_path, value.path);
+  if (valuePath) {
+    return {path: valuePath};
+  }
+
+  if ('valueLiteral' in value || 'value_literal' in value || 'literal' in value) {
+    const literal = pickDefined(value.valueLiteral, value.value_literal, value.literal);
+    return isString(literal) ? decodeJsonLiteralString(literal) : literal;
+  }
+
+  return value;
+};
+
 const normalizeActionArguments = (value: unknown): Record<string, unknown> | undefined => {
   if (Array.isArray(value)) {
-    const normalizedEntries = value.flatMap(item => {
-      if (!isRecord(item) || !isString(item.key)) {
+    const normalizedEntries = value.flatMap((item, index) => {
+      if (!isRecord(item)) {
         return [];
       }
 
-      const valuePath = pickString(item.valuePath, item.value_path);
-      const valueLiteral = pickString(item.valueLiteral, item.value_literal);
+      const entryKey = pickString(item.key) ?? String(index);
 
-      return [[
-        item.key,
-        valuePath ? {path: valuePath} : valueLiteral !== undefined ? decodeJsonLiteralString(valueLiteral) : null,
-      ] as const];
+      return [[entryKey, normalizeArgumentValue(item)] as const];
     });
 
     return normalizedEntries.length > 0 ? Object.fromEntries(normalizedEntries) : undefined;
@@ -158,23 +207,26 @@ const normalizeActionArguments = (value: unknown): Record<string, unknown> | und
   }
 
   const normalizedEntries = Object.entries(value).map(([key, itemValue]) => {
-    if (isRecord(itemValue)) {
-      const valuePath = pickString(itemValue.valuePath, itemValue.value_path, itemValue.path);
-      const valueLiteral = pickString(itemValue.valueLiteral, itemValue.value_literal, itemValue.literal);
-      return [
-        key,
-        valuePath
-          ? {path: valuePath}
-          : valueLiteral !== undefined
-            ? decodeJsonLiteralString(valueLiteral)
-            : itemValue,
-      ] as const;
-    }
-
-    return [key, itemValue] as const;
+    return [key, normalizeArgumentValue(itemValue)] as const;
   });
 
   return normalizedEntries.length > 0 ? Object.fromEntries(normalizedEntries) : undefined;
+};
+
+const normalizeUtilCall = (value: unknown): unknown => {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const call = pickString(value.call, value.operation);
+  if (!call) {
+    return value;
+  }
+
+  return {
+    call,
+    args: normalizeActionArguments(value.arguments),
+  };
 };
 
 const normalizeRekuestAction = (value: unknown): unknown => {
@@ -182,7 +234,7 @@ const normalizeRekuestAction = (value: unknown): unknown => {
     return value;
   }
 
-  const operationName = pickString(value.operationName, value.operation_name);
+  const operationName = pickString(value.operationName, value.operation_name, value.operation);
   if (!operationName) {
     return value;
   }
@@ -190,15 +242,29 @@ const normalizeRekuestAction = (value: unknown): unknown => {
   return {
     actionType: 'rekuestCall',
     operationName,
-    targetDependencyKey: pickString(value.targetDependencyKey, value.target_dependency_key),
+    targetDependencyKey: pickString(
+      value.targetDependencyKey,
+      value.target_dependency_key,
+      value.dependency,
+    ),
     arguments: normalizeActionArguments(value.arguments),
   };
 };
 
 const normalizePropValue = (prop: ComponentPropLike): unknown => {
+  const utilCall = prop.utilCall ?? prop.util_call;
+  if (utilCall !== undefined && utilCall !== null) {
+    return normalizeUtilCall(utilCall);
+  }
+
   const agentAction = prop.agentAction ?? prop.agent_action;
   if (agentAction !== undefined && agentAction !== null) {
     return normalizeRekuestAction(agentAction);
+  }
+
+  const agentCall = prop.agentCall ?? prop.agent_call;
+  if (agentCall !== undefined && agentCall !== null) {
+    return normalizeRekuestAction(agentCall);
   }
 
   const dynamicValue = prop.dynamicValue ?? prop.dynamic_value;
@@ -238,41 +304,83 @@ const normalizeComponentProps = (value: unknown): Record<string, unknown> => {
   );
 };
 
-const normalizeGraphAgentAction = (value: unknown): ComponentProp['agentAction'] => {
+const normalizeGraphActionArgument = (
+  value: unknown,
+  fallbackKey?: string,
+): ActionArgument | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const rawValueDict = value.valueDict ?? value.value_dict;
+  const rawValueList = value.valueList ?? value.value_list;
+
+  const valueDict = Array.isArray(rawValueDict)
+    ? rawValueDict
+        .flatMap((item, index) => normalizeGraphActionArgument(item, String(index)) ?? [])
+    : null;
+  const valueList = Array.isArray(rawValueList)
+    ? rawValueList
+        .flatMap(item => normalizeGraphActionArgument(item) ?? [])
+    : null;
+
+  return {
+    __typename: 'ActionArgument',
+    key: pickString(value.key, fallbackKey),
+    agentCall: normalizeGraphAgentCall(value.agentCall ?? value.agent_call),
+    utilCall: normalizeGraphUtilCall(value.utilCall ?? value.util_call),
+    valueDict,
+    valueList,
+    valueLiteral: pickDefined(value.valueLiteral, value.value_literal, value.literal) as ActionArgument['valueLiteral'],
+    valuePath: pickString(value.valuePath, value.value_path, value.path),
+  };
+};
+
+const normalizeGraphAgentCall = (value: unknown): ComponentProp['agentCall'] => {
   if (!isRecord(value)) {
     return undefined;
   }
 
-  const operationName = pickString(value.operationName, value.operation_name);
-  const targetDependencyKey = pickString(value.targetDependencyKey, value.target_dependency_key);
-  if (!operationName || !targetDependencyKey) {
+  const operation = pickString(value.operation, value.operationName, value.operation_name);
+  const dependency = pickString(
+    value.dependency,
+    value.targetDependencyKey,
+    value.target_dependency_key,
+  );
+  if (!operation || !dependency) {
     return undefined;
   }
 
-  const argumentsRecord = normalizeActionArguments(value.arguments);
+  const argumentsList = Array.isArray(value.arguments)
+    ? value.arguments.flatMap((item, index) => normalizeGraphActionArgument(item, String(index)) ?? [])
+    : null;
 
   return {
-    __typename: 'BlokAgentAction',
-    operationName,
-    targetDependencyKey,
-    arguments: argumentsRecord
-      ? Object.entries(argumentsRecord).map(([key, argumentValue]) => {
-          if (isRecord(argumentValue) && isString(argumentValue.path)) {
-            return {
-              __typename: 'ActionArgument',
-              key,
-              valuePath: argumentValue.path,
-            };
-          }
+    __typename: 'AgentCall',
+    operation,
+    dependency,
+    arguments: argumentsList,
+  };
+};
 
-          return {
-            __typename: 'ActionArgument',
-            key,
-            valueLiteral:
-              isString(argumentValue) ? argumentValue : JSON.stringify(argumentValue ?? null),
-          };
-        })
-      : null,
+const normalizeGraphUtilCall = (value: unknown): ComponentProp['utilCall'] => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const operation = pickString(value.operation, value.call);
+  if (!operation) {
+    return undefined;
+  }
+
+  const argumentsList = Array.isArray(value.arguments)
+    ? value.arguments.flatMap((item, index) => normalizeGraphActionArgument(item, String(index)) ?? [])
+    : null;
+
+  return {
+    __typename: 'UtilCall',
+    operation,
+    arguments: argumentsList,
   };
 };
 
@@ -304,12 +412,19 @@ const normalizeGraphProps = (value: unknown): ComponentProp[] | null => {
       return [];
     }
 
+    const normalizedAgentCall = normalizeGraphAgentCall(
+      item.agentAction ?? item.agent_action ?? item.agentCall ?? item.agent_call,
+    );
+    const staticValue = pickDefined(item.staticValue, item.static_value);
+    const normalizedUtilCall = normalizeGraphUtilCall(item.utilCall ?? item.util_call);
+
     const prop: ComponentProp = {
       __typename: 'ComponentProp',
       key: item.key,
-      staticValue: pickString(item.staticValue, item.static_value),
+      staticValue: staticValue as ComponentProp['staticValue'],
       dynamicValue: normalizeGraphDynamicValue(item.dynamicValue ?? item.dynamic_value),
-      agentAction: normalizeGraphAgentAction(item.agentAction ?? item.agent_action),
+      agentCall: normalizedAgentCall,
+      utilCall: normalizedUtilCall,
     };
 
     return [prop];

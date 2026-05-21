@@ -1241,7 +1241,7 @@ export type CreateBlokInput = {
   dependencies?: InputMaybe<Array<AgentDependencyInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  uri: Scalars['String']['input'];
+  uri?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation. */
@@ -2692,6 +2692,8 @@ export type PlacementFilter = {
 export type PlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
+  /** A specific blok that should be used to visualize the state of the placement */
+  blok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5353,6 +5355,18 @@ export type ListInterfacesQueryVariables = Exact<{
 
 
 export type ListInterfacesQuery = { __typename?: 'Query', interfaces: Array<{ __typename?: 'Interface', id: string, key: string, description?: string | null }> };
+
+export type MaterializedBlokQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+
+export type ListMaterializedBloksQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }> };
 
 export type MemoryShelvesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -9774,6 +9788,75 @@ export function useListInterfacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQu
 export type ListInterfacesQueryHookResult = ReturnType<typeof useListInterfacesQuery>;
 export type ListInterfacesLazyQueryHookResult = ReturnType<typeof useListInterfacesLazyQuery>;
 export type ListInterfacesQueryResult = Apollo.QueryResult<ListInterfacesQuery, ListInterfacesQueryVariables>;
+export const MaterializedBlokDocument = gql`
+    query MaterializedBlok($id: ID!) {
+  materializedBlok(id: $id) {
+    ...MaterializedBlok
+  }
+}
+    ${MaterializedBlokFragmentDoc}`;
+
+/**
+ * __useMaterializedBlokQuery__
+ *
+ * To run a query within a React component, call `useMaterializedBlokQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMaterializedBlokQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMaterializedBlokQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useMaterializedBlokQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MaterializedBlokQuery, MaterializedBlokQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<MaterializedBlokQuery, MaterializedBlokQueryVariables>(MaterializedBlokDocument, options);
+      }
+export function useMaterializedBlokLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MaterializedBlokQuery, MaterializedBlokQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<MaterializedBlokQuery, MaterializedBlokQueryVariables>(MaterializedBlokDocument, options);
+        }
+export type MaterializedBlokQueryHookResult = ReturnType<typeof useMaterializedBlokQuery>;
+export type MaterializedBlokLazyQueryHookResult = ReturnType<typeof useMaterializedBlokLazyQuery>;
+export type MaterializedBlokQueryResult = Apollo.QueryResult<MaterializedBlokQuery, MaterializedBlokQueryVariables>;
+export const ListMaterializedBloksDocument = gql`
+    query ListMaterializedBloks {
+  materializedBloks {
+    ...ListMaterializedBlok
+  }
+}
+    ${ListMaterializedBlokFragmentDoc}`;
+
+/**
+ * __useListMaterializedBloksQuery__
+ *
+ * To run a query within a React component, call `useListMaterializedBloksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListMaterializedBloksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListMaterializedBloksQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListMaterializedBloksQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMaterializedBloksQuery, ListMaterializedBloksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListMaterializedBloksQuery, ListMaterializedBloksQueryVariables>(ListMaterializedBloksDocument, options);
+      }
+export function useListMaterializedBloksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMaterializedBloksQuery, ListMaterializedBloksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListMaterializedBloksQuery, ListMaterializedBloksQueryVariables>(ListMaterializedBloksDocument, options);
+        }
+export type ListMaterializedBloksQueryHookResult = ReturnType<typeof useListMaterializedBloksQuery>;
+export type ListMaterializedBloksLazyQueryHookResult = ReturnType<typeof useListMaterializedBloksLazyQuery>;
+export type ListMaterializedBloksQueryResult = Apollo.QueryResult<ListMaterializedBloksQuery, ListMaterializedBloksQueryVariables>;
 export const MemoryShelvesDocument = gql`
     query MemoryShelves($pagination: OffsetPaginationInput, $filters: MemoryShelveFilter, $order: MemoryShelveOrder) {
   memoryShelves(order: $order, pagination: $pagination, filters: $filters) {

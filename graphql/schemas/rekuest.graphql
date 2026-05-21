@@ -1163,7 +1163,7 @@ input CreateBlokInput {
   dependencies: [AgentDependencyInput!] = null
   description: String = null
   name: String!
-  uri: String!
+  uri: String
 }
 
 """
@@ -2395,6 +2395,11 @@ input PlacementFilter {
 input PlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  blok: ID = null
   model: ID = null
   role: String = null
 }
@@ -2925,7 +2930,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "00f4f56b-f106-4e6a-9ffc-acb5bcf1f9de"
+  reference: String = "f204dd94-d302-46d2-a81a-3ad12ccfad22"
   title: String = null
 }
 

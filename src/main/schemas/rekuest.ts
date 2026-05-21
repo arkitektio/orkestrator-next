@@ -1240,7 +1240,7 @@ export type CreateBlokInput = {
   dependencies?: InputMaybe<Array<AgentDependencyInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  uri: Scalars['String']['input'];
+  uri?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation. */
@@ -2691,6 +2691,8 @@ export type PlacementFilter = {
 export type PlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
+  /** A specific blok that should be used to visualize the state of the placement */
+  blok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5353,6 +5355,18 @@ export type ListInterfacesQueryVariables = Exact<{
 
 export type ListInterfacesQuery = { __typename?: 'Query', interfaces: Array<{ __typename?: 'Interface', id: string, key: string, description?: string | null }> };
 
+export type MaterializedBlokQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+
+export type ListMaterializedBloksQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }> };
+
 export type MemoryShelvesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<MemoryShelveFilter>;
@@ -7748,6 +7762,20 @@ export const ListInterfacesDocument = gql`
   }
 }
     ${ListInterfaceFragmentDoc}`;
+export const MaterializedBlokDocument = gql`
+    query MaterializedBlok($id: ID!) {
+  materializedBlok(id: $id) {
+    ...MaterializedBlok
+  }
+}
+    ${MaterializedBlokFragmentDoc}`;
+export const ListMaterializedBloksDocument = gql`
+    query ListMaterializedBloks {
+  materializedBloks {
+    ...ListMaterializedBlok
+  }
+}
+    ${ListMaterializedBlokFragmentDoc}`;
 export const MemoryShelvesDocument = gql`
     query MemoryShelves($pagination: OffsetPaginationInput, $filters: MemoryShelveFilter, $order: MemoryShelveOrder) {
   memoryShelves(order: $order, pagination: $pagination, filters: $filters) {
@@ -8282,6 +8310,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ListInterfaces(variables?: ListInterfacesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListInterfacesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ListInterfacesQuery>({ document: ListInterfacesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListInterfaces', 'query', variables);
+    },
+    MaterializedBlok(variables: MaterializedBlokQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MaterializedBlokQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MaterializedBlokQuery>({ document: MaterializedBlokDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MaterializedBlok', 'query', variables);
+    },
+    ListMaterializedBloks(variables?: ListMaterializedBloksQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListMaterializedBloksQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListMaterializedBloksQuery>({ document: ListMaterializedBloksDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListMaterializedBloks', 'query', variables);
     },
     MemoryShelves(variables?: MemoryShelvesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MemoryShelvesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MemoryShelvesQuery>({ document: MemoryShelvesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'MemoryShelves', 'query', variables);

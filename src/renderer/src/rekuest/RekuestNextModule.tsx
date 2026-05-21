@@ -15,6 +15,8 @@ import AgentsPage from "./pages/AgentsPage";
 import Home from "./pages/Home";
 import Implementation from "./pages/ImplementationPage";
 import MemoryShelve from "./pages/MemoryShelve";
+import MaterializedBlokPage from "./pages/MaterializedBlok";
+import MaterializedBloks from "./pages/MaterializedBloks";
 import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
 import Shortcut from "./pages/Shortcut";
@@ -75,6 +77,8 @@ const Module: React.FC = () => {
           <Route path="memoryshelves/:id" element={<MemoryShelve />} />
           <Route path="bloks/:id" element={<Blok />} />
           <Route path="bloks" element={<Bloks />} />
+          <Route path="materialized_bloks" element={<MaterializedBloks />} />
+          <Route path="materialized_bloks/:id" element={<MaterializedBlokPage />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="implementations" element={<ImplementationsPage />} />
           <Route path="implementations/:id" element={<Implementation />} />

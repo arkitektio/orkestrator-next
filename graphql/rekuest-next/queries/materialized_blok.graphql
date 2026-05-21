@@ -1,0 +1,11 @@
+query MaterializedBlok($id: ID!) {
+  materializedBlok(id: $id) {
+    ...MaterializedBlok
+  }
+}
+
+query ListMaterializedBloks {
+  materializedBloks {
+    ...ListMaterializedBlok
+  }
+}

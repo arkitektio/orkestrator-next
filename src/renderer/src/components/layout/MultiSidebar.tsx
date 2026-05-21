@@ -26,7 +26,7 @@ export const MultiSidebar = (props: { map: ChildMap | undefined, sidebarKey?: st
     if (activeTab) {
       localStorage.setItem(props.sidebarKey || ACTIVE_SIDEBAR_KEY, activeTab);
     }
-  }, [activeTab]);
+  }, [activeTab, props.sidebarKey]);
 
   return (
     <Tabs
@@ -53,7 +53,11 @@ export const MultiSidebar = (props: { map: ChildMap | undefined, sidebarKey?: st
       {props.map &&
         Object.keys(props.map).map((key) => {
           return (
-            <TabsContent value={key} className="flex-grow">
+            <TabsContent
+              key={key}
+              value={key}
+              className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
+            >
               {props.map && props.map[key]}
             </TabsContent>
           );

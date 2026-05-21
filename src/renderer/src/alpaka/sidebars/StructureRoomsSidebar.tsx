@@ -214,7 +214,7 @@ export const StructureRoomsSidebar = ({
       collapsible
       value={resolvedActiveRoomId}
       onValueChange={setActiveRoomId}
-      className="flex h-full flex-col p-2"
+      className="flex h-full min-h-0 flex-col overflow-hidden p-2"
     >
       {data?.rooms.map((room) => (
         <AccordionItem
@@ -222,8 +222,8 @@ export const StructureRoomsSidebar = ({
           value={room.id}
           className="flex min-h-0 flex-col border-0 data-[state=open]:flex-1"
         >
-          <AccordionTrigger className="truncate text-sm">{room.title}</AccordionTrigger>
-          <AccordionContent className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+          <AccordionTrigger className="shrink-0 truncate text-sm">{room.title}</AccordionTrigger>
+          <AccordionContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
             {resolvedActiveRoomId === room.id && <StructureRoomView roomId={room.id} />}
           </AccordionContent>
         </AccordionItem>

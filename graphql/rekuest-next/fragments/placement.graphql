@@ -31,6 +31,9 @@ fragment SpacePlacement on Placement {
   agent {
     id
   }
+  blok {
+    id
+  }
   affineMatrix
 }
 
@@ -49,6 +52,8 @@ fragment AgentPlacement on Placement {
   space {
     id
   }
+
+
   affineMatrix
 }
 

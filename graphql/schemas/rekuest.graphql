@@ -2362,6 +2362,7 @@ input PinInput {
 type Placement {
   affineMatrix: Args
   agent: Agent!
+  blok: MaterializedBlok
   id: ID!
   model: ThreeDModel
 
@@ -2930,7 +2931,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "f204dd94-d302-46d2-a81a-3ad12ccfad22"
+  reference: String = "5b91c38d-0f5c-4aa2-a01f-6f04b6ff4b16"
   title: String = null
 }
 

@@ -1,5 +1,6 @@
 import {useMemo} from 'react';
 import type {ActionArgument, ComponentNode, ComponentProp} from '@/rekuest/api/graphql';
+import {cn} from '@/lib/utils';
 import {toast} from 'sonner';
 import {createStore} from 'zustand/vanilla';
 import { myCatalog } from './catalog';
@@ -13,6 +14,8 @@ type BlokRendererProps = {
   surfaceId?: string;
   uiComponents?: unknown;
   demoState?: unknown;
+  chrome?: 'default' | 'minimal';
+  sizing?: 'fill' | 'intrinsic';
 };
 
 const DEFAULT_SURFACE_ID = 'blok-preview';
@@ -637,6 +640,8 @@ export default function BlokRenderer({
   surfaceId = DEFAULT_SURFACE_ID,
   uiComponents,
   demoState,
+  chrome = 'default',
+  sizing = 'fill',
 }: BlokRendererProps) {
   const extractedDemoState = extractDemoState(demoState, uiComponents);
   const prepared = useMemo(
@@ -700,10 +705,31 @@ export default function BlokRenderer({
     );
   };
 
+  const sizingClassName =
+    sizing === 'intrinsic'
+      ? 'inline-flex max-w-full max-h-full flex-col overflow-auto'
+      : 'h-full w-full overflow-auto';
+
+  const containerClassName = cn(
+    'a2ui-container',
+    sizingClassName,
+    chrome === 'minimal'
+      ? 'rounded-xl border border-border/50 bg-background/90 p-1 shadow-sm'
+      : 'rounded-2xl border border-border/60 bg-background/70 p-4 shadow-sm backdrop-blur-sm',
+  );
+
+  const errorContainerClassName = cn(
+    'a2ui-container',
+    sizingClassName,
+    chrome === 'minimal'
+      ? 'rounded-xl border border-destructive/40 bg-background/95 p-2 shadow-sm'
+      : 'rounded-2xl border border-destructive/40 bg-destructive/5 p-4 shadow-sm backdrop-blur-sm',
+  );
+
   if (prepared.errors.length > 0) {
     return (
-      <div className="a2ui-container h-full w-full overflow-auto rounded-2xl border border-destructive/40 bg-destructive/5 p-4 shadow-sm backdrop-blur-sm">
-        <div className="mb-4 rounded-xl border border-destructive/30 bg-background/80 p-4">
+      <div className={errorContainerClassName}>
+        <div className={cn('rounded-xl border border-destructive/30 bg-background/80 p-4', chrome === 'minimal' ? 'mb-2' : 'mb-4')}>
           <h3 className="text-sm font-semibold text-destructive">Blok Validation Failed</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             This blok payload does not match the registered blok component catalog, so rendering was skipped.
@@ -727,7 +753,7 @@ export default function BlokRenderer({
 
   return (
     <BlokRuntimeProvider store={runtimeStore}>
-      <div className="a2ui-container h-full w-full overflow-auto rounded-2xl border border-border/60 bg-background/70 p-4 shadow-sm backdrop-blur-sm">
+      <div className={containerClassName}>
         {prepared.rootIds.length === 0 && (
           <div className="flex min-h-48 items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/30 px-6 text-sm text-muted-foreground">
             No blok components available for this preview yet.

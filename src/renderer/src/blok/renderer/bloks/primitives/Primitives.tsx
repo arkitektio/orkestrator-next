@@ -12,6 +12,7 @@ import {
   CardHeader as ShadCardHeader,
   CardTitle as ShadCardTitle,
 } from '@/components/ui/card';
+import {Input as ShadInput} from '@/components/ui/input';
 import {Separator as ShadSeparator} from '@/components/ui/separator';
 import {cn} from '@/lib/utils';
 import {cva} from 'class-variance-authority';
@@ -538,6 +539,74 @@ export const Text = createBlokComponent(
   },
 );
 
+export const Paragraph = createBlokComponent(
+  {
+    name: 'p',
+    schema: z.object({
+      text: BlokSchemas.DynamicString.optional(),
+      children: contentSchema,
+      tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
+      size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
+      weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
+      align: z.enum(['start', 'center', 'end']).optional(),
+      mono: boolSchema,
+      italic: boolSchema,
+      truncate: boolSchema,
+      className: classNameSchema,
+    }),
+  },
+  ({props, buildChild}) => {
+    return (
+      <p
+        className={cn(
+          textVariants({tone: props.tone, size: props.size, weight: props.weight}),
+          mapTextAlign(props.align),
+          props.mono && 'font-mono',
+          props.italic && 'italic',
+          props.truncate && 'truncate',
+          props.className,
+        )}
+      >
+        {renderContent(props.children ?? props.text, buildChild)}
+      </p>
+    );
+  },
+);
+
+export const Span = createBlokComponent(
+  {
+    name: 'span',
+    schema: z.object({
+      text: BlokSchemas.DynamicString.optional(),
+      children: contentSchema,
+      tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
+      size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
+      weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
+      align: z.enum(['start', 'center', 'end']).optional(),
+      mono: boolSchema,
+      italic: boolSchema,
+      truncate: boolSchema,
+      className: classNameSchema,
+    }),
+  },
+  ({props, buildChild}) => {
+    return (
+      <span
+        className={cn(
+          textVariants({tone: props.tone, size: props.size, weight: props.weight}),
+          mapTextAlign(props.align),
+          props.mono && 'font-mono',
+          props.italic && 'italic',
+          props.truncate && 'truncate',
+          props.className,
+        )}
+      >
+        {renderContent(props.children ?? props.text, buildChild)}
+      </span>
+    );
+  },
+);
+
 export const Heading = createBlokComponent(
   {
     name: 'Heading',
@@ -644,6 +713,61 @@ export const Button = createBlokComponent(
   },
 );
 
+export const Input = createBlokComponent(
+  {
+    name: 'Input',
+    schema: z.object({
+      value: BlokSchemas.DynamicString.optional(),
+      defaultValue: BlokSchemas.DynamicString.optional(),
+      placeholder: BlokSchemas.DynamicString.nullish(),
+      type: z.string().optional(),
+      className: classNameSchema,
+      disabled: BlokSchemas.DynamicBoolean.optional(),
+      readOnly: boolSchema,
+      fullWidth: boolSchema,
+      action: BlokSchemas.Action.optional(),
+    }),
+  },
+  ({props}) => {
+    const controlledValue = typeof props.value === 'string' ? props.value : undefined;
+    const initialValue =
+      controlledValue ??
+      (typeof props.defaultValue === 'string' ? props.defaultValue : '');
+    const placeholder = typeof props.placeholder === 'string' ? props.placeholder : undefined;
+    const disabled = props.disabled === true;
+    const [localValue, setLocalValue] = React.useState(initialValue);
+
+    React.useEffect(() => {
+      if (controlledValue !== undefined) {
+        setLocalValue(controlledValue);
+      }
+    }, [controlledValue]);
+
+    const isControlled = controlledValue !== undefined;
+
+    return (
+      <ShadInput
+        type={props.type ?? 'text'}
+        value={isControlled ? controlledValue : localValue}
+        defaultValue={isControlled ? undefined : initialValue}
+        placeholder={placeholder}
+        className={cn(props.fullWidth && 'w-full', props.className)}
+        disabled={disabled}
+        readOnly={props.readOnly}
+        onChange={event => {
+          if (!isControlled) {
+            setLocalValue(event.target.value);
+          }
+
+          if (typeof props.action === 'function') {
+            props.action();
+          }
+        }}
+      />
+    );
+  },
+);
+
 export const Separator = createBlokComponent(
   {
     name: 'Separator',
@@ -669,8 +793,11 @@ export const shadcnComposableComponents = [
   CardContent,
   CardFooter,
   Text,
+  Paragraph,
+  Span,
   Heading,
   Badge,
   Button,
+  Input,
   Separator,
 ];

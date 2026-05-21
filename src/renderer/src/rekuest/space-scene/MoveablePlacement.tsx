@@ -1,6 +1,6 @@
 import { WithMediaUrl } from "@/lib/datalayer/rekuestAccess";
 import { Center, Html, TransformControls, useGLTF } from "@react-three/drei";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Group, Matrix4 } from "three";
 import { MediaStore, SpacePlacementFragment, useUpdatePlacementMutation } from "../api/graphql";
 import { useSpaceScene } from "./context";
@@ -28,8 +28,8 @@ export const MoveablePlacement = ({
 }) => {
   const meshRef = useRef<Group>(null!);
   const selectedId = useSpaceScene((s) => s.selectedPlacementId);
-  const updateTransform = useSpaceScene((s) => s.updatePlacementTransform);
   const selectPlacement = useSpaceScene((s) => s.selectPlacement);
+  const openPlacementPanel = useSpaceScene((s) => s.openPlacementPanel);
   const isSelected = selectedId === placement.id;
 
   const [updateSpacePlacement] = useUpdatePlacementMutation();
@@ -101,6 +101,7 @@ export const MoveablePlacement = ({
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);
+          openPlacementPanel(placement.id);
         }}
       >
         <WithMediaUrl media={placement.model?.file as unknown as MediaStore}>
@@ -140,6 +141,7 @@ export const PlacementFallback = ({
   const meshRef = useRef<Group>(null!);
   const selectedId = useSpaceScene((s) => s.selectedPlacementId);
   const selectPlacement = useSpaceScene((s) => s.selectPlacement);
+  const openPlacementPanel = useSpaceScene((s) => s.openPlacementPanel);
   const isSelected = selectedId === placement.id;
 
   const [updateSpacePlacement] = useUpdatePlacementMutation();
@@ -208,6 +210,7 @@ useEffect(() => {
         onClick={(e) => {
           e.stopPropagation();
           selectPlacement(placement.id);
+          openPlacementPanel(placement.id);
         }}
       >
         <mesh castShadow>

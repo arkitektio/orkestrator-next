@@ -1,3 +1,10 @@
+## [1.60.1](https://github.com/arkitektio/orkestrator-next/compare/v1.60.0...v1.60.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* wrong imports ([671c5bf](https://github.com/arkitektio/orkestrator-next/commit/671c5bf26757ed53d5ee4cc5bb270c808d034f08))
+
 # [1.60.0](https://github.com/arkitektio/orkestrator-next/compare/v1.59.0...v1.60.0) (2026-05-22)
 
 

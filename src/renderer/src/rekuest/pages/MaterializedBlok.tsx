@@ -55,16 +55,6 @@ export const MaterializedBlokPage = asDetailQueryRoute(useMaterializedBlokQuery,
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  Dashboard
-                </p>
-                <p className="mt-1 text-sm font-medium">
-                  <RekuestDashboard.DetailLink object={materializedBlok.dashboard}>
-                    {materializedBlok.dashboard.id}
-                  </RekuestDashboard.DetailLink>
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                   Agent Mappings
                 </p>
                 <p className="mt-1 text-sm font-medium">{materializedBlok.agentMappings.length}</p>

@@ -134,9 +134,6 @@ export const BlokPage = asDetailQueryRoute(useGetBlokQuery, ({ data }) => {
                       </div>
                     </div>
 
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      Dashboard {materializedBlok.dashboard.id}
-                    </div>
                   </div>
                 ))
               )}

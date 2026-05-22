@@ -1,9 +1,8 @@
 "use client";
 
 import { DetailRoomFragment } from "@/alpaka/api/graphql";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Chat } from "./chat";
-import { userData } from "./data";
 
 interface ChatLayoutProps {
   defaultLayout?: number[] | undefined;
@@ -13,13 +12,8 @@ interface ChatLayoutProps {
 }
 
 export function ChatLayout({
-  defaultLayout = [320, 480],
   room,
-  defaultCollapsed = false,
-  navCollapsedSize,
 }: ChatLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [selectedUser, setSelectedUser] = React.useState(userData[0]);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -41,8 +35,6 @@ export function ChatLayout({
 
   return (
     <Chat
-      messages={selectedUser.messages}
-      selectedUser={selectedUser}
       isMobile={isMobile}
       room={room}
     />

@@ -1293,8 +1293,40 @@ type CustomReturnWidget implements ReturnWidget {
 
 type Dashboard {
   id: ID!
-  materializedBloks: [MaterializedBlok!]!
   name: String
+  placements(filters: DashboardPlacementFilter, ordering: [DashboardPlacementOrder!]! = [], pagination: OffsetPaginationInput): [DashboardPlacement!]!
+}
+
+"""A placement of an agent in a space."""
+type DashboardPlacement {
+  blok: MaterializedBlok
+  dashboard: Dashboard!
+  id: ID!
+}
+
+"""A way to filter placements (space memberships)"""
+input DashboardPlacementFilter {
+  AND: DashboardPlacementFilter
+  DISTINCT: Boolean
+  NOT: DashboardPlacementFilter
+  OR: DashboardPlacementFilter
+
+  """Filter by agent"""
+  agent: ID
+
+  """Filter by IDs"""
+  ids: [ID!]
+
+  """Search by name"""
+  search: String
+
+  """Filter by space"""
+  space: ID
+}
+
+input DashboardPlacementOrder {
+  createdAt: Ordering
+  role: Ordering
 }
 
 """Date with time (isoformat)"""
@@ -1382,9 +1414,33 @@ input DeleteAgentInput {
   id: ID!
 }
 
+"""The input for updating a blok."""
+input DeleteBlokInput {
+  """
+  The blok ID to delete. This is used to identify the blok in the system.
+  """
+  id: ID!
+}
+
+"""
+Input for deleting a dashboard. This is used to delete a dashboard by its ID.
+"""
+input DeleteDashboardInput {
+  """The ID of the dashboard to delete."""
+  id: ID!
+}
+
 """The input for deleting a implementation."""
 input DeleteImplementationInput {
   implementation: ID!
+}
+
+"""
+Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization.
+"""
+input DeleteMaterializedBlokInput {
+  """The ID of the materialized blok to delete."""
+  id: ID!
 }
 
 """The input for deleting a placement."""
@@ -1954,10 +2010,15 @@ type MaterializedBlok {
   agentMappings: [BlokAgentMapping!]!
   blok: Blok!
   createdAt: DateTime!
-  dashboard: Dashboard!
+
+  """Placements of this materialized blok on dashboards."""
+  dashboardPlacements(filters: DashboardPlacementFilter, ordering: [DashboardPlacementOrder!]! = [], pagination: OffsetPaginationInput): [DashboardPlacement!]!
   description: String
   id: ID!
   name: String
+
+  """Placements of this materialized blok."""
+  placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
   updatedAt: DateTime!
 }
 
@@ -2143,8 +2204,17 @@ type Mutation {
   """Delete an agent record."""
   deleteAgent(input: DeleteAgentInput!): ID!
 
+  """Delete a blok by ID."""
+  deleteBlok(input: DeleteBlokInput!): Boolean!
+
+  """Delete a dashboard by ID."""
+  deleteDashboard(input: DeleteDashboardInput!): Boolean!
+
   """Delete a registered implementation."""
   deleteImplementation(input: DeleteImplementationInput!): String!
+
+  """Delete a materialized blok by ID."""
+  deleteMaterializedBlok(input: DeleteMaterializedBlokInput!): Boolean!
 
   """Delete a placement."""
   deletePlacement(input: DeletePlacementInput!): ID!
@@ -2225,6 +2295,19 @@ type Mutation {
 
   """Unshelve data from a memory drawer."""
   unshelveMemoryDrawer(input: UnshelveMemoryDrawerInput!): ID!
+
+  """
+  Update properties of a blok such as its name, description, components, demo state, catalog, or dependencies.
+  """
+  updateBlok(input: UpdateBlokInput!): Blok!
+
+  """
+  Update properties of a    dashboard such as its name, associated bloks, or organization.
+  """
+  updateDashboard(input: UpdateDashboardInput!): Dashboard!
+
+  """Update properties of a materialized blok such as its agent mappings."""
+  updateMaterializedBlok(input: UpdateMaterializedBlokInput!): MaterializedBlok!
 
   """Update an existing placement."""
   updatePlacement(input: UpdatePlacementInput!): Placement!
@@ -2931,7 +3014,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "5b91c38d-0f5c-4aa2-a01f-6f04b6ff4b16"
+  reference: String = "289fb402-f407-4990-a0ec-8b6c5bd1aed7"
   title: String = null
 }
 
@@ -3749,6 +3832,53 @@ input UnshelveMemoryDrawerInput {
   The instance ID of the agent. This is used to identify the agent in the system.
   """
   instanceId: InstanceId!
+}
+
+"""The input for updating a blok."""
+input UpdateBlokInput {
+  """
+  The components of the blok. This is used to update the blok in the system.
+  """
+  components: [ComponentNodeInput!] = null
+
+  """The description of the blok and its purpose."""
+  description: String = null
+  id: ID!
+
+  """The name of the blok, used for identification in the system."""
+  name: String = null
+}
+
+"""
+Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization.
+"""
+input UpdateDashboardInput {
+  """
+  The new list of blok IDs to include in the dashboard. This will replace the existing list if provided.
+  """
+  bloks: [String!] = null
+
+  """The ID of the dashboard to update."""
+  id: ID!
+
+  """The new name of the dashboard."""
+  name: String = null
+
+  """The new organization ID to associate with the dashboard."""
+  organization: String = null
+}
+
+"""
+Input for updating a materialized blok. This is used to update the properties of a materialized blok, such as its associated agent mappings.
+"""
+input UpdateMaterializedBlokInput {
+  """
+  The list of mapped agents to update the materialized blok with. This is used to update the agent mappings of the materialized blok.
+  """
+  agentMappings: [MappedAgentInput!] = null
+
+  """The ID of the materialized blok to update."""
+  id: ID!
 }
 
 """The input for updating a placement."""

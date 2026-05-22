@@ -1,5 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { registry } from "@/app/localactions";
 import BlokRenderer from "@/blok/renderer/BlokRenderer";
+import { LocalActionButton } from "@/components/ui/localactionbutton";
 import { RekuestBlok, RekuestMaterializedBlok } from "@/linkers";
 import { useGetBlokQuery } from "../api/graphql";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,18 @@ export const BlokPage = asDetailQueryRoute(useGetBlokQuery, ({ data }) => {
       object={data.blok}
       pageActions={(
         <>
+            <LocalActionButton
+                name={"rekuest-delete-blok" as keyof typeof registry}
+                state={{
+                  left: [
+                    {
+                      identifier: '@rekuest/blok',
+                      object: { id: data.blok.id },
+                    },
+                  ],
+                  isCommand: false,
+                }}
+            />
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>

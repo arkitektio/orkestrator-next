@@ -1,6 +1,17 @@
 mutation CreateDashboard($input: CreateDashboardInput!) {
   createDashboard(input: $input) {
-    id
-    name
+    ...Dashboard
   }
+}
+
+
+mutation UpdateDashboard($input: UpdateDashboardInput!) {
+  updateDashboard(input: $input) {
+    ...Dashboard
+  }
+}
+
+
+mutation DeleteDashboard($input: DeleteDashboardInput!) {
+  deleteDashboard(input: $input)
 }

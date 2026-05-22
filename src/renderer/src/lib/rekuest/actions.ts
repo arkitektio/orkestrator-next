@@ -5,7 +5,16 @@ import {
   BounceDocument,
   BounceMutation,
   BounceMutationVariables,
+  DeleteBlokDocument,
+  DeleteBlokMutation,
+  DeleteBlokMutationVariables,
+  DeleteDashboardDocument,
+  DeleteDashboardMutation,
+  DeleteDashboardMutationVariables,
   DeleteAgentDocument,
+  DeleteMaterializedBlokDocument,
+  DeleteMaterializedBlokMutation,
+  DeleteMaterializedBlokMutationVariables,
   DeletePlacementDocument,
   DeleteShortcutDocument,
   DeleteSpaceDocument,
@@ -20,6 +29,126 @@ import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
 
 export const REKUEST_ACTIONS: Record<string, Action> = {
+  'rekuest-delete-blok': {
+    title: 'Delete Blok',
+    description: 'Delete the blok and return to the blok list',
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/blok'
+      },
+      {
+        type: 'nopartner'
+      }
+    ],
+    execute: async ({ services, state, navigate }) => {
+      for (const structure of state.left) {
+        if (structure.identifier !== '@rekuest/blok') {
+          continue
+        }
+
+        await services.rekuest.client.mutate<DeleteBlokMutation, DeleteBlokMutationVariables>({
+          mutation: DeleteBlokDocument,
+          variables: {
+            input: {
+              id: structure.object.id,
+            },
+          },
+        })
+
+        services.rekuest.client.cache.evict({
+          id: services.rekuest.client.cache.identify({
+            __typename: 'Blok',
+            id: structure.object.id,
+          }),
+        })
+      }
+
+      services.rekuest.client.cache.gc()
+      navigate('/rekuest/bloks')
+    },
+    collections: ['io'],
+  },
+  'rekuest-delete-materialized-blok': {
+    title: 'Delete Materialized Blok',
+    description: 'Delete the materialized blok and return to the list',
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/materialized_blok'
+      },
+      {
+        type: 'nopartner'
+      }
+    ],
+    execute: async ({ services, state, navigate }) => {
+      for (const structure of state.left) {
+        if (structure.identifier !== '@rekuest/materialized_blok') {
+          continue
+        }
+
+        await services.rekuest.client.mutate<DeleteMaterializedBlokMutation, DeleteMaterializedBlokMutationVariables>({
+          mutation: DeleteMaterializedBlokDocument,
+          variables: {
+            input: {
+              id: structure.object.id,
+            },
+          },
+        })
+
+        services.rekuest.client.cache.evict({
+          id: services.rekuest.client.cache.identify({
+            __typename: 'MaterializedBlok',
+            id: structure.object.id,
+          }),
+        })
+      }
+
+      services.rekuest.client.cache.gc()
+      navigate('/rekuest/materialized_bloks')
+    },
+    collections: ['io'],
+  },
+  'rekuest-delete-dashboard': {
+    title: 'Delete Dashboard',
+    description: 'Delete the dashboard and return to the dashboard list',
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/dashboard'
+      },
+      {
+        type: 'nopartner'
+      }
+    ],
+    execute: async ({ services, state, navigate }) => {
+      for (const structure of state.left) {
+        if (structure.identifier !== '@rekuest/dashboard') {
+          continue
+        }
+
+        await services.rekuest.client.mutate<DeleteDashboardMutation, DeleteDashboardMutationVariables>({
+          mutation: DeleteDashboardDocument,
+          variables: {
+            input: {
+              id: structure.object.id,
+            },
+          },
+        })
+
+        services.rekuest.client.cache.evict({
+          id: services.rekuest.client.cache.identify({
+            __typename: 'Dashboard',
+            id: structure.object.id,
+          }),
+        })
+      }
+
+      services.rekuest.client.cache.gc()
+      navigate('/rekuest/dashboards')
+    },
+    collections: ['io'],
+  },
   'rekuest-delete-agent': buildDeleteAction({
     title: 'Delete Agent',
     identifier: '@rekuest/agent',

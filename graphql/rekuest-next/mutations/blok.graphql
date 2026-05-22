@@ -9,3 +9,26 @@ mutation MaterializeBlok($input: MaterializeBlokInput!) {
     ...MaterializedBlok
   }
 }
+
+
+mutation UpdateBlok($input: UpdateBlokInput!) {
+  updateBlok(input: $input) {
+    ...Blok
+  }
+}
+
+mutation DeleteBlok($input: DeleteBlokInput!) {
+  deleteBlok(input: $input)
+}
+
+
+
+mutation UpdateMaterializedBlok($input: UpdateMaterializedBlokInput!) {
+  updateMaterializedBlok(input: $input) {
+    ...MaterializedBlok
+  }
+}
+
+mutation DeleteMaterializedBlok($input: DeleteMaterializedBlokInput!) {
+  deleteMaterializedBlok(input: $input)
+}

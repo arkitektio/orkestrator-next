@@ -22,7 +22,6 @@ import {
   WatchMessagesSubscriptionVariables,
 } from "../api/graphql";
 import { Chat } from "@/components/chat/chat";
-import { userData } from "@/components/chat/data";
 
 export type StructureRoomsSidebarProps = {
   identifier: Identifier;
@@ -97,12 +96,10 @@ const StructureRoomView = ({ roomId }: { roomId: string }) => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border bg-background">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg ">
       <Chat
         isMobile={isMobile}
-        messages={userData[0]?.messages}
         room={data.room}
-        selectedUser={userData[0]}
       />
     </div>
   );

@@ -5,6 +5,9 @@ fragment ProtocolAgent on Agent {
     identifier
   }
   name
+  states {
+    ...State
+  }
   implementations {
     interface
     action {
@@ -12,20 +15,10 @@ fragment ProtocolAgent on Agent {
       name
       description
       args {
-        key
-        label
-        kind
-        identifier
-        nullable
-        description
+        ...ArgPort
       }
       returns {
-        key
-        label
-        kind
-        identifier
-        nullable
-        description
+        ...ReturnPort
       }
     }
   }

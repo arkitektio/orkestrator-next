@@ -65,9 +65,6 @@ fragment MaterializedBlok on MaterializedBlok {
   blok {
     ...Blok
   }
-  dashboard {
-    id
-  }
   agentMappings {
     key
     agent {
@@ -89,8 +86,5 @@ fragment ListMaterializedBlok on MaterializedBlok {
     id
     name
 
-  }
-  dashboard {
-    id
   }
 }

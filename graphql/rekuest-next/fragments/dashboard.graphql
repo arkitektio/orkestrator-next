@@ -1,8 +1,10 @@
 fragment Dashboard on Dashboard {
   id
   name
-  materializedBloks {
+  placements {
+    blok {
     ...MaterializedBlok
+    }
   }
 }
 

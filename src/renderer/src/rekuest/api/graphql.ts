@@ -1364,8 +1364,44 @@ export type CustomReturnWidget = ReturnWidget & {
 export type Dashboard = {
   __typename?: 'Dashboard';
   id: Scalars['ID']['output'];
-  materializedBloks: Array<MaterializedBlok>;
   name?: Maybe<Scalars['String']['output']>;
+  placements: Array<DashboardPlacement>;
+};
+
+
+export type DashboardPlacementsArgs = {
+  filters?: InputMaybe<DashboardPlacementFilter>;
+  ordering?: Array<DashboardPlacementOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A placement of an agent in a space. */
+export type DashboardPlacement = {
+  __typename?: 'DashboardPlacement';
+  blok?: Maybe<MaterializedBlok>;
+  dashboard: Dashboard;
+  id: Scalars['ID']['output'];
+};
+
+/** A way to filter placements (space memberships) */
+export type DashboardPlacementFilter = {
+  AND?: InputMaybe<DashboardPlacementFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<DashboardPlacementFilter>;
+  OR?: InputMaybe<DashboardPlacementFilter>;
+  /** Filter by agent */
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by name */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by space */
+  space?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type DashboardPlacementOrder = {
+  createdAt?: InputMaybe<Ordering>;
+  role?: InputMaybe<Ordering>;
 };
 
 /**
@@ -1420,9 +1456,27 @@ export type DeleteAgentInput = {
   id: Scalars['ID']['input'];
 };
 
+/** The input for updating a blok. */
+export type DeleteBlokInput = {
+  /** The blok ID to delete. This is used to identify the blok in the system. */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting a dashboard. This is used to delete a dashboard by its ID. */
+export type DeleteDashboardInput = {
+  /** The ID of the dashboard to delete. */
+  id: Scalars['ID']['input'];
+};
+
 /** The input for deleting a implementation. */
 export type DeleteImplementationInput = {
   implementation: Scalars['ID']['input'];
+};
+
+/** Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization. */
+export type DeleteMaterializedBlokInput = {
+  /** The ID of the materialized blok to delete. */
+  id: Scalars['ID']['input'];
 };
 
 /** The input for deleting a placement. */
@@ -1975,11 +2029,28 @@ export type MaterializedBlok = {
   agentMappings: Array<BlokAgentMapping>;
   blok: Blok;
   createdAt: Scalars['DateTime']['output'];
-  dashboard: Dashboard;
+  /** Placements of this materialized blok on dashboards. */
+  dashboardPlacements: Array<DashboardPlacement>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
+  /** Placements of this materialized blok. */
+  placements: Array<Placement>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type MaterializedBlokDashboardPlacementsArgs = {
+  filters?: InputMaybe<DashboardPlacementFilter>;
+  ordering?: Array<DashboardPlacementOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type MaterializedBlokPlacementsArgs = {
+  filters?: InputMaybe<PlacementFilter>;
+  ordering?: Array<PlacementOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Temporary S3 credentials for reading a media object. */
@@ -2156,8 +2227,14 @@ export type Mutation = {
   createToolbox: Toolbox;
   /** Delete an agent record. */
   deleteAgent: Scalars['ID']['output'];
+  /** Delete a blok by ID. */
+  deleteBlok: Scalars['Boolean']['output'];
+  /** Delete a dashboard by ID. */
+  deleteDashboard: Scalars['Boolean']['output'];
   /** Delete a registered implementation. */
   deleteImplementation: Scalars['String']['output'];
+  /** Delete a materialized blok by ID. */
+  deleteMaterializedBlok: Scalars['Boolean']['output'];
   /** Delete a placement. */
   deletePlacement: Scalars['ID']['output'];
   /** Delete a resolution by ID. */
@@ -2210,6 +2287,12 @@ export type Mutation = {
   unreserve: Scalars['String']['output'];
   /** Unshelve data from a memory drawer. */
   unshelveMemoryDrawer: Scalars['ID']['output'];
+  /** Update properties of a blok such as its name, description, components, demo state, catalog, or dependencies. */
+  updateBlok: Blok;
+  /** Update properties of a    dashboard such as its name, associated bloks, or organization. */
+  updateDashboard: Dashboard;
+  /** Update properties of a materialized blok such as its agent mappings. */
+  updateMaterializedBlok: MaterializedBlok;
   /** Update an existing placement. */
   updatePlacement: Placement;
   /** Update an existing resolution. */
@@ -2348,8 +2431,26 @@ export type MutationDeleteAgentArgs = {
 
 
 /** Root mutation type for executing write operations on the API. */
+export type MutationDeleteBlokArgs = {
+  input: DeleteBlokInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationDeleteDashboardArgs = {
+  input: DeleteDashboardInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
 export type MutationDeleteImplementationArgs = {
   input: DeleteImplementationInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationDeleteMaterializedBlokArgs = {
+  input: DeleteMaterializedBlokInput;
 };
 
 
@@ -2506,6 +2607,24 @@ export type MutationUnreserveArgs = {
 /** Root mutation type for executing write operations on the API. */
 export type MutationUnshelveMemoryDrawerArgs = {
   input: UnshelveMemoryDrawerInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationUpdateBlokArgs = {
+  input: UpdateBlokInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationUpdateDashboardArgs = {
+  input: UpdateDashboardInput;
+};
+
+
+/** Root mutation type for executing write operations on the API. */
+export type MutationUpdateMaterializedBlokArgs = {
+  input: UpdateMaterializedBlokInput;
 };
 
 
@@ -4465,6 +4584,37 @@ export type UnshelveMemoryDrawerInput = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
+/** The input for updating a blok. */
+export type UpdateBlokInput = {
+  /** The components of the blok. This is used to update the blok in the system. */
+  components?: InputMaybe<Array<ComponentNodeInput>>;
+  /** The description of the blok and its purpose. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  /** The name of the blok, used for identification in the system. */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization. */
+export type UpdateDashboardInput = {
+  /** The new list of blok IDs to include in the dashboard. This will replace the existing list if provided. */
+  bloks?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The ID of the dashboard to update. */
+  id: Scalars['ID']['input'];
+  /** The new name of the dashboard. */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** The new organization ID to associate with the dashboard. */
+  organization?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for updating a materialized blok. This is used to update the properties of a materialized blok, such as its associated agent mappings. */
+export type UpdateMaterializedBlokInput = {
+  /** The list of mapped agents to update the materialized blok with. This is used to update the agent mappings of the materialized blok. */
+  agentMappings?: InputMaybe<Array<MappedAgentInput>>;
+  /** The ID of the materialized blok to update. */
+  id: Scalars['ID']['input'];
+};
+
 /** The input for updating a placement. */
 export type UpdatePlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
@@ -4592,7 +4742,7 @@ export type DetailActionFragment = { __typename?: 'Action', key: string, version
 
 export type PrimaryActionFragment = { __typename?: 'Action', id: string, stateful: boolean, name: string, hash: any, description?: string | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string }>, args: Array<{ __typename?: 'ArgPort', key: string, identifier?: any | null, kind: PortKind, nullable: boolean, default?: any | null }> };
 
-export type ProtocolAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename?: 'ArgPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }>, returns: Array<{ __typename?: 'ReturnPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }> } }> };
+export type ProtocolAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }> };
 
 export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, space: { __typename?: 'Space', id: string } }> };
 
@@ -4616,19 +4766,19 @@ export type ChildAssignationEventFragment = { __typename?: 'ChildAssignationEven
 
 export type ListAsssignationFragment = { __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } };
 
-export type BlokFragment = { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> };
+export type BlokFragment = { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> };
 
-export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> };
+export type MaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> };
 
 export type ListBlokFragment = { __typename?: 'Blok', id: string, name: string };
 
-export type ListMaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } };
+export type ListMaterializedBlokFragment = { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } };
 
 export type ClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
 export type ListClientFragment = { __typename?: 'Client', id: string, name: string, clientId: string };
 
-export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> };
+export type DashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null, placements: Array<{ __typename?: 'DashboardPlacement', blok?: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } | null }> };
 
 export type ListDashboardFragment = { __typename?: 'Dashboard', id: string, name?: string | null };
 
@@ -4900,21 +5050,63 @@ export type CreateBlokMutationVariables = Exact<{
 }>;
 
 
-export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> } };
+export type CreateBlokMutation = { __typename?: 'Mutation', createBlok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> } };
 
 export type MaterializeBlokMutationVariables = Exact<{
   input: MaterializeBlokInput;
 }>;
 
 
-export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+export type MaterializeBlokMutation = { __typename?: 'Mutation', materializeBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+
+export type UpdateBlokMutationVariables = Exact<{
+  input: UpdateBlokInput;
+}>;
+
+
+export type UpdateBlokMutation = { __typename?: 'Mutation', updateBlok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> } };
+
+export type DeleteBlokMutationVariables = Exact<{
+  input: DeleteBlokInput;
+}>;
+
+
+export type DeleteBlokMutation = { __typename?: 'Mutation', deleteBlok: boolean };
+
+export type UpdateMaterializedBlokMutationVariables = Exact<{
+  input: UpdateMaterializedBlokInput;
+}>;
+
+
+export type UpdateMaterializedBlokMutation = { __typename?: 'Mutation', updateMaterializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+
+export type DeleteMaterializedBlokMutationVariables = Exact<{
+  input: DeleteMaterializedBlokInput;
+}>;
+
+
+export type DeleteMaterializedBlokMutation = { __typename?: 'Mutation', deleteMaterializedBlok: boolean };
 
 export type CreateDashboardMutationVariables = Exact<{
   input: CreateDashboardInput;
 }>;
 
 
-export type CreateDashboardMutation = { __typename?: 'Mutation', createDashboard: { __typename?: 'Dashboard', id: string, name?: string | null } };
+export type CreateDashboardMutation = { __typename?: 'Mutation', createDashboard: { __typename?: 'Dashboard', id: string, name?: string | null, placements: Array<{ __typename?: 'DashboardPlacement', blok?: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } | null }> } };
+
+export type UpdateDashboardMutationVariables = Exact<{
+  input: UpdateDashboardInput;
+}>;
+
+
+export type UpdateDashboardMutation = { __typename?: 'Mutation', updateDashboard: { __typename?: 'Dashboard', id: string, name?: string | null, placements: Array<{ __typename?: 'DashboardPlacement', blok?: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } | null }> } };
+
+export type DeleteDashboardMutationVariables = Exact<{
+  input: DeleteDashboardInput;
+}>;
+
+
+export type DeleteDashboardMutation = { __typename?: 'Mutation', deleteDashboard: boolean };
 
 export type RequestMediaUploadMutationVariables = Exact<{
   input: RequestMediaUploadInput;
@@ -5142,7 +5334,7 @@ export type AgentForProtocolQueryVariables = Exact<{
 }>;
 
 
-export type AgentForProtocolQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename?: 'ArgPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }>, returns: Array<{ __typename?: 'ReturnPort', key: string, label?: string | null, kind: PortKind, identifier?: any | null, nullable: boolean, description?: string | null }> } }> } };
+export type AgentForProtocolQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, name: string, app: { __typename?: 'App', identifier: string }, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, implementations: Array<{ __typename?: 'Implementation', interface: string, action: { __typename?: 'Action', key: string, name: string, description?: string | null, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind, targetPort: string, targetAction: string, targetDependency?: string | null } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }> } };
 
 export type AgentOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -5206,7 +5398,7 @@ export type GetBlokQueryVariables = Exact<{
 }>;
 
 
-export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> } };
+export type GetBlokQuery = { __typename?: 'Query', blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> } };
 
 export type ListBloksQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5227,7 +5419,7 @@ export type GetDashboardQueryVariables = Exact<{
 }>;
 
 
-export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> }> } };
+export type GetDashboardQuery = { __typename?: 'Query', dashboard: { __typename?: 'Dashboard', id: string, name?: string | null, placements: Array<{ __typename?: 'DashboardPlacement', blok?: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } | null }> } };
 
 export type ListDashboardsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5362,12 +5554,12 @@ export type MaterializedBlokQueryVariables = Exact<{
 }>;
 
 
-export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, dashboard: { __typename?: 'Dashboard', id: string }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
+export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
 
 export type ListMaterializedBloksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string }, dashboard: { __typename?: 'Dashboard', id: string } }> };
+export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }> };
 
 export type MemoryShelvesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -5699,54 +5891,6 @@ export const PrimaryActionFragmentDoc = gql`
   description
 }
     `;
-export const ProtocolAgentFragmentDoc = gql`
-    fragment ProtocolAgent on Agent {
-  id
-  instanceId
-  app {
-    identifier
-  }
-  name
-  implementations {
-    interface
-    action {
-      key
-      name
-      description
-      args {
-        key
-        label
-        kind
-        identifier
-        nullable
-        description
-      }
-      returns {
-        key
-        label
-        kind
-        identifier
-        nullable
-        description
-      }
-    }
-  }
-}
-    `;
-export const ListImplementationFragmentDoc = gql`
-    fragment ListImplementation on Implementation {
-  id
-  interface
-  action {
-    description
-    name
-    stateful
-  }
-  agent {
-    name
-  }
-}
-    `;
 export const BaseEffectFragmentDoc = gql`
     fragment BaseEffect on Effect {
   __typename
@@ -5910,172 +6054,6 @@ export const StateFragmentDoc = gql`
   updatedAt
 }
     ${ReturnPortFragmentDoc}`;
-export const ListAsssignationFragmentDoc = gql`
-    fragment ListAsssignation on Assignation {
-  id
-  reference
-  latestEventKind
-  isDone
-  finishedAt
-  createdAt
-  action {
-    id
-    name
-  }
-  implementation {
-    id
-    interface
-    extension
-  }
-  createdAt
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  bucket
-}
-    `;
-export const AgentPlacementFragmentDoc = gql`
-    fragment AgentPlacement on Placement {
-  id
-  name
-  model {
-    id
-    file {
-      ...MediaStore
-    }
-    transferFunction
-  }
-  space {
-    id
-  }
-  affineMatrix
-}
-    ${MediaStoreFragmentDoc}`;
-export const AgentFragmentDoc = gql`
-    fragment Agent on Agent {
-  id
-  instanceId
-  implementations {
-    ...ListImplementation
-  }
-  memoryShelve {
-    id
-  }
-  states {
-    ...State
-  }
-  registry {
-    client {
-      clientId
-      release {
-        version
-        app {
-          identifier
-        }
-      }
-      device {
-        deviceId
-      }
-    }
-    user {
-      sub
-    }
-  }
-  blocked
-  pinned
-  extensions
-  name
-  active
-  connected
-  lastSeen
-  assignations(pagination: {limit: 5}) {
-    ...ListAsssignation
-  }
-  placements(pagination: {limit: 1}, ordering: {createdAt: DESC}) {
-    ...AgentPlacement
-  }
-}
-    ${ListImplementationFragmentDoc}
-${StateFragmentDoc}
-${ListAsssignationFragmentDoc}
-${AgentPlacementFragmentDoc}`;
-export const ListAgentFragmentDoc = gql`
-    fragment ListAgent on Agent {
-  id
-  instanceId
-  active
-  connected
-  name
-  lastSeen
-  pinned
-  blocked
-  registry {
-    client {
-      clientId
-    }
-    user {
-      sub
-    }
-  }
-  user {
-    sub
-  }
-  app {
-    identifier
-  }
-  release {
-    version
-  }
-  device {
-    id
-    deviceId
-  }
-  user {
-    sub
-  }
-}
-    `;
-export const AgentChangeEventFragmentDoc = gql`
-    fragment AgentChangeEvent on AgentChangeEvent {
-  create {
-    ...ListAgent
-  }
-  update {
-    ...ListAgent
-  }
-  delete
-}
-    ${ListAgentFragmentDoc}`;
-export const AssignationEventFragmentDoc = gql`
-    fragment AssignationEvent on AssignationEvent {
-  id
-  kind
-  level
-  returns
-  assignation {
-    id
-    reference
-  }
-  progress
-  reference
-  createdAt
-  message
-  delegatedTo {
-    id
-    implementation {
-      id
-      interface
-      action {
-        name
-      }
-      extension
-    }
-  }
-}
-    `;
 export const StringAssignWidgetFragmentDoc = gql`
     fragment StringAssignWidget on StringAssignWidget {
   __typename
@@ -6266,6 +6244,215 @@ export const ArgPortFragmentDoc = gql`
 ${AssignWidgetFragmentDoc}
 ${ArgChildPortFragmentDoc}
 ${ValidatorFragmentDoc}`;
+export const ProtocolAgentFragmentDoc = gql`
+    fragment ProtocolAgent on Agent {
+  id
+  instanceId
+  app {
+    identifier
+  }
+  name
+  states {
+    ...State
+  }
+  implementations {
+    interface
+    action {
+      key
+      name
+      description
+      args {
+        ...ArgPort
+      }
+      returns {
+        ...ReturnPort
+      }
+    }
+  }
+}
+    ${StateFragmentDoc}
+${ArgPortFragmentDoc}
+${ReturnPortFragmentDoc}`;
+export const ListImplementationFragmentDoc = gql`
+    fragment ListImplementation on Implementation {
+  id
+  interface
+  action {
+    description
+    name
+    stateful
+  }
+  agent {
+    name
+  }
+}
+    `;
+export const ListAsssignationFragmentDoc = gql`
+    fragment ListAsssignation on Assignation {
+  id
+  reference
+  latestEventKind
+  isDone
+  finishedAt
+  createdAt
+  action {
+    id
+    name
+  }
+  implementation {
+    id
+    interface
+    extension
+  }
+  createdAt
+}
+    `;
+export const MediaStoreFragmentDoc = gql`
+    fragment MediaStore on MediaStore {
+  id
+  key
+  bucket
+}
+    `;
+export const AgentPlacementFragmentDoc = gql`
+    fragment AgentPlacement on Placement {
+  id
+  name
+  model {
+    id
+    file {
+      ...MediaStore
+    }
+    transferFunction
+  }
+  space {
+    id
+  }
+  affineMatrix
+}
+    ${MediaStoreFragmentDoc}`;
+export const AgentFragmentDoc = gql`
+    fragment Agent on Agent {
+  id
+  instanceId
+  implementations {
+    ...ListImplementation
+  }
+  memoryShelve {
+    id
+  }
+  states {
+    ...State
+  }
+  registry {
+    client {
+      clientId
+      release {
+        version
+        app {
+          identifier
+        }
+      }
+      device {
+        deviceId
+      }
+    }
+    user {
+      sub
+    }
+  }
+  blocked
+  pinned
+  extensions
+  name
+  active
+  connected
+  lastSeen
+  assignations(pagination: {limit: 5}) {
+    ...ListAsssignation
+  }
+  placements(pagination: {limit: 1}, ordering: {createdAt: DESC}) {
+    ...AgentPlacement
+  }
+}
+    ${ListImplementationFragmentDoc}
+${StateFragmentDoc}
+${ListAsssignationFragmentDoc}
+${AgentPlacementFragmentDoc}`;
+export const ListAgentFragmentDoc = gql`
+    fragment ListAgent on Agent {
+  id
+  instanceId
+  active
+  connected
+  name
+  lastSeen
+  pinned
+  blocked
+  registry {
+    client {
+      clientId
+    }
+    user {
+      sub
+    }
+  }
+  user {
+    sub
+  }
+  app {
+    identifier
+  }
+  release {
+    version
+  }
+  device {
+    id
+    deviceId
+  }
+  user {
+    sub
+  }
+}
+    `;
+export const AgentChangeEventFragmentDoc = gql`
+    fragment AgentChangeEvent on AgentChangeEvent {
+  create {
+    ...ListAgent
+  }
+  update {
+    ...ListAgent
+  }
+  delete
+}
+    ${ListAgentFragmentDoc}`;
+export const AssignationEventFragmentDoc = gql`
+    fragment AssignationEvent on AssignationEvent {
+  id
+  kind
+  level
+  returns
+  assignation {
+    id
+    reference
+  }
+  progress
+  reference
+  createdAt
+  message
+  delegatedTo {
+    id
+    implementation {
+      id
+      interface
+      action {
+        name
+      }
+      extension
+    }
+  }
+}
+    `;
 export const PortGroupFragmentDoc = gql`
     fragment PortGroup on PortGroup {
   key
@@ -6458,9 +6645,6 @@ export const ListMaterializedBlokFragmentDoc = gql`
     id
     name
   }
-  dashboard {
-    id
-  }
 }
     `;
 export const BlokFragmentDoc = gql`
@@ -6530,9 +6714,6 @@ export const MaterializedBlokFragmentDoc = gql`
   blok {
     ...Blok
   }
-  dashboard {
-    id
-  }
   agentMappings {
     key
     agent {
@@ -6545,8 +6726,10 @@ export const DashboardFragmentDoc = gql`
     fragment Dashboard on Dashboard {
   id
   name
-  materializedBloks {
-    ...MaterializedBlok
+  placements {
+    blok {
+      ...MaterializedBlok
+    }
   }
 }
     ${MaterializedBlokFragmentDoc}`;
@@ -7694,14 +7877,141 @@ export function useMaterializeBlokMutation(baseOptions?: ApolloReactHooks.Mutati
 export type MaterializeBlokMutationHookResult = ReturnType<typeof useMaterializeBlokMutation>;
 export type MaterializeBlokMutationResult = Apollo.MutationResult<MaterializeBlokMutation>;
 export type MaterializeBlokMutationOptions = Apollo.BaseMutationOptions<MaterializeBlokMutation, MaterializeBlokMutationVariables>;
+export const UpdateBlokDocument = gql`
+    mutation UpdateBlok($input: UpdateBlokInput!) {
+  updateBlok(input: $input) {
+    ...Blok
+  }
+}
+    ${BlokFragmentDoc}`;
+export type UpdateBlokMutationFn = Apollo.MutationFunction<UpdateBlokMutation, UpdateBlokMutationVariables>;
+
+/**
+ * __useUpdateBlokMutation__
+ *
+ * To run a mutation, you first call `useUpdateBlokMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateBlokMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateBlokMutation, { data, loading, error }] = useUpdateBlokMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateBlokMutation, UpdateBlokMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateBlokMutation, UpdateBlokMutationVariables>(UpdateBlokDocument, options);
+      }
+export type UpdateBlokMutationHookResult = ReturnType<typeof useUpdateBlokMutation>;
+export type UpdateBlokMutationResult = Apollo.MutationResult<UpdateBlokMutation>;
+export type UpdateBlokMutationOptions = Apollo.BaseMutationOptions<UpdateBlokMutation, UpdateBlokMutationVariables>;
+export const DeleteBlokDocument = gql`
+    mutation DeleteBlok($input: DeleteBlokInput!) {
+  deleteBlok(input: $input)
+}
+    `;
+export type DeleteBlokMutationFn = Apollo.MutationFunction<DeleteBlokMutation, DeleteBlokMutationVariables>;
+
+/**
+ * __useDeleteBlokMutation__
+ *
+ * To run a mutation, you first call `useDeleteBlokMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBlokMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBlokMutation, { data, loading, error }] = useDeleteBlokMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteBlokMutation, DeleteBlokMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteBlokMutation, DeleteBlokMutationVariables>(DeleteBlokDocument, options);
+      }
+export type DeleteBlokMutationHookResult = ReturnType<typeof useDeleteBlokMutation>;
+export type DeleteBlokMutationResult = Apollo.MutationResult<DeleteBlokMutation>;
+export type DeleteBlokMutationOptions = Apollo.BaseMutationOptions<DeleteBlokMutation, DeleteBlokMutationVariables>;
+export const UpdateMaterializedBlokDocument = gql`
+    mutation UpdateMaterializedBlok($input: UpdateMaterializedBlokInput!) {
+  updateMaterializedBlok(input: $input) {
+    ...MaterializedBlok
+  }
+}
+    ${MaterializedBlokFragmentDoc}`;
+export type UpdateMaterializedBlokMutationFn = Apollo.MutationFunction<UpdateMaterializedBlokMutation, UpdateMaterializedBlokMutationVariables>;
+
+/**
+ * __useUpdateMaterializedBlokMutation__
+ *
+ * To run a mutation, you first call `useUpdateMaterializedBlokMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateMaterializedBlokMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateMaterializedBlokMutation, { data, loading, error }] = useUpdateMaterializedBlokMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateMaterializedBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateMaterializedBlokMutation, UpdateMaterializedBlokMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateMaterializedBlokMutation, UpdateMaterializedBlokMutationVariables>(UpdateMaterializedBlokDocument, options);
+      }
+export type UpdateMaterializedBlokMutationHookResult = ReturnType<typeof useUpdateMaterializedBlokMutation>;
+export type UpdateMaterializedBlokMutationResult = Apollo.MutationResult<UpdateMaterializedBlokMutation>;
+export type UpdateMaterializedBlokMutationOptions = Apollo.BaseMutationOptions<UpdateMaterializedBlokMutation, UpdateMaterializedBlokMutationVariables>;
+export const DeleteMaterializedBlokDocument = gql`
+    mutation DeleteMaterializedBlok($input: DeleteMaterializedBlokInput!) {
+  deleteMaterializedBlok(input: $input)
+}
+    `;
+export type DeleteMaterializedBlokMutationFn = Apollo.MutationFunction<DeleteMaterializedBlokMutation, DeleteMaterializedBlokMutationVariables>;
+
+/**
+ * __useDeleteMaterializedBlokMutation__
+ *
+ * To run a mutation, you first call `useDeleteMaterializedBlokMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMaterializedBlokMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMaterializedBlokMutation, { data, loading, error }] = useDeleteMaterializedBlokMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteMaterializedBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteMaterializedBlokMutation, DeleteMaterializedBlokMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteMaterializedBlokMutation, DeleteMaterializedBlokMutationVariables>(DeleteMaterializedBlokDocument, options);
+      }
+export type DeleteMaterializedBlokMutationHookResult = ReturnType<typeof useDeleteMaterializedBlokMutation>;
+export type DeleteMaterializedBlokMutationResult = Apollo.MutationResult<DeleteMaterializedBlokMutation>;
+export type DeleteMaterializedBlokMutationOptions = Apollo.BaseMutationOptions<DeleteMaterializedBlokMutation, DeleteMaterializedBlokMutationVariables>;
 export const CreateDashboardDocument = gql`
     mutation CreateDashboard($input: CreateDashboardInput!) {
   createDashboard(input: $input) {
-    id
-    name
+    ...Dashboard
   }
 }
-    `;
+    ${DashboardFragmentDoc}`;
 export type CreateDashboardMutationFn = Apollo.MutationFunction<CreateDashboardMutation, CreateDashboardMutationVariables>;
 
 /**
@@ -7728,6 +8038,70 @@ export function useCreateDashboardMutation(baseOptions?: ApolloReactHooks.Mutati
 export type CreateDashboardMutationHookResult = ReturnType<typeof useCreateDashboardMutation>;
 export type CreateDashboardMutationResult = Apollo.MutationResult<CreateDashboardMutation>;
 export type CreateDashboardMutationOptions = Apollo.BaseMutationOptions<CreateDashboardMutation, CreateDashboardMutationVariables>;
+export const UpdateDashboardDocument = gql`
+    mutation UpdateDashboard($input: UpdateDashboardInput!) {
+  updateDashboard(input: $input) {
+    ...Dashboard
+  }
+}
+    ${DashboardFragmentDoc}`;
+export type UpdateDashboardMutationFn = Apollo.MutationFunction<UpdateDashboardMutation, UpdateDashboardMutationVariables>;
+
+/**
+ * __useUpdateDashboardMutation__
+ *
+ * To run a mutation, you first call `useUpdateDashboardMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateDashboardMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateDashboardMutation, { data, loading, error }] = useUpdateDashboardMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateDashboardMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDashboardMutation, UpdateDashboardMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateDashboardMutation, UpdateDashboardMutationVariables>(UpdateDashboardDocument, options);
+      }
+export type UpdateDashboardMutationHookResult = ReturnType<typeof useUpdateDashboardMutation>;
+export type UpdateDashboardMutationResult = Apollo.MutationResult<UpdateDashboardMutation>;
+export type UpdateDashboardMutationOptions = Apollo.BaseMutationOptions<UpdateDashboardMutation, UpdateDashboardMutationVariables>;
+export const DeleteDashboardDocument = gql`
+    mutation DeleteDashboard($input: DeleteDashboardInput!) {
+  deleteDashboard(input: $input)
+}
+    `;
+export type DeleteDashboardMutationFn = Apollo.MutationFunction<DeleteDashboardMutation, DeleteDashboardMutationVariables>;
+
+/**
+ * __useDeleteDashboardMutation__
+ *
+ * To run a mutation, you first call `useDeleteDashboardMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDashboardMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDashboardMutation, { data, loading, error }] = useDeleteDashboardMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteDashboardMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDashboardMutation, DeleteDashboardMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteDashboardMutation, DeleteDashboardMutationVariables>(DeleteDashboardDocument, options);
+      }
+export type DeleteDashboardMutationHookResult = ReturnType<typeof useDeleteDashboardMutation>;
+export type DeleteDashboardMutationResult = Apollo.MutationResult<DeleteDashboardMutation>;
+export type DeleteDashboardMutationOptions = Apollo.BaseMutationOptions<DeleteDashboardMutation, DeleteDashboardMutationVariables>;
 export const RequestMediaUploadDocument = gql`
     mutation RequestMediaUpload($input: RequestMediaUploadInput!) {
   requestMediaUpload(input: $input) {

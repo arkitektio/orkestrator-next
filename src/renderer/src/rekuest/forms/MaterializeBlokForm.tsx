@@ -14,12 +14,25 @@ import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
+const dependencySelectionSchema = z.object({
+  key: z.string(),
+  autoResolve: z.boolean().optional(),
+  mappedAgents: z.array(
+    z.object({
+      agent: z.string(),
+      key: z.string(),
+      mappedActions: z.array(z.string()),
+    }),
+  ),
+});
+
 const formSchema = z.object({
-  dependencies: z.array(z.any()), // You can make this stricter if you'd like
+  dependencies: z.array(dependencySelectionSchema),
 });
 
 export type MaterializeBlokFormProps = {
   blokId: string;
+  dashboardId?: string;
   dependencies: Array<{
     id: string;
     key: string;
@@ -32,7 +45,7 @@ export type MaterializeBlokFormProps = {
     singular?: boolean;
   }>;
   onMaterialized?: (materialized: MaterializedBlok) => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
 };
 
 
@@ -69,6 +82,7 @@ export const MaterializeBlokForm = (
         variables: {
           input: {
             blok: props.blokId,
+            dashboard: props.dashboardId,
             agentMappings: data.dependencies.map(d => ({
                  key: d.key,
                  agent: d.mappedAgents[0]?.agent // Assuming single mapping for now based on your logic

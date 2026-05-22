@@ -1,5 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { registry } from "@/app/localactions";
 import BlokRenderer from "@/blok/renderer/BlokRenderer";
+import { LocalActionButton } from "@/components/ui/localactionbutton";
 import {
   RekuestAgent,
   RekuestBlok,
@@ -15,6 +17,20 @@ export const MaterializedBlokPage = asDetailQueryRoute(useMaterializedBlokQuery,
     <RekuestMaterializedBlok.ModelPage
       title={materializedBlok.blok.name || materializedBlok.id}
       object={materializedBlok}
+      pageActions={(
+        <LocalActionButton
+          name={"rekuest-delete-materialized-blok" as keyof typeof registry}
+          state={{
+            left: [
+              {
+                identifier: '@rekuest/materialized_blok',
+                object: { id: materializedBlok.id },
+              },
+            ],
+            isCommand: false,
+          }}
+        />
+      )}
     >
       <div className="relative flex h-full w-full flex-col gap-4 p-4">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">

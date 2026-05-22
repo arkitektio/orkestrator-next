@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { IntField } from "@/components/fields/IntField";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export const AddMultiPositionViewForm = (props: { image: string }) => {
   const [search] = useMultiWellPlateOptionsLazyQuery();
   const [create] = useAutoCreateMultiWellPlateMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Saved" });
 
   const form = useForm<WellPositionViewInput>({
     defaultValues: {
@@ -43,7 +43,7 @@ export const AddMultiPositionViewForm = (props: { image: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data,

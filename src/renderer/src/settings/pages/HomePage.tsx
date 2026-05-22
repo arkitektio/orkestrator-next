@@ -41,10 +41,10 @@ import {
   XCircle,
   Sparkles,
 } from "lucide-react";
-import deepEqual from "deep-equal";
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ServiceRuntimeState } from "@/lib/arkitekt/types";
+import { Settings as UserSettings } from "@/providers/settings/validator";
 
 export type IRepresentationScreenProps = Record<string, never>;
 
@@ -244,25 +244,22 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const configurationIssues = Arkitekt.useConfigurationIssues();
 
 
-  const form = useForm({
+  const form = useForm<UserSettings>({
     defaultValues: settings,
   });
 
   const {
     formState,
     formState: { isValidating },
-    watch,
   } = form;
 
-  const data = watch();
+  const data = useWatch({ control: form.control });
 
   useEffect(() => {
     if (formState.isValid && !isValidating) {
-      if (!deepEqual(data, settings)) {
-        setSettings(data);
-      }
+      setSettings(data as UserSettings);
     }
-  }, [formState, data, isValidating, settings]);
+  }, [data, formState.isValid, isValidating, setSettings]);
 
   return (
     <PageLayout
@@ -294,22 +291,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         {/* App Updates Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              Appearance
-            </CardTitle>
-            <CardDescription>
-              Customize the look and feel of the application.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ThemeCustomizer />
-          </CardContent>
-        </Card>
-
-        {/* App Updates Section */}
-        <Card>
-          <CardHeader>
             <CardTitle>Application Updates</CardTitle>
             <CardDescription>
               Check for and manage application updates.
@@ -320,99 +301,112 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           </CardContent>
         </Card>
 
-        {/* Settings Form Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              User Preferences
-            </CardTitle>
-            <CardDescription>
-              Customize your application experience with these settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit((data) => {
-                  setSettings(data);
-                })}
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <SwitchField
-                    name="experimentalViv"
-                    label="Experimental Viv"
-                    description="Enable experimental visualization features"
-                  />
-                  <SwitchField
-                    name="experimentalCache"
-                    label="Experimental Cache Mode"
-                    description="Cache image layers for better performance"
+        <Form {...form}>
+          <form className="space-y-8">
+            {/* Appearance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Appearance
+                </CardTitle>
+                <CardDescription>
+                  Customize the look and feel of the application.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ThemeCustomizer control={form.control} />
+              </CardContent>
+            </Card>
+
+            {/* Settings Form Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  User Preferences
+                </CardTitle>
+                <CardDescription>
+                  Customize your application experience with these settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SwitchField
+                      name="experimentalViv"
+                      label="Experimental Viv"
+                      description="Enable experimental visualization features"
+                    />
+                    <SwitchField
+                      name="experimentalCache"
+                      label="Experimental Cache Mode"
+                      description="Cache image layers for better performance"
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="defaultZoomLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex flex-row items-center justify-between w-full gap-2">
+                          <FormLabel>
+                            Default Zoom Level (
+                            {Math.round((field.value || 1.0) * 100)}%)
+                          </FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const currentValue = field.value || 1.0;
+                                  const newValue = Math.max(
+                                    0.25,
+                                    currentValue - 0.05,
+                                  );
+                                  field.onChange(newValue);
+                                }}
+                                disabled={(field.value || 1.0) <= 0.25}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="min-w-[80px] text-center text-sm font-medium">
+                                {Math.round((field.value || 1.0) * 100)}%
+                              </span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const currentValue = field.value || 1.0;
+                                  const newValue = Math.min(
+                                    3.0,
+                                    currentValue + 0.05,
+                                  );
+                                  field.onChange(newValue);
+                                }}
+                                disabled={(field.value || 1.0) >= 3.0}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </FormControl>
+                        </div>
+                        <FormDescription>
+                          Set the default zoom level for the application (25% -
+                          300%)
+                        </FormDescription>
+                      </FormItem>
+                    )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="defaultZoomLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex flex-row items-center justify-between w-full gap-2">
-                        <FormLabel>
-                          Default Zoom Level (
-                          {Math.round((field.value || 1.0) * 100)}%)
-                        </FormLabel>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                const currentValue = field.value || 1.0;
-                                const newValue = Math.max(
-                                  0.25,
-                                  currentValue - 0.05,
-                                );
-                                field.onChange(newValue);
-                              }}
-                              disabled={(field.value || 1.0) <= 0.25}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="min-w-[80px] text-center text-sm font-medium">
-                              {Math.round((field.value || 1.0) * 100)}%
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                const currentValue = field.value || 1.0;
-                                const newValue = Math.min(
-                                  3.0,
-                                  currentValue + 0.05,
-                                );
-                                field.onChange(newValue);
-                              }}
-                              disabled={(field.value || 1.0) >= 3.0}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </div>
-                      <FormDescription>
-                        Set the default zoom level for the application (25% -
-                        300%)
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
 
         {/* Services Section */}
         <div className="space-y-4">

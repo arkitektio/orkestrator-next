@@ -5,6 +5,17 @@
 import { WorkerPool } from '../pool/workerpool'
 import type { Chunk, CodecMetadata, DataType } from 'zarrita'
 
+export type TextureFidelity = 'default' | 'low' | 'high'
+
+export interface TextureChunkBounds {
+  localMin: number
+  localMax: number
+}
+
+export type TexturedChunk<D extends DataType = DataType> = Chunk<D> & {
+  textureBounds?: TextureChunkBounds
+}
+
 /**
  * Minimal metadata needed to reconstruct a zarrita codec pipeline in a worker.
  */
@@ -37,4 +48,6 @@ export interface GetWorkerOptions<StoreOpts = unknown> {
   useSharedArrayBuffer?: boolean
   /** Optional decoded-chunk cache. Defaults to the shared LRU cache. */
   cache?: ChunkCache
+  /** Optional worker-side texture fidelity conversion before the data returns to the main thread. */
+  textureFidelity?: TextureFidelity
 }

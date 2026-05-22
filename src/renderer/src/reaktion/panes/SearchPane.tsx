@@ -2,7 +2,7 @@ import { Tree } from "@/components/explorer/Tree";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FlussRun, FlussWorkspace } from "@/linkers";
@@ -18,7 +18,6 @@ import {
   useWorkspacesQuery,
 } from "../api/graphql";
 import WorkspaceCard from "../components/cards/WorkspaceCard";
-import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 
 interface IDataSidebarProps { }
 
@@ -48,16 +47,13 @@ export const NavigationPane = (props: {}) => {
 
       <SidePaneGroup title={<FlussWorkspace.ListLink>Workspaces</FlussWorkspace.ListLink>}
         action={
-          <FormDialogAction
-            label="Create"
+          <DialogButton
+            name="createworkspace"
             variant={"ghost"}
-            buttonChildren={<PlusIcon className="h-4 w-4" />}
-            onSubmit={(item) => {
-              console.log(item);
-            }}
+            dialogProps={{}}
           >
-            <CreateWorkspaceForm />
-          </FormDialogAction>
+            <PlusIcon className="h-4 w-4" />
+          </DialogButton>
         }
       >
         {data?.workspaces.map((workspace, index) => (

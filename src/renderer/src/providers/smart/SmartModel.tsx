@@ -37,7 +37,7 @@ export const SmartModel = ({
         "selected:ring selected:ring-1 selected:ring-offset-2 selected:ring-offset-transparent selected:ring-primary/80 selected:rounded",
         "b-selected:ring b-selected:ring-2 b-selected:rounded b-selected:ring-red-500",
         "dragging:animate-pulse dragging:ring-2 dragging:ring-gray-600 dragging:rounded dragging:rounded-md",
-        "over:shadow-xl over:ring-2 over:border-gray-200 over:ring over:rounded over:rounded-md",
+        "over:ring over:ring-offset-4 over:border-gray-200 over:ring-primary/80 over:rounded over:ring-offset-transparent",
         "selected:after:absolute selected:after:top-0 selected:after:right-0 selected:after:z-[9998] selected:after:flex selected:after:h-6 selected:after:w-6 selected:after:translate-x-1/2 selected:after:-translate-y-1/2 selected:after:items-center selected:after:justify-center selected:after:rounded-full selected:after:bg-primary selected:after:text-xs selected:after:font-semibold selected:after:text-white selected:after:content-[attr(data-selected-index)]",
         "b-selected:before:absolute b-selected:before:top-0 b-selected:before:right-0 b-selected:before:z-[9999] b-selected:before:flex b-selected:before:h-6 b-selected:before:w-6 b-selected:before:translate-x-1/2 b-selected:before:-translate-y-1/2 b-selected:before:items-center b-selected:before:justify-center b-selected:before:rounded-full b-selected:before:bg-red-500 b-selected:before:text-xs b-selected:before:font-semibold b-selected:before:text-white b-selected:before:content-[attr(data-bselected-index)]",
       ),
@@ -105,8 +105,8 @@ const SmartModelContext = ({ self }: { self: Structure }) => {
 
 export const CombineButton = () => {
   return (
-    <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 bg-black bg-opacity-75">
-      <div className="font-light text-xs p-2 rounded-full bg-black bg-opacity-100">
+    <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 bg-black bg-opacity-20 inset-0 rounded rounded-lg">
+      <div className="font-light text-xs p-2 rounded-full bg-black bg-opacity-20">
         Drop to Combine
       </div>
     </div>

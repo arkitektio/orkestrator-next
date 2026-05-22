@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useSceneStore } from '../store/sceneStore';
 import { useViewerStore } from '../store/viewerStore';
 
+export type VolumeRenderMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMaterial>;
+
 type VolumeTextureMeshProps = {
   texture: THREE.Data3DTexture;
+  localMinTexture: THREE.Data3DTexture;
+  localMaxTexture: THREE.Data3DTexture;
   colorMapTexture: THREE.Texture | null;
   layerId: string;
   dimensionOrder: [number, number, number];
@@ -14,10 +19,13 @@ type VolumeTextureMeshProps = {
   minValue: number;
   maxValue: number;
   dataScale: number;
+  volumeMeshRef?: MutableRefObject<VolumeRenderMesh | null>;
 };
 
 export const VolumeTextureMesh = ({
   texture,
+  localMinTexture,
+  localMaxTexture,
   colorMapTexture,
   layerId,
   dimensionOrder,
@@ -26,15 +34,13 @@ export const VolumeTextureMesh = ({
   minValue,
   maxValue,
   dataScale,
+  volumeMeshRef,
 }: VolumeTextureMeshProps) => {
   const [xIdx, yIdx, zIdx] = dimensionOrder;
   const isDebug = useViewerStore((s) => s.debug);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const layer = useSceneStore((s) => s.layers.find((candidate) => candidate.id === layerId));
-  const boundsScale = useMemo(
-    () => volumeSize.map((axis) => axis * 1.002) as [number, number, number],
-    [volumeSize],
-  );
+  const invalidate = useThree((state) => state.invalidate);
 
   const validSpatialIndices = useMemo(
     () => [xIdx, yIdx, zIdx].filter((index) => index !== -1),
@@ -77,8 +83,12 @@ export const VolumeTextureMesh = ({
     if (!materialRef.current) return;
 
     materialRef.current.uniforms.colorTexture.value = texture;
+    materialRef.current.uniforms.chunkMinTexture.value = localMinTexture;
+    materialRef.current.uniforms.chunkMaxTexture.value = localMaxTexture;
     materialRef.current.uniforms.dataScale.value = dataScale;
-  }, [dataScale, texture]);
+    materialRef.current.uniformsNeedUpdate = true;
+    invalidate();
+  }, [dataScale, invalidate, localMaxTexture, localMinTexture, texture]);
 
   useEffect(() => {
     if (!materialRef.current) return;
@@ -92,11 +102,15 @@ export const VolumeTextureMesh = ({
     if (colorMapTexture) {
       materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
     }
-  }, [colorMapTexture, layer?.climMax, layer?.climMin]);
+    materialRef.current.uniformsNeedUpdate = true;
+    invalidate();
+  }, [colorMapTexture, invalidate, layer?.climMax, layer?.climMin]);
 
   const initialUniforms = useMemo(
     () => ({
       colorTexture: { value: texture },
+      chunkMinTexture: { value: localMinTexture },
+      chunkMaxTexture: { value: localMaxTexture },
       colormapTexture: { value: colorMapTexture },
       minValue: { value: minValue },
       maxValue: { value: maxValue },
@@ -107,13 +121,33 @@ export const VolumeTextureMesh = ({
       useDiscrete: { value: 0.0 },
       dataScale: { value: dataScale },
       dimRemap: { value: dimRemapMat },
+      uPickingPass: { value: false },
     }),
-    [colorMapTexture, dataScale, dimRemapMat, layer?.climMax, layer?.climMin, maxValue, minValue, texture],
+    [
+      colorMapTexture,
+      dataScale,
+      dimRemapMat,
+      layer?.climMax,
+      layer?.climMin,
+      localMaxTexture,
+      localMinTexture,
+      maxValue,
+      minValue,
+      texture,
+    ],
   );
 
   return (
     <group position={volumePosition}>
-      <mesh scale={volumeSize} renderOrder={1} >
+      <mesh
+        ref={(mesh) => {
+          if (volumeMeshRef) {
+            volumeMeshRef.current = mesh as VolumeRenderMesh | null;
+          }
+        }}
+        scale={volumeSize}
+        renderOrder={1}
+      >
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial
           ref={materialRef}
@@ -142,6 +176,8 @@ export const VolumeTextureMesh = ({
             in vec3 vDirection;
 
             uniform sampler3D colorTexture;
+            uniform sampler3D chunkMinTexture;
+            uniform sampler3D chunkMaxTexture;
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
@@ -152,6 +188,7 @@ export const VolumeTextureMesh = ({
             uniform float useDiscrete;
             uniform float dataScale;
             uniform mat3 dimRemap;
+            uniform bool uPickingPass;
 
             out vec4 FragColor;
 
@@ -172,6 +209,33 @@ export const VolumeTextureMesh = ({
               return vec2(t0, t1);
             }
 
+            float reconstructRawValue(float encodedValue, vec3 texCoord) {
+              float localMin = texture(chunkMinTexture, texCoord).r;
+              float localMax = texture(chunkMaxTexture, texCoord).r;
+              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
+              if (abs(localMax - localMin) < 0.00001) {
+                return localMin;
+              }
+
+              return mix(localMin, localMax, encoded);
+            }
+
+            float computeNormalized(float rawValue) {
+              if (useDiscrete > 0.5) {
+                return mod(rawValue, 256.0) / 255.0;
+              }
+
+              float baseNorm = clamp((rawValue - minValue) / max(maxValue - minValue, 0.00001), 0.0, 1.0);
+              float climRange = max(climMax - climMin, 0.00001);
+              float normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);
+              return pow(normalized, gamma);
+            }
+
+            float computeVisibility(float normalized) {
+              vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
+              return color.a * opacity * normalized;
+            }
+
             void main() {
               vec3 rayDir = normalize(vDirection);
               vec2 bounds = hitBox(vOrigin, rayDir);
@@ -189,7 +253,9 @@ export const VolumeTextureMesh = ({
               t += delta * jitter;
 
               vec3 p = vOrigin + t * rayDir;
-              float maxVal = 0.0;
+              float maxRawValue = 0.0;
+              vec3 hitPosition = vec3(0.0);
+              bool hit = false;
 
               for (int i = 0; i < int(steps); i++) {
                 if (t > bounds.y) break;
@@ -198,24 +264,32 @@ export const VolumeTextureMesh = ({
                 uvw.y = 1.0 - uvw.y;
 
                 vec3 texCoord = dimRemap * uvw;
-                float val = texture(colorTexture, texCoord).r;
-                maxVal = max(maxVal, val);
+                float encodedValue = texture(colorTexture, texCoord).r;
+                float rawValue = reconstructRawValue(encodedValue, texCoord);
+
+                if (uPickingPass) {
+                  float sampleNormalized = computeNormalized(rawValue);
+                  if (computeVisibility(sampleNormalized) > 0.01) {
+                    hit = true;
+                    hitPosition = clamp(p, vec3(-0.5), vec3(0.5));
+                    break;
+                  }
+                } else {
+                  maxRawValue = max(maxRawValue, rawValue);
+                }
 
                 p += step;
                 t += delta;
               }
 
-              float rawValue = maxVal * dataScale;
-              float normalized;
+              if (uPickingPass) {
+                if (!hit) discard;
 
-              if (useDiscrete > 0.5) {
-                normalized = mod(rawValue, 256.0) / 255.0;
-              } else {
-                float baseNorm = clamp((rawValue - minValue) / max(maxValue - minValue, 0.00001), 0.0, 1.0);
-                float climRange = max(climMax - climMin, 0.00001);
-                normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);
-                normalized = pow(normalized, gamma);
+                FragColor = vec4(hitPosition, 1.0);
+                return;
               }
+
+              float normalized = computeNormalized(maxRawValue);
 
               vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
               if (color.a * normalized < 0.01) discard;
@@ -223,18 +297,6 @@ export const VolumeTextureMesh = ({
               FragColor = vec4(color.rgb, color.a * opacity * normalized);
             }
           `}
-        />
-      </mesh>
-
-      <mesh scale={boundsScale} renderOrder={3}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial
-          color={isDebug ? '#22d3ee' : '#67e8f9'}
-          wireframe={true}
-          opacity={isDebug ? 0.55 : 0.22}
-          transparent={true}
-          depthWrite={false}
-          toneMapped={false}
         />
       </mesh>
 

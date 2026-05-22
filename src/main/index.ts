@@ -20,7 +20,6 @@ import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
-app.commandLine.appendSwitch("origin-to-force-quic-on", "jhnnsrs-lab:4433");
 
 // Core Services
 const appManager = new AppManager();

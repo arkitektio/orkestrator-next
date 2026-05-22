@@ -5,10 +5,9 @@ import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
 import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
-import { ActionButton } from "@/components/ui/action";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import {
   BarChart3,
   Network,
@@ -24,7 +23,6 @@ import {
 import { PopularCarousel } from "../components/PopularCarousel";
 import DefinitionList from "../components/lists/DefinitionList";
 import ReleasesList from "../components/lists/ReleasesList";
-import { CreateRepoForm } from "../forms/CreateRepoForm";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,28 +41,27 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
       pageActions={
         <div className="flex flex-row gap-1">
           <>
-            <FormDialogAction
-              label="Add Repo"
+            <DialogButton
+              name="createrepo"
               variant="outline"
               size="sm"
-              onSubmit={(item) => {
-                console.log(item);
-              }}
+              dialogProps={{}}
             >
-              <CreateRepoForm />
-            </FormDialogAction>
+              Add Repo
+            </DialogButton>
           </>
 
-          <ActionButton
+          <Button
+
             label="Rescan Repos"
-            run={async () => {
+            onClick={async () => {
               await rescan();
             }}
             variant="outline"
             size="sm"
           >
             {loading ? "Rescanning..." : "Rescan Repos"}
-          </ActionButton>
+          </Button>
         </div>
       }
       title="Home"

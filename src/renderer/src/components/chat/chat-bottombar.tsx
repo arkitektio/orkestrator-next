@@ -1,4 +1,3 @@
-import { RoomFragment } from "@/alpaka/api/graphql";
 import { cn } from "@/lib/utils";
 import {
   BoldPlugin,
@@ -15,29 +14,32 @@ import {
   Mic,
   Paperclip,
   PlusCircle,
-  SendHorizontal,
+  Send,
+  SmilePlus,
   ThumbsUp,
   Underline,
 } from "lucide-react";
 import { Plate, PlateContent, usePlateEditor } from "platejs/react";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { EmojiPicker } from "../emoji-picker";
-import { Button, buttonVariants } from "../ui/button";
+import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatBottombarProps {
   sendMessage: (text: string) => void;
   isMobile: boolean;
-  room: RoomFragment;
 }
+
+type ComposerTextNode = {
+  text?: string;
+  children?: ComposerTextNode[];
+};
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
 export default function ChatBottombar({
   sendMessage,
   isMobile,
-  room,
 }: ChatBottombarProps) {
   const [hasContent, setHasContent] = useState(false);
 
@@ -51,10 +53,10 @@ export default function ChatBottombar({
     ],
   });
 
-  const serialize = (nodes: any[]) => {
+  const serialize = (nodes: ComposerTextNode[]) => {
     return nodes.map(node => {
       if (node.children) {
-        return node.children.map((child: any) => child.text || (child.children ? serialize([child]) : '')).join('')
+        return node.children.map((child) => child.text || (child.children ? serialize([child]) : '')).join('')
       }
       return node.text || ''
     }).join('\n')
@@ -87,59 +89,64 @@ export default function ChatBottombar({
   };
 
   return (
-    <div className="p-2 flex justify-between w-full items-end gap-2">
+    <div className="border-t ">
+      <div className="flex w-full items-end gap-3">
       <div className="flex pb-1">
         <Popover>
           <PopoverTrigger asChild>
-            <Link
-              to="#"
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
                 "h-9 w-9",
-                "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                "rounded-xl border bg-muted/40 hover:bg-muted/70"
               )}
             >
               <PlusCircle size={20} className="text-muted-foreground" />
-            </Link>
+            </Button>
           </PopoverTrigger>
-          <PopoverContent side="top" className="w-full p-2">
+          <PopoverContent side="top" align="start" className="w-auto p-2">
             {hasContent || isMobile ? (
               <div className="flex gap-2">
-                <Link
-                  to="#"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
                     "h-9 w-9",
-                    "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                    "rounded-xl hover:bg-muted"
                   )}
                 >
                   <Mic size={20} className="text-muted-foreground" />
-                </Link>
+                </Button>
                 {BottombarIcons.map((icon, index) => (
-                  <Link
+                  <Button
                     key={index}
-                    to="#"
+                    type="button"
+                    variant="ghost"
+                    size="icon"
                     className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon" }),
                       "h-9 w-9",
-                      "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                      "rounded-xl hover:bg-muted"
                     )}
                   >
                     <icon.icon size={20} className="text-muted-foreground" />
-                  </Link>
+                  </Button>
                 ))}
               </div>
             ) : (
-              <Link
-                to="#"
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
                   "h-9 w-9",
-                  "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                  "rounded-xl hover:bg-muted"
                 )}
               >
                 <Mic size={20} className="text-muted-foreground" />
-              </Link>
+              </Button>
             )}
           </PopoverContent>
         </Popover>
@@ -162,14 +169,19 @@ export default function ChatBottombar({
           }}
         >
           <Plate editor={editor} onChange={checkContent}>
-            <div className="relative rounded-lg border bg-background/20 w-full flex flex-col">
-              <div className="flex items-center gap-1 border-b px-2 py-1 bg-muted/20">
+            <div className="w-full overflow-hidden rounded-2xl border bg-background shadow-sm">
+              <PlateContent
+                className="min-h-[72px] w-full resize-none px-4 py-3 text-sm leading-6 focus-visible:outline-none max-h-[220px] overflow-y-auto"
+                placeholder="Write a message..."
+                onKeyDown={handleKeyPress}
+              />
+              <div className="flex items-center gap-1 border-t bg-muted/20 px-2 py-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   type="button"
                   onClick={() => editor.tf.toggle.mark({ key: "bold" })}
-                  className="p-0 h-6 w-6"
+                  className="h-8 w-8 p-0"
                 >
                   <Bold className="h-3 w-3" />
                 </Button>
@@ -178,7 +190,7 @@ export default function ChatBottombar({
                   size="sm"
                   type="button"
                   onClick={() => editor.tf.toggle.mark({ key: "italic" })}
-                  className="p-0 h-6 w-6"
+                  className="h-8 w-8 p-0"
                 >
                   <Italic className="h-3 w-3" />
                 </Button>
@@ -187,7 +199,7 @@ export default function ChatBottombar({
                   size="sm"
                   type="button"
                   onClick={() => editor.tf.toggle.mark({ key: "underline" })}
-                  className="p-0 h-6 w-6"
+                  className="h-8 w-8 p-0"
                 >
                   <Underline className="h-3 w-3" />
                 </Button>
@@ -196,56 +208,46 @@ export default function ChatBottombar({
                   size="sm"
                   type="button"
                   onClick={() => editor.tf.toggle.mark({ key: "code" })}
-                  className="p-0 h-6 w-6"
+                  className="h-8 w-8 p-0"
                 >
                   <Code className="h-3 w-3" />
                 </Button>
-              </div>
-              <PlateContent
-                className="w-full px-3 py-2 text-sm focus-visible:outline-none min-h-[40px] max-h-[200px] overflow-y-auto"
-                placeholder="Aa"
-                onKeyDown={handleKeyPress}
-              />
-              <div className="absolute right-2 bottom-2">
+                <div className="flex-1" />
                 <EmojiPicker
                   onChange={(value) => {
                     editor.insertText(value);
                     editor.tf.focus();
                   }}
-                />
+                >
+                  <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <SmilePlus className="h-4 w-4" />
+                  </Button>
+                </EmojiPicker>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant={hasContent ? "default" : "ghost"}
+                  onClick={hasContent ? handleSend : handleThumbsUp}
+                  className="min-w-[88px] rounded-xl"
+                >
+                  {hasContent ? (
+                    <>
+                      <Send className="mr-1.5 h-4 w-4" />
+                      Send
+                    </>
+                  ) : (
+                    <>
+                      <ThumbsUp className="mr-1.5 h-4 w-4" />
+                      React
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </Plate>
         </motion.div>
-
-        <div className="pb-1">
-          {hasContent ? (
-            <Link
-              to="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-                "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
-              )}
-              onClick={handleSend}
-            >
-              <SendHorizontal size={20} className="text-muted-foreground" />
-            </Link>
-          ) : (
-            <Link
-              to="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-                "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
-              )}
-              onClick={handleThumbsUp}
-            >
-              <ThumbsUp size={20} className="text-muted-foreground" />
-            </Link>
-          )}
-        </div>
       </AnimatePresence>
+      </div>
     </div>
   );
 }

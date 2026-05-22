@@ -2,12 +2,13 @@
  * Main-thread helpers for communicating with the read-only codec worker.
  */
 
-import type { Chunk, DataType, TypedArray } from 'zarrita'
+import type { DataType, TypedArray } from 'zarrita'
 import { get_ctr } from './internals/util.js'
-import type { CodecChunkMeta } from './types.js'
+import type { CodecChunkMeta, TextureChunkBounds, TexturedChunk } from './types.js'
+import type { TextureFidelity } from './types.js'
 import type { S3FetchConfig, SerializedRequestInit } from './s3-request.js'
 
-type TextureCompatibleDataType = 'uint8' | 'float32'
+type TextureCompatibleDataType = 'uint8' | 'uint16' | 'float32'
 
 export interface WorkerDecodeTimings {
   metaInitMs: number
@@ -20,7 +21,7 @@ export interface WorkerDecodeTimings {
 }
 
 export interface WorkerFetchDecodeResult<D extends DataType> {
-  chunk: Chunk<D> | undefined
+  chunk: TexturedChunk<D> | undefined
   timings: WorkerDecodeTimings
 }
 
@@ -37,6 +38,10 @@ function createPromotedArray<D extends DataType>(
 
   if (promotedType === 'float32') {
     return new Float32Array(buffer, byteOffset, byteLength / Float32Array.BYTES_PER_ELEMENT) as TypedArray<D>
+  }
+
+  if (promotedType === 'uint16') {
+    return new Uint16Array(buffer, byteOffset, byteLength / Uint16Array.BYTES_PER_ELEMENT) as TypedArray<D>
   }
 
   const Ctr = get_ctr(meta.data_type) as unknown as {
@@ -172,6 +177,7 @@ export async function workerFetchDecode<D extends DataType>(
   meta: CodecChunkMeta,
   requestInit?: SerializedRequestInit,
   actualChunkShape?: number[],
+  textureFidelity: TextureFidelity = 'default',
 ): Promise<WorkerFetchDecodeResult<D>> {
   const dispatcher = getDispatcher(worker)
   const metaInitMs = await ensureMeta(dispatcher, metaId)
@@ -186,9 +192,11 @@ export async function workerFetchDecode<D extends DataType>(
     metaId,
     requestInit,
     actualChunkShape,
+    textureFidelity,
   }) as {
     missing?: boolean
     promotedType?: TextureCompatibleDataType
+    textureBounds?: TextureChunkBounds
     data?: ArrayBuffer
     byteOffset?: number
     byteLength?: number
@@ -228,7 +236,12 @@ export async function workerFetchDecode<D extends DataType>(
     meta,
   )
   return {
-    chunk: { data, shape: response.shape!, stride: response.stride! },
+    chunk: {
+      data,
+      shape: response.shape!,
+      stride: response.stride!,
+      textureBounds: response.textureBounds,
+    } as TexturedChunk<D>,
     timings,
   }
 }

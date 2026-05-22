@@ -1,4 +1,3 @@
-import { RegisteredAction } from "@/providers/command/CommandContext";
 
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { useExtension } from "../ExtensionContext";

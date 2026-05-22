@@ -8,6 +8,7 @@ import { mapDTypeToMinMax } from '../stores/utils';
 import { ChunkVolume } from './ChunkVolume';
 import { redColormap } from '../zarr/colormaps';
 import { useSelectionStore } from '@/store/imageStore';
+import { useModeStore } from '../store/modeStore';
 import { affineToMatrix4 } from '../panels/layer/affine-utils';
 
 const InvertedHullOutline = ({
@@ -77,6 +78,7 @@ const InvertedHullOutline = ({
 
 export const FrameVolume = ({ frame }: { frame: Frame }) => {
   const [chunks, setChunks] = useState<ChunkData[] | null>(null);
+  const interactionMode = useModeStore((s) => s.interactionMode);
 
   const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
 
@@ -153,6 +155,9 @@ export const FrameVolume = ({ frame }: { frame: Frame }) => {
 
   return (
     <group matrix={affineMatrix} matrixAutoUpdate={false} onClick={(e) => {
+                if (interactionMode === 'PAN') {
+                  return;
+                }
                 e.stopPropagation();
                 if (isSelected) {
                   setSelectedFrameId(null);

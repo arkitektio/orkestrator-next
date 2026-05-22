@@ -1,13 +1,12 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { LokRedeemToken } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import RedeemTokenList from "../components/lists/RedeemTokenList";
-import { CreateRedeemTokenForm } from "../forms/CreateRedeemTokenForm";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -18,24 +17,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Lok"
       pageActions={
         <>
-          <FormDialogAction
+          <DialogButton
+            name="createredeemtoken"
             variant={"outline"}
             size={"sm"}
-            label="Create"
-            description="Create a new Graph"
-            buttonChildren={
-              <>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New Token
-              </>
-            }
-            onSubmit={(data) => {
-              console.log(data);
-              navigate(LokRedeemToken.linkBuilder(data.createRedeemToken.id));
+            dialogProps={{
+              onSuccess: (data) => navigate(LokRedeemToken.linkBuilder(data.createRedeemToken.id)),
             }}
           >
-            <CreateRedeemTokenForm />
-          </FormDialogAction>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            New Token
+          </DialogButton>
         </>
       }
     >

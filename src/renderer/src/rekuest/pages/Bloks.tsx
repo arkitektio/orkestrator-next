@@ -1,48 +1,12 @@
-import registry from "@/blok/registry";
-import { Button } from "@/components/ui/button";
 import { RekuestBlok } from "@/linkers";
-import { useCreateBlokMutation } from "../api/graphql";
 import BlokList from "../components/lists/BlokList";
 
 const Page = () => {
-  const [createBlok] = useCreateBlokMutation();
 
-  const createBloks = async () => {
-    for (const [key, mod] of registry.modules.entries()) {
-      console.log("Creating blok for", key, mod);
-      if (mod.app) {
-        const stateDemands = Object.keys(mod.app.states).map((key) => {
-          return { key: key, ...mod.app.states[key].demand };
-        });
-
-        const actionDemands = Object.keys(mod.app.actions).map((key) => {
-          return { key: key, ...mod.app.actions[key].demand };
-        });
-
-        const x = await createBlok({
-          variables: {
-            input: {
-              name: mod.app.name,
-              stateDemands: stateDemands,
-              actionDemands: actionDemands,
-              url: `orkestrator:///${key}`,
-            },
-          },
-        });
-
-        console.log("Created blok", x.data?.createBlok);
-      }
-    }
-  };
 
   return (
     <RekuestBlok.ListPage
       title={"Bloks"}
-      pageActions={
-        <Button onClick={() => createBloks()} variant={"outline"}>
-          Import Orkestrator Bloks
-        </Button>
-      }
     >
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>

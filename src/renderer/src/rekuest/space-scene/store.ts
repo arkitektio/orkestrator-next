@@ -1,3 +1,4 @@
+import { Matrix4 } from "three";
 import { createStore, StoreApi } from "zustand/vanilla";
 import { SpaceFragment, MediaStoreFragment, PlacementFragment } from "../api/graphql";
 
@@ -12,29 +13,6 @@ export interface MembershipEntry {
   agentId: string;
   agentName: string;
   media: MediaStoreFragment;
-}
-
-/**
- * Converts a 4x4 affine matrix (row-major) to position/rotation/scale.
- * Falls back to identity if the matrix is null/undefined.
- */
-function parseAffineMatrix(matrix: number[][] | null | undefined): {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale: [number, number, number];
-} {
-  if (!matrix || matrix.length < 4) {
-    return {
-      position: [0, 0, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
-    };
-  }
-  return {
-    position: [matrix[0][3], matrix[1][3], matrix[2][3]],
-    rotation: [0, 0, 0], // Simplified: rotation extraction from affine is complex
-    scale: [1, 1, 1],
-  };
 }
 
 /**
@@ -58,6 +36,9 @@ export interface SpaceSceneState {
   spaceId: string;
   placements: PlacementFragment[];
   selectedPlacementId: string | null;
+  openPanels: SpaceScenePanel[];
+  viewProjectionMatrix: Matrix4 | null;
+  viewportSize: { width: number; height: number };
 
   // Actions
   setPlacements: (placements: PlacementFragment[]) => void;
@@ -69,10 +50,20 @@ export interface SpaceSceneState {
     rotation?: [number, number, number],
     scale?: [number, number, number],
   ) => void;
+  updateCameraData: (matrix: Matrix4, size: { width: number; height: number }) => void;
   selectPlacement: (id: string | null) => void;
+  openPlacementPanel: (placementId: string) => void;
+  closePanel: (panelId: string) => void;
+  clearPanels: () => void;
 }
 
 export type SpaceSceneStore = StoreApi<SpaceSceneState>;
+
+export interface SpaceScenePanel {
+  id: string;
+  kind: "materialized-blok";
+  placementId: string;
+}
 
 
 
@@ -84,6 +75,9 @@ export const createSpaceSceneStore = (
     spaceId,
     placements: initial,
     selectedPlacementId: null,
+    openPanels: [],
+    viewProjectionMatrix: null,
+    viewportSize: { width: 0, height: 0 },
 
     setPlacements: (placements) => set({ placements }),
 
@@ -95,6 +89,7 @@ export const createSpaceSceneStore = (
     removePlacement: (id) =>
       set((state) => ({
         placements: state.placements.filter((p) => p.id !== id),
+        openPanels: state.openPanels.filter((panel) => panel.placementId !== id),
         selectedPlacementId:
           state.selectedPlacementId === id
             ? null
@@ -117,6 +112,33 @@ export const createSpaceSceneStore = (
         ),
       })),
 
+    updateCameraData: (matrix, size) =>
+      set({ viewProjectionMatrix: matrix, viewportSize: size }),
+
     selectPlacement: (id) => set({ selectedPlacementId: id }),
+
+    openPlacementPanel: (placementId) =>
+      set((state) => {
+        const panelId = `materialized-blok:${placementId}`;
+        const nextPanel = {
+          id: panelId,
+          kind: "materialized-blok" as const,
+          placementId,
+        };
+
+        return {
+          openPanels: [
+            ...state.openPanels.filter((panel) => panel.id !== panelId),
+            nextPanel,
+          ],
+        };
+      }),
+
+    closePanel: (panelId) =>
+      set((state) => ({
+        openPanels: state.openPanels.filter((panel) => panel.id !== panelId),
+      })),
+
+    clearPanels: () => set({ openPanels: [] }),
   }));
 };

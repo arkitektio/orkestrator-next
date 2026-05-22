@@ -88,6 +88,28 @@ type Action {
   version: String!
 }
 
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+type ActionArgument {
+  agentCall: AgentCall
+  key: String
+  utilCall: UtilCall
+  valueDict: [ActionArgument!]
+  valueList: [ActionArgument!]
+  valueLiteral: JSONSerializable
+  valuePath: String
+}
+
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+input ActionArgumentInput {
+  agentCall: AgentCallInput = null
+  key: String = null
+  utilCall: UtilCallInput = null
+  valueDict: [ActionArgumentInput!] = null
+  valueList: [ActionArgumentInput!] = null
+  valueLiteral: JSONSerializable = null
+  valuePath: String = null
+}
+
 """Input model for action demand."""
 type ActionDemand {
   argMatches: [PortMatch!]
@@ -206,15 +228,6 @@ scalar ActionHash
 enum ActionKind {
   FUNCTION
   GENERATOR
-}
-
-type ActionMapping {
-  createdAt: DateTime!
-  id: ID!
-  implementation: Implementation!
-  key: String!
-  materializedBlok: MaterializedBlok!
-  updatedAt: DateTime!
 }
 
 input ActionOrder {
@@ -346,6 +359,24 @@ type Agent {
   user: User!
 }
 
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+type AgentCall {
+  arguments: [ActionArgument!]
+  dependency: String!
+  operation: String!
+}
+
+"""
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+input AgentCallInput {
+  arguments: [ActionArgumentInput!] = null
+  dependency: String!
+  operation: String!
+}
+
 type AgentChangeEvent {
   create: Agent
   delete: ID
@@ -390,6 +421,7 @@ input AgentFilter {
 
   """Filter using app identifier"""
   appIdentifier: ID
+  blokDependency: ID
 
   """Filter by client ID of the app the agent is registered to"""
   clientId: String
@@ -894,9 +926,17 @@ input BlockInput {
 }
 
 type Blok {
-  """Get the actions that this blok can run."""
-  actionDemands: [ActionDemand!]!
+  catalog: UICatalog!
+
+  """List of action demands specified in this blok."""
+  components: [ComponentNode!]!
   creator: User!
+
+  """List of action demands specified in this blok."""
+  demoState: Props!
+
+  """Dependencies that need to be resolved for this blok."""
+  dependencies(filters: BlokDependencyFilter, pagination: OffsetPaginationInput): [BlokDependency!]!
   description: String
   id: ID!
 
@@ -904,12 +944,83 @@ type Blok {
   materializedBloks: [MaterializedBlok!]!
   name: String!
 
-  """Get the agents that this blok can be implemented against."""
-  possibleAgents: [Agent!]!
+  """List of action demands specified in this blok."""
+  uiComponents: Props!
+}
 
-  """Get the actions that this blok can run."""
+type BlokAgentMapping {
+  agent: Agent!
+  createdAt: DateTime!
+  id: ID!
+  key: String!
+  materializedBlok: MaterializedBlok!
+  updatedAt: DateTime!
+}
+
+"""The input for updating a blok."""
+input BlokAgentMappingInput {
+  agent: ID!
+  key: String!
+}
+
+"""Represents a dependency between implementations and actions."""
+type BlokDependency {
+  """List of action demands"""
+  actionDemands: [ActionDemand!]!
+
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the app they belong to. The filter string should be in the format 'app_identifier:version' where version can be a specific version or a wildcard '*'. For example, 'my_app:*' would allow any agent belonging to 'my_app' regardless of version, while 'my_app:1.0.0' would only allow agents with that specific version.
+  """
+  appFilter: String
+
+  """
+  Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable
+  """
+  autoResolvable: Boolean!
+
+  """Optional description of the dependency."""
+  description: String
+
+  """Unique ID of the dependency."""
+  id: ID!
+
+  """The implementation this dependency belongs to."""
+  implementation: Implementation!
+
+  """Optional string identifier or tag for reference."""
+  key: String!
+
+  """
+  Maximum number of viable agent instances that can be bound to this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is greater than this number, the dependency will not be considered auto resolvable.
+  """
+  maxViableInstances: Int
+
+  """
+  Minimum number of viable agent instances required to resolve this dependency. This is used in combination with the auto_resolvable field to determine if a dependency can be automatically resolved. If the number of available agent instances that match the filters is less than this number, the dependency will not be considered auto resolvable.
+  """
+  minViableInstances: Int
+
+  """Indicates if the dependency is optional."""
+  optional: Boolean!
+
+  """List of action demands specified in this dependency."""
+  singular: Boolean!
+
+  """List of state demands"""
   stateDemands: [StateDemand!]!
-  url: String!
+
+  """
+  Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
+  """
+  versionFilter: String
+}
+
+input BlokDependencyFilter {
+  AND: BlokDependencyFilter
+  DISTINCT: Boolean
+  NOT: BlokDependencyFilter
+  OR: BlokDependencyFilter
+  ids: [ID!]
 }
 
 """The input for bouncing an agent."""
@@ -1006,35 +1117,67 @@ type Collection {
   name: String!
 }
 
-"""The input for creating a blok."""
-input CreateBlokInput {
-  """
-  The action demands of the blok. This is used to identify the blok in the system.
-  """
-  actionDemands: [ActionDemandInput!] = null
-
-  """
-  The description of the blok. This can described the blok and its purpose.
-  """
-  description: String = null
-  name: String!
-
-  """
-  The state demands of the blok. This is used to identify the blok in the system.
-  """
-  stateDemands: [SchemaDemandInput!] = null
-
-  """
-  The URL of the blok. This can be used to link to the blok in the system.
-  """
-  url: String!
+"""
+An abstract structural visual element inside a Blok blueprint manifest.
+"""
+type ComponentNode {
+  children: [ComponentNode!]
+  component: String!
+  id: String!
+  props: [ComponentProp!]
 }
 
-"""The input for creating a dashboard."""
+"""
+An abstract structural visual element inside a Blok blueprint manifest.
+"""
+input ComponentNodeInput {
+  children: [ComponentNodeInput!] = null
+  component: String!
+  id: String!
+  props: [ComponentPropInput!] = null
+}
+
+"""A single key-value prop configuration for a component layout node."""
+type ComponentProp {
+  agentCall: AgentCall
+  dynamicValue: DynamicValue
+  key: String!
+  staticValue: JSONSerializable
+  utilCall: UtilCall
+}
+
+"""A single key-value prop configuration for a component layout node."""
+input ComponentPropInput {
+  agentCall: AgentCallInput = null
+  dynamicValue: DynamicValueInput = null
+  key: String!
+  staticValue: JSONSerializable = null
+  utilCall: UtilCallInput = null
+}
+
+"""The input for creating a blok."""
+input CreateBlokInput {
+  catalog: String = null
+  components: [ComponentNodeInput!] = null
+  demoState: Args = null
+  dependencies: [AgentDependencyInput!] = null
+  description: String = null
+  name: String!
+  uri: String
+}
+
+"""
+Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation.
+"""
 input CreateDashboardInput {
-  name: String = null
-  panels: [ID!] = null
-  tree: UITreeInput = null
+  """The list of blok IDs to include in the dashboard."""
+  bloks: [String!]! = []
+
+  """The name of the dashboard."""
+  name: String!
+
+  """The organization ID to associate with the dashboard."""
+  organization: String = null
 }
 
 """The input for creating a implementation in another agents extension."""
@@ -1150,9 +1293,40 @@ type CustomReturnWidget implements ReturnWidget {
 
 type Dashboard {
   id: ID!
-  materializedBloks: [MaterializedBlok!]!
   name: String
-  uiTree: UITree
+  placements(filters: DashboardPlacementFilter, ordering: [DashboardPlacementOrder!]! = [], pagination: OffsetPaginationInput): [DashboardPlacement!]!
+}
+
+"""A placement of an agent in a space."""
+type DashboardPlacement {
+  blok: MaterializedBlok
+  dashboard: Dashboard!
+  id: ID!
+}
+
+"""A way to filter placements (space memberships)"""
+input DashboardPlacementFilter {
+  AND: DashboardPlacementFilter
+  DISTINCT: Boolean
+  NOT: DashboardPlacementFilter
+  OR: DashboardPlacementFilter
+
+  """Filter by agent"""
+  agent: ID
+
+  """Filter by IDs"""
+  ids: [ID!]
+
+  """Search by name"""
+  search: String
+
+  """Filter by space"""
+  space: ID
+}
+
+input DashboardPlacementOrder {
+  createdAt: Ordering
+  role: Ordering
 }
 
 """Date with time (isoformat)"""
@@ -1240,9 +1414,33 @@ input DeleteAgentInput {
   id: ID!
 }
 
+"""The input for updating a blok."""
+input DeleteBlokInput {
+  """
+  The blok ID to delete. This is used to identify the blok in the system.
+  """
+  id: ID!
+}
+
+"""
+Input for deleting a dashboard. This is used to delete a dashboard by its ID.
+"""
+input DeleteDashboardInput {
+  """The ID of the dashboard to delete."""
+  id: ID!
+}
+
 """The input for deleting a implementation."""
 input DeleteImplementationInput {
   implementation: ID!
+}
+
+"""
+Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization.
+"""
+input DeleteMaterializedBlokInput {
+  """The ID of the materialized blok to delete."""
+  id: ID!
 }
 
 """The input for deleting a placement."""
@@ -1318,6 +1516,9 @@ type Dependency {
   """List of action demands specified in this dependency."""
   singular: Boolean!
 
+  """List of state demands"""
+  stateDemands: [StateDemand!]!
+
   """
   Optional filter string to limit which agents can be bound to this dependency based on the version of the app they belong to. The filter string should be in the format 'version' where version can be a specific version or a wildcard '*'. For example, '*' would allow any version, while '1.0.0' would only allow agents with that specific version.
   """
@@ -1339,6 +1540,21 @@ type Device {
 
   """Unique ID of the device."""
   id: ID!
+}
+
+"""
+A bound state pointer referencing a variable inside a Blok state instance.
+"""
+type DynamicValue {
+  literal: String
+  path: String
+}
+
+"""
+A bound state pointer referencing a variable inside a Blok state instance.
+"""
+input DynamicValueInput {
+  path: String = null
 }
 
 interface Effect {
@@ -1515,6 +1731,9 @@ type Implementation {
   """Interface string representing the implementation entrypoint."""
   interface: String!
 
+  """States that this implementation manipulates."""
+  manipulates: [State!]!
+
   """Get the latest completed assignation created by the current user."""
   myLatestAssignation: Assignation
 
@@ -1532,6 +1751,9 @@ type Implementation {
 
   """Tests"""
   tests: [Implementation!]!
+
+  """List of action demands"""
+  tracks: [Track!]!
 }
 
 input ImplementationActionFilter {
@@ -1588,12 +1810,14 @@ input ImplementationInput {
   interface: String
   locks: [String!] = null
   logo: String = null
+  manipulates: [String!]
 
   """
   The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
   """
   optimistics: [OptimisticInput!] = null
   params: AnyDefault = null
+  tracks: [TrackInput!] = null
 }
 
 type ImplementationMapping {
@@ -1712,6 +1936,9 @@ enum JSONPatchOperation {
   test
 }
 
+"""The `Args` scalar type represents a Dictionary of arguments"""
+scalar JSONSerializable
+
 """The input for bouncing an agent."""
 input KickInput {
   agent: ID!
@@ -1767,9 +1994,9 @@ input MappedAgentInput {
 """The input for creating a blok."""
 input MaterializeBlokInput {
   """
-  The agent ID to materialize the blok in. If not provided, the blok will be materialized in the default agent
+  The agent mappings for the blok. This is used to map the blok dependencies to agents in the system.
   """
-  agent: ID = null
+  agentMappings: [BlokAgentMappingInput!] = null
   blok: ID!
 
   """
@@ -1779,18 +2006,19 @@ input MaterializeBlokInput {
 }
 
 type MaterializedBlok {
-  """Mappings of actions to this materialized blok."""
-  actionMappings: [ActionMapping!]!
-  agent: Agent!
+  """Mappings of states to this materialized blok."""
+  agentMappings: [BlokAgentMapping!]!
   blok: Blok!
   createdAt: DateTime!
-  dashboard: Dashboard!
+
+  """Placements of this materialized blok on dashboards."""
+  dashboardPlacements(filters: DashboardPlacementFilter, ordering: [DashboardPlacementOrder!]! = [], pagination: OffsetPaginationInput): [DashboardPlacement!]!
   description: String
   id: ID!
   name: String
 
-  """Mappings of states to this materialized blok."""
-  stateMappings: [StateMapping!]!
+  """Placements of this materialized blok."""
+  placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
   updatedAt: DateTime!
 }
 
@@ -1976,8 +2204,17 @@ type Mutation {
   """Delete an agent record."""
   deleteAgent(input: DeleteAgentInput!): ID!
 
+  """Delete a blok by ID."""
+  deleteBlok(input: DeleteBlokInput!): Boolean!
+
+  """Delete a dashboard by ID."""
+  deleteDashboard(input: DeleteDashboardInput!): Boolean!
+
   """Delete a registered implementation."""
   deleteImplementation(input: DeleteImplementationInput!): String!
+
+  """Delete a materialized blok by ID."""
+  deleteMaterializedBlok(input: DeleteMaterializedBlokInput!): Boolean!
 
   """Delete a placement."""
   deletePlacement(input: DeletePlacementInput!): ID!
@@ -2058,6 +2295,19 @@ type Mutation {
 
   """Unshelve data from a memory drawer."""
   unshelveMemoryDrawer(input: UnshelveMemoryDrawerInput!): ID!
+
+  """
+  Update properties of a blok such as its name, description, components, demo state, catalog, or dependencies.
+  """
+  updateBlok(input: UpdateBlokInput!): Blok!
+
+  """
+  Update properties of a    dashboard such as its name, associated bloks, or organization.
+  """
+  updateDashboard(input: UpdateDashboardInput!): Dashboard!
+
+  """Update properties of a materialized blok such as its agent mappings."""
+  updateMaterializedBlok(input: UpdateMaterializedBlokInput!): MaterializedBlok!
 
   """Update an existing placement."""
   updatePlacement(input: UpdatePlacementInput!): Placement!
@@ -2195,6 +2445,7 @@ input PinInput {
 type Placement {
   affineMatrix: Args
   agent: Agent!
+  blok: MaterializedBlok
   id: ID!
   model: ThreeDModel
 
@@ -2228,6 +2479,11 @@ input PlacementFilter {
 input PlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  blok: ID = null
   model: ID = null
   role: String = null
 }
@@ -2327,6 +2583,9 @@ input PortMatchInput {
   """
   object: Arg = null
 }
+
+"""The `Args` scalar type represents a Dictionary of arguments"""
+scalar Props
 
 """A set of related actions forming a protocol."""
 type Protocol {
@@ -2755,7 +3014,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "01297193-e4fa-4874-9800-b46e0cd7afda"
+  reference: String = "289fb402-f407-4990-a0ec-8b6c5bd1aed7"
   title: String = null
 }
 
@@ -3205,15 +3464,6 @@ input StateImplementationInput {
   interface: String!
 }
 
-type StateMapping {
-  crreatedAt: DateTime!
-  id: ID!
-  implementation: Implementation!
-  key: String!
-  state: State!
-  updatedAt: DateTime!
-}
-
 """A plain patch event with no model cross-references."""
 type StatePatchEvent {
   agentId: ID!
@@ -3534,60 +3784,34 @@ input ToolboxOrder {
   name: Ordering
 }
 
-interface UIChild {
-  kind: UIChildKind!
+"""
+A value that is being tracked over time during the runtime of an action. This is the state of a dependency
+"""
+type Track {
+  dependencyKey: String
+  description: String
+  label: String
+  stateKey: String!
+  valueKey: String!
+  windows: [Window!]
 }
 
-input UIChildInput {
-  children: [UIChildInput!]
-  hidden: Boolean
-  kind: UIChildKind!
-  left: UIChildInput
-  right: UIChildInput
-  state: String = null
+"""
+A value that is being tracked over time during the runtime of an action. This is the state of a dependency
+"""
+input TrackInput {
+  dependencyKey: String = null
+  description: String = null
+  label: String = null
+  stateKey: String!
+  valueKey: String!
+  windows: [WindowInput!] = null
 }
 
-enum UIChildKind {
-  GRID
-  RESERVATION
-  SPLIT
-  STATE
-}
-
-type UIGrid implements UIChild {
-  children: [UIGridItem!]!
-  columns: Int!
-  kind: UIChildKind!
-  rowHeight: Int!
-}
-
-type UIGridItem {
-  child: UIChild!
-  h: Int!
-  maxW: Int!
-  minW: Int!
-  w: Int!
-  x: Int!
-  y: Int!
-}
-
-type UISplit implements UIChild {
-  kind: UIChildKind!
-  left: UIChild!
-  right: UIChild!
-}
-
-type UIState implements UIChild {
-  kind: UIChildKind!
-  state: String!
-}
-
-type UITree {
-  child: UIChild!
-}
-
-input UITreeInput {
-  child: UIChildInput!
+type UICatalog {
+  description: String
+  id: ID!
+  name: String!
 }
 
 """The input for bouncing an agent."""
@@ -3608,6 +3832,53 @@ input UnshelveMemoryDrawerInput {
   The instance ID of the agent. This is used to identify the agent in the system.
   """
   instanceId: InstanceId!
+}
+
+"""The input for updating a blok."""
+input UpdateBlokInput {
+  """
+  The components of the blok. This is used to update the blok in the system.
+  """
+  components: [ComponentNodeInput!] = null
+
+  """The description of the blok and its purpose."""
+  description: String = null
+  id: ID!
+
+  """The name of the blok, used for identification in the system."""
+  name: String = null
+}
+
+"""
+Input for updating a dashboard. This is used to update the properties of a dashboard, such as its name, associated bloks, or organization.
+"""
+input UpdateDashboardInput {
+  """
+  The new list of blok IDs to include in the dashboard. This will replace the existing list if provided.
+  """
+  bloks: [String!] = null
+
+  """The ID of the dashboard to update."""
+  id: ID!
+
+  """The new name of the dashboard."""
+  name: String = null
+
+  """The new organization ID to associate with the dashboard."""
+  organization: String = null
+}
+
+"""
+Input for updating a materialized blok. This is used to update the properties of a materialized blok, such as its associated agent mappings.
+"""
+input UpdateMaterializedBlokInput {
+  """
+  The list of mapped agents to update the materialized blok with. This is used to update the agent mappings of the materialized blok.
+  """
+  agentMappings: [MappedAgentInput!] = null
+
+  """The ID of the materialized blok to update."""
+  id: ID!
 }
 
 """The input for updating a placement."""
@@ -3650,6 +3921,18 @@ type User {
   sub: ID!
 }
 
+"""Defines a utility call that can be invoked within the system."""
+type UtilCall {
+  arguments: [ActionArgument!]
+  operation: String!
+}
+
+"""Defines a utility call that can be invoked within the system."""
+input UtilCallInput {
+  arguments: [ActionArgumentInput!] = null
+  operation: String!
+}
+
 type Validator {
   dependencies: [String!]
   errorMessage: String
@@ -3688,6 +3971,18 @@ input WaiterFilter {
   OR: WaiterFilter
   ids: [ID!]
   instanceId: InstanceId!
+}
+
+"""A window that is calculated"""
+type Window {
+  label: String
+  windowFunction: String!
+}
+
+"""A window that is calculated"""
+input WindowInput {
+  label: String = null
+  windowFunction: String!
 }
 
 scalar _Any

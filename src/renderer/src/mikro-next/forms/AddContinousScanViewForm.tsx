@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -116,7 +116,7 @@ function PixelatedCube({
 export const AddContinousScanViewForm = (props: { image: string }) => {
   const [add] = useCreateContinousScanViewMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Saved" });
 
   const form = useForm({
     defaultValues: {
@@ -129,7 +129,7 @@ export const AddContinousScanViewForm = (props: { image: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: { image: props.image, ...data },
               },

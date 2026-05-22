@@ -1,225 +1,59 @@
-import { Guard } from "@/app/Arkitekt";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
-import { useSmartDrop } from "@/providers/smart/hooks";
-import {
-  useAgentsQuery,
-  useCreateBlokMutation
-} from "@/rekuest/api/graphql";
-import { Structure } from "@/types";
-import {
-  DockviewApi,
-  DockviewReact,
-  DockviewReadyEvent,
-  IDockviewPanelProps,
-} from "dockview";
-import { useRef, useState } from "react";
-import registry from "../registry";
-import { ModuleWrapper } from "../Wrapper";
+import { Link } from "react-router-dom";
 
-const components = registry.components
-  .keys()
-  .map((key) => ({
-    key: key,
-    component: (
-      props: IDockviewPanelProps<{ title: string; agent: string }>,
-    ) => {
-      const Component = registry.components.get(key)?.component;
-      const module = registry.components.get(key)?.module;
+const destinations = [
+  {
+    title: "Rekuest Dashboards",
+    description: "Open the renderer-backed dashboards that now host materialized bloks.",
+    to: "/rekuest/dashboards",
+    cta: "Open Dashboards",
+  },
+  {
+    title: "Bloks",
+    description: "Browse blok definitions and materialize them from the current Rekuest pages.",
+    to: "/rekuest/bloks",
+    cta: "Open Bloks",
+  },
+  {
+    title: "Materialized Bloks",
+    description: "Inspect live materialized instances rendered through the shared blok renderer.",
+    to: "/rekuest/materialized_bloks",
+    cta: "Open Materialized Bloks",
+  },
+];
 
-      if (!Component || !module) {
-        return <>FAULTY</>;
-      }
-
-      return (
-        <div className="p-2 h-full w-full @container">
-          <ModuleWrapper app={module} agent={props.params.agent}>
-            {" "}
-            <Component />{" "}
-          </ModuleWrapper>
-        </div>
-      );
-    },
-  }))
-  .reduce((acc, cur) => {
-    acc[cur.key] = cur.component;
-    return acc;
-  }, {});
-
-export const Selector = (props: {
-  module: string;
-  app: MetaApplicationAdds<any>;
-  addPanel: (key: string, agent: string) => void;
-}) => {
-  if (!props.app.app) {
-    return <>No app defined</>;
-  }
-
-  const stateDemands = Object.keys(props.app.app.states).map((key) => {
-    return props.app.app.states[key].demand;
-  });
-
-  const actionDemands = Object.keys(props.app.app.actions).map((key) => {
-    return props.app.app.actions[key].demand;
-  });
-
-  const { data, variables } = useAgentsQuery({
-    variables: {
-      filters: {
-        stateDemands: stateDemands.length > 0 ? stateDemands : undefined,
-        actionDemands: actionDemands.length > 0 ? actionDemands : undefined,
-        distinct: true,
-      },
-    },
-  });
-
-  if (!data) {
-    return <></>;
-  }
-
-  if (data.agents.length === 0) {
-    return (
-      <div>
-        No agents Implementing this. {JSON.stringify(variables, null, 3)}
-      </div>
-    );
-  }
-
+export const Home = () => {
   return (
-    <div className="flex flex-col gap-2">
-      {data.agents.map((agent) => (
-        <Button onClick={() => props.addPanel(props.module, agent.id)}>
-          {agent.name}
-        </Button>
-      ))}
-    </div>
-  );
-};
+    <PageLayout title="Blok">
+      <div className="flex h-full w-full flex-col gap-6 p-4">
+        <section className="rounded-3xl border border-border/70 bg-background/80 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Renderer Workspace
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">Legacy module panels removed</h1>
+          <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+            This area no longer bootstraps blok UI from the old module registry. Use the Rekuest pages below for dashboards, blok definitions, and materialized blok previews, all rendered through the shared blok renderer.
+          </p>
+        </section>
 
-export const Home = (props) => {
-  const apiRef = useRef<DockviewApi>();
+        <section className="grid gap-4 xl:grid-cols-3">
+          {destinations.map((destination) => (
+            <div
+              key={destination.to}
+              className="flex flex-col justify-between rounded-3xl border border-border/70 bg-muted/20 p-5 shadow-sm"
+            >
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">{destination.title}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">{destination.description}</p>
+              </div>
 
-  const addPanel = (key: string, agent: string) => {
-    const api = apiRef.current;
-    if (api) {
-      api.addPanel({
-        id: `${key}-${agent}`,
-        component: key,
-        params: {
-          key: key,
-          agent: agent,
-          registry: props.registry,
-        },
-        title: key,
-      });
-    }
-    setDroppedItems(undefined);
-  };
-
-  const onReady = (event: DockviewReadyEvent) => {
-    apiRef.current = event.api;
-
-    // Load layout from localStorage if it exists
-    const savedLayout = localStorage.getItem("dockview-layout");
-    if (savedLayout) {
-      try {
-        const layout = JSON.parse(savedLayout);
-        event.api.fromJSON(layout);
-      } catch (error) {
-        console.error("Failed to load layout:", error);
-      }
-    }
-  };
-
-  const onSave = () => {
-    const api = apiRef.current;
-    if (api) {
-      const layout = api.toJSON();
-      localStorage.setItem("dockview-layout", JSON.stringify(layout));
-    }
-  };
-
-  const [droppedItems, setDroppedItems] = useState<Structure[] | undefined>();
-
-  const [{ isOver, canDrop, overItems }, drop] = useSmartDrop((items) => {
-    setDroppedItems(items);
-  }, []);
-
-  const [createBlok] = useCreateBlokMutation();
-
-  const createBloks = async () => {
-    for (const [key, mod] of registry.modules.entries()) {
-      if (mod.app) {
-        const stateDemands = Object.keys(mod.app.states).map((key) => {
-          return { key: key, ...mod.app.states[key].demand };
-        });
-
-        const actionDemands = Object.keys(mod.app.actions).map((key) => {
-          return { key: key, ...mod.app.actions[key].demand };
-        });
-
-        const x = await createBlok({
-          variables: {
-            input: {
-              name: mod.app.name,
-              stateDemands: stateDemands,
-              actionDemands: actionDemands,
-              url: `orkestrator:///${key}`,
-            },
-          },
-        });
-
-
-      }
-    }
-  };
-
-  return (
-    <PageLayout
-      title="Bloks"
-      pageActions={<Button onClick={() => createBloks()}>Materialize</Button>}
-    >
-      <div className="h-full w-full flex flex-col">
-        <Guard.Rekuest>
-          <Dialog
-            open={droppedItems != undefined}
-            onOpenChange={() => {
-              setDroppedItems(undefined);
-            }}
-          >
-            <DialogContent>
-              {droppedItems &&
-                droppedItems.map((item) => (
-                  <Selector
-                    module={item.object}
-                    app={
-                      registry.modules.get(item.object) as MetaApplication<
-                        any,
-                        any
-                      >
-                    }
-                    addPanel={addPanel}
-                  />
-                ))}
-            </DialogContent>
-          </Dialog>
-          <div className="h-full w-full" ref={drop}>
-            <DockviewReact
-              components={components}
-              onReady={onReady}
-              className={"dockview-theme-abyss"}
-            />
-          </div>
-          <Button
-            variant="outline"
-            className="absolute bottom-0 right-0"
-            onClick={onSave}
-          >
-            Save
-          </Button>
-        </Guard.Rekuest>
+              <Button asChild className="mt-6 w-fit">
+                <Link to={destination.to}>{destination.cta}</Link>
+              </Button>
+            </div>
+          ))}
+        </section>
       </div>
     </PageLayout>
   );

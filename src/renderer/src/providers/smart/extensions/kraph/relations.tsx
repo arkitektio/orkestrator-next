@@ -13,6 +13,7 @@ import {
   useCreateStructureRelationMutation,
   useEnsureStructureMutation,
   useListMaterializedEdgesQuery,
+  useListMaterializedMeasurementsQuery,
   useListMaterializedStructureRelationEdgesQuery,
   useListMeasurmentCategoryQuery,
   useListRelationCategoryQuery,
@@ -328,10 +329,11 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
   const firstObject = props.objects.at(0);
   const dialog = useDialog();
 
-  const { data, error } = useListMaterializedEdgesQuery({
+  const { data, error } = useListMaterializedMeasurementsQuery({
     variables: {
       filters: {
         search: props.filter && props.filter !== "" ? props.filter : undefined,
+        sourceIdentifier: firstObject?.identifier || "",
       },
     },
     fetchPolicy: "network-only",
@@ -345,7 +347,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
     <CommandGroup
       heading={<span className="font-light text-xs w-full items-center ml-2 w-full">Measures...</span>}
     >
-      {data?.materializedEdges.map((edge) => (
+      {data?.materializedMeasurementEdges.map((edge) => (
         <CreateMeasurementButton edge={edge} left={props} key={edge.id}>
           {edge.graph.name}
         </CreateMeasurementButton>

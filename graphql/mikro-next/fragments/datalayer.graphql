@@ -112,3 +112,13 @@ fragment ParquetAccessGrant on ParquetAccessGrant {
   key
   bucket
 }
+
+
+fragment GeneralParquetAccessGrant on GeneralParquetAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}

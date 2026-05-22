@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -6,14 +6,15 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import {
+  CreateRedeemTokenMutation,
   CreateRedeemTokenMutationVariables,
   useCreateRedeemTokenMutation,
 } from "../api/graphql";
 
-export const CreateRedeemTokenForm = (props: { token?: string }) => {
+export const CreateRedeemTokenForm = (props: { token?: string; onSuccess?: (data: CreateRedeemTokenMutation) => void }) => {
   const [createRedeemToken] = useCreateRedeemTokenMutation();
 
-  const cre = useGraphQlFormDialog(createRedeemToken);
+  const submit = useGraphQLDialog(createRedeemToken, { successMessage: "Redeem token created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateRedeemTokenMutationVariables["input"]>({
     defaultValues: {
@@ -26,8 +27,7 @@ export const CreateRedeemTokenForm = (props: { token?: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            console.log("dd");
-            return await cre({
+            return await submit({
               variables: {
                 input: data,
               },

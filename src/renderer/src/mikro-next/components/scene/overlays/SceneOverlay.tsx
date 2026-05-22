@@ -6,10 +6,13 @@ import { useViewerStore } from "../store/viewerStore";
 export const SceneOverlay = () => {
   const displayMode = useModeStore((s) => s.displayMode);
   const displayModeOptions = useModeStore((s) => s.displayModeOptions);
+  const cameraControllerMode = useModeStore((s) => s.cameraControllerMode);
+  const cameraControllerModeOptions = useModeStore((s) => s.cameraControllerModeOptions);
   const interactionModeOptions = useModeStore((s) => s.interactionModeOptions);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const setDisplayMode = useModeStore((s) => s.setDisplayMode);
+  const setCameraControllerMode = useModeStore((s) => s.setCameraControllerMode);
   const isDebug = useViewerStore((state) => state.debug);
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
@@ -50,6 +53,23 @@ export const SceneOverlay = () => {
             </Button>
           ))}
         </ButtonGroup>
+
+        {displayMode === "3D" && (
+          <ButtonGroup>
+            {cameraControllerModeOptions.map((mode) => (
+              <Button
+                variant={"outline"}
+                size={"xs"}
+                key={mode.value}
+                onClick={() => setCameraControllerMode(mode.value)}
+                disabled={cameraControllerMode === mode.value}
+                title={mode.description}
+              >
+                <span className="text-xs font-bold">{mode.label}</span>
+              </Button>
+            ))}
+          </ButtonGroup>
+        )}
 
         <ButtonGroup>
           <Button onClick={() => {

@@ -1,6 +1,6 @@
 import { VolumeLayer } from "./VolumeLayer";
+import { SceneProbedPoint } from "./SceneProbedPoint";
 import { useMemo } from "react";
-import { SceneFragment } from "@/mikro-next/api/graphql";
 import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 
@@ -14,8 +14,10 @@ export const SceneVolume = () => {
 
 
   const renderedAbleFrames = useMemo(() => {
-    return layers?.map(x=>x).slice(0, MAX_DISPLAYABLE);
-  }, [layers?.length]);
+    return layers
+      .filter((layer) => layer.visible !== false)
+      .slice(0, MAX_DISPLAYABLE);
+  }, [layers]);
 
   if (mode == "2D") return null;
 
@@ -26,8 +28,12 @@ export const SceneVolume = () => {
   return (
     <group>
       {renderedAbleFrames?.map((frame) => (
-        <VolumeLayer key={frame.id} layer={frame} />
+        <VolumeLayer
+          key={`${frame.id}:${frame.fixedLOD == null ? 'auto' : frame.fixedLOD}`}
+          layer={frame}
+        />
       ))}
+      <SceneProbedPoint />
     </group>
   );
 };

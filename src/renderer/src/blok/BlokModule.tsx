@@ -13,7 +13,7 @@ interface Props { }
  */
 const Module: React.FC<Props> = () => {
   return (
-    <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
+    <Guard.Rekuest unavailable={<>Loading</>} key={"rekuest"}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<Home />} />

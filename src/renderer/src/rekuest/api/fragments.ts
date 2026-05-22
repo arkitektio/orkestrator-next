@@ -32,11 +32,6 @@
       "StatePatchEvent",
       "StateSnapshotEvent"
     ],
-    "UIChild": [
-      "UIGrid",
-      "UISplit",
-      "UIState"
-    ],
     "_Entity": [
       "MediaStore",
       "Session",

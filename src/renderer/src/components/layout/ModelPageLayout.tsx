@@ -19,6 +19,12 @@ const LazyKnowledgeSidebar = lazy(() =>
   })),
 );
 
+const LazyStructureRoomsSidebar = lazy(() =>
+  import("@/alpaka/sidebars/StructureRoomsSidebar").then((module) => ({
+    default: module.StructureRoomsSidebar,
+  })),
+);
+
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
   identifier: Identifier;
@@ -54,6 +60,11 @@ export const ModelPageLayout = ({
       <LazyKnowledgeSidebar identifier={identifier} object={object} />
     </Suspense>
   );
+  const alpakaRoomsSidebar = (
+    <Suspense fallback={null}>
+      <LazyStructureRoomsSidebar identifier={identifier} object={object} />
+    </Suspense>
+  );
 
   return (
     <PageLayout
@@ -61,6 +72,7 @@ export const ModelPageLayout = ({
       sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
         "Comments": kommentsSidebar,
         "Knowledge": <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>,
+        "Rooms": <Guard.Alpaka>{alpakaRoomsSidebar}</Guard.Alpaka>,
         "Tasks": <RunsSidebar identifier={identifier} object={object} />,
         ...additionalSidebars,
       }} sidebarKey="DetailModel" />}

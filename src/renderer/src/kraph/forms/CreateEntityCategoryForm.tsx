@@ -1,3 +1,4 @@
+import { useDialog } from "@/app/dialog";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
@@ -42,6 +43,7 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import {
   AggregationFunction,
+  CreateEntityCategoryMutation,
   CreateEntityCategoryMutationVariables,
   DerivationType,
   GetGraphDocument,
@@ -50,7 +52,9 @@ import {
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
+import { toast } from "sonner";
 import { keyify } from "./utils";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 
 type CreateEntityCategoryFormValues = CreateEntityCategoryMutationVariables["input"];
 
@@ -283,7 +287,7 @@ export const PropertyDefinitions = () => {
 
 
 
-const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
+const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (data: CreateEntityCategoryMutation) => void }) => {
   const [add] = useCreateEntityCategoryMutation({
     refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
 
@@ -297,6 +301,7 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
   });
 
   const [search] = useSearchGraphsLazyQuery();
+  const  submit = useGraphQLDialog(add, { successMessage: "Entity Category created", onSuccess: props.onSuccess });
 
 
 
@@ -337,7 +342,7 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues>) => {
               },
             }));
 
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data,

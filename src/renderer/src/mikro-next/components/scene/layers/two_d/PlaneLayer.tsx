@@ -11,6 +11,7 @@ import { buildAffineMatrix } from '../../panels/layer/affine-utils';
 
 import { ChunkPlane } from '../ChunkPlane';
 import { useSelectionStore } from '../../store/layerStore';
+import { useModeStore } from '../../store/modeStore';
 import { useViewerStore } from '../../store/viewerStore';
 import { useSceneStore } from '../../store/sceneStore';
 import { DimSliceFragment } from '@/mikro-next/api/graphql';
@@ -86,6 +87,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [layer]);
 
   const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
+  const interactionMode = useModeStore((s) => s.interactionMode);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   // Scene Registration
@@ -116,7 +118,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
     const intensityPos = dims.indexOf(layer.intensityDim);
 
-    const colormapTexture = getColorMapTexture(layer);
+    const colormapTexture = getColorMapTexture(layer.colormap, layer.color);
 
     // We attach chunkRadius temporarily for the culling calculation
     let allGeneratedChunks: { worldX: number; worldY: number; chunkRadius: number; data: ChunkData }[] = [];
@@ -357,7 +359,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const colorMapTexture = useMemo(() => {
     if (!layer) return null;
-    return getColorMapTexture(layer);
+    return getColorMapTexture(layer.colormap, layer.color);
   }, [layer?.colormap]);
 
   if (layer?.visible === false) return null;
@@ -367,10 +369,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     <group
       matrix={affineMatrix}
       matrixAutoUpdate={false}
-      onClick={(e) => {
-        e.stopPropagation();
-        setSelectedLayerId(isSelected ? null : layerId);
-      }}
       ref={groupRef}
     >
       {chunks.map((chunk) => (

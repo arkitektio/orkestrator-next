@@ -1,13 +1,13 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { LokService } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ServiceList from "../components/lists/ServiceList";
-import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
+
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -18,24 +18,15 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Lok"
       pageActions={
         <>
-          <FormDialogAction
+          <DialogButton
+            name="createserviceinstance"
             variant={"outline"}
             size={"sm"}
-            label="Create"
-            description="Create a new Graph"
-            buttonChildren={
-              <>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New Service
-              </>
-            }
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(LokService.linkBuilder(item.linkedExpression.id));
-            }}
+            dialogProps={{}}
           >
-            <CreateServiceInstanceForm />
-          </FormDialogAction>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            New Service
+          </DialogButton>
         </>
       }
     >

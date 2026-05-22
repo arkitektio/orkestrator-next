@@ -1,6 +1,6 @@
-import * as ApolloReactHooks from '@/lib/alpaka/funcs';
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+import * as ApolloReactHooks from '@/lib/alpaka/funcs';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -16,9 +16,12 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** Base64EncodedString represents an untyped options object returned by the Dask Gateway API. */
+  Base64EncodedString: { input: any; output: any; }
+  /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
-  UntypedParams: { input: any; output: any; }
 };
 
 export type AddDocumentsToCollectionInput = {
@@ -111,6 +114,7 @@ export type ChromaCollectionInput = {
 
 export type CreateRoomInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  talkingAbout?: InputMaybe<Array<StructureInput>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -192,7 +196,7 @@ export type ImageInput = {
 
 export type ImageReponse = {
   __typename?: 'ImageReponse';
-  image: Scalars['UntypedParams']['output'];
+  image: Scalars['Base64EncodedString']['output'];
 };
 
 /** Modalities */
@@ -559,6 +563,7 @@ export type RoomFilter = {
   OR?: InputMaybe<RoomFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  talkingAbout?: InputMaybe<StructureInput>;
 };
 
 export type RoomStats = {

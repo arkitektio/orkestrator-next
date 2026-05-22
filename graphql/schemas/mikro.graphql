@@ -363,6 +363,11 @@ enum ChannelKind {
   WAVEGUIDE
 }
 
+type ChannelLabel {
+  id: ID!
+  label: String!
+}
+
 type ChannelView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -596,9 +601,11 @@ input ContinousScanViewInput {
 }
 
 type CoordinateAnchor {
+  channelLabel: ChannelLabel
   chunkShape: [Int!]!
   dims: [String!]!
   id: ID!
+  lightGraph: LightPath
   optikitState: OptikitState
   shape: [Int!]!
   store: ZarrStore!
@@ -610,6 +617,8 @@ Input type for a coordinate anchor, which specifies a list of dimension anchors 
 """
 input CoordinateAnchorInput {
   dimAnchors: [DimAnchorInput!]!
+  label: LabelInput = null
+  lightGraph: LightpathGraphInput = null
   omeMetadata: OmeMetadataInput = null
   valueHistogram: ValueHistogramInput = null
 }
@@ -708,7 +717,6 @@ type DataRoi {
 
   """Provenance entries for this camera"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-  vectorDims: [String!]!
   vectors: [[Float!]!]!
   xDim: String!
   yDim: String!
@@ -771,6 +779,12 @@ union DatasetImageFile = Dataset | File | Image
 scalar DateTime
 
 input DeleteCameraInput {
+  id: ID!
+}
+
+"""Delete a DataRoi by ID"""
+input DeleteDataRoiInput {
+  """The ID of the DataRoi to delete"""
   id: ID!
 }
 
@@ -1400,6 +1414,19 @@ type GeneralMediaAccessGrant {
 }
 
 """Temporary S3 credentials for reading a Zarr store."""
+type GeneralParquetAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""Temporary S3 credentials for reading a Zarr store."""
 type GeneralZarrAccessGrant {
   accessKey: String!
   bucket: String!
@@ -1853,6 +1880,13 @@ type LabelAccessor implements Accessor {
   table: Table!
 }
 
+"""
+Input type for a label, which specifies a label to associate with a coordinate anchor or an image
+"""
+input LabelInput {
+  label: String!
+}
+
 type LabelView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -2064,6 +2098,11 @@ input LightEdgeInput {
   sourcePortId: ID!
   targetElementId: ID!
   targetPortId: ID!
+}
+
+type LightPath {
+  graph: LightpathGraph!
+  id: ID!
 }
 
 """Optical port on an element"""
@@ -2485,6 +2524,9 @@ type Mutation {
   """Delete an existing channel view"""
   deleteChannelView(input: DeleteViewInput!): ID!
 
+  """Delete an existing data ROI"""
+  deleteDataRoi(input: DeleteDataRoiInput!): Boolean!
+
   """Delete an existing dataset"""
   deleteDataset(input: DeleteDatasetInput!): ID!
 
@@ -2645,6 +2687,11 @@ type Mutation {
   Request temporary S3 read credentials for media files in the organization
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Parquet files in the organization
+  """
+  requestGeneralParquetAccess(input: RequestGeneralParquetAccessInput!): GeneralParquetAccessGrant!
 
   """
   Request temporary S3 read credentials for Zarr files in the organization
@@ -4239,6 +4286,10 @@ input RequestGeneralMediaAccessInput {
   expiresIn: Int = null
 }
 
+input RequestGeneralParquetAccessInput {
+  expiresIn: Int = null
+}
+
 input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
 }
@@ -4259,11 +4310,8 @@ input RequestParquetAccessInput {
 
 input RequestParquetUploadInput {
   contentType: String = null
-  datalayer: String! = "s3"
   host: String = null
-  originalFileName: String!
   port: Int = null
-  protocol: String! = "https"
 }
 
 input RequestZarrAccessInput {
@@ -4433,7 +4481,9 @@ input SceneFilter {
   OR: SceneFilter
   description: StrFilterLookup
   id: ID
+  ids: [ID!] = null
   name: StrFilterLookup
+  search: String
 }
 
 input SceneOrder @oneOf {
@@ -5150,7 +5200,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

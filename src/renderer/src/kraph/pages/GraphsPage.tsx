@@ -1,12 +1,11 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { DialogButton } from "@/components/ui/dialog-button";
 import { KraphGraph } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import GraphList from "../components/lists/GraphList";
-import CreateGraphForm from "../forms/CreateGraphForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -19,24 +18,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <DialogButton
+              name="creategraph"
               variant={"outline"}
               size={"sm"}
-              label="Create"
-              description="Create a new Graph"
-              buttonChildren={
-                <>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create
-                </>
-              }
-              onSubmit={(item) => {
-                console.log(item);
-                navigate(KraphGraph.linkBuilder(item.createGraph.id));
+              dialogProps={{
+                onSuccess: (data) => navigate(KraphGraph.linkBuilder(data.createGraph.id)),
               }}
             >
-              <CreateGraphForm />
-            </FormDialogAction>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create
+            </DialogButton>
           </>
         </div>
       }

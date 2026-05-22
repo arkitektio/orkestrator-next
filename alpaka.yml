@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/alpaka/graphql"
+schema:
+  "http://jhnnsrs-lab/alpaka/schema":
+    handleAsSDL: true
 documents: "graphql/alpaka/**/*.graphql"
 generates:
   src/renderer/src/alpaka/api/fragments.ts:

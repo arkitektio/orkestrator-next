@@ -1,26 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSettings } from "@/providers/settings/SettingsContext";
+import { defaultSettings, Settings } from "@/providers/settings/validator";
 import React from "react";
+import { Control, useController } from "react-hook-form";
 
-export const ThemeCustomizer: React.FC = () => {
-  const { settings, setSettings } = useSettings();
+type Props = {
+  control: Control<Settings>;
+};
 
-  // Fallbacks map to your default light mode CSS variables
-  const currentHue = settings.brandHue ?? 267.25;
-  const currentChroma = settings.brandChroma ?? 0.21;
+export const ThemeCustomizer: React.FC<Props> = ({ control }) => {
+  const { field: hueField } = useController({ control, name: "brandHue" });
+  const { field: chromaField } = useController({ control, name: "brandChroma" });
+
+  const currentHue = hueField.value ?? defaultSettings.brandHue!;
+  const currentChroma = chromaField.value ?? defaultSettings.brandChroma!;
 
   const handleHueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({ ...settings, brandHue: parseFloat(e.target.value) });
+    hueField.onChange(parseFloat(e.target.value));
   };
 
   const handleChromaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({ ...settings, brandChroma: parseFloat(e.target.value) });
+    chromaField.onChange(parseFloat(e.target.value));
   };
 
   const reset = () => {
-    setSettings({ ...settings, brandHue: undefined, brandChroma: undefined });
+    hueField.onChange(defaultSettings.brandHue);
+    chromaField.onChange(defaultSettings.brandChroma);
   };
 
   // Pre-mapped OKLCH approximate equivalents for standard Tailwind colors
@@ -130,7 +136,10 @@ export const ThemeCustomizer: React.FC = () => {
               key={p.name}
               className="w-8 h-8 rounded-full border border-input ring-offset-background hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
               style={{ backgroundColor: `oklch(60% ${p.chroma} ${p.hue})` }}
-              onClick={() => setSettings({ ...settings, brandHue: p.hue, brandChroma: p.chroma })}
+              onClick={() => {
+                hueField.onChange(p.hue);
+                chromaField.onChange(p.chroma);
+              }}
               aria-label={`Set color to ${p.name}`}
               title={p.name}
             />

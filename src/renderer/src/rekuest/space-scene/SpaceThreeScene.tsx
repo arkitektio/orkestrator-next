@@ -6,7 +6,9 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { SpacePlacementFragment } from "../api/graphql";
+import { CameraMatrixSync } from "./CameraMatrixSync";
 import { useSpaceScene } from "./context";
+import { MaterializedBlokPanels } from "./MaterializedBlokPanels";
 import { MoveablePlacement, PlacementFallback } from "./MoveablePlacement";
 
 
@@ -29,6 +31,7 @@ const PlacementObject = ({ placement }: { placement: SpacePlacementFragment }) =
 
 const SceneContent = () => {
   const placements = useSpaceScene((s) => s.placements);
+  const clearPanels = useSpaceScene((s) => s.clearPanels);
   const selectPlacement = useSpaceScene((s) => s.selectPlacement);
 
   return (
@@ -72,13 +75,17 @@ const SceneContent = () => {
       <mesh
         position={[0, -0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
-        onClick={() => selectPlacement(null)}
+        onClick={() => {
+          selectPlacement(null);
+          clearPanels();
+        }}
         visible={false}
       >
         <planeGeometry args={[100, 100]} />
       </mesh>
 
       <Environment preset="city" />
+      <CameraMatrixSync />
       <OrbitControls
         enablePan
         enableZoom
@@ -88,23 +95,6 @@ const SceneContent = () => {
         maxDistance={20}
       />
     </>
-  );
-};
-
-const SelectedInfo = () => {
-  const selectedId = useSpaceScene((s) => s.selectedPlacementId);
-  const placements = useSpaceScene((s) => s.placements);
-  const selected = placements.find((p) => p.id === selectedId);
-
-  if (!selected) return null;
-
-  return (
-    <div className="absolute bottom-4 left-4 z-20 rounded-lg border bg-background/80 px-4 py-3 text-sm backdrop-blur-sm">
-      <div className="font-semibold">{selected.name}</div>
-      <div className="text-muted-foreground">
-        Agent: {selected.agent.id} &middot;
-      </div>
-    </div>
   );
 };
 
@@ -130,7 +120,7 @@ export const SpaceThreeScene = () => {
         >
           <SceneContent />
         </Canvas>
-        <SelectedInfo />
+        <MaterializedBlokPanels />
       </div>
     </div>
   );

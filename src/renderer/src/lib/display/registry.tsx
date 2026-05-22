@@ -5,6 +5,7 @@ export type DisplayWidgetProps = {
   identifier: Identifier;
   object: string;
   small?: boolean; // Optional prop for small display
+  context?: "command" | "widget"; // "command" = compact, "widget" = full display
 };
 
 export type HookWidget = (props: { value: string }) => React.ReactNode;

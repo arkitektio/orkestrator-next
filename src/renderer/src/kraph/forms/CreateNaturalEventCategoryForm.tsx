@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
@@ -8,16 +8,17 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateProtocolEventCategoryMutationVariables,
+  CreateNaturalEventCategoryMutation,
   useCreateNaturalEventCategoryMutation,
   useSearchGraphsLazyQuery
 } from "../api/graphql";
 
-const TForm = (props: { graph?: string }) => {
+const TForm = (props: { graph?: string; onSuccess?: (data: CreateNaturalEventCategoryMutation) => void }) => {
   const [add] = useCreateNaturalEventCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Natural Event Category created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateProtocolEventCategoryMutationVariables["input"]>({
     defaultValues: {
@@ -32,7 +33,7 @@ const TForm = (props: { graph?: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data,

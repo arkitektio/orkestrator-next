@@ -1,9 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ModuleWrapper } from "@/blok/Wrapper";
+import BlokRenderer from "@/blok/renderer/BlokRenderer";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LocalActionButton } from "@/components/ui/localactionbutton";
 import { RekuestDashboard } from "@/linkers";
 import {
   Direction,
@@ -12,10 +13,12 @@ import {
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
+  IDockviewPanelHeaderProps,
   positionToDirection,
   SerializedDockview,
 } from "dockview";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Circle, Pencil, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   MaterializedBlokFragment,
@@ -24,17 +27,44 @@ import {
   useListBloksQuery,
   useMaterializeBlokMutation,
 } from "../api/graphql";
+import { MaterializeBlokForm } from "../forms/MaterializeBlokForm";
+
+type MaterializedBlokPanelParams = {
+  title: string;
+  mblok: MaterializedBlokFragment;
+};
 
 const components = {
   MBLOK: (
-    props: IDockviewPanelProps<{
-      title: string;
-      mblok: MaterializedBlokFragment;
-    }>,
+    props: IDockviewPanelProps<MaterializedBlokPanelParams>,
   ) => {
     return <DynamicLoader blok={props.params.mblok} />;
   },
 } as const;
+
+const MaterializedBlokTab = (
+  props: IDockviewPanelHeaderProps<MaterializedBlokPanelParams> & {
+    editing: boolean;
+  },
+) => {
+  return (
+    <div className="group flex items-center gap-1.5 px-2 py-1 text-muted-foreground">
+      <Circle className="h-2 w-2 fill-current text-primary" />
+      <span>{props.params.mblok.blok.name ?? props.api.title}</span>
+      {props.editing && (
+        <button
+          className="ml-1 rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:!opacity-100 hover:bg-muted"
+          onClick={(event) => {
+            event.stopPropagation();
+            props.api.close();
+          }}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const BlokSidebar = () => {
   const { data } = useListBloksQuery();
@@ -55,66 +85,128 @@ export const BlokSidebar = () => {
 };
 
 export const DynamicLoader = (props: { blok: MaterializedBlokFragment }) => {
-
-
-
-
-  return <ModuleWrapper mblok={props.blok} />;
+  return (
+    <div className="h-full overflow-auto p-3 @container">
+      <BlokRenderer
+        surfaceId={props.blok.id}
+        uiComponents={props.blok.blok.uiComponents}
+        demoState={props.blok.blok.demoState}
+      />
+    </div>
+  );
 };
 
 export const Selector = (props: {
-  module: string;
-  addPanel: (key: string, agent: string) => void;
+  blokId: string;
+  dashboardId: string;
+  onMaterialized: (mblok: MaterializedBlokFragment) => void;
 }) => {
-  const { data, variables, error } = useGetBlokQuery({
+  const { data, error } = useGetBlokQuery({
     variables: {
-      id: props.module,
+      id: props.blokId,
     },
   });
+  const [materialize, { loading }] = useMaterializeBlokMutation();
+  const autoMaterializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!data || autoMaterializedRef.current || data.blok.dependencies.length > 0) {
+      return;
+    }
+
+    autoMaterializedRef.current = true;
+
+    materialize({
+      variables: {
+        input: {
+          blok: props.blokId,
+          dashboard: props.dashboardId,
+        },
+      },
+    })
+      .then((result) => {
+        const materializedBlok = result.data?.materializeBlok;
+
+        if (!materializedBlok) {
+          autoMaterializedRef.current = false;
+          toast.error("Failed to materialize blok");
+          return;
+        }
+
+        props.onMaterialized(materializedBlok);
+      })
+      .catch((materializeError) => {
+        autoMaterializedRef.current = false;
+        toast.error(materializeError.message);
+      });
+  }, [data, materialize, props]);
 
   if (error) {
     return <div>Error loading blok: {error.message}</div>;
   }
 
   if (!data) {
-    return <></>;
+    return <div className="text-sm text-muted-foreground">Loading blok...</div>;
   }
 
-  if (data.blok.possibleAgents.length === 0) {
+  if (data.blok.dependencies.length === 0) {
     return (
-      <div>
-        No agents Implementing this. {JSON.stringify(data.blok, null, 3)}
+      <div className="text-sm text-muted-foreground">
+        {loading ? "Materializing blok..." : "Preparing blok..."}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {data.blok.possibleAgents.map((agent) => (
-        <Button onClick={() => props.addPanel(props.module, agent.id)}>
-          {agent.name}
-        </Button>
-      ))}
-    </div>
+    <MaterializeBlokForm
+      blokId={data.blok.id}
+      dashboardId={props.dashboardId}
+      dependencies={data.blok.dependencies.map((dependency) => ({
+        id: dependency.id,
+        key: dependency.key,
+      }))}
+      onMaterialized={props.onMaterialized}
+    />
   );
 };
 
 export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
+  const materializedBloks = data.dashboard.placements.flatMap((placement) =>
+    placement.blok ? [placement.blok] : [],
+  );
   const [api, setApi] = useState<DockviewApi | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [panelCount, setPanelCount] = useState(materializedBloks.length);
+  const layoutStorageKey = `layout_${data.dashboard.id}`;
 
-  const [materialize] = useMaterializeBlokMutation();
+  const addMaterializedBlok = useCallback((
+    mblok: MaterializedBlokFragment,
+    dockApi: DockviewApi,
+    position?: {
+      direction: Direction;
+      referenceGroup?: string;
+    },
+  ) => {
+    dockApi.addPanel({
+      id: mblok.id,
+      component: "MBLOK",
+      params: {
+        title: mblok.blok.name,
+        mblok,
+      },
+      title: mblok.blok.name,
+      position,
+    });
+  }, []);
 
   const onReady = (event: DockviewReadyEvent) => {
-
-    const mySerializedLayout = localStorage.getItem(`layout_${data.dashboard.id}`);
+    const mySerializedLayout = localStorage.getItem(layoutStorageKey);
 
     if (mySerializedLayout) {
       try {
         const layout = JSON.parse(mySerializedLayout);
 
-        console.log("Restoring layout", layout.panels);
-
-        layout.panels = data.dashboard.materializedBloks?.map((b) => ({
+        layout.panels = materializedBloks.map((b) => ({
           id: b.id,
           contentComponent: "MBLOK",
           params: {
@@ -128,14 +220,14 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
         }, {});
 
         event.api.fromJSON(layout);
-      } catch (err) {
-        data.dashboard.materializedBloks?.forEach((b) =>
+      } catch {
+        materializedBloks.forEach((b) =>
           addMaterializedBlok(b, event.api),
         );
       }
     }
     else {
-      data.dashboard.materializedBloks?.forEach((b) =>
+      materializedBloks.forEach((b) =>
         addMaterializedBlok(b, event.api),
       );
     }
@@ -143,6 +235,7 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
 
 
     setApi(event.api);
+    setPanelCount(event.api.panels.length);
   };
 
   const [dropContext, setDropContext] = useState<{
@@ -161,79 +254,47 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
 
     const disposableL = api.onDidLayoutChange(() => {
       const layout: SerializedDockview = api.toJSON();
-      localStorage.setItem(`layout_${data.dashboard.id}`, JSON.stringify(layout));
+      localStorage.setItem(layoutStorageKey, JSON.stringify(layout));
+      setPanelCount(api.panels.length);
     });
 
     return () => {
       disposable.dispose();
       disposableL.dispose();
     };
-  }, [api]);
+  }, [api, layoutStorageKey]);
 
+  const onMaterialized = useCallback((mblok: MaterializedBlokFragment) => {
+    if (!api || dropContext == undefined) {
+      toast.error("Dashboard is not ready for dropping panels yet");
+      return;
+    }
 
-  const addMaterializedBlok = (
-    mblok: MaterializedBlokFragment,
-    api: DockviewApi,
-  ) => {
-
-    api.addPanel({
-      id: mblok.id,
-      component: "MBLOK",
-      params: {
-        title: "Panel 1",
-        mblok: mblok,
-      },
-      title: mblok.blok.name,
+    addMaterializedBlok(mblok, api, {
+      direction: dropContext.direction,
+      referenceGroup: dropContext.group,
     });
-  };
+    setDropContext(undefined);
+    void refetch();
+  }, [api, dropContext, refetch, addMaterializedBlok]);
 
-  const addPanel = useCallback((blok: string, agent: string) => {
-    materialize({
-      variables: {
-        input: { blok: blok, agent: agent, dashboard: data.dashboard.id },
-      },
-    }).then(
-      (result) => {
-        const mblok = result.data?.materializeBlok;
-        if (mblok) {
-          console.log("Materialized Blok", mblok);
-          if (!api || dropContext == undefined) {
-            toast.error("API reference is not set");
-            return;
-          }
+  const resetLayout = useCallback(() => {
+    if (!api) {
+      return;
+    }
 
+    api.clear();
+    localStorage.removeItem(layoutStorageKey);
+    materializedBloks.forEach((mblok) => addMaterializedBlok(mblok, api));
+    setPanelCount(api.panels.length);
+  }, [api, layoutStorageKey, materializedBloks, addMaterializedBlok]);
 
-          api.addPanel({
-            id: mblok.id,
-            component: "MBLOK",
-            params: {
-              title: mblok.blok.name,
-              mblok: mblok,
-            },
-            title: mblok.blok.name,
-            position: {
-              direction: dropContext?.direction,
-              referenceGroup: dropContext?.group,
-            },
-          });
-          setDropContext(undefined);
-        } else {
-          toast.error("Failed to materialize blok");
-        }
-      },
-      (error) => {
-        toast.error(error.message);
-      },
-    );
-
-  }, [data.dashboard.id, materialize, api, dropContext]);
-
-
-
-
-  const onSave = () => {
-
-  };
+  const renderTab = useCallback(
+    (props: IDockviewPanelHeaderProps<MaterializedBlokPanelParams>) => (
+      <MaterializedBlokTab {...props} editing={editing} />
+    ),
+    [editing],
+  );
 
   const onDidDrop = (event: DockviewDidDropEvent) => {
 
@@ -255,6 +316,22 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
     <RekuestDashboard.ModelPage
       title={data.dashboard.name || "New Dasboard"}
       object={data.dashboard}
+      pageActions={(
+        <LocalActionButton
+          name="rekuest-delete-dashboard"
+          variant="destructive"
+          size="sm"
+          state={{
+            left: [
+              {
+                identifier: '@rekuest/dashboard',
+                object: data.dashboard,
+              },
+            ],
+            isCommand: false,
+          }}
+        />
+      )}
       sidebars={
         <MultiSidebar
           map={{
@@ -263,7 +340,7 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
         />
       }
     >
-      <div className="relative w-full h-full flex">
+      <div className="h-full w-full flex flex-col overflow-hidden">
         <Dialog
           open={dropContext != undefined}
           onOpenChange={() => {
@@ -272,26 +349,87 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
 
         >
           <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Materialize Blok</DialogTitle>
+            </DialogHeader>
             {dropContext &&
-              <Selector module={dropContext.blok} addPanel={addPanel} />
+              <Selector
+                blokId={dropContext.blok}
+                dashboardId={data.dashboard.id}
+                onMaterialized={onMaterialized}
+              />
             }
           </DialogContent>
         </Dialog>
-        <DockviewReact
-          components={components}
-          onReady={onReady}
-          className={"dockview-theme-abyss h-[800px] w-full"}
-          onDidDrop={onDidDrop}
-        />
 
-        <Button
-          variant="outline"
-          className="absolute bottom-0 right-0"
-          onClick={onSave}
-        >
-          Save
-        </Button>
+        <div className="px-6 py-5 flex flex-col flex-1 gap-4 min-h-0">
+          <div className="flex items-end justify-between gap-4 shrink-0">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {data.dashboard.name || "Untitled dashboard"}
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Drag bloks from the sidebar to materialize and arrange them in this workspace.
+              </p>
+            </div>
 
+            <div className="flex gap-2">
+              {editing ? (
+                <>
+                  <Button onClick={resetLayout} variant="ghost" size="sm">
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Reset
+                  </Button>
+                  <Button onClick={() => setEditing(false)} variant="default" size="sm">
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Done
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => setEditing(true)} variant="ghost" size="sm">
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                  <Button onClick={() => void refetch()} variant="outline" size="sm">
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Refresh
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap shrink-0">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Dashboard
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Circle className="h-2 w-2 fill-current text-green-500" />
+              <span className="text-xs text-muted-foreground">{panelCount} panels open</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Circle className="h-2 w-2 fill-current text-primary" />
+              <span className="text-xs text-muted-foreground">
+                {data.dashboard.placements.length} placements
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Circle className="h-2 w-2 fill-current text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Drop enabled</span>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 rounded-2xl overflow-hidden">
+            <DockviewReact
+              components={components}
+              defaultTabComponent={renderTab}
+              onReady={onReady}
+              className="dockview-theme-abyss h-full w-full"
+              onDidDrop={onDidDrop}
+            />
+          </div>
+        </div>
       </div>
     </RekuestDashboard.ModelPage>
   );

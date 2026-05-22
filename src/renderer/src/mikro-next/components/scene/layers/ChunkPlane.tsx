@@ -10,9 +10,16 @@ import { useSceneStore } from '../store/sceneStore';
 const CHUNK_FADE_IN_MS = 220;
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
-function getTextureConfig(rawData: any) {
+function getTextureConfig(rawData: unknown) {
   if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 255.0 };
+    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 1.0 };
+  }
+  if (rawData instanceof Uint16Array) {
+    const normalizedData = new Float32Array(rawData.length);
+    for (let index = 0; index < rawData.length; index++) {
+      normalizedData[index] = rawData[index] / 65535;
+    }
+    return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
   }
   if (rawData instanceof Float32Array) {
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
@@ -25,6 +32,7 @@ function getTextureConfig(rawData: any) {
 export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
+  const [localBounds, setLocalBounds] = useState<{ localMin: number; localMax: number } | null>(null);
   const isDebug = useViewerStore((s) => s.debug);
   const getArray = useViewerStore((s) => s.getArray);
 
@@ -37,9 +45,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     const layer = s.layers.find((l) => l.id === chunk.frame_id);
     return layer
   });
-
-  const tStart = useViewerStore((s) => s.tStart);
-  const tEnd = useViewerStore((s) => s.tEnd);
 
   // Report rendering state to store automatically
   const setChunkStatus = useViewerStore((s) => s.setChunkStatus);
@@ -99,9 +104,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     return mat;
   }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
-  const isVisible = useMemo(() => {
-    return true;
-  }, [chunk, tStart, tEnd]);
+  const isVisible = true;
 
   useEffect(() => {
     if (!isVisible && !texture) return;
@@ -122,6 +125,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
           priority: chunk.level,
           signal: abortController.signal,
           useSharedArrayBuffer: true,
+          textureFidelity: chunk.level === 0 ? 'high' : 'low',
         });
         const chunkReadMs = performance.now() - chunkReadStartedAt;
 
@@ -168,6 +172,10 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         });
 
         setDataScale(dataScale);
+        setLocalBounds(chunkData.textureBounds ?? {
+          localMin: chunk.min_value,
+          localMax: chunk.max_value,
+        });
         setTexture(tex);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -182,7 +190,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     return () => {
       abortController.abort();
     };
-  }, [chunk, getArray]);
+  }, [chunk, fastestIdx, getArray, isVisible, middleIdx, slowestIdx, texture, xIdx, yIdx, zIdx]);
 
   useEffect(() => {
     return () => {
@@ -229,11 +237,15 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
       if (layer?.climMax !== undefined) {
         materialRef.current.uniforms.climMax.value = layer.climMax;
       }
+      if (localBounds) {
+        materialRef.current.uniforms.localMin.value = localBounds.localMin;
+        materialRef.current.uniforms.localMax.value = localBounds.localMax;
+      }
       if (colorMapTexture) {
         materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
       }
     }
-  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
+  }, [colorMapTexture, layer?.climMax, layer?.climMin, localBounds]);
 
 
 
@@ -243,6 +255,8 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     colormapTexture: { value: colorMapTexture },
     minValue: { value: chunk.min_value },
     maxValue: { value: chunk.max_value },
+    localMin: { value: localBounds?.localMin ?? chunk.min_value },
+    localMax: { value: localBounds?.localMax ?? chunk.max_value },
     climMin: { value: layer?.climMin ?? 0.0 },
     climMax: { value: layer?.climMax ?? 1.0 },
     opacity: { value: 1.0 },
@@ -250,7 +264,17 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
     dimRemap: { value: dimRemapMat },
-  }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
+  }), [
+    chunk.max_value,
+    chunk.min_value,
+    colorMapTexture,
+    dataScale,
+    dimRemapMat,
+    layer?.climMax,
+    layer?.climMin,
+    localBounds,
+    texture,
+  ]);
 
 
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
@@ -321,6 +345,8 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
+            uniform float localMin;
+            uniform float localMax;
             uniform float climMin;
             uniform float climMax;
             uniform float opacity;
@@ -331,13 +357,22 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
             out vec4 FragColor;
 
+            float reconstructRawValue(float encodedValue) {
+              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
+              if (abs(localMax - localMin) < 0.00001) {
+                return localMin;
+              }
+
+              return mix(localMin, localMax, encoded);
+            }
+
             void main() {
               vec3 uvw = vUv;
               uvw.y = 1.0 - uvw.y;
 
               vec3 texCoord = dimRemap * uvw;
-              float val = texture(colorTexture, texCoord).r;
-              float rawValue = val * dataScale;
+              float encodedValue = texture(colorTexture, texCoord).r;
+              float rawValue = reconstructRawValue(encodedValue);
 
               float normalized;
               if (useDiscrete > 0.5) {

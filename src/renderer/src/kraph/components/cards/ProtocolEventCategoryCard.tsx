@@ -12,7 +12,7 @@ const TheCard = ({ item }: Props) => {
   const s3resolve = useResolve();
 
   return (
-    <KraphProtocolEventCategory.Smart object={item?.id}>
+    <KraphProtocolEventCategory.Smart object={item}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate relative">
         {item?.image?.presignedUrl && (
           <Image
@@ -27,7 +27,7 @@ const TheCard = ({ item }: Props) => {
               "z-10 font-bold text-md mb-2 cursor-pointer " +
               (isActive ? "text-primary-300" : "")
             }
-            object={item.id}
+            object={item}
           >
             {item?.label}
           </KraphProtocolEventCategory.DetailLink>

@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "lint": "eslint . --fix",
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
+    "dev": "ELECTRON_DISABLE_SANDBOX=1 electron-vite dev",
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -32,8 +32,11 @@
     "elektro": "graphql-codegen --config elektro.yml"
   },
   "dependencies": {
+    "@a2ui/react": "^0.10.0",
+    "@a2ui/web_core": "^0.10.0",
     "@aws-sdk/client-s3": "^3.1010.0",
     "@aws-sdk/lib-storage": "^3.1010.0",
+    "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@moq/hang": "^0.1.2",
@@ -197,8 +200,8 @@
     "deep-equal": "^2.2.3",
     "dockview": "^5.2.0",
     "dockview-react": "^1.16.1",
-    "electron": "^39.2.6",
-    "electron-builder": "^26.0.12",
+    "electron": "^39.2.0",
+    "electron-builder": "26.9",
     "electron-updater": "^6.6.2",
     "electron-vite": "^5.0.0",
     "elkjs": "^0.9.3",
@@ -284,6 +287,6 @@
     "yup": "^1.2.0",
     "zarr": "^0.6.1",
     "zarrita": "0.5.3",
-    "zod": "^4.3.5"
+    "zod": "^4.4.3"
   }
 }

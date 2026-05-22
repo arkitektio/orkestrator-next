@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
@@ -9,6 +9,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
+  CreateRelationCategoryMutation,
   CreateRelationCategoryMutationVariables,
   useCreateInlineGraphMutation,
   useCreateRelationCategoryMutation,
@@ -18,14 +19,14 @@ import {
 } from "../api/graphql";
 
 
-export const TForm = (props: { graph?: string }) => {
+export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelationCategoryMutation) => void }) => {
   const [add] = useCreateRelationCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 
   const [create] = useCreateInlineGraphMutation();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Relation Category created", onSuccess: props.onSuccess });
 
   const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
     defaultValues: {
@@ -43,7 +44,7 @@ export const TForm = (props: { graph?: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   ...data,

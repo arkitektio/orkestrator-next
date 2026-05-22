@@ -185,14 +185,7 @@ export const getActionsForState = <TAppOrServices = ServiceMap>(
   });
 };
 
-// --- Factory Function Following Dialog Provider Pattern ---
-export function createLocalActionProvider<
-  TAppOrServices = ServiceMap,
-  const TRegistry extends Record<string, Action<TAppOrServices>> = Record<
-    string,
-    Action<TAppOrServices>
-  >,
->(registry: TRegistry) {
+export const  createLocalActionProvider = <TAppOrServices = ServiceMap, TRegistry extends Record<string, Action<TAppOrServices>> = Record<string,Action<TAppOrServices>>>(registry: TRegistry) => {
   type LocalActionId = keyof TRegistry;
 
   const LocalActionContext = createContext<{

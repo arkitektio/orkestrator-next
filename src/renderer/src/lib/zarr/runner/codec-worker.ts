@@ -12,13 +12,14 @@ import {
   type S3FetchConfig,
   type SerializedRequestInit,
 } from './s3-request.js'
-import type { CodecChunkMeta } from './types.js'
+import type { CodecChunkMeta, TextureChunkBounds } from './types.js'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope & {
   onmessage: ((event: MessageEvent<WorkerMessage>) => void | Promise<void>) | null
 }
 
-type TextureCompatibleDataType = 'uint8' | 'float32'
+type TextureCompatibleDataType = 'uint8' | 'uint16' | 'float32'
+type TextureFidelity = 'default' | 'low' | 'high'
 
 function now(): number {
   return performance.now()
@@ -54,9 +55,81 @@ function fixEdgeChunkShapeStride<D extends DataType>(
   return chunk
 }
 
+function convertChunkToTexturePrecision(
+  chunk: Chunk<DataType>,
+  targetType: 'uint8' | 'uint16',
+): {
+  chunk: Chunk<'uint8'> | Chunk<'uint16'>
+  promotedType: TextureCompatibleDataType
+  textureBounds: TextureChunkBounds
+} {
+  const source = chunk.data as ArrayLike<number | bigint>
+  const outputMax = targetType === 'uint8' ? 255 : 65535
+  const output = targetType === 'uint8' ? new Uint8Array(source.length) : new Uint16Array(source.length)
+  let localMin = Number.POSITIVE_INFINITY
+  let localMax = Number.NEGATIVE_INFINITY
+
+  for (let i = 0; i < source.length; i++) {
+    const numericValue = Number(source[i])
+    if (!Number.isFinite(numericValue)) {
+      continue
+    }
+
+    localMin = Math.min(localMin, numericValue)
+    localMax = Math.max(localMax, numericValue)
+  }
+
+  if (!Number.isFinite(localMin) || !Number.isFinite(localMax)) {
+    localMin = 0
+    localMax = 0
+  }
+
+  const sourceRange = localMax - localMin
+
+  for (let i = 0; i < source.length; i++) {
+    const numericValue = Number(source[i])
+    if (!Number.isFinite(numericValue)) {
+      output[i] = 0
+      continue
+    }
+
+    const normalized = sourceRange <= 0
+      ? 0
+      : Math.min(1, Math.max(0, (numericValue - localMin) / sourceRange))
+    output[i] = Math.round(normalized * outputMax)
+  }
+
+  return {
+    chunk: {
+      data: output,
+      shape: chunk.shape,
+      stride: chunk.stride,
+    } as Chunk<'uint8'> | Chunk<'uint16'>,
+    promotedType: targetType,
+    textureBounds: {
+      localMin,
+      localMax,
+    },
+  }
+}
+
 function promoteChunkForTexture(
   chunk: Chunk<DataType>,
-): { chunk: Chunk<'uint8'> | Chunk<'float32'>; promotedType: TextureCompatibleDataType } {
+  _sourceDataType: DataType,
+  textureFidelity: TextureFidelity,
+): {
+  chunk: Chunk<'uint8'> | Chunk<'uint16'> | Chunk<'float32'>
+  promotedType: TextureCompatibleDataType
+  textureBounds?: TextureChunkBounds
+} {
+  if (textureFidelity === 'low') {
+    return convertChunkToTexturePrecision(chunk, 'uint8')
+  }
+
+  if (textureFidelity === 'high') {
+    return convertChunkToTexturePrecision(chunk, 'uint16')
+  }
+
   if (chunk.data instanceof Uint8Array || chunk.data instanceof Uint8ClampedArray) {
     const uint8Data =
       chunk.data instanceof Uint8Array
@@ -285,6 +358,7 @@ type WorkerMessage =
       metaId: number
       requestInit?: SerializedRequestInit
       actualChunkShape?: number[]
+      textureFidelity?: TextureFidelity
     }
   | {
       type: 'fetch_exists'
@@ -383,7 +457,16 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const reshapeMs = now() - reshapeStartedAt
 
       const promoteStartedAt = now()
-      const promoted = promoteChunkForTexture(chunk)
+      const meta = metaByMetaId.get(msg.metaId)
+      if (!meta) {
+        throw new Error(`No metadata registered for metaId ${msg.metaId}`)
+      }
+
+      const promoted = promoteChunkForTexture(
+        chunk,
+        meta.data_type,
+        msg.textureFidelity ?? 'default',
+      )
       const promoteMs = now() - promoteStartedAt
 
       const dataView = promoted.chunk.data as unknown as {
@@ -400,6 +483,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           type: 'fetch_decoded' as const,
           id: msg.id,
           promotedType: promoted.promotedType,
+          textureBounds: promoted.textureBounds,
           data: buffer,
           byteOffset,
           byteLength,

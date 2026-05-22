@@ -10,7 +10,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { baseName, Router } from "@/constants";
 import { useFatalReport } from "@/hooks/use-report";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
@@ -116,7 +115,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     <SettingsProvider>
       <UploadProvider>
         <DownloadProvider>
-          <CommandProvider>
             <DebugProvider>
               <Router basename={baseName}>
                 <NuqsAdapter>
@@ -161,7 +159,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
               </NuqsAdapter>
             </Router>
           </DebugProvider>
-        </CommandProvider>
       </DownloadProvider>
     </UploadProvider>
   </SettingsProvider>

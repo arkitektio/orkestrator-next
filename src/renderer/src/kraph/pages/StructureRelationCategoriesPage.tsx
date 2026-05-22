@@ -1,11 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphGraph, KraphStructureRelationCategory } from "@/linkers";
+import { DialogButton } from "@/components/ui/dialog-button";
+import { KraphStructureRelationCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import StructureRelationCategoryList from "../components/lists/StructureRelationCategoryList";
-import CreateStructureRelationCategoryForm from "../forms/CreateStructureRelationCategoryForm";
 
 
 const Page = () => {
@@ -17,24 +16,17 @@ const Page = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <DialogButton
+              name="createstructurerelationcategory"
               variant={"outline"}
               size={"sm"}
-              label="Create"
-              description="Create a new Structure Relation Category"
-              buttonChildren={
-                <>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create
-                </>
-              }
-              onSubmit={(item) => {
-                console.log(item);
-                navigate(KraphGraph.linkBuilder(item.createGraph.id));
+              dialogProps={{
+                onSuccess: (data) => navigate(KraphStructureRelationCategory.linkBuilder(data.createStructureRelationCategory.id)),
               }}
             >
-              <CreateStructureRelationCategoryForm />
-            </FormDialogAction>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create
+            </DialogButton>
           </>
         </div>
       }

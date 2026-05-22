@@ -13,6 +13,8 @@ import { PanelProvider } from "./PanelProvider";
 import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { DebugPanel } from "./panels/DebugPanel";
+import { SelectedPointPanel } from "./panels/SelectedPointPanel";
+import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { ScenePlane } from "./layers/two_d/ScenePlane";
 import { createModeStore, ModeStoreContext } from "./store/modeStore";
@@ -26,6 +28,8 @@ import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
+import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSelectionStore";
+import { RectangleDrawer } from "./interactions/RectangleDrawer";
 import { RoiDrawer } from "./interactions/RoiDrawer";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { SceneDataRois } from "./layers/SceneDataRois";
@@ -44,6 +48,7 @@ type SceneScope = {
   selectionStore: ReturnType<typeof createSelectionStore>;
   sceneStore: ReturnType<typeof createSceneStore>;
   roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
+  roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
 };
 
 
@@ -74,6 +79,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
           selectionStore: createSelectionStore(),
           sceneStore: createSceneStore({ scene: props.scene }),
           roiDrawingStore: createRoiDrawingStore(),
+          roiSelectionStore: createRoiSelectionStore(),
         };
 
         if (!cancelled) {
@@ -118,6 +124,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
           <SelectionStoreContext.Provider value={scope.selectionStore}>
             <SceneStoreContext.Provider value={scope.sceneStore}>
             <RoiDrawingStoreContext.Provider value={scope.roiDrawingStore}>
+            <RoiSelectionStoreContext.Provider value={scope.roiSelectionStore}>
 
 
 
@@ -144,6 +151,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <ScenePlane />
               <SceneVolume />
               <SceneDataRois />
+              <RectangleDrawer />
               <RoiDrawer />
 
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
@@ -154,6 +162,8 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <ScenePanel/>
             <LayerControlPanel />
             <DebugPanel />
+            <SelectedPointPanel />
+            <SelectedRoiPanel />
             <ZSliderPanel />
             <VisibilityManager/>
             <ScaleBar />
@@ -163,6 +173,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <LayerViewRangesOverlay />
           </PanelProvider>
         </div>
+                </RoiSelectionStoreContext.Provider>
                 </RoiDrawingStoreContext.Provider>
                 </SceneStoreContext.Provider>
         </SelectionStoreContext.Provider>

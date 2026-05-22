@@ -38,6 +38,7 @@ import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
 import { RoiDrawerCanvas } from "./RoiDrawer";
 import { useViewerState, ViewerStateProvider } from "./ViewerStateProvider";
+import { resolveBaseColorRgb } from "../scene/zarr/colormaps";
 
 // Grid overlay component with milestone positions
 const GridOverlay = ({
@@ -287,7 +288,7 @@ export const LayerRender = (props: {
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
             chunk_shape={derivedScaleView.image.store.chunks || []}
-            key={`${chunk_loader.chunk_coords.join("-")}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${view.baseColor?.join("-")}`}
+            key={`${chunk_loader.chunk_coords.join("-")}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${resolveBaseColorRgb(view.baseColor).join("-")}`}
             view={view}
             z={z}
             t={t}

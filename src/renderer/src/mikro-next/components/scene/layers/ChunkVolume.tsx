@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { open } from 'zarrita';
 import { useSceneStore } from '../store/sceneStore'; // Added to fetch layer properties
@@ -6,27 +7,67 @@ import { useViewerStore } from '../store/viewerStore';
 import type { ChunkData } from '../stores/types';
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
-function getTextureConfig(rawData: any) {
-  if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 255.0 };
-  }
-  if (rawData instanceof Float32Array) {
-    return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+function getTextureConfig(rawData: Uint16Array) {
+  const normalizedData = new Float32Array(rawData.length);
+  for (let index = 0; index < rawData.length; index++) {
+    normalizedData[index] = rawData[index] / 65535;
   }
 
-  console.warn("Promoting TypedArray to Float32Array for strict WebGL2 compatibility.");
-  const floatData = new Float32Array(rawData);
-  return { data: floatData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+  return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+}
+
+function computeChunkLocalBounds(rawData: ArrayLike<number>): { localMin: number; localMax: number } {
+  let localMin = Number.POSITIVE_INFINITY;
+  let localMax = Number.NEGATIVE_INFINITY;
+
+  for (let index = 0; index < rawData.length; index++) {
+    const numericValue = Number(rawData[index]);
+    if (!Number.isFinite(numericValue)) {
+      continue;
+    }
+
+    localMin = Math.min(localMin, numericValue);
+    localMax = Math.max(localMax, numericValue);
+  }
+
+  if (!Number.isFinite(localMin) || !Number.isFinite(localMax)) {
+    return { localMin: 0, localMax: 0 };
+  }
+
+  return { localMin, localMax };
+}
+
+function normalizeChunkToUint16(
+  rawData: ArrayLike<number>,
+  bounds: { localMin: number; localMax: number },
+): Uint16Array {
+  const normalized = new Uint16Array(rawData.length);
+  const range = bounds.localMax - bounds.localMin;
+
+  for (let index = 0; index < rawData.length; index++) {
+    const numericValue = Number(rawData[index]);
+    if (!Number.isFinite(numericValue) || range <= 0) {
+      normalized[index] = 0;
+      continue;
+    }
+
+    const fraction = THREE.MathUtils.clamp((numericValue - bounds.localMin) / range, 0, 1);
+    normalized[index] = Math.round(fraction * 65535);
+  }
+
+  return normalized;
 }
 
 // --- 1. Individual Chunk Renderer with Volumetric Shader ---
 export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
+  const [localBounds, setLocalBounds] = useState<{ localMin: number; localMax: number } | null>(null);
   const isDebug = useViewerStore((s) => s.debug);
 
   // Reference for direct GPU uniform updates
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const invalidate = useThree((state) => state.invalidate);
 
   // Grab live layer state for contrast limits
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === chunk.frame_id));
@@ -93,7 +134,9 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
         const texHeight = middleIdx !== -1 ? rawShape[middleIdx] : 1;
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
-        const { data, type, internalFormat, dataScale } = getTextureConfig(chunkData.data);
+        const nextLocalBounds = computeChunkLocalBounds(chunkData.data as ArrayLike<number>);
+        const normalizedData = normalizeChunkToUint16(chunkData.data as ArrayLike<number>, nextLocalBounds);
+        const { data, type, internalFormat, dataScale } = getTextureConfig(normalizedData);
 
         const tex = new THREE.Data3DTexture(
           data,
@@ -116,6 +159,7 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
         tex.needsUpdate = true;
 
         setDataScale(dataScale);
+    setLocalBounds(nextLocalBounds);
         setTexture(tex);
       } catch (error) {
         console.error(`Failed to load chunk: ${chunk.chunkKey}`, error);
@@ -145,11 +189,17 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
       if (layer?.climMax !== undefined) {
         materialRef.current.uniforms.climMax.value = layer.climMax;
       }
+      if (localBounds) {
+        materialRef.current.uniforms.localMin.value = localBounds.localMin;
+        materialRef.current.uniforms.localMax.value = localBounds.localMax;
+      }
       if (colorMapTexture) {
         materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
       }
+      materialRef.current.uniformsNeedUpdate = true;
+      invalidate();
     }
-  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
+  }, [colorMapTexture, invalidate, layer?.climMin, layer?.climMax, localBounds]);
 
   // Memoize static or heavily-dependent initial uniforms
   const initialUniforms = useMemo(() => ({
@@ -157,6 +207,8 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
     colormapTexture: { value: colorMapTexture },
     minValue: { value: chunk.min_value ?? 0.0 },
     maxValue: { value: chunk.max_value ?? 1.0 },
+    localMin: { value: localBounds?.localMin ?? chunk.min_value ?? 0.0 },
+    localMax: { value: localBounds?.localMax ?? chunk.max_value ?? 1.0 },
     climMin: { value: layer?.climMin ?? 0.0 },
     climMax: { value: layer?.climMax ?? 1.0 },
     opacity: { value: 1.0 },
@@ -164,7 +216,17 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
     dimRemap: { value: dimRemapMat },
-  }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
+  }), [
+    chunk.max_value,
+    chunk.min_value,
+    colorMapTexture,
+    dataScale,
+    dimRemapMat,
+    layer?.climMax,
+    layer?.climMin,
+    localBounds,
+    texture,
+  ]);
 
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
   const totalX = getDimArraySize(xIdx);
@@ -218,6 +280,8 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
+            uniform float localMin;
+            uniform float localMax;
             uniform float climMin;
             uniform float climMax;
             uniform float opacity;
@@ -243,6 +307,15 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
               float t0 = max(tmin.x, max(tmin.y, tmin.z));
               float t1 = min(tmax.x, min(tmax.y, tmax.z));
               return vec2(t0, t1);
+            }
+
+            float reconstructRawValue(float encodedValue) {
+              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
+              if (abs(localMax - localMin) < 0.00001) {
+                return localMin;
+              }
+
+              return mix(localMin, localMax, encoded);
             }
 
             void main() {
@@ -273,21 +346,21 @@ export const ChunkVolume = ({ chunk, colorMapTexture }: { chunk: ChunkData, colo
                 // FAST MATRIX MULTIPLICATION
                 vec3 texCoord = dimRemap * uvw;
 
-                float val = texture(colorTexture, texCoord).r;
-                maxVal = max(maxVal, val);
+                float encodedValue = texture(colorTexture, texCoord).r;
+                float rawValue = reconstructRawValue(encodedValue);
+                maxVal = max(maxVal, rawValue);
 
                 p += step;
                 t += delta;
               }
 
-              float rawValue = maxVal * dataScale;
               float normalized;
 
               if (useDiscrete > 0.5) {
-                normalized = mod(rawValue, 256.0) / 255.0;
+                normalized = mod(maxVal, 256.0) / 255.0;
               } else {
                 // Incorporate dynamic climMin and climMax into volumetric rendering
-                float baseNorm = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 1.0);
+                float baseNorm = clamp((maxVal - minValue) / (maxValue - minValue), 0.0, 1.0);
                 float climRange = max(climMax - climMin, 0.00001);
 
                 normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);

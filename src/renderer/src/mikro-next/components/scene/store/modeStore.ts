@@ -2,8 +2,9 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "./createScopedStore";
 
-export type InteractionMode = "PAN" | "EDIT" | "SCAN" | "MOVE" | "META";
+export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META" | "PROBE" | "AUTO_PROBE";
 export type DisplayMode = "2D" | "3D";
+export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL";
 
 export type DisplayModeOption = {
   label: string;
@@ -14,6 +15,12 @@ export type DisplayModeOption = {
 export type InteractionModeOption = {
   label: string;
   value: InteractionMode;
+  description?: string;
+};
+
+export type CameraControllerModeOption = {
+  label: string;
+  value: CameraControllerMode;
   description?: string;
 };
 
@@ -29,9 +36,9 @@ export const interactionModeOptions: InteractionModeOption[] = [
     description: "Mode for selecting and modifying objects",
   },
   {
-    label: "Scan Mode",
-    value: "SCAN",
-    description: "Mode for drawing selection boxes and scanning areas",
+    label: "Select Mode",
+    value: "SELECT",
+    description: "Mode for selecting ROIs directly or with a drag box",
   },
   {
     label: "Move Mode",
@@ -43,6 +50,16 @@ export const interactionModeOptions: InteractionModeOption[] = [
     value: "META",
     description: "Mode for accessing meta-level controls and settings",
   },
+  {
+    label: "Probe Mode",
+    value: "PROBE",
+    description: "Click volumes to place or update the active probe",
+  },
+  {
+    label: "Auto Probe Mode",
+    value: "AUTO_PROBE",
+    description: "Hover volumes to update the active probe continuously",
+  },
 ];
 
 export const displayModeOptions: DisplayModeOption[] = [
@@ -50,13 +67,34 @@ export const displayModeOptions: DisplayModeOption[] = [
   { label: "3D View", value: "3D", description: "Display in 3D mode" },
 ];
 
+export const cameraControllerModeOptions: CameraControllerModeOption[] = [
+  {
+    label: "Orbit",
+    value: "ORBIT",
+    description: "Classic orbit camera around the current target",
+  },
+  {
+    label: "Cursor Orbit",
+    value: "CURSOR_ORBIT",
+    description: "Orbit camera with cursor-focused zoom behavior",
+  },
+  {
+    label: "Arcball",
+    value: "ARCBALL",
+    description: "Arcball controller for pointer-centered 3D rotation",
+  },
+];
+
 export interface ModeState {
   interactionMode: InteractionMode;
   displayMode: DisplayMode;
+  cameraControllerMode: CameraControllerMode;
   interactionModeOptions: InteractionModeOption[];
   displayModeOptions: DisplayModeOption[];
+  cameraControllerModeOptions: CameraControllerModeOption[];
   setInteractionMode: (mode: InteractionMode) => void;
   setDisplayMode: (mode: DisplayMode) => void;
+  setCameraControllerMode: (mode: CameraControllerMode) => void;
 }
 
 
@@ -69,9 +107,11 @@ export const createModeStore = () =>
   createStore<ModeState>()(
     immer((set) => ({
     interactionMode: "PAN", // Default starting mode
-    displayMode: "3D", // Active when holding a modifier key
+    displayMode: "2D", // Active when holding a modifier key
+    cameraControllerMode: "ORBIT",
     interactionModeOptions,
     displayModeOptions,
+    cameraControllerModeOptions,
     setInteractionMode: (mode) =>
       set((state) => {
         state.interactionMode = mode;
@@ -79,6 +119,10 @@ export const createModeStore = () =>
     setDisplayMode: (mode) =>
       set((state) => {
         state.displayMode = mode;
+      }),
+    setCameraControllerMode: (mode) =>
+      set((state) => {
+        state.cameraControllerMode = mode;
       }),
     })),
   );

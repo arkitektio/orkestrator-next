@@ -1,6 +1,6 @@
 overwrite: true
 schema:
-  "https://demo.arkitekt.live/rekuest/schema":
+  "http://jhnnsrs-lab/rekuest/schema":
     handleAsSDL: true
 
 documents: "graphql/rekuest-next/**/*.graphql"

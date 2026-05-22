@@ -5,6 +5,7 @@ import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/layerStore";
+import { useViewerStore } from "../store/viewerStore";
 import { affineToMatrix4 } from "../panels/layer/affine-utils";
 import { useCreateDataRoiMutation } from "@/mikro-next/api/graphql";
 import type { DrawnRoi } from "../store/roiDrawingStore";
@@ -21,7 +22,8 @@ export const RoiDrawer = () => {
   const drawnRois = useRoiDrawingStore((s) => s.drawnRois);
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
   const layers = useSceneStore((s) => s.layers);
-  const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
+  const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
+  const currentZ = useViewerStore((s) => s.currentZ);
 
   const [createDataRoi] = useCreateDataRoiMutation();
 
@@ -30,56 +32,75 @@ export const RoiDrawer = () => {
   const [currentPos, setCurrentPos] = useState<THREE.Vector3 | null>(null);
   const [polyPoints, setPolyPoints] = useState<THREE.Vector3[]>([]);
 
-  const selectedLayer = useMemo(
-    () => layers.find((l) => l.id === selectedLayerId),
-    [layers, selectedLayerId],
+  const armedLayers = useMemo(
+    () => layers.filter((layer) => armedLayerIds.includes(layer.id)),
+    [armedLayerIds, layers],
   );
 
-  const invAffine = useMemo(() => {
-    if (!selectedLayer) return new THREE.Matrix4().identity();
-    return affineToMatrix4(selectedLayer.affineMatrix).invert();
-  }, [selectedLayer]);
+  const primaryArmedLayer = armedLayers[0];
+
+  const pointOnCurrentSlice = useCallback(
+    (point: THREE.Vector3) => new THREE.Vector3(point.x, point.y, currentZ),
+    [currentZ],
+  );
+
+  const previewInvAffine = useMemo(() => {
+    if (!primaryArmedLayer) return new THREE.Matrix4().identity();
+    return affineToMatrix4(primaryArmedLayer.affineMatrix).invert();
+  }, [primaryArmedLayer]);
 
   const submitRoi = useCallback(
     async (roi: DrawnRoi) => {
-      if (!selectedLayer) return;
-      const layer = selectedLayer;
-      const slices = layer.lens.slices.map((s) => ({
-        dim: s.dim,
-        start: s.start,
-        stop: s.stop,
-        step: s.step,
-      }));
+      if (armedLayers.length === 0) return;
 
       try {
-        await createDataRoi({
-          variables: {
-            input: {
-              dataset: layer.lens.dataset.id,
-              drawnOnLens: layer.lens.dataset.dataArrays[0]?.id,
-              kind: roi.kind,
-              vectors: roi.vectors.map((v) => [v.x, v.y, v.z]),
-              slices,
-              xDim: layer.xDim,
-              yDim: layer.yDim,
-              zDim: layer.zDim,
-            },
-          },
-        });
-        console.log("Data ROI created successfully");
+        await Promise.all(
+          armedLayers.map(async (layer) => {
+            const invAffine = affineToMatrix4(layer.affineMatrix).invert();
+            const voxelVectors = roi.worldVectors.map((worldVector) => {
+              const vector = worldToVoxel(
+                new THREE.Vector3(worldVector.x, worldVector.y, worldVector.z),
+                invAffine,
+              );
+              return [Math.round(vector.x), Math.round(vector.y), Math.round(vector.z)] as [number, number, number];
+            });
+            const slices = layer.lens.slices.map((slice) => ({
+              dim: slice.dim,
+              start: slice.start,
+              stop: slice.stop,
+              step: slice.step,
+            }));
+
+            await createDataRoi({
+              variables: {
+                input: {
+                  dataset: layer.lens.dataset.id,
+                  drawnOnLens: layer.lens.id,
+                  kind: roi.kind,
+                  vectors: voxelVectors,
+                  slices,
+                  xDim: layer.xDim,
+                  yDim: layer.yDim,
+                  zDim: layer.zDim,
+                },
+              },
+            });
+          }),
+        );
+        console.log(`Data ROI created successfully for ${armedLayers.length} layer(s)`);
         removeDrawnRoi(roi.id);
       } catch (err) {
         console.error("Failed to create data ROI:", err);
       }
     },
-    [selectedLayer, createDataRoi, removeDrawnRoi],
+    [armedLayers, createDataRoi, removeDrawnRoi],
   );
 
   const finishShape = useCallback(
     (worldVectors: THREE.Vector3[]) => {
-      if (!activeTool || !selectedLayer) return;
+      if (!activeTool || !primaryArmedLayer) return;
       const voxelVectors = worldVectors.map((wv) => {
-        const v = worldToVoxel(wv, invAffine);
+        const v = worldToVoxel(wv, previewInvAffine);
         return { x: Math.round(v.x), y: Math.round(v.y), z: Math.round(v.z) };
       });
       const worldVecs = worldVectors.map((wv) => ({
@@ -90,7 +111,7 @@ export const RoiDrawer = () => {
 
       const roi: DrawnRoi = {
         id: Math.random().toString(36).substring(2, 9),
-        layerId: selectedLayer.id,
+        layerId: primaryArmedLayer.id,
         kind: DRAWING_TOOL_TO_ROI_KIND[activeTool],
         vectors: voxelVectors,
         worldVectors: worldVecs,
@@ -99,11 +120,11 @@ export const RoiDrawer = () => {
       addDrawnRoi(roi);
       submitRoi(roi);
     },
-    [activeTool, selectedLayer, invAffine, addDrawnRoi, submitRoi],
+    [activeTool, primaryArmedLayer, previewInvAffine, addDrawnRoi, submitRoi],
   );
 
-  // Only render when in EDIT mode with an active tool and selected layer
-  if (interactionMode !== "EDIT" || !activeTool || !selectedLayer) return null;
+  // Only render when in EDIT mode with an active tool and at least one armed layer
+  if (interactionMode !== "EDIT" || !activeTool || armedLayers.length === 0) return null;
 
   const isPolygonLike = activeTool === "POLYGON" || activeTool === "PATH";
 
@@ -112,59 +133,56 @@ export const RoiDrawer = () => {
       {/* Invisible interaction plane */}
       <mesh
         position={[0, 0, 0.01]}
-        onPointerDown={(e) => {
-          if (isPolygonLike) return; // polygon uses click
-          e.stopPropagation();
-          if (activeTool === "POINT") {
-            finishShape([e.point.clone()]);
-            return;
-          }
-          setStartPos(e.point.clone());
-        }}
         onPointerMove={(e) => {
           if (isPolygonLike) {
             if (polyPoints.length > 0) {
-              setCurrentPos(e.point.clone());
+              setCurrentPos(pointOnCurrentSlice(e.point));
             }
             return;
           }
+
           if (startPos) {
             e.stopPropagation();
-            setCurrentPos(e.point.clone());
+            setCurrentPos(pointOnCurrentSlice(e.point));
           }
-        }}
-        onPointerUp={(e) => {
-          if (isPolygonLike) return;
-          if (startPos && currentPos) {
-            e.stopPropagation();
-            if (activeTool === "LINE") {
-              finishShape([startPos, currentPos]);
-            } else {
-              // Rectangle / Ellipsis: 2 corner vectors
-              finishShape([startPos, currentPos]);
-            }
-          }
-          setStartPos(null);
-          setCurrentPos(null);
         }}
         onClick={(e) => {
-          if (!isPolygonLike) return;
           e.stopPropagation();
-          // Double-click to finish polygon
-          if (e.detail >= 2 && polyPoints.length >= 2) {
-            finishShape([...polyPoints]);
-            setPolyPoints([]);
-            setCurrentPos(null);
+          const anchorPoint = pointOnCurrentSlice(e.point);
+
+          if (isPolygonLike) {
+            // Double-click to finish polygon
+            if (e.detail >= 2 && polyPoints.length >= 2) {
+              finishShape([...polyPoints]);
+              setPolyPoints([]);
+              setCurrentPos(null);
+              return;
+            }
+            setPolyPoints((prev) => [...prev, anchorPoint]);
             return;
           }
-          setPolyPoints((prev) => [...prev, e.point.clone()]);
+
+          if (activeTool === "POINT") {
+            finishShape([anchorPoint]);
+            return;
+          }
+
+          if (!startPos) {
+            setStartPos(anchorPoint);
+            setCurrentPos(anchorPoint);
+            return;
+          }
+
+          finishShape([startPos, anchorPoint]);
+          setStartPos(null);
+          setCurrentPos(null);
         }}
       >
         <planeGeometry args={[80000, 80000]} />
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      {/* Live preview for rectangle / ellipsis drag */}
+      {/* Live preview for click-anchored line / rectangle / ellipsis */}
       {startPos && currentPos && !isPolygonLike && activeTool !== "POINT" && (
         activeTool === "LINE" ? (
           <Line

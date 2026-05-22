@@ -3,18 +3,16 @@ import {
   useSendMessageMutation
 } from "@/alpaka/api/graphql";
 import { useSmartDrop } from "@/providers/smart/hooks";
+import { MessageSquareText } from "lucide-react";
 import { Card } from "../ui/card";
 import { ChatList } from "./chat-list";
-import { Message, UserData } from "./data";
 
 interface ChatProps {
-  messages?: Message[];
-  selectedUser: UserData;
   isMobile: boolean;
   room: RoomFragment;
 }
 
-export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
+export function Chat({ isMobile, room }: ChatProps) {
   const [send, { loading }] = useSendMessageMutation({
     refetchQueries: ["DetailRoom"],
   });
@@ -27,7 +25,7 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
     });
   };
 
-  const [{ isOver, canDrop }, drop] = useSmartDrop((structures) => {
+  const [{ isOver }, drop] = useSmartDrop((structures) => {
     send({
       variables: {
         input: {
@@ -41,9 +39,12 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
   });
 
   return (
-    <div className="flex flex-col justify-between w-full h-full" ref={drop}>
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[inherit]"
+      ref={drop}
+    >
       {(isOver || loading) && (
-        <div className="absolute top-0 left-0 w-full h-full backdrop-blur-sm z-50">
+        <div className="absolute top-0 left-0 z-50 h-full w-full backdrop-blur-sm">
           <div className="flex items-center justify-center h-full">
             <Card className="p-4">
               {loading ? "Adding..." : "Drop to Add to Chat"}
@@ -51,15 +52,30 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
           </div>
         </div>
       )}
+      <div className="border-b px-4 py-3 backdrop-blur ">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted/60 text-muted-foreground shadow-sm">
+            <MessageSquareText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{room.title}</div>
+            <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+              {room.description || "Ask questions, attach structures, and keep the context in one room."}
+            </div>
+          </div>
+          <div className="hidden rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground sm:block">
+            {room.messages.length} {room.messages.length === 1 ? "message" : "messages"}
+          </div>
+        </div>
+      </div>
       <ChatList
         messages={[...room.messages].sort(
           (a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         )}
-        agent={{ id: "1" }}
+        currentAgentId="default"
         sendMessage={sendMessage}
         isMobile={isMobile}
-        room={room}
       />
     </div>
   );

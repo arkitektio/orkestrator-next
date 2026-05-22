@@ -38,7 +38,7 @@ export default function ChatTopbar({ selectedUser }: ChatTopbarProps) {
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
               "h-9 w-9",
-              "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
+              "",
             )}
           >
             <icon.icon size={20} className="text-muted-foreground" />

@@ -1,4 +1,5 @@
 import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
+import { Guard } from "@/app/Arkitekt";
 import { ListPageLayout } from "@/components/layout/ListPageLayout";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import {
@@ -13,7 +14,7 @@ import { ObjectButton } from "@/providers/smart/extensions/context";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 
 const LazyKomments = lazy(() =>
   import("@/lok-next/components/komments/Komments").then((module) => ({
@@ -24,6 +25,12 @@ const LazyKomments = lazy(() =>
 const LazyKnowledgeSidebar = lazy(() =>
   import("@/kraph/components/sidebars/KnowledgeSidebar").then((module) => ({
     default: module.KnowledgeSidebar,
+  })),
+);
+
+const LazyStructureRoomsSidebar = lazy(() =>
+  import("@/alpaka/sidebars/StructureRoomsSidebar").then((module) => ({
+    default: module.StructureRoomsSidebar,
   })),
 );
 
@@ -43,8 +50,21 @@ configureSmartBuilder({
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {
+    const roomsSidebar = (
+      <Suspense fallback={null}>
+        <LazyStructureRoomsSidebar identifier={identifier} object={props.object} />
+      </Suspense>
+    );
+
     return (
-      <ModelPageLayout identifier={identifier} {...props}>
+      <ModelPageLayout
+        identifier={identifier}
+        {...props}
+        additionalSidebars={{
+          ...props.additionalSidebars,
+          Rooms: <Guard.Alpaka>{roomsSidebar}</Guard.Alpaka>,
+        }}
+      >
         {children}
       </ModelPageLayout>
     );

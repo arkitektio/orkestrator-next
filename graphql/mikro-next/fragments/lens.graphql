@@ -6,6 +6,7 @@ fragment DimSlice on Slice {
 }
 
 fragment SceneLens on Lens {
+  id
     shape
     dims
     slices {
@@ -33,6 +34,14 @@ fragment SceneLens on Lens {
         max
         p1
         p99
+      }
+      channelLabel {
+        label
+      }
+      lightGraph {
+              graph {
+          ...LightpathGraph
+        }
       }
     }
 }

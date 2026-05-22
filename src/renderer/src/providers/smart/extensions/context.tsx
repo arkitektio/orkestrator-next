@@ -67,14 +67,14 @@ export const SmartContext = (props: SmartContextProps) => {
       <Command shouldFilter={false}>
         <CommandInput
           placeholder="Search"
-          className="h-9"
+          className="h-10 text-sm"
           onValueChange={(value) => {
             setFilterValue(value);
           }}
           autoFocus
         />
 
-        <CommandList>
+        <CommandList className="mt-2">
           <ApplicableLocalActions {...props} filter={filter} />
           <CommandEmpty>No Action available</CommandEmpty>
           <Guard.Rekuest fallback={<></>}>

@@ -1,4 +1,4 @@
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -15,7 +15,7 @@ export const UpdateImageForm = (props: { image: ImageFragment }) => {
 
   const [searchStage] = useRgbContextOptionsLazyQuery();
 
-  const dialog = useGraphQlFormDialog(add);
+  const submit = useGraphQLDialog(add, { successMessage: "Image updated" });
 
   const form = useForm({
     defaultValues: {
@@ -28,7 +28,7 @@ export const UpdateImageForm = (props: { image: ImageFragment }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
-            dialog({
+            submit({
               variables: {
                 input: {
                   id: props.image.id,

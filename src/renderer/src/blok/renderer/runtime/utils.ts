@@ -6,6 +6,13 @@ const isString = (value: unknown): value is string => {
   return typeof value === 'string';
 };
 
+const splitPathSegments = (path: string): string[] => {
+  return path
+    .replace(/^\//, '')
+    .split(/[/.]/)
+    .filter(Boolean);
+};
+
 const decodeJsonLiteralString = (value: string): unknown => {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -43,10 +50,7 @@ const getValueAtPath = (dataModel: unknown, path: string): unknown => {
     return dataModel;
   }
 
-  const segments = path
-    .replace(/^\//, '')
-    .split('/')
-    .filter(Boolean);
+  const segments = splitPathSegments(path);
 
   let current: unknown = dataModel;
   for (const segment of segments) {
@@ -67,3 +71,4 @@ const getValueAtPath = (dataModel: unknown, path: string): unknown => {
 };
 
 export {decodeJsonLiteralString, getValueAtPath, isRecord, isString, normalizeLiteralValue};
+export {splitPathSegments};

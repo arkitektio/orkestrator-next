@@ -1047,7 +1047,7 @@ export const Foreach = createBlokComponent(
     const items = useValue(blok.items);
     const scopeName = useValue(blok['let']);
     const childIds = component.children?.map(child => child.id) ?? [];
-    const itemsPath = blok.items.prop?.dynamic_value?.path?.replace(/\/$/, '');
+    const itemsPath = blok.items.prop?.dynamic_value?.path?.replace(/[/.]$/, '');
 
     if (!Array.isArray(items) || childIds.length === 0) {
       return null;

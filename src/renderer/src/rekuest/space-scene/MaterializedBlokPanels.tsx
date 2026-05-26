@@ -1,4 +1,4 @@
-import BlokRenderer from "@/blok/renderer/BlokRenderer";
+import MaterializedBlokRenderer from "@/rekuest/components/MaterializedBlokRenderer";
 import { useMaterializedBlokQuery } from "../api/graphql";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Matrix4, Vector3 } from "three";
@@ -150,12 +150,12 @@ const MaterializedBlokPanel = ({ panelId, placementId }: { panelId: string; plac
           </div>
         ) : materializedBlok ? (
           <div className="max-h-full max-w-full overflow-hidden">
-            <BlokRenderer
+            <MaterializedBlokRenderer
+              key={materializedBlok.id}
+              materializedBlok={materializedBlok}
               chrome="minimal"
               sizing="intrinsic"
               surfaceId={materializedBlok.id}
-              uiComponents={materializedBlok.blok.uiComponents}
-              demoState={materializedBlok.blok.demoState}
             />
           </div>
         ) : (

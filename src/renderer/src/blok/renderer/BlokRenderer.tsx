@@ -1,7 +1,8 @@
-import {useMemo} from 'react';
+import {useEffect, useMemo} from 'react';
 import {cn} from '@/lib/utils';
 import {toast} from 'sonner';
 import {createStore} from 'zustand/vanilla';
+import BlokDebugState from './BlokDebugState';
 import {myCatalog} from './catalog';
 import {
   BlokComponentRenderer,
@@ -16,6 +17,7 @@ type BlokRendererProps = {
   surfaceId?: string;
   uiComponents?: unknown;
   demoState?: unknown;
+  state?: unknown;
   chrome?: 'default' | 'minimal';
   sizing?: 'fill' | 'intrinsic';
 };
@@ -79,6 +81,17 @@ const extractDemoState = (demoState: unknown, uiComponents: unknown): unknown =>
   }
 
   return demoState;
+};
+
+const mergeState = (demoState: unknown, state: unknown): unknown => {
+  if (!isRecord(demoState) || !isRecord(state)) {
+    return state ?? demoState;
+  }
+
+  return {
+    ...demoState,
+    ...state,
+  };
 };
 
 const prepareComponents = (
@@ -179,18 +192,29 @@ export default function BlokRenderer({
   surfaceId = DEFAULT_SURFACE_ID,
   uiComponents,
   demoState,
+  state,
   chrome = 'default',
   sizing = 'fill',
 }: BlokRendererProps) {
   const extractedDemoState = extractDemoState(demoState, uiComponents);
+  const initialRuntimeState = useMemo(
+    () => (extractedDemoState !== undefined ? extractedDemoState : state),
+    [extractedDemoState, state],
+  );
+  const resolvedState = useMemo(
+    () => mergeState(extractedDemoState, state),
+    [extractedDemoState, state],
+  );
   const prepared = useMemo(
     () => prepareComponents(extractUiComponents(uiComponents)),
     [uiComponents],
   );
 
+  console.log('BlokRenderer: resolvedState', resolvedState);
+
   const runtimeStore = useMemo(() => {
     const store = createStore<BlokRuntimeContext>(() => ({
-      dataModel: extractedDemoState,
+      dataModel: initialRuntimeState,
       pathAliases: {},
       invokeFunction: (name, args) => myCatalog.invokeFunction(name, args, store.getState()),
       dispatchAction: action => {
@@ -203,7 +227,14 @@ export default function BlokRenderer({
     }));
 
     return store;
-  }, [extractedDemoState, surfaceId]);
+  }, [initialRuntimeState, surfaceId]);
+
+  useEffect(() => {
+    runtimeStore.setState(current => ({
+      ...current,
+      dataModel: resolvedState,
+    }));
+  }, [resolvedState, runtimeStore]);
 
   const renderComponent = (componentId: string, trail: string[] = []): React.ReactNode => {
     if (trail.includes(componentId)) {
@@ -240,7 +271,7 @@ export default function BlokRenderer({
       : 'h-full w-full overflow-auto';
 
   const containerClassName = cn(
-    'a2ui-container',
+    'a2ui-container relative',
     sizingClassName,
     chrome === 'minimal'
       ? 'rounded-xl border border-border/50 bg-background/90 p-1 shadow-sm'
@@ -248,7 +279,7 @@ export default function BlokRenderer({
   );
 
   const errorContainerClassName = cn(
-    'a2ui-container',
+    'a2ui-container relative',
     sizingClassName,
     chrome === 'minimal'
       ? 'rounded-xl border border-destructive/40 bg-background/95 p-2 shadow-sm'
@@ -257,32 +288,36 @@ export default function BlokRenderer({
 
   if (prepared.errors.length > 0) {
     return (
-      <div className={errorContainerClassName}>
-        <div className={cn('rounded-xl border border-destructive/30 bg-background/80 p-4', chrome === 'minimal' ? 'mb-2' : 'mb-4')}>
-          <h3 className="text-sm font-semibold text-destructive">Blok Validation Failed</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            This blok payload does not match the registered blok component catalog, so rendering was skipped.
-          </p>
-        </div>
+      <BlokRuntimeProvider store={runtimeStore}>
+        <div className={errorContainerClassName}>
+          <BlokDebugState surfaceId={surfaceId} />
+          <div className={cn('rounded-xl border border-destructive/30 bg-background/80 p-4', chrome === 'minimal' ? 'mb-2' : 'mb-4')}>
+            <h3 className="text-sm font-semibold text-destructive">Blok Validation Failed</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This blok payload does not match the registered blok component catalog, so rendering was skipped.
+            </p>
+          </div>
 
-        <div className="space-y-3">
-          {prepared.errors.map((error, index) => (
-            <div
-              key={`${error.path}-${index}`}
-              className="rounded-xl border border-destructive/20 bg-background/80 p-3"
-            >
-              <div className="text-xs font-medium text-destructive">{error.path}</div>
-              <div className="mt-1 text-sm text-foreground">{error.message}</div>
-            </div>
-          ))}
+          <div className="space-y-3">
+            {prepared.errors.map((error, index) => (
+              <div
+                key={`${error.path}-${index}`}
+                className="rounded-xl border border-destructive/20 bg-background/80 p-3"
+              >
+                <div className="text-xs font-medium text-destructive">{error.path}</div>
+                <div className="mt-1 text-sm text-foreground">{error.message}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </BlokRuntimeProvider>
     );
   }
 
   return (
     <BlokRuntimeProvider store={runtimeStore}>
       <div className={containerClassName}>
+        <BlokDebugState surfaceId={surfaceId} />
         {prepared.rootIds.length === 0 && (
           <div className="flex min-h-48 items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/30 px-6 text-sm text-muted-foreground">
             No blok components available for this preview yet.

@@ -8,14 +8,14 @@ import type {
   BlokRuntimeDependencies,
   BlokRuntimeContext,
 } from './types';
-import {getValueAtPath, normalizeLiteralValue} from './utils';
+import {getValueAtPath, normalizeLiteralValue, splitPathSegments} from './utils';
 
 const resolveRuntimePath = (
   path: string,
   runtimeContext: Pick<BlokRuntimeContext, 'pathAliases'>,
 ): string => {
   const normalizedPath = path.replace(/^\//, '');
-  const [head, ...tail] = normalizedPath.split('/').filter(Boolean);
+  const [head, ...tail] = splitPathSegments(normalizedPath);
   if (!head) {
     return normalizedPath;
   }

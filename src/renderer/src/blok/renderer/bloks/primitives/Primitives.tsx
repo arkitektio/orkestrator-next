@@ -17,13 +17,23 @@ import {Separator as ShadSeparator} from '@/components/ui/separator';
 import {cn} from '@/lib/utils';
 import {cva} from 'class-variance-authority';
 import * as z from 'zod';
-import {BlokSchemas, createBlokComponent} from '../../runtime';
+import {
+  BlokPropSchemas,
+  ScopedBlokRuntimeProvider,
+  createBlokComponent,
+  type BlokPropHandle,
+  useAction,
+  useBlok,
+  useValidation,
+  useValue,
+} from '../../runtime';
 
 const sizeSchema = z.string().optional();
 const spacingSchema = z.string().optional();
 const boolSchema = z.boolean().optional();
 const numberSchema = z.number().optional();
 const classNameSchema = z.string().optional();
+const flexDirectionSchema = z.enum(['row', 'column']).optional();
 const justifySchema = z
   .enum(['start', 'center', 'end', 'between', 'around', 'evenly'])
   .optional();
@@ -31,6 +41,32 @@ const alignSchema = z
   .enum(['start', 'center', 'end', 'stretch', 'baseline'])
   .optional();
 const overflowSchema = z.enum(['visible', 'hidden', 'auto', 'scroll']).optional();
+const textToneSchema = z.enum(['default', 'muted', 'destructive', 'success']).optional();
+const textSizeSchema = z.enum(['xs', 'sm', 'base', 'lg']).optional();
+const textWeightSchema = z.enum(['regular', 'medium', 'semibold', 'bold']).optional();
+const textAlignSchema = z.enum(['start', 'center', 'end']).optional();
+const headingLevelSchema = z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']).optional();
+const badgeVariantSchema = z
+  .enum(['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
+  .optional();
+const buttonVariantSchema = z
+  .enum([
+    'default',
+    'outline',
+    'secondary',
+    'ghost',
+    'destructive',
+    'link',
+    'primary',
+    'borderless',
+  ])
+  .optional();
+const buttonSizeSchema = z
+  .enum(['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'])
+  .optional();
+const separatorOrientationSchema = z.enum(['horizontal', 'vertical']).optional();
+const foreachItemsSchema = z.array(z.unknown()).optional();
+const foreachScopeSchema = z.string().optional();
 
 type ChildBuilder = (id: string, basePath?: string) => React.ReactNode;
 
@@ -55,6 +91,35 @@ type BaseLayoutProps = {
 
 type ChildDescriptor = string | {id: string; basePath?: string};
 
+type BaseLayoutBlok = {
+  gap?: BlokPropHandle<typeof spacingSchema>;
+  padding?: BlokPropHandle<typeof spacingSchema>;
+  margin?: BlokPropHandle<typeof spacingSchema>;
+  width?: BlokPropHandle<typeof sizeSchema>;
+  minWidth?: BlokPropHandle<typeof sizeSchema>;
+  maxWidth?: BlokPropHandle<typeof sizeSchema>;
+  height?: BlokPropHandle<typeof sizeSchema>;
+  minHeight?: BlokPropHandle<typeof sizeSchema>;
+  maxHeight?: BlokPropHandle<typeof sizeSchema>;
+  background?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
+  color?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
+  borderColor?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
+  radius?: BlokPropHandle<typeof sizeSchema>;
+  overflow?: BlokPropHandle<typeof overflowSchema>;
+  grow?: BlokPropHandle<typeof numberSchema>;
+  shrink?: BlokPropHandle<typeof numberSchema>;
+};
+
+type TextPresentationBlok = {
+  tone: BlokPropHandle<typeof textToneSchema>;
+  size: BlokPropHandle<typeof textSizeSchema>;
+  weight: BlokPropHandle<typeof textWeightSchema>;
+  align: BlokPropHandle<typeof textAlignSchema>;
+  mono: BlokPropHandle<typeof boolSchema>;
+  italic: BlokPropHandle<typeof boolSchema>;
+  truncate: BlokPropHandle<typeof boolSchema>;
+};
+
 const childDescriptorSchema = z.union([
   z.string(),
   z.object({
@@ -64,7 +129,7 @@ const childDescriptorSchema = z.union([
 ]);
 
 const childListSchema = z.array(childDescriptorSchema).optional();
-const contentSchema = z.union([BlokSchemas.DynamicString, childDescriptorSchema, z.array(childDescriptorSchema)]).optional();
+const contentSchema = z.union([BlokPropSchemas.DynamicString, childDescriptorSchema, z.array(childDescriptorSchema)]).optional();
 
 const renderChildList = (
   childList: unknown,
@@ -112,6 +177,30 @@ const renderContent = (
   return null;
 };
 
+const ForeachIteration = (props: {
+  scopeName?: string;
+  itemPath?: string;
+  childIds: string[];
+  buildChild: ChildBuilder;
+  iterationKey: string;
+}) => {
+  const renderedChildren = props.childIds.map(childId => (
+    <React.Fragment key={`${props.iterationKey}-${childId}`}>
+      {props.buildChild(childId)}
+    </React.Fragment>
+  ));
+
+  if (!props.scopeName || !props.itemPath) {
+    return <>{renderedChildren}</>;
+  }
+
+  return (
+    <ScopedBlokRuntimeProvider pathAliases={{[props.scopeName]: props.itemPath}}>
+      {renderedChildren}
+    </ScopedBlokRuntimeProvider>
+  );
+};
+
 const buildLayoutStyle = (props: BaseLayoutProps): React.CSSProperties => ({
   gap: props.gap,
   padding: props.padding,
@@ -130,6 +219,64 @@ const buildLayoutStyle = (props: BaseLayoutProps): React.CSSProperties => ({
   flexGrow: props.grow,
   flexShrink: props.shrink,
 });
+
+const useBaseLayoutProps = (blok: BaseLayoutBlok): BaseLayoutProps => {
+  const gap = useValue(blok.gap);
+  const padding = useValue(blok.padding);
+  const margin = useValue(blok.margin);
+  const width = useValue(blok.width);
+  const minWidth = useValue(blok.minWidth);
+  const maxWidth = useValue(blok.maxWidth);
+  const height = useValue(blok.height);
+  const minHeight = useValue(blok.minHeight);
+  const maxHeight = useValue(blok.maxHeight);
+  const background = useValue(blok.background);
+  const color = useValue(blok.color);
+  const borderColor = useValue(blok.borderColor);
+  const radius = useValue(blok.radius);
+  const overflow = useValue(blok.overflow);
+  const grow = useValue(blok.grow);
+  const shrink = useValue(blok.shrink);
+
+  return {
+    gap,
+    padding,
+    margin,
+    width,
+    minWidth,
+    maxWidth,
+    height,
+    minHeight,
+    maxHeight,
+    background,
+    color,
+    borderColor,
+    radius,
+    overflow,
+    grow,
+    shrink,
+  };
+};
+
+const useTextPresentationProps = (blok: TextPresentationBlok) => {
+  const tone = useValue(blok.tone);
+  const size = useValue(blok.size);
+  const weight = useValue(blok.weight);
+  const align = useValue(blok.align);
+  const mono = useValue(blok.mono);
+  const italic = useValue(blok.italic);
+  const truncate = useValue(blok.truncate);
+
+  return {
+    tone,
+    size,
+    weight,
+    align,
+    mono,
+    italic,
+    truncate,
+  };
+};
 
 const mapJustify = (justify?: z.infer<typeof justifySchema>) => {
   switch (justify) {
@@ -206,8 +353,8 @@ const textVariants = cva('text-sm leading-relaxed', {
 });
 
 const flexSchema = z.object({
-  children: BlokSchemas.ChildList,
-  direction: z.enum(['row', 'column']).optional(),
+  children: BlokPropSchemas.ChildList,
+  direction: flexDirectionSchema,
   wrap: boolSchema,
   justify: justifySchema,
   align: alignSchema,
@@ -221,9 +368,9 @@ const flexSchema = z.object({
   height: sizeSchema,
   minHeight: sizeSchema,
   maxHeight: sizeSchema,
-  background: BlokSchemas.DynamicString.optional(),
-  color: BlokSchemas.DynamicString.optional(),
-  borderColor: BlokSchemas.DynamicString.optional(),
+  background: BlokPropSchemas.DynamicString.optional(),
+  color: BlokPropSchemas.DynamicString.optional(),
+  borderColor: BlokPropSchemas.DynamicString.optional(),
   radius: sizeSchema,
   overflow: overflowSchema,
   grow: numberSchema,
@@ -235,20 +382,29 @@ export const Flex = createBlokComponent(
     name: 'Flex',
     schema: flexSchema,
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const direction = useValue(blok.direction);
+    const wrap = useValue(blok.wrap);
+    const justify = useValue(blok.justify);
+    const align = useValue(blok.align);
+    const bordered = useValue(blok.bordered);
+
     return (
       <div
         className={cn(
           'flex min-w-0',
-          props.direction === 'column' ? 'flex-col' : 'flex-row',
-          props.wrap && 'flex-wrap',
-          mapJustify(props.justify),
-          mapAlign(props.align),
-          props.bordered && 'border border-border/70',
+          direction === 'column' ? 'flex-col' : 'flex-row',
+          wrap && 'flex-wrap',
+          mapJustify(justify),
+          mapAlign(align),
+          bordered && 'border border-border/70',
         )}
-        style={buildLayoutStyle(props)}
+        style={buildLayoutStyle(layoutProps)}
       >
-        {renderChildList(props.children, buildChild)}
+        {renderChildList(children, buildChild)}
       </div>
     );
   },
@@ -259,19 +415,27 @@ export const Row = createBlokComponent(
     name: 'Row',
     schema: flexSchema,
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const wrap = useValue(blok.wrap);
+    const justify = useValue(blok.justify);
+    const align = useValue(blok.align);
+    const bordered = useValue(blok.bordered);
+
     return (
       <div
         className={cn(
           'flex min-w-0 flex-row',
-          props.wrap && 'flex-wrap',
-          mapJustify(props.justify),
-          mapAlign(props.align),
-          props.bordered && 'border border-border/70',
+          wrap && 'flex-wrap',
+          mapJustify(justify),
+          mapAlign(align),
+          bordered && 'border border-border/70',
         )}
-        style={buildLayoutStyle(props)}
+        style={buildLayoutStyle(layoutProps)}
       >
-        {renderChildList(props.children, buildChild)}
+        {renderChildList(children, buildChild)}
       </div>
     );
   },
@@ -282,19 +446,27 @@ export const Column = createBlokComponent(
     name: 'Column',
     schema: flexSchema,
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const wrap = useValue(blok.wrap);
+    const justify = useValue(blok.justify);
+    const align = useValue(blok.align);
+    const bordered = useValue(blok.bordered);
+
     return (
       <div
         className={cn(
           'flex min-w-0 flex-col',
-          props.wrap && 'flex-wrap',
-          mapJustify(props.justify),
-          mapAlign(props.align),
-          props.bordered && 'border border-border/70',
+          wrap && 'flex-wrap',
+          mapJustify(justify),
+          mapAlign(align),
+          bordered && 'border border-border/70',
         )}
-        style={buildLayoutStyle(props)}
+        style={buildLayoutStyle(layoutProps)}
       >
-        {renderChildList(props.children, buildChild)}
+        {renderChildList(children, buildChild)}
       </div>
     );
   },
@@ -304,7 +476,7 @@ export const Grid = createBlokComponent(
   {
     name: 'Grid',
     schema: z.object({
-      children: BlokSchemas.ChildList,
+      children: BlokPropSchemas.ChildList,
       columns: z.number().int().min(1).optional(),
       minColumnWidth: sizeSchema,
       gap: spacingSchema,
@@ -316,27 +488,34 @@ export const Grid = createBlokComponent(
       height: sizeSchema,
       minHeight: sizeSchema,
       maxHeight: sizeSchema,
-      background: BlokSchemas.DynamicString.optional(),
-      borderColor: BlokSchemas.DynamicString.optional(),
+      background: BlokPropSchemas.DynamicString.optional(),
+      borderColor: BlokPropSchemas.DynamicString.optional(),
       radius: sizeSchema,
       overflow: overflowSchema,
       bordered: boolSchema,
     }),
   },
-  ({props, buildChild}) => {
-    const gridTemplateColumns = props.columns
-      ? `repeat(${props.columns}, minmax(0, 1fr))`
-      : `repeat(auto-fit, minmax(${props.minColumnWidth ?? '16rem'}, 1fr))`;
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const columns = useValue(blok.columns);
+    const minColumnWidth = useValue(blok.minColumnWidth);
+    const bordered = useValue(blok.bordered);
+
+    const gridTemplateColumns = columns
+      ? `repeat(${columns}, minmax(0, 1fr))`
+      : `repeat(auto-fit, minmax(${minColumnWidth ?? '16rem'}, 1fr))`;
 
     return (
       <div
-        className={cn('grid min-w-0', props.bordered && 'border border-border/70')}
+        className={cn('grid min-w-0', bordered && 'border border-border/70')}
         style={{
-          ...buildLayoutStyle(props),
+          ...buildLayoutStyle(layoutProps),
           gridTemplateColumns,
         }}
       >
-        {renderChildList(props.children, buildChild)}
+        {renderChildList(children, buildChild)}
       </div>
     );
   },
@@ -357,19 +536,24 @@ export const Div = createBlokComponent(
       height: sizeSchema,
       minHeight: sizeSchema,
       maxHeight: sizeSchema,
-      background: BlokSchemas.DynamicString.optional(),
-      color: BlokSchemas.DynamicString.optional(),
-      borderColor: BlokSchemas.DynamicString.optional(),
+      background: BlokPropSchemas.DynamicString.optional(),
+      color: BlokPropSchemas.DynamicString.optional(),
+      borderColor: BlokPropSchemas.DynamicString.optional(),
       radius: sizeSchema,
       overflow: overflowSchema,
       grow: numberSchema,
       shrink: numberSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+
     return (
-      <div className={cn('min-w-0', props.className)} style={buildLayoutStyle(props)}>
-        {renderContent(props.children, buildChild)}
+      <div className={cn('min-w-0', className)} style={buildLayoutStyle(layoutProps)}>
+        {renderContent(children, buildChild)}
       </div>
     );
   },
@@ -379,7 +563,7 @@ export const Card = createBlokComponent(
   {
     name: 'Card',
     schema: z.object({
-      child: BlokSchemas.ComponentId.optional(),
+      child: BlokPropSchemas.ComponentId.optional(),
       children: childListSchema,
       size: z.enum(['default', 'sm']).optional(),
       className: classNameSchema,
@@ -387,20 +571,27 @@ export const Card = createBlokComponent(
       width: sizeSchema,
       minHeight: sizeSchema,
       height: sizeSchema,
-      background: BlokSchemas.DynamicString.optional(),
-      borderColor: BlokSchemas.DynamicString.optional(),
+      background: BlokPropSchemas.DynamicString.optional(),
+      borderColor: BlokPropSchemas.DynamicString.optional(),
       radius: sizeSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const child = useValue(blok.child);
+    const children = useValue(blok.children);
+    const size = useValue(blok.size);
+    const className = useValue(blok.className);
+
     return (
       <ShadCard
-        size={props.size ?? 'default'}
-        style={buildLayoutStyle(props)}
-        className={cn('min-w-0', props.className)}
+        size={size ?? 'default'}
+        style={buildLayoutStyle(layoutProps)}
+        className={cn('min-w-0', className)}
       >
-        {props.child ? buildChild(props.child) : null}
-        {renderChildList(props.children, buildChild)}
+        {child ? buildChild(child) : null}
+        {renderChildList(children, buildChild)}
       </ShadCard>
     );
   },
@@ -416,10 +607,15 @@ export const CardHeader = createBlokComponent(
       gap: spacingSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+
     return (
-      <ShadCardHeader className={props.className} style={buildLayoutStyle(props)}>
-        {renderChildList(props.children, buildChild)}
+      <ShadCardHeader className={className} style={buildLayoutStyle(layoutProps)}>
+        {renderChildList(children, buildChild)}
       </ShadCardHeader>
     );
   },
@@ -429,16 +625,22 @@ export const CardTitle = createBlokComponent(
   {
     name: 'CardTitle',
     schema: z.object({
-      text: BlokSchemas.DynamicString.optional(),
+      text: BlokPropSchemas.DynamicString.optional(),
       children: contentSchema,
       className: classNameSchema,
-      align: z.enum(['start', 'center', 'end']).optional(),
+      align: textAlignSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const align = useValue(blok.align);
+
     return (
-      <ShadCardTitle className={cn(mapTextAlign(props.align), props.className)}>
-        {renderContent(props.children ?? props.text, buildChild)}
+      <ShadCardTitle className={cn(mapTextAlign(align), className)}>
+        {renderContent(children ?? text, buildChild)}
       </ShadCardTitle>
     );
   },
@@ -448,16 +650,22 @@ export const CardDescription = createBlokComponent(
   {
     name: 'CardDescription',
     schema: z.object({
-      text: BlokSchemas.DynamicString.optional(),
+      text: BlokPropSchemas.DynamicString.optional(),
       children: contentSchema,
       className: classNameSchema,
-      align: z.enum(['start', 'center', 'end']).optional(),
+      align: textAlignSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const align = useValue(blok.align);
+
     return (
-      <ShadCardDescription className={cn(mapTextAlign(props.align), props.className)}>
-        {renderContent(props.children ?? props.text, buildChild)}
+      <ShadCardDescription className={cn(mapTextAlign(align), className)}>
+        {renderContent(children ?? text, buildChild)}
       </ShadCardDescription>
     );
   },
@@ -473,11 +681,17 @@ export const CardContent = createBlokComponent(
       gap: spacingSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const gap = useValue(blok.gap);
+
     return (
-      <ShadCardContent className={props.className} style={buildLayoutStyle(props)}>
-        <div className="flex min-w-0 flex-col" style={{gap: props.gap}}>
-          {renderChildList(props.children, buildChild)}
+      <ShadCardContent className={className} style={buildLayoutStyle(layoutProps)}>
+        <div className="flex min-w-0 flex-col" style={{gap}}>
+          {renderChildList(children, buildChild)}
         </div>
       </ShadCardContent>
     );
@@ -496,13 +710,20 @@ export const CardFooter = createBlokComponent(
       padding: spacingSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const layoutProps = useBaseLayoutProps(blok);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const justify = useValue(blok.justify);
+    const align = useValue(blok.align);
+
     return (
       <ShadCardFooter
-        className={cn(mapJustify(props.justify), mapAlign(props.align), props.className)}
-        style={buildLayoutStyle(props)}
+        className={cn(mapJustify(justify), mapAlign(align), className)}
+        style={buildLayoutStyle(layoutProps)}
       >
-        {renderChildList(props.children, buildChild)}
+        {renderChildList(children, buildChild)}
       </ShadCardFooter>
     );
   },
@@ -512,28 +733,32 @@ export const Text = createBlokComponent(
   {
     name: 'Text',
     schema: z.object({
-      text: BlokSchemas.DynamicString,
-      tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
-      size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
-      weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
-      align: z.enum(['start', 'center', 'end']).optional(),
+      text: BlokPropSchemas.DynamicString,
+      tone: textToneSchema,
+      size: textSizeSchema,
+      weight: textWeightSchema,
+      align: textAlignSchema,
       mono: boolSchema,
       italic: boolSchema,
       truncate: boolSchema,
     }),
   },
-  ({props}) => {
+  ({component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const textProps = useTextPresentationProps(blok);
+
     return (
       <p
         className={cn(
-          textVariants({tone: props.tone, size: props.size, weight: props.weight}),
-          mapTextAlign(props.align),
-          props.mono && 'font-mono',
-          props.italic && 'italic',
-          props.truncate && 'truncate',
+          textVariants({tone: textProps.tone, size: textProps.size, weight: textProps.weight}),
+          mapTextAlign(textProps.align),
+          textProps.mono && 'font-mono',
+          textProps.italic && 'italic',
+          textProps.truncate && 'truncate',
         )}
       >
-        {props.text}
+        {text}
       </p>
     );
   },
@@ -543,31 +768,37 @@ export const Paragraph = createBlokComponent(
   {
     name: 'p',
     schema: z.object({
-      text: BlokSchemas.DynamicString.optional(),
+      text: BlokPropSchemas.DynamicString.optional(),
       children: contentSchema,
-      tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
-      size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
-      weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
-      align: z.enum(['start', 'center', 'end']).optional(),
+      tone: textToneSchema,
+      size: textSizeSchema,
+      weight: textWeightSchema,
+      align: textAlignSchema,
       mono: boolSchema,
       italic: boolSchema,
       truncate: boolSchema,
       className: classNameSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const textProps = useTextPresentationProps(blok);
+
     return (
       <p
         className={cn(
-          textVariants({tone: props.tone, size: props.size, weight: props.weight}),
-          mapTextAlign(props.align),
-          props.mono && 'font-mono',
-          props.italic && 'italic',
-          props.truncate && 'truncate',
-          props.className,
+          textVariants({tone: textProps.tone, size: textProps.size, weight: textProps.weight}),
+          mapTextAlign(textProps.align),
+          textProps.mono && 'font-mono',
+          textProps.italic && 'italic',
+          textProps.truncate && 'truncate',
+          className,
         )}
       >
-        {renderContent(props.children ?? props.text, buildChild)}
+        {renderContent(children ?? text, buildChild)}
       </p>
     );
   },
@@ -577,31 +808,37 @@ export const Span = createBlokComponent(
   {
     name: 'span',
     schema: z.object({
-      text: BlokSchemas.DynamicString.optional(),
+      text: BlokPropSchemas.DynamicString.optional(),
       children: contentSchema,
-      tone: z.enum(['default', 'muted', 'destructive', 'success']).optional(),
-      size: z.enum(['xs', 'sm', 'base', 'lg']).optional(),
-      weight: z.enum(['regular', 'medium', 'semibold', 'bold']).optional(),
-      align: z.enum(['start', 'center', 'end']).optional(),
+      tone: textToneSchema,
+      size: textSizeSchema,
+      weight: textWeightSchema,
+      align: textAlignSchema,
       mono: boolSchema,
       italic: boolSchema,
       truncate: boolSchema,
       className: classNameSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const textProps = useTextPresentationProps(blok);
+
     return (
       <span
         className={cn(
-          textVariants({tone: props.tone, size: props.size, weight: props.weight}),
-          mapTextAlign(props.align),
-          props.mono && 'font-mono',
-          props.italic && 'italic',
-          props.truncate && 'truncate',
-          props.className,
+          textVariants({tone: textProps.tone, size: textProps.size, weight: textProps.weight}),
+          mapTextAlign(textProps.align),
+          textProps.mono && 'font-mono',
+          textProps.italic && 'italic',
+          textProps.truncate && 'truncate',
+          className,
         )}
       >
-        {renderContent(props.children ?? props.text, buildChild)}
+        {renderContent(children ?? text, buildChild)}
       </span>
     );
   },
@@ -611,24 +848,29 @@ export const Heading = createBlokComponent(
   {
     name: 'Heading',
     schema: z.object({
-      text: BlokSchemas.DynamicString,
-      level: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']).optional(),
-      align: z.enum(['start', 'center', 'end']).optional(),
+      text: BlokPropSchemas.DynamicString,
+      level: headingLevelSchema,
+      align: textAlignSchema,
     }),
   },
-  ({props}) => {
-    const Comp = (props.level ?? 'h3') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  ({component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const level = useValue(blok.level);
+    const align = useValue(blok.align);
+
+    const Comp = (level ?? 'h3') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
     const className = cn(
-      mapTextAlign(props.align),
-      props.level === 'h1' && 'text-4xl font-extrabold tracking-tight',
-      props.level === 'h2' && 'text-3xl font-bold tracking-tight',
-      (!props.level || props.level === 'h3') && 'text-2xl font-semibold tracking-tight',
-      props.level === 'h4' && 'text-xl font-semibold tracking-tight',
-      props.level === 'h5' && 'text-lg font-semibold',
-      props.level === 'h6' && 'text-base font-semibold uppercase tracking-wide text-muted-foreground',
+      mapTextAlign(align),
+      level === 'h1' && 'text-4xl font-extrabold tracking-tight',
+      level === 'h2' && 'text-3xl font-bold tracking-tight',
+      (!level || level === 'h3') && 'text-2xl font-semibold tracking-tight',
+      level === 'h4' && 'text-xl font-semibold tracking-tight',
+      level === 'h5' && 'text-lg font-semibold',
+      level === 'h6' && 'text-base font-semibold uppercase tracking-wide text-muted-foreground',
     );
 
-    return <Comp className={className}>{props.text}</Comp>;
+    return <Comp className={className}>{text}</Comp>;
   },
 );
 
@@ -636,21 +878,24 @@ export const Badge = createBlokComponent(
   {
     name: 'Badge',
     schema: z.object({
-      text: BlokSchemas.DynamicString.optional(),
-      child: BlokSchemas.ComponentId.optional(),
+      text: BlokPropSchemas.DynamicString.optional(),
+      child: BlokPropSchemas.ComponentId.optional(),
       children: contentSchema,
       className: classNameSchema,
-      variant: z
-        .enum(['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
-        .optional(),
+      variant: badgeVariantSchema,
     }),
   },
-  ({props, buildChild}) => {
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const text = useValue(blok.text);
+    const child = useValue(blok.child);
+    const children = useValue(blok.children);
+    const className = useValue(blok.className);
+    const variant = useValue(blok.variant);
+
     return (
-      <ShadBadge variant={props.variant ?? 'secondary'} className={props.className}>
-        {props.child
-          ? buildChild(props.child)
-          : renderContent(props.children ?? props.text, buildChild)}
+      <ShadBadge variant={variant ?? 'secondary'} className={className}>
+        {child ? buildChild(child) : renderContent(children ?? text, buildChild)}
       </ShadBadge>
     );
   },
@@ -660,54 +905,51 @@ export const Button = createBlokComponent(
   {
     name: 'Button',
     schema: z.object({
-      label: BlokSchemas.DynamicString.optional(),
-      child: BlokSchemas.ComponentId.optional(),
+      label: BlokPropSchemas.DynamicString.optional(),
+      child: BlokPropSchemas.ComponentId.optional(),
       children: contentSchema,
-      action: BlokSchemas.Action.optional(),
+      onClick: BlokPropSchemas.Action.optional(),
       className: classNameSchema,
-      variant: z
-        .enum([
-          'default',
-          'outline',
-          'secondary',
-          'ghost',
-          'destructive',
-          'link',
-          'primary',
-          'borderless',
-        ])
-        .optional(),
-      size: z
-        .enum(['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'])
-        .optional(),
+      variant: buttonVariantSchema,
+      size: buttonSizeSchema,
       fullWidth: boolSchema,
-      disabled: BlokSchemas.DynamicBoolean.optional(),
-      checks: BlokSchemas.Checkable.shape.checks,
+      disabled: BlokPropSchemas.DynamicBoolean.optional(),
+      checks: BlokPropSchemas.Checkable.shape.checks,
     }),
   },
-  ({props, buildChild}) => {
-    const variant =
-      props.variant === 'primary'
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const validation = useValidation(component, schema);
+    const label = useValue(blok.label);
+    const child = useValue(blok.child);
+    const children = useValue(blok.children);
+    const onClick = useAction(blok.onClick);
+    const className = useValue(blok.className);
+    const rawVariant = useValue(blok.variant);
+    const size = useValue(blok.size);
+    const fullWidth = useValue(blok.fullWidth);
+    const disabled = useValue(blok.disabled);
+
+    const resolvedVariant =
+      rawVariant === 'primary'
         ? 'default'
-        : props.variant === 'borderless'
+        : rawVariant === 'borderless'
           ? 'ghost'
-          : props.variant;
+          : rawVariant;
 
     return (
       <ShadButton
-        variant={variant ?? 'default'}
-        size={props.size ?? 'default'}
+        variant={resolvedVariant ?? 'default'}
+        size={size ?? 'default'}
         className={cn(
-          props.fullWidth && 'w-full',
-          buttonVariants({variant, size: props.size ?? 'default'}),
-          props.className,
+          fullWidth && 'w-full',
+          buttonVariants({variant: resolvedVariant, size: size ?? 'default'}),
+          className,
         )}
-        onClick={props.action}
-        disabled={props.disabled || props.isValid === false}
+        onClick={onClick}
+        disabled={disabled || validation.isValid === false}
       >
-        {props.child
-          ? buildChild(props.child)
-          : renderContent(props.children ?? props.label, buildChild)}
+        {child ? buildChild(child) : renderContent(children ?? label, buildChild)}
       </ShadButton>
     );
   },
@@ -717,24 +959,35 @@ export const Input = createBlokComponent(
   {
     name: 'Input',
     schema: z.object({
-      value: BlokSchemas.DynamicString.optional(),
-      defaultValue: BlokSchemas.DynamicString.optional(),
-      placeholder: BlokSchemas.DynamicString.nullish(),
+      value: BlokPropSchemas.DynamicString.optional(),
+      defaultValue: BlokPropSchemas.DynamicString.optional(),
+      placeholder: BlokPropSchemas.DynamicString.nullish(),
       type: z.string().optional(),
       className: classNameSchema,
-      disabled: BlokSchemas.DynamicBoolean.optional(),
+      disabled: BlokPropSchemas.DynamicBoolean.optional(),
       readOnly: boolSchema,
       fullWidth: boolSchema,
-      action: BlokSchemas.Action.optional(),
+      action: BlokPropSchemas.Action.optional(),
     }),
   },
-  ({props}) => {
-    const controlledValue = typeof props.value === 'string' ? props.value : undefined;
+  ({component, schema}) => {
+    const blok = useBlok(component, schema);
+    const value = useValue(blok.value);
+    const defaultValue = useValue(blok.defaultValue);
+    const placeholder = useValue(blok.placeholder);
+    const type = useValue(blok.type);
+    const className = useValue(blok.className);
+    const disabled = useValue(blok.disabled);
+    const readOnly = useValue(blok.readOnly);
+    const fullWidth = useValue(blok.fullWidth);
+    const action = useAction(blok.action);
+
+    const controlledValue = typeof value === 'string' ? value : undefined;
     const initialValue =
       controlledValue ??
-      (typeof props.defaultValue === 'string' ? props.defaultValue : '');
-    const placeholder = typeof props.placeholder === 'string' ? props.placeholder : undefined;
-    const disabled = props.disabled === true;
+      (typeof defaultValue === 'string' ? defaultValue : '');
+    const resolvedPlaceholder = typeof placeholder === 'string' ? placeholder : undefined;
+    const isDisabled = disabled === true;
     const [localValue, setLocalValue] = React.useState(initialValue);
 
     React.useEffect(() => {
@@ -747,21 +1000,19 @@ export const Input = createBlokComponent(
 
     return (
       <ShadInput
-        type={props.type ?? 'text'}
+        type={type ?? 'text'}
         value={isControlled ? controlledValue : localValue}
         defaultValue={isControlled ? undefined : initialValue}
-        placeholder={placeholder}
-        className={cn(props.fullWidth && 'w-full', props.className)}
-        disabled={disabled}
-        readOnly={props.readOnly}
+        placeholder={resolvedPlaceholder}
+        className={cn(fullWidth && 'w-full', className)}
+        disabled={isDisabled}
+        readOnly={readOnly}
         onChange={event => {
           if (!isControlled) {
             setLocalValue(event.target.value);
           }
 
-          if (typeof props.action === 'function') {
-            props.action();
-          }
+          action?.();
         }}
       />
     );
@@ -772,11 +1023,55 @@ export const Separator = createBlokComponent(
   {
     name: 'Separator',
     schema: z.object({
-      orientation: z.enum(['horizontal', 'vertical']).optional(),
+      orientation: separatorOrientationSchema,
     }),
   },
-  ({props}) => {
-    return <ShadSeparator orientation={props.orientation ?? 'horizontal'} />;
+  ({component, schema}) => {
+    const blok = useBlok(component, schema);
+    const orientation = useValue(blok.orientation);
+
+    return <ShadSeparator orientation={orientation ?? 'horizontal'} />;
+  },
+);
+
+export const Foreach = createBlokComponent(
+  {
+    name: 'foreach',
+    schema: z.object({
+      items: foreachItemsSchema,
+      let: foreachScopeSchema,
+    }),
+  },
+  ({buildChild, component, schema}) => {
+    const blok = useBlok(component, schema);
+    const items = useValue(blok.items);
+    const scopeName = useValue(blok['let']);
+    const childIds = component.children?.map(child => child.id) ?? [];
+    const itemsPath = blok.items.prop?.dynamic_value?.path?.replace(/\/$/, '');
+
+    if (!Array.isArray(items) || childIds.length === 0) {
+      return null;
+    }
+
+    return (
+      <>
+        {items.map((_, index) => {
+          const itemPath = itemsPath ? `${itemsPath}/${index}` : undefined;
+          const iterationKey = `${component.id}-${index}`;
+
+          return (
+            <ForeachIteration
+              key={iterationKey}
+              scopeName={scopeName}
+              itemPath={itemPath}
+              childIds={childIds}
+              buildChild={buildChild}
+              iterationKey={iterationKey}
+            />
+          );
+        })}
+      </>
+    );
   },
 );
 
@@ -800,4 +1095,5 @@ export const shadcnComposableComponents = [
   Button,
   Input,
   Separator,
+  Foreach,
 ];

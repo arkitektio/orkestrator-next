@@ -11,7 +11,7 @@ export const RawInspector = createBinderlessBlokComponent({
   return (
     <details>
       <summary>Raw Component State (ID: {component.id})</summary>
-      <pre>{JSON.stringify(component.props ?? {}, null, 2)}</pre>
+      <pre>{JSON.stringify(component.props ?? [], null, 2)}</pre>
     </details>
   );
 });

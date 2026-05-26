@@ -1,4 +1,11 @@
-import {createBlokComponent, BlokSchemas} from '../../runtime';
+import {
+  BlokPropSchemas,
+  createBlokComponent,
+  useAction,
+  useBlok,
+  useValidation,
+  useValue,
+} from '../../runtime';
 import * as z from 'zod';
 
 
@@ -6,27 +13,35 @@ import * as z from 'zod';
 export const MyProfile = createBlokComponent({
   name: 'MyProfile',
   schema: z.object({
-    username: BlokSchemas.DynamicString,
-    bio: BlokSchemas.DynamicString,
-    avatarUrl: BlokSchemas.DynamicString,
-    onEdit: BlokSchemas.Action,
-    isEditable: BlokSchemas.DynamicBoolean,
-    checks: BlokSchemas.Checkable.shape.checks,
+    username: BlokPropSchemas.DynamicString,
+    bio: BlokPropSchemas.DynamicString,
+    avatarUrl: BlokPropSchemas.DynamicString,
+    onEdit: BlokPropSchemas.Action,
+    isEditable: BlokPropSchemas.DynamicBoolean,
+    checks: BlokPropSchemas.Checkable.shape.checks,
   }),
-}, ({props}) => {
+}, ({component, schema}) => {
+  const blok = useBlok(component, schema);
+  const validation = useValidation(component, schema);
+  const username = useValue(blok.username);
+  const bio = useValue(blok.bio);
+  const avatarUrl = useValue(blok.avatarUrl);
+  const onEdit = useAction(blok.onEdit);
+  const isEditable = useValue(blok.isEditable);
+
   return (
     <div className="profile-widget">
-      <img src={props.avatarUrl ?? ''} alt={props.username} />
-      <h2>{props.username}</h2>
-      <p>{props.bio}</p>
+      <img src={avatarUrl ?? ''} alt={username} />
+      <h2>{username}</h2>
+      <p>{bio}</p>
 
-      {props.isEditable && (
-        <button onClick={props.onEdit} disabled={props.isValid === false}>
+      {isEditable && (
+        <button onClick={onEdit} disabled={validation.isValid === false}>
           Edit Profile
         </button>
       )}
 
-      {props.validationErrors?.map((err, i) => (
+      {validation.validationErrors.map((err, i) => (
         <div key={i} className="error-hint" style={{color: 'red'}}>
           {err}
         </div>

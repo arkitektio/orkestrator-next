@@ -1,11 +1,11 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import BlokRenderer from "@/blok/renderer/BlokRenderer";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LocalActionButton } from "@/components/ui/localactionbutton";
 import { RekuestDashboard } from "@/linkers";
+import MaterializedBlokRenderer from "@/rekuest/components/MaterializedBlokRenderer";
 import {
   Direction,
   DockviewApi,
@@ -87,10 +87,9 @@ export const BlokSidebar = () => {
 export const DynamicLoader = (props: { blok: MaterializedBlokFragment }) => {
   return (
     <div className="h-full overflow-auto p-3 @container">
-      <BlokRenderer
+      <MaterializedBlokRenderer
         surfaceId={props.blok.id}
-        uiComponents={props.blok.blok.uiComponents}
-        demoState={props.blok.blok.demoState}
+        materializedBlok={props.blok}
       />
     </div>
   );

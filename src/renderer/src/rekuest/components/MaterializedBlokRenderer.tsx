@@ -1,9 +1,21 @@
 import * as React from 'react';
 import BlokRenderer from '@/blok/renderer/BlokRenderer';
-import type {MaterializedBlokQuery} from '@/rekuest/api/graphql';
 import {useAgentStates} from '@/rekuest/hooks/useLiveState';
 
-type MaterializedBlokData = MaterializedBlokQuery['materializedBlok'];
+type MaterializedBlokData = {
+  id: string;
+  blok: {
+    uiComponents: unknown;
+    demoState: unknown;
+    dependencies?: Array<{key: string}> | null;
+  };
+  agentMappings: Array<{
+    key: string;
+    agent: {
+      id: string;
+    };
+  }>;
+};
 
 type MaterializedBlokRendererProps = Omit<
   React.ComponentProps<typeof BlokRenderer>,
@@ -28,6 +40,20 @@ const mergeMaterializedState = (
     ...demoState,
     ...dependencyStates,
   };
+};
+
+const toDemandedDependencyKeys = (materializedBlok: MaterializedBlokData): Set<string> => {
+  const demandedKeys = new Set<string>();
+
+  materializedBlok.blok.dependencies?.forEach(dependency => {
+    demandedKeys.add(dependency.key);
+  });
+
+  materializedBlok.agentMappings.forEach(mapping => {
+    demandedKeys.add(mapping.key);
+  });
+
+  return demandedKeys;
 };
 
 const AgentStateSubscription = (props: {
@@ -56,8 +82,40 @@ const AgentStateSubscription = (props: {
 export const MaterializedBlokRenderer = (props: MaterializedBlokRendererProps) => {
   const {materializedBlok, ...rendererProps} = props;
   const [dependencyStates, setDependencyStates] = React.useState<Record<string, unknown>>({});
+  const demandedDependencyKeys = React.useMemo(
+    () => toDemandedDependencyKeys(materializedBlok),
+    [materializedBlok],
+  );
+  const mappedDependencies = React.useMemo(
+    () =>
+      materializedBlok.agentMappings.filter(mapping =>
+        demandedDependencyKeys.has(mapping.key),
+      ),
+    [demandedDependencyKeys, materializedBlok.agentMappings],
+  );
+
+  React.useEffect(() => {
+    setDependencyStates(currentState => {
+      const nextState = Object.fromEntries(
+        Object.entries(currentState).filter(([key]) => demandedDependencyKeys.has(key)),
+      );
+
+      const currentKeys = Object.keys(currentState);
+      const nextKeys = Object.keys(nextState);
+
+      if (currentKeys.length === nextKeys.length) {
+        return currentState;
+      }
+
+      return nextState;
+    });
+  }, [demandedDependencyKeys]);
 
   const handleStateChange = React.useCallback((dependencyKey: string, value: unknown) => {
+    if (!demandedDependencyKeys.has(dependencyKey)) {
+      return;
+    }
+
     setDependencyStates(currentState => {
       if (value === undefined) {
         if (!(dependencyKey in currentState)) {
@@ -78,7 +136,7 @@ export const MaterializedBlokRenderer = (props: MaterializedBlokRendererProps) =
         [dependencyKey]: value,
       };
     });
-  }, []);
+  }, [demandedDependencyKeys]);
 
   const state = React.useMemo(
     () => mergeMaterializedState(materializedBlok.blok.demoState, dependencyStates),
@@ -87,7 +145,7 @@ export const MaterializedBlokRenderer = (props: MaterializedBlokRendererProps) =
 
   return (
     <>
-      {materializedBlok.agentMappings.map(mapping => (
+      {mappedDependencies.map(mapping => (
         <AgentStateSubscription
           key={`${mapping.key}-${mapping.agent.id}`}
           dependencyKey={mapping.key}

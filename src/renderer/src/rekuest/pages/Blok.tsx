@@ -1,8 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { registry } from "@/app/localactions";
-import BlokRenderer from "@/blok/renderer/BlokRenderer";
 import { LocalActionButton } from "@/components/ui/localactionbutton";
 import { RekuestBlok, RekuestMaterializedBlok } from "@/linkers";
+import DemoBlokRenderer from "@/rekuest/components/DemoBlokRenderer";
 import { useGetBlokQuery } from "../api/graphql";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -154,10 +154,9 @@ export const BlokPage = asDetailQueryRoute(useGetBlokQuery, ({ data }) => {
           </div>
 
           <div className="min-h-[36rem] overflow-hidden">
-            <BlokRenderer
+            <DemoBlokRenderer
               surfaceId={`${data.blok.id}-expanded`}
-              uiComponents={data.blok.uiComponents}
-              demoState={data.blok.demoState}
+              blok={data.blok}
             />
           </div>
         </section>

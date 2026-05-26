@@ -57,6 +57,10 @@ const actionValueSchema = z.custom<() => void>(value => typeof value === 'functi
   message: 'Expected action handler',
 });
 
+const dynamicTextSchema = z
+  .union([z.string(), z.number(), z.boolean()])
+  .transform(value => String(value));
+
 export const BlokSchemas = {
   DynamicValue: dynamicValueInputSchema,
   ActionArgument: actionArgumentInputSchema,
@@ -80,7 +84,7 @@ export const BlokPropSchemas = {
       ]),
     )
     .optional(),
-  DynamicString: z.string(),
+  DynamicString: dynamicTextSchema,
   DynamicBoolean: z.boolean(),
   Action: actionValueSchema,
   Checkable: z.object({

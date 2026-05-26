@@ -1,5 +1,4 @@
-import MaterializedBlokRenderer from "@/rekuest/components/MaterializedBlokRenderer";
-import { useMaterializedBlokQuery } from "../api/graphql";
+import CheckoutMaterializedBlokRenderer from "@/rekuest/components/CheckoutMaterializedBlokRenderer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Matrix4, Vector3 } from "three";
 import { useSpaceScene } from "./context";
@@ -23,11 +22,6 @@ const MaterializedBlokPanel = ({ panelId, placementId }: { panelId: string; plac
 
   const placement = placements.find((item) => item.id === placementId);
   const materializedBlokId = placement?.blok?.id;
-
-  const { data, loading, error } = useMaterializedBlokQuery({
-    variables: { id: materializedBlokId ?? "" },
-    skip: !materializedBlokId,
-  });
 
   useEffect(() => {
     const node = panelRef.current;
@@ -60,7 +54,7 @@ const MaterializedBlokPanel = ({ panelId, placementId }: { panelId: string; plac
     return () => {
       observer.disconnect();
     };
-  }, [materializedBlokId, loading, error]);
+  }, [materializedBlokId]);
 
   const screenPos = useMemo(() => {
     if (!placement || !vpMatrix || viewportSize.width === 0 || viewportSize.height === 0) {
@@ -115,8 +109,6 @@ const MaterializedBlokPanel = ({ panelId, placementId }: { panelId: string; plac
     return null;
   }
 
-  const materializedBlok = data?.materializedBlok;
-
   return (
     <div
       ref={panelRef}
@@ -140,29 +132,27 @@ const MaterializedBlokPanel = ({ panelId, placementId }: { panelId: string; plac
       </button>
 
       <div className="max-h-full max-w-full">
-        {loading && !materializedBlok ? (
-          <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-border/50 bg-background/90 px-4 py-6 text-sm text-muted-foreground shadow-sm">
-            Loading panel preview...
-          </div>
-        ) : error ? (
-          <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-destructive/40 bg-background/95 px-4 py-6 text-center text-sm text-destructive shadow-sm">
-            Failed to load the materialized blok preview.
-          </div>
-        ) : materializedBlok ? (
-          <div className="max-h-full max-w-full overflow-hidden">
-            <MaterializedBlokRenderer
-              key={materializedBlok.id}
-              materializedBlok={materializedBlok}
-              chrome="minimal"
-              sizing="intrinsic"
-              surfaceId={materializedBlok.id}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-border/50 bg-background/90 px-4 py-6 text-center text-sm text-muted-foreground shadow-sm">
-            This placement does not have a materialized blok preview yet.
-          </div>
-        )}
+        <CheckoutMaterializedBlokRenderer
+          materializedBlokId={materializedBlokId}
+          chrome="minimal"
+          sizing="intrinsic"
+          surfaceId={materializedBlokId ?? placementId}
+          loadingFallback={(
+            <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-border/50 bg-background/90 px-4 py-6 text-sm text-muted-foreground shadow-sm">
+              Loading panel preview...
+            </div>
+          )}
+          errorFallback={(
+            <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-destructive/40 bg-background/95 px-4 py-6 text-center text-sm text-destructive shadow-sm">
+              Failed to load the materialized blok preview.
+            </div>
+          )}
+          emptyFallback={(
+            <div className="flex min-h-24 min-w-56 items-center justify-center rounded-xl border border-border/50 bg-background/90 px-4 py-6 text-center text-sm text-muted-foreground shadow-sm">
+              This placement does not have a materialized blok preview yet.
+            </div>
+          )}
+        />
       </div>
     </div>
   );

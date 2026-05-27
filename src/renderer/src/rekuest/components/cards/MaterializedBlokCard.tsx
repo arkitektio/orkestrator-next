@@ -1,5 +1,5 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestBlok, RekuestDashboard, RekuestMaterializedBlok } from "@/linkers";
+import { RekuestBlok, RekuestMaterializedBlok } from "@/linkers";
 
 import { ListMaterializedBlokFragment } from "@/rekuest/api/graphql";
 
@@ -23,12 +23,6 @@ const MaterializedBlokCard = ({ item }: Props) => {
               <RekuestBlok.DetailLink object={item.blok}>
                 {item.blok.name}
               </RekuestBlok.DetailLink>
-            </span>
-            <span>
-              Dashboard{" "}
-              <RekuestDashboard.DetailLink object={item.dashboard}>
-                {item.dashboard.id}
-              </RekuestDashboard.DetailLink>
             </span>
           </CardDescription>
         </CardHeader>

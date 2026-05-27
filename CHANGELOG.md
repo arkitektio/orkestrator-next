@@ -1,3 +1,78 @@
+## [1.60.1](https://github.com/arkitektio/orkestrator-next/compare/v1.60.0...v1.60.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* wrong imports ([671c5bf](https://github.com/arkitektio/orkestrator-next/commit/671c5bf26757ed53d5ee4cc5bb270c808d034f08))
+
+# [1.60.0](https://github.com/arkitektio/orkestrator-next/compare/v1.59.0...v1.60.0) (2026-05-22)
+
+
+### Bug Fixes
+
+* a bit stuff ([65b3e91](https://github.com/arkitektio/orkestrator-next/commit/65b3e9132888231a0471c1bbfd4cd1cdd240315d))
+* add infor for stateful implemetnations ([f5780cb](https://github.com/arkitektio/orkestrator-next/commit/f5780cbf4bff9a431f76c512878bd683eb9c32c9))
+* add stuff ([0233ccc](https://github.com/arkitektio/orkestrator-next/commit/0233ccc8a28d0f018513063791d20e174d021b6f))
+* autoreload ([5803252](https://github.com/arkitektio/orkestrator-next/commit/5803252550f6a23becc4ae00a4b7290dd1542f7f))
+* before transition ([3536abc](https://github.com/arkitektio/orkestrator-next/commit/3536abc1ec2729ea3fad66d52948c76e100ecec5))
+* duckdb for tables ([315be8d](https://github.com/arkitektio/orkestrator-next/commit/315be8d35ad937d80fcbb1907aeea1ed03ce6d27))
+* freaking settings ([e572066](https://github.com/arkitektio/orkestrator-next/commit/e57206694ce066120d714d9887269408b45af3cb))
+* more features for the viewer ([a82c19d](https://github.com/arkitektio/orkestrator-next/commit/a82c19dc7ced9b289024a1e99d5ec35db2c32e04))
+* more grpah features ([3713e40](https://github.com/arkitektio/orkestrator-next/commit/3713e40b893ba1c3dabafa7f4eb993aa2d22b816))
+* more render stuff ([5a43aee](https://github.com/arkitektio/orkestrator-next/commit/5a43aeebc2a3fc80f7a72fbce1eaa3f9cd2c094b))
+* more stuff ([f41fe8c](https://github.com/arkitektio/orkestrator-next/commit/f41fe8c312a9be4c20e95422ff35366f62803e82))
+* more updates but too much vibe coding ([8e12cad](https://github.com/arkitektio/orkestrator-next/commit/8e12cad70ceb3f125fbb3eeec24f12084e5d69d0))
+* nana ([8c81d7c](https://github.com/arkitektio/orkestrator-next/commit/8c81d7cc2a7223b97f8c7610ce9de39777f084d1))
+* new displays ([2234f08](https://github.com/arkitektio/orkestrator-next/commit/2234f0881ce526ebe36a01da99cf2beb8fcba9b9))
+* push ([3553012](https://github.com/arkitektio/orkestrator-next/commit/3553012a33d60316141e4e99874ae056266bc9f3))
+* scroll wheel for the viewer ([5e5bc2c](https://github.com/arkitektio/orkestrator-next/commit/5e5bc2c3d8dd1070b539bb56fef091557486174b))
+* settings ([44022c7](https://github.com/arkitektio/orkestrator-next/commit/44022c7993300eeb54ed4fc17792d3822469e34f))
+* some more card fixes ([aae407d](https://github.com/arkitektio/orkestrator-next/commit/aae407d7f808b093e86e273bea071be5a43f8c12))
+* stuff ([23f6264](https://github.com/arkitektio/orkestrator-next/commit/23f62644deb5d1f43ff1fa0f05438a625a4a65b8))
+* stuff ([7a863c1](https://github.com/arkitektio/orkestrator-next/commit/7a863c137b3db35b407983a15ce66f596463082a))
+* stuff ([4c78aa6](https://github.com/arkitektio/orkestrator-next/commit/4c78aa630386fbe3670f118d66a69cb97d08d26d))
+* stuff ([3fccb1a](https://github.com/arkitektio/orkestrator-next/commit/3fccb1a6a75583ff283e6850041834bf3e6720da))
+* stuff ([ff0691d](https://github.com/arkitektio/orkestrator-next/commit/ff0691d6e6367e928a29440f51dfdcc2894b7c48))
+* stuff ([070f5af](https://github.com/arkitektio/orkestrator-next/commit/070f5afd83dcf735e1263d575e1c5800e0045f84))
+* stuff ([97bd5fd](https://github.com/arkitektio/orkestrator-next/commit/97bd5fd8b2c5a2952903bf1341b5bc2643488f9b))
+* tests ([0495f43](https://github.com/arkitektio/orkestrator-next/commit/0495f43f9998e77d341b6e1c1f310d4e0158c9c4))
+* ui is there ([6226dfe](https://github.com/arkitektio/orkestrator-next/commit/6226dfe6b0190bf2b0d180ffcd08016e4d1c8851))
+* updates ([b1a717c](https://github.com/arkitektio/orkestrator-next/commit/b1a717c15383369f4562b2cea84831ed17ee5593))
+* zod ([c0def59](https://github.com/arkitektio/orkestrator-next/commit/c0def597e32c41d4a05ce97207ca49fc9a4bf644))
+
+
+### Features
+
+* add Rooms Sidebar ([96ed61a](https://github.com/arkitektio/orkestrator-next/commit/96ed61a9d50d3f3056d5b86176114d46d1ca3110))
+* first blok renderer ([c6f7d79](https://github.com/arkitektio/orkestrator-next/commit/c6f7d79daf30133bbdd098085d12b5690c22c542))
+* stuff ([1788e4c](https://github.com/arkitektio/orkestrator-next/commit/1788e4c626ac84234ca4860845fa5ba90fc4f219))
+
+# [1.59.0](https://github.com/arkitektio/orkestrator-next/compare/v1.58.4...v1.59.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* add 3d ([5ebb279](https://github.com/arkitektio/orkestrator-next/commit/5ebb279898c370ebef7a524414d54bcf14b394c9))
+* added pool? ([4691770](https://github.com/arkitektio/orkestrator-next/commit/46917706b10462a4dbace47e555969aae8db45f2))
+* async store creation ([b8a5053](https://github.com/arkitektio/orkestrator-next/commit/b8a50530be5a73e7cd95f4d488ccef42e0aa583b))
+* culling? ([35fd83d](https://github.com/arkitektio/orkestrator-next/commit/35fd83d8599b7096d45f9decaebecdaa6073aec4))
+* intermitten without pool ([c79734a](https://github.com/arkitektio/orkestrator-next/commit/c79734aa66bbfcca11977e1b797717ef6b4eb9f4))
+* major performance boost ([12ca7a5](https://github.com/arkitektio/orkestrator-next/commit/12ca7a5f5d9b31de99060be5925f35f4d4684621))
+* more stuff ([5e6000f](https://github.com/arkitektio/orkestrator-next/commit/5e6000fdc29eb4b56459275cd210a4f0b6ae348c))
+* new items ([cd95fac](https://github.com/arkitektio/orkestrator-next/commit/cd95fac8bb07686f519e5162a65e6a7acc8c0067))
+* perforamnce ([927d5e1](https://github.com/arkitektio/orkestrator-next/commit/927d5e16ccebf5f3e0f240db14bfa1b2b7d808d3))
+* priority based ([7d463a5](https://github.com/arkitektio/orkestrator-next/commit/7d463a558135de41c7ab00f5bf94386426624f2a))
+* remove some stuff ([d052312](https://github.com/arkitektio/orkestrator-next/commit/d052312950c36bd5549e5ae3f8c9ed1dba2dfa49))
+* stuff ([044327f](https://github.com/arkitektio/orkestrator-next/commit/044327f4852cc45d9ee0e06a2101a03f85015850))
+* stuff ([f2adb35](https://github.com/arkitektio/orkestrator-next/commit/f2adb35e5bcd354574fa216ea60c9394d2b9f737))
+* stuff ([b8e2795](https://github.com/arkitektio/orkestrator-next/commit/b8e2795076a1bf4b4385eb00075a913ff877473f))
+* workerpool tests ([aad0803](https://github.com/arkitektio/orkestrator-next/commit/aad08032802e9b0a7edfe3ee8d7954e6db43b198))
+
+
+### Features
+
+* with abort controller? ([004c80d](https://github.com/arkitektio/orkestrator-next/commit/004c80d17c7006c94e7c324efab79b937ea58e57))
+
 ## [1.58.4](https://github.com/arkitektio/orkestrator-next/compare/v1.58.3...v1.58.4) (2026-05-05)
 
 

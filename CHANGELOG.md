@@ -1,3 +1,21 @@
+# [1.61.0](https://github.com/arkitektio/orkestrator-next/compare/v1.60.1...v1.61.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* add agent search ([ad37c4d](https://github.com/arkitektio/orkestrator-next/commit/ad37c4d88c8869c512a3df847852152a58db4eaa))
+* add the renderer ([39ca48a](https://github.com/arkitektio/orkestrator-next/commit/39ca48ad3ee721c41f6efef0ff495abe484e501f))
+* more space updates ([c8e56d2](https://github.com/arkitektio/orkestrator-next/commit/c8e56d20babf97cea7d14ec2fd6a6db61dfc2dbd))
+* more stuff, lets see ([d84c27b](https://github.com/arkitektio/orkestrator-next/commit/d84c27b2e1b9019c8a4d2a5fe5b6e65c9042f7da))
+* new blok api ([3155202](https://github.com/arkitektio/orkestrator-next/commit/3155202c3f259950c919dc12da189e1aa42ef87a))
+* with state ([32f430e](https://github.com/arkitektio/orkestrator-next/commit/32f430e5e12aa2cfd8ad7816b41767d902280429))
+
+
+### Features
+
+* some more bloks ([be131b7](https://github.com/arkitektio/orkestrator-next/commit/be131b7304b70b655f8d0c47a0c003677acc34e0))
+* with renderer ([d6790a1](https://github.com/arkitektio/orkestrator-next/commit/d6790a1f60cd2a52b34e44664a226469564bcc93))
+
 ## [1.60.1](https://github.com/arkitektio/orkestrator-next/compare/v1.60.0...v1.60.1) (2026-05-22)
 
 

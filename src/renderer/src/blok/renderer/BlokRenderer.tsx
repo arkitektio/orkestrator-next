@@ -1,25 +1,29 @@
-import {useEffect, useMemo} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {cn} from '@/lib/utils';
 import {toast} from 'sonner';
-import {createStore} from 'zustand/vanilla';
 import BlokDebugState from './BlokDebugState';
 import {myCatalog} from './catalog';
 import {
   BlokComponentRenderer,
   BlokSchemas,
   BlokRuntimeProvider,
+  createBlokRuntimeStore,
+  useBlokRuntime,
   type BlokComponentNode,
   type BlokComponentProp,
-  type BlokRuntimeContext,
+  type BlokDispatchActionHandler,
+  type BlokInvokeFunctionHandler,
 } from './runtime';
 
 type BlokRendererProps = {
   surfaceId?: string;
   uiComponents?: unknown;
-  demoState?: unknown;
-  state?: unknown;
+  initialState?: unknown;
+  invokeFunction?: BlokInvokeFunctionHandler;
+  dispatchAction?: BlokDispatchActionHandler;
   chrome?: 'default' | 'minimal';
   sizing?: 'fill' | 'intrinsic';
+  children?: React.ReactNode;
 };
 
 const DEFAULT_SURFACE_ID = 'blok-preview';
@@ -69,29 +73,6 @@ const extractUiComponents = (uiComponents: unknown): unknown[] => {
   }
 
   return [];
-};
-
-const extractDemoState = (demoState: unknown, uiComponents: unknown): unknown => {
-  if (demoState !== undefined) {
-    return demoState;
-  }
-
-  if (isRecord(uiComponents) && 'demoState' in uiComponents) {
-    return uiComponents.demoState;
-  }
-
-  return demoState;
-};
-
-const mergeState = (demoState: unknown, state: unknown): unknown => {
-  if (!isRecord(demoState) || !isRecord(state)) {
-    return state ?? demoState;
-  }
-
-  return {
-    ...demoState,
-    ...state,
-  };
 };
 
 const prepareComponents = (
@@ -188,53 +169,66 @@ const prepareComponents = (
   };
 };
 
+const BlokRuntimeInitializer = (props: {
+  initialState: unknown;
+  invokeFunction: BlokInvokeFunctionHandler;
+  dispatchAction: BlokDispatchActionHandler;
+}) => {
+  const setInitialDataModel = useBlokRuntime(state => state.setInitialDataModel);
+  const setInvokeFunction = useBlokRuntime(state => state.setInvokeFunction);
+  const setDispatchAction = useBlokRuntime(state => state.setDispatchAction);
+
+  useEffect(() => {
+    setInitialDataModel(props.initialState);
+  }, [props.initialState, setInitialDataModel]);
+
+  useEffect(() => {
+    setInvokeFunction(() => props.invokeFunction);
+  }, [props.invokeFunction, setInvokeFunction]);
+
+  useEffect(() => {
+    setDispatchAction(() => props.dispatchAction);
+  }, [props.dispatchAction, setDispatchAction]);
+
+  return null;
+};
+
 export default function BlokRenderer({
   surfaceId = DEFAULT_SURFACE_ID,
   uiComponents,
-  demoState,
-  state,
+  initialState,
+  invokeFunction,
+  dispatchAction,
   chrome = 'default',
   sizing = 'fill',
+  children,
 }: BlokRendererProps) {
-  const extractedDemoState = extractDemoState(demoState, uiComponents);
-  const initialRuntimeState = useMemo(
-    () => (extractedDemoState !== undefined ? extractedDemoState : state),
-    [extractedDemoState, state],
-  );
-  const resolvedState = useMemo(
-    () => mergeState(extractedDemoState, state),
-    [extractedDemoState, state],
-  );
   const prepared = useMemo(
     () => prepareComponents(extractUiComponents(uiComponents)),
     [uiComponents],
   );
+  const [runtimeStore] = useState(() =>
+    createBlokRuntimeStore({
+      initialDataModel: initialState,
+    }),
+  );
 
-  console.log('BlokRenderer: resolvedState', resolvedState);
-
-  const runtimeStore = useMemo(() => {
-    const store = createStore<BlokRuntimeContext>(() => ({
-      dataModel: initialRuntimeState,
-      pathAliases: {},
-      invokeFunction: (name, args) => myCatalog.invokeFunction(name, args, store.getState()),
-      dispatchAction: action => {
+  const resolvedInvokeFunction = useMemo<BlokInvokeFunctionHandler>(
+    () => invokeFunction ?? ((name, args) => myCatalog.invokeFunction(name, args, runtimeStore.getState())),
+    [invokeFunction, runtimeStore],
+  );
+  const resolvedDispatchAction = useMemo<BlokDispatchActionHandler>(
+    () =>
+      dispatchAction ??
+      ((action) => {
         toast.info(
           action.dependency
             ? `Preview action captured on ${surfaceId}: ${action.operation} on ${action.dependency}`
             : `Preview action captured on ${surfaceId}: ${action.operation}`,
         );
-      },
-    }));
-
-    return store;
-  }, [initialRuntimeState, surfaceId]);
-
-  useEffect(() => {
-    runtimeStore.setState(current => ({
-      ...current,
-      dataModel: resolvedState,
-    }));
-  }, [resolvedState, runtimeStore]);
+      }),
+    [dispatchAction, surfaceId],
+  );
 
   const renderComponent = (componentId: string, trail: string[] = []): React.ReactNode => {
     if (trail.includes(componentId)) {
@@ -278,19 +272,10 @@ export default function BlokRenderer({
       : 'rounded-2xl border border-border/60 bg-background/70 p-4 shadow-sm backdrop-blur-sm',
   );
 
-  const errorContainerClassName = cn(
-    'a2ui-container relative',
-    sizingClassName,
-    chrome === 'minimal'
-      ? 'rounded-xl border border-destructive/40 bg-background/95 p-2 shadow-sm'
-      : 'rounded-2xl border border-destructive/40 bg-destructive/5 p-4 shadow-sm backdrop-blur-sm',
-  );
 
   if (prepared.errors.length > 0) {
     return (
-      <BlokRuntimeProvider store={runtimeStore}>
-        <div className={errorContainerClassName}>
-          <BlokDebugState surfaceId={surfaceId} />
+      <>
           <div className={cn('rounded-xl border border-destructive/30 bg-background/80 p-4', chrome === 'minimal' ? 'mb-2' : 'mb-4')}>
             <h3 className="text-sm font-semibold text-destructive">Blok Validation Failed</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -309,13 +294,18 @@ export default function BlokRenderer({
               </div>
             ))}
           </div>
-        </div>
-      </BlokRuntimeProvider>
+          </>
     );
   }
 
   return (
     <BlokRuntimeProvider store={runtimeStore}>
+      <BlokRuntimeInitializer
+        initialState={initialState}
+        invokeFunction={resolvedInvokeFunction}
+        dispatchAction={resolvedDispatchAction}
+      />
+      {children}
       <div className={containerClassName}>
         <BlokDebugState surfaceId={surfaceId} />
         {prepared.rootIds.length === 0 && (

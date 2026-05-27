@@ -1,6 +1,10 @@
 import * as React from 'react';
 import BlokRenderer from '@/blok/renderer/BlokRenderer';
-import {useAgentStates} from '@/rekuest/hooks/useLiveState';
+import {useBlokRuntime, type BlokDispatchActionHandler} from '@/blok/renderer/runtime';
+import {toast} from 'sonner';
+import {useSettings} from '@/providers/settings/SettingsContext';
+import {useAssignMutation} from '@/rekuest/api/graphql';
+import {useAgentLiveState} from '@/rekuest/hooks/useLiveState';
 
 type MaterializedBlokData = {
   id: string;
@@ -19,147 +23,248 @@ type MaterializedBlokData = {
 
 type MaterializedBlokRendererProps = Omit<
   React.ComponentProps<typeof BlokRenderer>,
-  'uiComponents' | 'demoState' | 'state'
+  'uiComponents' | 'initialState' | 'dispatchAction' | 'children'
 > & {
   materializedBlok: MaterializedBlokData;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null;
-};
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
-const mergeMaterializedState = (
-  demoState: unknown,
-  dependencyStates: Record<string, unknown>,
-): unknown => {
-  if (!isRecord(demoState)) {
-    return Object.keys(dependencyStates).length > 0 ? dependencyStates : demoState;
+const splitRuntimePath = (path: string): string[] =>
+  path
+    .replace(/^\//, '')
+    .split(/[/.]/)
+    .filter(Boolean);
+
+const extractUiComponents = (uiComponents: unknown): unknown[] => {
+  if (Array.isArray(uiComponents)) {
+    return uiComponents;
   }
 
-  return {
-    ...demoState,
-    ...dependencyStates,
+  if (isRecord(uiComponents) && Array.isArray(uiComponents.uiComponents)) {
+    return uiComponents.uiComponents;
+  }
+
+  return [];
+};
+
+const collectArgumentDemandPaths = (
+  argument: unknown,
+  registerPath: (path: string) => void,
+) => {
+  if (!isRecord(argument)) {
+    return;
+  }
+
+  if (typeof argument.value_path === 'string') {
+    registerPath(argument.value_path);
+  }
+
+  if (Array.isArray(argument.value_list)) {
+    argument.value_list.forEach(item => collectArgumentDemandPaths(item, registerPath));
+  }
+
+  if (Array.isArray(argument.value_dict)) {
+    argument.value_dict.forEach(item => collectArgumentDemandPaths(item, registerPath));
+  }
+
+  if (isRecord(argument.util_call) && Array.isArray(argument.util_call.arguments)) {
+    argument.util_call.arguments.forEach(item => collectArgumentDemandPaths(item, registerPath));
+  }
+
+  if (isRecord(argument.agent_call) && Array.isArray(argument.agent_call.arguments)) {
+    argument.agent_call.arguments.forEach(item => collectArgumentDemandPaths(item, registerPath));
+  }
+};
+
+const collectDemandedStateInterfaces = (
+  uiComponents: unknown,
+  dependencyKeys: Set<string>,
+): Map<string, Set<string>> => {
+  const demandedInterfaces = new Map<string, Set<string>>();
+
+  const registerPath = (path: string) => {
+    const [dependencyKey, stateInterface] = splitRuntimePath(path);
+
+    if (!dependencyKey || !stateInterface || !dependencyKeys.has(dependencyKey)) {
+      return;
+    }
+
+    const interfaces = demandedInterfaces.get(dependencyKey) ?? new Set<string>();
+    interfaces.add(stateInterface);
+    demandedInterfaces.set(dependencyKey, interfaces);
   };
+
+  const visitNode = (node: unknown) => {
+    if (!isRecord(node)) {
+      return;
+    }
+
+    if (Array.isArray(node.props)) {
+      node.props.forEach(prop => {
+        if (!isRecord(prop)) {
+          return;
+        }
+
+        if (isRecord(prop.dynamic_value) && typeof prop.dynamic_value.path === 'string') {
+          registerPath(prop.dynamic_value.path);
+        }
+
+        if (isRecord(prop.agent_call) && Array.isArray(prop.agent_call.arguments)) {
+          prop.agent_call.arguments.forEach(argument => collectArgumentDemandPaths(argument, registerPath));
+        }
+
+        if (isRecord(prop.util_call) && Array.isArray(prop.util_call.arguments)) {
+          prop.util_call.arguments.forEach(argument => collectArgumentDemandPaths(argument, registerPath));
+        }
+      });
+    }
+
+    if (Array.isArray(node.children)) {
+      node.children.forEach(visitNode);
+    }
+  };
+
+  extractUiComponents(uiComponents).forEach(visitNode);
+
+  return demandedInterfaces;
 };
 
-const toDemandedDependencyKeys = (materializedBlok: MaterializedBlokData): Set<string> => {
-  const demandedKeys = new Set<string>();
-
-  materializedBlok.blok.dependencies?.forEach(dependency => {
-    demandedKeys.add(dependency.key);
-  });
-
-  materializedBlok.agentMappings.forEach(mapping => {
-    demandedKeys.add(mapping.key);
-  });
-
-  return demandedKeys;
-};
-
-const AgentStateSubscription = (props: {
+const MaterializedDependencyInterfaceSync = (props: {
   dependencyKey: string;
+  stateInterface: string;
   agentId: string;
-  onStateChange: (dependencyKey: string, value: unknown) => void;
 }) => {
-  const {agentId, dependencyKey, onStateChange} = props;
-  const {value} = useAgentStates({agentID: agentId});
+  const {agentId, dependencyKey, stateInterface} = props;
+  const {value, revision} = useAgentLiveState({agentID: agentId, stateInterface});
+  const setRuntimeValue = useBlokRuntime(state => state.setRuntimeValue);
+  const clearRuntimeValue = useBlokRuntime(state => state.clearRuntimeValue);
+  const setAgentMappingStateUpdate = useBlokRuntime(state => state.setAgentMappingStateUpdate);
+  const clearAgentMappingStateUpdate = useBlokRuntime(state => state.clearAgentMappingStateUpdate);
+  const runtimePath = `${dependencyKey}/${stateInterface}`;
 
   React.useEffect(() => {
     if (value == null) {
       return;
     }
 
-    onStateChange(dependencyKey, value);
+    setRuntimeValue(runtimePath, value);
+    setAgentMappingStateUpdate(dependencyKey, agentId, stateInterface, value, revision);
 
     return () => {
-      onStateChange(dependencyKey, undefined);
+      clearRuntimeValue(runtimePath);
+      clearAgentMappingStateUpdate(dependencyKey, stateInterface);
     };
-  }, [dependencyKey, onStateChange, value]);
+  }, [
+    agentId,
+    clearAgentMappingStateUpdate,
+    clearRuntimeValue,
+    dependencyKey,
+    revision,
+    runtimePath,
+    setAgentMappingStateUpdate,
+    setRuntimeValue,
+    stateInterface,
+    value,
+  ]);
 
   return null;
 };
 
-export const MaterializedBlokRenderer = (props: MaterializedBlokRendererProps) => {
-  const {materializedBlok, ...rendererProps} = props;
-  const [dependencyStates, setDependencyStates] = React.useState<Record<string, unknown>>({});
-  const demandedDependencyKeys = React.useMemo(
-    () => toDemandedDependencyKeys(materializedBlok),
-    [materializedBlok],
+const MaterializedBlokRuntimeSync = (props: {materializedBlok: MaterializedBlokData}) => {
+  const dependencyKeys = React.useMemo(
+    () => new Set(props.materializedBlok.agentMappings.map(mapping => mapping.key)),
+    [props.materializedBlok.agentMappings],
   );
-  const mappedDependencies = React.useMemo(
-    () =>
-      materializedBlok.agentMappings.filter(mapping =>
-        demandedDependencyKeys.has(mapping.key),
-      ),
-    [demandedDependencyKeys, materializedBlok.agentMappings],
-  );
-
-  React.useEffect(() => {
-    setDependencyStates(currentState => {
-      const nextState = Object.fromEntries(
-        Object.entries(currentState).filter(([key]) => demandedDependencyKeys.has(key)),
-      );
-
-      const currentKeys = Object.keys(currentState);
-      const nextKeys = Object.keys(nextState);
-
-      if (currentKeys.length === nextKeys.length) {
-        return currentState;
-      }
-
-      return nextState;
-    });
-  }, [demandedDependencyKeys]);
-
-  const handleStateChange = React.useCallback((dependencyKey: string, value: unknown) => {
-    if (!demandedDependencyKeys.has(dependencyKey)) {
-      return;
-    }
-
-    setDependencyStates(currentState => {
-      if (value === undefined) {
-        if (!(dependencyKey in currentState)) {
-          return currentState;
-        }
-
-        const nextState = {...currentState};
-        delete nextState[dependencyKey];
-        return nextState;
-      }
-
-      if (currentState[dependencyKey] === value) {
-        return currentState;
-      }
-
-      return {
-        ...currentState,
-        [dependencyKey]: value,
-      };
-    });
-  }, [demandedDependencyKeys]);
-
-  const state = React.useMemo(
-    () => mergeMaterializedState(materializedBlok.blok.demoState, dependencyStates),
-    [dependencyStates, materializedBlok.blok.demoState],
+  const demandedStateInterfaces = React.useMemo(
+    () => collectDemandedStateInterfaces(props.materializedBlok.blok.uiComponents, dependencyKeys),
+    [dependencyKeys, props.materializedBlok.blok.uiComponents],
   );
 
   return (
     <>
-      {mappedDependencies.map(mapping => (
-        <AgentStateSubscription
-          key={`${mapping.key}-${mapping.agent.id}`}
-          dependencyKey={mapping.key}
-          agentId={mapping.agent.id}
-          onStateChange={handleStateChange}
-        />
-      ))}
-      <BlokRenderer
-        {...rendererProps}
-        uiComponents={materializedBlok.blok.uiComponents}
-        demoState={materializedBlok.blok.demoState}
-        state={state}
-      />
+      {props.materializedBlok.agentMappings.flatMap(mapping => {
+        const interfaces = demandedStateInterfaces.get(mapping.key);
+
+        if (!interfaces || interfaces.size === 0) {
+          return [];
+        }
+
+        return [...interfaces].map(stateInterface => (
+          <MaterializedDependencyInterfaceSync
+            key={`${mapping.key}-${mapping.agent.id}-${stateInterface}`}
+            dependencyKey={mapping.key}
+            stateInterface={stateInterface}
+            agentId={mapping.agent.id}
+          />
+        ));
+      })}
     </>
+  );
+};
+
+const useMaterializedDispatchAction = (
+  agentMappings: MaterializedBlokData['agentMappings'],
+) => {
+  const {settings} = useSettings();
+  const [assign] = useAssignMutation();
+  const agentIdByDependency = React.useMemo(
+    () => new Map(agentMappings.map(mapping => [mapping.key, mapping.agent.id] as const)),
+    [agentMappings],
+  );
+
+  return React.useCallback<BlokDispatchActionHandler>(
+    (action) => {
+      console.log('Dispatching action with raw data:', {action, agentMappings, agentIdByDependency});
+      const agentId = action?.dependency ? agentIdByDependency.get(action.dependency) : undefined;
+
+      if (!agentId) {
+        toast.error(`No agent mapping found for dependency ${action?.dependency ?? 'unknown'}.`);
+        return;
+      }
+
+
+      console.log(`Dispatching action ${action.operation} to agent ${agentId} with arguments:`, action.arguments);
+      void assign({
+        variables: {
+          input: {
+            instanceId: settings.instanceId,
+            agent: agentId,
+            action: action.operation,
+            args: action.arguments ?? {},
+            hooks: [],
+            cached: false,
+            capture: false,
+            ephemeral: false,
+            log: false,
+          },
+        },
+      }).catch((error: unknown) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : `Failed to dispatch ${action.operation}.`,
+        );
+      });
+    },
+    [agentIdByDependency, assign, settings.instanceId],
+  );
+};
+
+export const MaterializedBlokRenderer = (props: MaterializedBlokRendererProps) => {
+  const {materializedBlok, ...rendererProps} = props;
+  const dispatchAction = useMaterializedDispatchAction(materializedBlok.agentMappings);
+
+  return (
+    <BlokRenderer
+      {...rendererProps}
+      uiComponents={materializedBlok.blok.uiComponents}
+      initialState={materializedBlok.blok.demoState}
+      dispatchAction={dispatchAction}
+    >
+      <MaterializedBlokRuntimeSync materializedBlok={materializedBlok} />
+    </BlokRenderer>
   );
 };
 

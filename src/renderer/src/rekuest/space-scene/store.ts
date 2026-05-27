@@ -1,6 +1,6 @@
 import { Matrix4 } from "three";
 import { createStore, StoreApi } from "zustand/vanilla";
-import { SpaceFragment, MediaStoreFragment, PlacementFragment } from "../api/graphql";
+import { SpaceFragment, MediaStoreFragment, SpacePlacementFragment } from "../api/graphql";
 
 export interface MembershipEntry {
   id: string;
@@ -34,15 +34,15 @@ export function buildAffineMatrix(
 
 export interface SpaceSceneState {
   spaceId: string;
-  placements: PlacementFragment[];
+  placements: SpacePlacementFragment[];
   selectedPlacementId: string | null;
   openPanels: SpaceScenePanel[];
   viewProjectionMatrix: Matrix4 | null;
   viewportSize: { width: number; height: number };
 
   // Actions
-  setPlacements: (placements: PlacementFragment[]) => void;
-  addPlacement: (placement: PlacementFragment) => void;
+  setPlacements: (placements: SpacePlacementFragment[]) => void;
+  addPlacement: (placement: SpacePlacementFragment) => void;
   removePlacement: (id: string) => void;
   updatePlacementTransform: (
     id: string,

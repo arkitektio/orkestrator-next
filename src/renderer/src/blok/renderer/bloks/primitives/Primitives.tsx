@@ -894,7 +894,7 @@ export const Badge = createBlokComponent(
     const variant = useValue(blok.variant);
 
     return (
-      <ShadBadge variant={variant ?? 'secondary'} className={className}>
+      <ShadBadge variant={variant ?? 'default'} className={className}>
         {child ? buildChild(child) : renderContent(children ?? text, buildChild)}
       </ShadBadge>
     );

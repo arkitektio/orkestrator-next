@@ -9,7 +9,7 @@ type DemoBlokData = {
 
 type DemoBlokRendererProps = Omit<
   React.ComponentProps<typeof BlokRenderer>,
-  'uiComponents' | 'demoState' | 'state'
+  'uiComponents' | 'initialState'
 > & {
   blok: DemoBlokData;
 };
@@ -22,7 +22,7 @@ export const DemoBlokRenderer = (props: DemoBlokRendererProps) => {
       {...rendererProps}
       surfaceId={surfaceId ?? `${blok.id ?? 'blok'}-demo`}
       uiComponents={blok.uiComponents}
-      demoState={blok.demoState}
+      initialState={blok.demoState}
     />
   );
 };

@@ -61,11 +61,51 @@ export type BlokRuntimeDependencies = {
   needsDispatchAction: boolean;
 };
 
+export type BlokAgentMappingInterfaceUpdate = {
+  value: unknown;
+  revision: number | null;
+};
+
+export type BlokAgentMappingStateUpdate = {
+  agentId: string;
+  interfaces: Record<string, BlokAgentMappingInterfaceUpdate>;
+};
+
+export type BlokAgentMappingStateUpdates = Record<string, BlokAgentMappingStateUpdate>;
+
+export type BlokInvokeFunctionHandler = (
+  name: string,
+  args: Record<string, unknown>,
+) => unknown;
+
+export type BlokDispatchActionHandler = (
+  action: BlokResolvedAgentCall,
+  component: BlokComponentNode,
+) => void;
+
 export type BlokRuntimeContext = {
+  initialDataModel: unknown;
   dataModel: unknown;
+  runtimePathValues: Record<string, unknown>;
+  agentMappingStateUpdates: BlokAgentMappingStateUpdates;
   pathAliases: Record<string, string>;
-  invokeFunction: (name: string, args: Record<string, unknown>) => unknown;
-  dispatchAction: (action: BlokResolvedAgentCall, component: BlokComponentNode) => void;
+  invokeFunction: BlokInvokeFunctionHandler;
+  dispatchAction: BlokDispatchActionHandler;
+  setInitialDataModel: (dataModel: unknown) => void;
+  setRuntimeValue: (path: string, value: unknown) => void;
+  clearRuntimeValue: (path: string) => void;
+  setAgentMappingStateUpdates: (updates: BlokAgentMappingStateUpdates) => void;
+  setAgentMappingStateUpdate: (
+    mappingKey: string,
+    agentId: string,
+    stateInterface: string,
+    value: unknown,
+    revision: number | null,
+  ) => void;
+  clearAgentMappingStateUpdate: (mappingKey: string, stateInterface: string) => void;
+  setPathAliases: (pathAliases: Record<string, string>) => void;
+  setInvokeFunction: (invokeFunction: BlokInvokeFunctionHandler) => void;
+  setDispatchAction: (dispatchAction: BlokDispatchActionHandler) => void;
 };
 
 export type BlokObjectSchema = z.ZodObject<Record<string, z.ZodTypeAny>>;

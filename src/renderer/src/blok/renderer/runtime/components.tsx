@@ -23,8 +23,6 @@ export const createBlokComponent = <TSchema extends BlokObjectSchema>(
   render: render as React.ComponentType<BlokRenderArgs>,
 });
 
-export const createBinderlessBlokComponent = createBlokComponent;
-
 export const BlokComponentRenderer = (props: {
   definition: BlokComponentDefinition;
   props: ReadonlyArray<BlokComponentProp>;

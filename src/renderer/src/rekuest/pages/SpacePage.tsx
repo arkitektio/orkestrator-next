@@ -2,13 +2,21 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { RekuestSpace } from "@/linkers";
 import { useSpaceQuery } from "@/rekuest/api/graphql";
-import { SpaceSceneProvider, SpaceThreeScene } from "../space-scene";
+import { SpaceViewScene, SpaceViewSceneProvider } from "../space-scene";
 
-export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
+export const SpacePage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
   return (
     <RekuestSpace.ModelPage
       title={data.space.name}
       object={data.space}
+      pageActions={
+        <div className="flex flex-row gap-2">
+          <RekuestSpace.DetailLink object={data.space} subroute="edit">
+            Edit
+          </RekuestSpace.DetailLink>
+          <RekuestSpace.ObjectButton object={data.space} />
+        </div>
+      }
       sidebars={
         <MultiSidebar
           map={{
@@ -27,9 +35,9 @@ export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
           </p>
         </div>
         <div className="flex-1 min-h-[500px] rounded-lg border overflow-hidden">
-          <SpaceSceneProvider space={data.space}>
-            <SpaceThreeScene />
-          </SpaceSceneProvider>
+          <SpaceViewSceneProvider space={data.space}>
+            <SpaceViewScene />
+          </SpaceViewSceneProvider>
         </div>
       </div>
     </RekuestSpace.ModelPage>
@@ -37,4 +45,4 @@ export const ToolboxPage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
 });
 
 
-export default ToolboxPage;
+export default SpacePage;

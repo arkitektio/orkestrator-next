@@ -32,7 +32,7 @@ export type Scalars = {
   InstanceId: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
-  /** The `Args` scalar type represents a Dictionary of arguments */
+  /** The `JSONSerializable` scalar type represents a JSON-serializable value. */
   JSONSerializable: { input: any; output: any; }
   /** A type representing a media store reference, which can be either a string ID or a more complex object. */
   MediaLike: { input: any; output: any; }
@@ -348,6 +348,8 @@ export type Agent = {
   __typename?: 'Agent';
   /** Determine if the agent is currently active based on last seen timestamp. */
   active: Scalars['Boolean']['output'];
+  /** Blok mappings associated with this agent. */
+  agentMappings: Array<BlokAgentMapping>;
   /** The app this agent belongs to. */
   app: App;
   /** Assignations executed by this agent. */
@@ -1030,6 +1032,13 @@ export type BlokDependenciesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type BlokMaterializedBloksArgs = {
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  ordering?: Array<MaterializedBlokOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type BlokAgentMapping = {
   __typename?: 'BlokAgentMapping';
   agent: Agent;
@@ -1083,6 +1092,17 @@ export type BlokDependencyFilter = {
   NOT?: InputMaybe<BlokDependencyFilter>;
   OR?: InputMaybe<BlokDependencyFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+/** Which locks does the agent provide in general */
+export type BlokImplementationInput = {
+  catalog?: InputMaybe<Scalars['String']['input']>;
+  components: Array<ComponentNodeInput>;
+  demoState?: InputMaybe<Scalars['JSONSerializable']['input']>;
+  /** The dependencies required by this Blok. */
+  dependencies?: Array<AgentDependencyInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
 };
 
 /** The input for bouncing an agent. */
@@ -1218,6 +1238,7 @@ export type ComponentNodeInput = {
 export type ComponentProp = {
   __typename?: 'ComponentProp';
   agentCall?: Maybe<AgentCall>;
+  declaresValue?: Maybe<Scalars['String']['output']>;
   dynamicValue?: Maybe<DynamicValue>;
   key: Scalars['String']['output'];
   staticValue?: Maybe<Scalars['JSONSerializable']['output']>;
@@ -1227,6 +1248,7 @@ export type ComponentProp = {
 /** A single key-value prop configuration for a component layout node. */
 export type ComponentPropInput = {
   agentCall?: InputMaybe<AgentCallInput>;
+  declaresValue?: InputMaybe<Scalars['String']['input']>;
   dynamicValue?: InputMaybe<DynamicValueInput>;
   key: Scalars['String']['input'];
   staticValue?: InputMaybe<Scalars['JSONSerializable']['input']>;
@@ -1273,6 +1295,8 @@ export type CreateImplementationInput = {
 export type CreatePlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
+  /** A specific blok that should be used to visualize the state of the placement */
+  materializedBlok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
   space: Scalars['String']['input'];
@@ -1716,6 +1740,7 @@ export enum HookKind {
 
 /** Implement an agent with the given implementations, states and locks. This will create the agent if it doesn't exist and update it if it does exist. */
 export type ImplementAgentInput = {
+  bloks?: InputMaybe<Array<BlokImplementationInput>>;
   extensions?: InputMaybe<Array<Scalars['String']['input']>>;
   hash?: InputMaybe<Scalars['String']['input']>;
   implementations?: InputMaybe<Array<ImplementationInput>>;
@@ -2023,6 +2048,7 @@ export type MaterializeBlokInput = {
   dashboard?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlok = {
   __typename?: 'MaterializedBlok';
   /** Mappings of states to this materialized blok. */
@@ -2040,6 +2066,7 @@ export type MaterializedBlok = {
 };
 
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlokDashboardPlacementsArgs = {
   filters?: InputMaybe<DashboardPlacementFilter>;
   ordering?: Array<DashboardPlacementOrder>;
@@ -2047,10 +2074,29 @@ export type MaterializedBlokDashboardPlacementsArgs = {
 };
 
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlokPlacementsArgs = {
   filters?: InputMaybe<PlacementFilter>;
   ordering?: Array<PlacementOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A way to filter placements (space memberships) */
+export type MaterializedBlokFilter = {
+  AND?: InputMaybe<MaterializedBlokFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<MaterializedBlokFilter>;
+  OR?: InputMaybe<MaterializedBlokFilter>;
+  /** Filter by agent */
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by name */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MaterializedBlokOrder = {
+  createdAt?: InputMaybe<Ordering>;
 };
 
 /** Temporary S3 credentials for reading a media object. */
@@ -3274,6 +3320,13 @@ export type QueryInterfacesArgs = {
 
 export type QueryMaterializedBlokArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMaterializedBloksArgs = {
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  ordering?: Array<MaterializedBlokOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -4620,6 +4673,8 @@ export type UpdatePlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
+  /** A specific blok that should be used to visualize the state of the placement */
+  materializedBlok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4747,6 +4802,8 @@ export type ProtocolAgentFragment = { __typename?: 'Agent', id: string, instance
 export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, blocked: boolean, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, interface: string, updatedAt: any, definition: { __typename?: 'StateDefinition', hash: string, name: string, ports: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }> } }>, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string, release?: { __typename?: 'Release', version: string, app: { __typename?: 'App', identifier: string } } | null, device?: { __typename?: 'Device', deviceId: string } | null }, user: { __typename?: 'User', sub: string } }, assignations: Array<{ __typename?: 'Assignation', id: string, reference?: string | null, latestEventKind: AssignationEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string, extension: string } }>, placements: Array<{ __typename?: 'Placement', id: string, name: string, affineMatrix?: any | null, model?: { __typename?: 'ThreeDModel', id: string, transferFunction?: string | null, file: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, space: { __typename?: 'Space', id: string } }> };
 
 export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } };
+
+export type SearchAgentFragment = { __typename?: 'Agent', id: string, name: string, instanceId: any, connected: boolean, blocked: boolean, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string } };
 
 export type AgentChangeEventFragment = { __typename?: 'AgentChangeEvent', delete?: string | null, create?: { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } } | null, update?: { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, blocked: boolean, registry: { __typename?: 'Registry', client: { __typename?: 'Client', clientId: string }, user: { __typename?: 'User', sub: string } }, user: { __typename?: 'User', sub: string }, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string }, device: { __typename?: 'Device', id: string, deviceId: string } } | null };
 
@@ -5454,11 +5511,12 @@ export type GetMemoryDrawerQuery = { __typename?: 'Query', memoryDrawer: { __typ
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   noActions: Scalars['Boolean']['input'];
+  noAgents: Scalars['Boolean']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', actions?: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string } }> };
+export type GlobalSearchQuery = { __typename?: 'Query', actions?: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string } }>, agents?: Array<{ __typename?: 'Agent', id: string, name: string, instanceId: any, connected: boolean, blocked: boolean, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string } }> };
 
 export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5556,7 +5614,11 @@ export type MaterializedBlokQueryVariables = Exact<{
 
 export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
 
-export type ListMaterializedBloksQueryVariables = Exact<{ [key: string]: never; }>;
+export type ListMaterializedBloksQueryVariables = Exact<{
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<MaterializedBlokOrder>>;
+}>;
 
 
 export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }> };
@@ -6379,6 +6441,21 @@ export const AgentFragmentDoc = gql`
 ${StateFragmentDoc}
 ${ListAsssignationFragmentDoc}
 ${AgentPlacementFragmentDoc}`;
+export const SearchAgentFragmentDoc = gql`
+    fragment SearchAgent on Agent {
+  id
+  name
+  instanceId
+  connected
+  blocked
+  app {
+    identifier
+  }
+  release {
+    version
+  }
+}
+    `;
 export const ListAgentFragmentDoc = gql`
     fragment ListAgent on Agent {
   id
@@ -9714,12 +9791,16 @@ export type GetMemoryDrawerQueryHookResult = ReturnType<typeof useGetMemoryDrawe
 export type GetMemoryDrawerLazyQueryHookResult = ReturnType<typeof useGetMemoryDrawerLazyQuery>;
 export type GetMemoryDrawerQueryResult = Apollo.QueryResult<GetMemoryDrawerQuery, GetMemoryDrawerQueryVariables>;
 export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $noActions: Boolean!, $pagination: OffsetPaginationInput) {
+    query GlobalSearch($search: String, $noActions: Boolean!, $noAgents: Boolean!, $pagination: OffsetPaginationInput) {
   actions: actions(filters: {search: $search}, pagination: $pagination) @skip(if: $noActions) {
     ...ListAction
   }
+  agents: agents(filters: {search: $search}, pagination: $pagination) @skip(if: $noAgents) {
+    ...SearchAgent
+  }
 }
-    ${ListActionFragmentDoc}`;
+    ${ListActionFragmentDoc}
+${SearchAgentFragmentDoc}`;
 
 /**
  * __useGlobalSearchQuery__
@@ -9735,6 +9816,7 @@ export const GlobalSearchDocument = gql`
  *   variables: {
  *      search: // value for 'search'
  *      noActions: // value for 'noActions'
+ *      noAgents: // value for 'noAgents'
  *      pagination: // value for 'pagination'
  *   },
  * });
@@ -10202,8 +10284,12 @@ export type MaterializedBlokQueryHookResult = ReturnType<typeof useMaterializedB
 export type MaterializedBlokLazyQueryHookResult = ReturnType<typeof useMaterializedBlokLazyQuery>;
 export type MaterializedBlokQueryResult = Apollo.QueryResult<MaterializedBlokQuery, MaterializedBlokQueryVariables>;
 export const ListMaterializedBloksDocument = gql`
-    query ListMaterializedBloks {
-  materializedBloks {
+    query ListMaterializedBloks($filters: MaterializedBlokFilter, $pagination: OffsetPaginationInput, $ordering: [MaterializedBlokOrder!]) {
+  materializedBloks(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
     ...ListMaterializedBlok
   }
 }
@@ -10221,6 +10307,9 @@ export const ListMaterializedBloksDocument = gql`
  * @example
  * const { data, loading, error } = useListMaterializedBloksQuery({
  *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */

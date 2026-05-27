@@ -277,6 +277,9 @@ type Agent {
   """
   active: Boolean!
 
+  """Blok mappings associated with this agent."""
+  agentMappings: [BlokAgentMapping!]!
+
   """The app this agent belongs to."""
   app: App!
 
@@ -941,7 +944,7 @@ type Blok {
   id: ID!
 
   """Materialized bloks that are instances of this blok."""
-  materializedBloks: [MaterializedBlok!]!
+  materializedBloks(filters: MaterializedBlokFilter, ordering: [MaterializedBlokOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedBlok!]!
   name: String!
 
   """List of action demands specified in this blok."""
@@ -1021,6 +1024,18 @@ input BlokDependencyFilter {
   NOT: BlokDependencyFilter
   OR: BlokDependencyFilter
   ids: [ID!]
+}
+
+"""Which locks does the agent provide in general"""
+input BlokImplementationInput {
+  catalog: String = null
+  components: [ComponentNodeInput!]!
+  demoState: JSONSerializable = null
+
+  """The dependencies required by this Blok."""
+  dependencies: [AgentDependencyInput!]! = []
+  description: String = null
+  key: String!
 }
 
 """The input for bouncing an agent."""
@@ -1140,6 +1155,7 @@ input ComponentNodeInput {
 """A single key-value prop configuration for a component layout node."""
 type ComponentProp {
   agentCall: AgentCall
+  declaresValue: String
   dynamicValue: DynamicValue
   key: String!
   staticValue: JSONSerializable
@@ -1149,6 +1165,7 @@ type ComponentProp {
 """A single key-value prop configuration for a component layout node."""
 input ComponentPropInput {
   agentCall: AgentCallInput = null
+  declaresValue: String = null
   dynamicValue: DynamicValueInput = null
   key: String!
   staticValue: JSONSerializable = null
@@ -1201,6 +1218,11 @@ input CreateImplementationInput {
 input CreatePlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  materializedBlok: ID = null
   model: ID = null
   role: String = null
   space: String!
@@ -1702,6 +1724,7 @@ scalar Identifier
 Implement an agent with the given implementations, states and locks. This will create the agent if it doesn't exist and update it if it does exist.
 """
 input ImplementAgentInput {
+  bloks: [BlokImplementationInput!] = null
   extensions: [String!] = null
   hash: String = null
   implementations: [ImplementationInput!] = null
@@ -1936,7 +1959,9 @@ enum JSONPatchOperation {
   test
 }
 
-"""The `Args` scalar type represents a Dictionary of arguments"""
+"""
+The `JSONSerializable` scalar type represents a JSON-serializable value.
+"""
 scalar JSONSerializable
 
 """The input for bouncing an agent."""
@@ -2005,6 +2030,9 @@ input MaterializeBlokInput {
   dashboard: ID = null
 }
 
+"""
+A materialized instance of a Blok that can be placed on dashboards and linked to agent states.
+"""
 type MaterializedBlok {
   """Mappings of states to this materialized blok."""
   agentMappings: [BlokAgentMapping!]!
@@ -2020,6 +2048,27 @@ type MaterializedBlok {
   """Placements of this materialized blok."""
   placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
   updatedAt: DateTime!
+}
+
+"""A way to filter placements (space memberships)"""
+input MaterializedBlokFilter {
+  AND: MaterializedBlokFilter
+  DISTINCT: Boolean
+  NOT: MaterializedBlokFilter
+  OR: MaterializedBlokFilter
+
+  """Filter by agent"""
+  agent: ID
+
+  """Filter by IDs"""
+  ids: [ID!]
+
+  """Search by name"""
+  search: String
+}
+
+input MaterializedBlokOrder {
+  createdAt: Ordering
 }
 
 """Temporary S3 credentials for reading a media object."""
@@ -2731,7 +2780,7 @@ type Query {
   materializedBlok(id: ID!): MaterializedBlok!
 
   """List of UI Blok."""
-  materializedBloks: [MaterializedBlok!]!
+  materializedBloks(filters: MaterializedBlokFilter, ordering: [MaterializedBlokOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedBlok!]!
 
   """Fetch a memory drawer by ID."""
   memoryDrawer(id: ID!): MemoryDrawer!
@@ -3014,7 +3063,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "289fb402-f407-4990-a0ec-8b6c5bd1aed7"
+  reference: String = "f3d09b6e-d1d6-490b-b75e-aca2e684df02"
   title: String = null
 }
 
@@ -3886,6 +3935,11 @@ input UpdatePlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
   id: ID!
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  materializedBlok: ID = null
   model: ID = null
   role: String = null
 }

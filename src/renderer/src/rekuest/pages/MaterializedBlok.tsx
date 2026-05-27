@@ -1,13 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { registry } from "@/app/localactions";
-import BlokRenderer from "@/blok/renderer/BlokRenderer";
 import { LocalActionButton } from "@/components/ui/localactionbutton";
 import {
   RekuestAgent,
   RekuestBlok,
-  RekuestDashboard,
   RekuestMaterializedBlok,
 } from "@/linkers";
+import MaterializedBlokRenderer from "@/rekuest/components/MaterializedBlokRenderer";
 import { useMaterializedBlokQuery } from "../api/graphql";
 
 export const MaterializedBlokPage = asDetailQueryRoute(useMaterializedBlokQuery, ({ data }) => {
@@ -148,10 +147,10 @@ export const MaterializedBlokPage = asDetailQueryRoute(useMaterializedBlokQuery,
           </div>
 
           <div className="min-h-[36rem] overflow-hidden">
-            <BlokRenderer
+            <MaterializedBlokRenderer
+              key={materializedBlok.id}
+              materializedBlok={materializedBlok}
               surfaceId={materializedBlok.id}
-              uiComponents={materializedBlok.blok.uiComponents}
-              demoState={materializedBlok.blok.demoState}
             />
           </div>
         </section>

@@ -1,7 +1,7 @@
-import {createBinderlessBlokComponent} from '../../runtime';
+import {createBlokComponent} from '../../runtime';
 import * as zod from 'zod';
 
-export const RawInspector = createBinderlessBlokComponent({
+export const RawInspector = createBlokComponent({
   name: 'RawInspector',
   schema: zod.object({
     name: zod.string(),
@@ -11,7 +11,7 @@ export const RawInspector = createBinderlessBlokComponent({
   return (
     <details>
       <summary>Raw Component State (ID: {component.id})</summary>
-      <pre>{JSON.stringify(component.props ?? {}, null, 2)}</pre>
+      <pre>{JSON.stringify(component.props ?? [], null, 2)}</pre>
     </details>
   );
 });

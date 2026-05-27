@@ -2,7 +2,6 @@ import {z} from 'zod';
 import {toast} from 'sonner';
 import {RawInspector} from './bloks/inspector/Inspector';
 import {shadcnComposableComponents} from './bloks/primitives/Primitives';
-import {MyProfile} from './bloks/profile/Profile';
 import {createBlokCatalog, createBlokFunction} from './runtime';
 
 const myCheckFunc = createBlokFunction(
@@ -29,6 +28,36 @@ const multiplyFunction = createBlokFunction(
   },
 );
 
+
+const gtFunction = createBlokFunction(
+  {
+    name: 'gt',
+    returnType: 'boolean',
+    schema: z.object({
+      a: z.number(),
+      b: z.number(),
+    }),
+  },
+  args => args.a > args.b,
+);
+
+
+const ifFunction = createBlokFunction(
+  {
+    name: 'if',
+    returnType: 'unknown',
+    schema: z.object({
+      condition: z.boolean(),
+      trueValue: z.unknown(),
+      falseValue: z.unknown(),
+    }),
+  },
+  args => (args.condition ? args.trueValue : args.falseValue),
+);
+
+
+
+
 const loggerInfoFunction = createBlokFunction(
   {
     name: 'logger.info',
@@ -50,8 +79,7 @@ export const myCatalog = createBlokCatalog(
   'https://arkitekt.live/catalogs/v1.json',
   [
     ...shadcnComposableComponents,
-    MyProfile,
     RawInspector,
   ],
-  [myCheckFunc, multiplyFunction, loggerInfoFunction],
+  [myCheckFunc, multiplyFunction, loggerInfoFunction, gtFunction, ifFunction],
 );

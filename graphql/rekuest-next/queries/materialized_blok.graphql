@@ -4,8 +4,8 @@ query MaterializedBlok($id: ID!) {
   }
 }
 
-query ListMaterializedBloks {
-  materializedBloks {
+query ListMaterializedBloks($filters: MaterializedBlokFilter, $pagination: OffsetPaginationInput, $ordering: [MaterializedBlokOrder!]) {
+  materializedBloks(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListMaterializedBlok
   }
 }

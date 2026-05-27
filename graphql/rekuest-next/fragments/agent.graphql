@@ -106,6 +106,20 @@ fragment ListAgent on Agent {
   }
 }
 
+fragment SearchAgent on Agent {
+  id
+  name
+  instanceId
+  connected
+  blocked
+  app {
+    identifier
+  }
+  release {
+    version
+  }
+}
+
 
 
 fragment AgentChangeEvent on AgentChangeEvent {

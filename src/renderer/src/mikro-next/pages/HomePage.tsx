@@ -163,7 +163,6 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               </CardDescription>
             </CardHeader>
 
-            <BlokRenderer/>
             <ImageList
               filters={{ notDerived: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
             />

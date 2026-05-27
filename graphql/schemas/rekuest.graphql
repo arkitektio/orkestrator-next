@@ -944,7 +944,7 @@ type Blok {
   id: ID!
 
   """Materialized bloks that are instances of this blok."""
-  materializedBloks: [MaterializedBlok!]!
+  materializedBloks(filters: MaterializedBlokFilter, ordering: [MaterializedBlokOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedBlok!]!
   name: String!
 
   """List of action demands specified in this blok."""
@@ -1218,6 +1218,11 @@ input CreateImplementationInput {
 input CreatePlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  materializedBlok: ID = null
   model: ID = null
   role: String = null
   space: String!
@@ -2025,6 +2030,9 @@ input MaterializeBlokInput {
   dashboard: ID = null
 }
 
+"""
+A materialized instance of a Blok that can be placed on dashboards and linked to agent states.
+"""
 type MaterializedBlok {
   """Mappings of states to this materialized blok."""
   agentMappings: [BlokAgentMapping!]!
@@ -2040,6 +2048,27 @@ type MaterializedBlok {
   """Placements of this materialized blok."""
   placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
   updatedAt: DateTime!
+}
+
+"""A way to filter placements (space memberships)"""
+input MaterializedBlokFilter {
+  AND: MaterializedBlokFilter
+  DISTINCT: Boolean
+  NOT: MaterializedBlokFilter
+  OR: MaterializedBlokFilter
+
+  """Filter by agent"""
+  agent: ID
+
+  """Filter by IDs"""
+  ids: [ID!]
+
+  """Search by name"""
+  search: String
+}
+
+input MaterializedBlokOrder {
+  createdAt: Ordering
 }
 
 """Temporary S3 credentials for reading a media object."""
@@ -2751,7 +2780,7 @@ type Query {
   materializedBlok(id: ID!): MaterializedBlok!
 
   """List of UI Blok."""
-  materializedBloks: [MaterializedBlok!]!
+  materializedBloks(filters: MaterializedBlokFilter, ordering: [MaterializedBlokOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedBlok!]!
 
   """Fetch a memory drawer by ID."""
   memoryDrawer(id: ID!): MemoryDrawer!
@@ -3034,7 +3063,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "03a9e331-dc34-47af-b494-71c2d9a481ae"
+  reference: String = "f3d09b6e-d1d6-490b-b75e-aca2e684df02"
   title: String = null
 }
 
@@ -3906,6 +3935,11 @@ input UpdatePlacementInput {
   affineMatrix: [[Float!]!] = null
   agent: ID = null
   id: ID!
+
+  """
+  A specific blok that should be used to visualize the state of the placement
+  """
+  materializedBlok: ID = null
   model: ID = null
   role: String = null
 }

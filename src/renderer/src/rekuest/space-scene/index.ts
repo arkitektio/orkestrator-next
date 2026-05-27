@@ -1,3 +1,2 @@
-export { SpaceSceneProvider } from "./SpaceSceneProvider";
-export { SpaceThreeScene } from "./SpaceThreeScene";
-export { useSpaceScene, useSpaceSceneStoreApi } from "./context";
+export { SpaceEditScene, SpaceEditSceneProvider } from "./SpaceEditScene";
+export { SpaceViewScene, SpaceViewSceneProvider } from "./SpaceViewScene";

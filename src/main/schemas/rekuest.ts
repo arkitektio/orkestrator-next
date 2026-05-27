@@ -1031,6 +1031,13 @@ export type BlokDependenciesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type BlokMaterializedBloksArgs = {
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  ordering?: Array<MaterializedBlokOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type BlokAgentMapping = {
   __typename?: 'BlokAgentMapping';
   agent: Agent;
@@ -1287,6 +1294,8 @@ export type CreateImplementationInput = {
 export type CreatePlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
+  /** A specific blok that should be used to visualize the state of the placement */
+  materializedBlok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
   space: Scalars['String']['input'];
@@ -2038,6 +2047,7 @@ export type MaterializeBlokInput = {
   dashboard?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlok = {
   __typename?: 'MaterializedBlok';
   /** Mappings of states to this materialized blok. */
@@ -2055,6 +2065,7 @@ export type MaterializedBlok = {
 };
 
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlokDashboardPlacementsArgs = {
   filters?: InputMaybe<DashboardPlacementFilter>;
   ordering?: Array<DashboardPlacementOrder>;
@@ -2062,10 +2073,29 @@ export type MaterializedBlokDashboardPlacementsArgs = {
 };
 
 
+/** A materialized instance of a Blok that can be placed on dashboards and linked to agent states. */
 export type MaterializedBlokPlacementsArgs = {
   filters?: InputMaybe<PlacementFilter>;
   ordering?: Array<PlacementOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A way to filter placements (space memberships) */
+export type MaterializedBlokFilter = {
+  AND?: InputMaybe<MaterializedBlokFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<MaterializedBlokFilter>;
+  OR?: InputMaybe<MaterializedBlokFilter>;
+  /** Filter by agent */
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by name */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MaterializedBlokOrder = {
+  createdAt?: InputMaybe<Ordering>;
 };
 
 /** Temporary S3 credentials for reading a media object. */
@@ -3289,6 +3319,13 @@ export type QueryInterfacesArgs = {
 
 export type QueryMaterializedBlokArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMaterializedBloksArgs = {
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  ordering?: Array<MaterializedBlokOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -4635,6 +4672,8 @@ export type UpdatePlacementInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
   agent?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
+  /** A specific blok that should be used to visualize the state of the placement */
+  materializedBlok?: InputMaybe<Scalars['ID']['input']>;
   model?: InputMaybe<Scalars['ID']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5574,7 +5613,11 @@ export type MaterializedBlokQueryVariables = Exact<{
 
 export type MaterializedBlokQuery = { __typename?: 'Query', materializedBlok: { __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string, uiComponents: any, demoState: any, materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }>, dependencies: Array<{ __typename?: 'BlokDependency', id: string, key: string }>, catalog: { __typename?: 'UICatalog', id: string, name: string }, components: Array<{ __typename?: 'ComponentNode', id: string, component: string, props?: Array<{ __typename?: 'ComponentProp', staticValue?: any | null, dynamicValue?: { __typename?: 'DynamicValue', path?: string | null, literal?: string | null } | null, agentCall?: { __typename?: 'AgentCall', operation: string, dependency: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null, utilCall?: { __typename?: 'UtilCall', operation: string, arguments?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null, valueDict?: Array<{ __typename?: 'ActionArgument', key?: string | null, valueLiteral?: any | null, valuePath?: string | null }> | null }> | null } | null }> | null, children?: Array<{ __typename?: 'ComponentNode', id: string, component: string }> | null }> }, agentMappings: Array<{ __typename?: 'BlokAgentMapping', key: string, agent: { __typename?: 'Agent', id: string } }> } };
 
-export type ListMaterializedBloksQueryVariables = Exact<{ [key: string]: never; }>;
+export type ListMaterializedBloksQueryVariables = Exact<{
+  filters?: InputMaybe<MaterializedBlokFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<MaterializedBlokOrder> | MaterializedBlokOrder>;
+}>;
 
 
 export type ListMaterializedBloksQuery = { __typename?: 'Query', materializedBloks: Array<{ __typename?: 'MaterializedBlok', id: string, blok: { __typename?: 'Blok', id: string, name: string } }> };
@@ -8030,8 +8073,12 @@ export const MaterializedBlokDocument = gql`
 }
     ${MaterializedBlokFragmentDoc}`;
 export const ListMaterializedBloksDocument = gql`
-    query ListMaterializedBloks {
-  materializedBloks {
+    query ListMaterializedBloks($filters: MaterializedBlokFilter, $pagination: OffsetPaginationInput, $ordering: [MaterializedBlokOrder!]) {
+  materializedBloks(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
     ...ListMaterializedBlok
   }
 }

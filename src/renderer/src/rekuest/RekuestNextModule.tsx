@@ -40,6 +40,7 @@ import AgentSpacePage from "./pages/agent/AgentSpacePage";
 import AgentStatesPage from "./pages/agent/AgentStatesPage";
 import AgentTasksPage from "./pages/agent/AgentTasksPage";
 import StatePage from "./pages/StatePage";
+import SpaceEditPage from "./pages/SpaceEditPage";
 import SpacePage from "./pages/SpacePage";
 import SpacesPage from "./pages/SpacesPage";
 
@@ -87,6 +88,7 @@ const Module: React.FC = () => {
           <Route path="agents/:id/states" element={<AgentStatesPage />} />
           <Route path="agents/:id/tasks" element={<AgentTasksPage />} />
           <Route path="spaces" element={<SpacesPage />} />
+          <Route path="spaces/:id/edit" element={<SpaceEditPage />} />
           <Route path="spaces/:id" element={<SpacePage />} />
 
           <Route path="states/:id" element={<StatePage />} />

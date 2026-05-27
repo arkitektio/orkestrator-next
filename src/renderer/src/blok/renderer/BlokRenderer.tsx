@@ -8,7 +8,6 @@ import {
   BlokSchemas,
   BlokRuntimeProvider,
   createBlokRuntimeStore,
-  useBlokRuntime,
   type BlokComponentNode,
   type BlokComponentProp,
   type BlokDispatchActionHandler,
@@ -169,30 +168,6 @@ const prepareComponents = (
   };
 };
 
-const BlokRuntimeInitializer = (props: {
-  initialState: unknown;
-  invokeFunction: BlokInvokeFunctionHandler;
-  dispatchAction: BlokDispatchActionHandler;
-}) => {
-  const setInitialDataModel = useBlokRuntime(state => state.setInitialDataModel);
-  const setInvokeFunction = useBlokRuntime(state => state.setInvokeFunction);
-  const setDispatchAction = useBlokRuntime(state => state.setDispatchAction);
-
-  useEffect(() => {
-    setInitialDataModel(props.initialState);
-  }, [props.initialState, setInitialDataModel]);
-
-  useEffect(() => {
-    setInvokeFunction(() => props.invokeFunction);
-  }, [props.invokeFunction, setInvokeFunction]);
-
-  useEffect(() => {
-    setDispatchAction(() => props.dispatchAction);
-  }, [props.dispatchAction, setDispatchAction]);
-
-  return null;
-};
-
 export default function BlokRenderer({
   surfaceId = DEFAULT_SURFACE_ID,
   uiComponents,
@@ -229,6 +204,18 @@ export default function BlokRenderer({
       }),
     [dispatchAction, surfaceId],
   );
+
+  useEffect(() => {
+    runtimeStore.getState().setInitialDataModel(initialState);
+  }, [initialState, runtimeStore]);
+
+  useEffect(() => {
+    runtimeStore.getState().setInvokeFunction(resolvedInvokeFunction);
+  }, [resolvedInvokeFunction, runtimeStore]);
+
+  useEffect(() => {
+    runtimeStore.getState().setDispatchAction(resolvedDispatchAction);
+  }, [resolvedDispatchAction, runtimeStore]);
 
   const renderComponent = (componentId: string, trail: string[] = []): React.ReactNode => {
     if (trail.includes(componentId)) {
@@ -300,11 +287,6 @@ export default function BlokRenderer({
 
   return (
     <BlokRuntimeProvider store={runtimeStore}>
-      <BlokRuntimeInitializer
-        initialState={initialState}
-        invokeFunction={resolvedInvokeFunction}
-        dispatchAction={resolvedDispatchAction}
-      />
       {children}
       <div className={containerClassName}>
         <BlokDebugState surfaceId={surfaceId} />

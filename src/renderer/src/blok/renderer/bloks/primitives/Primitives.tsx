@@ -733,6 +733,7 @@ export const Text = createBlokComponent(
   {
     name: 'Text',
     schema: z.object({
+      className: classNameSchema,
       text: BlokPropSchemas.DynamicString,
       tone: textToneSchema,
       size: textSizeSchema,
@@ -746,6 +747,7 @@ export const Text = createBlokComponent(
   ({component, schema}) => {
     const blok = useBlok(component, schema);
     const text = useValue(blok.text);
+    const className = useValue(blok.className);
     const textProps = useTextPresentationProps(blok);
 
     return (
@@ -753,6 +755,7 @@ export const Text = createBlokComponent(
         className={cn(
           textVariants({tone: textProps.tone, size: textProps.size, weight: textProps.weight}),
           mapTextAlign(textProps.align),
+          className,
           textProps.mono && 'font-mono',
           textProps.italic && 'italic',
           textProps.truncate && 'truncate',

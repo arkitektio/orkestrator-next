@@ -5,7 +5,9 @@ import DashboardList from "../components/lists/DashboardList";
 
 
 const Page = () => {
-  const [createDashboard] = useCreateDashboardMutation();
+  const [createDashboard] = useCreateDashboardMutation({
+    refetchQueries: ["ListDashboards"],
+  });
 
   return (
     <RekuestDashboard.ListPage

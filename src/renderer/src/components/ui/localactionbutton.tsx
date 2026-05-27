@@ -11,6 +11,7 @@ export interface LocalActionButtonProps extends ButtonProps {
   className?: string;
   disabled?: boolean;
   state?: ActionState;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 export const LocalActionButton = ({
@@ -23,7 +24,7 @@ export const LocalActionButton = ({
   const action = useAction(name);
   const { assign, progress } = usePerformAction({
     action,
-    state: state,
+    state: state || { left: [], isCommand: false },
   });
 
   const onClick = useCallback(async () => {

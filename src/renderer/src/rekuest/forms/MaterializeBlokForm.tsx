@@ -33,6 +33,7 @@ const formSchema = z.object({
 export type MaterializeBlokFormProps = {
   blokId: string;
   dashboardId?: string;
+  prefilledAgentId?: string;
   dependencies: Array<{
     id: string;
     key: string;
@@ -72,7 +73,19 @@ export const MaterializeBlokForm = (
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      dependencies: [],
+      dependencies: props.prefilledAgentId
+        ? normalizedDependencies.map((dependency) => ({
+            key: dependency.key,
+            autoResolve: false,
+            mappedAgents: [
+              {
+                agent: props.prefilledAgentId,
+                key: dependency.key,
+                mappedActions: [],
+              },
+            ],
+          }))
+        : [],
     },
   });
 

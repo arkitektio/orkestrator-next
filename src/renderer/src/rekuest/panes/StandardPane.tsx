@@ -16,6 +16,7 @@ import {
   useListDashboardsQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
+import SearchAgentCard from "../components/cards/SearchAgentCard";
 
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({
@@ -32,7 +33,7 @@ export const NavigationPane = () => {
     },
   });
 
-  const { data: pinnedAgents, error } = useAgentsQuery({
+  const { data: pinnedAgents } = useAgentsQuery({
     variables: {
       filters: {
         pinned: true,
@@ -40,13 +41,7 @@ export const NavigationPane = () => {
     },
   });
 
-  const { data: allDashboards } = useListDashboardsQuery({
-    variables: {
-      pagination: {
-        limit: 10,
-      },
-    },
-  });
+  const { data: allDashboards } = useListDashboardsQuery();
 
 
 
@@ -213,16 +208,13 @@ const Pane: React.FunctionComponent = () => {
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
     noActions: false,
+    noAgents: false,
     pagination: {
       limit: 10,
     },
   };
 
-  const { data, refetch } = useGlobalSearchQuery({ variables });
-
-  React.useEffect(() => {
-    refetch(variables);
-  }, [debouncedSearch]);
+  const { data } = useGlobalSearchQuery({ variables });
 
   const searchBar = (
     <div className="w-full flex flex-row">
@@ -242,6 +234,9 @@ const Pane: React.FunctionComponent = () => {
         <NavigationPane />
       ) : (
         <div className="h-full">
+          <ListRender array={data?.agents} >
+            {(item, i) => <SearchAgentCard item={item} key={i} />}
+          </ListRender>
           <ListRender array={data?.actions}>
             {(item, i) => <ActionCard item={item} key={i} />}
           </ListRender>

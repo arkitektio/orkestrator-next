@@ -277,6 +277,9 @@ type Agent {
   """
   active: Boolean!
 
+  """Blok mappings associated with this agent."""
+  agentMappings: [BlokAgentMapping!]!
+
   """The app this agent belongs to."""
   app: App!
 
@@ -1023,6 +1026,18 @@ input BlokDependencyFilter {
   ids: [ID!]
 }
 
+"""Which locks does the agent provide in general"""
+input BlokImplementationInput {
+  catalog: String = null
+  components: [ComponentNodeInput!]!
+  demoState: JSONSerializable = null
+
+  """The dependencies required by this Blok."""
+  dependencies: [AgentDependencyInput!]! = []
+  description: String = null
+  key: String!
+}
+
 """The input for bouncing an agent."""
 input BounceInput {
   agent: ID!
@@ -1140,6 +1155,7 @@ input ComponentNodeInput {
 """A single key-value prop configuration for a component layout node."""
 type ComponentProp {
   agentCall: AgentCall
+  declaresValue: String
   dynamicValue: DynamicValue
   key: String!
   staticValue: JSONSerializable
@@ -1149,6 +1165,7 @@ type ComponentProp {
 """A single key-value prop configuration for a component layout node."""
 input ComponentPropInput {
   agentCall: AgentCallInput = null
+  declaresValue: String = null
   dynamicValue: DynamicValueInput = null
   key: String!
   staticValue: JSONSerializable = null
@@ -1702,6 +1719,7 @@ scalar Identifier
 Implement an agent with the given implementations, states and locks. This will create the agent if it doesn't exist and update it if it does exist.
 """
 input ImplementAgentInput {
+  bloks: [BlokImplementationInput!] = null
   extensions: [String!] = null
   hash: String = null
   implementations: [ImplementationInput!] = null
@@ -1936,7 +1954,9 @@ enum JSONPatchOperation {
   test
 }
 
-"""The `Args` scalar type represents a Dictionary of arguments"""
+"""
+The `JSONSerializable` scalar type represents a JSON-serializable value.
+"""
 scalar JSONSerializable
 
 """The input for bouncing an agent."""
@@ -3014,7 +3034,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "289fb402-f407-4990-a0ec-8b6c5bd1aed7"
+  reference: String = "03a9e331-dc34-47af-b494-71c2d9a481ae"
   title: String = null
 }
 

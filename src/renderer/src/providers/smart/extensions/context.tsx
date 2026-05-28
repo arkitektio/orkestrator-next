@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PlayIcon } from "lucide-react";
 import React from "react";
+import { ApplicableTalk as ApplicableAlpakaTalk } from "./alpaka/talk";
 import { ApplicableDefinitions } from "./kabinet/definitions";
 import { ApplicableRelations } from "./kraph/relations";
 import { ApplicableLocalActions } from "./local/localactions";
@@ -77,6 +78,9 @@ export const SmartContext = (props: SmartContextProps) => {
         <CommandList className="mt-2">
           <ApplicableLocalActions {...props} filter={filter} />
           <CommandEmpty>No Action available</CommandEmpty>
+          <Guard.Alpaka unavailable={<></>}>
+            <ApplicableAlpakaTalk {...props} filter={filter} />
+          </Guard.Alpaka>
           <Guard.Rekuest unavailable={<></>}>
             {!props.disableShortcuts && (
               <ApplicableShortcuts {...props} filter={filter} />

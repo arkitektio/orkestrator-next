@@ -22,6 +22,7 @@ import {
   WatchMessagesSubscriptionVariables,
 } from "../api/graphql";
 import { Chat } from "@/components/chat/chat";
+import { storeRoomTalkingAbout } from "../roomTalkingAbout";
 
 export type StructureRoomsSidebarProps = {
   identifier: Identifier;
@@ -173,6 +174,12 @@ export const StructureRoomsSidebar = ({
     await refetch();
 
     if (nextRoomId) {
+      storeRoomTalkingAbout(nextRoomId, [
+        {
+          identifier,
+          object: object.id,
+        },
+      ]);
       setActiveRoomId(nextRoomId);
     }
   };

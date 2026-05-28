@@ -735,7 +735,7 @@ export type DocumentFragment = { __typename?: 'Document', id: string, content: s
 
 export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
 
-export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string };
+export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
 
 export type MessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
 
@@ -743,7 +743,7 @@ export type ListMessageFragment = { __typename?: 'Message', id: string, text: st
 
 export type ProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
 
-export type ListProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind };
+export type ListProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
 
 export type ChatResponseFragment = { __typename?: 'ChatResponse', id: string, object: string, created: number, model: string, usage?: { __typename?: 'Usage', promptTokens: number, completionTokens: number, totalTokens: number } | null, choices: Array<{ __typename?: 'Choice', index: number, finishReason?: string | null, message: { __typename?: 'ChatMessage', role: Role, content?: string | null, name?: string | null, toolCallId?: string | null, functionCall?: { __typename?: 'FunctionCall', name: string, arguments: string } | null, toolCalls?: Array<{ __typename?: 'ToolCall', id: string, type: ToolType, function: { __typename?: 'FunctionCall', name: string, arguments: string } }> | null } }> };
 
@@ -894,7 +894,7 @@ export type ListLlModelsQueryVariables = Exact<{
 }>;
 
 
-export type ListLlModelsQuery = { __typename?: 'Query', llmModels: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
+export type ListLlModelsQuery = { __typename?: 'Query', llmModels: Array<{ __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> }> };
 
 export type GetProviderQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -917,7 +917,7 @@ export type ListProvidersQueryVariables = Exact<{
 }>;
 
 
-export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', id: string, name: string, kind: ProviderKind }> };
+export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }> };
 
 export type GetRoomQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1023,6 +1023,19 @@ export const ListLlmModelFragmentDoc = gql`
     fragment ListLLMModel on LLMModel {
   id
   modelId
+  llmString
+  features
+  inputModalities
+  outputModalities
+  provider {
+    id
+    name
+    kind
+  }
+  embedderFor {
+    id
+    name
+  }
 }
     `;
 export const MessageFragmentDoc = gql`
@@ -1044,6 +1057,10 @@ export const ListProviderFragmentDoc = gql`
   id
   name
   kind
+  models {
+    id
+    modelId
+  }
 }
     `;
 export const ChatResponseFragmentDoc = gql`

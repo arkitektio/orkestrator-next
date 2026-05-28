@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { AlpakaProvider } from "@/linkers";
 import Anthropic from "@lobehub/icons-static-svg/icons/anthropic.svg";
 import Aws from "@lobehub/icons-static-svg/icons/aws.svg";
@@ -10,7 +11,7 @@ import Mistral from "@lobehub/icons-static-svg/icons/mistral.svg";
 import Ollama from "@lobehub/icons-static-svg/icons/ollama.svg";
 import OpenAI from "@lobehub/icons-static-svg/icons/openai.svg";
 import Perplexity from "@lobehub/icons-static-svg/icons/perplexity.svg";
-import { Bot, Cloud, Cpu, Server } from "lucide-react";
+import { ArrowUpRight, Bot, Cloud, Cpu, Server } from "lucide-react";
 import { ListProviderFragment, ProviderKind } from "../../api/graphql";
 
 interface Props {
@@ -18,72 +19,77 @@ interface Props {
 
 }
 
-export const kindToIcon: Record<ProviderKind, React.ReactNode> = {
-  [ProviderKind.Anthropic]: (
-    <img
-      src={Anthropic}
-      alt="Anthropic"
-      className="w-16 h-16 brightness-0 invert"
-    />
-  ),
-  [ProviderKind.Anyscale]: <Server className="w-16 h-16 text-white" />,
-  [ProviderKind.Aws]: (
-    <img src={Aws} alt="AWS" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Azure]: (
-    <img src={Azure} alt="Azure" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Cohere]: <Bot className="w-16 h-16 text-white" />,
-  [ProviderKind.Custom]: <Cpu className="w-16 h-16 text-white" />,
-  [ProviderKind.Deepinfra]: <Cloud className="w-16 h-16 text-white" />,
-  [ProviderKind.FireworksAi]: <Bot className="w-16 h-16 text-white" />,
-  [ProviderKind.Google]: (
-    <img src={Google} alt="Google" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Groq]: <Cpu className="w-16 h-16 text-white" />,
-  [ProviderKind.Huggingface]: (
-    <img
-      src={HuggingFace}
-      alt="Hugging Face"
-      className="w-16 h-16 brightness-0 invert"
-    />
-  ),
-  [ProviderKind.Mistral]: (
-    <img
-      src={Mistral}
-      alt="Mistral"
-      className="w-16 h-16 brightness-0 invert"
-    />
-  ),
-  [ProviderKind.Ollama]: (
-    <img src={Ollama} alt="Ollama" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Openai]: (
-    <img src={OpenAI} alt="OpenAI" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Palm]: (
-    <img src={Google} alt="PaLM" className="w-16 h-16 brightness-0 invert" />
-  ),
-  [ProviderKind.Perplexity]: (
-    <img
-      src={Perplexity}
-      alt="Perplexity"
-      className="w-16 h-16 brightness-0 invert"
-    />
-  ),
-  [ProviderKind.Replicate]: <Bot className="w-16 h-16 text-white" />,
-  [ProviderKind.TogetherAi]: <Cloud className="w-16 h-16 text-white" />,
-  [ProviderKind.Unknown]: <Bot className="w-16 h-16 text-white" />,
-  [ProviderKind.VertexAi]: (
-    <img
-      src={Google}
-      alt="Vertex AI"
-      className="w-16 h-16 brightness-0 invert"
-    />
-  ),
+const providerImageClassName = "h-9 w-9 brightness-0 invert";
+
+export const ProviderKindIcon = (props: {
+  kind: ProviderKind;
+  className?: string;
+}) => {
+  switch (props.kind) {
+    case ProviderKind.Anthropic:
+      return (
+        <img
+          src={Anthropic}
+          alt="Anthropic"
+          className={cn(providerImageClassName, props.className)}
+        />
+      );
+    case ProviderKind.Anyscale:
+      return <Server className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Aws:
+      return <img src={Aws} alt="AWS" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Azure:
+      return <img src={Azure} alt="Azure" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Cohere:
+      return <Bot className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Custom:
+      return <Cpu className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Deepinfra:
+      return <Cloud className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.FireworksAi:
+      return <Bot className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Google:
+      return <img src={Google} alt="Google" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Groq:
+      return <Cpu className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Huggingface:
+      return (
+        <img
+          src={HuggingFace}
+          alt="Hugging Face"
+          className={cn(providerImageClassName, props.className)}
+        />
+      );
+    case ProviderKind.Mistral:
+      return <img src={Mistral} alt="Mistral" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Ollama:
+      return <img src={Ollama} alt="Ollama" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Openai:
+      return <img src={OpenAI} alt="OpenAI" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Palm:
+      return <img src={Google} alt="PaLM" className={cn(providerImageClassName, props.className)} />;
+    case ProviderKind.Perplexity:
+      return (
+        <img
+          src={Perplexity}
+          alt="Perplexity"
+          className={cn(providerImageClassName, props.className)}
+        />
+      );
+    case ProviderKind.Replicate:
+      return <Bot className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.TogetherAi:
+      return <Cloud className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.Unknown:
+      return <Bot className={cn("h-9 w-9 text-white", props.className)} />;
+    case ProviderKind.VertexAi:
+      return <img src={Google} alt="Vertex AI" className={cn(providerImageClassName, props.className)} />;
+    default:
+      return <Bot className={cn("h-9 w-9 text-white", props.className)} />;
+  }
 };
 
-const getProviderGradient = (kind: ProviderKind): string => {
+export const getProviderGradient = (kind: ProviderKind): string => {
   switch (kind) {
     case ProviderKind.Anthropic:
       return "bg-gradient-to-br from-orange-500 to-red-600";
@@ -130,7 +136,7 @@ const getProviderGradient = (kind: ProviderKind): string => {
   }
 };
 
-const getProviderKindDisplayName = (kind: ProviderKind): string => {
+export const getProviderKindDisplayName = (kind: ProviderKind): string => {
   switch (kind) {
     case ProviderKind.Anthropic:
       return "Anthropic";
@@ -178,44 +184,66 @@ const getProviderKindDisplayName = (kind: ProviderKind): string => {
 };
 
 const TheCard = ({ item }: Props) => {
-  return (
-    <AlpakaProvider.Smart object={item} >
-      <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group">
-        <div
-          className={`absolute inset-0 ${getProviderGradient(item.kind)} opacity-20 group-hover:opacity-40 transition-opacity duration-300`}
-        />
+  const modelPreview = item.models.slice(0, 3);
 
-        {/* Main content */}
-        <div className="relative z-10 h-full flex flex-col">
-          {/* Icon section - takes most of the space */}
-          <div className="flex-1 flex items-center justify-center pt-6">
-            <div className="flex-shrink-0 drop-shadow-lg">
-              {kindToIcon[item.kind]}
+  return (
+    <AlpakaProvider.Smart object={item}>
+      <Card className="h-full min-h-60 border-border/60 bg-card shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-muted/60">
+              <ProviderKindIcon kind={item.kind} className="h-8 w-8" />
             </div>
+            <Badge
+              variant="outline"
+              className="rounded-full"
+            >
+              {getProviderKindDisplayName(item.kind)}
+            </Badge>
           </div>
 
-          {/* Bottom section with name and badge */}
-          <div className="p-4 bg-black/20 backdrop-blur-sm">
+          <CardTitle className="mt-2 text-lg font-semibold text-foreground">
             <AlpakaProvider.DetailLink
               object={item}
-              className="text-xl font-bold text-white hover:text-white/90 transition-colors truncate block mb-2 text-center"
+              className="block truncate transition-colors hover:text-foreground/80"
             >
               {item.name}
             </AlpakaProvider.DetailLink>
+          </CardTitle>
 
-            <div className="flex items-center justify-center">
-              <Badge
-                variant="outline"
-                className="text-xs transition-colors"
-              >
-                {getProviderKindDisplayName(item.kind)}
-              </Badge>
+          <p className="text-sm text-muted-foreground">
+            {item.models.length} {item.models.length === 1 ? "model" : "models"} available
+          </p>
+        </CardHeader>
+
+        <CardContent className="flex-1 pt-0">
+          {modelPreview.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {modelPreview.map((model) => (
+                <span
+                  key={model.id}
+                  className="rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground"
+                >
+                  {model.modelId}
+                </span>
+              ))}
+              {item.models.length > modelPreview.length ? (
+                <span className="rounded-full border border-dashed border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground">
+                  +{item.models.length - modelPreview.length} more
+                </span>
+              ) : null}
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+              No models linked yet.
+            </div>
+          )}
+        </CardContent>
 
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+        <CardFooter className="mt-auto justify-between border-t border-border/60 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Open provider</span>
+          <ArrowUpRight className="h-4 w-4" />
+        </CardFooter>
       </Card>
     </AlpakaProvider.Smart>
   );

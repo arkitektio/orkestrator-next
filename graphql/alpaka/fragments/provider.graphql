@@ -12,4 +12,8 @@ fragment ListProvider on Provider {
   id
   name
   kind
+  models {
+    id
+    modelId
+  }
 }

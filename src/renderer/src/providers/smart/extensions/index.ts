@@ -1,4 +1,7 @@
 import {
+	ApplicableTalk as AlpakaApplicableTalk,
+} from "@/providers/smart/extensions/alpaka/talk";
+import {
 	ObjectButton as SmartObjectButton,
 	SmartContext as SmartContextComponent,
 } from "@/providers/smart/extensions/context";
@@ -42,6 +45,7 @@ import type {
 
 export const ObjectButton = SmartObjectButton;
 export const SmartContext = SmartContextComponent;
+export const ApplicableTalk = AlpakaApplicableTalk;
 export const Actions = LocalActions;
 export const ApplicableLocalActions = LocalApplicableActions;
 export const LocalActionCommand = LocalActionCommandComponent;

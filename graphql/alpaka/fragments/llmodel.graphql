@@ -17,4 +17,17 @@ fragment LLMModel on LLMModel {
 fragment ListLLMModel on LLMModel {
   id
   modelId
+  llmString
+  features
+  inputModalities
+  outputModalities
+  provider {
+    id
+    name
+    kind
+  }
+  embedderFor {
+    id
+    name
+  }
 }

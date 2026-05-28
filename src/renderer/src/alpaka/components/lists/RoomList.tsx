@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { AlpakaRoom } from "@/linkers";
 
 import { useListRoomsQuery } from "@/alpaka/api/graphql";
 import {
@@ -14,19 +14,21 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListRoomsQuery({
+  const { data, error, loading, refetch } = useListRoomsQuery({
     variables: { filter: filters, pagination },
   });
 
   return (
     <ListRender
       array={data?.rooms}
+      error={error}
+      loading={loading}
       title={
-        <MikroDataset.ListLink className="flex-0">Rooms</MikroDataset.ListLink>
+        <AlpakaRoom.ListLink className="flex-0">Rooms</AlpakaRoom.ListLink>
       }
       refetch={refetch}
     >
-      {(ex, index) => <RoomCard key={index} item={ex} />}
+      {(ex, index) => <RoomCard key={ex.id} item={ex} index={index} />}
     </ListRender>
   );
 };

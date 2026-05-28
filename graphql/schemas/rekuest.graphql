@@ -48,6 +48,11 @@ type Action {
   """The kind or category of the action."""
   kind: ActionKind!
 
+  """
+  An optional icon identifier to represent this Action in the UI (e.g. 'fa-solid fa-dog')
+  """
+  logo: String
+
   """Name of the action."""
   name: String!
 
@@ -1833,7 +1838,7 @@ input ImplementationInput {
   interface: String
   locks: [String!] = null
   logo: String = null
-  manipulates: [String!]
+  manipulates: [String!] = null
 
   """
   The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
@@ -2344,6 +2349,9 @@ type Mutation {
 
   """Unshelve data from a memory drawer."""
   unshelveMemoryDrawer(input: UnshelveMemoryDrawerInput!): ID!
+
+  """Update properties of an agent such as its name."""
+  updateAgent(input: UpdateAgentInput!): Agent!
 
   """
   Update properties of a blok such as its name, description, components, demo state, catalog, or dependencies.
@@ -3063,7 +3071,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "f3d09b6e-d1d6-490b-b75e-aca2e684df02"
+  reference: String = "aca8d50e-a986-45fc-a5e5-5ef95da9dbc3"
   title: String = null
 }
 
@@ -3881,6 +3889,12 @@ input UnshelveMemoryDrawerInput {
   The instance ID of the agent. This is used to identify the agent in the system.
   """
   instanceId: InstanceId!
+}
+
+"""The input for updating an agent."""
+input UpdateAgentInput {
+  id: ID!
+  name: String = null
 }
 
 """The input for updating a blok."""

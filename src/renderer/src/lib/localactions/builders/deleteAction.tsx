@@ -4,6 +4,7 @@ import {
   NormalizedCache,
   TypedDocumentNode,
 } from "@apollo/client";
+import { Trash2 } from "lucide-react";
 import { Action, ResolveActionServices } from "../LocalActionProvider";
 
 export const identifierFromSmartOrString = (identifier: Smart | string) => {
@@ -24,10 +25,12 @@ export type DeleteActionParams<
 > = {
   identifier: Smart | string;
   title: string;
-  mutation: TypedDocumentNode<any, { id: string }>;
+  mutation: TypedDocumentNode<unknown, { id: string }>;
   typename: string | string[];
   service: TServiceKey;
   description?: string;
+  icon?: Action<TAppOrServices>["icon"];
+  pinned?: Action<TAppOrServices>["pinned"];
 };
 
 export const buildDeleteAction = <
@@ -38,6 +41,8 @@ export const buildDeleteAction = <
 ): Action<TAppOrServices> => ({
   title: params.title,
   description: params.description || "Delete the structure",
+  icon: params.icon ?? Trash2,
+  pinned: params.pinned,
   conditions: [
     {
       type: "identifier",
@@ -47,7 +52,7 @@ export const buildDeleteAction = <
       type: "nopartner",
     },
   ],
-  execute: async ({ services, onProgress, abortSignal, state }) => {
+  execute: async ({ services, onProgress, abortSignal: _abortSignal, state }) => {
     const service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
     if (!service) {

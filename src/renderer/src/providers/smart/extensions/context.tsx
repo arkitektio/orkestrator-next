@@ -77,19 +77,19 @@ export const SmartContext = (props: SmartContextProps) => {
         <CommandList className="mt-2">
           <ApplicableLocalActions {...props} filter={filter} />
           <CommandEmpty>No Action available</CommandEmpty>
-          <Guard.Rekuest fallback={<></>}>
+          <Guard.Rekuest unavailable={<></>}>
             {!props.disableShortcuts && (
               <ApplicableShortcuts {...props} filter={filter} />
             )}
           </Guard.Rekuest>
 
-          <Guard.Kraph fallback={<></>}>
+          <Guard.Kraph unavailable={<></>}>
             {!props.disableKraph && (
               <ApplicableRelations {...props} filter={filter} />
             )}
           </Guard.Kraph>
 
-          <Guard.Rekuest fallback={<></>}>
+          <Guard.Rekuest unavailable={<></>}>
             {!props.disableActions && (
               <ApplicableActions {...props} filter={filter} />
             )}
@@ -98,7 +98,7 @@ export const SmartContext = (props: SmartContextProps) => {
             )}
           </Guard.Rekuest>
 
-          <Guard.Kabinet fallback={<></>}>
+          <Guard.Kabinet unavailable={<></>}>
             {!props.disableKabinet && (
               <ApplicableDefinitions {...props} filter={filter} />
             )}

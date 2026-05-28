@@ -11,10 +11,13 @@ import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
 import { linkBuilder } from "@/providers/smart/builder";
 import { smartRegistry } from "@/providers/smart/registry";
+import { ExternalLink, FolderOpen } from "lucide-react";
 
 const NavigateAction: Action = {
   title: "Open",
   description: "Open the structure",
+  icon: FolderOpen,
+  pinned: true,
   conditions: [
     {
       type: "nopartner",
@@ -38,6 +41,8 @@ const NavigateAction: Action = {
 const PopOutAction: Action = {
   title: "Open in new window",
   description: "Open the structure in a new window",
+  icon: ExternalLink,
+  pinned: true,
   conditions: [
     {
       type: "nopartner",
@@ -61,7 +66,19 @@ const PopOutAction: Action = {
   collections: ["smart"],
 };
 
-export const { LocalActionProvider, useAction, useMatchingActions, registry } =
+export const {
+  LocalActionProvider,
+  useAction,
+  useLocalActionEntries,
+  useMatchingActions,
+  useMatchingActionEntries,
+  usePinnedActionIds,
+  usePinnedMatchingActionEntries,
+  useSetPinnedActionIds,
+  useTogglePinnedAction,
+  useUnpinnedMatchingActionEntries,
+  registry,
+} =
   createLocalActionProvider({
     ...MIKRO_ACTIONS,
     ...KRAPH_ACTIONS,

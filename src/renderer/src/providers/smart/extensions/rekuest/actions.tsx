@@ -1,15 +1,14 @@
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
-import { CommandItem, CommandList } from "@/components/ui/command";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import React from "react";
+import * as LucideIcons from "lucide-react";
 import {
   AssignationEventFragment,
   DemandKind,
@@ -22,7 +21,47 @@ import {
 } from "@/rekuest/api/graphql";
 import { registeredCallbacks } from "@/rekuest/components/functional/AssignationUpdater";
 import { useAssign } from "@/rekuest/hooks/useAssign";
+import { Boxes, PlayCircle, Workflow } from "lucide-react";
+import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps, SmartContextProps } from "../types";
+
+const toPascalCase = (value: string) =>
+  value
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+
+const resolveActionLogo = (logo?: string | null) => {
+  if (!logo || logo.startsWith("custom:")) {
+    return null;
+  }
+
+  const candidates = [logo, toPascalCase(logo)];
+
+  for (const candidate of candidates) {
+    const icon = LucideIcons[candidate as keyof typeof LucideIcons];
+    if (typeof icon === "function") {
+      return icon as React.ComponentType<{ className?: string }>;
+    }
+  }
+
+  return null;
+};
+
+const getActionVisual = (
+  logo?: string | null,
+  fallback?: React.ComponentType<{ className?: string }>,
+) => {
+  if (logo?.startsWith("custom:")) {
+    return { svg: logo.slice("custom:".length), icon: undefined };
+  }
+
+  return {
+    svg: undefined,
+    icon: resolveActionLogo(logo) ?? fallback ?? PlayCircle,
+  };
+};
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unknown error";
@@ -352,28 +391,15 @@ export const AssignButton = (
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        <CommandItem
+        <CommandActionRow
           onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
-          className={cn(
-            "flex-grow flex flex-col group cursor-pointer",
-            doing && "animate-pulse",
-            error && "border border-1 border-red-200",
-          )}
-          style={{
-            backgroundSize: `${progress || 0}% 100%`,
-            backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "left center",
-          }}
-        >
-          <span className="mr-auto text-md text-gray-100">
-            {props.action.name} {error && <span className="text-red-800">{error}</span>}
-          </span>
-          <span className="mr-auto text-xs text-gray-400">
-            {props.action.description}
-          </span>
-        </CommandItem>
+          title={<>{props.action.name} {error && <span className="text-red-800">{error}</span>}</>}
+          description={props.action.description}
+          progress={progress}
+          className={doing ? "animate-pulse" : undefined}
+          {...getActionVisual(props.action.logo, PlayCircle)}
+        />
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
         <DirectImplementationAssignment {...props} action={props.action} />
@@ -461,28 +487,15 @@ export const BatchAssignButton = (
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        <CommandItem
+        <CommandActionRow
           onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
-          className={cn(
-            "flex-grow flex flex-col group cursor-pointer",
-            doing && "animate-pulse",
-            error && "border border-1 border-red-200",
-          )}
-          style={{
-            backgroundSize: `${progress || 0}% 100%`,
-            backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "left center",
-          }}
-        >
-          <span className="mr-auto text-md text-gray-100">
-            {props.action.name} {error && <span className="text-red-800">{error}</span>}
-          </span>
-          <span className="mr-auto text-xs text-gray-400">
-            {props.action.description}
-          </span>
-        </CommandItem>
+          title={<>{props.action.name} {error && <span className="text-red-800">{error}</span>}</>}
+          description={props.action.description}
+          progress={progress}
+          className={doing ? "animate-pulse" : undefined}
+          {...getActionVisual(props.action.logo, Boxes)}
+        />
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
         <DirectImplementationAssignment {...props} action={props.action} />
@@ -516,12 +529,15 @@ export const ApplicableBatchActions = (props: PassDownProps) => {
   }
 
   return (
-    <>
-    <div className="font-light text-xs w-full items-center ml-2 w-full">Batch ..</div>
-        {data.actions.map((action) => (
-          <BatchAssignButton action={action} {...props} key={action.id} />
-        ))}
-        </>
+    <div>
+      <div className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+
+        <span>Batch</span>
+      </div>
+      {data.actions.map((action) => (
+        <BatchAssignButton action={action} {...props} key={action.id} />
+      ))}
+    </div>
   );
 };
 
@@ -546,11 +562,14 @@ export const ApplicableActions = (props: PassDownProps) => {
   }
 
   return (
-    <>
-      <div className="font-light text-xs w-full items-center ml-2 w-full">Run...</div>
+    <div>
+      <div className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+
+        <span>Run</span>
+      </div>
       {data.actions.map((action) => (
         <AssignButton action={action} {...props} key={action.id} />
       ))}
-    </>
+    </div>
   );
 };

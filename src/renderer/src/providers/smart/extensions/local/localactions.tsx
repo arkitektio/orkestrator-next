@@ -1,15 +1,14 @@
 import { usePerformAction } from "@/app/hooks/useLocalAction";
-import { useMatchingActions } from "@/app/localactions";
 import {
-  CommandItem,
+  useMatchingActionEntries,
+  usePinnedActionIds,
+} from "@/app/localactions";
+import {
 } from "@/components/ui/command";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { CommandGroup } from "cmdk";
+import { Sparkles } from "lucide-react";
+import { CommandActionRow } from "../CommandActionRow";
 import type { OnDone, PassDownProps } from "../types";
 
 export const LocalActionCommand = (props: {
@@ -18,30 +17,16 @@ export const LocalActionCommand = (props: {
   onDone?: OnDone;
 }) => {
   const { assign, progress } = usePerformAction(props);
+  const Icon = props.action.icon ?? Sparkles;
 
   return (
-    <CommandItem
+    <CommandActionRow
       onSelect={assign}
-      className="flex-1"
-      style={{
-        backgroundSize: `${progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }}
-    >
-      <Tooltip>
-        <TooltipTrigger className="flex flex-col">
-          <span className="mr-auto text-md text-gray-100 flex">
-            {props.action.title}
-          </span>
-          <span className="mr-auto text-xs text-gray-400">
-            {props.action.description}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{props.action.description}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
+      title={props.action.title}
+      description={props.action.description}
+      icon={Icon}
+      progress={progress}
+    />
   );
 };
 
@@ -50,9 +35,21 @@ export const Actions = (props: {
   filter?: string;
   onDone?: OnDone;
 }) => {
-  const actions = useMatchingActions({
+  const pinnedActionIds = usePinnedActionIds();
+  const matchingActions = useMatchingActionEntries({
     state: props.state,
     search: props.filter,
+  });
+
+  const actions = [...matchingActions].sort((left, right) => {
+    const leftPinned = pinnedActionIds.includes(left.id);
+    const rightPinned = pinnedActionIds.includes(right.id);
+
+    if (leftPinned !== rightPinned) {
+      return leftPinned ? -1 : 1;
+    }
+
+    return left.action.title.localeCompare(right.action.title);
   });
 
   if (actions.length === 0) {
@@ -63,13 +60,13 @@ export const Actions = (props: {
     <CommandGroup
       heading={
         <span className="font-light text-xs w-full items-center ml-2 w-full">
-          Generic
+          Default
         </span>
       }
     >
-      {actions.map((action) => (
+      {actions.map(({ id, action }) => (
         <LocalActionCommand
-          key={action.title}
+          key={id}
           action={action}
           state={props.state}
           onDone={props.onDone}

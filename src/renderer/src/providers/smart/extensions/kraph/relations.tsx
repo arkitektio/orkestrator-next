@@ -1,18 +1,12 @@
 import { useDialog } from "@/app/dialog";
 import { CommandItem } from "@/components/ui/command";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   ListMaterializedEdgeFragment,
   ListMaterializedStructureRelationEdgeFragment,
   ListRelationCategoryFragment,
   useCreateRelationMutation,
   useCreateStructureRelationMutation,
   useEnsureStructureMutation,
-  useListMaterializedEdgesQuery,
   useListMaterializedMeasurementsQuery,
   useListMaterializedStructureRelationEdgesQuery,
   useListMeasurmentCategoryQuery,
@@ -20,8 +14,10 @@ import {
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
 import { CommandGroup } from "cmdk";
+import { GitBranchPlus, Link2, Network, PlusCircle, Ruler } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
+import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
 
 export const EntityRelateButton = (props: {
@@ -56,18 +52,13 @@ export const EntityRelateButton = (props: {
   };
 
   return (
-    <CommandItem value={props.relation.label} onSelect={handleRelationCreation} className="flex-1">
-      <Tooltip>
-        <TooltipTrigger className="flex flex-row group w-full">
-          <div className="flex-col">
-            <div className="text-md text-gray-100 text-left">{props.relation.label}</div>
-            <div className="text-xs text-gray-400 text-left">{props.relation.description}</div>
-          </div>
-          <div className="flex-grow" />
-        </TooltipTrigger>
-        <TooltipContent>{props.relation.description}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
+    <CommandActionRow
+      value={props.relation.label}
+      onSelect={handleRelationCreation}
+      title={props.relation.label}
+      description={props.relation.description}
+      icon={Link2}
+    />
   );
 };
 
@@ -127,18 +118,13 @@ export const StructureRelateButton = (props: {
   };
 
   return (
-    <CommandItem value={props.materializedEdge.id} onSelect={handleRelationCreation} className="flex-1">
-      <Tooltip>
-        <TooltipTrigger className="flex flex-row group w-full">
-          <div className="flex-col">
-            <div className="text-md text-gray-100 text-left">{props.materializedEdge.edge.label}</div>
-            <div className="text-xs text-gray-400 text-left">{props.materializedEdge.graph.name}</div>
-          </div>
-          <div className="flex-grow" />
-        </TooltipTrigger>
-        <TooltipContent>{props.materializedEdge.edge.label}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
+    <CommandActionRow
+      value={props.materializedEdge.id}
+      onSelect={handleRelationCreation}
+      title={props.materializedEdge.edge.label}
+      description={props.materializedEdge.graph.name}
+      icon={Network}
+    />
   );
 };
 
@@ -150,7 +136,7 @@ export const CreateMeasurementButton = (props: {
   const dialog = useDialog();
 
   return (
-    <CommandItem
+    <CommandActionRow
       value={props.edge.id}
       onSelect={() => {
         dialog.openDialog("setasmeasurement", {
@@ -158,20 +144,10 @@ export const CreateMeasurementButton = (props: {
           edge: props.edge,
         });
       }}
-      className="flex-1"
-    >
-      <Tooltip>
-        <TooltipTrigger className="flex flex-row group w-full">
-          <div className="flex-1">
-            <div className="text-md text-gray-100 text-left flex flex-row gap-2">
-              Measure <pre className="my-auto">{props.edge.graph.name}</pre>
-            </div>
-            <div className="text-xs text-gray-400 text-left">{props.edge.graph.id}</div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{props.edge.graph.name}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
+      title={`Measure ${props.edge.graph.name}`}
+      description={props.edge.graph.id}
+      icon={Ruler}
+    />
   );
 };
 
@@ -195,7 +171,7 @@ export const EntityRelationActions = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full">Relate Entities</span>}
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><Link2 className="h-3.5 w-3.5" /><span>Relate Entities</span></span>}
     >
       {data?.relationCategories.map((relation) => (
         <EntityRelateButton
@@ -222,6 +198,7 @@ export const EntityRelationActions = (props: PassDownProps) => {
         }
         className="flex-1"
       >
+        <PlusCircle className="mr-2 h-4 w-4" />
         Create new Relation
       </CommandItem>
     </CommandGroup>
@@ -246,7 +223,7 @@ export const StructureRelationActions = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full">Relate...</span>}
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Relate</span></span>}
     >
       {firstPartner &&
         data?.materializedStructureRelationEdges.map((edge) => (
@@ -274,6 +251,7 @@ export const StructureRelationActions = (props: PassDownProps) => {
         }
         className="flex-1"
       >
+        <GitBranchPlus className="mr-2 h-4 w-4" />
         Create new Relation
       </CommandItem>
     </CommandGroup>
@@ -298,7 +276,7 @@ export const MeasurementActions = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full">Measure...</span>}
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Measure</span></span>}
     >
       {data?.measurementCategories.map((category) => (
         <CommandItem
@@ -312,6 +290,7 @@ export const MeasurementActions = (props: PassDownProps) => {
           }
           className="flex-1"
         >
+          <Ruler className="mr-2 h-4 w-4" />
           {category.label}
         </CommandItem>
       ))}
@@ -345,7 +324,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full">Measures...</span>}
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Measures</span></span>}
     >
       {data?.materializedMeasurementEdges.map((edge) => (
         <CreateMeasurementButton edge={edge} left={props} key={edge.id}>
@@ -357,7 +336,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
           <span className="text-red-500">Error: {error.message}</span>
         </CommandItem>
       )}
-      <CommandItem
+      <CommandActionRow
         value="no-relation"
         onSelect={() =>
           dialog.openDialog("createnewmeasurement", {
@@ -365,10 +344,10 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
             right: props.partners || [],
           })
         }
-        className="flex-1"
-      >
-        Create new Measurement
-      </CommandItem>
+        title="Create new Measurement"
+        description="Define a new measurement category"
+        icon={PlusCircle}
+      />
     </CommandGroup>
   );
 };

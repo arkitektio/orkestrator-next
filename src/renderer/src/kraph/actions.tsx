@@ -8,10 +8,12 @@ import {
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
 } from "./api/graphql";
+import { FlaskConical, PlusCircle, Ruler, Workflow } from "lucide-react";
 
 export const NewEntityAction: Action = {
   title: "Create New Entity",
   description: "Create a new entity in the current graph",
+  icon: PlusCircle,
   conditions: [
     {
       type: "identifier",
@@ -93,6 +95,7 @@ export const KRAPH_ACTIONS = {
   "create-protocol-event-category": {
     title: "Create Protocol Event Category",
     description: "Create a new Protocol Event Category",
+    icon: Workflow,
     conditions: [
       {
         type: "identifier",
@@ -114,6 +117,7 @@ export const KRAPH_ACTIONS = {
     title: "Create New Measurement Category",
     description:
       "Create a new measurement category between structure and entity",
+    icon: Ruler,
     conditions: [
       {
         type: "identifier",
@@ -135,6 +139,7 @@ export const KRAPH_ACTIONS = {
   "create-protocol-event": {
     title: "Create Protocol Event Category",
     description: "Delete the structure",
+    icon: FlaskConical,
     conditions: [
       {
         type: "mixture",

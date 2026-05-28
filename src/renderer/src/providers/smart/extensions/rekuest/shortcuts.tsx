@@ -1,6 +1,7 @@
 import { useDialog } from "@/app/dialog";
-import { CommandItem } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
+import { CommandGroup } from "cmdk";
 import React from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -14,6 +15,8 @@ import {
 } from "@/rekuest/api/graphql";
 import { registeredCallbacks } from "@/rekuest/components/functional/AssignationUpdater";
 import { useAssign } from "@/rekuest/hooks/useAssign";
+import { Zap } from "lucide-react";
+import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps, SmartContextProps } from "../types";
 
 const getErrorMessage = (error: unknown) =>
@@ -221,24 +224,26 @@ export const ShortcutButton = (
   }, [props.shortcut, conditionalAssign]);
 
   return (
-    <CommandItem
+    <CommandActionRow
       onSelect={() => conditionalAssign(props.shortcut)}
       value={props.shortcut.id}
-      className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
-      style={{
-        backgroundSize: `${progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }}
-    >
-      {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
-      <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
-        {props.shortcut.name} {props.shortcut.bindNumber && `(${props.shortcut.bindNumber})`}
-        {doing && " ..."}
-        {error && ` ${error}`}
-      </span>
-    </CommandItem>
+      title={props.shortcut.name}
+      description={props.shortcut.description || (props.shortcut.bindNumber ? `Shortcut ${props.shortcut.bindNumber}` : undefined)}
+      icon={Zap}
+      progress={progress}
+      trailing={
+        <span className="ml-auto flex items-center gap-2">
+          {props.shortcut.allowQuick ? <LightningBoltIcon className="h-4 w-4 text-muted-foreground" /> : null}
+          {props.shortcut.bindNumber ? (
+            <Badge variant="outline" className="h-6 rounded-md px-2 text-[10px]">
+              {props.shortcut.bindNumber}
+            </Badge>
+          ) : null}
+          {doing ? <span className="text-xs text-muted-foreground">...</span> : null}
+          {error ? <span className="text-xs text-red-800">{error}</span> : null}
+        </span>
+      }
+    />
   );
 };
 
@@ -262,10 +267,17 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
   }
 
   return (
-    <div className="flex flex-row gap-2 p-2">
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+          <Zap className="h-3.5 w-3.5" />
+          <span>Shortcuts</span>
+        </span>
+      }
+    >
       {data.shortcuts.map((shortcut) => (
         <ShortcutButton shortcut={shortcut} {...props} key={shortcut.id} />
       ))}
-    </div>
+    </CommandGroup>
   );
 };

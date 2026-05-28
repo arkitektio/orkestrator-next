@@ -1,6 +1,7 @@
 import { Arkitekt, Guard } from "@/app/Arkitekt";
 import "@/app/configureSmartBuilder";
 import { DialogProvider } from "@/app/dialog";
+import { LocalActionProvider } from "@/app/localactions";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import { DisplayProvider } from "./display";
 import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
 
 
-function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
   const reportBug = useFatalReport();
@@ -73,7 +74,7 @@ export const BackNavigationErrorCatcher = ({
 
   return (
     <ErrorBoundary
-      fallbackRender={fallbackRender}
+      fallbackRender={(props) => <ErrorFallback {...props} />}
       onReset={() => {
 
         navigate(-1);
@@ -122,38 +123,40 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                   {/* This is where we configure the application automatically based on facts */}
 
                   <Arkitekt.Provider>
-                    <TooltipProvider>
-                      <DisplayProvider>
-                        <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
-                          <SmartProvider>
-                            <DialogProvider>
-                              <SelectionProvider>
-                                <AgentProvider disabled={true}>
-                                  <WardRegistrar />
-                                  <BuiltinDashboardWidgets />
-                                  <Guard.Rekuest fallback={<></>}>
-                                    <LazyProviderBoundary>
-                                      <AssignationUpdater />
-                                      <AgentUpdater />
-                                    </LazyProviderBoundary>
-                                    <RekuestDashboardWidgets />
-                                    <LatestTasksDashboardWidget />
-                                    <Toaster />
-                                  </Guard.Rekuest>
-                                  <Guard.Mikro fallback={<></>}>
-                                    <MikroDashboardWidgets />
-                                    <LatestImagesDashboardWidget />
-                                  </Guard.Mikro>
-                                  <BackNavigationErrorCatcher>
-                                    {children}
-                                  </BackNavigationErrorCatcher>
-                                </AgentProvider>
-                              </SelectionProvider>
-                            </DialogProvider>
-                          </SmartProvider>
-                        </WidgetRegistryProvider>
-                      </DisplayProvider>
-                    </TooltipProvider>
+                    <LocalActionProvider>
+                      <TooltipProvider>
+                        <DisplayProvider>
+                          <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
+                            <SmartProvider>
+                              <DialogProvider>
+                                <SelectionProvider>
+                                  <AgentProvider disabled={true}>
+                                    <WardRegistrar />
+                                    <BuiltinDashboardWidgets />
+                                    <Guard.Rekuest fallback={<></>}>
+                                      <LazyProviderBoundary>
+                                        <AssignationUpdater />
+                                        <AgentUpdater />
+                                      </LazyProviderBoundary>
+                                      <RekuestDashboardWidgets />
+                                      <LatestTasksDashboardWidget />
+                                      <Toaster />
+                                    </Guard.Rekuest>
+                                    <Guard.Mikro fallback={<></>}>
+                                      <MikroDashboardWidgets />
+                                      <LatestImagesDashboardWidget />
+                                    </Guard.Mikro>
+                                    <BackNavigationErrorCatcher>
+                                      {children}
+                                    </BackNavigationErrorCatcher>
+                                  </AgentProvider>
+                                </SelectionProvider>
+                              </DialogProvider>
+                            </SmartProvider>
+                          </WidgetRegistryProvider>
+                        </DisplayProvider>
+                      </TooltipProvider>
+                    </LocalActionProvider>
                   </Arkitekt.Provider>
                 </ThemeProvider>
               </NuqsAdapter>

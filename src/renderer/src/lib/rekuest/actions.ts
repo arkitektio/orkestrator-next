@@ -27,11 +27,13 @@ import {
 } from '@/rekuest/api/graphql'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
+import { Ban, LogOut, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 
 export const REKUEST_ACTIONS: Record<string, Action> = {
   'rekuest-delete-blok': {
     title: 'Delete Blok',
     description: 'Delete the blok and return to the blok list',
+    icon: Trash2,
     conditions: [
       {
         type: 'identifier',
@@ -72,6 +74,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
   'rekuest-delete-materialized-blok': {
     title: 'Delete Materialized Blok',
     description: 'Delete the materialized blok and return to the list',
+    icon: Trash2,
     conditions: [
       {
         type: 'identifier',
@@ -112,6 +115,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
   'rekuest-delete-dashboard': {
     title: 'Delete Dashboard',
     description: 'Delete the dashboard and return to the dashboard list',
+    icon: Trash2,
     conditions: [
       {
         type: 'identifier',
@@ -184,6 +188,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
 
   'rekuest-bounce-agent': {
     title: 'Bounce Agent',
+    icon: RotateCcw,
     conditions: [
       {
         type: 'identifier',
@@ -210,6 +215,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
   },
   'rekuest-kick-agent': {
     title: 'Kick Agent',
+    icon: LogOut,
     conditions: [
       {
         type: 'identifier',
@@ -236,6 +242,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
   },
   'rekuest-block-agent': {
     title: 'Block Agent',
+    icon: Ban,
     conditions: [
       {
         type: 'identifier',
@@ -262,6 +269,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
   },
   'rekuest-unblock-agent': {
     title: 'Unblock Agent',
+    icon: ShieldCheck,
     conditions: [
       {
         type: 'identifier',

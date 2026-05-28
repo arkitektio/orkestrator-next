@@ -1,9 +1,11 @@
 import { Action } from '../localactions/LocalActionProvider'
+import { Bell, Building2 } from 'lucide-react'
 
 export const LOK_ACTIONS = {
   notify_user: {
     description: 'Notify a user',
     title: 'Notify User',
+    icon: Bell,
     conditions: [{ type: 'identifier', identifier: '@lok/user' }, { type: 'nopartner' }],
     collections: ['notify'],
     execute: async ({ state, services, dialog }) => {
@@ -17,6 +19,7 @@ export const LOK_ACTIONS = {
   add_user_to_organization: {
     title: 'Add User',
     description: 'Add a user to an organization',
+    icon: Building2,
     conditions: [{ type: 'identifier', identifier: '@lok/user' }, { type: 'nopartner' }],
     collections: ['notify'],
     execute: async ({ state, services, dialog }) => {

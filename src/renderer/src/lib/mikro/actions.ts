@@ -12,10 +12,10 @@ import {
   PutFilesInDatasetMutationVariables,
   PutImagesInDatasetDocument,
   PutFilesInDatasetDocument,
-  GetDatasetsDocument,
   PutImagesInDatasetMutation,
   PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
+import { File, FolderInput, Images } from "lucide-react";
 import { Action } from "../localactions/LocalActionProvider";
 import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetch";
 
@@ -26,6 +26,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     title: 'Delete Image',
     identifier: '@mikro/image',
     description: 'Delete the image',
+    pinned: true,
     service: 'mikro',
     typename: 'Image',
     mutation: DeleteImageDocument
@@ -49,6 +50,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   move_to_dataset: {
     description: 'Move dataset to a dataset',
     title: 'Move to Dataset',
+    icon: FolderInput,
     conditions: [
       { type: 'identifier', identifier: '@mikro/dataset' },
       { type: 'partner', partner: '@mikro/dataset' }
@@ -92,6 +94,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   move_images_to_dataset: {
     description: 'Move images to a dataset',
     title: 'Move Images to Dataset',
+    icon: Images,
     conditions: [
       { type: 'identifier', identifier: '@mikro/dataset' },
       { type: 'partner', partner: '@mikro/image' }
@@ -137,6 +140,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   move_files_to_dataset: {
     description: 'Move files to a dataset',
     title: 'Move Files to Dataset',
+    icon: File,
     conditions: [
       { type: 'identifier', identifier: '@mikro/dataset' },
       { type: 'partner', partner: '@mikro/file' }

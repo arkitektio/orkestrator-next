@@ -1,10 +1,4 @@
 import { useRekuest } from "@/app/Arkitekt";
-import { CommandItem } from "@/components/ui/command";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   ListDefinitionFragment,
   useAllPrimaryDefinitionsQuery,
@@ -17,7 +11,9 @@ import {
 } from "@/rekuest/api/graphql";
 import { useHashActionWithProgress } from "@/rekuest/hooks/useHashActionWithProgress";
 import { CommandGroup } from "cmdk";
+import { Boxes, Download } from "lucide-react";
 import React from "react";
+import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
 import { KabinetDefinition } from "@/linkers";
 
@@ -42,35 +38,17 @@ export const InstallButton = (props: {
   });
 
   return (
-    <CommandItem
+    <CommandActionRow
       value={`install-${props.definition.id}-${props.action.id}`}
       onSelect={() => {
         void assign({ definition: {object: props.definition.id, __identifier: KabinetDefinition.identifier } });
       }}
-      className="flex-1"
-      style={{
-        backgroundSize: `${progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }}
+      title={props.definition.name}
+      description={props.definition.description}
+      icon={Download}
+      progress={progress}
       disabled={!installed}
-    >
-      <Tooltip>
-        <TooltipTrigger className="flex flex-row group w-full">
-          <div className="flex-col">
-            <div className="text-md text-gray-100 text-left">
-              {props.definition.name}
-            </div>
-            <div className="text-xs text-gray-400 text-left">
-              {props.definition.description} on
-            </div>
-          </div>
-          <div className="flex-grow" />
-        </TooltipTrigger>
-        <TooltipContent>{props.definition.description}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
+    />
   );
 };
 
@@ -146,14 +124,15 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
   }
 
   if (!enginesData || enginesData.actions.length === 0) {
-    return <>No install action found</>;
+    return null;
   }
 
   return (
     <CommandGroup
       heading={
-        <span className="font-light text-xs w-full items-center ml-2 w-full">
-          Installable
+        <span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+
+          <span>Installable</span>
         </span>
       }
     >

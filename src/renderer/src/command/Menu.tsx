@@ -20,7 +20,7 @@ import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Sparkles } from "lucide-react";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { createElement, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Context,
   ExtensionContext,
@@ -41,31 +41,22 @@ export const DisplayWidget = (props: {
     return <>No widget found</>;
   }
 
+  const widgetElement = createElement(Widget, {
+    small: true,
+    object: props.object,
+    identifier: props.identifier,
+    context: props.context || "widget",
+  });
+
   if (props.link) {
     return (
       <SmartLink identifier={props.identifier} object={props.object}>
-        <Suspense>
-          <Widget
-            small={true}
-            object={props.object}
-            identifier={props.identifier}
-            context={props.context || "widget"}
-          />
-        </Suspense>
+        <Suspense>{widgetElement}</Suspense>
       </SmartLink>
     );
   }
 
-  return (
-    <Suspense>
-      <Widget
-        small={true}
-        object={props.object}
-        identifier={props.identifier}
-        context={props.context || "widget"}
-      />
-    </Suspense>
-  );
+  return <Suspense>{widgetElement}</Suspense>;
 };
 
 export const DisplayWidgetHub = () => {
@@ -306,6 +297,7 @@ export const CommandMenu = (props: {
                     filter={context.query}
                     objects={props.objects || []}
                     partners={props.partners}
+                    onDone={() => setContext((c) => ({ ...c, open: false }))}
                   />
                   <Guard.Kabinet>
                     <ApplicableDefinitions

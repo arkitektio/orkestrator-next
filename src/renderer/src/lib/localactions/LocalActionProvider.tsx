@@ -1,6 +1,10 @@
-import React, { createContext, useContext } from "react";
+import React, { useEffect, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { createStore, type StoreApi } from "zustand/vanilla";
 
 import { useDialog } from "@/app/dialog";
+import { createScopedStoreHooks } from "@/mikro-next/components/scene/store/createScopedStore";
+import type { Structure as AppStructure } from "@/types";
 import type { InferedServiceMap, ServiceBuilderMap } from "../arkitekt/types";
 import type { ServiceMap } from "../arkitekt/provider";
 import { useNavigate } from "react-router-dom";
@@ -70,10 +74,7 @@ export type Condition =
   | MixtureActive
   | PartnerMixtureActive;
 
-export type Structure = {
-  object: {id: string , [key: string]: string | number | boolean | null };
-  identifier: string;
-};
+export type Structure = AppStructure;
 
 export type ActionState = {
   left: Structure[];
@@ -109,6 +110,8 @@ export type SetAction = ActionState;
 export type Action<TAppOrServices = ServiceMap> = {
   title: string;
   description: string;
+  icon?: LucideIcon;
+  pinned?: boolean;
   conditions: readonly Condition[];
   collections?: readonly string[];
   execute: (action: ActionParams<TAppOrServices>) => Promise<ActionState | void>;
@@ -116,12 +119,79 @@ export type Action<TAppOrServices = ServiceMap> = {
 
 export type ActionRegistry<TAppOrServices = ServiceMap> = Record<string, Action<TAppOrServices>>;
 
-export const getActionsForState = <TAppOrServices = ServiceMap>(
-  registry: ActionRegistry<TAppOrServices>,
+type ActionMetadata = Pick<
+  Action,
+  "title" | "description" | "icon" | "pinned" | "conditions" | "collections"
+>;
+
+type RegistryActionId<TRegistry extends Record<string, unknown>> = Extract<
+  keyof TRegistry,
+  string
+>;
+
+export type ActionEntry<
+  TRegistry extends Record<string, ActionMetadata> = Record<string, ActionMetadata>,
+> = {
+  id: RegistryActionId<TRegistry>;
+  action: TRegistry[RegistryActionId<TRegistry>];
+};
+
+const LOCAL_ACTION_PINS_STORAGE_KEY = "wasser-local-action-pins";
+
+type LocalActionScopedStoreState = {
+  registry: Record<string, unknown>;
+  pinnedActionIds: string[];
+  setPinnedActionIds: (ids: string[]) => void;
+  togglePinnedAction: (id: string) => void;
+  hydrate: () => void;
+};
+
+type LocalActionScopedStore = StoreApi<LocalActionScopedStoreState> & {
+  cleanup: () => void;
+};
+
+type LocalActionScopedHooks = ReturnType<
+  typeof createScopedStoreHooks<LocalActionScopedStoreState, LocalActionScopedStore>
+>;
+
+type LocalActionGlobalScope = typeof globalThis & {
+  __orkestratorLocalActionStoreHooks?: LocalActionScopedHooks;
+};
+
+const globalLocalActionScope = globalThis as LocalActionGlobalScope;
+
+if (!globalLocalActionScope.__orkestratorLocalActionStoreHooks) {
+  globalLocalActionScope.__orkestratorLocalActionStoreHooks =
+    createScopedStoreHooks<LocalActionScopedStoreState, LocalActionScopedStore>(
+      "LocalActionStore",
+    );
+}
+
+const stableLocalActionStoreHooks =
+  globalLocalActionScope.__orkestratorLocalActionStoreHooks;
+
+const getRegistryEntries = <TRegistry extends Record<string, ActionMetadata>>(
+  registry: TRegistry,
+): ActionEntry<TRegistry>[] => {
+  return Object.entries(registry).map(([id, action]) => ({
+    id: id as RegistryActionId<TRegistry>,
+    action: action as TRegistry[RegistryActionId<TRegistry>],
+  }));
+};
+
+const getDeclaredPinnedActionIds = <TRegistry extends Record<string, ActionMetadata>>(
+  registry: TRegistry,
+): RegistryActionId<TRegistry>[] => {
+  return getRegistryEntries(registry)
+    .filter((entry) => entry.action.pinned)
+    .map((entry) => entry.id);
+};
+
+const matchesConditionsForState = (
+  conditions: readonly Condition[],
   state: ActionState,
-): Action<TAppOrServices>[] => {
-  return Object.values(registry).filter((action) => {
-    return action.conditions.every((condition) => {
+) => {
+  return conditions.every((condition) => {
       if (condition.type === "identifier") {
         return state.left.some(
           (structure) => structure.identifier === condition.identifier,
@@ -181,49 +251,219 @@ export const getActionsForState = <TAppOrServices = ServiceMap>(
         return state.isCommand === condition.command;
       }
       return false;
-    });
   });
 };
 
+export const getActionsForState = <TAppOrServices = ServiceMap>(
+  registry: ActionRegistry<TAppOrServices>,
+  state: ActionState,
+): Action<TAppOrServices>[] => {
+  return Object.values(registry).filter((action) =>
+    matchesConditionsForState(action.conditions, state),
+  );
+};
+
+export const getActionEntriesForState = <TRegistry extends Record<string, ActionMetadata>>(
+  registry: TRegistry,
+  state: ActionState,
+): ActionEntry<TRegistry>[] => {
+  return getRegistryEntries(registry).filter((entry) =>
+    matchesConditionsForState(entry.action.conditions, state),
+  );
+};
+
+const matchesActionSearch = <TAppOrServices = ServiceMap>(
+  action: Action<TAppOrServices>,
+  search?: string,
+) => {
+  if (!search) {
+    return true;
+  }
+
+  const loweredSearch = search.toLowerCase();
+
+  return (
+    action.title.toLowerCase().includes(loweredSearch) ||
+    action.description.toLowerCase().includes(loweredSearch)
+  );
+};
+
 export const  createLocalActionProvider = <TAppOrServices = ServiceMap, TRegistry extends Record<string, Action<TAppOrServices>> = Record<string,Action<TAppOrServices>>>(registry: TRegistry) => {
-  type LocalActionId = keyof TRegistry;
-
-  const LocalActionContext = createContext<{
+  type LocalActionId = RegistryActionId<TRegistry>;
+  type LocalActionStoreState = {
     registry: TRegistry;
-  }>({
-    registry,
-  });
+    pinnedActionIds: string[];
+    setPinnedActionIds: (ids: string[]) => void;
+    togglePinnedAction: (id: string) => void;
+    hydrate: () => void;
+  };
+  type LocalActionStore = StoreApi<LocalActionStoreState> & {
+    cleanup: () => void;
+  };
 
-  const useLocalActions = () => useContext(LocalActionContext);
+  const LocalActionContext = stableLocalActionStoreHooks.StoreContext as React.Context<
+    LocalActionStore | null
+  >;
+
+  const useLocalActions = <TSelected,>(
+    selector: (state: LocalActionStoreState) => TSelected,
+  ) => {
+    return stableLocalActionStoreHooks.useScopedStore((state) =>
+      selector(state as LocalActionStoreState),
+    );
+  };
+
+  const normalizePinnedActionIds = (value: unknown): LocalActionId[] => {
+    const persistedPinnedActionIds = Array.isArray(value)
+      ? value.filter(
+          (item): item is LocalActionId =>
+            typeof item === "string" && item in registry,
+        )
+      : [];
+
+    return Array.from(
+      new Set([...declaredPinnedActionIds, ...persistedPinnedActionIds]),
+    );
+  };
+
+  const declaredPinnedActionIds = getDeclaredPinnedActionIds(registry);
+
+  const persistPinnedActionIds = (pinnedActionIds: LocalActionId[]) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      LOCAL_ACTION_PINS_STORAGE_KEY,
+      JSON.stringify(pinnedActionIds),
+    );
+  };
+
+  const createLocalActionStore = (): LocalActionStore => {
+    const store = createStore<LocalActionStoreState>((set) => ({
+      registry,
+      pinnedActionIds: declaredPinnedActionIds,
+      setPinnedActionIds: (ids) => {
+        const pinnedActionIds = normalizePinnedActionIds(ids);
+        persistPinnedActionIds(pinnedActionIds);
+        set({ pinnedActionIds });
+      },
+      togglePinnedAction: (id) => {
+        const pinnedActionIds = store.getState().pinnedActionIds.includes(id)
+          ? store.getState().pinnedActionIds.filter((pinnedId) => pinnedId !== id)
+          : [...store.getState().pinnedActionIds, id];
+
+        const normalizedPinnedActionIds = normalizePinnedActionIds(pinnedActionIds);
+        persistPinnedActionIds(normalizedPinnedActionIds);
+        set({ pinnedActionIds: normalizedPinnedActionIds });
+      },
+      hydrate: () => {
+        if (typeof window === "undefined") {
+          return;
+        }
+
+        try {
+          const serializedPinnedActionIds = window.localStorage.getItem(
+            LOCAL_ACTION_PINS_STORAGE_KEY,
+          );
+
+          if (!serializedPinnedActionIds) {
+            set({ pinnedActionIds: declaredPinnedActionIds });
+            return;
+          }
+
+          set({
+            pinnedActionIds: normalizePinnedActionIds(
+              JSON.parse(serializedPinnedActionIds),
+            ),
+          });
+        } catch (error) {
+          console.error("Failed to hydrate pinned local actions", error);
+        }
+      },
+    }));
+
+    const extendedStore = store as LocalActionStore;
+    extendedStore.cleanup = () => {
+      return;
+    };
+
+    return extendedStore;
+  };
+
+  const useLocalActionEntries = (): ActionEntry<TRegistry>[] => {
+    const actionRegistry = useLocalActions((state) => state.registry);
+    return getRegistryEntries(actionRegistry);
+  };
+
+  const useMatchingActionEntries = (options: {
+    state: ActionState;
+    search?: string;
+  }): ActionEntry<TRegistry>[] => {
+    const actionRegistry = useLocalActions((state) => state.registry);
+
+    return getActionEntriesForState(actionRegistry, options.state).filter((entry) =>
+      matchesActionSearch(entry.action, options.search),
+    );
+  };
 
   const useMatchingActions = (options: {
     state: ActionState;
     search?: string;
   }) => {
-    const { registry } = useLocalActions();
-    return getActionsForState(registry, options.state).filter((action) => {
-      if (options.search) {
-        return (
-          action.title.toLowerCase().includes(options.search.toLowerCase()) ||
-          action.description
-            .toLowerCase()
-            .includes(options.search.toLowerCase())
-        );
-      }
-      return true;
-    });
+    return useMatchingActionEntries(options).map((entry) => entry.action);
   };
 
+  const usePinnedActionIds = () =>
+    useLocalActions((state) => state.pinnedActionIds as LocalActionId[]);
+
+  const usePinnedMatchingActionEntries = (options: {
+    state: ActionState;
+    search?: string;
+  }): ActionEntry<TRegistry>[] => {
+    const pinnedActionIds = usePinnedActionIds();
+
+    return useMatchingActionEntries(options).filter((entry) =>
+      pinnedActionIds.includes(entry.id),
+    );
+  };
+
+  const useUnpinnedMatchingActionEntries = (options: {
+    state: ActionState;
+    search?: string;
+  }): ActionEntry<TRegistry>[] => {
+    const pinnedActionIds = usePinnedActionIds();
+
+    return useMatchingActionEntries(options).filter(
+      (entry) => !pinnedActionIds.includes(entry.id),
+    );
+  };
+
+  const useTogglePinnedAction = () =>
+    useLocalActions((state) => state.togglePinnedAction);
+
+  const useSetPinnedActionIds = () =>
+    useLocalActions((state) => state.setPinnedActionIds);
+
   const useAction = <T extends LocalActionId>(identifier: T): TRegistry[T] => {
-    const { registry } = useLocalActions();
-    return registry[identifier];
+    return useLocalActions((state) => state.registry[identifier]);
   };
 
   const LocalActionProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
   }) => {
+    const [store] = useState<LocalActionStore>(() => createLocalActionStore());
+
+    useEffect(() => {
+      store.getState().hydrate();
+
+      return () => {
+        store.cleanup();
+      };
+    }, [store]);
+
     return (
-      <LocalActionContext.Provider value={{ registry: registry }}>
+      <LocalActionContext.Provider value={store}>
         {children}
       </LocalActionContext.Provider>
     );
@@ -232,7 +472,14 @@ export const  createLocalActionProvider = <TAppOrServices = ServiceMap, TRegistr
   return {
     LocalActionProvider,
     useAction,
+    useLocalActionEntries,
     useMatchingActions,
+    useMatchingActionEntries,
+    usePinnedActionIds,
+    usePinnedMatchingActionEntries,
+    useSetPinnedActionIds,
+    useTogglePinnedAction,
+    useUnpinnedMatchingActionEntries,
     registry,
   };
 }

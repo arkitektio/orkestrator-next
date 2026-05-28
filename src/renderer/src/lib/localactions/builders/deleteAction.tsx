@@ -52,11 +52,32 @@ export const buildDeleteAction = <
       type: "nopartner",
     },
   ],
-  execute: async ({ services, onProgress, abortSignal: _abortSignal, state }) => {
+  execute: async ({ services, onProgress, abortSignal: _abortSignal, state, modifiers, confirm }) => {
     const service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
     if (!service) {
       throw new Error("Service not found");
+    }
+
+    if (!modifiers.ctrlKey) {
+      const itemCount = state.left.length;
+      const confirmed = await confirm({
+        title:
+          itemCount > 1
+            ? `Delete ${itemCount} items?`
+            : params.title,
+        description:
+          itemCount > 1
+            ? `You are about to delete ${itemCount} selected items. This action cannot be undone. To skip this dialog, hold Ctrl when doing it.`
+            : `${params.description || "Delete the selected item"} This action cannot be undone. To skip this dialog, hold Ctrl when doing it.`,
+        confirmLabel: "Delete",
+        cancelLabel: "Keep",
+        destructive: true,
+      });
+
+      if (!confirmed) {
+        return;
+      }
     }
 
     for (const i in state.left) {

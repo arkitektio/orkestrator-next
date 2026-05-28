@@ -1,20 +1,24 @@
 import { FormDialog } from "@/components/dialog/FormDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropZone } from "@/components/ui/dropzone";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { MikroDataset, MikroFile, MikroImage } from "@/linkers";
 
 import { useDebounce } from "@/hooks/use-debounce";
 import {
+  ChildrenQuery,
   DatasetFragment,
   useChildrenQuery,
   usePutDatasetsInDatasetMutation,
   usePutImagesInDatasetMutation,
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
+import { useSelection } from "@/providers/selection/SelectionContext";
+import { useSmartDrop } from "@/providers/smart/hooks";
+import { Structure } from "@/types";
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,13 +36,9 @@ import {
   SortDesc,
   Table
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { createElement, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CreateDatasetForm } from "../../forms/CreateDatasetForm";
-import DatasetCard from "../cards/DatasetCard";
-import FileCard from "../cards/FileCard";
-import ImageCard from "../cards/ImageCard";
-import { ContainerGrid } from "@/components/layout/ContainerGrid";
 
 
 type ViewMode = "grid" | "list" | "table";
@@ -58,9 +58,9 @@ interface DatasetExplorerState {
   viewMode: ViewMode;
   pagination: { limit: number; offset: number };
   debouncedSearch: string;
-  data: any;
+  data?: ChildrenQuery;
   loading: boolean;
-  error: any;
+  error?: { message: string } | null;
 }
 
 interface DatasetExplorerActions {
@@ -74,9 +74,9 @@ interface DatasetExplorerActions {
 
 interface DatasetToolbarProps extends DatasetExplorerState, DatasetExplorerActions {
   dataset: DatasetFragment;
-  selection: any[];
-  bselection: any[];
-  refetch?: () => void;
+  selection: Structure[];
+  bselection: Structure[];
+  refetch?: () => unknown;
 }
 
 
@@ -87,6 +87,173 @@ interface DatasetListExplorerProps {
   explorerState: ReturnType<typeof useDatasetExplorer>;
 }
 
+type ExplorerItem = ChildrenQuery["children"][number];
+
+const formatFileSize = (fileSizeInBytes?: number | null) => {
+  if (!fileSizeInBytes) return "-";
+
+  let size = fileSizeInBytes;
+  let unitIndex = -1;
+  const byteUnits = ["kB", "MB", "GB", "TB", "PB"];
+
+  do {
+    size /= 1024;
+    unitIndex++;
+  } while (size > 1024 && unitIndex < byteUnits.length - 1);
+
+  return `${Math.max(size, 0.1).toFixed(1)} ${byteUnits[unitIndex]}`;
+};
+
+const getItemTypeLabel = (item: ExplorerItem) => {
+  switch (item.__typename) {
+    case "Dataset":
+      return "Folder";
+    case "Image":
+      return "Image";
+    case "File":
+      return "File";
+    default:
+      return "Item";
+  }
+};
+
+const getItemMeta = (item: ExplorerItem) => {
+  switch (item.__typename) {
+    case "Dataset":
+      return item.description || "Nested dataset";
+    case "Image":
+      return item.latestSnapshot ? "Preview available" : "Image object";
+    case "File":
+      return item.contentType || formatFileSize(item.size);
+    default:
+      return "";
+  }
+};
+
+const ExplorerItemIcon = (props: { item: ExplorerItem; className?: string }) => {
+  const Icon =
+    props.item.__typename === "Dataset"
+      ? Folder
+      : props.item.__typename === "Image"
+        ? ImageIcon
+        : FileIcon;
+
+  return (
+    <span
+      className={cn(
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40 text-muted-foreground",
+        props.className,
+      )}
+    >
+      {createElement(Icon, { className: "h-4 w-4" })}
+    </span>
+  );
+};
+
+const ExplorerItemSmart = (props: {
+  item: ExplorerItem;
+  children: React.ReactNode;
+}) => {
+  if (props.item.__typename === "Dataset") {
+    return <MikroDataset.Smart object={props.item}>{props.children}</MikroDataset.Smart>;
+  }
+
+  if (props.item.__typename === "Image") {
+    return <MikroImage.Smart object={props.item}>{props.children}</MikroImage.Smart>;
+  }
+
+  return <MikroFile.Smart object={props.item}>{props.children}</MikroFile.Smart>;
+};
+
+const ExplorerItemLink = (props: {
+  item: ExplorerItem;
+  className?: string;
+  children: React.ReactNode;
+}) => {
+  if (props.item.__typename === "Dataset") {
+    return (
+      <MikroDataset.DetailLink object={props.item} className={props.className}>
+        {props.children}
+      </MikroDataset.DetailLink>
+    );
+  }
+
+  if (props.item.__typename === "Image") {
+    return (
+      <MikroImage.DetailLink object={props.item} className={props.className}>
+        {props.children}
+      </MikroImage.DetailLink>
+    );
+  }
+
+  return (
+    <MikroFile.DetailLink object={props.item} className={props.className}>
+      {props.children}
+    </MikroFile.DetailLink>
+  );
+};
+
+const ExplorerGridItem = (props: { item: ExplorerItem }) => {
+  return (
+    <ExplorerItemSmart item={props.item}>
+      <div className="group rounded-xl border border-border/60 bg-background/70 p-3 transition-colors hover:bg-muted/30">
+        <div className="flex flex-col items-start gap-3">
+          <ExplorerItemIcon item={props.item} className="h-12 w-12 rounded-xl" />
+          <div className="min-w-0">
+            <ExplorerItemLink
+              item={props.item}
+              className="line-clamp-2 text-sm font-medium text-foreground"
+            >
+              {props.item.name}
+            </ExplorerItemLink>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {getItemTypeLabel(props.item)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </ExplorerItemSmart>
+  );
+};
+
+const ExplorerListItem = (props: { item: ExplorerItem; detailed?: boolean }) => {
+  return (
+    <ExplorerItemSmart item={props.item}>
+      <div
+        className={cn(
+          "grid items-center gap-3 border-b border-border/50 px-3 py-2 transition-colors hover:bg-muted/30",
+          props.detailed
+            ? "grid-cols-[minmax(0,1.6fr)_120px_minmax(0,0.9fr)]"
+            : "grid-cols-[minmax(0,1fr)_120px]",
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <ExplorerItemIcon item={props.item} />
+          <div className="min-w-0">
+            <ExplorerItemLink
+              item={props.item}
+              className="block truncate text-sm font-medium text-foreground"
+            >
+              {props.item.name}
+            </ExplorerItemLink>
+            <p className="truncate text-xs text-muted-foreground">
+              {getItemMeta(props.item)}
+            </p>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground">{getItemTypeLabel(props.item)}</div>
+        {props.detailed ? (
+          <div className="truncate text-xs text-muted-foreground">
+            {props.item.__typename === "File"
+              ? formatFileSize(props.item.size)
+              : getItemMeta(props.item)}
+          </div>
+        ) : null}
+      </div>
+    </ExplorerItemSmart>
+  );
+};
+
 export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
   const [putDatasets] = usePutDatasetsInDatasetMutation({
     refetchQueries: ['Children'],
@@ -96,6 +263,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
     refetchQueries: ['Children'],
     awaitRefetchQueries: true,
   });
+  const { selection, bselection } = useSelection();
 
   // Use the explorer state passed from parent
   const {
@@ -104,157 +272,164 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
     loading,
     error,
     filteredAndSortedData,
-    getTypeIcon,
     refetch,
     debouncedSearch,
   } = props.explorerState;
 
+  const totalItems = filteredAndSortedData.length;
+
+  const [{ isOver, canDrop }, dropRef] = useSmartDrop(
+    async (structures: Structure[]) => {
+      const imageIds = structures
+        .filter((item) => item.identifier === "@mikro/image")
+        .map((item) => item.object.id);
+      const datasetIds = structures
+        .filter((item) => item.identifier === "@mikro/dataset")
+        .map((item) => item.object.id)
+        .filter((id) => id !== props.dataset.id);
+
+      try {
+        if (imageIds.length > 0) {
+          await putImages({
+            variables: {
+              selfs: imageIds,
+              other: props.dataset.id,
+            },
+          });
+        }
+
+        if (datasetIds.length > 0) {
+          await putDatasets({
+            variables: {
+              selfs: datasetIds,
+              other: props.dataset.id,
+            },
+          });
+        }
+
+        if (imageIds.length > 0 || datasetIds.length > 0) {
+          refetch?.();
+        }
+      } catch (dropError) {
+        console.error("Failed to add dropped items to dataset:", dropError);
+      }
+    },
+    [props.dataset.id, putDatasets, putImages, refetch],
+  );
+
+  const explorerDropRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      dropRef(node);
+    },
+    [dropRef],
+  );
+
   return (
-    <div className="h-full w-full flex flex-col">
-
-      {/* Toolbar moved to page header */}
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-auto">
-
-        {/* Quick Stats */}
-        <div className="flex items-center space-x-4 mb-4 text-sm text-muted-foreground">
-          <span>{filteredAndSortedData.length} items</span>
-          {debouncedSearch && (
-            <span>• Filtered by &quot;{debouncedSearch}&quot;</span>
-          )}
-          {filters.type !== "all" && (
-            <span>• Showing {filters.type} only</span>
-          )}
-        </div>
-
-        {/* Items Grid/List */}
-        {viewMode === "grid" && (
-          <ContainerGrid className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredAndSortedData.map((child) => {
-              return (
-                <div key={child.id} className="relative group">
-                  {/* Render appropriate card - cards already have Smart wrappers */}
-                  {child.__typename === "Dataset" && (
-                    <DatasetCard item={child} className="h-20 w-full" />
-                  )}
-                  {child.__typename === "Image" && (
-                    <ImageCard item={child} className="h-20 w-full" />
-                  )}
-                  {child.__typename === "File" && (
-                    <FileCard item={child} className="h-20 w-full" />
-                  )}
-                </div>
-              );
-            })}
-          </ContainerGrid>
-        )}          {viewMode === "list" && (
-          <div className="space-y-2">
-            {filteredAndSortedData.map((child) => {
-              // Each card type has its own Smart wrapper, so we create simple list items
-              // wrapped in the appropriate Smart component
-              const SmartComponent = child.__typename === "Dataset" ? MikroDataset.Smart :
-                child.__typename === "Image" ? MikroImage.Smart :
-                  child.__typename === "File" ? MikroFile.Smart :
-                    MikroDataset.Smart; // fallback
-
-              return (
-                <SmartComponent key={child.id} object={child}>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border transition-colors hover:bg-muted/50">
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      {getTypeIcon(child.__typename || "")}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{child.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {child.__typename}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </SmartComponent>
-              );
-            })}
-          </div>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin" />
-            <span className="ml-2">Loading...</span>
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center justify-center py-12 text-red-500">
-            {error.message}
-          </div>
-        )}
-
-        {filteredAndSortedData.length === 0 && !loading && !error && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Folder className="w-12 h-12 mb-2" />
-            <div className="text-lg font-medium">No items found</div>
-            <div className="text-sm">
-              {debouncedSearch || filters.type !== "all"
-                ? "Try adjusting your search or filters"
-                : "This dataset appears to be empty"}
-            </div>
-          </div>
-        )}
+    <div className="flex h-full w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/70 bg-background/80 shadow-sm">
+      <div className="border-b border-border/70 bg-background/50 px-4 py-1">
+          <DatasetExplorerToolbar
+            {...props.explorerState}
+            dataset={props.dataset}
+            selection={selection}
+            bselection={bselection}
+          />
       </div>
 
-      {/* Drop Zones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        <DropZone
-          accepts={["item:@mikro/image", "list:@mikro/image"]}
-          className="border border-dashed border-muted-foreground/25 cursor-pointer rounded-lg p-6 text-center hover:border-muted-foreground/50 hover:bg-muted/25 transition-colors"
-          onDrop={async (item) => {
-            try {
-              await putImages({
-                variables: {
-                  selfs: item.map((i) => i.id),
-                  other: props?.dataset?.id,
-                },
-              });
-              // The refetchQueries should handle this, but we can also manually refetch
-              refetch();
-            } catch (error) {
-              console.error('Failed to add images to dataset:', error);
-            }
-          }}
-          canDropLabel={
-            <div className="flex flex-col items-center space-y-2">
-              <ImageIcon className="w-8 h-8 text-muted-foreground" />
-              <div>Drop images here to add to this dataset</div>
+      <div
+        className="relative flex min-h-0 w-full flex-1 flex-col"
+        ref={explorerDropRef}
+      >
+        {canDrop ? (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-3 z-20 rounded-2xl border border-dashed border-emerald-500/60 bg-emerald-500/8 transition-opacity",
+              isOver ? "opacity-100" : "opacity-70",
+            )}
+          >
+            <div className="absolute inset-x-6 top-6 rounded-xl border border-emerald-500/40 bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
+                  <Folder className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-foreground">
+                    {isOver ? "Release to move items into this dataset" : "Drop images or folders here"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Supported: images and nested datasets
+                  </div>
+                </div>
+              </div>
             </div>
-          }
-          overLabel={"Release to add images"}
-        />
-        <DropZone
-          accepts={["item:@mikro/dataset", "list:@mikro/dataset"]}
-          className="border border-dashed border-muted-foreground/25 cursor-pointer rounded-lg p-6 text-center hover:border-muted-foreground/50 hover:bg-muted/25 transition-colors"
-          onDrop={async (item) => {
-            try {
-              await putDatasets({
-                variables: {
-                  selfs: item.map((i) => i.id),
-                  other: props?.dataset?.id,
-                },
-              });
-              // The refetchQueries should handle this, but we can also manually refetch
-              refetch();
-            } catch (error) {
-              console.error('Failed to add datasets to dataset:', error);
-            }
-          }}
-          canDropLabel={
-            <div className="flex flex-col items-center space-y-2">
-              <Folder className="w-8 h-8 text-muted-foreground" />
-              <div>Drop datasets here to add to this dataset</div>
-            </div>
-          }
-          overLabel={"Release to add datasets"}
-        />
+          </div>
+        ) : null}
+
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <div className="border-b border-border/70 px-4 py-2 text-xs text-muted-foreground">
+            {viewMode === "grid" ? "Large icons" : viewMode === "list" ? "List" : "Details"}
+          </div>
+
+          <div className="flex-1 overflow-auto p-2">
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                {filteredAndSortedData.map((child) => (
+                  <ExplorerGridItem key={child.id} item={child} />
+                ))}
+              </div>
+            ) : null}
+
+            {viewMode === "list" ? (
+              <div>
+                {filteredAndSortedData.map((child) => (
+                  <ExplorerListItem key={child.id} item={child} />
+                ))}
+              </div>
+            ) : null}
+
+            {viewMode === "table" ? (
+              <div>
+                <div className="grid grid-cols-[minmax(0,1.6fr)_120px_minmax(0,0.9fr)] gap-3 px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  <div>Name</div>
+                  <div>Type</div>
+                  <div>Details</div>
+                </div>
+                {filteredAndSortedData.map((child) => (
+                  <ExplorerListItem key={child.id} item={child} detailed />
+                ))}
+              </div>
+            ) : null}
+
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="h-6 w-6 animate-spin" />
+                <span className="ml-2">Loading...</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-center justify-center py-12 text-red-500">
+                {error.message}
+              </div>
+            )}
+
+            {filteredAndSortedData.length === 0 && !loading && !error && (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Folder className="mb-3 h-12 w-12" />
+                <div className="text-lg font-medium">This folder is empty</div>
+                <div className="mt-1 text-sm">
+                  {debouncedSearch || filters.type !== "all"
+                    ? "Try adjusting the search or active filter"
+                    : "Drag images or folders here to populate this dataset"}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border/70 px-4 py-2 text-xs text-muted-foreground">
+            <span>{totalItems} item(s)</span>
+            <span>{filters.type === "all" ? "All content" : `Filtered to ${filters.type}`}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -279,16 +454,16 @@ export const DatasetExplorerToolbar = ({
   refetch
 }: DatasetToolbarProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl py-2 ">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
-        <div className="relative">
+        <div className="relative min-w-[240px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search files and folders..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10 w-64"
+            className="w-full border-border/70 bg-background/80 pl-10"
           />
           {searchInput !== debouncedSearch && (
             <RefreshCw className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
@@ -297,7 +472,7 @@ export const DatasetExplorerToolbar = ({
 
         {/* Type Filter */}
         <Select value={filters.type} onValueChange={(value: FilterType) => updateFilters({ type: value })}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40 border-border/70 bg-background/80">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue />
           </SelectTrigger>
@@ -334,7 +509,7 @@ export const DatasetExplorerToolbar = ({
             updateFilters({ sortField: field, sortDirection: direction });
           }}
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 border-border/70 bg-background/80">
             {filters.sortDirection === "asc" ? <SortAsc className="w-4 h-4 mr-2" /> : <SortDesc className="w-4 h-4 mr-2" />}
             <SelectValue />
           </SelectTrigger>
@@ -349,11 +524,11 @@ export const DatasetExplorerToolbar = ({
         </Select>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-2">
         {/* New Dataset Button */}
         <FormDialog
           trigger={
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-border/70 bg-background/80">
               <Plus className="w-4 h-4 mr-2" />
               New Dataset
             </Button>
@@ -397,7 +572,7 @@ export const DatasetExplorerToolbar = ({
         <Separator orientation="vertical" className="h-6" />
 
         {/* View Mode Toggles */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center rounded-lg border border-border/70 bg-background/80 p-1">
           <Button
             variant={viewMode === "grid" ? "default" : "ghost"}
             size="sm"
@@ -427,6 +602,7 @@ export const DatasetExplorerToolbar = ({
         <Button
           variant="ghost"
           size="sm"
+          className="border border-transparent bg-background/80 hover:border-border/70"
           onClick={() => {
             // Use refetch from the hook instead of page reload
             if (refetch) {
@@ -444,6 +620,7 @@ export const DatasetExplorerToolbar = ({
           <Button
             variant="outline"
             size="sm"
+            className="border-border/70 bg-background/80"
             onClick={() => {
               const newOffset = Math.max(0, pagination.offset - pagination.limit);
               setPagination({
@@ -458,6 +635,7 @@ export const DatasetExplorerToolbar = ({
           <Button
             variant="outline"
             size="sm"
+            className="border-border/70 bg-background/80"
             onClick={() => {
               const newOffset = pagination.offset + pagination.limit;
               setPagination({
@@ -493,7 +671,7 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
   });
 
   const [viewMode, setViewMode] = useState<ViewMode>(
-    (searchParams.get('viewMode') as ViewMode) || 'grid'
+    (searchParams.get('viewMode') as ViewMode) || 'table'
   );
 
   const [pagination, setPagination] = useState({
@@ -503,6 +681,19 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
+  const { data, loading, error, refetch } = useChildrenQuery({
+    variables: {
+      id: dataset.id,
+      pagination: pagination,
+      filters: {
+        search: debouncedSearch || undefined,
+      },
+    },
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
+  });
+
   // Sync state to URL parameters
   useEffect(() => {
     const newParams = new URLSearchParams();
@@ -511,52 +702,16 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
     if (filters.type !== 'all') newParams.set('type', filters.type);
     if (filters.sortField !== 'name') newParams.set('sortField', filters.sortField);
     if (filters.sortDirection !== 'asc') newParams.set('sortDirection', filters.sortDirection);
-    if (viewMode !== 'grid') newParams.set('viewMode', viewMode);
+    if (viewMode !== 'table') newParams.set('viewMode', viewMode);
     if (pagination.limit !== 30) newParams.set('limit', pagination.limit.toString());
     if (pagination.offset !== 0) newParams.set('offset', pagination.offset.toString());
 
     setSearchParams(newParams, { replace: true });
   }, [searchInput, filters, viewMode, pagination, setSearchParams]);
 
-  // Reset pagination offset when search or filters change
-  useEffect(() => {
-    refetch();
-    if (pagination.offset > 0) {
-      setPagination(prev => ({ ...prev, offset: 0 }));
-    }
-  }, [debouncedSearch, filters.type, filters.sortField, filters.sortDirection]);
-
-  // Use debounced search for server-side filtering (other filters will be client-side for now)
-  const { data, loading, error, refetch } = useChildrenQuery({
-    variables: {
-      id: dataset.id,
-      pagination: pagination,
-      filters: {
-        search: debouncedSearch || undefined,
-        // TODO: Add type filtering when server supports it
-        // TODO: Add sorting when server supports it
-      },
-    },
-    // Enable polling for automatic updates (optional, can be disabled for performance)
-    // pollInterval: 30000, // Poll every 30 seconds
-    // Refetch on focus
-    notifyOnNetworkStatusChange: true,
-    // Fetch policy to ensure fresh data
-    fetchPolicy: 'cache-and-network',
-    // Error policy
-    errorPolicy: 'all',
-  });
-
-  // Refetch when dataset ID changes
-  useEffect(() => {
-    refetch();
-  }, [dataset.id, refetch, searchParams]);
-
-  // Server-side search, client-side type filtering and sorting (until server supports them)
-  const filteredAndSortedData = useCallback(() => {
-    if (!data?.children) return [];
-
-    let items = [...data.children];
+  const filteredAndSortedData = (() => {
+    const children = data?.children ?? [];
+    let items = [...children];
 
     // Filter by type (client-side for now)
     if (filters.type !== "all") {
@@ -599,7 +754,14 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
     });
 
     return items;
-  }, [data?.children, filters])();
+  })();
+
+  const setSearchInputValue = useCallback((value: string) => {
+    setSearchInput(value);
+    setPagination((previous) =>
+      previous.offset === 0 ? previous : { ...previous, offset: 0 },
+    );
+  }, []);
 
   const updateFilters = useCallback((updates: Partial<ExplorerFilters>) => {
     setFilters(prev => ({ ...prev, ...updates }));
@@ -643,7 +805,7 @@ export const useDatasetExplorer = (dataset: DatasetFragment) => {
     filteredAndSortedData,
 
     // Actions
-    setSearchInput,
+    setSearchInput: setSearchInputValue,
     setFilters,
     setViewMode,
     setPagination,

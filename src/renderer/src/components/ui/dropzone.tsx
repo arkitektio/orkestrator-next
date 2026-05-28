@@ -7,6 +7,7 @@ import { resolveSmartDrop } from "@/providers/smart/dropUtils";
 export type DropZoneProps = {
   accepts: Identifier[];
   className?: string;
+  children?: React.ReactNode;
   compareWithList?: { id: string }[];
   overLabel: React.ReactNode;
   canDropLabel: React.ReactNode;
@@ -17,6 +18,7 @@ export const DropZone = ({
   className,
   accepts,
   onDrop,
+  children,
   compareWithList,
   overLabel,
   canDropLabel,
@@ -71,6 +73,7 @@ export const DropZone = ({
     <div className={`${!canDrop && "hidden"} ${className}`} ref={drop}>
       {allItemsContained && "All items already contained"}
       {isOver ? overLabel : canDropLabel}
+      {children}
     </div>
   );
 };

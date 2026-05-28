@@ -16,17 +16,20 @@ export const LocalActionCommand = (props: {
   state: ActionState;
   onDone?: OnDone;
 }) => {
-  const { assign, progress } = usePerformAction(props);
+  const { assign, progress, confirmationDialog } = usePerformAction(props);
   const Icon = props.action.icon ?? Sparkles;
 
   return (
-    <CommandActionRow
-      onSelect={assign}
-      title={props.action.title}
-      description={props.action.description}
-      icon={Icon}
-      progress={progress}
-    />
+    <>
+      <CommandActionRow
+        onSelect={assign}
+        title={props.action.title}
+        description={props.action.description}
+        icon={Icon}
+        progress={progress}
+      />
+      {confirmationDialog}
+    </>
   );
 };
 

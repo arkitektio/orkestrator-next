@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { DatasetFragment, useUpdateImageMutation } from "../api/graphql";
+import { DatasetFragment, useUpdateDatasetMutation } from "../api/graphql";
 
 export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
-  const [add] = useUpdateImageMutation();
+  const [updateDataset] = useUpdateDatasetMutation();
 
-  const submit = useGraphQLDialog(add, { successMessage: "Dataset updated" });
+  const submit = useGraphQLDialog(updateDataset, {
+    successMessage: "Dataset updated",
+  });
 
   const form = useForm({
     defaultValues: {
@@ -24,10 +26,8 @@ export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
           onSubmit={form.handleSubmit(async (data) => {
             submit({
               variables: {
-                input: {
-                  id: props.dataset.id,
-                  ...data,
-                },
+                id: props.dataset.id,
+                name: data.name,
               },
             });
           })}
@@ -39,7 +39,6 @@ export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
                 name="name"
                 description="The Name Value"
               />
-              Not Implemented
             </div>
           </div>
 

@@ -5,6 +5,9 @@ import {
   DeleteFileDocument,
   DeleteImageDocument,
   DeleteRoiDocument,
+  GetDatasetDocument,
+  GetDatasetQuery,
+  GetDatasetQueryVariables,
   PutDatasetsInDatasetDocument,
   PutDatasetsInDatasetMutation,
   PutDatasetsInDatasetMutationVariables,
@@ -15,13 +18,54 @@ import {
   PutImagesInDatasetMutation,
   PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
-import { File, FolderInput, Images } from "lucide-react";
+import { File, FolderInput, Images, Pencil } from "lucide-react";
 import { Action } from "../localactions/LocalActionProvider";
 import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetch";
 
 type MikroAction = Action<typeof Arkitekt>;
 
 export const MIKRO_ACTIONS: Record<string, MikroAction> = {
+  'update-mikro-dataset': {
+    title: 'Rename / Update Dataset',
+    description: 'Open the update dialog for this dataset',
+    icon: Pencil,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/dataset' },
+      { type: 'nopartner' },
+    ],
+    collections: ['dataset'],
+    execute: async ({ state, services, dialog }) => {
+      const selectedDataset = state.left.find(
+        (item) => item.identifier === '@mikro/dataset',
+      );
+
+      if (!selectedDataset?.object?.id) {
+        throw new Error('No dataset selected for Rename / Update Dataset action');
+      }
+
+      const mikro = services.mikro;
+      if (!mikro) {
+        throw new Error('Mikro service is not available');
+      }
+
+      const { data } = await mikro.client.query<
+        GetDatasetQuery,
+        GetDatasetQueryVariables
+      >({
+        query: GetDatasetDocument,
+        variables: {
+          id: selectedDataset.object.id,
+        },
+        fetchPolicy: 'network-only',
+      });
+
+      if (!data?.dataset) {
+        throw new Error('Unable to load dataset for update dialog');
+      }
+
+      dialog.openDialog('updatedataset', { dataset: data.dataset });
+    },
+  },
   'delete-mikro-image': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Image',
     identifier: '@mikro/image',

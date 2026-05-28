@@ -2,10 +2,10 @@ import { usePerformAction } from "@/app/hooks/useLocalAction";
 import { registry, useAction } from "@/app/localactions";
 import { ActionState } from "@/lib/localactions/LocalActionProvider";
 import { cn } from "@/lib/utils";
-import React, { useCallback } from "react";
-import { Button, ButtonProps } from "./button";
+import React from "react";
+import { Button } from "./button";
 
-export interface LocalActionButtonProps extends ButtonProps {
+export interface LocalActionButtonProps extends React.ComponentProps<typeof Button> {
   children?: React.ReactNode | string;
   name: keyof typeof registry; // Optional prop for action name
   className?: string;
@@ -22,27 +22,23 @@ export const LocalActionButton = ({
   ...props
 }: LocalActionButtonProps) => {
   const action = useAction(name);
-  const { assign, progress } = usePerformAction({
+  const { assign, confirmationDialog } = usePerformAction({
     action,
     state: state || { left: [], isCommand: false },
   });
 
-  const onClick = useCallback(async () => {
-    try {
-      await assign();
-    } catch (e) {
-      console.error("Error executing action:", e);
-      // Optionally, you can show a dialog or toast here to inform the user
-    }
-  }, []);
-
   return (
-    <Button
-      className={cn("flex flex-row items-center justify-center", className)}
-      onClick={onClick}
-      {...props}
-    >
-      {children ? children : action.title}
-    </Button>
+    <>
+      <Button
+        className={cn("flex flex-row items-center justify-center", className)}
+        onClick={() => {
+          void assign();
+        }}
+        {...props}
+      >
+        {children ? children : action.title}
+      </Button>
+      {confirmationDialog}
+    </>
   );
 };

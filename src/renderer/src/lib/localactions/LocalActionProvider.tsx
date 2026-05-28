@@ -101,6 +101,19 @@ export type ActionParams<TAppOrServices = ServiceMap> = {
   services: ResolveActionServices<TAppOrServices>;
   onProgress: (progress: number) => void;
   abortSignal: AbortSignal;
+  modifiers: {
+    ctrlKey: boolean;
+    shiftKey: boolean;
+    altKey: boolean;
+    metaKey: boolean;
+  };
+  confirm: (options: {
+    title: string;
+    description?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    destructive?: boolean;
+  }) => Promise<boolean>;
   dialog: ReturnType<typeof useDialog>;
   navigate: ReturnType<typeof useNavigate>;
 };

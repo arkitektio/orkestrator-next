@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/arkitektio/orkestrator-next/compare/v1.62.0...v1.63.0) (2026-05-28)
+
+
+### Features
+
+* better dataset pages ([47fb8f7](https://github.com/arkitektio/orkestrator-next/commit/47fb8f7f90d20ea2978f19364a619e5a98427b3f))
+
 # [1.62.0](https://github.com/arkitektio/orkestrator-next/compare/v1.61.0...v1.62.0) (2026-05-28)
 
 

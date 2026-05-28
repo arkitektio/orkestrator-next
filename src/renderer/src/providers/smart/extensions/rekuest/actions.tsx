@@ -11,9 +11,12 @@ import { v4 as uuidv4 } from "uuid";
 import React from "react";
 import * as LucideIcons from "lucide-react";
 import {
+  ActionDemandInput,
   AssignationEventFragment,
+  DetailImplementationFragment,
   DemandKind,
-  ListImplementationFragment,
+  ImplementationOrder,
+  Ordering,
   PortDemandInput,
   PortKind,
   PrimaryActionFragment,
@@ -71,6 +74,9 @@ const formatAssignErrorToast = (message: string) => ({
   title: "Assignment failed",
   detail: message,
 });
+
+const SMART_IMPLEMENTATION_PAGE_SIZE = 12;
+const ACTIVE_IMPLEMENTATION_ORDERING = [{ active: Ordering.Desc }] as unknown as ImplementationOrder[];
 
 const buildActionDemands = (
   props: PassDownProps,
@@ -160,8 +166,38 @@ const buildActionDemands = (
   return demands;
 };
 
+const buildImplementationDemand = (
+  props: PassDownProps,
+  options?: { batch?: boolean },
+): ActionDemandInput => {
+  const demands = buildActionDemands(props, options);
+  const argMatches = demands
+    .filter((demand) => demand.kind === DemandKind.Args)
+    .flatMap((demand) => demand.matches ?? []);
+  const returnMatches = demands
+    .filter((demand) => demand.kind === DemandKind.Returns)
+    .flatMap((demand) => demand.matches ?? []);
+
+  const forceArgLength = argMatches.length
+    ? Math.max(...argMatches.map((match) => match.at ?? 0)) + 1
+    : undefined;
+  const forceReturnLength = returnMatches.length
+    ? Math.max(...returnMatches.map((match) => match.at ?? 0)) + 1
+    : undefined;
+
+  return {
+    key: options?.batch ? "smart-batch" : "smart-context",
+    ...(argMatches.length ? { argMatches } : {}),
+    ...(typeof forceArgLength === "number" ? { forceArgLength } : {}),
+    ...(returnMatches.length ? { returnMatches } : {}),
+    ...(typeof forceReturnLength === "number" ? { forceReturnLength } : {}),
+  };
+};
+
+type AssignableAction = PrimaryActionFragment | DetailImplementationFragment["action"];
+
 const buildActionArgs = (
-  action: PrimaryActionFragment,
+  action: AssignableAction,
   props: SmartContextProps,
 ): Record<string, unknown> | null => {
   const keys: Record<string, unknown> = {};
@@ -225,6 +261,10 @@ const buildActionArgs = (
   return keys;
 };
 
+const getImplementationDescription = (
+  implementation: DetailImplementationFragment,
+) => [implementation.agent.name, implementation.interface].filter(Boolean).join(" • ");
+
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
@@ -233,28 +273,29 @@ export const DirectImplementationAssignment = (
       filters: {
         actionHash: props.action.hash,
       },
+      ordering: ACTIVE_IMPLEMENTATION_ORDERING,
+      pagination: { limit: SMART_IMPLEMENTATION_PAGE_SIZE },
     },
+    fetchPolicy: "cache-and-network",
   });
   const { assign } = useAssign();
   const { openDialog } = useDialog();
 
   const onTemplateSelect = async (
     action: PrimaryActionFragment,
-    implementation: ListImplementationFragment,
+    implementation: DetailImplementationFragment,
   ) => {
-    const key = action.args?.at(0)?.key;
-    const firstObject = props.objects[0];
-
-    if (!key || !firstObject) {
-      toast.error("No key found");
+    const keys = buildActionArgs(action, props);
+    if (!keys) {
       return;
     }
 
-    if (action.args.length > 1) {
+    const unknownKeys = action.args.filter((arg) => arg.key && !keys[arg.key]);
+    if (unknownKeys.length >= 1) {
       openDialog("implementationassign", {
         id: implementation.id,
-        args: { [key]:  {"__identifier": firstObject.identifier, object: firstObject.object.id},},
-        hidden: { [key]:  {"__identifier": firstObject.identifier, object: firstObject.object.id},},
+        args: keys,
+        hidden: keys,
       });
       return;
     }
@@ -264,9 +305,7 @@ export const DirectImplementationAssignment = (
 
       await assign({
         implementation: implementation.id,
-        args: {
-          [key]: {"__identifier": firstObject.identifier, object: firstObject.object.id},
-        },
+        args: keys,
         cached: false,
         capture: false,
         ephemeral: props.ephemeral ?? false,
@@ -298,6 +337,9 @@ export const DirectImplementationAssignment = (
             <div className="text-xs text-gray-400">{implementation.interface}</div>
           </Button>
         ))}
+        {implementations.data?.implementations.length === 0 ? (
+          <div className="text-xs text-muted-foreground">No implementations</div>
+        ) : null}
       </div>
       <Button
         variant="outline"
@@ -390,6 +432,182 @@ const useAssignActionProgress = (props: SmartContextProps) => {
   };
 };
 
+export const ImplementationAssignButton = (
+  props: SmartContextProps & { implementation: DetailImplementationFragment },
+) => {
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+  const {
+    doing,
+    error,
+    errorFlashActive,
+    progress,
+    setDoing,
+    setError,
+    onEvent,
+    triggerErrorFeedback,
+  } = useAssignActionProgress(props);
+
+  const conditionalAssign = async (
+    implementation: DetailImplementationFragment,
+  ) => {
+    const keys = buildActionArgs(implementation.action, props);
+    if (!keys) {
+      return;
+    }
+
+    const unknownKeys = implementation.action.args.filter(
+      (arg) => arg.key && !keys[arg.key],
+    );
+    if (unknownKeys.length >= 1) {
+      openDialog("implementationassign", {
+        id: implementation.id,
+        args: keys,
+        hidden: keys,
+      });
+      return;
+    }
+
+    try {
+      const reference = uuidv4();
+      registeredCallbacks.set(reference, onEvent);
+
+      await assign({
+        implementation: implementation.id,
+        args: keys,
+        cached: false,
+        capture: false,
+        reference,
+        ephemeral: props.ephemeral ?? false,
+        log: false,
+      });
+
+      setDoing(true);
+      setError(null);
+    } catch (error) {
+      triggerErrorFeedback(getErrorMessage(error));
+    }
+  };
+
+  const inlineErrorToast = error ? formatAssignErrorToast(error) : null;
+
+  return (
+    <CommandActionRow
+      onSelect={() => conditionalAssign(props.implementation)}
+      value={props.implementation.id}
+      title={props.implementation.action.name}
+      description={getImplementationDescription(props.implementation)}
+      progress={progress}
+      className={cn(
+        doing && "animate-pulse",
+        errorFlashActive &&
+          "bg-red/20 data-selected:bg-red-500/20 text-destructive ring-1 ring-inset ring-destructive/35 transition-colors duration-150",
+      )}
+      trailing={
+        <span className="ml-auto flex items-center gap-2">
+          {inlineErrorToast ? (
+            <span className="max-w-48 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-right text-[10px] leading-tight text-destructive">
+              <span className="block font-medium">{inlineErrorToast.title}</span>
+              <span className="block truncate">{inlineErrorToast.detail}</span>
+            </span>
+          ) : null}
+        </span>
+      }
+      {...getActionVisual(props.implementation.action.logo, PlayCircle)}
+    />
+  );
+};
+
+export const BatchImplementationAssignButton = (
+  props: SmartContextProps & { implementation: DetailImplementationFragment },
+) => {
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+  const {
+    doing,
+    error,
+    errorFlashActive,
+    progress,
+    setDoing,
+    setError,
+    onEvent,
+    triggerErrorFeedback,
+  } = useAssignActionProgress(props);
+
+  const conditionalAssign = async (
+    implementation: DetailImplementationFragment,
+  ) => {
+    for (const object of props.objects) {
+      const keys = buildActionArgs(implementation.action, {
+        ...props,
+        objects: [object],
+      });
+
+      if (!keys) {
+        return;
+      }
+
+      const unknownKeys = implementation.action.args.filter(
+        (arg) => arg.key && !keys[arg.key],
+      );
+      if (unknownKeys.length >= 1) {
+        openDialog("implementationassign", {
+          id: implementation.id,
+          args: keys,
+          hidden: keys,
+        });
+        return;
+      }
+
+      try {
+        const reference = uuidv4();
+        await assign({
+          implementation: implementation.id,
+          args: keys,
+          cached: false,
+          capture: false,
+          reference,
+          ephemeral: props.ephemeral ?? false,
+          log: false,
+        });
+        registeredCallbacks.set(reference, onEvent);
+        setDoing(true);
+        setError(null);
+      } catch (error) {
+        triggerErrorFeedback(getErrorMessage(error));
+      }
+    }
+  };
+
+  const inlineErrorToast = error ? formatAssignErrorToast(error) : null;
+
+  return (
+    <CommandActionRow
+      onSelect={() => conditionalAssign(props.implementation)}
+      value={props.implementation.id}
+      title={props.implementation.action.name}
+      description={getImplementationDescription(props.implementation)}
+      progress={progress}
+      className={cn(
+        doing && "animate-pulse",
+        errorFlashActive &&
+          "bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/35 transition-colors duration-150",
+      )}
+      trailing={
+        <span className="ml-auto flex items-center gap-2">
+          {inlineErrorToast ? (
+            <span className="max-w-48 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-right text-[10px] leading-tight text-destructive">
+              <span className="block font-medium">{inlineErrorToast.title}</span>
+              <span className="block truncate">{inlineErrorToast.detail}</span>
+            </span>
+          ) : null}
+        </span>
+      }
+      {...getActionVisual(props.implementation.action.logo, Boxes)}
+    />
+  );
+};
+
 export const AssignButton = (
   props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
@@ -461,6 +679,16 @@ export const AssignButton = (
             errorFlashActive &&
               "bg-red/20 data-selected:bg-red-500/20 text-destructive ring-1 ring-inset ring-destructive/35 transition-colors duration-150",
           )}
+          trailing={
+            <span className="ml-auto flex items-center gap-2">
+              {inlineErrorToast ? (
+                <span className="max-w-48 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-right text-[10px] leading-tight text-destructive">
+                  <span className="block font-medium">{inlineErrorToast.title}</span>
+                  <span className="block truncate">{inlineErrorToast.detail}</span>
+                </span>
+              ) : null}
+            </span>
+          }
           {...getActionVisual(props.action.logo, PlayCircle)}
         />
       </ContextMenuTrigger>
@@ -658,6 +886,84 @@ export const ApplicableActions = (props: PassDownProps) => {
       </div>
       {data.actions.map((action) => (
         <AssignButton action={action} {...props} key={action.id} />
+      ))}
+    </div>
+  );
+};
+
+export const ApplicableImplementations = (props: PassDownProps) => {
+  const { data, error } = useImplementationsQuery({
+    variables: {
+      filters: {
+        actionDemand: buildImplementationDemand(props),
+        search: props.filter && props.filter !== "" ? props.filter : undefined,
+      },
+      ordering: ACTIVE_IMPLEMENTATION_ORDERING,
+      pagination: { limit: SMART_IMPLEMENTATION_PAGE_SIZE },
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+  if (error) {
+    return <span className="font-light text-xs w-full items-center ml-2 w-full">Error</span>;
+  }
+
+  if (!data || data.implementations.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <div className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+        <span>Implementations</span>
+      </div>
+      {data.implementations.map((implementation) => (
+        <ImplementationAssignButton
+          implementation={implementation}
+          {...props}
+          key={implementation.id}
+        />
+      ))}
+    </div>
+  );
+};
+
+export const ApplicableBatchImplementations = (props: PassDownProps) => {
+  const { data, error } = useImplementationsQuery({
+    variables: {
+      filters: {
+        actionDemand: buildImplementationDemand(props, { batch: true }),
+        search: props.filter && props.filter !== "" ? props.filter : undefined,
+      },
+      ordering: ACTIVE_IMPLEMENTATION_ORDERING,
+      pagination: { limit: SMART_IMPLEMENTATION_PAGE_SIZE },
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+  if (error) {
+    return <span className="font-light text-xs w-full items-center ml-2 w-full">Error</span>;
+  }
+
+  if (props.objects.length < 2) {
+    return null;
+  }
+
+  if (!data || data.implementations.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <div className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+        <span>Batch Implementations</span>
+      </div>
+      {data.implementations.map((implementation) => (
+        <BatchImplementationAssignButton
+          implementation={implementation}
+          {...props}
+          key={implementation.id}
+        />
       ))}
     </div>
   );

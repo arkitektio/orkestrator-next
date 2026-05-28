@@ -31,7 +31,7 @@ type Action {
   id: ID!
 
   """List of implementations for this action."""
-  implementations(filters: ImplementationFilter, order: ImplementationOrder, pagination: OffsetPaginationInput): [Implementation!]!
+  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
   """Interfaces implemented by the action."""
   interfaces: [String!]!
@@ -325,7 +325,7 @@ type Agent {
   implementation(interface: String!): Implementation
 
   """Implementations the agent can run."""
-  implementations(filters: ImplementationFilter, order: ImplementationOrder, pagination: OffsetPaginationInput): [Implementation!]!
+  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
   """Unique instance identifier on the agent."""
   instanceId: InstanceId!
@@ -1818,6 +1818,7 @@ input ImplementationFilter {
   action: ImplementationActionFilter
   actionDemand: ActionDemandInput
   actionHash: ActionHash
+  active: Boolean
   agent: ImplementationAgentFilter
   extension: String
   ids: [ID!]
@@ -1859,8 +1860,9 @@ type ImplementationMapping {
   resolvedDependencies: [ResolvedAgentDependency!]!
 }
 
-input ImplementationOrder {
+input ImplementationOrder @oneOf {
   createdAt: Ordering
+  discoveredBy: Boolean
   finishedAt: Ordering
   startedAt: Ordering
   status: Ordering
@@ -1919,7 +1921,7 @@ type Interface {
   id: ID!
 
   """Implementations that implement this interface."""
-  implementations(filters: ImplementationFilter, order: ImplementationOrder, pagination: OffsetPaginationInput): [Implementation!]!
+  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
   """Usages of this interface as an input in actions."""
   inputUsages(filters: InputInterfaceUsageFilter, pagination: OffsetPaginationInput): [InputInterfaceUsage!]!
@@ -2776,7 +2778,7 @@ type Query {
   implementationAt(actionHash: String = null, agent: ID!, demand: ActionDemandInput = null, extension: String = null, interface: String = null): Implementation!
 
   """All registered implementations."""
-  implementations(filters: ImplementationFilter, order: ImplementationOrder, pagination: OffsetPaginationInput): [Implementation!]!
+  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
   """Fetch an interface by ID."""
   interface(id: ID!): Interface!
@@ -3010,7 +3012,7 @@ type Reservation {
   implementation: Implementation
 
   """Available implementations for the reservation."""
-  implementations(filters: ImplementationFilter, order: ImplementationOrder, pagination: OffsetPaginationInput): [Implementation!]!
+  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
   """Name of the reservation."""
   name: String!
@@ -3071,7 +3073,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "aca8d50e-a986-45fc-a5e5-5ef95da9dbc3"
+  reference: String = "226569aa-a77c-40ea-9a45-6de71be920c2"
   title: String = null
 }
 

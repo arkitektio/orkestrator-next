@@ -34,6 +34,7 @@ import { CreateWorkspaceForm } from "@/reaktion/components/forms/CreateWorkspace
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
+import { UpdateAgentForm } from "@/rekuest/forms/UpdateAgentForm";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,
@@ -43,6 +44,7 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   createnewmeasurement: CreateNewMeasurement,
   setasmeasurement: SetAsMeasurement,
   createshortcut: CreateShortcutDialog,
+  updateagent: UpdateAgentForm,
   notifyusers: NotifyDialog,
   addusertoorganization: AddUserToOrganizationDialog,
   addpropertydefinition: AddPropertyDefinitionDialog,

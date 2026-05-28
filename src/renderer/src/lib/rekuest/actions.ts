@@ -1,4 +1,7 @@
 import {
+  AgentDocument,
+  AgentQuery,
+  AgentQueryVariables,
   BlockDocument,
   BlockMutation,
   BlockMutationVariables,
@@ -27,9 +30,50 @@ import {
 } from '@/rekuest/api/graphql'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
-import { Ban, LogOut, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Ban, LogOut, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 
 export const REKUEST_ACTIONS: Record<string, Action> = {
+  'rekuest-update-agent': {
+    title: 'Rename / Update Agent',
+    description: 'Open the update dialog for this agent',
+    icon: Pencil,
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/agent'
+      },
+      {
+        type: 'nopartner'
+      }
+    ],
+    execute: async ({ services, state, dialog }) => {
+      const selectedAgent = state.left.find(
+        (item) => item.identifier === '@rekuest/agent',
+      )
+
+      if (!selectedAgent?.object?.id) {
+        throw new Error('No agent selected for Rename / Update Agent action')
+      }
+
+      const { data } = await services.rekuest.client.query<
+        AgentQuery,
+        AgentQueryVariables
+      >({
+        query: AgentDocument,
+        variables: {
+          id: selectedAgent.object.id,
+        },
+        fetchPolicy: 'network-only',
+      })
+
+      if (!data?.agent) {
+        throw new Error('Unable to load agent for update dialog')
+      }
+
+      dialog.openDialog('updateagent', { agent: data.agent })
+    },
+    collections: ['io'],
+  },
   'rekuest-delete-blok': {
     title: 'Delete Blok',
     description: 'Delete the blok and return to the blok list',

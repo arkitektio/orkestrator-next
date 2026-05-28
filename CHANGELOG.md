@@ -1,3 +1,10 @@
+# [1.62.0](https://github.com/arkitektio/orkestrator-next/compare/v1.61.0...v1.62.0) (2026-05-28)
+
+
+### Features
+
+* context menu update ([e46712d](https://github.com/arkitektio/orkestrator-next/commit/e46712de42e7a4764fd193518555917d911d2b5b))
+
 # [1.61.0](https://github.com/arkitektio/orkestrator-next/compare/v1.60.1...v1.61.0) (2026-05-27)
 
 

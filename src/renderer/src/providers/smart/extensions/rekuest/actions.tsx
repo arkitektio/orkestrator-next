@@ -5,6 +5,7 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import React from "react";
@@ -21,7 +22,7 @@ import {
 } from "@/rekuest/api/graphql";
 import { registeredCallbacks } from "@/rekuest/components/functional/AssignationUpdater";
 import { useAssign } from "@/rekuest/hooks/useAssign";
-import { Boxes, PlayCircle, Workflow } from "lucide-react";
+import { Boxes, PlayCircle } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps, SmartContextProps } from "../types";
 
@@ -65,6 +66,11 @@ const getActionVisual = (
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unknown error";
+
+const formatAssignErrorToast = (message: string) => ({
+  title: "Assignment failed",
+  detail: message,
+});
 
 const buildActionDemands = (
   props: PassDownProps,
@@ -261,6 +267,10 @@ export const DirectImplementationAssignment = (
         args: {
           [key]: {"__identifier": firstObject.identifier, object: firstObject.object.id},
         },
+        cached: false,
+        capture: false,
+        ephemeral: props.ephemeral ?? false,
+        log: false,
         reference,
       });
 
@@ -318,29 +328,66 @@ const useAssignActionProgress = (props: SmartContextProps) => {
   const [doing, setDoing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState<number | null>(0);
+  const [errorFlashActive, setErrorFlashActive] = React.useState(false);
+  const errorFlashTimeoutRef = React.useRef<number | null>(null);
+
+  const triggerErrorFeedback = React.useCallback(
+    (message: string) => {
+      setDoing(false);
+      setProgress(null);
+      setError(message);
+      setErrorFlashActive(true);
+      props.onError?.(message);
+
+      if (errorFlashTimeoutRef.current) {
+        window.clearTimeout(errorFlashTimeoutRef.current);
+      }
+
+      errorFlashTimeoutRef.current = window.setTimeout(() => {
+        setErrorFlashActive(false);
+        errorFlashTimeoutRef.current = null;
+      }, 700);
+    },
+    [props],
+  );
+
+  React.useEffect(() => {
+    return () => {
+      if (errorFlashTimeoutRef.current) {
+        window.clearTimeout(errorFlashTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const onEvent = React.useCallback(
     (event: AssignationEventFragment) => {
       if (event.kind === "DONE") {
         setDoing(false);
         setProgress(null);
+        setError(null);
         props.onDone?.({ event, kind: "action" });
       }
       if (event.kind === "ERROR" || event.kind === "CRITICAL") {
         const message = event.message || "Unknown error";
-        setDoing(false);
-        setProgress(null);
-        setError(message);
-        props.onError?.(message);
+        triggerErrorFeedback(message);
       }
       if (event.kind === "PROGRESS") {
         setProgress(event.progress || 0);
       }
     },
-    [props],
+    [props, triggerErrorFeedback],
   );
 
-  return { doing, error, progress, setDoing, setError, onEvent };
+  return {
+    doing,
+    error,
+    errorFlashActive,
+    progress,
+    setDoing,
+    setError,
+    onEvent,
+    triggerErrorFeedback,
+  };
 };
 
 export const AssignButton = (
@@ -348,7 +395,16 @@ export const AssignButton = (
 ) => {
   const { assign } = useAssign();
   const { openDialog } = useDialog();
-  const { doing, error, progress, setDoing, setError, onEvent } =
+  const {
+    doing,
+    error,
+    errorFlashActive,
+    progress,
+    setDoing,
+    setError,
+    onEvent,
+    triggerErrorFeedback,
+  } =
     useAssignActionProgress(props);
 
   const conditionalAssign = async (action: PrimaryActionFragment) => {
@@ -374,19 +430,22 @@ export const AssignButton = (
       await assign({
         action: action.id,
         args: keys,
+        cached: false,
+        capture: false,
         reference,
-        ephemeral: props.ephemeral,
+        ephemeral: props.ephemeral ?? false,
+        log: false,
       });
 
       setDoing(true);
       setError(null);
     } catch (error) {
       const message = getErrorMessage(error);
-      toast.error(message);
-      setDoing(false);
-      setError(message);
+      triggerErrorFeedback(message);
     }
   };
+
+  const inlineErrorToast = error ? formatAssignErrorToast(error) : null;
 
   return (
     <ContextMenu modal={false}>
@@ -394,10 +453,14 @@ export const AssignButton = (
         <CommandActionRow
           onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
-          title={<>{props.action.name} {error && <span className="text-red-800">{error}</span>}</>}
+          title={props.action.name}
           description={props.action.description}
           progress={progress}
-          className={doing ? "animate-pulse" : undefined}
+          className={cn(
+            doing && "animate-pulse",
+            errorFlashActive &&
+              "bg-red/20 data-selected:bg-red-500/20 text-destructive ring-1 ring-inset ring-destructive/35 transition-colors duration-150",
+          )}
           {...getActionVisual(props.action.logo, PlayCircle)}
         />
       </ContextMenuTrigger>
@@ -413,7 +476,16 @@ export const BatchAssignButton = (
 ) => {
   const { assign } = useAssign();
   const { openDialog } = useDialog();
-  const { doing, error, progress, setDoing, setError, onEvent } =
+  const {
+    doing,
+    error,
+    errorFlashActive,
+    progress,
+    setDoing,
+    setError,
+    onEvent,
+    triggerErrorFeedback,
+  } =
     useAssignActionProgress(props);
 
   const conditionalAssign = async (action: PrimaryActionFragment) => {
@@ -469,20 +541,23 @@ export const BatchAssignButton = (
         await assign({
           action: action.id,
           args: keys,
+          cached: false,
+          capture: false,
           reference,
-          ephemeral: props.ephemeral,
+          ephemeral: props.ephemeral ?? false,
+          log: false,
         });
         registeredCallbacks.set(reference, onEvent);
         setDoing(true);
         setError(null);
       } catch (error) {
         const message = getErrorMessage(error);
-        toast.error(message);
-        setDoing(false);
-        setError(message);
+        triggerErrorFeedback(message);
       }
     }
   };
+
+  const inlineErrorToast = error ? formatAssignErrorToast(error) : null;
 
   return (
     <ContextMenu modal={false}>
@@ -490,10 +565,24 @@ export const BatchAssignButton = (
         <CommandActionRow
           onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
-          title={<>{props.action.name} {error && <span className="text-red-800">{error}</span>}</>}
+          title={props.action.name}
           description={props.action.description}
           progress={progress}
-          className={doing ? "animate-pulse" : undefined}
+          className={cn(
+            doing && "animate-pulse",
+            errorFlashActive &&
+              "bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/35 transition-colors duration-150",
+          )}
+          trailing={
+            <span className="ml-auto flex items-center gap-2">
+              {inlineErrorToast ? (
+                <span className="max-w-48 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-right text-[10px] leading-tight text-destructive">
+                  <span className="block font-medium">{inlineErrorToast.title}</span>
+                  <span className="block truncate">{inlineErrorToast.detail}</span>
+                </span>
+              ) : null}
+            </span>
+          }
           {...getActionVisual(props.action.logo, Boxes)}
         />
       </ContextMenuTrigger>

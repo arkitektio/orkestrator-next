@@ -1554,6 +1554,8 @@ export type EntityCategoryFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   label?: InputMaybe<Scalars['String']['input']>;
   /** Filter by list of IDs */
+  matchesDescription?: InputMaybe<EntityDescriptorInput>;
+  /** Filter by list of IDs */
   pinned?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by list of IDs */
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1650,6 +1652,8 @@ export type EntityDescriptorInput = {
   defaultCategoryKey?: InputMaybe<Scalars['String']['input']>;
   /** Filter by entity key/label */
   keys?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The list of ontology terms associated with this entity descriptor */
+  ontologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter by ontology references on the entity (format: 'PREFIX:TERM_ID') */
   ontotologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter by tags on the entity */

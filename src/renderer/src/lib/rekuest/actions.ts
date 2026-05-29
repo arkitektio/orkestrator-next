@@ -24,13 +24,16 @@ import {
   KickDocument,
   KickMutation,
   KickMutationVariables,
+  PinAgentDocument,
+  PinAgentMutation,
+  PinAgentMutationVariables,
   UnblockDocument,
   UnblockMutation,
   UnblockMutationVariables
 } from '@/rekuest/api/graphql'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
-import { Ban, LogOut, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Ban, LogOut, Pencil, Pin, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 
 export const REKUEST_ACTIONS: Record<string, Action> = {
   'rekuest-update-agent': {
@@ -229,6 +232,35 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     typename: 'Placement',
     mutation: DeletePlacementDocument // You would need to implement this mutation in your GraphQL API
   }),
+
+  'rekuest-pin-agent': {
+    title: 'Pin Agent',
+    icon: Pin,
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/agent'
+      }
+    ],
+    description: 'Pin or unpin this agent',
+    execute: async ({ services, state }) => {
+      for (const structure of state.left) {
+        if (structure.identifier !== '@rekuest/agent') {
+          continue
+        }
+
+        await services.rekuest.client.mutate<PinAgentMutation, PinAgentMutationVariables>({
+          mutation: PinAgentDocument,
+          variables: {
+            input: {
+              id: structure.object.id,
+              pin: !Boolean(structure.object.pinned),
+            },
+          },
+        })
+      }
+    },
+  },
 
   'rekuest-bounce-agent': {
     title: 'Bounce Agent',

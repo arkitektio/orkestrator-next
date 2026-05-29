@@ -10320,6 +10320,18 @@
             "deprecationReason": null
           },
           {
+            "name": "matchesDescription",
+            "description": "Filter by list of IDs",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "EntityDescriptorInput",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "pinned",
             "description": "Filter by list of IDs",
             "type": {
@@ -10897,6 +10909,26 @@
               }
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ontologyTerms",
+            "description": "The list of ontology terms associated with this entity descriptor",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "String",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },

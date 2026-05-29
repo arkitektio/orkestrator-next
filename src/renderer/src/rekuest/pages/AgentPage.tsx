@@ -186,18 +186,6 @@ export const AgentPage = asDetailQueryRoute(
             <BounceAgentButton agent={data.agent} />
             <CopyAgentPythonButton agent={data.agent} />
             <ManagedByCard agent={data.agent} />
-            <RekuestAgent.DetailLink
-                          object={data?.agent}
-                          subroute="space"
-                          className="font-semibold"
-                        >
-                          <Button
-                            variant={"outline"}
-                            size={"sm"}
-                          >
-                            Space
-                          </Button>
-                        </RekuestAgent.DetailLink>
                         <RekuestAgent.DetailLink
                           object={data?.agent}
                           subroute="states"
@@ -220,6 +208,18 @@ export const AgentPage = asDetailQueryRoute(
                             size={"sm"}
                           >
                             Tasks
+                          </Button>
+                        </RekuestAgent.DetailLink>
+                        <RekuestAgent.DetailLink
+                          object={data?.agent}
+                          subroute="bloks"
+                          className="font-semibold"
+                        >
+                          <Button
+                            variant={"outline"}
+                            size={"sm"}
+                          >
+                            Bloks
                           </Button>
                         </RekuestAgent.DetailLink>
           </>

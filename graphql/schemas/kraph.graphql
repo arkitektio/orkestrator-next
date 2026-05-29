@@ -1925,6 +1925,9 @@ input EntityCategoryFilter {
   label: String
 
   """Filter by list of IDs"""
+  matchesDescription: EntityDescriptorInput
+
+  """Filter by list of IDs"""
   pinned: Boolean
 
   """Filter by list of IDs"""
@@ -2021,6 +2024,9 @@ input EntityDescriptorInput {
 
   """Filter by entity key/label"""
   keys: [String!] = null
+
+  """The list of ontology terms associated with this entity descriptor"""
+  ontologyTerms: [String!]
 
   """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
   ontotologyTerms: [String!] = null

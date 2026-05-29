@@ -27,7 +27,6 @@ import {
   Modifier,
   useSmartExtension,
 } from "./ExtensionContext";
-import { SearchExtensions } from "./extensions/SearchExtensions";
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -307,9 +306,6 @@ export const CommandMenu = (props: {
                       returns={props.returns || []}
                     />
                   </Guard.Kabinet>
-                  <Guard.Mikro fallback={<></>}>
-                    <SearchExtensions />
-                  </Guard.Mikro>
                 </ExtensionContext.Provider>
               </CommandList>
               <div className="border-t border-border/50 bg-linear-to-r from-transparent via-primary/6 to-transparent px-2 py-2">

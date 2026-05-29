@@ -357,6 +357,24 @@ interface Category {
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
 }
 
+"""Input for specifying the position of a node in the graph visualization"""
+input CategoryNodePositionInput {
+  """The category of the node"""
+  category: String!
+
+  """Optional height for the node (for visualization purposes)"""
+  height: Float = null
+
+  """The x-coordinate of the node position"""
+  positionX: Float!
+
+  """The y-coordinate of the node position"""
+  positionY: Float!
+
+  """Optional width for the node (for visualization purposes)"""
+  width: Float = null
+}
+
 """Base interface for graph nodes representing entities"""
 type CategoryTag {
   """Description of the category tag"""
@@ -1925,7 +1943,7 @@ input EntityCategoryFilter {
   label: String
 
   """Filter by list of IDs"""
-  matchesDescription: EntityDescriptorInput
+  matchesDescriptor: EntityDescriptorInput
 
   """Filter by list of IDs"""
   pinned: Boolean
@@ -2026,7 +2044,7 @@ input EntityDescriptorInput {
   keys: [String!] = null
 
   """The list of ontology terms associated with this entity descriptor"""
-  ontologyTerms: [String!]
+  ontologyTerms: [String!] = null
 
   """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
   ontotologyTerms: [String!] = null
@@ -2788,6 +2806,9 @@ input MaterializedMeasurementEdgeFilter {
   DISTINCT: Boolean
   NOT: MaterializedMeasurementEdgeFilter
   OR: MaterializedMeasurementEdgeFilter
+
+  """Filter by list of IDs"""
+  graphId: String
   id: ID
 
   """Filter by list of IDs"""
@@ -3696,6 +3717,9 @@ type Mutation {
 
   """Update a graph table query"""
   updateGraphTableQuery(input: UpdateGraphTableQueryInput!): GraphTableQuery!
+
+  """Update the visual configuration of a graph in the graph engine"""
+  updateGraphVisual(input: UpdateGraphVisualInput!): Graph!
 
   """Update an existing measurement in the graph"""
   updateMeasurement(input: UpdateMeasurementInput!): Measurement!
@@ -5635,6 +5659,9 @@ input StructureCategoryFilter {
   label: String
 
   """Filter by list of IDs"""
+  matchesDescriptor: StructureDescriptorInput
+
+  """Filter by list of IDs"""
   pinned: Boolean
 
   """Filter by list of IDs"""
@@ -6268,6 +6295,15 @@ input UpdateGraphTableQueryInput {
 
   """The Cypher query string that defines this graph query"""
   query: String = null
+}
+
+"""Input for updating the visual properties of a graph element"""
+input UpdateGraphVisualInput {
+  """The ID of the graph element to update"""
+  id: String!
+
+  """List of node positions to update"""
+  nodePositions: [CategoryNodePositionInput!]! = []
 }
 
 """

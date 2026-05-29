@@ -2,10 +2,10 @@ import { Position } from "@xyflow/react";
 
 import {
   BaseListCategoryFragment,
+  CategoryNodePositionInput,
   CategoryDefintion,
   EntityDescriptorFragment,
   GraphFragment,
-  GraphNodeInput,
   ListEntityCategoryFragment,
   ListStructureCategoryFragment,
   StructureCategoryDefinition,
@@ -310,10 +310,22 @@ export function calculateMidpoint(
   };
 }
 
-export const nodeToNodeInput = (node: MyNode): GraphNodeInput | null => {
+export const nodeToNodeInput = (node: MyNode) => {
   // We only update the positions of the node the rest is not needed
   return {
     id: node.id,
+    positionX: node.position.x,
+    positionY: node.position.y,
+    height: node.height,
+    width: node.width,
+  };
+};
+
+export const nodeToNodePositionInput = (
+  node: MyNode,
+): CategoryNodePositionInput | null => {
+  return {
+    category: node.id,
     positionX: node.position.x,
     positionY: node.position.y,
     height: node.height,

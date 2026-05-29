@@ -100,6 +100,7 @@ export const GraphKnowledgeView = (props: {
                 dialog.openDialog("createnewmeasurement", {
                   left: [{ identifier: props.identifier, object: props.object }],
                   right: [],
+                  graph: props.graph.id,
                 })
               }
             >

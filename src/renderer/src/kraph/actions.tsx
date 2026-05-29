@@ -129,9 +129,14 @@ export const KRAPH_ACTIONS = {
       },
     ],
     execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+      const graph = state.left[0]?.object?.graph?.id as string | undefined;
+      if (!graph) {
+        throw new Error("Structure category does not have a graph. Use the context menu to select a graph.");
+      }
       dialog.openDialog("createnewmeasurement", {
         left: state.left,
         right: state.right || [],
+        graph,
       });
     },
     collections: ["io"],

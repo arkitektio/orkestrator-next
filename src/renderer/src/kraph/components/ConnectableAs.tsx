@@ -252,6 +252,7 @@ export type ConnectableAsProps = {
 export const ConnectableAs = ({
   identifier,
   structure,
+  graphId,
   onConnect,
   variant = "dialog",
 }: ConnectableAsProps) => {
@@ -259,6 +260,7 @@ export const ConnectableAs = ({
     variables: {
       filters: {
         sourceIdentifier: identifier,
+        graphId: graphId,
       },
     },
     fetchPolicy: "network-only",

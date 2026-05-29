@@ -4,6 +4,6 @@ mutation CreateRoom($input: CreateRoomInput!) {
   }
 }
 
-mutation DeleteRoom($input: DeleteRoomInput!) {
-  deleteRoom(input: $input)
+mutation DeleteRoom($id: ID!) {
+  deleteRoom(input: { id: $id })
 }

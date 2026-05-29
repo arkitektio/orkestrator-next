@@ -5,3 +5,39 @@ fragment ListRepo on GithubRepo {
   user
   repo
 }
+
+fragment Repo on GithubRepo {
+  id
+  name
+  branch
+  user
+  repo
+  url
+  issueUrl
+  addedAt
+  updatedAt
+  flavours {
+    id
+    name
+    release {
+      id
+      version
+      app {
+        identifier
+      }
+    }
+    selectors {
+      ... on CPUSelector {
+        __typename
+      }
+      ... on CudaSelector {
+        cudaVersion
+        cudaCores
+      }
+      ... on RocmSelector {
+        apiVersion
+        apiThing
+      }
+    }
+  }
+}

@@ -7,7 +7,7 @@ import { KabinetBackend } from "@/linkers";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { Popover } from "@radix-ui/react-popover";
 import { useDebounce } from "@uidotdev/usehooks";
-import { HelpCircle, Home, ShoppingCart } from "lucide-react";
+import { GitBranch, HelpCircle, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
@@ -41,6 +41,13 @@ export const NavigationPane = () => {
         </SidePaneGroup>
 
         <SidePaneGroup title="Manage All">
+          <PaneLink
+            to="/kabinet/repos"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranch className="h-4 w-4" />
+            Repos
+          </PaneLink>
           <PaneLink
             to="/kabinet/pods"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -94,17 +101,12 @@ const Pane: React.FunctionComponent = () => {
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    noActions: false,
     pagination: {
       limit: 10,
     },
   };
 
-  const { data, refetch } = useGlobalSearchQuery({ variables });
-
-  React.useEffect(() => {
-    refetch(variables);
-  }, [debouncedSearch]);
+  const { data } = useGlobalSearchQuery({ variables });
 
   return (
     <>

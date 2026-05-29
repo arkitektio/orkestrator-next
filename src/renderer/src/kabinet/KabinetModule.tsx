@@ -8,16 +8,20 @@ import FlavourPage from "./pages/FlavourPage";
 import HomePage from "./pages/HomePage";
 import PodPage from "./pages/PodPage";
 import PodsPage from "./pages/PodsPage";
+import RepoPage from "./pages/RepoPage";
+import ReposPage from "./pages/ReposPage";
 import ReleasePage from "./pages/ReleasePage";
 import ResourcePage from "./pages/ResourcePage";
 import StandardPane from "./panes/StandardPane";
 interface Props { }
 
-export const KabinetModule: React.FC<Props> = (props) => {
+export const KabinetModule: React.FC<Props> = () => {
   return (
     <Guard.Kabinet fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
+          <Route path="repos" element={<ReposPage />} />
+          <Route path="repos/:id" element={<RepoPage />} />
           <Route path="pods" element={<PodsPage />} />
           <Route path="pods/:id" element={<PodPage />} />
           <Route path="definitions/:id" element={<DefinitionPage />} />

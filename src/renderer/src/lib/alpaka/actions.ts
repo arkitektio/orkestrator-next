@@ -1,5 +1,4 @@
 import { DeleteProviderDocument, DeleteRoomDocument } from '@/alpaka/api/graphql'
-import { DeleteProviderDocument, DeleteRoomDocument } from "@/alpaka/api/graphql";
 import { buildDeleteAction } from "../localactions/builders/deleteAction";
 import { Action } from "../localactions/LocalActionProvider";
 export const ALPAKA_ACTIONS: Record<string, Action> = {

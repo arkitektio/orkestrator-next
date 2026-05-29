@@ -506,6 +506,8 @@ export const KabinetDefinition = buildSmart(
   "kabinet/definitions",
 );
 
+export const KabinetRepo = buildSmart("@kabinet/repo", "kabinet/repos");
+
 export const KabinetBackend = buildSmart(
   "@kabinet/backend",
   "kabinet/backends",

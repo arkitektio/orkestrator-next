@@ -22,6 +22,7 @@ import {
 } from "../api/graphql";
 import { PopularCarousel } from "../components/PopularCarousel";
 import DefinitionList from "../components/lists/DefinitionList";
+import RepoList from "../components/lists/RepoList";
 import ReleasesList from "../components/lists/ReleasesList";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
@@ -122,7 +123,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
           {/* Welcome Header */}
           <CardHeader>
             <CardTitle className="text-3xl flex items-center gap-3">
-              <ShoppingBasket className="h-8 w-8 text-blue-500" />
+              <ShoppingBasket className="h-8 w-8 text-primary" />
               Apps
             </CardTitle>
             <CardDescription className="text-lg">
@@ -131,6 +132,10 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
           </CardHeader>
 
           <PopularCarousel />
+
+          <Separator className="mt-8 mb-2" />
+
+          <RepoList pagination={{ limit: 6 }} />
 
           <Separator className="mt-8 mb-2" />
 

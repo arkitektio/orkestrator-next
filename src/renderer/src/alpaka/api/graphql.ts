@@ -829,7 +829,7 @@ export type CreateRoomMutationVariables = Exact<{
 export type CreateRoomMutation = { __typename?: 'Mutation', createRoom: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
 
 export type DeleteRoomMutationVariables = Exact<{
-  input: DeleteRoomInput;
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -1494,8 +1494,8 @@ export type CreateRoomMutationHookResult = ReturnType<typeof useCreateRoomMutati
 export type CreateRoomMutationResult = Apollo.MutationResult<CreateRoomMutation>;
 export type CreateRoomMutationOptions = Apollo.BaseMutationOptions<CreateRoomMutation, CreateRoomMutationVariables>;
 export const DeleteRoomDocument = gql`
-    mutation DeleteRoom($input: DeleteRoomInput!) {
-  deleteRoom(input: $input)
+    mutation DeleteRoom($id: ID!) {
+  deleteRoom(input: {id: $id})
 }
     `;
 export type DeleteRoomMutationFn = Apollo.MutationFunction<DeleteRoomMutation, DeleteRoomMutationVariables>;
@@ -1513,7 +1513,7 @@ export type DeleteRoomMutationFn = Apollo.MutationFunction<DeleteRoomMutation, D
  * @example
  * const [deleteRoomMutation, { data, loading, error }] = useDeleteRoomMutation({
  *   variables: {
- *      input: // value for 'input'
+ *      id: // value for 'id'
  *   },
  * });
  */

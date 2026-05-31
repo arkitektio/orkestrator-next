@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-import { useSceneStore } from '../store/sceneStore';
-import { useViewerStore } from '../store/viewerStore';
+import { useSceneStore } from '../../store/sceneStore';
+import { useViewerStore } from '../../store/viewerStore';
 
 export type VolumeRenderMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMaterial>;
 

@@ -9,7 +9,7 @@ import { getColorMapTexture } from '../../zarr/colormaps';
 import { calculateChunkGrid } from '../../zarr/utils';
 import { buildAffineMatrix } from '../../panels/layer/affine-utils';
 
-import { ChunkPlane } from '../ChunkPlane';
+import { ChunkPlane } from './ChunkPlane';
 import { useSelectionStore } from '../../store/layerStore';
 import { useModeStore } from '../../store/modeStore';
 import { useViewerStore } from '../../store/viewerStore';

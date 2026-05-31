@@ -5,18 +5,18 @@ import type { Chunk, DataType, Slice } from 'zarrita';
 
 import { DimSliceFragment } from '@/mikro-next/api/graphql';
 
-import { getChunkWorker } from '../../../../lib/zarr/runner';
-import { setter } from '../../../../lib/zarr/runner/internals/setter';
-import { get_strides } from '../../../../lib/zarr/runner/internals/util';
-import { workerPool } from '../../../workers/pool';
-import { buildAffineMatrix } from '../panels/layer/affine-utils';
-import { useSelectionStore } from '../store/layerStore';
-import { useModeStore } from '../store/modeStore';
-import { LayerState } from '../store/sceneStore';
-import { useViewerStore, useViewerStoreApi } from '../store/viewerStore';
-import { BasicIndexer } from '../stores/indexer';
-import { mapDTypeToMinMax } from '../stores/utils';
-import { getColorMapTexture } from '../zarr/colormaps';
+import { getChunkWorker } from '../../../../../lib/zarr/runner';
+import { setter } from '../../../../../lib/zarr/runner/internals/setter';
+import { get_strides } from '../../../../../lib/zarr/runner/internals/util';
+import { workerPool } from '../../../../workers/pool';
+import { buildAffineMatrix } from '../../panels/layer/affine-utils';
+import { useSelectionStore } from '../../store/layerStore';
+import { useModeStore } from '../../store/modeStore';
+import { LayerState } from '../../store/sceneStore';
+import { useViewerStore, useViewerStoreApi } from '../../store/viewerStore';
+import { BasicIndexer } from '../../stores/indexer';
+import { mapDTypeToMinMax } from '../../stores/utils';
+import { getColorMapTexture } from '../../zarr/colormaps';
 import { VolumeTextureMesh, type VolumeRenderMesh } from './VolumeTextureMesh';
 
 type AxisSelection = {

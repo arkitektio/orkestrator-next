@@ -1006,6 +1006,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
         isEdgeChunk ? edgeChunkShape : undefined,
         opts.textureFidelity,
+        useShared,
       )
 
       let chunkToReturn: TexturedChunk<D>
@@ -1163,9 +1164,12 @@ export async function getWorker<
   // Allocate output — backed by SharedArrayBuffer when requested
   const size = indexer.shape.reduce((a: number, b: number) => a * b, 1)
   const buffer = createBuffer(size * outputBytesPerElement, useShared)
-  const data = new OutputCtr(buffer as ArrayBufferLike, 0, size)
+  const OutputArrayCtr = OutputCtr as unknown as {
+    new (buffer: ArrayBufferLike, byteOffset: number, length: number): Chunk<D>["data"]
+  }
+  const data = new OutputArrayCtr(buffer, 0, size)
   const outStride = get_strides(indexer.shape)
-  const out = setter.prepare(data, indexer.shape, outStride) as Chunk<D>
+  const out = setter.prepare(data as Chunk<D>["data"], indexer.shape, outStride) as Chunk<D>
 
   // Pre-compute chunk invariants (hoisted out of loop)
   const chunkShape = actualChunkShape
@@ -1239,6 +1243,8 @@ export async function getWorker<
             correctedCodecMeta,
             serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
             isEdgeChunk ? edgeChunkShape : undefined,
+            'default',
+            useShared,
           )
 
           let chunkToWrite: Chunk<D>

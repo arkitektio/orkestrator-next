@@ -27,7 +27,7 @@ export interface WorkerFetchDecodeResult<D extends DataType> {
 
 function createPromotedArray<D extends DataType>(
   promotedType: TextureCompatibleDataType | undefined,
-  buffer: ArrayBuffer,
+  buffer: ArrayBufferLike,
   byteOffset: number,
   byteLength: number,
   meta: CodecChunkMeta,
@@ -178,6 +178,7 @@ export async function workerFetchDecode<D extends DataType>(
   requestInit?: SerializedRequestInit,
   actualChunkShape?: number[],
   textureFidelity: TextureFidelity = 'default',
+  useSharedArrayBuffer = false,
 ): Promise<WorkerFetchDecodeResult<D>> {
   const dispatcher = getDispatcher(worker)
   const metaInitMs = await ensureMeta(dispatcher, metaId)
@@ -193,11 +194,12 @@ export async function workerFetchDecode<D extends DataType>(
     requestInit,
     actualChunkShape,
     textureFidelity,
+    useSharedArrayBuffer,
   }) as {
     missing?: boolean
     promotedType?: TextureCompatibleDataType
     textureBounds?: TextureChunkBounds
-    data?: ArrayBuffer
+    data?: ArrayBufferLike
     byteOffset?: number
     byteLength?: number
     shape?: number[]

@@ -23,8 +23,10 @@ export type ZarrStore = {
   getWorkerFetchConfig?: () => S3FetchConfig;
 };
 
-export function isWorkerFetchCapableStore(store: ZarrStore): store is ZarrStore & { getWorkerFetchConfig: () => S3FetchConfig } {
-  return typeof store.getWorkerFetchConfig === "function";
+export function isWorkerFetchCapableStore(
+  store: unknown,
+): store is { getWorkerFetchConfig: () => S3FetchConfig } {
+  return typeof store === "object" && store !== null && typeof (store as { getWorkerFetchConfig?: unknown }).getWorkerFetchConfig === "function";
 }
 
 /** Minimal client interface - compatible with Apollo Client's mutate method */

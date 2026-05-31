@@ -1,15 +1,12 @@
 import { VolumeLayer } from "./VolumeLayer";
 import { SceneProbedPoint } from "./SceneProbedPoint";
 import { useMemo } from "react";
-import { useModeStore } from "../store/modeStore";
-import { useSceneStore } from "../store/sceneStore";
+import { useSceneStore } from "../../store/sceneStore";
 
 const MAX_DISPLAYABLE = 10;
 
 
 export const SceneVolume = () => {
-  // 1. Get the descriptors directly from your backend state hook
-  const mode = useModeStore((s) => s.displayMode);
   const layers = useSceneStore((s) => s.layers);
 
 
@@ -18,11 +15,6 @@ export const SceneVolume = () => {
       .filter((layer) => layer.visible !== false)
       .slice(0, MAX_DISPLAYABLE);
   }, [layers]);
-
-  if (mode == "2D") return null;
-
-
-
 
   // 2. Map over them. React handles all mounting, fetching, and unmounting automatically.
   return (

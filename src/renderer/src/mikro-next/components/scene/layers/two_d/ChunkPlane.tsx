@@ -1,28 +1,33 @@
-import { useViewerStore } from '../store/viewerStore';
+import { useViewerStore } from '../../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-import { getChunkWorker } from '../../../../lib/zarr/runner';
-import { workerPool } from '../../../workers/pool';
-import type { ChunkData } from '../stores/types';
-import { useSceneStore } from '../store/sceneStore';
+import { useFrame, useThree } from '@react-three/fiber';
+import { getChunkWorker } from '../../../../../lib/zarr/runner';
+import { workerPool } from '../../../../workers/pool';
+import type { ChunkData } from '../../stores/types';
+import { useSceneStore } from '../../store/sceneStore';
 
 const CHUNK_FADE_IN_MS = 220;
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: unknown) {
   if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 1.0 };
-  }
-  if (rawData instanceof Uint16Array) {
-    const normalizedData = new Float32Array(rawData.length);
-    for (let index = 0; index < rawData.length; index++) {
-      normalizedData[index] = rawData[index] / 65535;
-    }
-    return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+    return {
+      data: rawData,
+      type: THREE.UnsignedByteType,
+      internalFormat: 'R8',
+      dataScale: 1.0,
+      usesNormalizedTextureValues: true,
+    };
   }
   if (rawData instanceof Float32Array) {
-    return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+    return {
+      data: rawData,
+      type: THREE.FloatType,
+      internalFormat: 'R32F',
+      dataScale: 1.0,
+      usesNormalizedTextureValues: false,
+    };
   }
 
   throw new Error(`Unexpected chunk data type: ${rawData?.constructor?.name ?? typeof rawData}`);
@@ -32,9 +37,11 @@ function getTextureConfig(rawData: unknown) {
 export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
+  const [usesNormalizedTextureValues, setUsesNormalizedTextureValues] = useState(false);
   const [localBounds, setLocalBounds] = useState<{ localMin: number; localMax: number } | null>(null);
   const isDebug = useViewerStore((s) => s.debug);
   const getArray = useViewerStore((s) => s.getArray);
+  const invalidate = useThree((state) => state.invalidate);
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -125,7 +132,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
           priority: chunk.level,
           signal: abortController.signal,
           useSharedArrayBuffer: true,
-          textureFidelity: chunk.level === 0 ? 'high' : 'low',
         });
         const chunkReadMs = performance.now() - chunkReadStartedAt;
 
@@ -143,7 +149,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
         const texturePrepStartedAt = performance.now();
-        const { data, type, dataScale } = getTextureConfig(chunkData.data);
+        const { data, type, dataScale, usesNormalizedTextureValues } = getTextureConfig(chunkData.data);
         const textureConfigMs = performance.now() - texturePrepStartedAt;
 
         const textureCreateStartedAt = performance.now();
@@ -172,6 +178,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         });
 
         setDataScale(dataScale);
+        setUsesNormalizedTextureValues(usesNormalizedTextureValues);
         setLocalBounds(chunkData.textureBounds ?? {
           localMin: chunk.min_value,
           localMax: chunk.max_value,
@@ -244,8 +251,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
       if (colorMapTexture) {
         materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
       }
+      materialRef.current.uniforms.usesNormalizedTextureValues.value = usesNormalizedTextureValues ? 1.0 : 0.0;
+      materialRef.current.uniformsNeedUpdate = true;
+      invalidate();
     }
-  }, [colorMapTexture, layer?.climMax, layer?.climMin, localBounds]);
+  }, [colorMapTexture, invalidate, layer?.climMax, layer?.climMin, localBounds, usesNormalizedTextureValues]);
 
 
 
@@ -263,6 +273,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     gamma: { value: 1.0 },
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
+    usesNormalizedTextureValues: { value: usesNormalizedTextureValues ? 1.0 : 0.0 },
     dimRemap: { value: dimRemapMat },
   }), [
     chunk.max_value,
@@ -274,6 +285,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     layer?.climMin,
     localBounds,
     texture,
+    usesNormalizedTextureValues,
   ]);
 
 
@@ -353,11 +365,16 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
             uniform float gamma;
             uniform float useDiscrete;
             uniform float dataScale;
+            uniform float usesNormalizedTextureValues;
             uniform mat3 dimRemap;
 
             out vec4 FragColor;
 
             float reconstructRawValue(float encodedValue) {
+              if (usesNormalizedTextureValues < 0.5) {
+                return encodedValue * dataScale;
+              }
+
               float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
               if (abs(localMax - localMin) < 0.00001) {
                 return localMin;

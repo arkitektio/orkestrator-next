@@ -29,7 +29,7 @@ import {
   createBuffer,
   get_strides,
 } from "./internals/util"
-import type { ChunkCache, CodecChunkMeta, GetWorkerOptions, TextureChunkBounds, TexturedChunk } from "./types"
+import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
 import { disposeWorker, getMetaId, workerFetchDecode, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
 import { isWorkerFetchCapableStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type"
 import { serializeRequestInit } from "./s3-request"
@@ -203,83 +203,8 @@ function createWorkerTask<T>(
 
 function getTextureOutputConstructor(dataType: DataType):
   | Uint8ArrayConstructor
-  | Uint16ArrayConstructor
   | Float32ArrayConstructor {
   return dataType === "uint8" ? Uint8Array : Float32Array
-}
-
-function getTextureOutputConstructorForFidelity(
-  dataType: DataType,
-  textureFidelity: GetWorkerOptions["textureFidelity"] = 'default',
-): Uint8ArrayConstructor | Uint16ArrayConstructor | Float32ArrayConstructor {
-  if (textureFidelity === 'low') {
-    return Uint8Array
-  }
-
-  if (textureFidelity === 'high') {
-    return Uint16Array
-  }
-
-  return getTextureOutputConstructor(dataType)
-}
-
-function mapDTypeToRange(dataType: DataType): [number, number] {
-  switch (dataType) {
-    case 'uint8':
-      return [0, 255]
-    case 'uint16':
-      return [0, 65535]
-    case 'uint32':
-      return [0, 4294967295]
-    case 'int8':
-      return [-128, 127]
-    case 'int16':
-      return [-32768, 32767]
-    case 'int32':
-      return [-2147483648, 2147483647]
-    case 'float32':
-    case 'float64':
-      return [0, 1]
-    case 'bool':
-      return [0, 1]
-    default:
-      return [0, 1]
-  }
-}
-
-function convertFillValueForTexture(
-  fillValue: Scalar<DataType>,
-  dataType: DataType,
-  textureFidelity: GetWorkerOptions['textureFidelity'] = 'default',
-): number {
-  if (textureFidelity === 'default') {
-    return Number(fillValue)
-  }
-
-  const numericValue = Number(fillValue)
-  if (!Number.isFinite(numericValue)) {
-    return 0
-  }
-
-  const [minValue, maxValue] = mapDTypeToRange(dataType)
-  const normalized = Math.min(1, Math.max(0, (numericValue - minValue) / Math.max(maxValue - minValue, 0.00001)))
-  return Math.round(normalized * (textureFidelity === 'low' ? 255 : 65535))
-}
-
-function getTextureBoundsForFillValue(
-  fillValue: Scalar<DataType> | null,
-  textureFidelity: GetWorkerOptions['textureFidelity'] = 'default',
-): TextureChunkBounds | undefined {
-  if (textureFidelity === 'default' || fillValue == null) {
-    return undefined
-  }
-
-  const numericValue = Number(fillValue)
-  const finiteValue = Number.isFinite(numericValue) ? numericValue : 0
-  return {
-    localMin: finiteValue,
-    localMax: finiteValue,
-  }
 }
 
 function roundTiming(ms: number): number {
@@ -494,7 +419,7 @@ export function readBloscFrameContentSize(
  *
  * Returns the decompressed byte size, or null if detection failed.
  */
-async function probeDecompressedSize(
+async function probeDecompressedSize<D extends DataType>(
   rawBytes: Uint8Array,
   codecMeta: CodecChunkMeta,
   bytesPerElement: number,
@@ -917,7 +842,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   arr: ZarrArray<D, Store>,
   chunkCoords: number[],
   opts: GetWorkerOptions<Parameters<Store["get"]>[1]>,
-): Promise<TexturedChunk<D>> {
+): Promise<Chunk<D>> {
   const startedAt = performance.now()
   const { pool, workerUrl } = opts
   const useShared = opts.useSharedArrayBuffer !== false
@@ -941,7 +866,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
 
   const actualChunkShape = codecMeta.chunk_shape
   const correctedCodecMeta = codecMeta
-  const OutputCtr = getTextureOutputConstructorForFidelity(correctedCodecMeta.data_type, opts.textureFidelity)
+  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
   const metaId = getMetaId(correctedCodecMeta)
 
   if (!isWorkerFetchCapableStore(arr.store)) {
@@ -956,7 +881,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   )
   const isEdgeChunk = edgeChunkShape.some((size, index) => size !== actualChunkShape[index])
 
-  const cacheKey = `${createCacheKey(arr, encodeChunkKey, chunkCoords)}:tf:${opts.textureFidelity ?? 'default'}`
+  const cacheKey = createCacheKey(arr, encodeChunkKey, chunkCoords)
   const cacheLookupStartedAt = performance.now()
   const cachedChunk = cache.get(cacheKey)
   const cacheLookupMs = performance.now() - cacheLookupStartedAt
@@ -986,7 +911,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
       metadataReadMs: roundTiming(metadataReadMs),
       totalMs: roundTiming(performance.now() - startedAt),
     })
-    return cachedChunk as TexturedChunk<D>
+    return cachedChunk as Chunk<D>
   }
 
   const enqueuedAt = performance.now()
@@ -1005,11 +930,9 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         correctedCodecMeta,
         serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
         isEdgeChunk ? edgeChunkShape : undefined,
-        opts.textureFidelity,
-        useShared,
       )
 
-      let chunkToReturn: TexturedChunk<D>
+      let chunkToReturn: Chunk<D>
       let fillChunkMs = 0
 
       if (fetchedChunk) {
@@ -1024,17 +947,12 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         )
         const chunkData = new OutputCtr(fillChunkSize)
         if (fillValue != null) {
-          if (opts.textureFidelity === 'default') {
-            chunkData.fill(convertFillValueForTexture(fillValue, correctedCodecMeta.data_type, opts.textureFidelity))
-          } else {
-            chunkData.fill(0)
-          }
+          chunkData.fill(Number(fillValue))
         }
         chunkToReturn = {
           data: chunkData as Chunk<D>["data"],
           shape: edgeChunkShape,
           stride: fillChunkStrides,
-          textureBounds: getTextureBoundsForFillValue(fillValue, opts.textureFidelity),
         }
         cache.set(cacheKey, chunkToReturn)
         fillChunkMs = performance.now() - fillStartedAt
@@ -1164,12 +1082,9 @@ export async function getWorker<
   // Allocate output — backed by SharedArrayBuffer when requested
   const size = indexer.shape.reduce((a: number, b: number) => a * b, 1)
   const buffer = createBuffer(size * outputBytesPerElement, useShared)
-  const OutputArrayCtr = OutputCtr as unknown as {
-    new (buffer: ArrayBufferLike, byteOffset: number, length: number): Chunk<D>["data"]
-  }
-  const data = new OutputArrayCtr(buffer, 0, size)
+  const data = new OutputCtr(buffer as ArrayBufferLike, 0, size)
   const outStride = get_strides(indexer.shape)
-  const out = setter.prepare(data as Chunk<D>["data"], indexer.shape, outStride) as Chunk<D>
+  const out = setter.prepare(data, indexer.shape, outStride) as Chunk<D>
 
   // Pre-compute chunk invariants (hoisted out of loop)
   const chunkShape = actualChunkShape
@@ -1243,8 +1158,6 @@ export async function getWorker<
             correctedCodecMeta,
             serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
             isEdgeChunk ? edgeChunkShape : undefined,
-            'default',
-            useShared,
           )
 
           let chunkToWrite: Chunk<D>

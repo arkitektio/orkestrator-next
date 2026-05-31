@@ -193,8 +193,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
             arrayShape: arr.shape,
             min_value: minVal,
             max_value: maxVal,
-            cLimMin: Math.ceil(minVal * (layer.climMin || 0)),
-            cLimMax: Math.floor(maxVal * (layer.climMax || 1)),
             colormapTexture: colormapTexture,
             level: levelIdx,
             scaleFactors: level.scaleFactors

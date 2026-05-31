@@ -20,7 +20,6 @@ import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
-app.commandLine.appendSwitch('enable-quic');
 // Core Services
 const appManager = new AppManager();
 const transport = new IpcTransport();

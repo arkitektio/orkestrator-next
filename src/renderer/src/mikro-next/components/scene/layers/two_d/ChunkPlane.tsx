@@ -5,7 +5,7 @@ import { getChunkWorker } from '../../../../../lib/zarr/runner';
 import { workerPool } from '../../../../workers/pool';
 import type { ChunkData } from '../../stores/types';
 import { useSceneStore } from '../../store/sceneStore';
-import { useShallow } from 'zustand/shallow';
+
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
 function getTextureConfig(rawData: any) {
@@ -213,7 +213,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     maxValue: { value: chunk.max_value },
     climMin: { value: layer?.climMin ?? 0.0 },
     climMax: { value: layer?.climMax ?? 1.0 },
-    opacity: { value: 1.0 },
+    opacity: { value: 1 },
     gamma: { value: 1.0 },
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
@@ -316,7 +316,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
               vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
 
-              if (color.a * normalized < 0.01) discard;
 
               FragColor = vec4(color.rgb, color.a * opacity * normalized);
             }

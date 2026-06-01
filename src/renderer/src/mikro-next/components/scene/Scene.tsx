@@ -150,7 +150,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <SceneModeContent />
 
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
-                <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
+                <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}/>
               </GizmoHelper>
             </SceneWrapper>
 

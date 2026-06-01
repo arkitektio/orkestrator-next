@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-import { useSceneStore } from '../../store/sceneStore';
+import { useSceneStoreApi } from '../../store/sceneStore';
 import { useViewerStore } from '../../store/viewerStore';
 
 export type VolumeRenderMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMaterial>;
@@ -39,8 +39,14 @@ export const VolumeTextureMesh = ({
   const [xIdx, yIdx, zIdx] = dimensionOrder;
   const isDebug = useViewerStore((s) => s.debug);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const layer = useSceneStore((s) => s.layers.find((candidate) => candidate.id === layerId));
+  const sceneStoreApi = useSceneStoreApi();
   const invalidate = useThree((state) => state.invalidate);
+
+  const initialLayer = sceneStoreApi.getState().layers.find((candidate) => candidate.id === layerId);
+  const initialClimMin = initialLayer?.climMin ?? 0.0;
+  const initialClimMax = initialLayer?.climMax ?? 1.0;
+  const climMinRef = useRef<number>(initialClimMin);
+  const climMaxRef = useRef<number>(initialClimMax);
 
   const validSpatialIndices = useMemo(
     () => [xIdx, yIdx, zIdx].filter((index) => index !== -1),
@@ -91,20 +97,41 @@ export const VolumeTextureMesh = ({
   }, [dataScale, invalidate, localMaxTexture, localMinTexture, texture]);
 
   useEffect(() => {
+    const unsubscribe = sceneStoreApi.subscribe((state) => {
+      const nextLayer = state.layers.find((candidate) => candidate.id === layerId);
+      if (!nextLayer) return;
+
+      const nextMin = nextLayer.climMin ?? 0.0;
+      const nextMax = nextLayer.climMax ?? 1.0;
+
+      if (nextMin === climMinRef.current && nextMax === climMaxRef.current) return;
+
+      climMinRef.current = nextMin;
+      climMaxRef.current = nextMax;
+
+      const material = materialRef.current;
+      if (!material) return;
+
+      material.uniforms.climMin.value = nextMin;
+      material.uniforms.climMax.value = nextMax;
+      material.uniformsNeedUpdate = true;
+      invalidate();
+    });
+
+    return unsubscribe;
+  }, [invalidate, layerId, sceneStoreApi]);
+
+  useEffect(() => {
     if (!materialRef.current) return;
 
-    if (layer?.climMin !== undefined) {
-      materialRef.current.uniforms.climMin.value = layer.climMin;
-    }
-    if (layer?.climMax !== undefined) {
-      materialRef.current.uniforms.climMax.value = layer.climMax;
-    }
+    materialRef.current.uniforms.climMin.value = climMinRef.current;
+    materialRef.current.uniforms.climMax.value = climMaxRef.current;
     if (colorMapTexture) {
       materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
     }
     materialRef.current.uniformsNeedUpdate = true;
     invalidate();
-  }, [colorMapTexture, invalidate, layer?.climMax, layer?.climMin]);
+  }, [colorMapTexture, invalidate]);
 
   const initialUniforms = useMemo(
     () => ({
@@ -114,8 +141,8 @@ export const VolumeTextureMesh = ({
       colormapTexture: { value: colorMapTexture },
       minValue: { value: minValue },
       maxValue: { value: maxValue },
-      climMin: { value: layer?.climMin ?? 0.0 },
-      climMax: { value: layer?.climMax ?? 1.0 },
+      climMin: { value: initialClimMin },
+      climMax: { value: initialClimMax },
       opacity: { value: 1.0 },
       gamma: { value: 1.0 },
       useDiscrete: { value: 0.0 },
@@ -127,8 +154,8 @@ export const VolumeTextureMesh = ({
       colorMapTexture,
       dataScale,
       dimRemapMat,
-      layer?.climMax,
-      layer?.climMin,
+      initialClimMax,
+      initialClimMin,
       localMaxTexture,
       localMinTexture,
       maxValue,

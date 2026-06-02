@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/lovekit/graphql"
+schema:
+  "http://jhnnsrs-lab/lovekit/schema":
+    handleAsSDL: true
 documents: "graphql/lovekit/**/*.graphql"
 generates:
   src/renderer/src/lovekit/api/fragments.ts:

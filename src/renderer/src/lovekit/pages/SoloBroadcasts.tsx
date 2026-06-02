@@ -1,16 +1,15 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { AlpakaCollection } from "@/linkers";
+import { AlpakaCollection, LovekitSoloBroadcast } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
-import CollectionList from "../components/lists/CollectionList";
+import SoloBroadcastList from "../components/lists/SoloBroadcastList";
 
 export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <LovekitSoloBroadcast.ListPage
       title="Images"
       pageActions={
         <>
@@ -28,9 +27,9 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Collections"
           description="Collections are searchable groups of data. They allow to retrieve data based on semantic queries."
         />
-        <CollectionList pagination={{ limit: 30 }} />
+        <SoloBroadcastList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </LovekitSoloBroadcast.ListPage>
   );
 };
 

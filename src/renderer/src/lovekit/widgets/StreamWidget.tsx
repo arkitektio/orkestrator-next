@@ -40,27 +40,6 @@ export const VideoStream = ({ stream }: { stream: EnsuredStreamFragment }) => {
   );
 };
 
-export const StreamJoiner = (props: { room: string }) => {
-  const [createStream, stream] = useJoin();
-
-  return <>Not implemented Right now</>;
-};
-
-export const StreamWidget = (props: ReturnWidgetProps) => {
-  const { data } = useGetStreamQuery({
-    variables: {
-      id: props.value,
-    },
-  });
-
-  const room = data?.stream?.id;
-
-  return (
-    <div className="w-full h-full m-2">
-      {room && <StreamJoiner room={room} />}
-    </div>
-  );
-};
 
 export const AsyncStreamWidget = (props: { id: string }) => {
   const { data, error } = useGetStreamQuery({
@@ -73,7 +52,6 @@ export const AsyncStreamWidget = (props: { id: string }) => {
 
   return (
     <div className="w-full h-full m-2">
-      {room && <StreamJoiner room={room} />}
       {!room && (
         <div className="flex items-center justify-center h-full">
           <span className="text-white">Loading stream...</span>

@@ -1,0 +1,187 @@
+type App {
+  id: String!
+  identifier: String!
+}
+
+type Client {
+  clientId: String!
+  name: String!
+  release: Release
+}
+
+type CollaborativeBroadcast {
+  audioStreams: [Stream!]!
+  createdAt: DateTime!
+  id: ID!
+
+  """The streamers that are collaborating on this broadcast."""
+  streamers(filters: StreamerFilter, pagination: OffsetPaginationInput): [Streamer!]!
+  streams: [Stream!]!
+  title: String!
+  videoStreams: [Stream!]!
+}
+
+"""Filter for Solo Broadcasts"""
+input CollaborativeBroadcastFilter {
+  AND: CollaborativeBroadcastFilter
+  DISTINCT: Boolean
+  NOT: CollaborativeBroadcastFilter
+  OR: CollaborativeBroadcastFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+input EnsureCollaborativeBroadcastInput {
+  instanceId: String = null
+  title: String = null
+}
+
+input EnsureSoloBroadcastInput {
+  instanceId: String = null
+  title: String = null
+}
+
+input EnsureStreamInput {
+  broadcast: ID = null
+  kind: StreamKind! = VIDEO
+  title: String = null
+}
+
+input JoinBroadcastInput {
+  broadcast: ID!
+}
+
+type Mutation {
+  """Create a collaborative broadcast"""
+  ensureCollaborativeBroadcast(input: EnsureCollaborativeBroadcastInput!): CollaborativeBroadcast!
+
+  """Create a solo broadcast"""
+  ensureSoloBroadcast(input: EnsureSoloBroadcastInput!): SoloBroadcast!
+
+  """Create a stream and return the token for it"""
+  ensureStream(input: EnsureStreamInput!): String!
+
+  """Join a solo broadcast and return the token for it"""
+  joinBroadcast(input: JoinBroadcastInput!): String!
+}
+
+input OffsetPaginationInput {
+  limit: Int
+  offset: Int! = 0
+}
+
+type Organization {
+  id: String!
+  slug: String!
+}
+
+type Query {
+  """Get a collaborative broadcast by ID"""
+  collaborativeBroadcast(id: ID!): CollaborativeBroadcast!
+
+  """Get all collaborative broadcasts"""
+  collaborativeBroadcasts(filters: CollaborativeBroadcastFilter, pagination: OffsetPaginationInput): [CollaborativeBroadcast!]!
+
+  """Get a solo broadcast by ID"""
+  soloBroadcast(id: ID!): SoloBroadcast!
+
+  """Get all solo broadcasts"""
+  soloBroadcasts(filters: SoloBroadcastFilter, pagination: OffsetPaginationInput): [SoloBroadcast!]!
+
+  """Get a stream by ID"""
+  stream(id: ID!): Stream!
+
+  """Get a stream"""
+  streams(filters: StreamFilter, pagination: OffsetPaginationInput): [Stream!]!
+}
+
+type Release {
+  app: App!
+  id: String!
+  version: String!
+}
+
+type SoloBroadcast {
+  audioStreams: [Stream!]!
+  createdAt: DateTime!
+  id: ID!
+  streamer: Streamer!
+  title: String!
+  videoStreams: [Stream!]!
+}
+
+"""Filter for Solo Broadcasts"""
+input SoloBroadcastFilter {
+  AND: SoloBroadcastFilter
+  DISTINCT: Boolean
+  NOT: SoloBroadcastFilter
+  OR: SoloBroadcastFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+type Stream {
+  id: ID!
+  kind: StreamKind!
+  streamer: Streamer!
+  title: String!
+}
+
+type StreamEvent {
+  create: Stream
+  delete: ID
+  moved: Stream
+  update: Stream
+}
+
+"""Filter for Streams"""
+input StreamFilter {
+  AND: StreamFilter
+  DISTINCT: Boolean
+  NOT: StreamFilter
+  OR: StreamFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+"""The state of a dask cluster"""
+enum StreamKind {
+  AUDIO
+  VIDEO
+}
+
+type Streamer {
+  client: Client!
+
+  """The collaborative broadcasts created by this agent."""
+  collaborativeBroadcasts(filters: CollaborativeBroadcastFilter, pagination: OffsetPaginationInput): [CollaborativeBroadcast!]!
+  id: ID!
+
+  """The solo broadcasts created by this agent, if any."""
+  soloBroadcasts: SoloBroadcast
+  user: User!
+}
+
+"""Filter for Dask Clusters"""
+input StreamerFilter {
+  AND: StreamerFilter
+  DISTINCT: Boolean
+  NOT: StreamerFilter
+  OR: StreamerFilter
+  ids: [ID!] = null
+  search: String = null
+}
+
+type Subscription {
+  """Subscribe to stream events"""
+  streams(dataset: ID = null): StreamEvent!
+}
+
+type User {
+  activeOrganization: Organization
+  preferredUsername: String!
+  sub: String!
+}

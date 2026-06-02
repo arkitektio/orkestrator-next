@@ -6,6 +6,15 @@ fragment SoloBroadcast on SoloBroadcast {
   }
 }
 
+fragment ListSoloBroadcast on SoloBroadcast {
+  id
+  title
+  streamer {
+    ...Streamer
+  }
+}
+
+
 fragment CollaborativeBroadcast on CollaborativeBroadcast {
   id
   title

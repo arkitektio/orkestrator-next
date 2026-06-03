@@ -48,6 +48,9 @@ type Action {
   """The kind or category of the action."""
   kind: ActionKind!
 
+  """Get the latest completed assignation for this action."""
+  latestAssignation: Assignation
+
   """
   An optional icon identifier to represent this Action in the UI (e.g. 'fa-solid fa-dog')
   """
@@ -1861,8 +1864,8 @@ type ImplementationMapping {
 }
 
 input ImplementationOrder @oneOf {
+  active: Ordering
   createdAt: Ordering
-  discoveredBy: Boolean
   finishedAt: Ordering
   startedAt: Ordering
   status: Ordering
@@ -3073,7 +3076,7 @@ input ReserveInput {
   hash: ActionHash = null
   implementation: ID = null
   instanceId: InstanceId! = "default"
-  reference: String = "226569aa-a77c-40ea-9a45-6de71be920c2"
+  reference: String = "816bb51e-c5ef-4603-b03f-27bd7c7fed13"
   title: String = null
 }
 

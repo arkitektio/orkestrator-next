@@ -18,6 +18,10 @@ fragment ListAction on Action {
   app {
     identifier
   }
+  latestAssignation {
+    id
+    args
+  }
 }
 
 fragment SearchAction on Action {

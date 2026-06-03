@@ -235,6 +235,11 @@ export const AssignationUpdater = (props: {}) => {
               return;
             }
 
+            if (create.reference && registeredCallbacks.has(create.reference)) {
+              // Already tracked locally by a component, skip global toast notification
+              return;
+            }
+
             console.error("Added assignation", create.reference);
             const toastId = create.id; // Use the assignation id as the toastId
             toast.custom((id) => <AssignationToaster id={toastId} />, {

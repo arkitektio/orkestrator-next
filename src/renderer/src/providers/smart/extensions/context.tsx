@@ -14,7 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 import { PlayIcon } from "lucide-react";
 import React from "react";
-import { ApplicableTalk as ApplicableAlpakaTalk } from "./alpaka/talk";
+import {
+  ApplicableTalk as ApplicableAlpakaTalk,
+} from "./alpaka/talk";
 import { ApplicableDefinitions } from "./kabinet/definitions";
 import { ApplicableRelations } from "./kraph/relations";
 import { ApplicableLocalActions } from "./local/localactions";

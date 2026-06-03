@@ -84,6 +84,8 @@ export type Action = {
   key: Scalars['String']['output'];
   /** The kind or category of the action. */
   kind: ActionKind;
+  /** Get the latest completed assignation for this action. */
+  latestAssignation?: Maybe<Assignation>;
   /** An optional icon identifier to represent this Action in the UI (e.g. 'fa-solid fa-dog') */
   logo?: Maybe<Scalars['String']['output']>;
   /** Name of the action. */
@@ -1869,11 +1871,11 @@ export type ImplementationMapping = {
 };
 
 export type ImplementationOrder =
-  { createdAt: Ordering; discoveredBy?: never; finishedAt?: never; startedAt?: never; status?: never; }
-  |  { createdAt?: never; discoveredBy: Scalars['Boolean']['input']; finishedAt?: never; startedAt?: never; status?: never; }
-  |  { createdAt?: never; discoveredBy?: never; finishedAt: Ordering; startedAt?: never; status?: never; }
-  |  { createdAt?: never; discoveredBy?: never; finishedAt?: never; startedAt: Ordering; status?: never; }
-  |  { createdAt?: never; discoveredBy?: never; finishedAt?: never; startedAt?: never; status: Ordering; };
+  { active: Ordering; createdAt?: never; finishedAt?: never; startedAt?: never; status?: never; }
+  |  { active?: never; createdAt: Ordering; finishedAt?: never; startedAt?: never; status?: never; }
+  |  { active?: never; createdAt?: never; finishedAt: Ordering; startedAt?: never; status?: never; }
+  |  { active?: never; createdAt?: never; finishedAt?: never; startedAt: Ordering; status?: never; }
+  |  { active?: never; createdAt?: never; finishedAt?: never; startedAt?: never; status: Ordering; };
 
 export type ImplementationUpdate = {
   __typename?: 'ImplementationUpdate';
@@ -4803,7 +4805,7 @@ export type _Service = {
   sdl: Scalars['String']['output'];
 };
 
-export type ListActionFragment = { __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string } };
+export type ListActionFragment = { __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string }, latestAssignation?: { __typename?: 'Assignation', id: string, args: any } | null };
 
 export type SearchActionFragment = { __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, logo?: string | null, kind: ActionKind, scope: ActionScope };
 
@@ -5347,7 +5349,7 @@ export type AllActionsQueryVariables = Exact<{
 }>;
 
 
-export type AllActionsQuery = { __typename?: 'Query', actions: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string } }> };
+export type AllActionsQuery = { __typename?: 'Query', actions: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string }, latestAssignation?: { __typename?: 'Assignation', id: string, args: any } | null }> };
 
 export type AllPrimaryActionsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -5539,7 +5541,7 @@ export type GlobalSearchQueryVariables = Exact<{
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', actions?: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string } }>, agents?: Array<{ __typename?: 'Agent', id: string, name: string, instanceId: any, connected: boolean, blocked: boolean, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string } }> };
+export type GlobalSearchQuery = { __typename?: 'Query', actions?: Array<{ __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, logo?: string | null, key: string, version: string, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }>, app: { __typename?: 'App', identifier: string }, latestAssignation?: { __typename?: 'Assignation', id: string, args: any } | null }>, agents?: Array<{ __typename?: 'Agent', id: string, name: string, instanceId: any, connected: boolean, blocked: boolean, app: { __typename?: 'App', identifier: string }, release: { __typename?: 'Release', version: string } }> };
 
 export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5944,6 +5946,10 @@ export const ListActionFragmentDoc = gql`
   version
   app {
     identifier
+  }
+  latestAssignation {
+    id
+    args
   }
 }
     `;

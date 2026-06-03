@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
+import { useMyContextQuery } from "@/lok-next/api/graphql";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
 import {
   AlertTriangle,
@@ -353,6 +354,96 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
   );
 };
 
+const SettingsNavItem = ({ mobile = false }: { mobile?: boolean }) => {
+  return (
+    <DroppableNavLink to="/settings" className={mobile ? "cursor-pointer" : undefined}>
+      {({ isActive }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <NavigationMenuLink
+              active={isActive}
+              className={cn(
+                "flex-1 cursor-pointer",
+                isActive ? "bg-primary" : "",
+              )}
+            >
+              <div className="relative flex items-center justify-center">
+                <Settings className="w-8 h-8 mx-auto text-foreground" />
+              </div>
+            </NavigationMenuLink>
+          </TooltipTrigger>
+          <TooltipContent side={mobile ? "top" : "right"}>
+            Settings
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </DroppableNavLink>
+  );
+};
+
+const ActiveProfileMenuLabel = ({ fakts }: { fakts: any }) => {
+  const { data: contextData } = useMyContextQuery();
+
+  return (
+    <div className="flex flex-col space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-sm">
+          <Username />
+        </span>
+        <NavLink
+          to="lok"
+          className="text-[10px] text-muted-foreground hover:text-foreground border rounded px-1.5 py-0.5 transition-colors"
+        >
+          Manage
+        </NavLink>
+      </div>
+
+      <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border/40">
+        {fakts?.self?.deployment_name && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-medium text-foreground/80">Composition:</span>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal truncate max-w-[120px]" title={fakts.self.deployment_name}>
+              {fakts.self.deployment_name}
+            </Badge>
+          </div>
+        )}
+        {contextData?.mycontext?.organization && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-medium text-foreground/80">Organization:</span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal truncate max-w-[120px]" title={contextData.mycontext.organization.name}>
+              {contextData.mycontext.organization.name}
+            </Badge>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ProfileMenuLabel = ({ hasLokProfile, fakts }: { hasLokProfile: boolean; fakts: any }) => {
+  if (!hasLokProfile) {
+    return (
+      <div className="flex flex-col space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-sm">Guest</span>
+        </div>
+        {fakts?.self?.deployment_name && (
+          <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border/40">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/80">Composition:</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal truncate max-w-[120px]" title={fakts.self.deployment_name}>
+                {fakts.self.deployment_name}
+              </Badge>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <ActiveProfileMenuLabel fakts={fakts} />;
+};
+
 const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
   const disconnect = Arkitekt.useDisconnect();
   const reconnect = Arkitekt.useReconnect();
@@ -418,6 +509,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
       </div>
 
       <div className="flex-grow block md:hidden">
+
         <Drawer>
           <DrawerTrigger className="flex w-full h-full justify-start items-start">
             <IconContext.Provider value={{ className: "w-8 h-8 mx-auto text-foreground" }}>
@@ -437,26 +529,27 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
                 </div>
               </div>
             ))}
-
+            <div className="flex flex-col rounded-md border p-2">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium">
+                  Settings
+                </div>
+                <SettingsNavItem mobile />
+              </div>
+            </div>
           </DrawerContent>
         </Drawer>
       </div>
 
-      <div className="flex-initial h-12 w-12 items-center flex flex-col justify-center">
+      <div className="flex-initial w-12 items-center flex flex-col justify-center">
+        <SettingsNavItem />
         <DropdownMenu>
           <DropdownMenuTrigger className="text-foreground h-12 w-12">
             {hasLokProfile ? <Me /> : <div className="h-12 w-12 rounded-full border" />}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" className="w-64 mb-2 border-border">
-            <DropdownMenuLabel className="flex items-center gap-2 w-full justify-between">
-              {hasLokProfile ? <Username /> : <div>Guest</div>}
-              <div key={"lok"} className="flex flex-col rounded-md border p-2">
-                <div className="flex items-center justify-between">
-                  <NavLink to={"lok"} className="text-foreground">Manage</NavLink>
-                </div>
-              </div>
-
-            {fakts?.self.alias.host ? <Badge className="px-1">{fakts?.self.alias.host}</Badge> : null}
+            <DropdownMenuLabel className="font-normal">
+              <ProfileMenuLabel hasLokProfile={hasLokProfile} fakts={fakts} />
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {configurationIssues.length > 0 && (
@@ -493,7 +586,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="ghost" className="h-10 w-10 mt-2" onClick={reload}>
+        <Button variant="ghost" className="h-8 w-8" onClick={reload}>
           <ReloadIcon />
         </Button>
       </div>

@@ -489,6 +489,7 @@ export const LovekitSoloBroadcast = buildSmart(
 );
 
 export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
+export const AlpakaMessage = buildSmart("@alpaka/message", "alpaka/messages");
 export const AlpakaProvider = buildSmart(
   "@alpaka/provider",
   "alpaka/providers",

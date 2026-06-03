@@ -12,16 +12,6 @@ import { AlpakaRoom } from "@/linkers";
 const ACTION_TITLE = "Talk about structure";
 const ACTION_DESCRIPTION = "Open an Alpaka room about the selected structure";
 
-const matchesFilter = (filter?: string) => {
-  if (!filter?.trim()) {
-    return true;
-  }
-
-  const query = filter.trim().toLowerCase();
-  return [ACTION_TITLE, ACTION_DESCRIPTION, "alpaka", "room", "chat"]
-    .some((value) => value.toLowerCase().includes(query));
-};
-
 const buildRoomTitle = (props: PassDownProps) => {
   if (props.objects.length === 1) {
     return `Talk about ${props.objects[0].identifier}`;
@@ -35,7 +25,7 @@ const buildRoomDescription = (props: PassDownProps) => {
     return `Conversation about ${props.objects[0].identifier} ${props.objects[0].object.id}`;
   }
 
-  return `Conversation about ${props.objects.length} selected structures`;
+  return `Conversation about ${props.objects.length} selected selected structures`;
 };
 
 export const TalkAboutButton = (props: PassDownProps) => {
@@ -80,7 +70,13 @@ export const TalkAboutButton = (props: PassDownProps) => {
 
       storeRoomTalkingAbout(roomId, talkingAbout);
       props.onDone?.({ kind: "local" });
-      navigate(AlpakaRoom.linkBuilder(roomId));
+
+      const promptText = props.filter?.trim() || `Please tell me more about this ${talkingAbout.length === 1 ? "structure" : "structures"}.`;
+      navigate(
+        `${AlpakaRoom.linkBuilder(roomId)}?prefillStructures=${encodeURIComponent(
+          JSON.stringify(talkingAbout)
+        )}&text=${encodeURIComponent(promptText)}`
+      );
     } catch (nextError) {
       const message =
         nextError instanceof Error ? nextError.message : "Failed to create room";
@@ -96,12 +92,14 @@ export const TalkAboutButton = (props: PassDownProps) => {
       onSelect={() => {
         void openRoom();
       }}
-      value={ACTION_TITLE}
-      title={ACTION_TITLE}
+      value={props.filter ? `Talk about structure: ${props.filter}` : ACTION_TITLE}
+      title={props.filter ? `Talk about structure: "${props.filter}"` : ACTION_TITLE}
       description={
-        props.objects.length === 1
-          ? ACTION_DESCRIPTION
-          : `Open an Alpaka room about ${props.objects.length} selected structures`
+        props.filter
+          ? `Create a room, attach the selected structures and prefill with "${props.filter}"`
+          : props.objects.length === 1
+            ? ACTION_DESCRIPTION
+            : `Open an Alpaka room about ${props.objects.length} selected structures`
       }
       icon={MessageSquareMore}
       disabled={isOpening}
@@ -116,7 +114,7 @@ export const TalkAboutButton = (props: PassDownProps) => {
 };
 
 export const ApplicableTalk = (props: PassDownProps) => {
-  if (props.objects.length === 0 || !matchesFilter(props.filter)) {
+  if (props.objects.length === 0) {
     return null;
   }
 

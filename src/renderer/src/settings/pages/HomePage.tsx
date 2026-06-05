@@ -369,6 +369,11 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SwitchField
+                      name="showHoverCards"
+                      label="Hover Previews"
+                      description="Show a detail preview card when hovering over items"
+                    />
+                    <SwitchField
                       name="experimentalViv"
                       label="Experimental Viv"
                       description="Enable experimental visualization features"

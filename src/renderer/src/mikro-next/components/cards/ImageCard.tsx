@@ -12,7 +12,7 @@ const ImageCard = ({ item, className }: ImageCardProps) => {
 
   const { progress } = MikroImage.useLive({ object: item.id });
   return (
-    <MikroImage.Smart object={item}>
+    <MikroImage.Smart object={item} hover>
       <div
         className={cn(
           `relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden`,

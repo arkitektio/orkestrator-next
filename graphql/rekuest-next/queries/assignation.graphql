@@ -36,3 +36,9 @@ query NoChildrenDetailAssignation($id: ID!) {
     ...NoChildrenDetailAssignation
   }
 }
+
+query HoverAssignation($id: ID!) {
+  assignation(id: $id) {
+    ...HoverAssignation
+  }
+}

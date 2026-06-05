@@ -14,7 +14,8 @@ import { ObjectButton } from "@/providers/smart/extensions/context";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { lazy, Suspense } from "react";
+import { ComponentType, lazy, ReactNode, Suspense } from "react";
+import { HoverSkeleton } from "@/mikro-next/components/hovers/HoverShell";
 
 const LazyKomments = lazy(() =>
   import("@/lok-next/components/komments/Komments").then((module) => ({
@@ -34,6 +35,47 @@ const LazyStructureRoomsSidebar = lazy(() =>
   })),
 );
 
+const LazyImageHoverCard = lazy(
+  () => import("@/mikro-next/components/hovers/ImageHoverCard"),
+);
+const LazyFileHoverCard = lazy(
+  () => import("@/mikro-next/components/hovers/FileHoverCard"),
+);
+const LazyDatasetHoverCard = lazy(
+  () => import("@/mikro-next/components/hovers/DatasetHoverCard"),
+);
+const LazyActionHoverCard = lazy(
+  () => import("@/rekuest/components/hovers/ActionHoverCard"),
+);
+const LazyAgentHoverCard = lazy(
+  () => import("@/rekuest/components/hovers/AgentHoverCard"),
+);
+const LazyAssignationHoverCard = lazy(
+  () => import("@/rekuest/components/hovers/AssignationHoverCard"),
+);
+
+// Maps a smart model identifier to the component rendered inside its on-demand
+// hover card, together with the module guard that gates it. The hover cards run
+// module-specific GraphQL (e.g. the mikro / rekuest backends), so the guard must
+// wrap the component from the outside — that way its query hooks only mount once
+// the relevant backend is `ready`, and nothing fires when the module is absent.
+type HoverCardEntry = {
+  Component: ComponentType<{ object: any }>;
+  Guard: ComponentType<{ children: ReactNode }>;
+};
+
+const hoverCards: Record<string, HoverCardEntry> = {
+  "@mikro/image": { Component: LazyImageHoverCard, Guard: Guard.Mikro },
+  "@mikro/file": { Component: LazyFileHoverCard, Guard: Guard.Mikro },
+  "@mikro/dataset": { Component: LazyDatasetHoverCard, Guard: Guard.Mikro },
+  "@rekuest/action": { Component: LazyActionHoverCard, Guard: Guard.Rekuest },
+  "@rekuest/agent": { Component: LazyAgentHoverCard, Guard: Guard.Rekuest },
+  "@rekuest/assignation": {
+    Component: LazyAssignationHoverCard,
+    Guard: Guard.Rekuest,
+  },
+};
+
 configureSmartBuilder({
   renderKomments: ({ identifier, object }) => {
     return (
@@ -47,6 +89,20 @@ configureSmartBuilder({
       <Suspense fallback={null}>
         <LazyKnowledgeSidebar identifier={identifier} object={object} />
       </Suspense>
+    );
+  },
+  renderHover: ({ identifier, object }) => {
+    const entry = hoverCards[identifier];
+    if (!entry) {
+      return null;
+    }
+    const { Component, Guard: ModuleGuard } = entry;
+    return (
+      <ModuleGuard>
+        <Suspense fallback={<HoverSkeleton />}>
+          <Component object={object} />
+        </Suspense>
+      </ModuleGuard>
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {

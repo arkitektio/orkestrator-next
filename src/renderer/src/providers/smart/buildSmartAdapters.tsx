@@ -50,6 +50,7 @@ export interface SmartBuilderAdapters {
   renderKomments: (context: SmartObjectContext) => React.ReactNode;
   renderKnowledge: (context: SmartObjectContext) => React.ReactNode;
   renderTinyKnowledge: (context: SmartObjectContext) => React.ReactNode;
+  renderHover: (context: SmartObjectContext) => React.ReactNode;
   renderModelPage: (
     props: SmartModelPage<any> & { identifier: Identifier },
   ) => React.ReactNode;
@@ -74,6 +75,7 @@ let smartBuilderAdapters: SmartBuilderAdapters = {
   renderKomments: () => null,
   renderKnowledge: () => null,
   renderTinyKnowledge: () => <>Not implemented right now</>,
+  renderHover: () => null,
   renderModelPage: ({ children }) => <>{children}</>,
   renderListPage: ({ children }) => <>{children}</>,
   renderObjectButton: () => null,

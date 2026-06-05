@@ -131,3 +131,36 @@ fragment AgentChangeEvent on AgentChangeEvent {
   }
   delete
 }
+
+fragment HoverAgent on Agent {
+  id
+  name
+  active
+  connected
+  blocked
+  pinned
+  lastSeen
+  instanceId
+  extensions
+  app {
+    identifier
+  }
+  release {
+    version
+  }
+  user {
+    sub
+  }
+  latestHardwareRecord {
+    cpuCount
+    cpuVendorName
+  }
+  implementations(pagination: { limit: 6 }) {
+    id
+    interface
+    action {
+      id
+      name
+    }
+  }
+}

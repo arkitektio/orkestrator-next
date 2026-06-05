@@ -10,7 +10,7 @@ interface Props {
 
 const TheCard = ({ assignation }: Props) => {
   return (
-    <RekuestAssignation.Smart object={assignation}>
+    <RekuestAssignation.Smart object={assignation} hover>
       <Card>
         <CardHeader>
           <CardTitle>

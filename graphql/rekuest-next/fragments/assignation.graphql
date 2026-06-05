@@ -191,3 +191,32 @@ fragment ListAsssignation on Assignation {
   }
   createdAt
 }
+
+fragment HoverAssignation on Assignation {
+  id
+  reference
+  latestEventKind
+  isDone
+  statusMessage
+  createdAt
+  finishedAt
+  action {
+    id
+    name
+  }
+  implementation {
+    id
+    interface
+    agent {
+      id
+      name
+    }
+  }
+  events(pagination: { limit: 5 }) {
+    id
+    kind
+    progress
+    message
+    createdAt
+  }
+}

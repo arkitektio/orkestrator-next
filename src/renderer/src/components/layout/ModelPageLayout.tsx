@@ -87,7 +87,7 @@ export const ModelPageLayout = ({
       actions={actions}
       pageActions={
         <div className="flex flex-row gap-1.5 items-center">
-          <TalkAboutPageButton identifier={identifier} object={object} />
+          <Guard.Alpaka><TalkAboutPageButton identifier={identifier} object={object} /></Guard.Alpaka>
           {pageActions || <ObjectButton objects={objects} />}
         </div>
       }

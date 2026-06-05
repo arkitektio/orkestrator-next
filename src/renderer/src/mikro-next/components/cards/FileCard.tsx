@@ -27,7 +27,7 @@ console.log(getReadableFileSizeString(1551859712)); // output is "1.4 GB"
 
 const TheCard = ({ item, className }: Props) => {
   return (
-    <MikroFile.Smart object={item} key={item.id}>
+    <MikroFile.Smart object={item} key={item.id} hover>
       <Card
         className={cn(
           "px-2 py-2  max-h-40 min-h-10 justify-left flex items-center ",

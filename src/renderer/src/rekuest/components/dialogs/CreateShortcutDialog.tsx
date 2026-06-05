@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { notEmpty } from "@/lib/utils";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
@@ -205,85 +207,136 @@ export const CreateShortcutDialog = (props: {
 
   const { registry } = useWidgetRegistry();
 
+  if (!action) {
+    return (
+      <div className="space-y-4">
+        <DialogHeader>
+          <DialogTitle>Create Shortcut</DialogTitle>
+          <DialogDescription>Loading action…</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-2/3" />
+        </div>
+      </div>
+    );
+  }
+
+  const hasArgs = action.args.length > 0;
+
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <DialogHeader>
-        <DialogTitle>{action?.name}</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          {action.logo && (
+            <img src={action.logo} alt="" className="h-6 w-6 rounded" />
+          )}
+          Create Shortcut
+        </DialogTitle>
+        <DialogDescription>
+          Save{" "}
+          <span className="font-medium text-foreground">{action.name}</span> as
+          a shortcut for quick, repeatable assignment.
+        </DialogDescription>
       </DialogHeader>
 
-      <DialogDescription className="mt2">
-        {action?.description && (
-          <ActionDescription
-            description={action?.description}
-            variables={data}
-          />
-        )}
+      {action.description && (
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <ActionDescription description={action.description} variables={data} />
+        </div>
+      )}
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 mt-4"
-          >
-            <div className="w-full flex flex-row items-center space-x-2 mt-2">
-              {action?.args.length > 0 &&
-                action?.args.map((arg) => {
-                  return (
-                    <Badge
-                      key={arg.key}
-                      onClick={() => {
-                        setChosenArgs((chosenArgs) =>
-                          chosenArgs.includes(arg.key)
-                            ? chosenArgs.filter((k) => k !== arg.key)
-                            : [...chosenArgs, arg.key],
-                        );
-                      }}
-                      className="p-2"
-                    >
-                      <div>{arg.label || arg.key}</div>
-                    </Badge>
-                  );
-                })}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col gap-6"
+        >
+          <ScrollArea className="max-h-[55vh] pr-3 -mr-3">
+            <div className="flex flex-col gap-6">
+              {hasArgs && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-0.5">
+                    <h3 className="text-sm font-medium">Pre-fill arguments</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Select which arguments to bake into the shortcut. Anything
+                      left out is asked for each time the shortcut runs.
+                    </p>
+                  </div>
+                  <div className="flex flex-row flex-wrap gap-1.5">
+                    {action.args.map((arg) => {
+                      const selected = chosenArgs.includes(arg.key);
+                      return (
+                        <Badge
+                          key={arg.key}
+                          variant={selected ? "default" : "outline"}
+                          onClick={() => {
+                            setChosenArgs((chosenArgs) =>
+                              chosenArgs.includes(arg.key)
+                                ? chosenArgs.filter((k) => k !== arg.key)
+                                : [...chosenArgs, arg.key],
+                            );
+                          }}
+                          className="cursor-pointer select-none px-2.5 py-1"
+                        >
+                          {arg.label || arg.key}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  {chosenArgs.length > 0 && (
+                    <div className="rounded-md border bg-background/60 p-3">
+                      <ArgsContainer
+                        registry={registry}
+                        groups={action.portGroups || []}
+                        ports={action.args.filter((arg) =>
+                          chosenArgs.includes(arg.key),
+                        )}
+                        hidden={props.args}
+                        path={[]}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4">
+                <StringField
+                  name="name"
+                  label="Name"
+                  description="The name of the shortcut"
+                />
+
+                <IntField
+                  name="bindNumber"
+                  label="Bind a shortcut key"
+                  description="A number (0-9) to bind this shortcut to. Press that key to run it instantly."
+                />
+
+                <SwitchField
+                  name="allowQuick"
+                  label="Allow Quick"
+                  description="Quick access runs this shortcut without any confirmation"
+                />
+              </div>
             </div>
-            {action?.args.length == 0 && (
-              <div className="text-muted"> No Arguments needed</div>
-            )}
-            <ArgsContainer
-              registry={registry}
-              groups={action?.portGroups || []}
-              ports={
-                action?.args.filter((arg) => chosenArgs.includes(arg.key)) || []
-              }
-              hidden={props.args}
-              path={[]}
-            />
+          </ScrollArea>
 
-            <StringField
-              name="name"
-              label="Name"
-              description="The name of the shortcut"
-            />
-
-            <IntField
-              name="bindNumber"
-              label="Bind a shortcut key"
-              description="A number to bind this shortcut to. If set, you can run this shortcut by pressing the number key."
-            />
-
-            <SwitchField
-              name="allowQuick"
-              label="Allow Quick"
-              description="Quick access will allow you to run this shortcut without any confirmation"
-            />
-
-            <DialogFooter>
-              <Button variant={"outline"} disabled={!isValid}>
-                {" "}
-                Reserve
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogDescription>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={closeDialog}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!isValid || isSubmitting}>
+              {isSubmitting ? "Creating…" : "Create Shortcut"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
     </div>
   );
 };

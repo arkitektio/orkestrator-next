@@ -13,7 +13,7 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAgent.Smart object={item}>
+    <RekuestAgent.Smart object={item} hover>
       <Card
         className={cn(
           "aspect-square flex flex-col relative overflow-visible",

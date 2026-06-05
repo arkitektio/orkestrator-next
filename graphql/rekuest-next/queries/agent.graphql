@@ -40,3 +40,9 @@ query AgentForDependency($search: String, $values: [ID!], $dependency: ID) {
    ...ListAgent
   }
 }
+
+query HoverAgent($id: ID!) {
+  agent(id: $id) {
+    ...HoverAgent
+  }
+}

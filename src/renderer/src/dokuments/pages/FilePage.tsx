@@ -3,7 +3,7 @@ import { Icons } from "@/components/icons";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DokumentsDocument, DokumentsFile, LovekitStream } from "@/linkers";
 import {
   DatabaseIcon,
@@ -11,37 +11,38 @@ import {
   FileIcon,
   FileTextIcon,
   FolderIcon,
-  InfoIcon
 } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
+import { Separator } from "@/components/ui/separator";
+
+// Helper for getting clean file extension
+const getFileExtension = (filename: string) => {
+  return filename.split('.').pop()?.toUpperCase() || 'FILE';
+};
+
+// Helper for determining color based on extension
+const getFileTypeColor = (filename: string) => {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'pdf': return 'bg-red-500/10 text-red-500 border-red-500/20';
+    case 'doc':
+    case 'docx': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+    case 'mp4':
+    case 'avi':
+    case 'mov': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    case 'txt': return 'bg-sky-500/10 text-sky-500 border-sky-500/20';
+    default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+  }
+};
 
 export const FilePage = asDetailQueryRoute(
   useGetFileQuery,
   ({ data }) => {
     const file = data?.file;
-
-    // Helper functions
-    const getFileExtension = (filename: string) => {
-      return filename.split('.').pop()?.toUpperCase() || 'FILE';
-    };
-
-    const getFileTypeColor = (filename: string) => {
-      const extension = filename.split('.').pop()?.toLowerCase();
-      switch (extension) {
-        case 'pdf': return 'bg-red-100 text-red-700 border-red-200';
-        case 'doc':
-        case 'docx': return 'bg-blue-100 text-blue-700 border-blue-200';
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-        case 'gif': return 'bg-green-100 text-green-700 border-green-200';
-        case 'mp4':
-        case 'avi':
-        case 'mov': return 'bg-purple-100 text-purple-700 border-purple-200';
-        case 'txt': return 'bg-gray-100 text-gray-700 border-gray-200';
-        default: return 'bg-orange-100 text-orange-700 border-orange-200';
-      }
-    };
 
     const handleDownload = () => {
       if (file?.store.presignedUrl) {
@@ -53,6 +54,9 @@ export const FilePage = asDetailQueryRoute(
         document.body.removeChild(link);
       }
     };
+
+    const fileExtension = getFileExtension(file?.name || '');
+    const fileTypeColorClass = getFileTypeColor(file?.name || '');
 
     return (
       <DokumentsFile.ModelPage
@@ -75,151 +79,112 @@ export const FilePage = asDetailQueryRoute(
           />
         }
       >
-        <div className="space-y-8">
-          {/* File Information Card */}
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl shadow-sm ${getFileTypeColor(file?.name || '')}`}>
-                  <FileIcon className="w-8 h-8" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent truncate">
-                    {file?.name}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-3 mt-2 text-base">
-                    <Badge
-                      variant="secondary"
-                      className={`${getFileTypeColor(file?.name || '')} font-semibold px-3 py-1`}
-                    >
-                      {getFileExtension(file?.name || '')}
-                    </Badge>
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <DatabaseIcon className="w-4 h-4" />
-                      ID: {file?.id}
-                    </span>
-                  </CardDescription>
-                </div>
+        {/* Enhanced File Header / Title Area */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl border shadow-sm ${fileTypeColorClass}`}>
+              <FileIcon className="h-8 w-8" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground truncate">
+                {file?.name}
+              </h1>
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <DatabaseIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>ID: {file?.id}</span>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="space-y-3 p-4 bg-white rounded-lg border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <FolderIcon className="w-5 h-5 text-blue-600" />
-                    <div className="text-sm font-semibold text-gray-900">Storage Location</div>
-                  </div>
-                  <div className="text-sm font-mono bg-gray-50 p-3 rounded-md border break-all">
-                    {file?.store.bucket}/{file?.store.path || file?.store.key}
-                  </div>
-                </div>
-                <div className="space-y-3 p-4 bg-white rounded-lg border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <DatabaseIcon className="w-5 h-5 text-green-600" />
-                    <div className="text-sm font-semibold text-gray-900">Storage Bucket</div>
-                  </div>
-                  <div className="text-sm flex items-center gap-2 p-3 bg-gray-50 rounded-md">
-                    <FolderIcon className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">{file?.store.bucket}</span>
+            </div>
+            <Badge variant="secondary" className="text-xs font-mono px-2.5 py-1">
+              {fileExtension}
+            </Badge>
+          </div>
+        </div>
+
+        <Separator className="my-6" />
+
+        <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Bucket</div>
+                  <div className="text-xs font-mono bg-muted/40 px-2.5 py-1.5 rounded border border-border/30 select-all truncate">
+                    {file?.store.bucket}
                   </div>
                 </div>
-                <div className="space-y-3 p-4 bg-white rounded-lg border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <InfoIcon className="w-5 h-5 text-purple-600" />
-                    <div className="text-sm font-semibold text-gray-900">Storage Key</div>
-                  </div>
-                  <div className="text-sm font-mono text-muted-foreground p-3 bg-gray-50 rounded-md break-all">
+                <div className="space-y-1 md:col-span-2">
+                  <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Storage Key</div>
+                  <div className="text-xs font-mono bg-muted/40 px-2.5 py-1.5 rounded border border-border/30 select-all break-all">
                     {file?.store.key}
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Associated Documents Card */}
-          {file?.documents && file.documents.length > 0 && (
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-blue-50/30">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <FileTextIcon className="w-6 h-6 text-blue-600" />
+              {file?.store.path && (
+                <div className="space-y-1">
+                  <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Storage Path</div>
+                  <div className="text-xs font-mono bg-muted/40 px-2.5 py-1.5 rounded border border-border/30 select-all break-all">
+                    {file?.store.path}
                   </div>
-                  <span>Associated Documents</span>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-semibold">
-                    {file.documents.length}
-                  </Badge>
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Documents that have been created from this file
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {file.documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="group flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all duration-200 bg-white hover:bg-blue-50/50 hover:border-blue-200"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg group-hover:from-blue-200 group-hover:to-blue-100 transition-colors">
-                          <FileTextIcon className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <DokumentsDocument.DetailLink
-                            object={doc}
-                            className="font-semibold text-lg hover:text-blue-600 transition-colors block truncate"
-                          >
-                            {doc.title}
-                          </DokumentsDocument.DetailLink>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                            <DatabaseIcon className="w-3 h-3" />
-                            Document ID: {doc.id}
-                          </div>
-                        </div>
+                </div>
+              )}
+
+          {/* Associated Documents */}
+          {file?.documents && file.documents.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <FileTextIcon className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-bold tracking-tight">Associated Documents</h2>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-semibold text-xs">
+                  {file.documents.length}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {file.documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="group flex flex-col justify-between p-4 border border-border rounded-xl hover:shadow-sm transition-all duration-200 bg-card hover:bg-muted/30 h-36"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="p-2.5 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors shrink-0">
+                        <FileTextIcon className="w-5 h-5 text-primary" />
                       </div>
+                      <div className="min-w-0 flex-1">
+                        <DokumentsDocument.DetailLink
+                          object={doc}
+                          className="font-semibold text-sm hover:text-primary transition-colors block truncate text-foreground"
+                        >
+                          {doc.title}
+                        </DokumentsDocument.DetailLink>
+                        <span className="text-[10px] text-muted-foreground font-mono truncate block mt-1">
+                          ID: {doc.id}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end border-t border-border/40 pt-2 mt-2">
                       <DokumentsDocument.DetailLink object={doc}>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="hover:bg-blue-100 hover:text-blue-700 transition-colors shadow-sm"
+                          className="h-8 hover:bg-muted transition-colors text-xs text-muted-foreground hover:text-foreground"
                         >
-                          <Icons.externalLink className="w-4 h-4" />
+                          Open Document
+                          <Icons.externalLink className="w-3.5 h-3.5 ml-1.5 shrink-0" />
                         </Button>
                       </DokumentsDocument.DetailLink>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* No Documents Placeholder */}
-          {(!file?.documents || file.documents.length === 0) && (
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 bg-gray-100 rounded-lg">
-                    <FileTextIcon className="w-6 h-6 text-gray-500" />
                   </div>
-                  <span>Associated Documents</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                    <FileTextIcon className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No documents created yet
-                  </h3>
-                  <p className="text-gray-600 mb-1">
-                    No documents have been created from this file yet.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Upload and process this file to generate documents.
-                  </p>
-                </div>
-              </CardContent>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Card className="border border-dashed border-border/80 p-8 text-center bg-muted/5">
+              <div className="mx-auto w-10 h-10 rounded-full bg-muted flex items-center justify-center mb-3">
+                <FileTextIcon className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1 text-foreground">No documents created yet</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                No documents have been created from this file yet. Upload and process this file to generate documents.
+              </p>
             </Card>
           )}
         </div>
@@ -227,6 +192,9 @@ export const FilePage = asDetailQueryRoute(
     );
   },
 );
+
+export default FilePage;
+
 
 
 export default FilePage;

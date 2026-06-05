@@ -2,11 +2,18 @@ import { AgentController } from "@/app/agent/AgentController";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { FancyInput } from "@/components/ui/fancy-input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
+import { cn } from "@/lib/utils";
 import { RekuestAgent, RekuestDashboard } from "@/linkers";
+import { ListAgentFragment } from "@/rekuest/api/graphql";
 import { CardStackIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
-import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
+import { Box, ChevronDown, FunctionSquare, Home, Pin, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
@@ -18,30 +25,53 @@ import {
 import ActionCard from "../components/cards/ActionCard";
 import SearchAgentCard from "../components/cards/SearchAgentCard";
 
+const agentStatusDot = (agent: ListAgentFragment) => {
+  if (agent.blocked) return "bg-destructive";
+  if (agent.connected) return "bg-emerald-500";
+  if (agent.active) return "bg-yellow-500";
+  return "bg-muted-foreground/30";
+};
+
+const AgentNavItem = ({ agent }: { agent: ListAgentFragment }) => (
+  <RekuestAgent.Smart object={agent}>
+    <RekuestAgent.PaneLink
+      object={agent}
+      className="flex flex-row w-full items-center gap-2 rounded px-1 py-1 text-muted-foreground transition-colors hover:text-primary hover:bg-muted/50"
+    >
+      <span
+        className={cn("h-1.5 w-1.5 rounded-full shrink-0", agentStatusDot(agent))}
+      />
+      <span className="flex-1 min-w-0">
+        <span className="block text-xs leading-tight truncate">{agent.name}</span>
+        <span className="block text-[10px] text-muted-foreground/60 leading-tight truncate">
+          {agent.app.identifier}
+        </span>
+      </span>
+    </RekuestAgent.PaneLink>
+  </RekuestAgent.Smart>
+);
+
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({
     variables: {
-      filters: {
-        pinned: false,
-      },
-      order: {
-        lastSeen: Ordering.Desc,
-      },
-      pagination: {
-        limit: 10,
-      },
+      filters: { pinned: false },
+      order: { lastSeen: Ordering.Desc },
+      pagination: { limit: 10 },
     },
   });
 
   const { data: pinnedAgents } = useAgentsQuery({
-    variables: {
-      filters: {
-        pinned: true,
-      },
-    },
+    variables: { filters: { pinned: true } },
   });
 
   const { data: allDashboards } = useListDashboardsQuery();
+
+  const [appsOpen, setAppsOpen] = React.useState(true);
+  const [pinnedOpen, setPinnedOpen] = React.useState(true);
+  const [dashboardsOpen, setDashboardsOpen] = React.useState(true);
+
+  const hasPinned = (pinnedAgents?.agents.length ?? 0) > 0;
+  const hasDashboards = (allDashboards?.dashboards.length ?? 0) > 0;
 
 
 
@@ -50,9 +80,8 @@ export const NavigationPane = () => {
 
   return (
     <div className="flex-1 flex-col h-full overflow-y-auto overflow-x-hidden">
-      <nav className="grid items-start px-1 text-xs font-medium lg:px-2 flex-grow p-3 ">
+      <nav className="grid items-start px-1 text-xs font-medium lg:px-2 flex-grow p-3">
         <SidePaneGroup title="Explore">
-
           <PaneLink
             to="/rekuest/home"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -65,7 +94,7 @@ export const NavigationPane = () => {
         <SidePaneGroup title="Manage All">
           <PaneLink
             to="/rekuest/actions"
-            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
             Actions
@@ -79,7 +108,7 @@ export const NavigationPane = () => {
           </PaneLink>
           <PaneLink
             to="/rekuest/implementations"
-            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
             Implementations
@@ -121,82 +150,96 @@ export const NavigationPane = () => {
           </PaneLink>
         </SidePaneGroup>
 
-        {pinnedAgents?.agents && pinnedAgents.agents.length > 0 && (
-          <>
-            <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-              My Pinned Apps
-            </div>
-            <div className="flex flex-col items-start gap-4 rounded-lg ml-2 mb-4 text-muted-foreground">
-              {pinnedAgents?.agents.map((agent, index) => (
-                <RekuestAgent.Smart object={agent} key={index}>
-                  <RekuestAgent.PaneLink
-                    object={agent}
-                    key={index}
-                    className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-                  >
-                    <CardStackIcon className="h-4 w-4" />
-                    {agent.name}
-                    <div
-                      className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
-                      style={{
-                        backgroundColor: agent.active
-                          ? "#00FF00"
-                          : "#FF0000",
-                      }}
-                    />
-                  </RekuestAgent.PaneLink>
-                </RekuestAgent.Smart>
+        {hasPinned && (
+          <Collapsible open={pinnedOpen} onOpenChange={setPinnedOpen} className="mb-5">
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-muted-foreground text-xs font-semibold uppercase mb-2 hover:text-foreground transition-colors">
+              <span className="flex items-center gap-1.5">
+                <Pin className="h-3 w-3" />
+                Pinned Apps
+                <span className="font-normal normal-case opacity-60">
+                  ({pinnedAgents!.agents.length})
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-3 w-3 transition-transform duration-150",
+                  pinnedOpen ? "rotate-0" : "-rotate-90",
+                )}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="flex flex-col gap-0.5 ml-1">
+              {pinnedAgents!.agents.map((agent) => (
+                <AgentNavItem key={agent.id} agent={agent} />
               ))}
-            </div>
-          </>
+            </CollapsibleContent>
+          </Collapsible>
         )}
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          My Apps
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          {data?.agents.map((agent, index) => (
-            <RekuestAgent.Smart object={agent} key={index}>
-              <div className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary">
-                <RekuestAgent.PaneLink
-                  object={agent}
-                  key={index}
-                  className={"flex flex-row gap-2"}
-                >
-                  <CardStackIcon
-                    className={"h-4 w-4 " + (agent.active ? "text-primary" : "text-muted-foreground")}
-                  />
-                  {agent.name}
-                  <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
-                </RekuestAgent.PaneLink>
-              </div>
-            </RekuestAgent.Smart>
-          ))}
-        </div>
-        {allDashboards?.dashboards && allDashboards.dashboards.length > 0 && (
-          <>
-            <div className="text-muted-foreground text-xs font-semibold uppercase my-4">
-              My Dashboards
-            </div>
-            <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-              {allDashboards.dashboards.map((dashboard, index) => (
-                <RekuestDashboard.Smart object={dashboard} key={index}>
+
+        <Collapsible open={appsOpen} onOpenChange={setAppsOpen} className="mb-5">
+          <CollapsibleTrigger className="flex w-full items-center justify-between text-muted-foreground text-xs font-semibold uppercase mb-2 hover:text-foreground transition-colors">
+            <span className="flex items-center gap-1.5">
+              <CardStackIcon className="h-3 w-3" />
+              My Apps
+              {data?.agents && data.agents.length > 0 && (
+                <span className="font-normal normal-case opacity-60">
+                  ({data.agents.length})
+                </span>
+              )}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-3 w-3 transition-transform duration-150",
+                appsOpen ? "rotate-0" : "-rotate-90",
+              )}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="flex flex-col gap-0.5 ml-1">
+            {data?.agents.length ? (
+              data.agents.map((agent) => (
+                <AgentNavItem key={agent.id} agent={agent} />
+              ))
+            ) : (
+              <p className="text-[10px] text-muted-foreground/50 px-1 py-1">
+                No agents online
+              </p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {hasDashboards && (
+          <Collapsible open={dashboardsOpen} onOpenChange={setDashboardsOpen} className="mb-5">
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-muted-foreground text-xs font-semibold uppercase mb-2 hover:text-foreground transition-colors">
+              <span className="flex items-center gap-1.5">
+                <Box className="h-3 w-3" />
+                Dashboards
+                <span className="font-normal normal-case opacity-60">
+                  ({allDashboards!.dashboards.length})
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-3 w-3 transition-transform duration-150",
+                  dashboardsOpen ? "rotate-0" : "-rotate-90",
+                )}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="flex flex-col gap-0.5 ml-1">
+              {allDashboards!.dashboards.map((dashboard) => (
+                <RekuestDashboard.Smart object={dashboard} key={dashboard.id}>
                   <RekuestDashboard.PaneLink
                     object={dashboard}
-                    key={index}
-                    className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+                    className="flex flex-row w-full items-center gap-2 rounded px-1 py-1 text-muted-foreground transition-colors hover:text-primary hover:bg-muted/50"
                   >
-                    <CardStackIcon className="h-4 w-4" />
-                    {dashboard.name}
-                    <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
+                    <Box className="h-3 w-3 shrink-0" />
+                    <span className="text-xs truncate">{dashboard.name}</span>
                   </RekuestDashboard.PaneLink>
                 </RekuestDashboard.Smart>
               ))}
-            </div>
-          </>
+            </CollapsibleContent>
+          </Collapsible>
         )}
-      </nav >
-
-    </div >
+      </nav>
+    </div>
   );
 };
 

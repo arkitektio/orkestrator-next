@@ -121,3 +121,9 @@ query PrimaryReturnActions(
     ...PrimaryAction
   }
 }
+
+query HoverAction($id: ID!) {
+  action(id: $id) {
+    ...HoverAction
+  }
+}

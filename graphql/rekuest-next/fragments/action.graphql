@@ -105,3 +105,30 @@ fragment PrimaryAction on Action {
   }
   description
 }
+
+fragment HoverAction on Action {
+  id
+  name
+  description
+  kind
+  stateful
+  logo
+  app {
+    identifier
+  }
+  implementations(pagination: { limit: 6 }) {
+    id
+    interface
+    agent {
+      id
+      name
+      active
+    }
+  }
+  assignations(pagination: { limit: 5 }, order: { createdAt: DESC }) {
+    id
+    latestEventKind
+    isDone
+    createdAt
+  }
+}

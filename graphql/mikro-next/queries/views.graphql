@@ -32,3 +32,15 @@ query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) 
     ...LightpathView
   }
 }
+
+query ListFileViews($file: ID!, $pagination: OffsetPaginationInput = { limit: 10, offset: 0 }) {
+  file(id: $file) {
+    id
+    views(pagination: $pagination) {
+      ...FileView
+      image {
+        ...ListImage
+      }
+    }
+  }
+}

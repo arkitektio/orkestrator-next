@@ -1142,9 +1142,9 @@ type File {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """The size of the file in bytes"""
-  size: Int
+  size: Float
   store: BigFileStore!
-  views: [FileView!]!
+  views(filters: FileViewFilter, ordering: [FileViewOrder!]! = [], pagination: OffsetPaginationInput): [FileView!]!
 }
 
 type FileEvent {
@@ -1205,6 +1205,14 @@ type FileView implements View {
   zMin: Int
 }
 
+input FileViewFilter {
+  AND: FileViewFilter
+  DISTINCT: Boolean
+  NOT: FileViewFilter
+  OR: FileViewFilter
+  file: ID
+}
+
 input FileViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -1241,6 +1249,10 @@ input FileViewInput {
 
   """The minimum z coordinate of the view"""
   zMin: Int = null
+}
+
+input FileViewOrder @oneOf {
+  createdAt: Ordering
 }
 
 """A filter"""
@@ -1577,7 +1589,7 @@ type Image {
   derivedViews: [DerivedView!]!
 
   """File views relating to source files"""
-  fileViews: [FileView!]!
+  fileViews(filters: FileViewFilter, ordering: [FileViewOrder!]! = [], pagination: OffsetPaginationInput): [FileView!]!
 
   """The channels of this image"""
   frames: [FrameInfo!]!
@@ -3835,6 +3847,8 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): File!
+  fileView(id: ID!): FileView!
+  fileViews(filters: FileViewFilter, ordering: [FileViewOrder!]! = [], pagination: OffsetPaginationInput): [FileView!]!
   files(filters: FileFilter, order: FileOrder, pagination: OffsetPaginationInput): [File!]!
 
   """Returns a single image by ID"""
@@ -4922,10 +4936,6 @@ input UpdateRGBViewInput {
 }
 
 input UpdateRoiInput {
-  entity: ID = null
-  entityGroup: ID = null
-  entityKind: ID = null
-  entityParent: ID = null
   kind: RoiKind = null
   roi: ID!
   vectors: [FiveDVector!] = null

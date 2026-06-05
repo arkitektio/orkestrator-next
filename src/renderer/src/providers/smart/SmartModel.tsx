@@ -3,13 +3,25 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/providers/settings/SettingsContext";
+import { getSmartBuilderAdapters } from "@/providers/smart/buildSmartAdapters";
 import { SmartContext } from "@/providers/smart/extensions/context";
 import { Structure } from "@/types";
 import { Portal } from "@radix-ui/react-portal";
 import React from "react";
 import { motion } from "framer-motion";
 import { useSelectionSelector } from "../selection/SelectionContext";
+import {
+  enterHoverGroup,
+  leaveHoverGroup,
+  useHoverGroupActive,
+} from "./hoverGroup";
 import { SmartModelProps } from "./types";
 import { useSmartModel } from "./useSmartModel";
 
@@ -22,12 +34,21 @@ export const SmartModel = ({
     floatingStyles,
     self,
     isOver,
+    isDragging,
     partners,
     clearPartners,
     handleClick,
     handleDragStart,
     getCurrentSelection,
   } = useSmartModel({ identifier: props.identifier, object: props.object,  });
+
+  const [contextMenuOpen, setContextMenuOpen] = React.useState(false);
+
+  // Hover cards are opt-out via the user settings (default on).
+  const hoverCardsEnabled = useSettingsStore(
+    (state) => state.settings?.showHoverCards ?? true,
+  );
+  const hoverEnabled = Boolean(props.hover) && hoverCardsEnabled;
 
   const className = React.useMemo(
     () =>
@@ -46,49 +67,151 @@ export const SmartModel = ({
     ],
   );
 
-  return (
-    <ContextMenu modal={false}>
+  const triggerContent = (
+    <div
+      key={`${props.identifier}:${props.object}`}
+      ref={ref}
+      onClick={handleClick}
+      className={cn("relative", props.containerClassName, className)}
+      onDragStart={handleDragStart}
+      draggable={false}
+    >
+      {props.children}
+      {isOver && <CombineButton />}
+
+      {partners.length > 0 && (
+        <Portal>
+          <motion.div
+            ref={floatingRef}
+            style={floatingStyles}
+            className="z-[10050] w-[320px] max-w-[min(90vw,320px)] shadow-2xl max-w-md rounded bg-popover border  rounded-lg p-1 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ filter: "blur(2px)" }}
+            animate={{ filter: "none" }}
+          >
+            <SmartContext
+              objects={
+                getCurrentSelection().length > 1
+                  ? getCurrentSelection()
+                  : [self]
+              }
+              partners={partners}
+              onDone={() => clearPartners()}
+            />
+          </motion.div>
+        </Portal>
+      )}
+    </div>
+  );
+
+  const menu = (
+    <ContextMenu modal={false} onOpenChange={setContextMenuOpen}>
       <ContextMenuContent className="dark:border-gray-700 max-w-md">
         <SmartModelContext self={self} />
       </ContextMenuContent>
       <ContextMenuTrigger asChild>
-        <div
-          key={`${props.identifier}:${props.object}`}
-          ref={ref}
-          onClick={handleClick}
-          className={cn("relative", props.containerClassName, className)}
-          onDragStart={handleDragStart}
-          draggable={false}
-        >
-          {props.children}
-          {isOver && <CombineButton />}
-
-          {partners.length > 0 && (
-            <Portal>
-              <motion.div
-                ref={floatingRef}
-                style={floatingStyles}
-                className="z-[10050] w-[320px] max-w-[min(90vw,320px)] shadow-2xl max-w-md rounded bg-popover border  rounded-lg p-1 shadow-xl"
-                onClick={(e) => e.stopPropagation()}
-                initial={{ filter: "blur(2px)" }}
-  animate={{ filter: "none" }}
-
-              >
-                <SmartContext
-                  objects={
-                    getCurrentSelection().length > 1
-                      ? getCurrentSelection()
-                      : [self]
-                  }
-                  partners={partners}
-                  onDone={() => clearPartners()}
-                />
-              </motion.div>
-            </Portal>
-          )}
-        </div>
+        {hoverEnabled ? (
+          <HoverCardTrigger asChild>{triggerContent}</HoverCardTrigger>
+        ) : (
+          triggerContent
+        )}
       </ContextMenuTrigger>
     </ContextMenu>
+  );
+
+  if (!hoverEnabled) {
+    return menu;
+  }
+
+  return (
+    <SmartHoverCard self={self} disabled={isDragging || contextMenuOpen || partners.length > 0}>
+      {menu}
+    </SmartHoverCard>
+  );
+};
+
+// Wraps the model trigger in a shadcn HoverCard. The detailed hover content is
+// resolved per-identifier through the smart builder adapters and is only
+// mounted while the card is open, so the (potentially expensive) detail query
+// is fired on demand when the item actually becomes visible.
+const SmartHoverCard = ({
+  self,
+  children,
+  disabled,
+}: {
+  self: Structure;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const groupActive = useHoverGroupActive();
+  const openRef = React.useRef(false);
+
+  const handleOpenChange = React.useCallback((next: boolean) => {
+    if (disabled && next) return;
+    setOpen(next);
+    if (next === openRef.current) {
+      return;
+    }
+    openRef.current = next;
+    if (next) {
+      enterHoverGroup();
+    } else {
+      leaveHoverGroup();
+    }
+  }, [disabled]);
+
+  // Make sure we release our slot in the group if we unmount while open
+  // (e.g. the item scrolls out of view).
+  React.useEffect(() => {
+    return () => {
+      if (openRef.current) {
+        openRef.current = false;
+        leaveHoverGroup();
+      }
+    };
+  }, []);
+
+  // Force close if disabled while open
+  React.useEffect(() => {
+    if (disabled && open) {
+      setOpen(false);
+      if (openRef.current) {
+        openRef.current = false;
+        leaveHoverGroup();
+      }
+    }
+  }, [disabled, open]);
+
+  return (
+    <HoverCard
+      open={open}
+      onOpenChange={handleOpenChange}
+      openDelay={groupActive ? 80 : 600}
+      closeDelay={100}
+    >
+      {children}
+      <HoverCardContent
+        side="right"
+        align="center"
+        sideOffset={12}
+        className="w-80 max-w-[min(90vw,20rem)] p-0 ring-0 border-0 bg-transparent overflow-visible shadow-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Gradient "frame" — the padding lets this gradient show as a border
+            around the solid body. The shadow lives here (on the actual visible
+            element) so it isn't lost on the transparent portal container. */}
+        <div className="rounded-3xl bg-gradient-to-br from-primary/70 via-primary/10 to-primary-similar/40 p-[1.5px] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)]">
+          <div className="rounded-3xl overflow-hidden bg-popover">
+            {open &&
+              getSmartBuilderAdapters().renderHover({
+                identifier: self.identifier,
+                object: self.object,
+              })}
+          </div>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 };
 

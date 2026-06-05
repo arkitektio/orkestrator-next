@@ -257,7 +257,7 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
           variables: {
             input: {
               id: structure.object.id,
-              pin: !Boolean(structure.object.pinned),
+              pin: !structure.object.pinned,
             },
           },
         })

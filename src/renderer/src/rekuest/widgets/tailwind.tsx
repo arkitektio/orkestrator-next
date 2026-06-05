@@ -44,7 +44,7 @@ export const ReturnsContainer =  ({
   return (
     <div
       className={cn(
-        `grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`,
+        `grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size} @3xl:grid-cols-${xxxl_size} @5xl:grid-cols-${xxxxl_size} gap-4`,
         className,
       )}
     >
@@ -55,16 +55,16 @@ export const ReturnsContainer =  ({
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <div className="@container flex flex-col rounded rounded-md border-1" key={index}>
+          <div className="@container flex flex-col rounded-md border" key={index}>
             {showKeys && (
               <label
-                className="flex-initial font-light text-slate-200 mb-2"
+                className="flex-initial font-light mb-2"
                 htmlFor={port.key}
               >
                 {port.label || port.key}
               </label>
             )}
-            <div className="flex-grow bg-background rounded rounded-md ">
+            <div className="flex-grow bg-background rounded-md">
               <EffectWrapper
                 effects={port.effects || []}
                 port={port}
@@ -81,7 +81,7 @@ export const ReturnsContainer =  ({
             {port.description && (
               <div
                 id={`${port.key}-help`}
-                className="text-xs mb-4 font-light flex-initial text-slate-400"
+                className="text-xs mb-4 font-light flex-initial text-muted-foreground"
               >
                 {port.description}
               </div>
@@ -111,17 +111,17 @@ export const WrappedReturnsContainer = ({
         return (
           <div
             key={key}
-            className="@container flex flex-col rounded rounded-md border-1 flex-1"
+            className="@container flex flex-col rounded-md border flex-1"
           >
             {showKeys && (
               <label
-                className="flex-initial font-light text-slate-200 mb-2"
+                className="flex-initial font-light mb-2"
                 htmlFor={port.key}
               >
                 {port.label || port.key}
               </label>
             )}
-            <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
+            <div className="flex-grow bg-muted rounded-md max-h-[300px]">
               <EffectWrapper
                 effects={port.effects || []}
                 port={port}
@@ -138,7 +138,7 @@ export const WrappedReturnsContainer = ({
             {port.description && (
               <div
                 id={`${port.key}-help`}
-                className="text-xs mb-4 font-light flex-initial text-slate-400"
+                className="text-xs mb-4 font-light flex-initial text-muted-foreground"
               >
                 {port.description}
               </div>

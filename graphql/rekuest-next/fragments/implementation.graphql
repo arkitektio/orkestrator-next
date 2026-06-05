@@ -37,6 +37,7 @@ fragment ListImplementation on Implementation {
   id
   interface
   action {
+    id
     description
     name
     stateful

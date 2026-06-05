@@ -1,3 +1,4 @@
+import { useDialog } from "@/app/dialog";
 import {
   HoverRow,
   HoverSectionLabel,
@@ -5,8 +6,10 @@ import {
   HoverSkeleton,
 } from "@/components/hover/HoverShell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Object } from "@/types";
+import { Zap } from "lucide-react";
 import { PortKind, useHoverImplementationQuery } from "../../api/graphql";
 
 const portKindLabel: Record<PortKind, string> = {
@@ -26,6 +29,7 @@ const portKindLabel: Record<PortKind, string> = {
 };
 
 export const ImplementationHoverCard = ({ object }: { object: Object }) => {
+  const { openDialog } = useDialog();
   const { data, error } = useHoverImplementationQuery({
     variables: { id: object.id },
     fetchPolicy: "cache-first",
@@ -134,6 +138,15 @@ export const ImplementationHoverCard = ({ object }: { object: Object }) => {
           )}
         </div>
       )}
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-1 w-full gap-2"
+        onClick={() => openDialog("createshortcut", { id: action.id }, {})}
+      >
+        <Zap className="h-3.5 w-3.5" />
+        Create shortcut
+      </Button>
     </HoverShell>
   );
 };

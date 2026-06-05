@@ -11,6 +11,7 @@ export const StringWidget = (props: InputWidgetProps) => {
       name={pathToName(props.path)}
       label={props.port.label || props.port.key}
       description={props.port.description || undefined}
+      validate={validate}
     />
   );
 };

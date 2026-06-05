@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn, notEmpty } from "@/lib/utils";
+import { AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -57,9 +58,14 @@ export const ButtonLabel = (props: {
   }, [props.value, props.search]);
 
   return (
-    <div className="flex flex-row items-center">
-      {option?.label && <div className="text-slate-200">{option.label}</div>}
-      {error}
+    <div className="flex flex-row items-center gap-1 min-w-0">
+      {option?.label && <span className="truncate">{option.label}</span>}
+      {error && (
+        <span className="flex items-center gap-1 text-xs text-destructive shrink-0">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          {error}
+        </span>
+      )}
     </div>
   );
 };
@@ -82,22 +88,21 @@ export type SearchFieldProps = {
 } & FieldProps;
 
 
-
-
-
-
-
 export const SearchWidget = (
   props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
-  console.log("SearchWidget", props);
   const { registry } = useWidgetRegistry();
 
   const thequery = props?.widget?.query || "";
   const wardKey = props.widget?.ward;
 
   if (!wardKey) {
-    return <>No ward set</>;
+    return (
+      <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        Configuration error: no data source configured for this field.
+      </div>
+    );
   }
 
   const theward = useMemo(
@@ -112,7 +117,6 @@ export const SearchWidget = (
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("searching", searching, theward, wardKey, thequery);
       if (!theward.search) throw new Error("Ward does not support search");
       if (!met) throw new Error("Dependencies not met");
 
@@ -121,7 +125,6 @@ export const SearchWidget = (
         variables: { ...searching, ...values },
       });
 
-      console.log(options);
       return options;
     },
     [theward, thequery, values],
@@ -170,7 +173,6 @@ export const SearchWidget = (
             });
           }
         }
-        // This is not a default behaviour of the <input /> field
         if (e.key === "Escape") {
           input.blur();
         }
@@ -180,7 +182,14 @@ export const SearchWidget = (
   );
 
   if (!met) {
-    return <div className="w-full my-2">Waiting for {props.widget?.dependencies?.map(d => <Badge>{d}</Badge>)}</div>;
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 rounded border border-border px-3 py-2 text-xs text-muted-foreground">
+        <span>Waiting for:</span>
+        {props.widget?.dependencies?.map((d, i) => (
+          <Badge key={i} variant="outline" className="text-[10px]">{d}</Badge>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -189,7 +198,7 @@ export const SearchWidget = (
       name={pathToName(props.path)}
       render={({ field }) => (
         <>
-          <FormItem className="flex flex-col dark:text-white">
+          <FormItem className="flex flex-col">
             {props.port.label != undefined && <FormLabel>{props.port.label}</FormLabel>}
             <Command
               shouldFilter={false}
@@ -210,9 +219,7 @@ export const SearchWidget = (
                   />
                   {field.value != undefined && field.value != null && (
                     <div
-                      className={cn(
-                        "z-8 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 truncate",
-                      )}
+                      className="absolute inset-0 z-10 flex cursor-pointer items-center rounded-md bg-input px-3 text-sm truncate"
                       onClick={() => {
                         setInputValue("");
                         form.setValue(pathToName(props.path), undefined, {
@@ -231,12 +238,13 @@ export const SearchWidget = (
               <div className="relative mt-2">
                 {open && (
                   <CommandList slot="list" className="w-full t-10">
-                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in ">
+                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                       <CommandEmpty>No options found.</CommandEmpty>
                       {error && (
-                        <CommandGroup heading="Error">
-                          {error && <CommandItem>{error}</CommandItem>}
-                        </CommandGroup>
+                        <div className="flex items-center gap-2 px-3 py-2 text-xs text-destructive border-b border-destructive/20 bg-destructive/5">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                          {error}
+                        </div>
                       )}
                       {options.length > 0 && (
                         <CommandGroup heading="Options">
@@ -281,7 +289,7 @@ export const SearchWidget = (
                 )}
               </div>
             </Command>
-            {props.port.description && <FormDescription className="max-h-32 overflow-y-scroll">{props.port.description}</FormDescription>}
+            {props.port.description && <FormDescription>{props.port.description}</FormDescription>}
             <FormMessage />
           </FormItem>
         </>

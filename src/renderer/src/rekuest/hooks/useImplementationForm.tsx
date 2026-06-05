@@ -11,6 +11,16 @@ import {
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
 
+const extractErrorMessages = (obj: Record<string, any>, prefix = ""): string[] => {
+  const out: string[] = [];
+  for (const [k, v] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    if (typeof v?.message === "string") out.push(`${path}: ${v.message}`);
+    else if (v && typeof v === "object") out.push(...extractErrorMessages(v, path));
+  }
+  return out;
+};
+
 export const portHash = (port: Port[]) => {
   return port
     .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
@@ -143,7 +153,10 @@ export const useImplementationForm = (props: {
           });
         },
         (errors) => {
-          toast.error(JSON.stringify(errors));
+          const msgs = extractErrorMessages(errors as Record<string, any>);
+          if (msgs.length === 0) toast.error("Please check the form for errors.");
+          else if (msgs.length === 1) toast.error(msgs[0]);
+          else toast.error(`${msgs.length} validation errors — ${msgs.slice(0, 3).join("; ")}${msgs.length > 3 ? "…" : ""}`);
         },
       );
     },

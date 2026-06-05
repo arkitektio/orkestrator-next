@@ -1,3 +1,10 @@
+# [1.64.0](https://github.com/arkitektio/orkestrator-next/compare/v1.63.1...v1.64.0) (2026-05-28)
+
+
+### Features
+
+* more model cards ([6354dec](https://github.com/arkitektio/orkestrator-next/commit/6354dec1bfb1e766d2b432cedf69ab168cb73225))
+
 ## [1.63.1](https://github.com/arkitektio/orkestrator-next/compare/v1.63.0...v1.63.1) (2026-05-28)
 
 

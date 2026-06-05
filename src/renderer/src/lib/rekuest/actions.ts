@@ -21,6 +21,9 @@ import {
   DeletePlacementDocument,
   DeleteShortcutDocument,
   DeleteSpaceDocument,
+  ImplementationDocument,
+  ImplementationQuery,
+  ImplementationQueryVariables,
   KickDocument,
   KickMutation,
   KickMutationVariables,
@@ -33,7 +36,7 @@ import {
 } from '@/rekuest/api/graphql'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
-import { Ban, LogOut, Pencil, Pin, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Ban, Bookmark, LogOut, Pencil, Pin, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 
 export const REKUEST_ACTIONS: Record<string, Action> = {
   'rekuest-update-agent': {
@@ -369,5 +372,44 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
         // variables: { ... } // Add necessary variables here
       })
     }
-  }
+  },
+  'rekuest-create-shortcut-from-implementation': {
+    title: 'Create Shortcut',
+    description: 'Create a shortcut for this action',
+    icon: Bookmark,
+    conditions: [
+      {
+        type: 'identifier',
+        identifier: '@rekuest/implementation',
+      },
+      {
+        type: 'nopartner',
+      },
+    ],
+    execute: async ({ services, state, dialog }) => {
+      const structure = state.left.find(
+        (item) => item.identifier === '@rekuest/implementation',
+      )
+
+      if (!structure?.object?.id) {
+        throw new Error('No implementation selected')
+      }
+
+      const { data } = await services.rekuest.client.query<
+        ImplementationQuery,
+        ImplementationQueryVariables
+      >({
+        query: ImplementationDocument,
+        variables: { id: structure.object.id },
+        fetchPolicy: 'cache-first',
+      })
+
+      if (!data?.implementation?.action?.id) {
+        throw new Error('Could not load action for this implementation')
+      }
+
+      dialog.openDialog('createshortcut', { id: data.implementation.action.id })
+    },
+    collections: ['io'],
+  },
 } as const

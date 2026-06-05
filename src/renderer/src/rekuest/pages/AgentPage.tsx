@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
+import { VerticalListRender } from "@/components/layout/VerticalListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";
 import { CopyAgentPythonButton } from "../components/copy-agent-python";
-import ImplementationCard from "../components/cards/ImplementationCard";
-import TaskCard from "../components/cards/TaskCard";
+import AgentImplementationCard from "../components/cards/AgentImplementationCard";
+import AgentTaskCard from "../components/cards/AgentTaskCard";
 import { AgentTasksSidebar } from "../sidebars/AgentTasksSidebar";
 
 export const PinAgent = (props: { agent: AgentFragment }) => {
@@ -148,6 +148,8 @@ export const AgentPage = asDetailQueryRoute(
       });
     }, [subscribeToMore, data.agent.id]);
 
+    const recentTasks = data.agent.assignations.slice(0, 5);
+
     return (
       <RekuestAgent.ModelPage
         title={data.agent.name}
@@ -241,7 +243,7 @@ export const AgentPage = asDetailQueryRoute(
               <div className="space-y-1">
                 <div className="space-y-4">
                   <RekuestAgent.DetailLink object={data.agent}>
-                    <h1 className="scroll-m-20 text-4xl font-bold tracking-tight transition-colors hover:text-primary lg:text-6xl cursor-pointer">
+                    <h1 className="scroll-m-20 text-2xl font-bold tracking-tight transition-colors hover:text-primary lg:text-4xl cursor-pointer">
                       {data.agent.name}
                     </h1>
                   </RekuestAgent.DetailLink>
@@ -257,10 +259,10 @@ export const AgentPage = asDetailQueryRoute(
                             : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.75)]",
                         )}
                       />
-                      <span className="text-2xl font-semibold">
+                      <span className="text-lg font-semibold">
                         {data.agent.connected ? "Online" : "Offline"}
                       </span>
-                      <div className="font-light">
+                      <div className="font-light text-sm">
                       <Timestamp date={data.agent.lastSeen} relative />
                       </div>
                                        </div>
@@ -284,18 +286,18 @@ export const AgentPage = asDetailQueryRoute(
               </div>
 
 
-        <div className="mt-6  @container">
-          Tasks
-              <ListRender array={data.agent.assignations}>
-                {(item) => <TaskCard item={item} />}
-              </ListRender>
-        </div>
+        <div className="mt-4 flex flex-col gap-4 min-h-0 flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <VerticalListRender title="Actions" array={data.agent.implementations}>
+              {(item) => <AgentImplementationCard key={item.id} item={item} />}
+            </VerticalListRender>
+          </div>
 
-        <div className="mt-6  @container overflow-y-auto">
-          Actions
-          <ListRender array={data.agent.implementations}>
-            {(item) => <ImplementationCard item={item} />}
-          </ListRender>
+          <div className="shrink-0">
+            <VerticalListRender title="Recent Tasks" array={recentTasks}>
+              {(item) => <AgentTaskCard key={item.id} item={item} />}
+            </VerticalListRender>
+          </div>
         </div>
               </div>
             </div>

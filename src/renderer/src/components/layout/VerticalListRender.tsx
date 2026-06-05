@@ -1,0 +1,28 @@
+import { ReactNode } from "react";
+
+type VerticalListRenderProps<T> = {
+  title: ReactNode;
+  array: T[] | undefined | null;
+  titleClassName?: string;
+  children: (item: T, index: number) => ReactNode;
+};
+
+export const VerticalListRender = <T,>({
+  title,
+  array,
+  titleClassName,
+  children,
+}: VerticalListRenderProps<T>) => {
+  if (!array || array.length === 0) return null;
+
+  return (
+    <div>
+      <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </span>
+      <div className="mt-2 space-y-2 gap-1">
+        {array.map((item, index) => children(item, index))}
+      </div>
+    </div>
+  );
+};

@@ -1,13 +1,13 @@
 fragment File on File {
   origins {
-    id
+    ...ListImage
   }
   id
   name
   store {
     ...BigFileStore
   }
-  views {
+  views(pagination: $viewPagination) {
     id
     seriesIdentifier
     image {

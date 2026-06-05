@@ -34,12 +34,15 @@ export const SmartModel = ({
     floatingStyles,
     self,
     isOver,
+    isDragging,
     partners,
     clearPartners,
     handleClick,
     handleDragStart,
     getCurrentSelection,
   } = useSmartModel({ identifier: props.identifier, object: props.object,  });
+
+  const [contextMenuOpen, setContextMenuOpen] = React.useState(false);
 
   // Hover cards are opt-out via the user settings (default on).
   const hoverCardsEnabled = useSettingsStore(
@@ -102,7 +105,7 @@ export const SmartModel = ({
   );
 
   const menu = (
-    <ContextMenu modal={false}>
+    <ContextMenu modal={false} onOpenChange={setContextMenuOpen}>
       <ContextMenuContent className="dark:border-gray-700 max-w-md">
         <SmartModelContext self={self} />
       </ContextMenuContent>
@@ -120,7 +123,11 @@ export const SmartModel = ({
     return menu;
   }
 
-  return <SmartHoverCard self={self}>{menu}</SmartHoverCard>;
+  return (
+    <SmartHoverCard self={self} disabled={isDragging || contextMenuOpen || partners.length > 0}>
+      {menu}
+    </SmartHoverCard>
+  );
 };
 
 // Wraps the model trigger in a shadcn HoverCard. The detailed hover content is
@@ -130,15 +137,18 @@ export const SmartModel = ({
 const SmartHoverCard = ({
   self,
   children,
+  disabled,
 }: {
   self: Structure;
   children: React.ReactNode;
+  disabled?: boolean;
 }) => {
   const [open, setOpen] = React.useState(false);
   const groupActive = useHoverGroupActive();
   const openRef = React.useRef(false);
 
   const handleOpenChange = React.useCallback((next: boolean) => {
+    if (disabled && next) return;
     setOpen(next);
     if (next === openRef.current) {
       return;
@@ -149,7 +159,7 @@ const SmartHoverCard = ({
     } else {
       leaveHoverGroup();
     }
-  }, []);
+  }, [disabled]);
 
   // Make sure we release our slot in the group if we unmount while open
   // (e.g. the item scrolls out of view).
@@ -161,6 +171,17 @@ const SmartHoverCard = ({
       }
     };
   }, []);
+
+  // Force close if disabled while open
+  React.useEffect(() => {
+    if (disabled && open) {
+      setOpen(false);
+      if (openRef.current) {
+        openRef.current = false;
+        leaveHoverGroup();
+      }
+    }
+  }, [disabled, open]);
 
   return (
     <HoverCard

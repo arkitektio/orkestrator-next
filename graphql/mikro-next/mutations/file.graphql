@@ -3,6 +3,7 @@ mutation from_file_like(
   $name: String!
   $origins: [ID!]
   $dataset: ID
+  $viewPagination: OffsetPaginationInput
 ) {
   fromFileLike(
     input: { file: $file, fileName: $name, origins: $origins, dataset: $dataset }

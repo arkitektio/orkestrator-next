@@ -1,3 +1,20 @@
+## [1.64.1](https://github.com/arkitektio/orkestrator-next/compare/v1.64.0...v1.64.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* a bi better kabinet ui ([c601c23](https://github.com/arkitektio/orkestrator-next/commit/c601c233ad8e3604884d37db21f7d45226aa0c39))
+* actions ([a0040c3](https://github.com/arkitektio/orkestrator-next/commit/a0040c3aaa984f9ff6811cf97ad447350e2e7779))
+* add broadcast cards ([87f20c2](https://github.com/arkitektio/orkestrator-next/commit/87f20c20beaa1a28e48ff27e6ef8122ee03ea419))
+* chat room ([a07e9c2](https://github.com/arkitektio/orkestrator-next/commit/a07e9c2b66af5de26a5e867ec3c201f8f1020216))
+* finish performance problems of scene ([0cc1f1f](https://github.com/arkitektio/orkestrator-next/commit/0cc1f1ffbcd387fa79f3e35a44d0605e01375caf))
+* Issue in /rekuest ([02974ca](https://github.com/arkitektio/orkestrator-next/commit/02974ca442a5ac277031ac4194f8e205cad3c245)), closes [#80](https://github.com/arkitektio/orkestrator-next/issues/80)
+* more ui fixes ([5dcbddb](https://github.com/arkitektio/orkestrator-next/commit/5dcbddb590ed79246555d04760bbd261f88c2852))
+* more ui updates ([4655f1d](https://github.com/arkitektio/orkestrator-next/commit/4655f1dd5dc6773998fe48168b8e5e9d65ec81fb))
+* refactor chunk ([974a9e1](https://github.com/arkitektio/orkestrator-next/commit/974a9e1a701140c9a77ed9dcf64f57b3a976e112))
+* revert to older loader paradigm ([1040b83](https://github.com/arkitektio/orkestrator-next/commit/1040b83043c5be5dd8cf25c058f83a7d87c93f00))
+* structure category ([5d2104f](https://github.com/arkitektio/orkestrator-next/commit/5d2104f0f0ae7068a91c83e2381e0dbfc82df7d3))
+
 # [1.64.0](https://github.com/arkitektio/orkestrator-next/compare/v1.63.1...v1.64.0) (2026-05-28)
 
 

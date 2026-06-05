@@ -68,3 +68,9 @@ query ActionImplementationAt($agent: ID!, $actionHash: String!) {
     ...DetailImplementation
   }
 }
+
+query HoverImplementation($id: ID!) {
+  implementation(id: $id) {
+    ...HoverImplementation
+  }
+}

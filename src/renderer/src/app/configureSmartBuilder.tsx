@@ -53,6 +53,9 @@ const LazyAgentHoverCard = lazy(
 const LazyAssignationHoverCard = lazy(
   () => import("@/rekuest/components/hovers/AssignationHoverCard"),
 );
+const LazyImplementationHoverCard = lazy(
+  () => import("@/rekuest/components/hovers/ImplementationHoverCard"),
+);
 
 // Maps a smart model identifier to the component rendered inside its on-demand
 // hover card, together with the module guard that gates it. The hover cards run
@@ -72,6 +75,10 @@ const hoverCards: Record<string, HoverCardEntry> = {
   "@rekuest/agent": { Component: LazyAgentHoverCard, Guard: Guard.Rekuest },
   "@rekuest/assignation": {
     Component: LazyAssignationHoverCard,
+    Guard: Guard.Rekuest,
+  },
+  "@rekuest/implementation": {
+    Component: LazyImplementationHoverCard,
     Guard: Guard.Rekuest,
   },
 };

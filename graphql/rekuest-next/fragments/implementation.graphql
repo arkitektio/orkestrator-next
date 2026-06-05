@@ -61,3 +61,34 @@ query ImplementationStats($id: ID!) {
     count
   }
 }
+
+fragment HoverImplementation on Implementation {
+  id
+  interface
+  extension
+  pinned
+  action {
+    id
+    name
+    description
+    kind
+    stateful
+    logo
+    app {
+      identifier
+    }
+    args {
+      key
+      label
+      kind
+      nullable
+      default
+    }
+  }
+  agent {
+    id
+    name
+    active
+    connected
+  }
+}

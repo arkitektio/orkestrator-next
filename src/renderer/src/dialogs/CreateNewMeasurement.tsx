@@ -1,231 +1,327 @@
-import { Structure } from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ListSearchField } from "@/components/fields/ListSearchField copy";
-import { ParagraphField } from "@/components/fields/ParagraphField";
-import { SearchOptions } from "@/components/fields/SearchField";
-import { StringField } from "@/components/fields/StringField";
+import { AutoDerivedStringField, StringField } from "@/components/fields/StringField";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  CreateMeasurementCategoryMutationVariables,
+  CreateMeasurementDefinitionInput,
   useCreateMeasurementCategoryMutation,
-  useCreateStructureMutation,
-  useCreateStructureRelationMutation,
-  useSearchEntityCategoryLazyQuery,
-  useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
+  useListEntityCategoryQuery,
+  useListStructureCategoryQuery,
 } from "@/kraph/api/graphql";
-import { smartRegistry } from "@/providers/smart/registry";
+import { ageNameify, validateAgeName } from "@/kraph/forms/utils";
+import { Structure } from "@/types";
+import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-const searchIdentifiers = async ({ search, values }: SearchOptions) => {
-  const models = smartRegistry
-    .registeredModels()
-    .filter((model) => {
-      if (values) return values.includes(model.identifier);
-      if (search) return model.identifier.includes(search);
-      if (!search) return true;
-      return false;
-    })
-    .map((model) => ({
-      label: model.identifier,
-      value: model.identifier,
-    }));
-  return models || [];
-};
+const normalizeInput = (
+  data: CreateMeasurementDefinitionInput,
+): CreateMeasurementDefinitionInput => ({
+  ...data,
+  label: data.label || undefined,
+  description: data.description || undefined,
+  source: {
+    ...data.source,
+    identifiers: data.source.identifiers?.length ? data.source.identifiers : undefined,
+    keys: data.source.keys?.length ? data.source.keys : undefined,
+    tags: data.source.tags?.length ? data.source.tags : undefined,
+    ontotologyTerms: data.source.ontotologyTerms?.length ? data.source.ontotologyTerms : undefined,
+    defaultCategoryKey: data.source.defaultCategoryKey || undefined,
+  },
+  target: {
+    ...data.target,
+    keys: data.target.keys?.length ? data.target.keys : undefined,
+    tags: data.target.tags?.length ? data.target.tags : undefined,
+    ontotologyTerms: data.target.ontotologyTerms?.length ? data.target.ontotologyTerms : undefined,
+    defaultCategoryKey: data.target.defaultCategoryKey || undefined,
+  },
+});
 
-export type FormData = CreateMeasurementCategoryMutationVariables["input"];
+function useDebounce<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
 export const CreateNewMeasurement = (props: {
   left: Structure[];
   right: Structure[];
+  graph: string;
 }) => {
   const { closeDialog } = useDialog();
 
-  const form = useForm<FormData>({
+  const [structureSearch, setStructureSearch] = useState("");
+  const [entitySearch, setEntitySearch] = useState("");
+  const debouncedStructureSearch = useDebounce(structureSearch);
+  const debouncedEntitySearch = useDebounce(entitySearch);
+
+  const form = useForm<CreateMeasurementDefinitionInput>({
     defaultValues: {
-      structureDefinition: {
-        identifierFilters: props.left.map((s) => s.identifier),
-        tagFilters: [],
+      graph: props.graph,
+      label: "",
+      key: "",
+      description: "",
+      source: {
+        identifiers: props.left.map((s) => s.identifier),
+        keys: [],
+        tags: [],
+        ontotologyTerms: [],
+        defaultCategoryKey: "",
       },
-      entityDefinition: {
-        categoryFilters: [],
-        tagFilters: [],
+      target: {
+        keys: [],
+        tags: [],
+        ontotologyTerms: [],
+        defaultCategoryKey: "",
       },
     },
   });
 
-  const [searchGraphs] = useSearchGraphsLazyQuery();
-  const [searchCategories] = useSearchEntityCategoryLazyQuery();
-  const [searchTags] = useSearchTagsLazyQuery();
+  const selectedIdentifiers: string[] = form.watch("source.identifiers") ?? [];
+  const selectedEntityKeys: string[] = form.watch("target.keys") ?? [];
 
-  const [createStructure] = useCreateStructureMutation({
-    onCompleted: (data) => {
-      console.log("Structure created:", data);
+  const { data: structureData } = useListStructureCategoryQuery({
+    variables: {
+      filters: {
+        graph: { id: props.graph },
+        search: debouncedStructureSearch || undefined,
+      },
+      pagination: { limit: 50, offset: 0 },
     },
-    onError: (error) => {
-      console.error("Error creating structure:", error);
-    },
+    fetchPolicy: "network-only",
   });
 
-  const [createMeasurementCategoryMutation] =
-    useCreateMeasurementCategoryMutation({
-      onCompleted: (data) => {
-        console.log("Relation category created:", data);
+  const { data: entityData } = useListEntityCategoryQuery({
+    variables: {
+      filters: {
+        graph: { id: props.graph },
+        search: debouncedEntitySearch || undefined,
       },
-      onError: (error) => {
-        console.error("Error creating relation category:", error);
-      },
-    });
-
-  const [createSRelation] = useCreateStructureRelationMutation({
-    onCompleted: (data) => {
-      console.log("Relation created:", data);
+      pagination: { limit: 50, offset: 0 },
     },
-    onError: (error) => {
-      console.error("Error creating relation:", error);
-    },
+    fetchPolicy: "network-only",
   });
 
-  const handleRelationCreation = async (formData: FormData) => {
+  const [createMeasurementCategory] = useCreateMeasurementCategoryMutation({
+    refetchQueries: ["GetGraph", "ListMeasurmentCategory"],
+  });
+
+  const toggleIdentifier = (identifier: string) => {
+    const current = form.getValues("source.identifiers") ?? [];
+    if (current.includes(identifier)) {
+      form.setValue("source.identifiers", current.filter((i) => i !== identifier));
+    } else {
+      form.setValue("source.identifiers", [...current, identifier]);
+    }
+  };
+
+  const toggleEntityKey = (key: string) => {
+    const current = form.getValues("target.keys") ?? [];
+    if (current.includes(key)) {
+      form.setValue("target.keys", current.filter((k) => k !== key));
+    } else {
+      form.setValue("target.keys", [...current, key]);
+    }
+  };
+
+  const handleSubmit = async (data: CreateMeasurementDefinitionInput) => {
     try {
-      const result = await createMeasurementCategoryMutation({
-        variables: {
-          input: {
-            ...formData,
-          },
-        },
+      await createMeasurementCategory({
+        variables: { input: normalizeInput({ ...data, graph: props.graph }) },
       });
-
-      const categoryToUse = result.data?.createMeasurementCategory;
-
-      if (!categoryToUse) {
-        throw new Error("No category available for relation creation");
-      }
-
-      // Create structures
-      const leftStructureString = `${props.left[0]?.identifier}:${props.left[0]?.object}`;
-      const rightStructureString = `${props.right[0]?.identifier}:${props.right[0]?.object}`;
-
-      const left = await createStructure({
-        variables: {
-          input: {
-            structure: leftStructureString,
-            graph: categoryToUse.graph.id,
-          },
-        },
-      });
-
-      const right = await createStructure({
-        variables: {
-          input: {
-            structure: rightStructureString,
-            graph: categoryToUse.graph.id,
-          },
-        },
-      });
-
-      // Create relation
-      await createSRelation({
-        variables: {
-          input: {
-            source: left.data?.createStructure.id,
-            target: right.data?.createStructure.id,
-            category: categoryToUse.id,
-          },
-        },
-      });
-
       closeDialog();
-      toast.success("Relation created successfully!");
+      toast.success("Measurement category created!");
     } catch (error) {
       toast.error(
-        `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to create: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      console.error("Failed to create relation:", error);
     }
   };
 
   return (
-    <div className="flex flex-col w-full h-full max-w-4xl mx-auto p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Create New Measurement</h2>
+    <div className="flex flex-col h-full">
+      <div className="px-6 pt-4 pb-3 border-b">
+        <h2 className="text-xl font-semibold">Create Measurement Category</h2>
       </div>
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleRelationCreation)}
-          className="space-y-6"
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-1 overflow-hidden"
         >
-          <GraphQLSearchField
-            label="Graph"
-            name="graph"
-            description="Select the graph for this relation"
-            searchQuery={searchGraphs}
-          />
-          <StringField
-            label="Label"
-            name="label"
-            description="Name for the relation category (e.g., 'connects to', 'part of')"
-          />
-          <ParagraphField
-            label="Description"
-            name="description"
-            description="Describe what this relation represents"
-          />
-          <StringField
-            label="PURL"
-            name="purl"
-            description="Permanent URL identifier (optional)"
-          />
-
-          <Separator />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">Source Definition</h4>
-              <div className="space-y-2">
-                <GraphQLSearchField
-                  label="Tag Filters"
-                  name="structureDefinition.tagFilters"
-                  description="Filter source structures by tags"
-                  searchQuery={searchTags}
+          <div className="grid grid-cols-3 flex-1 divide-x overflow-hidden">
+            {/* Left Pane — Structure Categories */}
+            <div className="flex flex-col overflow-hidden p-4 gap-3">
+              <div>
+                <p className="text-sm font-medium mb-1">Structure Categories</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Select the structures to map from. Selected identifiers become the source definition.
+                </p>
+                <Input
+                  placeholder="Filter by label or identifier…"
+                  value={structureSearch}
+                  onChange={(e) => setStructureSearch(e.target.value)}
+                  className="h-8 text-sm"
                 />
-                <ListSearchField
-                  label="Indentifier Filters"
-                  name="structureDefinition.identifierFilters"
-                  description="Filter source structures by categories"
-                  search={searchIdentifiers}
+              </div>
+              {selectedIdentifiers.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedIdentifiers.map((id) => (
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className="text-xs cursor-pointer"
+                      onClick={() => toggleIdentifier(id)}
+                    >
+                      {id} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <ScrollArea className="flex-1">
+                <div className="flex flex-col gap-1 pr-2">
+                  {structureData?.structureCategories.map((cat) => {
+                    const selected = selectedIdentifiers.includes(cat.identifier);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleIdentifier(cat.identifier)}
+                        className={`text-left rounded-md p-2 text-sm border transition-colors hover:bg-accent ${
+                          selected
+                            ? "border-primary bg-primary/10"
+                            : "border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate">{cat.label}</span>
+                          {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </div>
+                        <span className="text-xs text-muted-foreground font-mono truncate block">
+                          {cat.identifier}
+                        </span>
+                        {cat.description && (
+                          <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                            {cat.description}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {structureData?.structureCategories.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No structure categories found
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Center Pane — Label / Key / Submit */}
+            <div className="flex flex-col p-4 gap-4">
+              <div>
+                <p className="text-sm font-medium mb-1">Measurement Label</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Name and key for this measurement category.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <StringField
+                  label="Label"
+                  name="label"
+                  description="Human-readable name (e.g. 'Has fluorescence measurement')"
                 />
+                <AutoDerivedStringField
+                  label="Key"
+                  name="key"
+                  sourceName="label"
+                  deriveValue={ageNameify}
+                  normalizeValue={ageNameify}
+                  validate={validateAgeName}
+                  description="AGE-name key, auto-derived from label"
+                />
+              </div>
+              <div className="mt-auto pt-4">
+                <Button type="submit" className="w-full">
+                  Create Measurement Category
+                </Button>
               </div>
             </div>
 
-            <div>
-              <h4 className="font-medium mb-2">Target Definition</h4>
-              <div className="space-y-2">
-                <GraphQLSearchField
-                  label="Tag Filters"
-                  name="entityDefinition.tagFilters"
-                  description="Filter target structures by tags"
-                  searchQuery={searchTags}
-                />
-                <GraphQLListSearchField
-                  label="Category Filters"
-                  name="entityDefinition.categoryFilters"
-                  description="Filter target structures by categories"
-                  searchQuery={searchCategories}
+            {/* Right Pane — Entity Categories */}
+            <div className="flex flex-col overflow-hidden p-4 gap-3">
+              <div>
+                <p className="text-sm font-medium mb-1">Entity Categories</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Select the entity categories to map to. Selected keys become the target definition.
+                </p>
+                <Input
+                  placeholder="Filter by label or key…"
+                  value={entitySearch}
+                  onChange={(e) => setEntitySearch(e.target.value)}
+                  className="h-8 text-sm"
                 />
               </div>
+              {selectedEntityKeys.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedEntityKeys.map((k) => (
+                    <Badge
+                      key={k}
+                      variant="secondary"
+                      className="text-xs cursor-pointer"
+                      onClick={() => toggleEntityKey(k)}
+                    >
+                      {k} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <ScrollArea className="flex-1">
+                <div className="flex flex-col gap-1 pr-2">
+                  {entityData?.entityCategories.map((cat) => {
+                    const selected = selectedEntityKeys.includes(cat.key);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleEntityKey(cat.key)}
+                        className={`text-left rounded-md p-2 text-sm border transition-colors hover:bg-accent ${
+                          selected
+                            ? "border-primary bg-primary/10"
+                            : "border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate">{cat.label}</span>
+                          {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </div>
+                        <span className="text-xs text-muted-foreground font-mono truncate block">
+                          {cat.key}
+                        </span>
+                        {cat.description && (
+                          <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                            {cat.description}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {entityData?.entityCategories.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No entity categories found
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           </div>
-
-          <Button type="submit" variant="outline">
-            Create New Relation Category
-          </Button>
         </form>
       </Form>
     </div>

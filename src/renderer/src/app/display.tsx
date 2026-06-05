@@ -19,6 +19,7 @@ import { StructureDisplay } from "@/kraph/displays/StructureDisplay";
 import { StructureCategoryDisplay } from "@/kraph/displays/StructureCategoryDisplay";
 import { StructureRelationCategoryDisplay } from "@/kraph/displays/StructureRelationCategoryDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
+import { MessageDisplay } from "@/alpaka/displays/MessageDisplay";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
 import { DatasetDisplay } from "@/mikro-next/displays/DatasetDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
@@ -80,4 +81,6 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@kabinet/pod": PodDisplay,
     // lovekit
     "@lovekit/solo_broadcast": SoloBroadcastDisplay,
+    // alpaka
+    "@alpaka/message": MessageDisplay,
   });

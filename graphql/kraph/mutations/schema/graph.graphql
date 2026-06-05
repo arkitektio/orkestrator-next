@@ -11,6 +11,11 @@ mutation CreateInlineGraph($input: String!) {
   }
 }
 
+mutation UpdateGraphVisual($input: UpdateGraphVisualInput!) {
+  updateGraphVisual(input: $input) {
+    ...Graph
+  }
+}
 
 
 mutation DeleteGraph($id: String!) {

@@ -12,7 +12,7 @@ const Root = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col w-full gap-6", className)}
+    className={cn("flex flex-col w-full gap-2", className)}
     {...props}
   />
 ));
@@ -31,13 +31,13 @@ const Header = React.forwardRef<HTMLDivElement, HeaderProps>(
     <div
       ref={ref}
       className={cn(
-        "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2 font-bold",
+        "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1 ml-1 font-bold",
         className
       )}
       {...props}
     >
-      <div className="flex flex-col space-y-2 space-x-0 sm:space-x-2 sm:space-y-0">
-        <h3 className="font-light leading-none tracking-tight text-xl">
+      <div className="flex flex-col space-x-0 ">
+        <h3 className="font-light leading-none tracking-tight text-md">
           {children}
         </h3>
       </div>
@@ -78,7 +78,7 @@ const Footer = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center justify-end py-2 mt-auto", className)}
+    className={cn("flex items-center justify-end py-1 mt-auto", className)}
     {...props}
   />
 ));

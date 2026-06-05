@@ -7,18 +7,18 @@ query Implementation($id: ID!) {
 query Implementations(
   $filters: ImplementationFilter
   $pagination: OffsetPaginationInput
-  $order: ImplementationOrder
+  $ordering: [ImplementationOrder!]
 ) {
-  implementations(filters: $filters, pagination: $pagination, order: $order) {
+  implementations(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...DetailImplementation
   }
 }
 query ListImplementations(
   $filters: ImplementationFilter
   $pagination: OffsetPaginationInput
-  $order: ImplementationOrder
+  $ordering: [ImplementationOrder!]
 ) {
-  implementations(filters: $filters, pagination: $pagination, order: $order) {
+  implementations(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListImplementation
   }
 }

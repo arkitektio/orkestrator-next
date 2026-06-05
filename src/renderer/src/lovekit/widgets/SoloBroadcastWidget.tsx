@@ -1,4 +1,5 @@
 import { useLivekit } from "@/app/Arkitekt";
+import { cn } from "@/lib/utils";
 import {
   SoloBroadcastFragment,
   useGetSoloBroadcastQuery,
@@ -12,62 +13,13 @@ import {
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
+import { StreamJoiner } from "../components/StreamJoiner";
 
-function VideoRenderer() {
-  const trackRefs = useTracks([Track.Source.Camera]);
 
-  const streamer = trackRefs.filter((t) =>
-    t.participant.identity.startsWith("streamer"),
-  );
-
-  return (
-    <GridLayout tracks={streamer}>
-      <VideoTrack trackRef={streamer.at(0)} />
-    </GridLayout>
-  );
-}
-
-export const VideoStream = ({ token }: { token: string }) => {
-  const { url } = useLivekit();
-
-  console.log("Stream", token, url);
-
-  return (
-    <LiveKitRoom token={token} serverUrl={url} connect={true}>
-      <VideoRenderer />
-    </LiveKitRoom>
-  );
-};
-
-export const StreamJoiner = (props: { broadcast: SoloBroadcastFragment }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const tokenFutureRan = useRef<boolean>(false);
-
-  const [x] = useJoinBroadcastMutation();
-
-  useEffect(() => {
-    if (!tokenFutureRan.current) {
-      tokenFutureRan.current = true;
-      x({
-        variables: {
-          input: { broadcast: props.broadcast.id },
-        },
-      }).then((result) => {
-        if (result.data?.joinBroadcast) {
-          setToken(result.data.joinBroadcast);
-        }
-      });
-    }
-  }, [props.broadcast.id, x]);
-
-  return (
-    <div className="w-full h-full flex-grow relative flex items-center justify-center">
-      {token && <VideoStream token={token} />}
-    </div>
-  );
-};
-
-export const AsyncSoloBroadcastWidget = (props: { id: string }) => {
+export const AsyncSoloBroadcastWidget = (props: {
+  id: string;
+  className?: string;
+}) => {
   const { data, error } = useGetSoloBroadcastQuery({
     variables: {
       id: props.id,
@@ -77,8 +29,10 @@ export const AsyncSoloBroadcastWidget = (props: { id: string }) => {
   const broadcast = data?.soloBroadcast?.id;
 
   return (
-    <div className="w-full h-full bg-black relative">
-      {broadcast && <StreamJoiner broadcast={data.soloBroadcast} />}
+    <div className={cn("relative h-full w-full overflow-hidden bg-black", props.className)}>
+      {broadcast && (
+        <StreamJoiner broadcast={data.soloBroadcast} />
+      )}
       {!broadcast && (
         <div className="flex items-center justify-center h-full">
           <span className="text-white">Loading broadcast...</span>

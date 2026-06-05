@@ -8,11 +8,13 @@ import {
   useListGraphsQuery,
 } from "@/kraph/api/graphql";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
+import { useDialog } from "@/app/dialog";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { MetricsTable } from "../tables/MetricsTable";
 import { Identifier, Object } from "@/types";
 import { ConnectableAs } from "@/kraph/components/ConnectableAs";
+import { PlusCircle } from "lucide-react";
 
 
 export type KnowledgeSidebarProps = {
@@ -31,6 +33,7 @@ export const GraphKnowledgeView = (props: {
   object: Object;
   graph: ListGraphFragment;
 }) => {
+  const dialog = useDialog();
   const { data, refetch, error, loading } = useGetInformedStructureQuery({
     variables: {
       identifier: props.identifier,
@@ -89,6 +92,21 @@ export const GraphKnowledgeView = (props: {
                 Measure
               </Button>
             </ObjectButton>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                dialog.openDialog("createnewmeasurement", {
+                  left: [{ identifier: props.identifier, object: props.object }],
+                  right: [],
+                  graph: props.graph.id,
+                })
+              }
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create new measurement
+            </Button>
 
             {hasConnections && (
               <ConnectableAs

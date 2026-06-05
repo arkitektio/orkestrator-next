@@ -645,6 +645,18 @@ export const getColorMapTexture = (
     return rainbowColormap;
   }
 
+  if (resolvedColormap === ColorMap.Red) {
+    return redColormap;
+  }
+
+  if (resolvedColormap === ColorMap.Green) {
+    return greenColormap;
+  }
+
+  if (resolvedColormap === ColorMap.Blue) {
+    return blueColormap;
+  }
+
   if (resolvedColormap === ColorMap.Intensity) {
     return getContinuousColorMapTexture(resolvedColormap, color);
   }

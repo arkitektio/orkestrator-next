@@ -1,0 +1,11 @@
+query GetRepo($id: ID!) {
+  repo: githubRepo(id: $id) {
+    ...Repo
+  }
+}
+
+query ListRepos($filters: GithubRepoFilter, $pagination: OffsetPaginationInput) {
+  repos: githubRepos(filters: $filters, pagination: $pagination) {
+    ...ListRepo
+  }
+}

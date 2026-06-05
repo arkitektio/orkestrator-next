@@ -61,29 +61,7 @@ export const RoomPage =  asDetailQueryRoute(
           />
         }
       >
-        <div className="space-y-4">
-          {talkingAboutStructures.length > 0 ? (
-            <Card className="border-border/60 bg-card shadow-sm">
-              <CardHeader>
-                <CardTitle>Talking About</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {talkingAboutStructures.map((structure) => (
-                  <div
-                    key={`${structure.identifier}:${structure.object}`}
-                    className="overflow-hidden rounded-xl border border-border/60 bg-muted/20 p-2"
-                  >
-                    <DisplayWidget
-                      identifier={structure.identifier}
-                      object={structure.object}
-                      link
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ) : null}
-
+        <div className="h-[calc(100vh)] min-h-0 flex flex-col overflow-hidden">
           <ChatLayout navCollapsedSize={200} room={data.room} />
         </div>
       </AlpakaRoom.ModelPage>

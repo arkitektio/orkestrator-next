@@ -1,0 +1,55 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { ListRender } from "@/components/layout/ListRender";
+import { RekuestAgent, RekuestMaterializedBlok } from "@/linkers";
+import {
+  Ordering,
+  useAgentQuery,
+  useListMaterializedBloksQuery,
+} from "@/rekuest/api/graphql";
+import MaterializedBlokCard from "@/rekuest/components/cards/MaterializedBlokCard";
+
+export const AgentBloksPage = asDetailQueryRoute(useAgentQuery, ({ data, id }) => {
+  const { data: blokData, loading, error, refetch } = useListMaterializedBloksQuery({
+    variables: {
+      filters: { agent: id },
+      ordering: [{ createdAt: Ordering.Desc }],
+      pagination: { limit: 20, offset: 0 },
+    },
+  });
+
+  return (
+    <RekuestAgent.ModelPage
+      title={
+        <div className="flex flex-row items-center gap-2">
+          {data.agent.name}
+          <span className="text-sm font-light text-muted-foreground">- Bloks</span>
+        </div>
+      }
+      object={data.agent}
+    >
+      <div className="p-6">
+        <ListRender
+          array={blokData?.materializedBloks}
+          loading={loading}
+          error={error}
+          title={
+            <RekuestMaterializedBlok.ListLink className="flex-0">
+              Materialized Bloks
+            </RekuestMaterializedBlok.ListLink>
+          }
+          refetch={({ pagination }) =>
+            refetch({
+              filters: { agent: id },
+              ordering: [{ createdAt: Ordering.Desc }],
+              pagination,
+            })
+          }
+        >
+          {(item) => <MaterializedBlokCard key={item.id} item={item} />}
+        </ListRender>
+      </div>
+    </RekuestAgent.ModelPage>
+  );
+});
+
+export default AgentBloksPage;

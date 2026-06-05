@@ -5,7 +5,7 @@
 import type { Chunk, DataType } from 'zarrita'
 
 import { create_codec_pipeline } from './internals/codec-pipeline.js'
-import { get_strides } from './internals/util.js'
+import { createBuffer, get_ctr, get_strides } from './internals/util.js'
 import {
   deserializeRequestInit,
   fetchS3Path,
@@ -20,6 +20,8 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope & {
 
 type TextureCompatibleDataType = 'uint8' | 'uint16' | 'float32'
 type TextureFidelity = 'default' | 'low' | 'high'
+
+type TextureCompatibleChunk = Chunk<'uint8'> | Chunk<'uint16'> | Chunk<'float32'>
 
 function now(): number {
   return performance.now()
@@ -58,6 +60,7 @@ function fixEdgeChunkShapeStride<D extends DataType>(
 function convertChunkToTexturePrecision(
   chunk: Chunk<DataType>,
   targetType: 'uint8' | 'uint16',
+  useSharedArrayBuffer: boolean,
 ): {
   chunk: Chunk<'uint8'> | Chunk<'uint16'>
   promotedType: TextureCompatibleDataType
@@ -65,7 +68,13 @@ function convertChunkToTexturePrecision(
 } {
   const source = chunk.data as ArrayLike<number | bigint>
   const outputMax = targetType === 'uint8' ? 255 : 65535
-  const output = targetType === 'uint8' ? new Uint8Array(source.length) : new Uint16Array(source.length)
+  const outputBuffer = createBuffer(
+    source.length * (targetType === 'uint8' ? Uint8Array.BYTES_PER_ELEMENT : Uint16Array.BYTES_PER_ELEMENT),
+    useSharedArrayBuffer,
+  )
+  const output = targetType === 'uint8'
+    ? new Uint8Array(outputBuffer)
+    : new Uint16Array(outputBuffer)
   let localMin = Number.POSITIVE_INFINITY
   let localMax = Number.NEGATIVE_INFINITY
 
@@ -117,17 +126,18 @@ function promoteChunkForTexture(
   chunk: Chunk<DataType>,
   _sourceDataType: DataType,
   textureFidelity: TextureFidelity,
+  useSharedArrayBuffer: boolean,
 ): {
-  chunk: Chunk<'uint8'> | Chunk<'uint16'> | Chunk<'float32'>
+  chunk: TextureCompatibleChunk
   promotedType: TextureCompatibleDataType
   textureBounds?: TextureChunkBounds
 } {
   if (textureFidelity === 'low') {
-    return convertChunkToTexturePrecision(chunk, 'uint8')
+    return convertChunkToTexturePrecision(chunk, 'uint8', useSharedArrayBuffer)
   }
 
   if (textureFidelity === 'high') {
-    return convertChunkToTexturePrecision(chunk, 'uint16')
+    return convertChunkToTexturePrecision(chunk, 'uint16', useSharedArrayBuffer)
   }
 
   if (chunk.data instanceof Uint8Array || chunk.data instanceof Uint8ClampedArray) {
@@ -136,24 +146,29 @@ function promoteChunkForTexture(
         ? chunk.data
         : new Uint8Array(chunk.data.buffer, chunk.data.byteOffset, chunk.data.byteLength)
     return {
-      chunk: {
-        data: uint8Data,
-        shape: chunk.shape,
-        stride: chunk.stride,
-      } as Chunk<'uint8'>,
+      chunk: ensureSharedChunkIfNeeded(
+        {
+          data: uint8Data,
+          shape: chunk.shape,
+          stride: chunk.stride,
+        } as Chunk<'uint8'>,
+        useSharedArrayBuffer,
+      ),
       promotedType: 'uint8',
     }
   }
 
   if (chunk.data instanceof Float32Array) {
     return {
-      chunk: chunk as Chunk<'float32'>,
+      chunk: ensureSharedChunkIfNeeded(chunk as Chunk<'float32'>, useSharedArrayBuffer),
       promotedType: 'float32',
     }
   }
 
   const source = chunk.data as ArrayLike<number | bigint>
-  const promoted = new Float32Array(source.length)
+  const promoted = new Float32Array(
+    createBuffer(source.length * Float32Array.BYTES_PER_ELEMENT, useSharedArrayBuffer),
+  )
   for (let i = 0; i < source.length; i++) {
     promoted[i] = Number(source[i])
   }
@@ -167,6 +182,45 @@ function promoteChunkForTexture(
     promotedType: 'float32',
   }
 }
+
+function ensureSharedChunkIfNeeded<D extends 'uint8' | 'uint16' | 'float32'>(
+  chunk: Chunk<D>,
+  useSharedArrayBuffer: boolean,
+): Chunk<D> {
+  if (!useSharedArrayBuffer) {
+    return chunk
+  }
+
+  const dataView = chunk.data as unknown as {
+    buffer: ArrayBufferLike
+    byteOffset: number
+    byteLength: number
+  }
+
+  if (typeof SharedArrayBuffer !== 'undefined' && dataView.buffer instanceof SharedArrayBuffer) {
+    return chunk
+  }
+
+  const Ctr = get_ctr(DTYPE_BY_PROMOTED_ARRAY.get((chunk.data as unknown as { constructor: Function }).constructor) ?? 'float32') as unknown as {
+    new (buffer: ArrayBufferLike, byteOffset?: number, length?: number): Chunk<D>['data']
+    BYTES_PER_ELEMENT: number
+  }
+  const sharedBuffer = createBuffer(dataView.byteLength, true)
+  const sharedData = new Ctr(sharedBuffer, 0, dataView.byteLength / Ctr.BYTES_PER_ELEMENT)
+  sharedData.set(chunk.data as unknown as ArrayLike<number>)
+
+  return {
+    data: sharedData,
+    shape: chunk.shape,
+    stride: chunk.stride,
+  }
+}
+
+const DTYPE_BY_PROMOTED_ARRAY = new Map<Function, 'uint8' | 'uint16' | 'float32'>([
+  [Uint8Array, 'uint8'],
+  [Uint16Array, 'uint16'],
+  [Float32Array, 'float32'],
+])
 
 function copySubRegion(
   src: { readonly [i: number]: unknown; readonly length: number },
@@ -359,6 +413,7 @@ type WorkerMessage =
       requestInit?: SerializedRequestInit
       actualChunkShape?: number[]
       textureFidelity?: TextureFidelity
+      useSharedArrayBuffer?: boolean
     }
   | {
       type: 'fetch_exists'
@@ -466,6 +521,7 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         chunk,
         meta.data_type,
         msg.textureFidelity ?? 'default',
+        msg.useSharedArrayBuffer === true,
       )
       const promoteMs = now() - promoteStartedAt
 
@@ -478,27 +534,30 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const byteOffset = dataView.byteOffset
       const byteLength = dataView.byteLength
 
-      ctx.postMessage(
-        {
-          type: 'fetch_decoded' as const,
-          id: msg.id,
-          promotedType: promoted.promotedType,
-          textureBounds: promoted.textureBounds,
-          data: buffer,
-          byteOffset,
-          byteLength,
-          shape: promoted.chunk.shape,
-          stride: promoted.chunk.stride,
-          timings: {
-            fetchMs,
-            decodeMs,
-            reshapeMs,
-            promoteMs,
-            totalMs: now() - workerStartedAt,
-          },
+      const message = {
+        type: 'fetch_decoded' as const,
+        id: msg.id,
+        promotedType: promoted.promotedType,
+        textureBounds: promoted.textureBounds,
+        data: buffer,
+        byteOffset,
+        byteLength,
+        shape: promoted.chunk.shape,
+        stride: promoted.chunk.stride,
+        timings: {
+          fetchMs,
+          decodeMs,
+          reshapeMs,
+          promoteMs,
+          totalMs: now() - workerStartedAt,
         },
-        [buffer],
-      )
+      }
+
+      if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) {
+        ctx.postMessage(message)
+      } else {
+        ctx.postMessage(message, [buffer])
+      }
     }
   } catch (error) {
     ctx.postMessage({

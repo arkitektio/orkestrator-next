@@ -9,10 +9,9 @@ import { getColorMapTexture } from '../../zarr/colormaps';
 import { calculateChunkGrid } from '../../zarr/utils';
 import { buildAffineMatrix } from '../../panels/layer/affine-utils';
 
-import { ChunkPlane } from '../ChunkPlane';
-import { useSelectionStore } from '../../store/layerStore';
+import { ChunkPlane } from './ChunkPlane';
 import { useModeStore } from '../../store/modeStore';
-import { useViewerStore } from '../../store/viewerStore';
+import { useViewerStore, useViewerStoreApi } from '../../store/viewerStore';
 import { useSceneStore } from '../../store/sceneStore';
 import { DimSliceFragment } from '@/mikro-next/api/graphql';
 
@@ -29,6 +28,20 @@ interface ZarrCache {
   levels: ZarrLevel[];
   dims: string[];
 }
+
+type AxisSelection = {
+  start: number;
+  step: number;
+  length: number;
+};
+
+type ProbeGeometryContext = {
+  xSelection: AxisSelection;
+  ySelection: AxisSelection;
+  zSelection: AxisSelection;
+  volumePosition: [number, number, number];
+  volumeSize: [number, number, number];
+};
 
 // --- 2. The Main Plane Layer ---
 
@@ -53,6 +66,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const lodBias = useViewerStore((state) => state.lodBias);
   const cullRadius = useViewerStore((state) => state.cullRadius);
   const setLodDebugInfo = useViewerStore((s) => s.setLodDebugInfo);
+  const viewerStoreApi = useViewerStoreApi();
 
   // Safely grab the specific layer
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
@@ -86,9 +100,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     });
   }, [layer]);
 
-  const isSelected = useSelectionStore((s) => layer ? s.selectedLayerId === layer.id : false);
   const interactionMode = useModeStore((s) => s.interactionMode);
-  const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   // Scene Registration
   useEffect(() => {
@@ -98,15 +110,16 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [layerId, register, unregister]);
 
   // --- Logic: Update Chunks ---
-  const updateChunks = useCallback(() => {
+  const updateChunks = useCallback((lodOverride?: number) => {
     if (!zarrCache.current || !layer) return;
 
     const { dims } = zarrCache.current;
+    const lod = lodOverride ?? activeLod;
 
     const numLevels = zarrCache.current.levels.length;
-    const levelsToRender = [activeLod];
-    if (activeLod + 1 < numLevels) levelsToRender.push(activeLod + 1);
-    if (activeLod + 2 < numLevels) levelsToRender.push(activeLod + 2);
+    const levelsToRender = [lod];
+    if (lod + 1 < numLevels) levelsToRender.push(lod + 1);
+    if (lod + 2 < numLevels) levelsToRender.push(lod + 2);
 
     const sliceMap = layer.lens.slices.reduce((acc, slice) => {
       acc[slice.dim] = slice;
@@ -193,8 +206,6 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
             arrayShape: arr.shape,
             min_value: minVal,
             max_value: maxVal,
-            cLimMin: Math.ceil(minVal * (layer.climMin || 0)),
-            cLimMax: Math.floor(maxVal * (layer.climMax || 1)),
             colormapTexture: colormapTexture,
             level: levelIdx,
             scaleFactors: level.scaleFactors
@@ -259,11 +270,14 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
         // Guard against writing state if component unmounted
         if (!signal.aborted) {
+          const initialLod = Math.max(0, levels.length - 1);
           zarrCache.current = {
             levels,
             dims: layer.lens.dataset.dims
           };
-          setActiveLod(Math.max(0, levels.length - 1));
+          setActiveLod(initialLod);
+          // Populate chunks immediately; avoids startup blank state when active LOD stays unchanged (single-level pyramids).
+          updateChunks(initialLod);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -357,10 +371,135 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     return buildAffineMatrix(layer);
   }, [layer]);
 
+  const resolveProbeGeometryContext = useCallback((): ProbeGeometryContext | null => {
+    if (!layer || !zarrCache.current) return null;
+
+    const level = zarrCache.current.levels[activeLod];
+    if (!level) return null;
+
+    const { arr, scaleFactors } = level;
+    const dims = zarrCache.current.dims;
+    const xPos = dims.indexOf(layer.xDim);
+    const yPos = dims.indexOf(layer.yDim);
+    const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
+    if (xPos === -1 || yPos === -1 || zPos === -1) return null;
+
+    const sliceMap = layer.lens.slices.reduce((acc, slice) => {
+      acc[slice.dim] = slice;
+      return acc;
+    }, {} as Record<string, DimSliceFragment>);
+
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim], arr.shape[xPos]);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim], arr.shape[yPos]);
+
+    let zSelection = resolveSpatialSelection(
+      layer.zDim ? sliceMap[layer.zDim] : undefined,
+      arr.shape[zPos],
+    );
+
+    if (currentZ !== undefined && Number.isFinite(currentZ)) {
+      const layerAffine = buildAffineMatrix(layer);
+      const inv = layerAffine.clone().invert();
+      const pt = new THREE.Vector3(0, 0, currentZ).applyMatrix4(inv);
+      const zScale = scaleFactors && scaleFactors.length > zPos ? scaleFactors[zPos] : 1;
+      const downscaledZ = Math.round(pt.z / zScale);
+      const maxVoxelZ = arr.shape[zPos] - 1;
+      const zIndex = Math.max(0, Math.min(maxVoxelZ, downscaledZ));
+      zSelection = { start: zIndex, step: 1, length: 1 };
+    }
+
+    const scaleX = scaleFactors && scaleFactors.length > xPos ? scaleFactors[xPos] : 1;
+    const scaleY = scaleFactors && scaleFactors.length > yPos ? scaleFactors[yPos] : 1;
+    const scaleZ = scaleFactors && scaleFactors.length > zPos ? scaleFactors[zPos] : 1;
+
+    const totalX = arr.shape[xPos] * scaleX;
+    const totalY = arr.shape[yPos] * scaleY;
+    const totalZ = arr.shape[zPos] * scaleZ;
+
+    const width = xSelection.length * xSelection.step * scaleX;
+    const height = ySelection.length * ySelection.step * scaleY;
+    const depth = zSelection.length * zSelection.step * scaleZ;
+    if (width <= 0 || height <= 0 || depth <= 0) return null;
+
+    const volumePosition: [number, number, number] = [
+      xSelection.start * scaleX + width / 2 - totalX / 2,
+      -(ySelection.start * scaleY + height / 2 - totalY / 2),
+      zSelection.start * scaleZ + depth / 2 - totalZ / 2,
+    ];
+
+    return {
+      xSelection,
+      ySelection,
+      zSelection,
+      volumePosition,
+      volumeSize: [width, height, depth],
+    };
+  }, [activeLod, currentZ, layer]);
+
+  const updateProbe = useCallback((localPoint: THREE.Vector3 | null, save: boolean) => {
+    const currentProbe = viewerStoreApi.getState().probedCoordinate;
+
+    if (!localPoint || !layer) {
+      if (currentProbe?.layerId === layer?.id) {
+        viewerStoreApi.getState().setProbedCoordinate(null);
+      }
+      return;
+    }
+
+    const probeContext = resolveProbeGeometryContext();
+    if (!probeContext) return;
+
+    const [volumeX, volumeY] = probeContext.volumePosition;
+    const [width, height] = probeContext.volumeSize;
+
+    const normalizedX = (localPoint.x - volumeX) / width;
+    const normalizedY = (localPoint.y - volumeY) / height;
+
+    if (normalizedX < 0 || normalizedX > 1 || normalizedY < 0 || normalizedY > 1) {
+      if (currentProbe?.layerId === layer.id) {
+        viewerStoreApi.getState().setProbedCoordinate(null);
+      }
+      return;
+    }
+
+    const clampedX = THREE.MathUtils.clamp(normalizedX, 0, 1);
+    const clampedY = THREE.MathUtils.clamp(normalizedY, 0, 1);
+
+    const localPos: [number, number, number] = [
+      clampedX - 0.5,
+      clampedY - 0.5,
+      0,
+    ];
+
+    const nextProbe = {
+      layerId: layer.id,
+      localPos,
+      voxelIndex: [
+        resolveVoxelIndex(clampedX, probeContext.xSelection),
+        resolveVoxelIndex(1 - clampedY, probeContext.ySelection),
+        resolveVoxelIndex(0.5, probeContext.zSelection),
+      ] as [number, number, number],
+    };
+
+    if (
+      currentProbe?.layerId === nextProbe.layerId &&
+      currentProbe.voxelIndex[0] === nextProbe.voxelIndex[0] &&
+      currentProbe.voxelIndex[1] === nextProbe.voxelIndex[1] &&
+      currentProbe.voxelIndex[2] === nextProbe.voxelIndex[2]
+    ) {
+      return;
+    }
+
+    viewerStoreApi.getState().setProbedCoordinate(nextProbe);
+    if (save) {
+      viewerStoreApi.getState().addSavedProbe(nextProbe);
+    }
+  }, [layer, resolveProbeGeometryContext, viewerStoreApi]);
+
   const colorMapTexture = useMemo(() => {
     if (!layer) return null;
     return getColorMapTexture(layer.colormap, layer.color);
-  }, [layer?.colormap]);
+  }, [layer]);
 
   if (layer?.visible === false) return null;
   if (!chunks) return null;
@@ -370,6 +509,31 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       ref={groupRef}
+      onPointerMove={(event) => {
+        if (interactionMode !== 'AUTO_PROBE') return;
+        if (event.buttons !== 0) return;
+
+        const group = groupRef.current;
+        if (!group) return;
+
+        const localPoint = group.worldToLocal(event.point.clone());
+        updateProbe(localPoint, false);
+        event.stopPropagation();
+      }}
+      onPointerOut={() => {
+        if (interactionMode !== 'AUTO_PROBE') return;
+        updateProbe(null, false);
+      }}
+      onPointerDown={(event) => {
+        if (interactionMode !== 'PROBE' && interactionMode !== 'AUTO_PROBE') return;
+
+        const group = groupRef.current;
+        if (!group) return;
+
+        event.stopPropagation();
+        const localPoint = group.worldToLocal(event.point.clone());
+        updateProbe(localPoint, event.shiftKey);
+      }}
     >
       {chunks.map((chunk) => (
         <ChunkPlane
@@ -381,3 +545,25 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     </group>
   );
 };
+
+function resolveSpatialSelection(
+  slice: DimSliceFragment | undefined,
+  axisLength: number,
+): AxisSelection {
+  const step = Math.max(1, slice?.step ?? 1);
+  const start = Math.max(0, Math.min(axisLength, slice?.start ?? 0));
+  const stop = Math.max(start, Math.min(axisLength, slice?.stop ?? axisLength));
+  const length = stop <= start ? 0 : Math.max(1, Math.ceil((stop - start) / step));
+
+  return { start, step, length };
+}
+
+function resolveVoxelIndex(normalizedPosition: number, selection: AxisSelection): number {
+  const clampedPosition = THREE.MathUtils.clamp(normalizedPosition, 0, 0.999999);
+  const relativeIndex = Math.min(
+    selection.length - 1,
+    Math.max(0, Math.floor(clampedPosition * selection.length)),
+  );
+
+  return selection.start + relativeIndex * selection.step;
+}

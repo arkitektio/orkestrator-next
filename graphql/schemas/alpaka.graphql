@@ -175,8 +175,10 @@ type ImageReponse {
 
 """Modalities"""
 enum InputModality {
+  AUDIO
   IMAGE
   TEXT
+  VIDEO
 }
 
 """
@@ -225,10 +227,12 @@ type Message {
 
   """The collections that can be embedded with this model"""
   attachedStructures: [Structure!]!
+  before(filters: MessageFilter = null, pagination: OffsetPaginationInput = null): [Message!]!
 
   """The time this comment got created"""
   createdAt: DateTime!
   id: ID!
+  room: Room!
 
   """A clear text representation of the rich comment"""
   text: String!
@@ -243,6 +247,10 @@ input MessageFilter {
   OR: MessageFilter
   ids: [ID!]
   search: String
+}
+
+input MessageOrder @oneOf {
+  createdAt: Ordering
 }
 
 type Mutation {
@@ -269,6 +277,15 @@ input OffsetPaginationInput {
 type OllamaPullResult {
   detail: String
   status: String!
+}
+
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
 }
 
 """An Organization model to represent an organization in the system"""
@@ -345,6 +362,8 @@ type Query {
   documents(collection: ID!, nResults: Int = 3, queryTexts: [String!] = null, where: JSON = null): [Document!]!
   llmModel(id: ID!): LLMModel!
   llmModels(filters: LLMModelFilter, pagination: OffsetPaginationInput): [LLMModel!]!
+  message(id: ID!): Message!
+  messages(filters: MessageFilter, ordering: [MessageOrder!]! = [], pagination: OffsetPaginationInput): [Message!]!
   provider(id: ID!): Provider!
   providers(filters: ProviderFilter, pagination: OffsetPaginationInput): [Provider!]!
   room(id: ID!): Room!
@@ -366,7 +385,7 @@ type Room {
   agents(pagination: OffsetPaginationInput): [Agent!]!
   description: String!
   id: ID!
-  messages(filters: MessageFilter, pagination: OffsetPaginationInput): [Message!]!
+  messages(filters: MessageFilter, ordering: [MessageOrder!]! = [], pagination: OffsetPaginationInput): [Message!]!
 
   """The organization this room belongs to"""
   organization: Organization!

@@ -23,9 +23,13 @@ import {
 import {
 	ApplicableActions as RekuestApplicableActions,
 	ApplicableBatchActions as RekuestApplicableBatchActions,
+	ApplicableBatchImplementations as RekuestApplicableBatchImplementations,
+	ApplicableImplementations as RekuestApplicableImplementations,
 	AssignButton as RekuestAssignButton,
+	BatchImplementationAssignButton as RekuestBatchImplementationAssignButton,
 	BatchAssignButton as RekuestBatchAssignButton,
 	DirectImplementationAssignment as RekuestDirectImplementationAssignment,
+	ImplementationAssignButton as RekuestImplementationAssignButton,
 } from "@/providers/smart/extensions/rekuest/actions";
 import {
 	ApplicableShortcuts as RekuestApplicableShortcuts,
@@ -59,8 +63,12 @@ export const StructureRelateButton = KraphStructureRelateButton;
 export const StructureRelationActions = KraphStructureRelationActions;
 export const ApplicableActions = RekuestApplicableActions;
 export const ApplicableBatchActions = RekuestApplicableBatchActions;
+export const ApplicableImplementations = RekuestApplicableImplementations;
+export const ApplicableBatchImplementations = RekuestApplicableBatchImplementations;
 export const AssignButton = RekuestAssignButton;
+export const ImplementationAssignButton = RekuestImplementationAssignButton;
 export const BatchAssignButton = RekuestBatchAssignButton;
+export const BatchImplementationAssignButton = RekuestBatchImplementationAssignButton;
 export const DirectImplementationAssignment = RekuestDirectImplementationAssignment;
 export const ApplicableShortcuts = RekuestApplicableShortcuts;
 export const ShortcutButton = RekuestShortcutButton;

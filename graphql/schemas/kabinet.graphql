@@ -1,5 +1,16 @@
 directive @unionElementOf(discriminator: String!, key: String!, union: String!) on INPUT_OBJECT
 
+"""A JSON-serializable argument entry for a multi-agent action trigger."""
+input ActionArgumentInput {
+  agentCall: AgentCallInput = null
+  key: String = null
+  utilCall: UtilCallInput = null
+  valueDict: [ActionArgumentInput!] = null
+  valueList: [ActionArgumentInput!] = null
+  valueLiteral: JSONSerializable = null
+  valuePath: String = null
+}
+
 """
 A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
@@ -43,6 +54,15 @@ enum ActionScope {
 }
 
 """
+Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
+"""
+input AgentCallInput {
+  arguments: [ActionArgumentInput!] = null
+  dependency: String!
+  operation: String!
+}
+
+"""
 A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
@@ -52,10 +72,6 @@ input AgentDependencyInput {
   autoResolvable: Boolean! = false
   description: String = null
   key: String!
-
-  """
-  The maximum amount of viable instances for the agent. This is used to identify the demand in the system.
-  """
   maxViableInstances: Int = null
   minViableInstances: Int = null
 
@@ -155,6 +171,9 @@ input AssignWidgetInput {
   stateAccessors: [StateAccessorInput!] = null
   statePath: String = null
   step: Float = null
+  targetAction: String = null
+  targetDependency: String = null
+  targetPort: String = null
   ward: String = null
 }
 
@@ -162,6 +181,7 @@ input AssignWidgetInput {
 enum AssignWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
   SEARCH
   SLIDER
   STATE_CHOICE
@@ -190,6 +210,18 @@ input BackendFilter {
   OR: BackendFilter
   ids: [ID!] = null
   search: String = null
+}
+
+"""Which locks does the agent provide in general"""
+input BlokImplementationInput {
+  catalog: String = null
+  components: [ComponentNodeInput!]!
+  demoState: JSONSerializable = null
+
+  """The dependencies required by this Blok."""
+  dependencies: [AgentDependencyInput!]! = []
+  description: String = null
+  key: String!
 }
 
 """ A selector is a way to select a release"""
@@ -271,6 +303,26 @@ type Collection {
   description: String!
   id: ID!
   name: String!
+}
+
+"""
+An abstract structural visual element inside a Blok blueprint manifest.
+"""
+input ComponentNodeInput {
+  children: [ComponentNodeInput!] = null
+  component: String!
+  id: String!
+  props: [ComponentPropInput!] = null
+}
+
+"""A single key-value prop configuration for a component layout node."""
+input ComponentPropInput {
+  agentCall: AgentCallInput = null
+  declaresValue: String = null
+  dynamicValue: DynamicValueInput = null
+  key: String!
+  staticValue: JSONSerializable = null
+  utilCall: UtilCallInput = null
 }
 
 """The state of a dask cluster"""
@@ -541,6 +593,13 @@ input DumpLogsInput {
   pod: ID!
 }
 
+"""
+A bound state pointer referencing a variable inside a Blok state instance.
+"""
+input DynamicValueInput {
+  path: String = null
+}
+
 interface Effect {
   dependencies: [String!]!
   function: ValidatorFunction!
@@ -697,18 +756,40 @@ input ImplementationInput {
   interface: String
   locks: [String!] = null
   logo: String = null
+  manipulates: [String!] = null
 
   """
   The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
   """
   optimistics: [OptimisticInput!] = null
   params: AnyDefault = null
+  tracks: [TrackInput!] = null
 }
 
 input InspectionInput {
+  bloks: [BlokImplementationInput!]!
   implementations: [ImplementationInput!]!
+  locks: [LockImplementationInput!]!
   requirements: [RequirementInput!]!
   size: Int
+  states: [StateImplementationInput!]!
+}
+
+"""
+The `JSONSerializable` scalar type represents a JSON-serializable value.
+"""
+scalar JSONSerializable
+
+"""Which locks does the agent provide in general"""
+input LockDefinitionInput {
+  description: String = null
+  key: String!
+}
+
+"""Which locks does the agent provide in general"""
+input LockImplementationInput {
+  definition: LockDefinitionInput!
+  key: String!
 }
 
 """The logs of a pod"""
@@ -966,8 +1047,17 @@ enum ProvidesOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
+}
+
+type ProxyWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  targetAction: String!
+  targetDependency: String
+  targetPort: String!
 }
 
 """A qualifier that describes some property of the action"""
@@ -1097,6 +1187,7 @@ enum RequiresOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
@@ -1176,6 +1267,7 @@ input ReturnWidgetInput {
 enum ReturnWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
 }
 
 """ A selector is a way to select a release"""
@@ -1269,6 +1361,14 @@ type StateChoiceAssignWidget implements AssignWidget {
 }
 
 """
+A state schema is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params.
+"""
+input StateDefinitionInput {
+  name: String!
+  ports: [ReturnPortInput!]!
+}
+
+"""
 A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
@@ -1290,6 +1390,14 @@ input StateDependencyInput {
   """
   protocols: [ID!] = null
   stateKey: String = null
+}
+
+"""
+A state implementation is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params.
+"""
+input StateImplementationInput {
+  definition: StateDefinitionInput!
+  interface: String!
 }
 
 type StringAssignWidget implements AssignWidget {
@@ -1318,6 +1426,18 @@ type TimeBucket {
 }
 
 """
+A value that is being tracked over time during the runtime of an action. This is the state of a dependency
+"""
+input TrackInput {
+  dependencyKey: String = null
+  description: String = null
+  label: String = null
+  stateKey: String!
+  valueKey: String!
+  windows: [WindowInput!] = null
+}
+
+"""
 UntypedParams represents an untyped options object returned by the Dask Gateway API.
 """
 scalar UntypedParams
@@ -1342,6 +1462,12 @@ type User {
   sub: ID!
 }
 
+"""Defines a utility call that can be invoked within the system."""
+input UtilCallInput {
+  arguments: [ActionArgumentInput!] = null
+  operation: String!
+}
+
 type Validator {
   dependencies: [String!]
   errorMessage: String
@@ -1358,4 +1484,10 @@ input ValidatorInput {
   errorMessage: String = null
   function: ValidatorFunction!
   label: String = null
+}
+
+"""A window that is calculated"""
+input WindowInput {
+  label: String = null
+  windowFunction: String!
 }

@@ -20,7 +20,6 @@ import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
-
 // Core Services
 const appManager = new AppManager();
 const transport = new IpcTransport();
@@ -116,6 +115,8 @@ session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 
 app.on("certificate-error", (event, _, __, ___, ____, callback) => {
   event.preventDefault();
+  // Check if we this is a certificate error we want to ignore (you can add more logic here if needed)
+  // By default we should only ignore errors for the configure fakt domains, but for now we ignore all to avoid issues with self-signed certs in development and testing
   callback(true);
 });
 

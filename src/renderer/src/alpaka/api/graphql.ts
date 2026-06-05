@@ -201,8 +201,10 @@ export type ImageReponse = {
 
 /** Modalities */
 export enum InputModality {
+  Audio = 'AUDIO',
   Image = 'IMAGE',
-  Text = 'TEXT'
+  Text = 'TEXT',
+  Video = 'VIDEO'
 }
 
 /** A LLM model to chage with */
@@ -250,12 +252,21 @@ export type Message = {
   agent: Agent;
   /** The collections that can be embedded with this model */
   attachedStructures: Array<Structure>;
+  before: Array<Message>;
   /** The time this comment got created */
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  room: Room;
   /** A clear text representation of the rich comment */
   text: Scalars['String']['output'];
   title: Scalars['String']['output'];
+};
+
+
+/** Message represent the message of an agent on a room */
+export type MessageBeforeArgs = {
+  filters?: InputMaybe<MessageFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Message represent the message of an agent on a room */
@@ -267,6 +278,9 @@ export type MessageFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type MessageOrder =
+  { createdAt: Ordering; };
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -361,6 +375,15 @@ export type OllamaPullResult = {
   status: Scalars['String']['output'];
 };
 
+export enum Ordering {
+  Asc = 'ASC',
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
+}
+
 /** An Organization model to represent an organization in the system */
 export type Organization = {
   __typename?: 'Organization';
@@ -444,6 +467,8 @@ export type Query = {
   documents: Array<Document>;
   llmModel: LlmModel;
   llmModels: Array<LlmModel>;
+  message: Message;
+  messages: Array<Message>;
   provider: Provider;
   providers: Array<Provider>;
   room: Room;
@@ -478,6 +503,18 @@ export type QueryLlmModelArgs = {
 
 export type QueryLlmModelsArgs = {
   filters?: InputMaybe<LlmModelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMessageArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMessagesArgs = {
+  filters?: InputMaybe<MessageFilter>;
+  ordering?: Array<MessageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -540,6 +577,7 @@ export type RoomAgentsArgs = {
 /** Room(id, title, description, creator, organization, created_at) */
 export type RoomMessagesArgs = {
   filters?: InputMaybe<MessageFilter>;
+  ordering?: Array<MessageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -829,7 +867,7 @@ export type CreateRoomMutationVariables = Exact<{
 export type CreateRoomMutation = { __typename?: 'Mutation', createRoom: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
 
 export type DeleteRoomMutationVariables = Exact<{
-  input: DeleteRoomInput;
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -895,6 +933,13 @@ export type ListLlModelsQueryVariables = Exact<{
 
 
 export type ListLlModelsQuery = { __typename?: 'Query', llmModels: Array<{ __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, inputModalities: Array<InputModality>, outputModalities: Array<InputModality>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> }> };
+
+export type GetMessageRoomQueryVariables = Exact<{
+  messageId: Scalars['ID']['input'];
+}>;
+
+
+export type GetMessageRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, messages: Array<{ __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
 
 export type GetProviderQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1494,8 +1539,8 @@ export type CreateRoomMutationHookResult = ReturnType<typeof useCreateRoomMutati
 export type CreateRoomMutationResult = Apollo.MutationResult<CreateRoomMutation>;
 export type CreateRoomMutationOptions = Apollo.BaseMutationOptions<CreateRoomMutation, CreateRoomMutationVariables>;
 export const DeleteRoomDocument = gql`
-    mutation DeleteRoom($input: DeleteRoomInput!) {
-  deleteRoom(input: $input)
+    mutation DeleteRoom($id: ID!) {
+  deleteRoom(input: {id: $id})
 }
     `;
 export type DeleteRoomMutationFn = Apollo.MutationFunction<DeleteRoomMutation, DeleteRoomMutationVariables>;
@@ -1513,7 +1558,7 @@ export type DeleteRoomMutationFn = Apollo.MutationFunction<DeleteRoomMutation, D
  * @example
  * const [deleteRoomMutation, { data, loading, error }] = useDeleteRoomMutation({
  *   variables: {
- *      input: // value for 'input'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -1823,6 +1868,54 @@ export function useListLlModelsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type ListLlModelsQueryHookResult = ReturnType<typeof useListLlModelsQuery>;
 export type ListLlModelsLazyQueryHookResult = ReturnType<typeof useListLlModelsLazyQuery>;
 export type ListLlModelsQueryResult = Apollo.QueryResult<ListLlModelsQuery, ListLlModelsQueryVariables>;
+export const GetMessageRoomDocument = gql`
+    query GetMessageRoom($messageId: ID!) {
+  rooms(pagination: {limit: 100}) {
+    id
+    title
+    messages(filters: {ids: [$messageId]}) {
+      id
+      text
+      createdAt
+      agent {
+        id
+      }
+      attachedStructures {
+        identifier
+        object
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMessageRoomQuery__
+ *
+ * To run a query within a React component, call `useGetMessageRoomQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMessageRoomQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMessageRoomQuery({
+ *   variables: {
+ *      messageId: // value for 'messageId'
+ *   },
+ * });
+ */
+export function useGetMessageRoomQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMessageRoomQuery, GetMessageRoomQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetMessageRoomQuery, GetMessageRoomQueryVariables>(GetMessageRoomDocument, options);
+      }
+export function useGetMessageRoomLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMessageRoomQuery, GetMessageRoomQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetMessageRoomQuery, GetMessageRoomQueryVariables>(GetMessageRoomDocument, options);
+        }
+export type GetMessageRoomQueryHookResult = ReturnType<typeof useGetMessageRoomQuery>;
+export type GetMessageRoomLazyQueryHookResult = ReturnType<typeof useGetMessageRoomLazyQuery>;
+export type GetMessageRoomQueryResult = Apollo.QueryResult<GetMessageRoomQuery, GetMessageRoomQueryVariables>;
 export const GetProviderDocument = gql`
     query GetProvider($id: ID!) {
   provider(id: $id) {

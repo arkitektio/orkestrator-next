@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {toast} from 'sonner';
 import {RawInspector} from './bloks/inspector/Inspector';
+import {lovekitBlokComponents} from './bloks/lovekit';
 import {mikroBlokComponents} from './bloks/mikro';
 import {shadcnComposableComponents} from './bloks/primitives/Primitives';
 import {createBlokCatalog, createBlokFunction} from './runtime';
@@ -80,6 +81,7 @@ export const myCatalog = createBlokCatalog(
   'https://arkitekt.live/catalogs/v1.json',
   [
     ...shadcnComposableComponents,
+    ...lovekitBlokComponents,
     ...mikroBlokComponents,
     RawInspector,
   ],

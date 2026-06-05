@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-import { buildAffineMatrix } from '../panels/layer/affine-utils';
-import { useSceneStore, type LayerState } from '../store/sceneStore';
-import { useViewerStore, type ProbedCoordinate } from '../store/viewerStore';
+import { buildAffineMatrix } from '../../panels/layer/affine-utils';
+import { useSceneStore, type LayerState } from '../../store/sceneStore';
+import { useViewerStore, type ProbedCoordinate } from '../../store/viewerStore';
 
 type AxisSelection = {
   start: number;

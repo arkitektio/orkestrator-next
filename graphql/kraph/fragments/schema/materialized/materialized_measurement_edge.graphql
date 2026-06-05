@@ -9,6 +9,10 @@ fragment ListMaterializedMeasurementEdge on MaterializedMeasurementEdge {
     key
     label
   }
+  source {
+    id
+    identifier
+  }
   edge {
     id
     key

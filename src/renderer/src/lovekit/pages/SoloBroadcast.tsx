@@ -1,0 +1,48 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { LovekitSoloBroadcast, LovekitStream } from "@/linkers";
+import { useGetSoloBroadcastQuery, useGetStreamQuery } from "../api/graphql";
+
+import { cn } from "@/lib/utils";
+import { StreamJoiner } from "../components/StreamJoiner";
+
+export default asDetailQueryRoute(
+  useGetSoloBroadcastQuery,
+  ({ data, subscribeToMore }) => {
+
+
+    const broadcast = data?.soloBroadcast?.id;
+    return (
+      <LovekitSoloBroadcast.ModelPage
+        title={data?.soloBroadcast.id}
+        object={data.soloBroadcast}
+        pageActions={
+          <div className="flex flex-row gap-2">
+            <LovekitSoloBroadcast.ObjectButton object={data.soloBroadcast} />
+          </div>
+        }
+        sidebars={
+          <MultiSidebar
+            map={{
+              Comments: <LovekitSoloBroadcast.Komments object={data.soloBroadcast} />,
+            }}
+          />
+        }
+      >
+
+         return (
+           <div className={cn("relative h-full w-full overflow-hidden bg-black")}>
+             {broadcast && (
+               <StreamJoiner broadcast={data.soloBroadcast} />
+             )}
+             {!broadcast && (
+               <div className="flex items-center justify-center h-full">
+                 <span className="text-white">Loading broadcast...</span>
+               </div>
+             )}
+           </div>
+         );
+      </LovekitSoloBroadcast.ModelPage>
+    );
+  },
+);

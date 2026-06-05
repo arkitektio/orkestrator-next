@@ -5,7 +5,7 @@ export const useOpenDocs = () => {
   const location = useLocation();
 
   const openDocs = () => {
-    window.api.openWebbrowser("https://arkitekt.live/deeplink?orkestrator=" + encodeURIComponent(location.pathname));
+    window.api.openWebbrowser("https://arkitekt.live/docs?orkestrator=" + encodeURIComponent(location.pathname));
   }
 
   return openDocs;

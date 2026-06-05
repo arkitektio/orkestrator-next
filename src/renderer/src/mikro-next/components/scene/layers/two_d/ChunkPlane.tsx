@@ -1,25 +1,16 @@
-import { useViewerStore } from '../store/viewerStore';
+import { useViewerStore } from '../../store/viewerStore';
 import { useEffect, useMemo, useState, useRef } from 'react'; // FIXED: Added useRef
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-import { getChunkWorker } from '../../../../lib/zarr/runner';
-import { workerPool } from '../../../workers/pool';
-import type { ChunkData } from '../stores/types';
-import { useSceneStore } from '../store/sceneStore';
+import { getChunkWorker } from '../../../../../lib/zarr/runner';
+import { workerPool } from '../../../../workers/pool';
+import type { ChunkData } from '../../stores/types';
+import { useSceneStore } from '../../store/sceneStore';
 
-const CHUNK_FADE_IN_MS = 220;
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
-function getTextureConfig(rawData: unknown) {
+function getTextureConfig(rawData: any) {
   if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 1.0 };
-  }
-  if (rawData instanceof Uint16Array) {
-    const normalizedData = new Float32Array(rawData.length);
-    for (let index = 0; index < rawData.length; index++) {
-      normalizedData[index] = rawData[index] / 65535;
-    }
-    return { data: normalizedData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
+    return { data: rawData, type: THREE.UnsignedByteType, internalFormat: 'R8', dataScale: 255.0 };
   }
   if (rawData instanceof Float32Array) {
     return { data: rawData, type: THREE.FloatType, internalFormat: 'R32F', dataScale: 1.0 };
@@ -32,19 +23,20 @@ function getTextureConfig(rawData: unknown) {
 export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
-  const [localBounds, setLocalBounds] = useState<{ localMin: number; localMax: number } | null>(null);
   const isDebug = useViewerStore((s) => s.debug);
   const getArray = useViewerStore((s) => s.getArray);
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const fadeStartedAtRef = useRef<number | null>(null);
 
   // Grab the [0, 1] contrast limits from the store
   const layer = useSceneStore((s) => {
     const layer = s.layers.find((l) => l.id === chunk.frame_id);
     return layer
   });
+
+  const tStart = useViewerStore((s) => s.tStart);
+  const tEnd = useViewerStore((s) => s.tEnd);
 
   // Report rendering state to store automatically
   const setChunkStatus = useViewerStore((s) => s.setChunkStatus);
@@ -104,7 +96,9 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     return mat;
   }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
 
-  const isVisible = true;
+  const isVisible = useMemo(() => {
+    return true;
+  }, [chunk, tStart, tEnd]);
 
   useEffect(() => {
     if (!isVisible && !texture) return;
@@ -114,9 +108,9 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     const loadData = async () => {
       const chunkLoadStartedAt = performance.now();
       try {
-        const arrayLookupStartedAt = performance.now();
-        const arr = getArray(chunk.store);
-        const arrayLookupMs = performance.now() - arrayLookupStartedAt;
+        const openStartedAt = performance.now();
+        const arr = await getArray(chunk.store);
+        const openMs = performance.now() - openStartedAt;
         if (abortController.signal.aborted) return;
 
         const chunkReadStartedAt = performance.now();
@@ -125,7 +119,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
           priority: chunk.level,
           signal: abortController.signal,
           useSharedArrayBuffer: true,
-          textureFidelity: chunk.level === 0 ? 'high' : 'low',
         });
         const chunkReadMs = performance.now() - chunkReadStartedAt;
 
@@ -162,7 +155,7 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         console.log('[chunk plane timing]', {
           chunkKey: chunk.chunkKey,
           chunkCoords: [...chunk.chunkCoords],
-          arrayLookupMs: Number(arrayLookupMs.toFixed(2)),
+          openArrayMs: Number(openMs.toFixed(2)),
           getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
           textureConfigMs: Number(textureConfigMs.toFixed(2)),
           textureCreateMs: Number(textureCreateMs.toFixed(2)),
@@ -172,10 +165,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
         });
 
         setDataScale(dataScale);
-        setLocalBounds(chunkData.textureBounds ?? {
-          localMin: chunk.min_value,
-          localMax: chunk.max_value,
-        });
         setTexture(tex);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -190,42 +179,13 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     return () => {
       abortController.abort();
     };
-  }, [chunk, fastestIdx, getArray, isVisible, middleIdx, slowestIdx, texture, xIdx, yIdx, zIdx]);
+  }, [chunk, getArray]);
 
   useEffect(() => {
     return () => {
       if (texture) texture.dispose();
     };
   }, [texture]);
-
-  useEffect(() => {
-    if (!texture) {
-      fadeStartedAtRef.current = null;
-      return;
-    }
-
-    fadeStartedAtRef.current = performance.now();
-    if (materialRef.current) {
-      materialRef.current.uniforms.opacity.value = 0.0;
-    }
-  }, [texture]);
-
-  useFrame(() => {
-    if (!texture || !materialRef.current) return;
-
-    const startedAt = fadeStartedAtRef.current;
-    if (startedAt == null) {
-      materialRef.current.uniforms.opacity.value = 1.0;
-      return;
-    }
-
-    const progress = Math.min((performance.now() - startedAt) / CHUNK_FADE_IN_MS, 1);
-    materialRef.current.uniforms.opacity.value = progress;
-
-    if (progress >= 1) {
-      fadeStartedAtRef.current = null;
-    }
-  });
 
   // FIXED: The high-performance update loop.
   // Pushes new values straight to the GPU without re-rendering the component structure.
@@ -237,15 +197,11 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
       if (layer?.climMax !== undefined) {
         materialRef.current.uniforms.climMax.value = layer.climMax;
       }
-      if (localBounds) {
-        materialRef.current.uniforms.localMin.value = localBounds.localMin;
-        materialRef.current.uniforms.localMax.value = localBounds.localMax;
-      }
       if (colorMapTexture) {
         materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
       }
     }
-  }, [colorMapTexture, layer?.climMax, layer?.climMin, localBounds]);
+  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
 
 
 
@@ -255,26 +211,14 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     colormapTexture: { value: colorMapTexture },
     minValue: { value: chunk.min_value },
     maxValue: { value: chunk.max_value },
-    localMin: { value: localBounds?.localMin ?? chunk.min_value },
-    localMax: { value: localBounds?.localMax ?? chunk.max_value },
     climMin: { value: layer?.climMin ?? 0.0 },
     climMax: { value: layer?.climMax ?? 1.0 },
-    opacity: { value: 1.0 },
+    opacity: { value: 1 },
     gamma: { value: 1.0 },
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
     dimRemap: { value: dimRemapMat },
-  }), [
-    chunk.max_value,
-    chunk.min_value,
-    colorMapTexture,
-    dataScale,
-    dimRemapMat,
-    layer?.climMax,
-    layer?.climMin,
-    localBounds,
-    texture,
-  ]);
+  }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
 
 
   const getDimArraySize = (idx: number) => idx !== -1 ? chunk.arrayShape[idx] : 1;
@@ -304,10 +248,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
   if (!isVisible) return null;
 
   if (!texture) {
-    if (!isDebug) {
-      return null;
-    }
-
     return (
       <mesh position={[xPos, yPos, zPos - (chunk.level || 0) * 0.01]}>
         <boxGeometry args={[widthScaled, heightScaled, zSizeScaled]} />
@@ -345,8 +285,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
-            uniform float localMin;
-            uniform float localMax;
             uniform float climMin;
             uniform float climMax;
             uniform float opacity;
@@ -357,22 +295,13 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
             out vec4 FragColor;
 
-            float reconstructRawValue(float encodedValue) {
-              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
-              if (abs(localMax - localMin) < 0.00001) {
-                return localMin;
-              }
-
-              return mix(localMin, localMax, encoded);
-            }
-
             void main() {
               vec3 uvw = vUv;
               uvw.y = 1.0 - uvw.y;
 
               vec3 texCoord = dimRemap * uvw;
-              float encodedValue = texture(colorTexture, texCoord).r;
-              float rawValue = reconstructRawValue(encodedValue);
+              float val = texture(colorTexture, texCoord).r;
+              float rawValue = val * dataScale;
 
               float normalized;
               if (useDiscrete > 0.5) {
@@ -387,7 +316,6 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
 
               vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
 
-              if (color.a * normalized < 0.01) discard;
 
               FragColor = vec4(color.rgb, color.a * opacity * normalized);
             }

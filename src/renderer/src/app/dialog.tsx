@@ -1,4 +1,5 @@
 import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
+import { AlpakaReplyerAssignForm } from "@/alpaka/forms/AlpakaReplyerAssignForm";
 import { AddPropertyDefinitionDialog } from "@/dialogs/AddPropertyDefinition";
 import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { ChatDialog } from "@/dialogs/ChatDialog";
@@ -38,6 +39,7 @@ import { UpdateAgentForm } from "@/rekuest/forms/UpdateAgentForm";
 
 export const { DialogProvider, useDialog, registry } = createDialogProvider({
   actionassign: ActionAssignForm,
+  alpakareplyerassign: AlpakaReplyerAssignForm,
   implementationassign: ImplementationAssignForm,
   relatestructure: RelateStructures,
   createnewrelation: CreateNewRelation,

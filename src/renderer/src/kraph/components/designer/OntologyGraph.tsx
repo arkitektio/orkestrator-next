@@ -1,16 +1,11 @@
 import { Button } from "@/components/ui/button";
-
-import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import {
   GraphFragment,
-  GraphNodeInput,
-  useUpdateGraphMutation
+  useUpdateGraphVisualMutation,
 } from "@/kraph/api/graphql";
 import { KraphGraph } from "@/linkers";
 import {
   Connection,
-  getNodesBounds,
-  getViewportForBounds,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
@@ -18,7 +13,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
-import { toPng } from "html-to-image";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
@@ -32,11 +26,10 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, nodeToNodeInput, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
+import { calculateMidpoint, discoLayout, EDGE_TYPES, forceLayout, hashGraph, layeredLayout, NODE_TYPES, nodeToNodePositionInput, ontologyToEdges, ontologyToNodes, radialLayout, stressLayout, treeLayout } from "./utils";
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
-  const [update] = useUpdateGraphMutation();
-  const uploadFile =  useKraphMediaUpload();
+  const [updateGraphVisual] = useUpdateGraphVisualMutation();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -62,87 +55,27 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     }
   }, [reactFlowInstance, hashGraph(graph)]);
 
-  const captureAndUploadScreenshot = async (): Promise<string | null> => {
-    if (!reactFlowWrapper.current) return null;
-
-    try {
-      const imageWidth = 800;
-      const imageHeight = 800;
-      // Dynamically import html2canvas to avoid SSR issues
-      const nodesBounds = getNodesBounds(nodes);
-      const viewport = getViewportForBounds(
-        nodesBounds,
-        imageWidth,
-        imageHeight,
-        0.5,
-        2,
-        2,
-      );
-
-      const pngPromise = toPng(
-        document.querySelector(".react-flow__viewport") as HTMLElement,
-        {
-          backgroundColor: "transparent",
-          width: imageWidth,
-          height: imageHeight,
-          style: {
-            width: imageWidth.toString(),
-            height: imageHeight.toString(),
-            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-          },
-        },
-      );
-
-      const dataUrl = await pngPromise;
-
-      // Convert data URL to Blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-
-      // Create a File object from the Blob
-      const file = new File([blob], `graph-screenshot${graph.id}.png`, {
-        type: "image/png",
-      });
-
-      // Upload the file using your existing upload function
-      return await uploadFile(file);
-    } catch (error) {
-      console.error("Failed to capture screenshot:", error);
-      return null;
-    }
-  };
-
   const save = async () => {
-    const nodes = reactFlowInstance?.getNodes() as MyNode[];
+    const currentNodes = reactFlowInstance?.getNodes() as MyNode[] | undefined;
 
-    const nodeInputs = nodes
-      .map(nodeToNodeInput)
-      .filter((n) => n != null) as GraphNodeInput[];
-
-    console.log("Saving graph and capturing screenshot...");
-
-    // Capture and upload screenshot
-    const imageId = await captureAndUploadScreenshot();
-
-    if (imageId) {
-      console.log("Screenshot captured and uploaded successfully");
-    } else {
-      console.log("Screenshot capture skipped or failed");
+    if (!currentNodes?.length) {
+      return;
     }
 
-    const updateInput = {
-      id: graph.id,
-      nodes: nodeInputs,
-      ...(imageId && { image: imageId }),
-    };
+    const nodePositions = currentNodes
+      .map(nodeToNodePositionInput)
+      .filter((n) => n != null);
 
-    update({
+    await updateGraphVisual({
       variables: {
-        input: updateInput,
+        input: {
+          id: graph.id,
+          nodePositions,
+        },
       },
     });
 
-    console.log("Graph saved successfully");
+    console.log("Graph visuals saved successfully");
   };
 
   const onPaneClick = (event: React.MouseEvent) => {
@@ -451,14 +384,6 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           >
             Circle
           </Button>
-
-          <KraphGraph.DetailLink
-            object={graph}
-            subroute={"reagentcategories"}
-            className="text-sm"
-          >
-            Reagent Categories
-          </KraphGraph.DetailLink>
         </div>
       </div>
     </OntologyGraphProvider>

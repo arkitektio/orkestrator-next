@@ -1,0 +1,18 @@
+query GetMessageRoom($messageId: ID!) {
+  rooms(pagination: { limit: 100 }) {
+    id
+    title
+    messages(filters: { ids: [$messageId] }) {
+      id
+      text
+      createdAt
+      agent {
+        id
+      }
+      attachedStructures {
+        identifier
+        object
+      }
+    }
+  }
+}

@@ -28,6 +28,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 interface ChatBottombarProps {
   sendMessage: (text: string) => void;
   isMobile: boolean;
+  stagedStructures: { identifier: string; object: string }[];
+  onRemoveStructure: (index: number) => void;
+  prefillText?: string;
 }
 
 type ComposerTextNode = {
@@ -40,6 +43,9 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 export default function ChatBottombar({
   sendMessage,
   isMobile,
+  stagedStructures,
+  onRemoveStructure,
+  prefillText,
 }: ChatBottombarProps) {
   const [hasContent, setHasContent] = useState(false);
 
@@ -62,20 +68,34 @@ export default function ChatBottombar({
     }).join('\n')
   }
 
+  const checkContent = React.useCallback(() => {
+    const text = serialize(editor.children)
+    setHasContent(!!text.trim() || stagedStructures.length > 0)
+  }, [editor.children, stagedStructures])
+
+  React.useEffect(() => {
+    if (prefillText) {
+      editor.tf.setValue([
+        {
+          type: "p",
+          children: [{ text: prefillText }],
+        },
+      ]);
+    }
+  }, [prefillText, editor]);
+
+  React.useEffect(() => {
+    checkContent();
+  }, [stagedStructures, editor.children, checkContent]);
+
   const handleSend = () => {
     const message = serialize(editor.children);
-    if (message.trim()) {
+    if (message.trim() || stagedStructures.length > 0) {
       sendMessage(message.trim());
       editor.tf.setValue([{ type: "p", children: [{ text: "" }] }]);
       setHasContent(false);
     }
   };
-
-  const checkContent = () => {
-    const text = serialize(editor.children)
-    setHasContent(!!text.trim())
-  }
-
 
   const handleThumbsUp = () => {
     sendMessage("👍");
@@ -89,68 +109,8 @@ export default function ChatBottombar({
   };
 
   return (
-    <div className="border-t ">
-      <div className="flex w-full items-end gap-3">
-      <div className="flex pb-1">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-9 w-9",
-                "rounded-xl border bg-muted/40 hover:bg-muted/70"
-              )}
-            >
-              <PlusCircle size={20} className="text-muted-foreground" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent side="top" align="start" className="w-auto p-2">
-            {hasContent || isMobile ? (
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-9 w-9",
-                    "rounded-xl hover:bg-muted"
-                  )}
-                >
-                  <Mic size={20} className="text-muted-foreground" />
-                </Button>
-                {BottombarIcons.map((icon, index) => (
-                  <Button
-                    key={index}
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "h-9 w-9",
-                      "rounded-xl hover:bg-muted"
-                    )}
-                  >
-                    <icon.icon size={20} className="text-muted-foreground" />
-                  </Button>
-                ))}
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-9 w-9",
-                  "rounded-xl hover:bg-muted"
-                )}
-              >
-                <Mic size={20} className="text-muted-foreground" />
-              </Button>
-            )}
-          </PopoverContent>
-        </Popover>
-      </div>
+    <div className="w-full">
+      <div className="flex w-full items-end">
 
       <AnimatePresence initial={false}>
         <motion.div
@@ -170,6 +130,30 @@ export default function ChatBottombar({
         >
           <Plate editor={editor} onChange={checkContent}>
             <div className="w-full overflow-hidden rounded-2xl border bg-background shadow-sm">
+              {stagedStructures.length > 0 && (
+                <div className="flex flex-wrap gap-2 px-4 pt-3 pb-2 border-b border-border/30 bg-muted/10">
+                  {stagedStructures.map((structure, idx) => (
+                    <div
+                      key={`${structure.identifier}-${structure.object}-${idx}`}
+                      className="relative group flex items-center gap-2 pl-2.5 pr-1 py-1 rounded-xl border border-primary/60 bg-pane text-[11px] font-medium max-w-[240px] shadow-xs"
+                    >
+                      <span className="truncate text-muted-foreground select-none">
+                        {structure.identifier.split(".").pop() || structure.identifier}:
+                      </span>
+                      <span className="font-mono text-[10px] text-foreground font-semibold truncate">
+                        {structure.object}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveStructure(idx)}
+                        className="h-4.5 w-4.5 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <PlateContent
                 className="min-h-[72px] w-full resize-none px-4 py-3 text-sm leading-6 focus-visible:outline-none max-h-[220px] overflow-y-auto"
                 placeholder="Write a message..."

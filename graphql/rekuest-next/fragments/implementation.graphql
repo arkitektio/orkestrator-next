@@ -9,6 +9,7 @@ fragment DetailImplementation on Implementation {
   agent {
     id
     name
+    active
   }
 
   dependencies {
@@ -42,6 +43,7 @@ fragment ListImplementation on Implementation {
   }
   agent {
     name
+    active
   }
 }
 

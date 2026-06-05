@@ -483,8 +483,13 @@ export const LokServiceInstance = buildSmart(
 export const LokLayer = buildSmart("@lok/layer", "lok/layers");
 
 export const LovekitStream = buildSmart("@lovekit/stream", "lovekit/streams");
+export const LovekitSoloBroadcast = buildSmart(
+  "@lovekit/solo_broadcast",
+  "lovekit/solobroadcasts",
+);
 
 export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
+export const AlpakaMessage = buildSmart("@alpaka/message", "alpaka/messages");
 export const AlpakaProvider = buildSmart(
   "@alpaka/provider",
   "alpaka/providers",
@@ -505,6 +510,8 @@ export const KabinetDefinition = buildSmart(
   "@kabinet/definition",
   "kabinet/definitions",
 );
+
+export const KabinetRepo = buildSmart("@kabinet/repo", "kabinet/repos");
 
 export const KabinetBackend = buildSmart(
   "@kabinet/backend",

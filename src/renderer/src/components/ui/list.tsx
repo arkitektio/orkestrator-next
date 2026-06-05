@@ -46,8 +46,8 @@ export const ListTitle = (props: {
   onClick?: () => void;
 }) => {
   return (
-    <div className="font-light text-xl dark:text-white justify-between flex flex-row">
-      <div className="flex-grow my-auto">{props.children}</div>
+    <div className="text-xl dark:text-white justify-between flex flex-row">
+      <div className="flex-grow my-auto font-semibold text-md">{props.children}</div>
       {props.right && <div className="my-auto">{props.right}</div>}
     </div>
   );

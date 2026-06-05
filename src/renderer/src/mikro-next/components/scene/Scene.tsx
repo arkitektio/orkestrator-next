@@ -16,28 +16,30 @@ import { DebugPanel } from "./panels/DebugPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
-import { ScenePlane } from "./layers/two_d/ScenePlane";
-import { createModeStore, ModeStoreContext } from "./store/modeStore";
+import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
 import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
-import { SceneVolume } from "./layers/SceneVolume";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
 import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSelectionStore";
-import { RectangleDrawer } from "./interactions/RectangleDrawer";
-import { RoiDrawer } from "./interactions/RoiDrawer";
 import { RoiToolbar } from "./overlays/RoiToolbar";
-import { SceneDataRois } from "./layers/SceneDataRois";
-import { CullingDebugRing } from "./layers/debug/CullingDebugRing";
+import { TwoDScene } from "./TwoDScene";
+import { ThreeDScene } from "./ThreeDScene";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas
         frameloop="demand">{children}</Canvas>;
+};
+
+const SceneModeContent = () => {
+  const displayMode = useModeStore((state) => state.displayMode);
+
+  return displayMode === "2D" ? <TwoDScene /> : <ThreeDScene />;
 };
 
 
@@ -145,17 +147,10 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <SceneAxis/>
               <ScaleGrid />
 
-              <CullingDebugRing />
-
-              {/* Layers */}
-              <ScenePlane />
-              <SceneVolume />
-              <SceneDataRois />
-              <RectangleDrawer />
-              <RoiDrawer />
+              <SceneModeContent />
 
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
-                <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)", "rgba(78, 78, 78, 0.5)"]}/>
+                <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}/>
               </GizmoHelper>
             </SceneWrapper>
 

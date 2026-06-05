@@ -1,15 +1,15 @@
 import { useDialog } from "@/app/dialog";
 import { CommandItem } from "@/components/ui/command";
 import {
-  ListMaterializedEdgeFragment,
+  ListMaterializedMeasurementEdgeFragment,
   ListMaterializedStructureRelationEdgeFragment,
   ListRelationCategoryFragment,
   useCreateRelationMutation,
   useCreateStructureRelationMutation,
   useEnsureStructureMutation,
+  useListGraphsQuery,
   useListMaterializedMeasurementsQuery,
   useListMaterializedStructureRelationEdgesQuery,
-  useListMeasurmentCategoryQuery,
   useListRelationCategoryQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
@@ -129,7 +129,7 @@ export const StructureRelateButton = (props: {
 };
 
 export const CreateMeasurementButton = (props: {
-  edge: ListMaterializedEdgeFragment;
+  edge: ListMaterializedMeasurementEdgeFragment;
   left: PassDownProps;
   children: React.ReactNode;
 }) => {
@@ -142,10 +142,10 @@ export const CreateMeasurementButton = (props: {
         dialog.openDialog("setasmeasurement", {
           left: props.left.objects,
           edge: props.edge,
-        });
+        }, { size: "large" });
       }}
-      title={`Measure ${props.edge.graph.name}`}
-      description={props.edge.graph.id}
+      title={<div className="font-light">measures {props.edge.edge.label} for {props.edge.target.label}</div>}
+      description={props.edge.graph.name}
       icon={Ruler}
     />
   );
@@ -261,11 +261,10 @@ export const StructureRelationActions = (props: PassDownProps) => {
 export const MeasurementActions = (props: PassDownProps) => {
   const firstObject = props.objects.at(0);
   const dialog = useDialog();
-  const { data, error } = useListMeasurmentCategoryQuery({
+
+  const { data: pinnedGraphs } = useListGraphsQuery({
     variables: {
-      filters: {
-        search: props.filter && props.filter !== "" ? props.filter : undefined,
-      },
+      filters: { pinned: true },
     },
     fetchPolicy: "network-only",
   });
@@ -274,31 +273,30 @@ export const MeasurementActions = (props: PassDownProps) => {
     return null;
   }
 
+  if (!pinnedGraphs?.graphs.length) {
+    return null;
+  }
+
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Measure</span></span>}
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><Ruler className="h-3.5 w-3.5" /><span>Create Measurement Category</span></span>}
     >
-      {data?.measurementCategories.map((category) => (
-        <CommandItem
-          key={category.id}
-          value={category.id}
+      {pinnedGraphs.graphs.map((graph) => (
+        <CommandActionRow
+          key={graph.id}
+          value={`create-measurement-${graph.id}`}
           onSelect={() =>
             dialog.openDialog("createnewmeasurement", {
               left: props.objects,
-              right: [],
+              right: props.partners || [],
+              graph: graph.id,
             })
           }
-          className="flex-1"
-        >
-          <Ruler className="mr-2 h-4 w-4" />
-          {category.label}
-        </CommandItem>
+          title={`In "${graph.name}"`}
+          description={graph.description ?? undefined}
+          icon={Ruler}
+        />
       ))}
-      {error && (
-        <CommandItem value="error" className="flex-1">
-          <span className="text-red-500">Error: {error.message}</span>
-        </CommandItem>
-      )}
     </CommandGroup>
   );
 };
@@ -306,7 +304,6 @@ export const MeasurementActions = (props: PassDownProps) => {
 export const ApplicableMeasurements = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects.at(0);
-  const dialog = useDialog();
 
   const { data, error } = useListMaterializedMeasurementsQuery({
     variables: {
@@ -336,18 +333,6 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
           <span className="text-red-500">Error: {error.message}</span>
         </CommandItem>
       )}
-      <CommandActionRow
-        value="no-relation"
-        onSelect={() =>
-          dialog.openDialog("createnewmeasurement", {
-            left: props.objects,
-            right: props.partners || [],
-          })
-        }
-        title="Create new Measurement"
-        description="Define a new measurement category"
-        icon={PlusCircle}
-      />
     </CommandGroup>
   );
 };

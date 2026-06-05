@@ -14,11 +14,18 @@ import {
 import { cn } from "@/lib/utils";
 import { PlayIcon } from "lucide-react";
 import React from "react";
-import { ApplicableTalk as ApplicableAlpakaTalk } from "./alpaka/talk";
+import {
+  ApplicableTalk as ApplicableAlpakaTalk,
+} from "./alpaka/talk";
 import { ApplicableDefinitions } from "./kabinet/definitions";
 import { ApplicableRelations } from "./kraph/relations";
 import { ApplicableLocalActions } from "./local/localactions";
-import { ApplicableActions, ApplicableBatchActions } from "./rekuest/actions";
+import {
+  ApplicableActions,
+  ApplicableBatchActions,
+  ApplicableBatchImplementations,
+  ApplicableImplementations,
+} from "./rekuest/actions";
 import { ApplicableShortcuts } from "./rekuest/shortcuts";
 import type { ObjectButtonProps, SmartContextProps } from "./types";
 
@@ -97,8 +104,14 @@ export const SmartContext = (props: SmartContextProps) => {
             {!props.disableActions && (
               <ApplicableActions {...props} filter={filter} />
             )}
+            {!props.disableActions && (
+              <ApplicableImplementations {...props} filter={filter} />
+            )}
             {!props.disableBatchActions && (
               <ApplicableBatchActions {...props} filter={filter} />
+            )}
+            {!props.disableBatchActions && (
+              <ApplicableBatchImplementations {...props} filter={filter} />
             )}
           </Guard.Rekuest>
 

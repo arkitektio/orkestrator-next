@@ -41,6 +41,10 @@ export const NavigationPane = () => (
           <Image className="h-4 w-4" />
           Streams
         </DroppableNavLink>
+        <DroppableNavLink to="/lovekit/solobroadcasts" className="flex gap-3 w-full hover:text-primary">
+          <Image className="h-4 w-4" />
+          Solo Broadcasts
+        </DroppableNavLink>
       </div>
     </nav>
   </div>

@@ -1,3 +1,12 @@
+## [1.64.2](https://github.com/arkitektio/orkestrator-next/compare/v1.64.1...v1.64.2) (2026-06-05)
+
+
+### Bug Fixes
+
+* alex sidebar ([08f2c4a](https://github.com/arkitektio/orkestrator-next/commit/08f2c4aa33e362652fc28504eeb733995f8c3b8f))
+* smart model fix + page layout fix ([39470d8](https://github.com/arkitektio/orkestrator-next/commit/39470d8018182b6c9b920f41b07c465e994f4bb6))
+* ui updates ([fb92ce5](https://github.com/arkitektio/orkestrator-next/commit/fb92ce532db546b3d6e4430922a8c1d8c83807f0))
+
 ## [1.64.1](https://github.com/arkitektio/orkestrator-next/compare/v1.64.0...v1.64.1) (2026-06-05)
 
 

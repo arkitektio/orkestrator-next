@@ -2,6 +2,7 @@ import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
+import { DependencyDefinitionsProvider } from "../widgets/DependencyContext";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -50,8 +52,6 @@ export const ImplementationAssignForm = (
     args: Record<string, unknown>;
     dependencies: Record<string, ResolvedDependencyInput>;
   }) => {
-    console.log("Submitting");
-    console.log(data);
     try {
       const assignation = await assign({
         implementation: props.id,
@@ -78,7 +78,12 @@ export const ImplementationAssignForm = (
   const { registry } = useWidgetRegistry();
 
   if (error) {
-    return <p className="text-red-500">{error.message}</p>;
+    return (
+      <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        {error.message}
+      </div>
+    );
   }
 
   return (
@@ -96,28 +101,31 @@ export const ImplementationAssignForm = (
 
           <div className="text-muted-foreground flex-initial my-2">{description}</div>
           <div className="flex-grow  mb-4 @container ">
-            <ArgsContainer
-              registry={registry}
-              ports={implementation?.action.args || []}
-              path={["args"]}
-              bound={implementation?.agent.id}
-              groups={implementation?.action.portGroups}
-              hidden={props.hidden}
-            />
+            <DependencyDefinitionsProvider dependencies={implementation?.dependencies || []}>
+              <ArgsContainer
+                registry={registry}
+                ports={implementation?.action.args || []}
+                path={["args"]}
+                bound={implementation?.agent.id}
+                groups={implementation?.action.portGroups}
+                hidden={props.hidden}
+              />
 
 
-            {implementation?.dependencies && (
-              <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation?.agent.id} />
-            )}
+              {implementation?.dependencies && (
+                <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation?.agent.id} />
+              )}
+            </DependencyDefinitionsProvider>
 
           </div>
           <DialogFooter className="flex-initial">
             <Button
               type="submit"
-              className={cn("flex-initial", form.formState.isSubmitting && "bg-red-200")}
+              disabled={form.formState.isSubmitting}
+              className="flex-initial gap-2"
             >
-              {" "}
-              Submit{" "}
+              {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Submit
             </Button>
           </DialogFooter>
         </div>

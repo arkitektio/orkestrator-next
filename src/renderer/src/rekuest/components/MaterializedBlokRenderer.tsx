@@ -231,7 +231,7 @@ const useMaterializedDispatchAction = (
           input: {
             instanceId: settings.instanceId,
             agent: agentId,
-            interface: action.operation,
+            action: action.operation,
             args: action.arguments ?? {},
             hooks: [],
             cached: false,

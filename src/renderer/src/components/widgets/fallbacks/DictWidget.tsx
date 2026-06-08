@@ -14,20 +14,22 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 const RenderDownWidget = ({
   port,
   path,
+  bound,
 }: {
   port: ChildPortFragment;
   path: string[];
+  bound?: string;
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
 
-  console.log(port);
   return (
     <div className="mt-2">
       <Widget
         port={{ ...port, __typename: "Port" } as Port}
         parentKind={PortKind.Dict}
-        widget={port.assignWidget}
+        widget={port.widget}
+        bound={bound}
         path={path}
       />
     </div>
@@ -38,6 +40,7 @@ export const SideBySideWidget = ({
   port,
   valuetype,
   path,
+  bound,
 }: InputWidgetProps & { valuetype: ChildPortFragment }) => {
   const control = useFormContext().control;
 
@@ -47,37 +50,43 @@ export const SideBySideWidget = ({
   });
 
   return (
-    <ContainerGrid fitLength={fields.length}>
-      {fields.map((item, index) => (
-        <Card key={item.id} className="p-3">
-          <StringField
-            name={pathToName(path.concat(index.toString(), "__key"))}
-            label="The Key"
-            description="The key of this entry"
-          />
-          <RenderDownWidget
-            port={valuetype}
-            path={path.concat(index.toString(), "__value")}
-          />
-          <Button
-            variant="outline"
-            size={"icon"}
-            className="absolute top-0 right-0 mr-2 mt-2"
-            onClick={() => remove(index)}
+    <div className="@container">
+      <ContainerGrid minItemWidth={320}>
+        {fields.map((item, index) => (
+          <Card
+            key={item.id}
+            className="p-3 relative overflow-visible focus-within:z-50"
           >
-            <X />
-          </Button>
-        </Card>
-      ))}
-      <TooltipButton
-        variant="outline"
-        size="icon"
-        onClick={() => append({ __value: undefined })}
-        tooltip="Add new item"
-      >
-        <Plus />
-      </TooltipButton>
-    </ContainerGrid>
+            <StringField
+              name={pathToName(path.concat(index.toString(), "__key"))}
+              label="The Key"
+              description="The key of this entry"
+            />
+            <RenderDownWidget
+              port={valuetype}
+              path={path.concat(index.toString(), "__value")}
+              bound={bound}
+            />
+            <Button
+              variant="outline"
+              size={"icon"}
+              className="absolute top-0 right-0 mr-2 mt-2"
+              onClick={() => remove(index)}
+            >
+              <X />
+            </Button>
+          </Card>
+        ))}
+        <TooltipButton
+          variant="outline"
+          size="icon"
+          onClick={() => append({ __value: undefined })}
+          tooltip="Add new item"
+        >
+          <Plus />
+        </TooltipButton>
+      </ContainerGrid>
+    </div>
   );
 };
 

@@ -5,7 +5,11 @@ import { TooltipButton } from "@/components/ui/tooltip-button";
 import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
-import { pathToName, portToDefaults } from "@/rekuest/widgets/utils";
+import {
+  pathToName,
+  portToDefaults,
+  portToMinItemWidth,
+} from "@/rekuest/widgets/utils";
 import { Plus, X } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { ListChoicesWidget } from "../custom/ListChoicesWidget";
@@ -14,20 +18,22 @@ import { ListSearchWidget } from "../custom/ListSearchWidget";
 const RenderDownWidget = ({
   port,
   path,
+  bound,
 }: {
   port: ChildPortFragment;
   path: string[];
+  bound?: string;
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
 
-  console.log(port);
   return (
     <div className="mt-2">
       <Widget
         port={{ ...port, __typename: "Port" } as Port}
         parentKind={PortKind.List}
-        widget={port.assignWidget}
+        widget={port.widget}
+        bound={bound}
         path={path}
       />
     </div>
@@ -38,10 +44,9 @@ export const SideBySideWidget = ({
   port,
   valuetype,
   path,
+  bound,
 }: InputWidgetProps & { valuetype: ChildPortFragment }) => {
   const control = useFormContext().control;
-
-  console.log("THE PATH", path);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -49,15 +54,19 @@ export const SideBySideWidget = ({
   });
 
   return (
-    <div>
+    <div className="@container">
       <div>{port.label || port.key}</div>
       <div>
-        <ContainerGrid fitLength={fields.length}>
+        <ContainerGrid minItemWidth={portToMinItemWidth(valuetype)}>
           {fields.map((item, index) => (
-            <Card key={item.id} className="p-3 relative">
+            <Card
+              key={item.id}
+              className="p-3 relative overflow-visible focus-within:z-50"
+            >
               <RenderDownWidget
                 port={valuetype}
                 path={path.concat(index.toString(), "__value")}
+                bound={bound}
               />
               <Button
                 variant="outline"
@@ -103,12 +112,12 @@ export const ListWidget = (props: InputWidgetProps) => {
     return <>Faulty port config. no child</>;
   }
 
-  if (child?.assignWidget?.__typename == "SearchAssignWidget") {
-    return <ListSearchWidget {...props} widget={child.assignWidget} />;
+  if (child?.widget?.__typename == "SearchAssignWidget") {
+    return <ListSearchWidget {...props} widget={child.widget} />;
   }
 
-  if (child?.assignWidget?.__typename == "ChoiceAssignWidget") {
-    return <ListChoicesWidget {...props} widget={child.assignWidget} />;
+  if (child?.widget?.__typename == "ChoiceAssignWidget") {
+    return <ListChoicesWidget {...props} widget={child.widget} />;
   }
 
   return <SideBySideWidget {...props} valuetype={child} />;

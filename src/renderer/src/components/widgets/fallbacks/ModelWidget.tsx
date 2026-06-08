@@ -11,8 +11,7 @@ export type UnionValue = {
 const ModelWidget: React.FC<InputWidgetProps> = ({
   port,
   path,
-  widget,
-  parentKind,
+  bound,
 }) => {
   return (
     <>
@@ -28,7 +27,8 @@ const ModelWidget: React.FC<InputWidgetProps> = ({
               } as Port
             }
             path={path.concat(port.key)}
-            widget={port.assignWidget}
+            widget={port.widget}
+            bound={bound}
             parentKind={PortKind.Model}
           />
         );

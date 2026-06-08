@@ -25,6 +25,27 @@ export const isObjectPort = (port: LabellablePort): boolean => {
   return port.kind == PortKind.Dict || port.kind == PortKind.Model;
 };
 
+/**
+ * Sensible minimum width (in px) for a single item of the given kind when it is
+ * laid out in a responsive `auto-fit` grid (see `ContainerGrid`'s
+ * `minItemWidth`). Complex/nested kinds render tall, self-contained sub-forms
+ * and want a wider track (fewer columns); simple scalar inputs pack densely.
+ */
+export const portToMinItemWidth = (port: { kind: PortKind }): number => {
+  switch (port.kind) {
+    case PortKind.Dict:
+    case PortKind.Model:
+    case PortKind.List:
+    case PortKind.Union:
+    case PortKind.Interface:
+    case PortKind.MemoryStructure:
+      return 320;
+    default:
+      // scalars, enums, dates and structure search widgets
+      return 200;
+  }
+};
+
 export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.Structure)
     return port.identifier || "Unknown Structure";

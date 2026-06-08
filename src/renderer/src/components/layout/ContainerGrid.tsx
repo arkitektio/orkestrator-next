@@ -5,12 +5,24 @@ import React, { useEffect, useRef } from "react";
 export type FittingResponsiveGridProps = {
   children?: React.ReactNode;
   fitLength?: number;
+  /**
+   * When set, the grid lays its items out with
+   * `repeat(auto-fit, minmax(min(100%, <minItemWidth>px), 1fr))`.
+   *
+   * This makes the grid responsive to its **own** measured width (rather than
+   * to the nearest `@container` ancestor), so a grid that only occupies part of
+   * a wider layout column packs the right number of items into the space it
+   * actually has. Larger values yield fewer, wider columns — use a small value
+   * for lists of scalars and a larger one for lists of complex items.
+   */
+  minItemWidth?: number;
   className?: string;
 };
 
 export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   children,
   fitLength,
+  minItemWidth,
   className,
 }) => {
   const parent = useRef<HTMLDivElement | null>(null);
@@ -28,6 +40,21 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
       });
     }
   }, [children]);
+
+  if (minItemWidth) {
+    return (
+      <div
+        className={cn("grid gap-4", className)}
+        style={{
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minItemWidth}px), 1fr))`,
+        }}
+        data-enableselect="true"
+        ref={parent}
+      >
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div

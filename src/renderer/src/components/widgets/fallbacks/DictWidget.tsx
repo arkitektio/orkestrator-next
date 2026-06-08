@@ -50,38 +50,43 @@ export const SideBySideWidget = ({
   });
 
   return (
-    <ContainerGrid fitLength={fields.length}>
-      {fields.map((item, index) => (
-        <Card key={item.id} className="p-3">
-          <StringField
-            name={pathToName(path.concat(index.toString(), "__key"))}
-            label="The Key"
-            description="The key of this entry"
-          />
-          <RenderDownWidget
-            port={valuetype}
-            path={path.concat(index.toString(), "__value")}
-            bound={bound}
-          />
-          <Button
-            variant="outline"
-            size={"icon"}
-            className="absolute top-0 right-0 mr-2 mt-2"
-            onClick={() => remove(index)}
+    <div className="@container">
+      <ContainerGrid minItemWidth={320}>
+        {fields.map((item, index) => (
+          <Card
+            key={item.id}
+            className="p-3 relative overflow-visible focus-within:z-50"
           >
-            <X />
-          </Button>
-        </Card>
-      ))}
-      <TooltipButton
-        variant="outline"
-        size="icon"
-        onClick={() => append({ __value: undefined })}
-        tooltip="Add new item"
-      >
-        <Plus />
-      </TooltipButton>
-    </ContainerGrid>
+            <StringField
+              name={pathToName(path.concat(index.toString(), "__key"))}
+              label="The Key"
+              description="The key of this entry"
+            />
+            <RenderDownWidget
+              port={valuetype}
+              path={path.concat(index.toString(), "__value")}
+              bound={bound}
+            />
+            <Button
+              variant="outline"
+              size={"icon"}
+              className="absolute top-0 right-0 mr-2 mt-2"
+              onClick={() => remove(index)}
+            >
+              <X />
+            </Button>
+          </Card>
+        ))}
+        <TooltipButton
+          variant="outline"
+          size="icon"
+          onClick={() => append({ __value: undefined })}
+          tooltip="Add new item"
+        >
+          <Plus />
+        </TooltipButton>
+      </ContainerGrid>
+    </div>
   );
 };
 

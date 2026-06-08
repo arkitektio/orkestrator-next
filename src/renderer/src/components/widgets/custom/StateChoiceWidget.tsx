@@ -67,14 +67,23 @@ export const StateChoiceWidget = (
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("Searching with liveValue:", liveValue);
-
       const accessedValue = accessNestedValue(liveValue || {}, statePaths);
-      console.log("Accessed value at path", statePaths, ":", accessedValue);
-      // 1. Validation: Must be an array
+      // 1. Validation: Must be an array — the options are built by mapping over it.
       if (!Array.isArray(accessedValue)) {
-        console.warn("Path did not resolve to an array", statePaths);
-        throw new Error("Invalid state path: Expected an array.");
+        const stateLoaded =
+          liveValue != null && Object.keys(liveValue).length > 0;
+        const found =
+          accessedValue === null
+            ? stateLoaded
+              ? "nothing (a key along the path is missing — check it for typos)"
+              : `nothing (state "${stateKey}" hasn't been reported by the agent yet)`
+            : `a ${typeof accessedValue} (${JSON.stringify(accessedValue)})`;
+        throw new Error(
+          `State choice "${props.port.key}" expected its state path "${props.widget?.statePath}" ` +
+            `to resolve to a list of options, but found ${found}. ` +
+            `The first segment ("${stateKey}") selects the agent's state interface; ` +
+            `the rest ("${statePaths.join(".") || "—"}") walks into it and must land on an array.`,
+        );
       }
 
       // 2. Identify Subpaths (Handling null accessors)
@@ -86,11 +95,9 @@ export const StateChoiceWidget = (
       // 3. Map the array with fallbacks
       return accessedValue.map((item, index) => {
         // Handle Objects
-        console.log("Processing item:", item);
         if (item !== null && typeof item === "object") {
 
           if (props.port.kind == PortKind.MemoryStructure) {
-            console.log("Detected MemoryStructure item, applying special handling");
             return {
               value: item,
               label: item.name || item.id || `Option ${index + 1}`,
@@ -108,7 +115,6 @@ export const StateChoiceWidget = (
           const val = valuePath ? accessNestedValue(item, valuePath.split('.')) : (item.id || item.key || index);
           const lab = labelPath ? accessNestedValue(item, labelPath.split('.')) : (item.name || item.label || String(val));
           const desc = descPath ? accessNestedValue(item, descPath.split('.')) : undefined;
-          console.log("Resolved option:", { val, lab, desc });
           return {
             value: val,
             label: lab,

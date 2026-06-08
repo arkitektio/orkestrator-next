@@ -540,7 +540,7 @@ export const RGBContextRender = (props: {
 export const FinalRenderInner = (props: RGBDProps) => {
   const rbgContext = props.context;
 
-  const { setZ, z, showGrid } = useViewerState();
+  const { setZ, z, showGrid, allowRoiDrawing } = useViewerState();
 
   const version = rbgContext.image.store.version;
   const zSize = rbgContext.image?.store.shape?.at(2) || 1;
@@ -622,7 +622,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
           />
           <OrbitControls
             enableRotate={false}
-            enablePan={true}
+            enablePan={!allowRoiDrawing}
             regress={false}
             mouseButtons={{
               LEFT: THREE.MOUSE.PAN,
@@ -655,7 +655,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
               imageHeight={ySize}
               imageWidth={xSize}
               image={props.context.image}
-              event_key="ctrl"
+              event_key="none"
             />
           </>
         </ThreeCanvas>
@@ -705,7 +705,7 @@ export const FinalRender = (props: RGBDProps) => {
         showGrid: false,
         z: props.z || 0,
         t: props.t || 0,
-        allowRoiDrawing: true,
+        allowRoiDrawing: false,
       }}
     >
       <FinalRenderInner {...props} />

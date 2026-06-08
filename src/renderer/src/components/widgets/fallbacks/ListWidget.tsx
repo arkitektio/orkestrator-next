@@ -14,20 +14,22 @@ import { ListSearchWidget } from "../custom/ListSearchWidget";
 const RenderDownWidget = ({
   port,
   path,
+  bound,
 }: {
   port: ChildPortFragment;
   path: string[];
+  bound?: string;
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
 
-  console.log(port);
   return (
     <div className="mt-2">
       <Widget
         port={{ ...port, __typename: "Port" } as Port}
         parentKind={PortKind.List}
-        widget={port.assignWidget}
+        widget={port.widget}
+        bound={bound}
         path={path}
       />
     </div>
@@ -38,6 +40,7 @@ export const SideBySideWidget = ({
   port,
   valuetype,
   path,
+  bound,
 }: InputWidgetProps & { valuetype: ChildPortFragment }) => {
   const control = useFormContext().control;
 
@@ -58,6 +61,7 @@ export const SideBySideWidget = ({
               <RenderDownWidget
                 port={valuetype}
                 path={path.concat(index.toString(), "__value")}
+                bound={bound}
               />
               <Button
                 variant="outline"
@@ -103,12 +107,12 @@ export const ListWidget = (props: InputWidgetProps) => {
     return <>Faulty port config. no child</>;
   }
 
-  if (child?.assignWidget?.__typename == "SearchAssignWidget") {
-    return <ListSearchWidget {...props} widget={child.assignWidget} />;
+  if (child?.widget?.__typename == "SearchAssignWidget") {
+    return <ListSearchWidget {...props} widget={child.widget} />;
   }
 
-  if (child?.assignWidget?.__typename == "ChoiceAssignWidget") {
-    return <ListChoicesWidget {...props} widget={child.assignWidget} />;
+  if (child?.widget?.__typename == "ChoiceAssignWidget") {
+    return <ListChoicesWidget {...props} widget={child.widget} />;
   }
 
   return <SideBySideWidget {...props} valuetype={child} />;

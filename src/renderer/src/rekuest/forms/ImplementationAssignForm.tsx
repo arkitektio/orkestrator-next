@@ -18,6 +18,7 @@ import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
+import { DependencyDefinitionsProvider } from "../widgets/DependencyContext";
 
 export type ImplementationAssignFormProps = {
   id: string;
@@ -100,19 +101,21 @@ export const ImplementationAssignForm = (
 
           <div className="text-muted-foreground flex-initial my-2">{description}</div>
           <div className="flex-grow  mb-4 @container ">
-            <ArgsContainer
-              registry={registry}
-              ports={implementation?.action.args || []}
-              path={["args"]}
-              bound={implementation?.agent.id}
-              groups={implementation?.action.portGroups}
-              hidden={props.hidden}
-            />
+            <DependencyDefinitionsProvider dependencies={implementation?.dependencies || []}>
+              <ArgsContainer
+                registry={registry}
+                ports={implementation?.action.args || []}
+                path={["args"]}
+                bound={implementation?.agent.id}
+                groups={implementation?.action.portGroups}
+                hidden={props.hidden}
+              />
 
 
-            {implementation?.dependencies && (
-              <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation?.agent.id} />
-            )}
+              {implementation?.dependencies && (
+                <DependenciesContainer dependencies={implementation?.dependencies} bound={implementation?.agent.id} />
+              )}
+            </DependencyDefinitionsProvider>
 
           </div>
           <DialogFooter className="flex-initial">

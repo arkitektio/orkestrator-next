@@ -20,7 +20,9 @@ export const RoiDrawerCanvas = ({
   image,
   event_key = "shift",
 }: RoiDrawerProps) => {
-  const { roiDrawMode, z, t } = useViewerState();
+  const { roiDrawMode, z, t, allowRoiDrawing } = useViewerState();
+
+  if (!allowRoiDrawing) return null;
 
   const commonProps = {
     imageHeight,

@@ -1,14 +1,19 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
-import { notEmpty } from "@/lib/utils";
+import { FormLabel } from "@/components/ui/form";
 import {
   PortKind,
+  ResolvedDependencyInput,
   StateChoiceAssignWidgetFragment,
-  useGetStateForQuery,
 } from "@/rekuest/api/graphql";
 import { useAgentLiveState } from "@/rekuest/hooks/useLiveState";
+import {
+  resolveDependencyDefinition,
+  useDependencyDefinitions,
+} from "@/rekuest/widgets/DependencyContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";
+import { useWatch } from "react-hook-form";
 
 
 
@@ -27,16 +32,37 @@ export const StateChoiceWidget = (
 ) => {
 
 
-  const stateKey = props.widget?.statePath.split(".")[0];
-  const statePaths = props.widget?.statePath.split(".").slice(1) || [];
-  const stateAccessors = props.widget.stateAccessors;
-  const dependency = props.widget.dependency
+  const stateKey = props.widget?.statePath?.split(".")[0];
+  const statePaths = props.widget?.statePath?.split(".").slice(1) || [];
+  const stateAccessors = props.widget?.stateAccessors;
+  const dependency = props.widget?.dependency;
 
+  // Resolve which agent's live state backs this widget.
+  // - No dependency: the implementation's own bound agent (props.bound).
+  // - Dependency: the agent the user selected for that dependency in the form.
+  const dependencyDefinitions = useDependencyDefinitions();
+  const watchedDeps = useWatch({ name: "dependencies" }) as
+    | ResolvedDependencyInput[]
+    | undefined;
+
+  let agentID: string | undefined = props.bound;
+  let dependencyLabel: string | undefined;
+  if (dependency) {
+    const definition = resolveDependencyDefinition(
+      dependencyDefinitions,
+      dependency,
+    );
+    const dependencyKey = definition?.key ?? dependency;
+    dependencyLabel = dependencyKey;
+    // A STATE_CHOICE reads a single agent's state — use the first mapped agent.
+    agentID = watchedDeps?.find((d) => d.key === dependencyKey)
+      ?.mappedAgents?.[0]?.agent;
+  }
 
   const { value: liveValue } = useAgentLiveState({
-    agentID: props.bound,
+    agentID: agentID,
     stateInterface: stateKey,
-    skip: !props.bound || !stateKey,
+    skip: !agentID || !stateKey,
   });
 
   const search = useCallback(
@@ -102,17 +128,23 @@ export const StateChoiceWidget = (
     [liveValue, statePaths, stateAccessors],
   );
 
-  if (dependency) {
-    return (
-      <div>
-        This widget is currently not compatible with dependencies. Please remove
-        the dependency to use it.
-      </div>
-    );
-  }
-
   if (!stateKey) {
     return <div>Invalid state choices widget configuration</div>;
+  }
+
+  if (!agentID) {
+    return (
+      <div className="flex flex-col gap-1">
+        <FormLabel className="text-sm">
+          {props.port.label || props.port.key}
+        </FormLabel>
+        <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          {dependency
+            ? `First select an agent for "${dependencyLabel}"`
+            : "No agent available for this state"}
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -201,8 +201,8 @@ const SmartHoverCard = ({
         {/* Gradient "frame" — the padding lets this gradient show as a border
             around the solid body. The shadow lives here (on the actual visible
             element) so it isn't lost on the transparent portal container. */}
-        <div className="rounded-3xl bg-gradient-to-br from-primary/70 via-primary/10 to-primary-similar/40 p-[1.5px] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)]">
-          <div className="rounded-3xl overflow-hidden bg-popover">
+        <div className="rounded-3xl bg-primary p-[1px] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)]">
+          <div className="rounded-3xl overflow-hidden bg-popover border border-primary/20">
             {open &&
               getSmartBuilderAdapters().renderHover({
                 identifier: self.identifier,

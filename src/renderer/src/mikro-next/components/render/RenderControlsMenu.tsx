@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Grid3X3,
+  Hand,
   Layers,
   MapPin,
   Minus,
@@ -79,7 +80,7 @@ export const RenderControlsMenu = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button
           size="sm"
           variant="ghost"
@@ -110,10 +111,23 @@ export const RenderControlsMenu = ({
           {showRois ? "Hide ROIs" : "Show ROIs"}
         </DropdownMenuItem>
 
+        {/* Pan mode toggle */}
+        <DropdownMenuItem
+          onClick={() => setAllowRoiDrawing(false)}
+          className={`cursor-pointer ${!allowRoiDrawing
+            ? "bg-blue-800 text-white"
+            : "text-gray-300 hover:bg-gray-800"
+            }`}
+        >
+          <Hand className="w-4 h-4 mr-2" />
+          Pan / Navigate
+          {!allowRoiDrawing && <Check className="w-3 h-3 ml-auto" />}
+        </DropdownMenuItem>
+
         {/* Direct ROI Drawing Mode Selection */}
         <DropdownMenuSeparator className="bg-gray-700" />
         <DropdownMenuLabel className="text-gray-400">
-          Draw ROI (Auto-enables)
+          Draw ROI
         </DropdownMenuLabel>
         {[
           RoiKind.Rectangle,

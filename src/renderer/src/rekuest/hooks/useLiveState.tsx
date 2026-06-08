@@ -71,10 +71,12 @@ export const useLiveState = ({
 
 export const useAgentLiveState = ({
   agentID,
-  stateInterface
+  stateInterface,
+  skip,
 }: {
-  agentID: string;
-  stateInterface: string
+  agentID?: string;
+  stateInterface?: string;
+  skip?: boolean;
 }) => {
 
     const [liveValue, setLiveValue] = useState<Record<string, unknown> | null>(null);
@@ -85,7 +87,8 @@ export const useAgentLiveState = ({
     const currentLiveValue = liveValue
     // Subscribe to live patches
     useWatchStateSubscription({
-      variables: { agentID: agentID, interface: stateInterface },
+      skip: skip || !agentID || !stateInterface,
+      variables: { agentID: agentID as string, interface: stateInterface as string },
       onData: ({ data: subData }) => {
         const event = subData.data?.watchState;
         if (!event) return;

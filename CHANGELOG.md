@@ -1,3 +1,12 @@
+## [1.64.3](https://github.com/arkitektio/orkestrator-next/compare/v1.64.2...v1.64.3) (2026-06-08)
+
+
+### Bug Fixes
+
+* fix state choise widgets ([63bc690](https://github.com/arkitektio/orkestrator-next/commit/63bc6904ffe123cb673cf5df1223d2cfa6d04f4b))
+* smaller widget fixes ([79ed88c](https://github.com/arkitektio/orkestrator-next/commit/79ed88ce22fc0c110712962c1a4179ec3d2a7aa2))
+* state choice widgets ([d779691](https://github.com/arkitektio/orkestrator-next/commit/d7796917f1773dc2a1641609f7d8c2263ed644f8))
+
 ## [1.64.2](https://github.com/arkitektio/orkestrator-next/compare/v1.64.1...v1.64.2) (2026-06-05)
 
 

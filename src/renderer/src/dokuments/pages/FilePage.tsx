@@ -196,5 +196,3 @@ export const FilePage = asDetailQueryRoute(
 export default FilePage;
 
 
-
-export default FilePage;

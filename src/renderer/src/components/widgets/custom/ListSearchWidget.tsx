@@ -26,7 +26,7 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { cn, notEmpty } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -66,17 +66,25 @@ export const ListButtonLabel = (props: {
   };
 
   return (
-    <div className="gap-2 flex flex-row p-1">
+    <div className="flex flex-row flex-wrap items-center gap-1 p-1">
       {options.map((l, index) => (
         <Badge
           key={index}
+          variant="secondary"
           onClick={() => remove(l.value)}
-          className="cursor-pointer px-1 py-1 bg-slate-300 my-2"
+          title="Remove"
+          className="group/chip cursor-pointer pr-1.5"
         >
-          {l.label}
+          <span className="max-w-40 truncate">{l.label}</span>
+          <X className="text-muted-foreground transition-colors group-hover/chip:text-foreground" />
         </Badge>
       ))}
-      {error}
+      {error && (
+        <span className="flex items-center gap-1 text-xs text-destructive">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          {error}
+        </span>
+      )}
     </div>
   );
 };

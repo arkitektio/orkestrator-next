@@ -26,7 +26,7 @@ import {
 import { cn, notEmpty } from "@/lib/utils";
 import { gql } from "@apollo/client";
 import type { OperationDefinitionNode } from "graphql";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -42,11 +42,15 @@ export const ButtonLabel = (props: {
 }) => {
   const [option, setOption] = useState<Option | null | undefined>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     props
       .search({ values: [props.value.object] })
       .then((res) => {
+        if (cancelled) return;
         if (res.length === 0) {
           setOption(null);
           setError("No option found for value");
@@ -56,12 +60,21 @@ export const ButtonLabel = (props: {
         setError(null);
       })
       .catch((err) => {
-        setError(err.message);
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [props.value, props.search]);
 
   return (
-    <div className="flex flex-row items-center gap-1 min-w-0">
+    <div className="flex min-w-0 flex-1 flex-row items-center gap-1.5 text-left">
+      {loading && !option && !error && (
+        <span className="h-3 w-24 animate-pulse rounded-full bg-muted-foreground/20" />
+      )}
       {option?.label && <span className="truncate">{option.label}</span>}
       {error && (
         <span className="flex items-center gap-1 text-xs text-destructive shrink-0">
@@ -285,7 +298,7 @@ export const SearchWidget = (
                 <div className="w-full relative h-10">
                   <CommandInput
                     onKeyDown={handleKeyDown}
-                    placeholder={"Search..."}
+                    placeholder={field.value != undefined && field.value != null ? "" : "Search..."}
                     onValueChange={(e) => {
                       setInputValue(e);
                       query(e);
@@ -295,8 +308,10 @@ export const SearchWidget = (
                     onFocus={() => setOpen(true)}
                   />
                   {field.value != undefined && field.value != null && (
-                    <div
-                      className="absolute inset-0 z-10 flex cursor-pointer items-center rounded-md bg-input px-3 text-sm truncate"
+                    <button
+                      type="button"
+                      title="Clear selection and search again"
+                      className="group/chosen absolute inset-x-1 top-1 z-10 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-input bg-muted px-2.5 text-xs/relaxed transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => {
                         setInputValue("");
                         form.setValue(pathToName(props.path), undefined, {
@@ -308,7 +323,8 @@ export const SearchWidget = (
                       }}
                     >
                       <ButtonLabel search={search} value={field.value} />
-                    </div>
+                      <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover/chosen:text-foreground" />
+                    </button>
                   )}
                 </div>
               </div>

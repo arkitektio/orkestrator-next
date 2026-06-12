@@ -86,6 +86,7 @@ export interface Ward {
 
 export type LabellablePort = {
   key: string;
+  label?: string | null;
   kind: PortKind;
   identifier?: string;
   nullable?: boolean;

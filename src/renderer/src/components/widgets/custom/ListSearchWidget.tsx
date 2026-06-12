@@ -1,5 +1,9 @@
-import { SearchOptions } from "@/components/fields/SearchField";
+import {
+  PAGE_SIZE,
+  queryDeclaresPagination,
+} from "@/components/widgets/custom/SearchWidget";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
+import useWidgetDependencies from "@/rekuest/hooks/useWidgetDependencies";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
@@ -22,6 +26,7 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { cn, notEmpty } from "@/lib/utils";
+import { AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -40,18 +45,16 @@ export const ListButtonLabel = (props: {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (props.value == undefined) {
+    if (props.value == undefined || props.value.length == 0) {
       setOptions([]);
-      return;
-    }
-    if (props.value.length == 0) {
-      setOptions([]);
+      setError(null);
       return;
     }
     props
       .search({ values: props.value.map(x => x.__value) })
       .then((res) => {
         setOptions(res.filter(notEmpty));
+        setError(null);
       })
       .catch((err) => {
         setError(err.message);
@@ -78,7 +81,12 @@ export const ListButtonLabel = (props: {
   );
 };
 
-export type SearchOptions = { search?: string; values?: string[] };
+export type SearchOptions = {
+  search?: string;
+  values?: string[];
+  limit?: number;
+  offset?: number;
+};
 
 export type SearchFunction = (
   searching: SearchOptions,
@@ -89,7 +97,9 @@ export const ListSearchWidget = (
   props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
   const { registry } = useWidgetRegistry();
-  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
+  const [options, setOptions] = useState<Option[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -98,56 +108,107 @@ export const ListSearchWidget = (
   const wardKey = props.widget?.ward;
   const query = props?.widget?.query || "";
 
-  if (!wardKey) {
-    return <>No ward set</>;
-  }
-
+  // getWard falls back to a throwing fakeWard for unknown keys, so resolving
+  // with an empty key is safe — the !wardKey check below renders the error
+  // instead. Hooks must all run before any early return.
   const theward = useMemo(
-    () => registry.getWard(wardKey),
+    () => registry.getWard(wardKey ?? ""),
     [registry, wardKey],
   );
 
   const name = pathToName(props.path)
 
+  const { values, met } = useWidgetDependencies({
+    widget: props.widget,
+    path: props.path,
+  });
+
   const search = useCallback(
     async (searching: SearchOptions) => {
       if (!theward.search) throw new Error("Ward does not support search");
+      if (!met) throw new Error("Dependencies not met");
       const options = await theward.search({
         query: query,
-        variables: searching,
+        variables: { ...searching, ...values },
       });
       return options;
     },
-    [theward, query],
+    [theward, query, values, met],
   );
 
   const form = useFormContext();
 
+  const paginated = useMemo(() => queryDeclaresPagination(query), [query]);
+
+  // Pagination bookkeeping lives in refs so a stale closure can never
+  // append a page that belongs to a previous search term.
+  const requestRef = useRef(0);
+  const offsetRef = useRef(0);
+  const lastSearchRef = useRef<string | undefined>(undefined);
+
+  const fetchOptions = useCallback(
+    (searchTerm: string | undefined, offset: number) => {
+      const requestId = ++requestRef.current;
+      if (offset === 0) lastSearchRef.current = searchTerm;
+
+      const variables: SearchOptions = paginated
+        ? { limit: PAGE_SIZE, offset }
+        : {};
+      if (searchTerm !== undefined) variables.search = searchTerm;
+
+      search(variables)
+        .then((res) => {
+          if (requestRef.current !== requestId) return;
+          const page = res || [];
+          offsetRef.current = offset + page.length;
+          const cleaned = page.filter(notEmpty);
+          setOptions((prev) => (offset > 0 ? [...prev, ...cleaned] : cleaned));
+          setHasMore(paginated && page.length === PAGE_SIZE);
+          setError(null);
+        })
+        .catch((err) => {
+          if (requestRef.current !== requestId) return;
+          setError(err.message || "Error");
+          if (offset === 0) setOptions([]);
+          setHasMore(false);
+        })
+        .finally(() => {
+          if (requestRef.current === requestId) setLoadingMore(false);
+        });
+    },
+    [search, paginated],
+  );
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    fetchOptions(lastSearchRef.current, offsetRef.current);
+  }, [hasMore, loadingMore, fetchOptions]);
 
   const onValueChange = (string: string) => {
-    search({ search: string })
-      .then((res) => {
-        setOptions(res || []);
-        setOpen(true);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setOptions([]);
-      });
+    setOpen(true);
+    fetchOptions(string, 0);
   };
 
   useEffect(() => {
-    search({})
-      .then((res) => {
-        setOptions(res || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message || "Error");
-        setOptions([]);
-      });
-  }, [name, search]);
+    fetchOptions(undefined, 0);
+  }, [fetchOptions]);
+
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!open || !hasMore || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { root: listRef.current, rootMargin: "0px 0px 64px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [open, hasMore, loadMore]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -155,9 +216,13 @@ export const ListSearchWidget = (
       if (input) {
         if (e.key === "Delete" || e.key === "Backspace") {
           if (input.value === "") {
-            form.setValue(name, { __value: undefined }, {
-              shouldValidate: true,
-            });
+            // Remove the last selected chip; the field value is an array.
+            const current = form.getValues(name);
+            if (Array.isArray(current) && current.length > 0) {
+              form.setValue(name, current.slice(0, -1), {
+                shouldValidate: true,
+              });
+            }
           }
         }
         // This is not a default behaviour of the <input /> field
@@ -166,8 +231,28 @@ export const ListSearchWidget = (
         }
       }
     },
-    [],
+    [form, name],
   );
+
+  if (!wardKey) {
+    return (
+      <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        Configuration error: no data source configured for this field.
+      </div>
+    );
+  }
+
+  if (!met) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 rounded border border-border px-3 py-2 text-xs text-muted-foreground">
+        <span>Waiting for:</span>
+        {props.widget?.dependencies?.map((d, i) => (
+          <Badge key={i} variant="outline" className="text-[10px]">{d}</Badge>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <FormField<{ [name: string]: { __value: string }[] }>
@@ -213,8 +298,11 @@ export const ListSearchWidget = (
               </div>
               <div className="relative mt-2">
                 {open && (
-                  <CommandList slot="list" className="w-full">
-                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                  <CommandList slot="list" className="w-full max-h-none overflow-visible">
+                    <div
+                      ref={listRef}
+                      className="absolute top-0 z-10 w-full max-h-72 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+                    >
                       <CommandEmpty>No Options found</CommandEmpty>
                       {error && (
                         <CommandGroup heading="Error">
@@ -223,7 +311,7 @@ export const ListSearchWidget = (
                       )}
                       {options.length > 0 && (
                         <CommandGroup heading="Options">
-                          {options?.filter(notEmpty).map((option, index) => (
+                          {options.map((option, index) => (
                             <CommandItem
                               value={option.value}
                               key={index}
@@ -283,6 +371,14 @@ export const ListSearchWidget = (
                             </CommandItem>
                           ))}
                         </CommandGroup>
+                      )}
+                      {hasMore && (
+                        <div
+                          ref={sentinelRef}
+                          className="flex items-center justify-center py-2 text-xs text-muted-foreground"
+                        >
+                          {loadingMore ? "Loading more…" : ""}
+                        </div>
                       )}
                     </div>
                   </CommandList>

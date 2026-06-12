@@ -23,7 +23,7 @@ import {
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
-import { registeredCallbacks } from "@/rekuest/components/functional/AssignationUpdater";
+import { trackAssignation } from "@/rekuest/lib/assignationTracker";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Boxes, PlayCircle } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
@@ -300,9 +300,12 @@ export const DirectImplementationAssignment = (
       return;
     }
 
-    try {
-      const reference = uuidv4();
+    const reference = uuidv4();
+    const untrack = trackAssignation(reference, (event) => {
+      props.onDone?.({ event, kind: "action" });
+    });
 
+    try {
       await assign({
         implementation: implementation.id,
         args: keys,
@@ -312,11 +315,8 @@ export const DirectImplementationAssignment = (
         log: false,
         reference,
       });
-
-      registeredCallbacks.set(reference, (event) => {
-        props.onDone?.({ event, kind: "action" });
-      });
     } catch (error) {
+      untrack();
       toast.error(getErrorMessage(error));
     }
   };
@@ -468,10 +468,10 @@ export const ImplementationAssignButton = (
       return;
     }
 
-    try {
-      const reference = uuidv4();
-      registeredCallbacks.set(reference, onEvent);
+    const reference = uuidv4();
+    const untrack = trackAssignation(reference, onEvent);
 
+    try {
       await assign({
         implementation: implementation.id,
         args: keys,
@@ -485,6 +485,7 @@ export const ImplementationAssignButton = (
       setDoing(true);
       setError(null);
     } catch (error) {
+      untrack();
       triggerErrorFeedback(getErrorMessage(error));
     }
   };
@@ -559,8 +560,10 @@ export const BatchImplementationAssignButton = (
         return;
       }
 
+      const reference = uuidv4();
+      const untrack = trackAssignation(reference, onEvent);
+
       try {
-        const reference = uuidv4();
         await assign({
           implementation: implementation.id,
           args: keys,
@@ -570,10 +573,10 @@ export const BatchImplementationAssignButton = (
           ephemeral: props.ephemeral ?? false,
           log: false,
         });
-        registeredCallbacks.set(reference, onEvent);
         setDoing(true);
         setError(null);
       } catch (error) {
+        untrack();
         triggerErrorFeedback(getErrorMessage(error));
       }
     }
@@ -641,10 +644,10 @@ export const AssignButton = (
       return;
     }
 
-    try {
-      const reference = uuidv4();
-      registeredCallbacks.set(reference, onEvent);
+    const reference = uuidv4();
+    const untrack = trackAssignation(reference, onEvent);
 
+    try {
       await assign({
         action: action.id,
         args: keys,
@@ -658,6 +661,7 @@ export const AssignButton = (
       setDoing(true);
       setError(null);
     } catch (error) {
+      untrack();
       const message = getErrorMessage(error);
       triggerErrorFeedback(message);
     }
@@ -764,8 +768,10 @@ export const BatchAssignButton = (
         return;
       }
 
+      const reference = uuidv4();
+      const untrack = trackAssignation(reference, onEvent);
+
       try {
-        const reference = uuidv4();
         await assign({
           action: action.id,
           args: keys,
@@ -775,10 +781,10 @@ export const BatchAssignButton = (
           ephemeral: props.ephemeral ?? false,
           log: false,
         });
-        registeredCallbacks.set(reference, onEvent);
         setDoing(true);
         setError(null);
       } catch (error) {
+        untrack();
         const message = getErrorMessage(error);
         triggerErrorFeedback(message);
       }

@@ -140,8 +140,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       </LazyProviderBoundary>
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />
-                                      <Toaster />
                                     </Guard.Rekuest>
+                                    <Toaster />
                                     <Guard.Mikro fallback={<></>}>
                                       <MikroDashboardWidgets />
                                       <LatestImagesDashboardWidget />

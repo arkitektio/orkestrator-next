@@ -9,7 +9,7 @@ import {
   ReserveMutationVariables,
   useActionByHashQuery
 } from "../api/graphql";
-import { registeredCallbacks } from "../components/functional/AssignationUpdater";
+import { trackAssignation } from "../lib/assignationTracker";
 import { useAssign } from "./useAssign";
 
 export type ActionReserveVariables = Omit<
@@ -78,9 +78,10 @@ export const useHashActionWithProgress = (
     });
 
 
-    try {
-      const reference = uuidv4();
+    const reference = uuidv4();
+    const untrack = trackAssignation(reference, doStuff);
 
+    try {
       await postAssign({
         action: data?.action.id,
         args: args,
@@ -90,9 +91,8 @@ export const useHashActionWithProgress = (
 
       setDoing(true);
       setError(null);
-
-      registeredCallbacks.set(reference, doStuff);
     } catch (e) {
+      untrack();
       toast.error(e.message);
       setDoing(false);
       setError(e.message || "Unknown error");

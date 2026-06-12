@@ -1,29 +1,34 @@
 import { useRekuest } from "@/app/Arkitekt";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { RekuestAssignation } from "@/linkers";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import {
+  useAssignation,
+  useLiveAssignation,
+} from "@/rekuest/hooks/useAssignations";
 import { WrappedReturnsContainer } from "@/rekuest/widgets/tailwind";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AssignationEventFragment,
   AssignationEventKind,
   AssignationsDocument,
   AssignationsQuery,
-  useCancelMutation,
   useDetailActionQuery,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+import {
+  bufferEvent,
+  isTerminalEvent,
+  registeredCallbacks,
+  takeBufferedEvents,
+} from "../../lib/assignationTracker";
+import { AssignationStatusLine } from "../assignation/AssignationStatusLine";
 
-export const registeredCallbacks = new Map<
-  string,
-  (event: AssignationEventFragment) => void
->();
+export { registeredCallbacks } from "../../lib/assignationTracker";
 
 export const DynamicYieldDisplay = (props: {
   values: any[];
@@ -70,83 +75,98 @@ export const borderColorForAss = (ass: any) => {
   return "border-muted-foreground/10";
 };
 
-export const AssignationToaster = (props: { id: string }) => {
-  const ass = useLiveAssignation({ assignation: props.id });
-  const [hover, setHovered] = useState(false);
+const dismissedToasts = new Set<string>();
 
-  const [cancelAssign] = useCancelMutation();
+const dismissAssignationToast = (id: string) => {
+  dismissedToasts.add(id);
+  toast.dismiss(id);
+};
 
-  // useEffect to close the toast if `ass.done` becomes true
+const showAssignationToast = (id: string) => {
+  if (dismissedToasts.has(id)) {
+    return;
+  }
+  toast.custom(() => <AssignationToast id={id} />, {
+    id,
+    duration: Infinity, // Dismissal is driven by AssignationToast
+    dismissible: true,
+    onDismiss: () => dismissedToasts.add(id),
+  });
+};
+
+export const AssignationToast = (props: { id: string }) => {
+  const assignation = useAssignation({ assignation: props.id });
+  const live = useLiveAssignation({ assignation: props.id });
+
+  // Success and cancellation auto-dismiss after a short delay; errors persist
+  // until closed via the X button.
   useEffect(() => {
-    if ((ass.done || ass.cancelled) && !hover) {
-      // wait delay
+    if (live.done || live.cancelled) {
       const timer = setTimeout(() => {
-        toast.dismiss(props.id);
-      }, 2000);
+        dismissAssignationToast(props.id);
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, [ass.done, ass.cancelled, props.id, hover]);
+    return undefined;
+  }, [live.done, live.cancelled, props.id]);
+
+  // Sonner measures a toast's height only when the toast itself is updated
+  // (its jsx/title props change). Our content re-renders in place as events
+  // arrive, so the recorded height goes stale — and hovering, which applies
+  // `height: var(--initial-height)`, would visibly resize the toast. Re-issue
+  // the toast whenever the rendered layout changes shape to force a
+  // re-measure.
+  const layoutKey = [
+    live.progress != null,
+    live.message,
+    live.error,
+    live.yield != null,
+    live.latestEventKind,
+  ].join("|");
+
+  useEffect(() => {
+    showAssignationToast(props.id);
+  }, [layoutKey, props.id]);
+
+  if (!assignation) {
+    return null;
+  }
 
   return (
     <div
-      className={cn("relative w-md group flex flex-col gap-2 h-20 bg-background")}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className={cn(
+        "relative w-[var(--width)] flex flex-col gap-2 rounded-md border bg-background p-3 shadow-lg",
+        borderColorForAss(live),
+      )}
     >
-      <div className={cn("absolute bottom-0 left-2 h-6  z-999 translate-y-[30%] border border-muted-foreground/10 bg-background rounded-md px-2 py-1", borderColorForAss(ass))}>
-        <RekuestAssignation.DetailLink object={ass}>
-          <div className="flex flex-row h-full w-full justify-center ">
-
-            {ass.event?.kind == AssignationEventKind.Progress && (
-              <Loader2 className="animate-spin h-4 w-4 text-muted-foreground flex-shrink-0 my-auto" />
-            )}
-            {ass.event?.kind == AssignationEventKind.Bound && (
-              <Loader2 className="animate-spin h-4 w-4 text-blue-500 flex-shrink-0 my-auto" />
-            )}
-            {ass.yield && !ass.done && (
-              <Loader2 className="animate-spin h-4 w-4 text-muted-foreground flex-shrink-0 my-auto" />
-            )}
-            {ass.done && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 my-auto" />}
-            {ass.cancelled && <XCircle className="h-4 w-4 text-orange-500 flex-shrink-0 my-auto" />}
-            {ass.error && <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 my-auto" onClick={() => toast.dismiss(props.id)}/>}
-
-            <div className="ml-2 text-xs my-auto">{ass.event?.kind}</div>
-            {ass.message && !ass.error && <div className="ml-2 font-light text-xs my-auto">{ass.message}</div>}
-            {ass.progress != undefined && ass.progress != 0 && (
-              <div className="ml-2 font-light text-xs my-auto">{ass.progress}</div>
-            )}
-          </div>
-        </RekuestAssignation.DetailLink>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-1 top-1 h-6 w-6 text-muted-foreground hover:text-foreground"
+        onClick={() => dismissAssignationToast(props.id)}
+        aria-label="Dismiss notification"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      <div className="pr-7">
+        <AssignationStatusLine assignation={assignation} showCancel showLink />
       </div>
-      <div className="h-full w-full flex flex-col items-center justify-center">
-        {ass.error && (
-          <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded w-full h-full">
-            {ass.error}
-          </div>
-        )}
 
+      {live.error && (
+        <div className="w-full rounded bg-red-500/10 p-2 text-xs text-red-500">
+          {live.error}
+        </div>
+      )}
 
-        {ass.yield && ass.actionId && (
-          <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
-        )}
-
-        {ass.message && !ass.yield && !ass.error && (
-          <div className="text-xs  bg-slate-500/10 p-2 rounded h-full w-full">
-            {ass.message}
-          </div>
-        )}
-
-
-      </div>
+      {live.yield && live.actionId && (
+        <DynamicYieldDisplay values={live.yield} actionId={live.actionId} />
+      )}
     </div>
   );
 };
 
-
-export const cached_assignations_events = {}
-
-export const AssignationUpdater = (props: {}) => {
+export const AssignationUpdater = () => {
   const { settings } = useSettings();
   const client = useRekuest();
   useEffect(() => {
@@ -163,12 +183,18 @@ export const AssignationUpdater = (props: {}) => {
           },
         })
         .subscribe((res) => {
-          console.log("Received assignation update", res);
-
-          let event = res.data?.assignations.event;
+          const event = res.data?.assignations.event;
           const create = res?.data?.assignations.create;
 
           if (event) {
+            // Deliver to locally tracking components outside the cache update
+            // (updateQuery callbacks are skipped when the query isn't cached
+            // and may run more than once).
+            registeredCallbacks.get(event.assignation.reference)?.(event);
+            if (isTerminalEvent(event.kind)) {
+              registeredCallbacks.delete(event.assignation.reference);
+            }
+
             client.cache.updateQuery<AssignationsQuery>(
               {
                 query: AssignationsDocument,
@@ -177,20 +203,35 @@ export const AssignationUpdater = (props: {}) => {
                 },
               },
               (data) => {
-                const assignation = data?.assignations.find(
+                if (!data) {
+                  return data;
+                }
+
+                const assignation = data.assignations.find(
                   (a) => a.id === event.assignation.id,
                 );
 
                 if (!assignation) {
-                  cached_assignations[event.assignation.id] = event;
+                  // The event arrived before its assignation's create payload;
+                  // keep it until the create is processed.
+                  bufferEvent(event.assignation.id, event);
+                  return data;
                 }
 
-                registeredCallbacks.get(event.assignation.reference)?.(event);
-
                 return {
-                  assignations: (data?.assignations || []).map((ass) =>
+                  assignations: data.assignations.map((ass) =>
                     ass.id == event.assignation.id
-                      ? { ...ass, events: [event, ...ass.events] }
+                      ? {
+                          ...ass,
+                          events: [event, ...ass.events],
+                          latestEventKind: event.kind,
+                          isDone:
+                            ass.isDone ||
+                            event.kind === AssignationEventKind.Done,
+                          finishedAt: isTerminalEvent(event.kind)
+                            ? event.createdAt
+                            : ass.finishedAt,
+                        }
                       : ass,
                   ),
                 };
@@ -207,25 +248,36 @@ export const AssignationUpdater = (props: {}) => {
                 },
               },
               (data) => {
-                event = cached_assignations_events[create.id];
+                if (data?.assignations.some((a) => a.id === create.id)) {
+                  return data;
+                }
 
-                let new_create;
-                if (event) {
+                const buffered = takeBufferedEvents(create.id);
+                let new_create = create;
+
+                if (buffered.length > 0) {
+                  // Buffered events arrived oldest-first; the events list is
+                  // ordered newest-first.
+                  const events = [
+                    ...buffered.slice().reverse(),
+                    ...create.events,
+                  ];
+                  const latest = events[0];
                   new_create = {
                     ...create,
-                    events: [event, ...create.events],
+                    events,
+                    latestEventKind: latest.kind,
+                    isDone:
+                      create.isDone ||
+                      events.some(
+                        (e) => e.kind === AssignationEventKind.Done,
+                      ),
                   };
                 }
-                else {
-                  new_create = create;
-                }
-
-
-
-
 
                 return {
-                  assignations: data?.assignations.concat([new_create]) || [new_create],
+                  assignations:
+                    data?.assignations.concat([new_create]) || [new_create],
                 };
               },
             );
@@ -240,20 +292,15 @@ export const AssignationUpdater = (props: {}) => {
               return;
             }
 
-            console.error("Added assignation", create.reference);
-            const toastId = create.id; // Use the assignation id as the toastId
-            toast.custom((id) => <AssignationToaster id={toastId} />, {
-              id: toastId,
-              duration: Infinity, // Keep toast open until manually closed or task completes
-              dismissible: true,
-
-            });
+            // Use the assignation id as the toast id
+            showAssignationToast(create.id);
           }
         });
 
       return () => subscription.unsubscribe();
     }
-  }, [client]);
+    return undefined;
+  }, [client, settings.instanceId]);
 
   return <></>;
 };

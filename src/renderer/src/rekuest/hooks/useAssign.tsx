@@ -8,7 +8,7 @@ import {
   ReserveMutationVariables,
   useAssignMutation
 } from "../api/graphql";
-import { registeredCallbacks } from "../components/functional/AssignationUpdater";
+import { trackAssignation } from "../lib/assignationTracker";
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
   "instanceId"
@@ -78,13 +78,19 @@ export const useAssignWithCallback = <T extends any>({ onDone }: {
     async (vars: ActionAssignVariables) => {
       const reference = vars.reference || uuidv4();
 
-      registeredCallbacks.set(reference, (event: AssignationEventFragment) => {
-        onDone?.(event);
-      });
+      const untrack = trackAssignation(
+        reference,
+        (event: AssignationEventFragment) => {
+          onDone?.(event);
+        },
+      );
 
-      const assignation = await assign({ ...vars, reference });
-
-      return assignation;
+      try {
+        return await assign({ ...vars, reference });
+      } catch (error) {
+        untrack();
+        throw error;
+      }
     },
     [assign, onDone],
   );

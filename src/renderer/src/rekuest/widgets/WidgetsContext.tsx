@@ -43,7 +43,7 @@ export type WidgetRegistryContextType = {
 
 export const WidgetRegistryContext =
   React.createContext<WidgetRegistryContextType>({
-    registry: null,
+    registry: null as unknown as WidgetRegistryType,
     setRegistry: () => {
       throw new Error(
         "Set registry is not implemented. Do you have a Registry provider?",

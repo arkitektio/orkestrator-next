@@ -1,3 +1,11 @@
+## [1.64.5](https://github.com/arkitektio/orkestrator-next/compare/v1.64.4...v1.64.5) (2026-06-12)
+
+
+### Bug Fixes
+
+* pagination ([d8c7927](https://github.com/arkitektio/orkestrator-next/commit/d8c792782a1dfa9225555187d2e0b63511dfb204))
+* update assignation space ([ba3ec3f](https://github.com/arkitektio/orkestrator-next/commit/ba3ec3f37571868d7865b81f721abfb9edffe8a0))
+
 ## [1.64.4](https://github.com/arkitektio/orkestrator-next/compare/v1.64.3...v1.64.4) (2026-06-09)
 
 

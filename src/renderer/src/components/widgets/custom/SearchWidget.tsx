@@ -1,4 +1,3 @@
-import { SearchOptions } from "@/components/fields/SearchField";
 import { Badge } from "@/components/ui/badge";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
 import useWidgetDependencies from "@/rekuest/hooks/useWidgetDependencies";
@@ -25,7 +24,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn, notEmpty } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { gql } from "@apollo/client";
+import type { OperationDefinitionNode } from "graphql";
+import { AlertCircle, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -41,24 +42,39 @@ export const ButtonLabel = (props: {
 }) => {
   const [option, setOption] = useState<Option | null | undefined>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     props
       .search({ values: [props.value.object] })
       .then((res) => {
+        if (cancelled) return;
         if (res.length === 0) {
           setOption(null);
           setError("No option found for value");
+          return;
         }
         setOption(res[0] || null);
+        setError(null);
       })
       .catch((err) => {
-        setError(err.message);
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [props.value, props.search]);
 
   return (
-    <div className="flex flex-row items-center gap-1 min-w-0">
+    <div className="flex min-w-0 flex-1 flex-row items-center gap-1.5 text-left">
+      {loading && !option && !error && (
+        <span className="h-3 w-24 animate-pulse rounded-full bg-muted-foreground/20" />
+      )}
       {option?.label && <span className="truncate">{option.label}</span>}
       {error && (
         <span className="flex items-center gap-1 text-xs text-destructive shrink-0">
@@ -70,11 +86,33 @@ export const ButtonLabel = (props: {
   );
 };
 
-export type SearchOptions = { search?: string; values?: (string | number)[] };
+export type SearchOptions = {
+  search?: string;
+  values?: (string | number)[];
+  limit?: number;
+  offset?: number;
+};
 
 export type SearchFunction = (
   searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
+
+export const PAGE_SIZE = 25;
+
+/** A query opts into pagination by declaring optional $limit / $offset Int variables. */
+export const queryDeclaresPagination = (query: string): boolean => {
+  try {
+    const document = gql(query);
+    const operation = document.definitions.find(
+      (d): d is OperationDefinitionNode => d.kind === "OperationDefinition",
+    );
+    const variableNames =
+      operation?.variableDefinitions?.map((v) => v.variable.name.value) || [];
+    return variableNames.includes("limit") && variableNames.includes("offset");
+  } catch {
+    return false;
+  }
+};
 
 export type SearchFieldProps = {
   name: string;
@@ -96,17 +134,11 @@ export const SearchWidget = (
   const thequery = props?.widget?.query || "";
   const wardKey = props.widget?.ward;
 
-  if (!wardKey) {
-    return (
-      <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-        Configuration error: no data source configured for this field.
-      </div>
-    );
-  }
-
+  // getWard falls back to a throwing fakeWard for unknown keys, so resolving
+  // with an empty key is safe — the !wardKey check below renders the error
+  // instead. Hooks must all run before any early return.
   const theward = useMemo(
-    () => registry.getWard(wardKey),
+    () => registry.getWard(wardKey ?? ""),
     [registry, wardKey],
   );
 
@@ -127,40 +159,89 @@ export const SearchWidget = (
 
       return options;
     },
-    [theward, thequery, values],
+    [theward, thequery, values, met],
   );
 
   const form = useFormContext();
 
-  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
+  const paginated = useMemo(() => queryDeclaresPagination(thequery), [thequery]);
+
+  const [options, setOptions] = useState<Option[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
+  // Pagination bookkeeping lives in refs so a stale closure can never
+  // append a page that belongs to a previous search term.
+  const requestRef = useRef(0);
+  const offsetRef = useRef(0);
+  const lastSearchRef = useRef<string | undefined>(undefined);
+
+  const fetchOptions = useCallback(
+    (searchTerm: string | undefined, offset: number) => {
+      const requestId = ++requestRef.current;
+      if (offset === 0) lastSearchRef.current = searchTerm;
+
+      const variables: SearchOptions = paginated
+        ? { limit: PAGE_SIZE, offset }
+        : {};
+      if (searchTerm !== undefined) variables.search = searchTerm;
+
+      search(variables)
+        .then((res) => {
+          if (requestRef.current !== requestId) return;
+          const page = res || [];
+          offsetRef.current = offset + page.length;
+          const cleaned = page.filter(notEmpty);
+          setOptions((prev) => (offset > 0 ? [...prev, ...cleaned] : cleaned));
+          setHasMore(paginated && page.length === PAGE_SIZE);
+          setError(null);
+        })
+        .catch((err) => {
+          if (requestRef.current !== requestId) return;
+          setError(err.message || "Error");
+          if (offset === 0) setOptions([]);
+          setHasMore(false);
+        })
+        .finally(() => {
+          if (requestRef.current === requestId) setLoadingMore(false);
+        });
+    },
+    [search, paginated],
+  );
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    fetchOptions(lastSearchRef.current, offsetRef.current);
+  }, [hasMore, loadingMore, fetchOptions]);
+
   const query = (string: string) => {
-    search({ search: string })
-      .then((res) => {
-        setOptions(res || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setOptions([]);
-      });
+    fetchOptions(string, 0);
   };
 
   useEffect(() => {
-    search({})
-      .then((res) => {
-        setOptions(res || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message || "Error");
-        setOptions([]);
-      });
-  }, [name, search]);
+    fetchOptions(undefined, 0);
+  }, [fetchOptions]);
+
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!open || !hasMore || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { root: listRef.current, rootMargin: "0px 0px 64px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [open, hasMore, loadMore]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -178,8 +259,17 @@ export const SearchWidget = (
         }
       }
     },
-    [],
+    [form, props.path],
   );
+
+  if (!wardKey) {
+    return (
+      <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        Configuration error: no data source configured for this field.
+      </div>
+    );
+  }
 
   if (!met) {
     return (
@@ -208,7 +298,7 @@ export const SearchWidget = (
                 <div className="w-full relative h-10">
                   <CommandInput
                     onKeyDown={handleKeyDown}
-                    placeholder={"Search..."}
+                    placeholder={field.value != undefined && field.value != null ? "" : "Search..."}
                     onValueChange={(e) => {
                       setInputValue(e);
                       query(e);
@@ -218,8 +308,10 @@ export const SearchWidget = (
                     onFocus={() => setOpen(true)}
                   />
                   {field.value != undefined && field.value != null && (
-                    <div
-                      className="absolute inset-0 z-10 flex cursor-pointer items-center rounded-md bg-input px-3 text-sm truncate"
+                    <button
+                      type="button"
+                      title="Clear selection and search again"
+                      className="group/chosen absolute inset-x-1 top-1 z-10 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-input bg-muted px-2.5 text-xs/relaxed transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => {
                         setInputValue("");
                         form.setValue(pathToName(props.path), undefined, {
@@ -231,14 +323,18 @@ export const SearchWidget = (
                       }}
                     >
                       <ButtonLabel search={search} value={field.value} />
-                    </div>
+                      <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover/chosen:text-foreground" />
+                    </button>
                   )}
                 </div>
               </div>
               <div className="relative mt-2">
                 {open && (
-                  <CommandList slot="list" className="w-full t-10">
-                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                  <CommandList slot="list" className="w-full t-10 max-h-none overflow-visible">
+                    <div
+                      ref={listRef}
+                      className="absolute top-0 z-10 w-full max-h-72 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+                    >
                       <CommandEmpty>No options found.</CommandEmpty>
                       {error && (
                         <div className="flex items-center gap-2 px-3 py-2 text-xs text-destructive border-b border-destructive/20 bg-destructive/5">
@@ -248,7 +344,7 @@ export const SearchWidget = (
                       )}
                       {options.length > 0 && (
                         <CommandGroup heading="Options">
-                          {options?.filter(notEmpty).map((option, index) => (
+                          {options.map((option, index) => (
                             <CommandItem
                               value={option.value}
                               key={index}
@@ -283,6 +379,14 @@ export const SearchWidget = (
                             </CommandItem>
                           ))}
                         </CommandGroup>
+                      )}
+                      {hasMore && (
+                        <div
+                          ref={sentinelRef}
+                          className="flex items-center justify-center py-2 text-xs text-muted-foreground"
+                        >
+                          {loadingMore ? "Loading more…" : ""}
+                        </div>
                       )}
                     </div>
                   </CommandList>

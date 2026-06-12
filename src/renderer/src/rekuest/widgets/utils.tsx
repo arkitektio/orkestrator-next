@@ -1,4 +1,5 @@
 import { notEmpty } from "@/lib/utils";
+import { smartRegistry } from "@/providers/smart/registry";
 import { ApolloClient, gql, NormalizedCache } from "@apollo/client";
 import ShadowRealm from "shadowrealm-api";
 import { z } from "zod"; // Add new import
@@ -46,9 +47,25 @@ export const portToMinItemWidth = (port: { kind: PortKind }): number => {
   }
 };
 
+/** Human-readable name for a port, preferring the explicit label. */
+export const portToName = (port: LabellablePort): string => {
+  return port.label || port.key;
+};
+
+/**
+ * Human-readable name for a port's structure identifier, via the smart
+ * registry's reverse lookup (descriptive names are given in linkers.tsx).
+ */
+export const identifierToName = (
+  identifier: string | undefined,
+  fallback: string,
+): string => {
+  return identifier ? smartRegistry.getDisplayName(identifier) : fallback;
+};
+
 export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.Structure)
-    return port.identifier || "Unknown Structure";
+    return identifierToName(port.identifier, "Unknown Structure");
   if (port.kind == PortKind.List) {
     const firstChild = port.children?.at(0);
 
@@ -70,13 +87,13 @@ export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.String) return "String";
   if (port.kind == PortKind.Date) return "Date";
   if (port.kind == PortKind.Model) {
-    return port.identifier || "Unknown Model";
+    return identifierToName(port.identifier, "Unknown Model");
   }
   if (port.kind == PortKind.Enum) {
-    return port.identifier || "Unknown Enum";
+    return identifierToName(port.identifier, "Unknown Enum");
   }
   if (port.kind == PortKind.MemoryStructure) {
-    return port.identifier || "Unknown Memory Structure";
+    return identifierToName(port.identifier, "Unknown Memory Structure");
   }
   if (port.kind == PortKind.Dict) {
     const firstChild = port.children?.at(0);
@@ -88,32 +105,45 @@ export const portToLabel = (port: LabellablePort): string => {
 };
 
 export const portToZod = (port: LabellablePort): any => {
+  const portName = portToName(port);
   let baseType;
   switch (port?.kind) {
     case PortKind.String:
-      baseType = z.string({ message: "Please enter a string" });
+      baseType = z.string({ message: `"${portName}" requires a text value` });
       break;
     case PortKind.Enum:
       baseType = z.enum(
         (port.choices?.map((c) => c.value) || ["fake"]) as [string],
-        { message: "Please enter a kind" },
+        { message: `Please select a choice for "${portName}"` },
       );
       break;
     case PortKind.Int:
-      baseType = z.coerce.number({ message: "Please enter a valid integer" });
+      baseType = z.coerce.number({
+        message: `"${portName}" requires a valid integer`,
+      });
       break;
     case PortKind.MemoryStructure:
-      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
+      baseType = z.object(
+        { __identifier: z.literal(port.identifier), object: z.string() },
+        {
+          message: `Please select a ${identifierToName(port.identifier, "memory structure")} for "${portName}"`,
+        },
+      );
       break;
     case PortKind.Float:
       baseType = z.coerce
-        .number({ message: "Please enter a valid float" })
+        .number({ message: `"${portName}" requires a valid number` })
         .refine((val) => !isNaN(val), {
-          message: "Please enter a valid float",
+          message: `"${portName}" requires a valid number`,
         });
       break;
     case PortKind.Structure:
-      baseType = z.object({__identifier: z.literal(port.identifier), object: z.string()}, { message: "Please enter a valid memory structure" });
+      baseType = z.object(
+        { __identifier: z.literal(port.identifier), object: z.string() },
+        {
+          message: `Please select a ${identifierToName(port.identifier, "structure")} for "${portName}"`,
+        },
+      );
       break;
     case PortKind.Union:
       const variants = port.children?.filter(notEmpty);
@@ -128,7 +158,9 @@ export const portToZod = (port: LabellablePort): any => {
       );
       break;
     case PortKind.Bool:
-      baseType = z.boolean({ message: "Please enter a valid boolean" });
+      baseType = z.boolean({
+        message: `"${portName}" requires a true/false value`,
+      });
       break;
     case PortKind.Dict:
       const dictChild = port.children?.at(0);
@@ -162,7 +194,9 @@ export const portToZod = (port: LabellablePort): any => {
   }
   if (port.nullable) {
     if (!baseType) throw new Error(`Base type for ${port} is not defined`);
-    baseType = z.nullable(baseType, { message: "Please provide a value" });
+    baseType = z.nullable(baseType, {
+      message: `Please provide a value for "${portName}"`,
+    });
   }
 
   return baseType;

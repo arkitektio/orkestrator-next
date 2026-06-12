@@ -1,68 +1,71 @@
-
 // ── Task Space Store (single source of truth) ───────────────────────
 
-import { useContext } from "react";
-import { createContext } from "react";
-import { createStore, useStore } from "zustand";
-import * as THREE from "three";
+import { useContext } from 'react'
+import { createContext } from 'react'
+import { createStore, useStore } from 'zustand'
+import * as THREE from 'three'
 import {
   DetailAssignationFragment,
   DetailAssignationQuery,
-  PostmanAssignationFragment,
-} from "@/rekuest/api/graphql";
+  PostmanAssignationFragment
+} from '@/rekuest/api/graphql'
 import {
   SpaceGroup,
   SpaceGroupPlacement,
   TimelineDependencyGroup,
   TimelineEvent,
   TimelineItem,
-  TimelineMethodRow,
-} from "./types";
+  TimelineMethodRow
+} from './types'
 
 // ── helpers ──────────────────────────────────────────────────────────
 
 function notEmpty<T>(v: T | null | undefined): v is T {
-  return v !== null && v !== undefined;
+  return v !== null && v !== undefined
 }
 
 const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
-  if (typeof candidate === "string" || typeof candidate === "number") {
-    const label = String(candidate).trim();
-    return label.length > 0 ? label : undefined;
+  if (typeof candidate === 'string' || typeof candidate === 'number') {
+    const label = String(candidate).trim()
+    return label.length > 0 ? label : undefined
   }
-  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return undefined;
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return undefined
 
-  const obj = candidate as Record<string, unknown>;
-  for (const key of ["name", "title", "reference", "key", "id"]) {
-    const value = obj[key];
-    if (typeof value === "string" && value.trim().length > 0) return value;
+  const obj = candidate as Record<string, unknown>
+  for (const key of ['name', 'title', 'reference', 'key', 'id']) {
+    const value = obj[key]
+    if (typeof value === 'string' && value.trim().length > 0) return value
   }
-  return undefined;
-};
+  return undefined
+}
 
 const getEndTime = (a: PostmanAssignationFragment) => {
-  if (a.finishedAt) return new Date(a.finishedAt).getTime();
+  if (a.finishedAt) return new Date(a.finishedAt).getTime()
   if (a.events && a.events.length > 0) {
-    const times = a.events.map((e) => new Date(e.createdAt).getTime());
-    if (times.length > 0) return Math.max(...times);
+    const times = a.events.map((e) => new Date(e.createdAt).getTime())
+    if (times.length > 0) return Math.max(...times)
   }
-  return new Date().getTime();
-};
+  return new Date().getTime()
+}
 
 // ── derived data builders ────────────────────────────────────────────
 
 function buildSpaceGroups(
-  resolvedDependencies: DetailAssignationQuery["assignation"]["resolvedDependencies"],
-  rootAgent?: { id: string; name: string; placements: DetailAssignationQuery["assignation"]["resolvedDependencies"][0]["mappedAgents"][0]["agent"]["placements"] } | null,
+  resolvedDependencies: DetailAssignationQuery['assignation']['resolvedDependencies'],
+  rootAgent?: {
+    id: string
+    name: string
+    placements: DetailAssignationQuery['assignation']['resolvedDependencies'][0]['mappedAgents'][0]['agent']['placements']
+  } | null
 ): SpaceGroup[] {
-  const groupMap = new Map<string, SpaceGroup>();
+  const groupMap = new Map<string, SpaceGroup>()
 
   // Add root agent placements first (marked as root)
   if (rootAgent) {
     for (const placement of rootAgent.placements) {
-      const spaceId = placement.space.id;
+      const spaceId = placement.space.id
       if (!groupMap.has(spaceId)) {
-        groupMap.set(spaceId, { spaceId, placements: [] });
+        groupMap.set(spaceId, { spaceId, placements: [] })
       }
       groupMap.get(spaceId)!.placements.push({
         id: placement.id,
@@ -71,17 +74,17 @@ function buildSpaceGroups(
         agentId: rootAgent.id,
         isRoot: true,
         model: placement.model ?? null,
-        affineMatrix: placement.affineMatrix,
-      });
+        affineMatrix: placement.affineMatrix
+      })
     }
   }
 
   for (const dep of resolvedDependencies) {
     for (const mapping of dep.mappedAgents) {
       for (const placement of mapping.agent.placements) {
-        const spaceId = placement.space.id;
+        const spaceId = placement.space.id
         if (!groupMap.has(spaceId)) {
-          groupMap.set(spaceId, { spaceId, placements: [] });
+          groupMap.set(spaceId, { spaceId, placements: [] })
         }
         groupMap.get(spaceId)!.placements.push({
           id: placement.id,
@@ -89,91 +92,88 @@ function buildSpaceGroups(
           agentName: mapping.agent.name,
           agentId: mapping.agent.id,
           model: placement.model ?? null,
-          affineMatrix: placement.affineMatrix,
-        });
+          affineMatrix: placement.affineMatrix
+        })
       }
     }
   }
 
-  return Array.from(groupMap.values());
+  return Array.from(groupMap.values())
 }
 
 function buildAgentToAssignationMap(
-  resolvedDependencies: DetailAssignationQuery["assignation"]["resolvedDependencies"],
-  children: PostmanAssignationFragment[],
+  resolvedDependencies: DetailAssignationQuery['assignation']['resolvedDependencies'],
+  children: PostmanAssignationFragment[]
 ): Map<string, string[]> {
   // dependency key → agent IDs
-  const depKeyToAgentIds = new Map<string, Set<string>>();
+  const depKeyToAgentIds = new Map<string, Set<string>>()
   for (const dep of resolvedDependencies) {
-    const agents = new Set<string>();
+    const agents = new Set<string>()
     for (const mapping of dep.mappedAgents) {
-      agents.add(mapping.agent.id);
+      agents.add(mapping.agent.id)
     }
-    depKeyToAgentIds.set(dep.key, agents);
+    depKeyToAgentIds.set(dep.key, agents)
   }
 
   // agent ID → assignation IDs
-  const agentToAssignations = new Map<string, string[]>();
+  const agentToAssignations = new Map<string, string[]>()
   for (const child of children) {
-    const depKey = child.dependency?.trim() || "catch-all";
-    const agentIds = depKeyToAgentIds.get(depKey);
+    const depKey = child.dependency?.trim() || 'catch-all'
+    const agentIds = depKeyToAgentIds.get(depKey)
     if (agentIds) {
       for (const agentId of agentIds) {
         if (!agentToAssignations.has(agentId)) {
-          agentToAssignations.set(agentId, []);
+          agentToAssignations.set(agentId, [])
         }
-        agentToAssignations.get(agentId)!.push(child.id);
+        agentToAssignations.get(agentId)!.push(child.id)
       }
     }
   }
-  return agentToAssignations;
+  return agentToAssignations
 }
 
 function buildTimeline(children: PostmanAssignationFragment[]): {
-  groups: TimelineDependencyGroup[];
-  events: TimelineEvent[];
-  startTime: number;
-  endTime: number;
+  groups: TimelineDependencyGroup[]
+  events: TimelineEvent[]
+  startTime: number
+  endTime: number
 } {
   if (children.length === 0) {
-    return { groups: [], events: [], startTime: 0, endTime: 0 };
+    return { groups: [], events: [], startTime: 0, endTime: 0 }
   }
 
-  const times = children.flatMap((a) => [
-    new Date(a.createdAt).getTime(),
-    getEndTime(a),
-  ]);
-  const min = Math.min(...times);
-  const max = Math.max(...times);
-  const interpolate = (t: number) => (max === min ? 0 : (t - min) / (max - min));
+  const times = children.flatMap((a) => [new Date(a.createdAt).getTime(), getEndTime(a)])
+  const min = Math.min(...times)
+  const max = Math.max(...times)
+  const interpolate = (t: number) => (max === min ? 0 : (t - min) / (max - min))
 
-  const groupMap = new Map<string, TimelineDependencyGroup>();
-  const methodMap = new Map<string, Map<string, TimelineMethodRow>>();
+  const groupMap = new Map<string, TimelineDependencyGroup>()
+  const methodMap = new Map<string, Map<string, TimelineMethodRow>>()
 
   for (const a of children) {
-    const dependencyMethod = a.dependencyMethod?.trim() || "dynamic";
-    const dependencyKey = a.dependency?.trim() || "catch-all";
+    const dependencyMethod = a.dependencyMethod?.trim() || 'dynamic'
+    const dependencyKey = a.dependency?.trim() || 'catch-all'
 
-    const dependencies = a.dependencies;
+    const dependencies = a.dependencies
     const dependenciesByKey =
-      dependencies && typeof dependencies === "object" && !Array.isArray(dependencies)
+      dependencies && typeof dependencies === 'object' && !Array.isArray(dependencies)
         ? (dependencies as Record<string, unknown>)
-        : undefined;
+        : undefined
 
-    const selectedDependencyValue = dependenciesByKey?.[dependencyKey];
+    const selectedDependencyValue = dependenciesByKey?.[dependencyKey]
     const selectedMethodValue =
       selectedDependencyValue &&
-      typeof selectedDependencyValue === "object" &&
+      typeof selectedDependencyValue === 'object' &&
       !Array.isArray(selectedDependencyValue)
         ? (selectedDependencyValue as Record<string, unknown>)[dependencyMethod]
-        : undefined;
+        : undefined
 
-    const dependencyLabel = dependencyKey === "catch-all" ? "Catch-all dependency" : dependencyKey;
-    const resolvedDepLabel = dependencyCandidateToLabel(selectedDependencyValue);
-    const resolvedMethodLabel = dependencyCandidateToLabel(selectedMethodValue);
+    const dependencyLabel = dependencyKey === 'catch-all' ? 'Catch-all dependency' : dependencyKey
+    const resolvedDepLabel = dependencyCandidateToLabel(selectedDependencyValue)
+    const resolvedMethodLabel = dependencyCandidateToLabel(selectedMethodValue)
 
-    const startTime = new Date(a.createdAt).getTime();
-    const endTime = getEndTime(a);
+    const startTime = new Date(a.createdAt).getTime()
+    const endTime = getEndTime(a)
 
     const item: TimelineItem = {
       assignation: a,
@@ -181,45 +181,45 @@ function buildTimeline(children: PostmanAssignationFragment[]): {
       end: interpolate(endTime),
       startTime,
       endTime,
-      events: [],
-    };
+      events: []
+    }
 
     if (!groupMap.has(dependencyKey)) {
       groupMap.set(dependencyKey, {
         id: dependencyKey,
         dependency: dependencyLabel,
-        summary: resolvedDepLabel ? `resolved via ${resolvedDepLabel}` : "Dependency group",
+        summary: resolvedDepLabel ? `resolved via ${resolvedDepLabel}` : 'Dependency group',
         items: [],
-        methods: [],
-      });
-      methodMap.set(dependencyKey, new Map());
+        methods: []
+      })
+      methodMap.set(dependencyKey, new Map())
     }
 
-    const group = groupMap.get(dependencyKey)!;
-    group.items.push(item);
+    const group = groupMap.get(dependencyKey)!
+    group.items.push(item)
 
-    const methodsForDep = methodMap.get(dependencyKey)!;
+    const methodsForDep = methodMap.get(dependencyKey)!
     if (!methodsForDep.has(dependencyMethod)) {
       const row: TimelineMethodRow = {
         id: `${dependencyKey}:${dependencyMethod}`,
         method: dependencyMethod,
-        summary: resolvedMethodLabel || resolvedDepLabel || "Delegated path",
-        items: [],
-      };
-      methodsForDep.set(dependencyMethod, row);
-      group.methods.push(row);
+        summary: resolvedMethodLabel || resolvedDepLabel || 'Delegated path',
+        items: []
+      }
+      methodsForDep.set(dependencyMethod, row)
+      group.methods.push(row)
     }
-    methodsForDep.get(dependencyMethod)!.items.push(item);
+    methodsForDep.get(dependencyMethod)!.items.push(item)
   }
 
   const groups = Array.from(groupMap.values())
     .map((g) => ({
       ...g,
-      methods: [...g.methods].sort((a, b) => a.method.localeCompare(b.method)),
+      methods: [...g.methods].sort((a, b) => a.method.localeCompare(b.method))
     }))
-    .sort((a, b) => a.dependency.localeCompare(b.dependency));
+    .sort((a, b) => a.dependency.localeCompare(b.dependency))
 
-  return { groups, events: [], startTime: min, endTime: max };
+  return { groups, events: [], startTime: min, endTime: max }
 }
 
 // ── active-at-timepoint ──────────────────────────────────────────────
@@ -227,170 +227,186 @@ function buildTimeline(children: PostmanAssignationFragment[]): {
 function computeActiveAtTimepoint(
   timepoint: number,
   children: PostmanAssignationFragment[],
-  agentToAssignationIds: Map<string, string[]>,
+  agentToAssignationIds: Map<string, string[]>
 ): {
-  assignationIds: Set<string>;
-  agentIds: Set<string>;
-  implementationIds: Set<string>;
+  assignationIds: Set<string>
+  agentIds: Set<string>
+  implementationIds: Set<string>
 } {
-  const assignationIds = new Set<string>();
-  const implementationIds = new Set<string>();
+  const assignationIds = new Set<string>()
+  const implementationIds = new Set<string>()
 
   for (const child of children) {
-    const start = new Date(child.createdAt).getTime();
-    const end = child.finishedAt
-      ? new Date(child.finishedAt).getTime()
-      : Date.now();
+    const start = new Date(child.createdAt).getTime()
+    const end = child.finishedAt ? new Date(child.finishedAt).getTime() : timepoint
 
-      console.log(`Checking assignation ${child.id} with time range[${start}, ${end}] against timepoint ${timepoint}`);
     if (timepoint >= start && timepoint <= end) {
-      assignationIds.add(child.id);
+      assignationIds.add(child.id)
       if (child.implementation?.id) {
-        implementationIds.add(child.implementation.id);
+        implementationIds.add(child.implementation.id)
       }
     }
   }
 
-  const agentIds = new Set<string>();
+  const agentIds = new Set<string>()
   for (const [agentId, aIds] of agentToAssignationIds) {
     for (const aId of aIds) {
       if (assignationIds.has(aId)) {
-        agentIds.add(agentId);
-        break;
+        agentIds.add(agentId)
+        break
       }
     }
   }
 
-  return { assignationIds, agentIds, implementationIds };
+  return { assignationIds, agentIds, implementationIds }
 }
 
 // ── layout engine ────────────────────────────────────────────────────
 
-const RADIAL_RADIUS = 2.5;
+const RADIAL_RADIUS = 2.5
 
 const IDENTITY_MATRIX: number[][] = [
   [1, 0, 0, 0],
   [0, 1, 0, 0],
   [0, 0, 1, 0],
-  [0, 0, 0, 1],
-];
+  [0, 0, 0, 1]
+]
 
 function computeLayoutTransforms(
   spaceGroups: SpaceGroup[],
-  layoutMode: "space" | "radial",
-  rootAgentId: string | null,
+  layoutMode: 'space' | 'radial',
+  rootAgentId: string | null
 ): Map<string, number[][]> {
-  const transforms = new Map<string, number[][]>();
+  const transforms = new Map<string, number[][]>()
 
   for (const group of spaceGroups) {
-    if (layoutMode === "space") {
+    if (layoutMode === 'space') {
       for (const p of group.placements) {
-        transforms.set(p.id, p.affineMatrix ?? IDENTITY_MATRIX);
+        transforms.set(p.id, p.affineMatrix ?? IDENTITY_MATRIX)
       }
     } else {
-      const rootPlacement = group.placements.find(
-        (p) => p.isRoot || p.agentId === rootAgentId,
-      );
-      const others = group.placements.filter(
-        (p) => !p.isRoot && p.agentId !== rootAgentId,
-      );
+      const rootPlacement = group.placements.find((p) => p.isRoot || p.agentId === rootAgentId)
+      const others = group.placements.filter((p) => !p.isRoot && p.agentId !== rootAgentId)
 
       if (rootPlacement) {
-        transforms.set(rootPlacement.id, IDENTITY_MATRIX);
+        transforms.set(rootPlacement.id, IDENTITY_MATRIX)
       }
 
       others.forEach((p, i) => {
-        const angle = (i / Math.max(others.length, 1)) * Math.PI * 2;
-        const x = Math.cos(angle) * RADIAL_RADIUS;
-        const z = Math.sin(angle) * RADIAL_RADIUS;
+        const angle = (i / Math.max(others.length, 1)) * Math.PI * 2
+        const x = Math.cos(angle) * RADIAL_RADIUS
+        const z = Math.sin(angle) * RADIAL_RADIUS
         transforms.set(p.id, [
           [1, 0, 0, x],
           [0, 1, 0, 0],
           [0, 0, 1, z],
-          [0, 0, 0, 1],
-        ]);
-      });
+          [0, 0, 0, 1]
+        ])
+      })
     }
   }
 
-  return transforms;
+  return transforms
 }
 
 // ── store interface ──────────────────────────────────────────────────
 
 interface SpaceViewState {
-  task: DetailAssignationFragment;
+  task: DetailAssignationFragment
 
   // Spaces
-  spaceGroups: SpaceGroup[];
-  allPlacements: SpaceGroupPlacement[];
+  spaceGroups: SpaceGroup[]
+  allPlacements: SpaceGroupPlacement[]
 
   // Root agent
-  rootAgentId: string | null;
+  rootAgentId: string | null
 
   // Active at selected timepoint
-  activeAssignationIds: Set<string>;
-  activeAgentIds: Set<string>;
-  activeImplementationIds: Set<string>;
+  activeAssignationIds: Set<string>
+  activeAgentIds: Set<string>
+  activeImplementationIds: Set<string>
 
   // Timeline
-  timelineGroups: TimelineDependencyGroup[];
-  timelineEvents: TimelineEvent[];
-  timelineStartTime: number;
-  timelineEndTime: number;
+  timelineGroups: TimelineDependencyGroup[]
+  timelineEvents: TimelineEvent[]
+  timelineStartTime: number
+  timelineEndTime: number
+
+  // Live follow
+  isLive: boolean
+  liveNow: number
+
+  // Timeline zoom — a sub-window [zoomStart, zoomEnd] as fractions of the full
+  // [timelineStartTime, timelineEndTime] range (0..1). 0/1 means fully zoomed out.
+  zoomStart: number
+  zoomEnd: number
 
   // Selection & highlighting
-  selectedTimepoint: number;
-  selectedPlacementId: string | null;
-  selectedAgentId: string | null;
-  selectedDependencyId: string | null;
-  highlightedAssignationIds: string[];
+  selectedTimepoint: number
+  selectedPlacementId: string | null
+  selectedAgentId: string | null
+  selectedDependencyId: string | null
+  highlightedAssignationIds: string[]
 
   // Agent → assignation mapping
-  agentToAssignationIds: Map<string, string[]>;
+  agentToAssignationIds: Map<string, string[]>
 
   // Camera data for 3D→2D projection
-  viewProjectionMatrix: THREE.Matrix4 | null;
-  viewportSize: { width: number; height: number };
+  viewProjectionMatrix: THREE.Matrix4 | null
+  viewportSize: { width: number; height: number }
 
   // Debug
-  debugWireframe: boolean;
+  debugWireframe: boolean
 
   // Layout
-  layoutMode: "space" | "radial";
-  computedTransforms: Map<string, number[][]>;
+  layoutMode: 'space' | 'radial'
+  computedTransforms: Map<string, number[][]>
 
   // Actions
-  updateCameraData: (matrix: THREE.Matrix4, size: { width: number; height: number }) => void;
-  selectPlacement: (id: string | null) => void;
-  selectAgent: (id: string | null) => void;
-  selectDependency: (id: string | null) => void;
-  selectTimepoint: (timestamp: number) => void;
-  setHighlightedAssignationIds: (ids: string[]) => void;
-  toggleDebugWireframe: () => void;
-  toggleLayoutMode: () => void;
-  refreshTimeline: (task: DetailAssignationFragment) => void;
+  updateCameraData: (matrix: THREE.Matrix4, size: { width: number; height: number }) => void
+  selectPlacement: (id: string | null) => void
+  selectAgent: (id: string | null) => void
+  selectDependency: (id: string | null) => void
+  selectTimepoint: (timestamp: number) => void
+  setHighlightedAssignationIds: (ids: string[]) => void
+  toggleDebugWireframe: () => void
+  toggleLayoutMode: () => void
+  refreshTimeline: (task: DetailAssignationFragment) => void
+  setLiveNow: (now: number) => void
+  enableLive: () => void
+  disableLive: () => void
+  setZoomWindow: (start: number, end: number) => void
+  resetZoom: () => void
 }
 
 export const createSpaceViewStore = (task: DetailAssignationFragment) => {
-  const children = (task.children || []).filter(notEmpty);
-  const rootAgent = task.implementation?.agent ?? null;
-  const rootAgentId = rootAgent?.id ?? null;
-  const spaceGroups = buildSpaceGroups(task.resolvedDependencies, rootAgent);
-  const allPlacements = spaceGroups.flatMap((g) => g.placements);
-  const agentToAssignationIds = buildAgentToAssignationMap(task.resolvedDependencies, children);
-  const { groups, startTime, endTime } = buildTimeline(children);
-  const initialActive = computeActiveAtTimepoint(startTime, children, agentToAssignationIds);
+  const children = (task.children || []).filter(notEmpty)
+  const rootAgent = task.implementation?.agent ?? null
+  const rootAgentId = rootAgent?.id ?? null
+  const spaceGroups = buildSpaceGroups(task.resolvedDependencies, rootAgent)
+  const allPlacements = spaceGroups.flatMap((g) => g.placements)
+  const agentToAssignationIds = buildAgentToAssignationMap(task.resolvedDependencies, children)
+  const { groups, startTime, endTime } = buildTimeline(children)
+
+  // A running task opens at the live frontier and follows "now"; a finished
+  // task opens at its start for replay (follow disabled).
+  const taskDone = task.isDone === true
+  const liveNow = Date.now()
+  const initialTimepoint = taskDone ? startTime : liveNow
+  const initialActive = computeActiveAtTimepoint(initialTimepoint, children, agentToAssignationIds)
 
   const parentEvents: TimelineEvent[] = (task.events || []).map((e) => ({
     kind: e.kind,
     message: e.message,
     createdAt: e.createdAt,
-    position: endTime === startTime ? 0 : (new Date(e.createdAt).getTime() - startTime) / (endTime - startTime),
-  }));
+    position:
+      endTime === startTime
+        ? 0
+        : (new Date(e.createdAt).getTime() - startTime) / (endTime - startTime)
+  }))
 
-  const initialLayoutMode = "space" as const;
-  const initialTransforms = computeLayoutTransforms(spaceGroups, initialLayoutMode, rootAgentId);
+  const initialLayoutMode = 'space' as const
+  const initialTransforms = computeLayoutTransforms(spaceGroups, initialLayoutMode, rootAgentId)
 
   return createStore<SpaceViewState>((set, get) => ({
     task,
@@ -406,7 +422,13 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
     timelineEndTime: endTime,
     agentToAssignationIds,
 
-    selectedTimepoint: startTime,
+    isLive: !taskDone,
+    liveNow,
+
+    zoomStart: 0,
+    zoomEnd: 1,
+
+    selectedTimepoint: initialTimepoint,
     selectedPlacementId: null,
     selectedAgentId: null,
     selectedDependencyId: null,
@@ -424,33 +446,39 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
 
     selectPlacement: (id) => {
       if (id === null) {
-        set({ selectedPlacementId: null, selectedAgentId: null, highlightedAssignationIds: [] });
-        return;
+        set({ selectedPlacementId: null, selectedAgentId: null, highlightedAssignationIds: [] })
+        return
       }
-      const placement = get().allPlacements.find((p) => p.id === id);
-      const agentId = placement?.agentId ?? null;
-      const highlighted = agentId ? get().agentToAssignationIds.get(agentId) ?? [] : [];
-      set({ selectedPlacementId: id, selectedAgentId: agentId, highlightedAssignationIds: highlighted });
+      const placement = get().allPlacements.find((p) => p.id === id)
+      const agentId = placement?.agentId ?? null
+      const highlighted = agentId ? (get().agentToAssignationIds.get(agentId) ?? []) : []
+      set({
+        selectedPlacementId: id,
+        selectedAgentId: agentId,
+        highlightedAssignationIds: highlighted
+      })
     },
 
     selectAgent: (id) => {
-      const highlighted = id ? get().agentToAssignationIds.get(id) ?? [] : [];
-      set({ selectedAgentId: id, highlightedAssignationIds: highlighted });
+      const highlighted = id ? (get().agentToAssignationIds.get(id) ?? []) : []
+      set({ selectedAgentId: id, highlightedAssignationIds: highlighted })
     },
 
     selectDependency: (id) => set({ selectedDependencyId: id }),
 
     selectTimepoint: (timestamp) => {
-      const { task: currentTask, agentToAssignationIds: currentMap } = get();
-      const currentChildren = (currentTask.children || []).filter(notEmpty);
-      const active = computeActiveAtTimepoint(timestamp, currentChildren, currentMap);
+      const { task: currentTask, agentToAssignationIds: currentMap } = get()
+      const currentChildren = (currentTask.children || []).filter(notEmpty)
+      const active = computeActiveAtTimepoint(timestamp, currentChildren, currentMap)
+      // Any manual scrub/jump drops out of follow-live mode.
       set({
+        isLive: false,
         selectedTimepoint: timestamp,
         activeAssignationIds: active.assignationIds,
         activeAgentIds: active.agentIds,
         activeImplementationIds: active.implementationIds,
-        highlightedAssignationIds: [...active.assignationIds],
-      });
+        highlightedAssignationIds: [...active.assignationIds]
+      })
     },
 
     setHighlightedAssignationIds: (ids) => set({ highlightedAssignationIds: ids }),
@@ -458,32 +486,49 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
     toggleDebugWireframe: () => set((s) => ({ debugWireframe: !s.debugWireframe })),
 
     toggleLayoutMode: () => {
-      const s = get();
-      const next = s.layoutMode === "space" ? "radial" as const : "space" as const;
-      const transforms = computeLayoutTransforms(s.spaceGroups, next, s.rootAgentId);
-      set({ layoutMode: next, computedTransforms: transforms });
+      const s = get()
+      const next = s.layoutMode === 'space' ? ('radial' as const) : ('space' as const)
+      const transforms = computeLayoutTransforms(s.spaceGroups, next, s.rootAgentId)
+      set({ layoutMode: next, computedTransforms: transforms })
     },
 
     refreshTimeline: (updatedTask) => {
-      const updatedChildren = (updatedTask.children || []).filter(notEmpty);
-      const updatedRootAgent = updatedTask.implementation?.agent ?? null;
-      const updatedRootAgentId = updatedRootAgent?.id ?? null;
-      const updatedSpaceGroups = buildSpaceGroups(updatedTask.resolvedDependencies, updatedRootAgent);
-      const updatedAllPlacements = updatedSpaceGroups.flatMap((g) => g.placements);
-      const updatedAgentMap = buildAgentToAssignationMap(updatedTask.resolvedDependencies, updatedChildren);
-      const updatedActive = computeActiveAtTimepoint(get().selectedTimepoint, updatedChildren, updatedAgentMap);
-      const { groups: tGroups, startTime: sT, endTime: eT } = buildTimeline(updatedChildren);
+      const { isLive: wasLive, liveNow: currentNow, selectedTimepoint: currentTimepoint } = get()
+      // Live stops cleanly the moment the task completes, so the final frame stays put.
+      const stillLive = wasLive && updatedTask.isDone !== true
+      const computeAt = stillLive ? currentNow : currentTimepoint
+
+      const updatedChildren = (updatedTask.children || []).filter(notEmpty)
+      const updatedRootAgent = updatedTask.implementation?.agent ?? null
+      const updatedRootAgentId = updatedRootAgent?.id ?? null
+      const updatedSpaceGroups = buildSpaceGroups(
+        updatedTask.resolvedDependencies,
+        updatedRootAgent
+      )
+      const updatedAllPlacements = updatedSpaceGroups.flatMap((g) => g.placements)
+      const updatedAgentMap = buildAgentToAssignationMap(
+        updatedTask.resolvedDependencies,
+        updatedChildren
+      )
+      const updatedActive = computeActiveAtTimepoint(computeAt, updatedChildren, updatedAgentMap)
+      const { groups: tGroups, startTime: sT, endTime: eT } = buildTimeline(updatedChildren)
       const updatedParentEvents: TimelineEvent[] = (updatedTask.events || []).map((e) => ({
         kind: e.kind,
         message: e.message,
         createdAt: e.createdAt,
-        position: eT === sT ? 0 : (new Date(e.createdAt).getTime() - sT) / (eT - sT),
-      }));
+        position: eT === sT ? 0 : (new Date(e.createdAt).getTime() - sT) / (eT - sT)
+      }))
 
-      const updatedTransforms = computeLayoutTransforms(updatedSpaceGroups, get().layoutMode, updatedRootAgentId);
+      const updatedTransforms = computeLayoutTransforms(
+        updatedSpaceGroups,
+        get().layoutMode,
+        updatedRootAgentId
+      )
 
       set({
         task: updatedTask,
+        isLive: stillLive,
+        selectedTimepoint: stillLive ? currentNow : currentTimepoint,
         rootAgentId: updatedRootAgentId,
         activeAssignationIds: updatedActive.assignationIds,
         activeAgentIds: updatedActive.agentIds,
@@ -496,18 +541,71 @@ export const createSpaceViewStore = (task: DetailAssignationFragment) => {
         timelineEvents: updatedParentEvents,
         timelineStartTime: sT,
         timelineEndTime: eT,
-        computedTransforms: updatedTransforms,
-      });
+        computedTransforms: updatedTransforms
+      })
     },
-  }));
-};
 
-type SpaceViewStore = ReturnType<typeof createSpaceViewStore>;
+    setLiveNow: (now) => {
+      const { isLive, task: currentTask, agentToAssignationIds: currentMap } = get()
+      if (!isLive) {
+        // Not following: just advance the clock so the "now" frontier + elapsed move.
+        set({ liveNow: now })
+        return
+      }
+      const currentChildren = (currentTask.children || []).filter(notEmpty)
+      const active = computeActiveAtTimepoint(now, currentChildren, currentMap)
+      set({
+        liveNow: now,
+        selectedTimepoint: now,
+        activeAssignationIds: active.assignationIds,
+        activeAgentIds: active.agentIds,
+        activeImplementationIds: active.implementationIds,
+        highlightedAssignationIds: [...active.assignationIds]
+      })
+    },
 
-export const SpaceViewStoreContext = createContext<SpaceViewStore | null>(null);
+    enableLive: () => {
+      const { task: currentTask, agentToAssignationIds: currentMap, liveNow } = get()
+      const currentChildren = (currentTask.children || []).filter(notEmpty)
+      const active = computeActiveAtTimepoint(liveNow, currentChildren, currentMap)
+      set({
+        isLive: true,
+        // Zoom is a replay-only affordance; reset to the full range on going live.
+        zoomStart: 0,
+        zoomEnd: 1,
+        selectedTimepoint: liveNow,
+        activeAssignationIds: active.assignationIds,
+        activeAgentIds: active.agentIds,
+        activeImplementationIds: active.implementationIds,
+        highlightedAssignationIds: [...active.assignationIds]
+      })
+    },
+
+    disableLive: () => set({ isLive: false }),
+
+    setZoomWindow: (start, end) => {
+      const MIN_SPAN = 0.02 // up to ~50× zoom
+      let s = Math.max(0, Math.min(1, start))
+      let e = Math.max(0, Math.min(1, end))
+      if (e - s < MIN_SPAN) {
+        const mid = (s + e) / 2
+        s = Math.max(0, mid - MIN_SPAN / 2)
+        e = Math.min(1, s + MIN_SPAN)
+        s = Math.max(0, e - MIN_SPAN)
+      }
+      set({ zoomStart: s, zoomEnd: e })
+    },
+
+    resetZoom: () => set({ zoomStart: 0, zoomEnd: 1 })
+  }))
+}
+
+type SpaceViewStore = ReturnType<typeof createSpaceViewStore>
+
+export const SpaceViewStoreContext = createContext<SpaceViewStore | null>(null)
 
 export function useSpaceViewStore<T>(selector: (s: SpaceViewState) => T): T {
-  const store = useContext(SpaceViewStoreContext);
-  if (!store) throw new Error("Missing SpaceViewStoreContext");
-  return useStore(store, selector);
+  const store = useContext(SpaceViewStoreContext)
+  if (!store) throw new Error('Missing SpaceViewStoreContext')
+  return useStore(store, selector)
 }

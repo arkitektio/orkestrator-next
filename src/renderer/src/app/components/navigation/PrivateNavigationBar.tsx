@@ -1,4 +1,5 @@
-import { Arkitekt, moduleRegistry } from "@/app/Arkitekt";
+import { Arkitekt, Guard, moduleRegistry } from "@/app/Arkitekt";
+import { BackgroundTasksButton } from "@/rekuest/components/global/BackgroundTasksPanel";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import {
@@ -542,6 +543,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
       </div>
 
       <div className="flex-initial w-12 items-center flex flex-col justify-center">
+        <Guard.Rekuest>
+          <BackgroundTasksButton />
+        </Guard.Rekuest>
         <SettingsNavItem />
         <DropdownMenu>
           <DropdownMenuTrigger className="text-foreground h-12 w-12">

@@ -13,7 +13,7 @@ import {
   PortKind,
   useShortcutsQuery,
 } from "@/rekuest/api/graphql";
-import { registeredCallbacks } from "@/rekuest/components/functional/AssignationUpdater";
+import { trackAssignation } from "@/rekuest/lib/assignationTracker";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Zap } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
@@ -184,19 +184,22 @@ export const ShortcutButton = (
         return;
       }
 
+      const reference = uuidv4();
+      const untrack = trackAssignation(reference, doStuff);
+
       try {
-        const reference = uuidv4();
         await assign({
           action: shortcut.action.id,
           args: {
             ...keys,
             ...shortcut.savedArgs,
           },
+          reference,
         });
-        registeredCallbacks.set(reference, doStuff);
         setDoing(true);
         setError(null);
       } catch (error) {
+        untrack();
         const message = getErrorMessage(error);
         toast.error(message);
         props.onError?.(message);

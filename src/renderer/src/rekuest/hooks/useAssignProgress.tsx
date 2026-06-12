@@ -11,7 +11,7 @@ export const useAssignProgress = (options: {
   const { data } = useAssignations();
 
   const assignations = data?.assignations.filter((a) => {
-    if (a.status == AssignationEventKind.Done) {
+    if (a.isDone || a.latestEventKind == AssignationEventKind.Done) {
       return false;
     }
 

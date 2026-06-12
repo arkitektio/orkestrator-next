@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   AssignationEventKind,
   PortKind,
+  PostmanAssignationFragment,
   useAssignationsQuery,
 } from "../api/graphql";
 
@@ -55,7 +56,10 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
           }
         }
 
-        if (a.status == AssignationEventKind.Done && !options.allowDone) {
+        if (
+          !options.allowDone &&
+          (a.isDone || a.latestEventKind == AssignationEventKind.Done)
+        ) {
           return false;
         }
 
@@ -113,6 +117,7 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
       options?.identifier,
       options?.object,
       options?.assignation,
+      options?.allowDone,
       options?.refetch,
     ],
   );
@@ -126,9 +131,9 @@ export const useLatestAssignation = (options: FilterOptions) => {
   return latestAssignation;
 };
 
-export const useLiveAssignation = (options: FilterOptions) => {
-  const assignation = useLatestAssignation(options);
-
+export const deriveLiveState = (
+  assignation: PostmanAssignationFragment | undefined,
+) => {
   const latestProgress = assignation?.events
     .filter((x) => x.kind == AssignationEventKind.Progress)
     .at(0)?.progress;
@@ -154,7 +159,6 @@ export const useLiveAssignation = (options: FilterOptions) => {
     (x) => x.message != undefined,
   )?.message;
 
-
   return {
     progress:
       done == undefined && error == undefined ? latestProgress : undefined,
@@ -163,9 +167,24 @@ export const useLiveAssignation = (options: FilterOptions) => {
     done,
     error,
     actionId: assignation?.action.id,
+    actionName: assignation?.action.name,
     message: latestMessage,
     event: assignation?.events.at(0),
     assignationId: assignation?.id,
     id: assignation?.id,
+    reference: assignation?.reference,
+    latestEventKind: assignation?.latestEventKind,
+    isDone: assignation?.isDone,
+    createdAt: assignation?.createdAt,
   };
+};
+
+export type LiveAssignationState = ReturnType<typeof deriveLiveState>;
+
+export const useLiveAssignation = (options: FilterOptions) => {
+  // Live trackers follow a specific assignation through completion, so Done
+  // assignations stay in scope unless the caller opts out explicitly.
+  const assignation = useLatestAssignation({ allowDone: true, ...options });
+
+  return useMemo(() => deriveLiveState(assignation), [assignation]);
 };

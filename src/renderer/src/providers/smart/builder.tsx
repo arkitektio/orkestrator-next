@@ -245,6 +245,9 @@ export const buildSmart = <T extends Object>(
   model: Identifier,
   to: string,
   options?: {
+    /** Descriptive name used in labels and validation messages. */
+    name?: string;
+    description?: string;
     searchFunction?: SearchFunction;
     describeQuery?: string;
   },
@@ -252,8 +255,9 @@ export const buildSmart = <T extends Object>(
   smartRegistry.register({
     identifier: model,
     path: to,
+    name: options?.name,
     search: options?.searchFunction,
-    description: "A smart model",
+    description: options?.description || "A smart model",
   });
 
   return {

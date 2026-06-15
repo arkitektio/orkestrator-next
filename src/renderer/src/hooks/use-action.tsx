@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import {
   AssignationEventKind,
   AssignInput,
@@ -10,11 +9,8 @@ import {
 } from "@/rekuest/api/graphql";
 import { useCallback, useState } from "react";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type PartialTemplateOptions = Partial<ActionAssignVariables>;
 
@@ -31,15 +27,10 @@ export type UseActionReturn<T> = {
 export const useAction = <T extends any>(
   options: PartialTemplateOptions,
 ): UseActionReturn<T> => {
-  const { settings } = useSettings();
   const [currentAssign, setCurrentAssign] =
     useState<PostmanAssignationFragment | null>(null);
 
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data: assignations_data } = useAssignationsQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
@@ -60,7 +51,6 @@ export const useAction = <T extends any>(
             input: {
               ...vars,
               ...options,
-              instanceId: settings.instanceId,
               hooks: [],
             },
           },
@@ -81,7 +71,7 @@ export const useAction = <T extends any>(
         throw Error(`Couldn't assign: ${error.message}`);
       }
     },
-    [postAssign, settings.instanceId, options.agent, options.template, options],
+    [postAssign, options],
   );
 
   const reassign = useCallback(() => {

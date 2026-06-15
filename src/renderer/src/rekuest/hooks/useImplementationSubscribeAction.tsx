@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback, useState } from "react";
 import {
   AssignInput,
@@ -12,11 +11,8 @@ import {
   useImplementationQuery,
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type UseImplementationActionReturn<T> = {
   implementation?: DetailImplementationFragment;
@@ -36,7 +32,6 @@ export type UseImplementationAction<T> = {
 export const useImplementationSubscribeAction = <T extends any>(
   options: UseImplementationAction<T>,
 ): UseImplementationActionReturn<T> => {
-  const { settings } = useSettings();
   const [causedAssignation, setCausedAssignation] =
     useState<PostmanAssignationFragment | null>(null);
 
@@ -46,11 +41,7 @@ export const useImplementationSubscribeAction = <T extends any>(
     },
   });
 
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data: assignations_data } = useAssignationsQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
@@ -68,7 +59,6 @@ export const useImplementationSubscribeAction = <T extends any>(
           input: {
             ...vars,
             args: vars.args,
-            instanceId: settings.instanceId,
             hooks: [],
           },
         },
@@ -89,7 +79,7 @@ export const useImplementationSubscribeAction = <T extends any>(
       setCausedAssignation(assignation);
       return assignation;
     },
-    [postAssign, settings],
+    [postAssign],
   );
 
   const reassign = useCallback(() => {

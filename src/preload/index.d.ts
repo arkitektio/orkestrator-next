@@ -20,7 +20,7 @@ declare global {
       setZoomLevel: (zoomLevel: number) => Promise<{ success: boolean; error?: string }>;
       getZoomLevel: () => Promise<{ success: boolean; zoomLevel?: number; error?: string }>;
       openWebbrowser: (url: string) => Promise<void>;
-      initAgent: (context: { token: string, url: string, instanceId: string, agentUrl: string, services: AvailableService[] }) => Promise<void>;
+      initAgent: (context: { token: string, url: string, agentUrl: string, services: AvailableService[] }) => Promise<void>;
       reportIssue: (opts: {
         title?: string;
         extra?: string;

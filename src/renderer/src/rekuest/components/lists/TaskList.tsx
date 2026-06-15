@@ -13,7 +13,7 @@ const List = ({ filters, order, pagination }: Props) => {
   const { data, error, refetch } = useListAssignationsQuery({
     variables: {
       filter: filters,
-      order: order,
+      ordering: order ? [order] : undefined,
       pagination: pagination,
     },
   });

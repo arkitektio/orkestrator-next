@@ -1,5 +1,4 @@
 import { formatApolloError } from "@/lib/errorHandler";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
   AssignInput,
@@ -13,11 +12,8 @@ import {
   useImplementationQuery,
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type UseImplementationActionReturn<T> = {
   implementation?: DetailImplementationFragment;
@@ -38,19 +34,13 @@ export type UseImplementationAction<T> = {
 export const useImplementationAction = <T extends any>(
   options: UseImplementationAction<T>,
 ): UseImplementationActionReturn<T> => {
-  const { settings } = useSettings();
-
   const { data, variables, refetch, error } = useImplementationQuery({
     variables: {
       id: options.id,
     },
   });
 
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data: assignations_data } = useAssignationsQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
@@ -72,7 +62,6 @@ export const useImplementationAction = <T extends any>(
               ...vars,
               implementation: options.id,
               args: vars.args,
-              instanceId: settings.instanceId,
               hooks: [],
             },
           },
@@ -91,7 +80,7 @@ export const useImplementationAction = <T extends any>(
           throw Error(`Couldn't assign: ${formatApolloError(error, "rekuest")}`);
       }
     },
-    [postAssign, settings.instanceId, options.id],
+    [postAssign, options.id],
   );
 
   const reassign = useCallback(() => {

@@ -4,7 +4,7 @@ fragment PostmanAssignation on Assignation {
   args
   reference
   isDone
-  events(order: {createdAt: DESC}) {
+  events(ordering: {createdAt: DESC}) {
     ...AssignationEvent
   }
   ephemeral

@@ -364,7 +364,7 @@ export const DependencySearchField = ({
                               {agent.app.identifier}
                             </span>
                             <span className="text-[10px] text-muted-foreground truncate">
-                              v{agent.release.version} · {agent.instanceId}
+                              v{agent.release.version}
                             </span>
                           </div>
                           <CheckIcon

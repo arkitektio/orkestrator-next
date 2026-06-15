@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -9,11 +8,8 @@ import {
   useAssignMutation
 } from "../api/graphql";
 import { trackAssignation } from "../lib/assignationTracker";
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   assign: (
@@ -26,8 +22,6 @@ export type useActionOptions<T> = {
 };
 
 export const useAssign = <T extends any>(): useActionReturn<T> => {
-  const { settings } = useSettings();
-
   const [postAssign] = useAssignMutation({});
 
   const assign = useCallback(
@@ -39,7 +33,6 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
           input: {
             ...vars,
             args: vars.args,
-            instanceId: settings.instanceId,
             hooks: [],
             reference: vars.reference || "",
           },
@@ -58,7 +51,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
       return assignation;
     },
-    [postAssign, settings],
+    [postAssign],
   );
 
   return {

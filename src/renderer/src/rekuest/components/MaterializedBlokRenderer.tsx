@@ -2,7 +2,6 @@ import * as React from 'react';
 import BlokRenderer from '@/blok/renderer/BlokRenderer';
 import {useBlokRuntime, type BlokDispatchActionHandler} from '@/blok/renderer/runtime';
 import {toast} from 'sonner';
-import {useSettings} from '@/providers/settings/SettingsContext';
 import {useAssignMutation} from '@/rekuest/api/graphql';
 import {useAgentLiveState} from '@/rekuest/hooks/useLiveState';
 
@@ -207,7 +206,6 @@ const MaterializedBlokRuntimeSync = (props: {materializedBlok: MaterializedBlokD
 const useMaterializedDispatchAction = (
   agentMappings: MaterializedBlokData['agentMappings'],
 ) => {
-  const {settings} = useSettings();
   const [assign] = useAssignMutation();
   const agentIdByDependency = React.useMemo(
     () => new Map(agentMappings.map(mapping => [mapping.key, mapping.agent.id] as const)),
@@ -229,7 +227,6 @@ const useMaterializedDispatchAction = (
       void assign({
         variables: {
           input: {
-            instanceId: settings.instanceId,
             agent: agentId,
             action: action.operation,
             args: action.arguments ?? {},
@@ -248,7 +245,7 @@ const useMaterializedDispatchAction = (
         );
       });
     },
-    [agentIdByDependency, assign, settings.instanceId],
+    [agentIdByDependency, assign],
   );
 };
 

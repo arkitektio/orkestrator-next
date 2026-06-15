@@ -1,7 +1,6 @@
 import { useRekuest } from "@/app/Arkitekt";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import {
   useAssignation,
   useLiveAssignation,
@@ -167,7 +166,6 @@ export const AssignationToast = (props: { id: string }) => {
 };
 
 export const AssignationUpdater = () => {
-  const { settings } = useSettings();
   const client = useRekuest();
   useEffect(() => {
     if (client) {
@@ -178,9 +176,7 @@ export const AssignationUpdater = () => {
           WatchAssignationEventsSubscriptionVariables
         >({
           query: WatchAssignationsDocument,
-          variables: {
-            instanceId: settings.instanceId,
-          },
+          variables: {},
         })
         .subscribe((res) => {
           const event = res.data?.assignations.event;
@@ -198,9 +194,7 @@ export const AssignationUpdater = () => {
             client.cache.updateQuery<AssignationsQuery>(
               {
                 query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                variables: {},
               },
               (data) => {
                 if (!data) {
@@ -243,9 +237,7 @@ export const AssignationUpdater = () => {
             client.cache.updateQuery<AssignationsQuery>(
               {
                 query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                variables: {},
               },
               (data) => {
                 if (data?.assignations.some((a) => a.id === create.id)) {
@@ -300,7 +292,7 @@ export const AssignationUpdater = () => {
       return () => subscription.unsubscribe();
     }
     return undefined;
-  }, [client, settings.instanceId]);
+  }, [client]);
 
   return <></>;
 };

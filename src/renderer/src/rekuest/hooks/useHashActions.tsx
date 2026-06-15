@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
   AssignActionQuery,
@@ -12,11 +11,8 @@ import {
   useCancelMutation,
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   action?: AssignActionQuery["action"];
@@ -36,19 +32,13 @@ export type useActionOptions<T> = {
 export const useHashAction = <T extends any>(
   options: useActionOptions<T>,
 ): useActionReturn<T> => {
-  const { settings } = useSettings();
-
   const { data } = useAssignActionQuery({
     variables: {
       ...options,
     },
   });
 
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data: assignations_data } = useAssignationsQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
@@ -68,7 +58,6 @@ export const useHashAction = <T extends any>(
           input: {
             ...vars,
             args: vars.args,
-            instanceId: settings.instanceId,
             hooks: [],
           },
         },
@@ -88,7 +77,7 @@ export const useHashAction = <T extends any>(
 
       return assignation;
     },
-    [postAssign, settings],
+    [postAssign],
   );
 
   const reassign = useCallback(() => {

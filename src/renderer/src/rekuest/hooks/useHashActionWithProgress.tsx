@@ -12,11 +12,8 @@ import {
 import { trackAssignation } from "../lib/assignationTracker";
 import { useAssign } from "./useAssign";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 
 

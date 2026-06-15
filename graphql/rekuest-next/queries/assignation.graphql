@@ -1,5 +1,5 @@
-query Assignations($instanceId: InstanceId!) {
-  assignations(instanceId: $instanceId) {
+query Assignations {
+  assignations {
     ...PostmanAssignation
   }
 }
@@ -12,20 +12,20 @@ query DetailAssignation($id: ID!) {
 
 query ListAssignations(
   $filter: AssignationFilter
-  $order: AssignationOrder
+  $ordering: [AssignationOrder!]
   $pagination: OffsetPaginationInput
 ) {
-  tasks(filters: $filter, pagination: $pagination, order: $order) {
+  tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
     ...ListAsssignation
   }
 }
 
 query ListAssignationsDetails(
   $filter: AssignationFilter
-  $order: AssignationOrder
+  $ordering: [AssignationOrder!]
   $pagination: OffsetPaginationInput
 ) {
-  tasks(filters: $filter, pagination: $pagination, order: $order) {
+  tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
     ...PostmanAssignation
   }
 }

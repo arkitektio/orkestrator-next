@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
   PostmanReservationFragment,
@@ -11,12 +10,7 @@ export const useUsage = (options: {
   hash?: string;
   implementation?: string;
 }): [PostmanReservationFragment | undefined, () => void] => {
-  const { settings } = useSettings();
-  const { data } = useReservationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data } = useReservationsQuery();
 
   const [reserve, _] = useReserveMutation();
   const [unreserve, __] = useUnreserveMutation();
@@ -28,7 +22,6 @@ export const useUsage = (options: {
     if (!isUsed) {
       reserve({
         variables: {
-          instanceId: settings.instanceId,
           action: options.hash,
           implementation: options.implementation,
         },

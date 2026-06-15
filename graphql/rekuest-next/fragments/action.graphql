@@ -125,7 +125,7 @@ fragment HoverAction on Action {
       active
     }
   }
-  assignations(pagination: { limit: 5 }, order: { createdAt: DESC }) {
+  assignations(pagination: { limit: 5 }, ordering: { createdAt: DESC }) {
     id
     latestEventKind
     isDone

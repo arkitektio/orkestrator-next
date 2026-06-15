@@ -1,5 +1,4 @@
 mutation Reserve(
-  $instanceId: InstanceId!
   $action: ID
   $hash: ActionHash
   $implementation: ID
@@ -7,7 +6,6 @@ mutation Reserve(
 ) {
   reserve(
     input: {
-      instanceId: $instanceId
       action: $action
       implementation: $implementation
       hash: $hash

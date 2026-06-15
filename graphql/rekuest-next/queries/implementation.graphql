@@ -50,12 +50,10 @@ query ImplementationAt(
 }
 
 query MyImplementationAt(
-  $instanceId: String!
   $interface: String
   $actionId: ID
 ) {
   myImplementationAt(
-    instanceId: $instanceId
     interface: $interface
     actionId: $actionId
   ) {

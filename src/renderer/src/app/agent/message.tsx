@@ -106,7 +106,6 @@ export const AssignInquiry = z.object({
 
 export const Init = Message.extend({
   type: z.literal(ToAgentMessageType.enum.INIT),
-  instance_id: z.string(),
   agent: z.string(),
   inquiries: z.array(AssignInquiry).default([]),
 });
@@ -178,7 +177,6 @@ export const HeartbeatEvent = Message.extend({
 
 export const Register = Message.extend({
   type: z.literal(FromAgentMessageType.enum.REGISTER),
-  instance_id: z.string(),
   token: z.string(),
 });
 

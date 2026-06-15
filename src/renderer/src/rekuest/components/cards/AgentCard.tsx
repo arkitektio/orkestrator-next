@@ -26,11 +26,6 @@ const TheCard = ({ item }: Props) => {
               {" "}
               <h1 className="flex-wrap break-all">{item.app.identifier}</h1>
               <h2 className="text-sm text-muted-foreground">{item.release.version}</h2>
-              <span className="text-muted-foreground font-light">
-                {item.instanceId}
-              </span>
-
-
             </RekuestAgent.DetailLink>
           </CardTitle>
         </CardHeader>

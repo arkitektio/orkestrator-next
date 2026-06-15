@@ -1,4 +1,3 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useMemo } from "react";
 import {
   AssignationEventKind,
@@ -8,12 +7,7 @@ import {
 } from "../api/graphql";
 
 export const useAssignations = () => {
-  const { settings } = useSettings();
-  const queryResult = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const queryResult = useAssignationsQuery();
 
   return queryResult;
 };

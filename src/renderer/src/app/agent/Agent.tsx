@@ -59,7 +59,6 @@ const getAccessToken = (token: TokenResponse | string) => {
 };
 
 export class OrkestratorAgent {
-  instanceId: string;
   context: AppContext;
   rekuestClient: ApolloClient<NormalizedCache>;
   ws: WebSocket | null = null;
@@ -85,10 +84,8 @@ export class OrkestratorAgent {
 
   constructor(
     context: AppContext,
-    instanceId: string,
     navigate: (path: string) => void
   ) {
-    this.instanceId = instanceId;
     this.context = context;
     this.navigate = navigate;
     this.rekuestClient = selectApolloClient(context, "rekuest");
@@ -212,7 +209,6 @@ export class OrkestratorAgent {
         await window.api.initAgent({
           token: this.token,
           url: this.context.connection!.endpoint.base_url,
-          instanceId: this.instanceId,
           agentUrl: this.agentUrl,
           services: this.getAvailableServices(),
         });
@@ -312,7 +308,6 @@ export class OrkestratorAgent {
         mutation: EnsureAgentDocument,
         variables: {
           input: {
-            instanceId: this.instanceId,
             name: "Orkestrator",
           },
         },
@@ -358,7 +353,6 @@ export class OrkestratorAgent {
         Register.parse({
           type: "REGISTER",
           token: this.token,
-          instance_id: this.instanceId,
         })
       );
     };

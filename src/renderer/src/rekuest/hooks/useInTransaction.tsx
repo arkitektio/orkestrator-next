@@ -2,7 +2,6 @@ import {
   PostmanAssignationFragment,
   useAssignationsQuery,
 } from "../api/graphql";
-import { useInstancId } from "./useInstanceId";
 
 export type InTransactionOptions = {
   object: string;
@@ -16,13 +15,7 @@ export type InTransactionReturn = {
 export const useInTransaction = (
   options: InTransactionOptions,
 ): InTransactionReturn => {
-  const id = useInstancId();
-
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: id,
-    },
-  });
+  const { data: assignations_data } = useAssignationsQuery();
 
   const asArgs = assignations_data?.assignations.filter(
     (x) =>

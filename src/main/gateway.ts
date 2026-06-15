@@ -68,7 +68,7 @@ export class AgentGateway {
     });
   }
 
-  public async initialize(context: { token: string, url: string, instanceId: string, agentUrl: string, services: AvailableService[] }) {
+  public async initialize(context: { token: string, url: string, agentUrl: string, services: AvailableService[] }) {
       this.token = context.token;
 
       const client = new GraphQLClient(context.url, {

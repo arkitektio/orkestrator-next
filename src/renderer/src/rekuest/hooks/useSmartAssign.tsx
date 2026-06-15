@@ -6,11 +6,8 @@ import {
   ReserveMutationVariables
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionReserveVariables = ReserveMutationVariables;
+export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   assign: (

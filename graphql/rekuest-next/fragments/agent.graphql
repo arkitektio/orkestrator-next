@@ -1,6 +1,5 @@
 fragment ProtocolAgent on Agent {
   id
-  instanceId
   app {
     identifier
   }
@@ -25,7 +24,6 @@ fragment ProtocolAgent on Agent {
 }
 fragment Agent on Agent {
   id
-  instanceId
   implementations {
     ...ListImplementation
   }
@@ -71,7 +69,6 @@ fragment Agent on Agent {
 
 fragment ListAgent on Agent {
   id
-  instanceId
   active
   connected
   name
@@ -109,7 +106,6 @@ fragment ListAgent on Agent {
 fragment SearchAgent on Agent {
   id
   name
-  instanceId
   connected
   blocked
   app {
@@ -140,7 +136,6 @@ fragment HoverAgent on Agent {
   blocked
   pinned
   lastSeen
-  instanceId
   extensions
   app {
     identifier

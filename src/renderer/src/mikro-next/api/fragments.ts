@@ -105,6 +105,7 @@
       "Snapshot",
       "Stage",
       "Table",
+      "Task",
       "TimepointView",
       "User",
       "ValueHistogram",

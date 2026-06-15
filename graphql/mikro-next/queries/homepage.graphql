@@ -1,9 +1,9 @@
 query HomePage {
-  images: images(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+  images: images(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
     ...ListImage
   }
 
-  files: files(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+  files: files(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
     ...ListFile
   }
 }
@@ -12,7 +12,7 @@ query PeerHomePage($id: ID!) {
   images: images(
     pagination: { limit: 1 }
     filters: { owner: $id }
-    order: { createdAt: DESC }
+    ordering: [{ createdAt: DESC }]
   ) {
     ...ListImage
   }
@@ -20,7 +20,7 @@ query PeerHomePage($id: ID!) {
   files: files(
     pagination: { limit: 1 }
     filters: { owner: $id }
-    order: { createdAt: DESC }
+    ordering: [{ createdAt: DESC }]
   ) {
     ...ListFile
   }

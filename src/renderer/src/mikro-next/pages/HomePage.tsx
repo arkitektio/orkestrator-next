@@ -7,20 +7,46 @@ import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
 import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleSearch } from "@/components/ui/collapsible-search";
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageActionButton } from "@/components/ui/page-action-button";
 import { useUpload } from "@/providers/upload/UploadProvider";
-import { BarChart3, Database, Network, TrendingUp, Upload } from "lucide-react";
-import { Ordering, useHomePageQuery } from "../api/graphql";
+import {
+  ArrowDownWideNarrow,
+  ArrowUpDown,
+  ArrowUpWideNarrow,
+  BarChart3,
+  Database,
+  Network,
+  TrendingUp,
+  Upload,
+} from "lucide-react";
+import {
+  DatasetOrder,
+  FileOrder,
+  ImageOrder,
+  Ordering,
+  useHomePageQuery,
+} from "../api/graphql";
 import { UploadDialog } from "../components/dialogs/UploadDialog";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
-import { parseAsIsoDateTime, useQueryState } from "nuqs";
-import BlokRenderer from "@/blok/renderer/BlokRenderer";
+import { parseAsIsoDateTime, parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 
 
 export interface IRepresentationScreenProps { }
@@ -41,10 +67,35 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
     parseAsIsoDateTime.withDefault(undefined)
   );
 
+  const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
+
+  const [sortField, setSortField] = useQueryState(
+    "sort",
+    parseAsStringLiteral(["createdAt", "name"] as const).withDefault("createdAt")
+  );
+
+  const [sortDirection, setSortDirection] = useQueryState(
+    "dir",
+    parseAsStringLiteral(["ASC", "DESC"] as const).withDefault("DESC")
+  );
+
   const temporalFilter = {
     createdAfter: createdAfter ?? undefined,
     createdBefore: createdBefore ?? undefined,
   };
+
+  const searchTerm = search.trim();
+  const searchFilter = searchTerm ? { search: searchTerm } : {};
+
+  const ordering = Ordering[sortDirection === "ASC" ? "Asc" : "Desc"];
+  // Image/File/Dataset orders are @oneOf inputs that share createdAt/name keys.
+  const imageOrdering: ImageOrder[] = [{ [sortField]: ordering }];
+  const fileOrdering: FileOrder[] = [{ [sortField]: ordering }];
+  const datasetOrdering: DatasetOrder[] = [{ [sortField]: ordering }];
+
+  const sortFieldLabels = { createdAt: "Date created", name: "Name" } as const;
+  // Defaults the dashboard ships with — a tag is shown when the user diverges.
+  const isCustomOrder = sortField !== "createdAt" || sortDirection !== "DESC";
 
   const handleFilesSelected = (files: File[]) => {
     files.forEach((file) => {
@@ -76,6 +127,63 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               Upload Files
             </PageActionButton>
           </UploadDialog>
+
+          {/* Collapsible search drives the `search` filter on every list */}
+          <CollapsibleSearch
+            value={search}
+            onChange={(value) => setSearch(value || null)}
+            placeholder="Search images, datasets and files…"
+          />
+
+          {/* Ordering: field + direction in a dropdown, shared across lists.
+              A tag surfaces the active sort whenever it differs from default. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                Sort
+                {isCustomOrder && (
+                  <Badge variant="secondary" className="gap-1">
+                    {sortFieldLabels[sortField]}
+                    {sortDirection === "ASC" ? (
+                      <ArrowUpWideNarrow />
+                    ) : (
+                      <ArrowDownWideNarrow />
+                    )}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortField}
+                onValueChange={(value) =>
+                  setSortField(value as "createdAt" | "name")
+                }
+              >
+                <DropdownMenuRadioItem value="createdAt">
+                  Date created
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Direction</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortDirection}
+                onValueChange={(value) =>
+                  setSortDirection(value as "ASC" | "DESC")
+                }
+              >
+                <DropdownMenuRadioItem value="DESC">
+                  Descending
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="ASC">
+                  Ascending
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* 3. Picker updates the URL params */}
           <DateTimeRangePicker
@@ -153,7 +261,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
           </div>
         ) : (
           <div className="space-y-8 p-3">
-            <CardHeader>
+            <CardHeader className="px-0">
               <CardTitle className="text-3xl flex items-center gap-3">
                 <Database className="h-8 w-8 text-primary" />
                 Your Data
@@ -164,13 +272,18 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
             </CardHeader>
 
             <ImageList
-              filters={{ notDerived: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
+              filters={{ notDerived: true, ...temporalFilter, ...searchFilter }}
+              ordering={imageOrdering}
             />
             <DatasetList
-              filters={{ parentless: true, ...temporalFilter }} order={{ createdAt: Ordering.Desc }}
+              filters={{ parentless: true, ...temporalFilter, ...searchFilter }}
+              ordering={datasetOrdering}
             />
             <Separator className="my-4" />
-            <FileList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />
+            <FileList
+              filters={{ ...temporalFilter, ...searchFilter }}
+              ordering={fileOrdering}
+            />
           </div>
         )}
       </UploadWrapper>

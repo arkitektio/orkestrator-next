@@ -41,13 +41,13 @@ const TheCard = ({ history }: HistoryCardProps) => {
                   </>
                 )}
               </div>
-              {history.during && (
+              {history.task && (
                 <RekuestAssignation.DetailLink
                   className={({ isActive } /*  */) =>
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
-                  object={history.during}
+                  object={history.task.id}
                 >
                   <Badge> during</Badge>
                 </RekuestAssignation.DetailLink>

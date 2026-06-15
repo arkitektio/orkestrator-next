@@ -7,9 +7,9 @@ query GetFile($id: ID!, $viewPagination: OffsetPaginationInput = { limit: 5, off
 query GetFiles(
   $filters: FileFilter
   $pagination: OffsetPaginationInput
-  $order: FileOrder
+  $ordering: [FileOrder!]
 ) {
-  files(filters: $filters, pagination: $pagination, order: $order) {
+  files(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListFile
   }
 }

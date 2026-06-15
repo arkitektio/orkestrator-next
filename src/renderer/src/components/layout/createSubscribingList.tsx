@@ -18,9 +18,10 @@ import { Card } from "../ui/card";
 
 // --- Types ---
 
-interface StandardVariables<TFilters, TOrder> {
+interface StandardVariables<TFilters, TOrder, TOrdering> {
   filters?: TFilters;
   order?: TOrder;
+  ordering?: TOrdering;
   pagination: OffsetPaginationInput;
 }
 
@@ -40,9 +41,10 @@ interface HookResult<TData> {
 
 type ItemComponentType<TItem> = React.ComponentType<{ item: TItem } & any>;
 
-export interface GeneratedListProps<TFilters, TOrder> {
+export interface GeneratedListProps<TFilters, TOrder, TOrdering> {
   filters?: TFilters;
   order?: TOrder;
+  ordering?: TOrdering;
   title?: React.ReactNode;
   actions?: React.ReactNode;
   emptyTitle?: string;
@@ -90,10 +92,10 @@ export const Offseter = ({
   </div>
 );
 
-interface CreateListOptions<TData, TFilters, TOrder, TItem> {
+interface CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem> {
   // Logic
   useHook: (options: {
-    variables: StandardVariables<TFilters, TOrder>;
+    variables: StandardVariables<TFilters, TOrder, TOrdering>;
     fetchPolicy?: any;
   }) => HookResult<TData>;
   dataKey: keyof TData;
@@ -120,9 +122,10 @@ export const createSubscribingList = <
   TData,
   TFilters,
   TOrder,
+  TOrdering,
   TItem extends { id?: string | number }
 >(
-  options: CreateListOptions<TData, TFilters, TOrder, TItem>
+  options: CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem>
 ) => {
   const {
     useHook,
@@ -140,7 +143,7 @@ export const createSubscribingList = <
     cardProps: defaultCardProps = {},
   } = options;
 
-  const GenericList = (props: GeneratedListProps<TFilters, TOrder>) => {
+  const GenericList = (props: GeneratedListProps<TFilters, TOrder, TOrdering>) => {
     const title = props.title ?? defaultTitle;
     const actions = props.actions ?? defaultActions;
     const emptyTitle = props.emptyTitle ?? defaultEmptyTitle;
@@ -155,13 +158,18 @@ export const createSubscribingList = <
 
     useEffect(() => {
       setPagination((prev) => ({ ...prev, offset: 0 }));
-    }, [JSON.stringify(props.filters), JSON.stringify(props.order)]);
+    }, [
+      JSON.stringify(props.filters),
+      JSON.stringify(props.order),
+      JSON.stringify(props.ordering),
+    ]);
 
     // 1. Get subscribeToMore from the hook
     const { data, loading, error, refetch, subscribeToMore } = useHook({
       variables: {
         filters: props.filters as TFilters,
         order: props.order as TOrder,
+        ordering: props.ordering as TOrdering,
         pagination: pagination,
       },
       fetchPolicy: "cache-and-network",
@@ -181,6 +189,7 @@ export const createSubscribingList = <
         variables: {
           filters: props.filters,
           order: props.order,
+          ordering: props.ordering,
           // usually subscriptions don't take pagination, but we pass it just in case
         },
         updateQuery: (prev, { subscriptionData }) => {
@@ -227,7 +236,12 @@ export const createSubscribingList = <
           return prev;
         },
       });
-    }, [subscribeToMore, JSON.stringify(props.filters), JSON.stringify(props.order)]);
+    }, [
+      subscribeToMore,
+      JSON.stringify(props.filters),
+      JSON.stringify(props.order),
+      JSON.stringify(props.ordering),
+    ]);
 
     const listData = (data ? data[dataKey] : []) as unknown as TItem[];
     const hasItems = listData && listData.length > 0;

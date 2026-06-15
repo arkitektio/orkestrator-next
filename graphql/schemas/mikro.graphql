@@ -1,8 +1,17 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
+"""
+A multi-dimensional array dataset with named dimensions. It can have multiple scales attached to it, which are represented as DataArrays
+"""
 type ADataset {
-  """Provenance entries for this camera"""
-  dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
+  """The task this dataset was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
+
+  """The multiscale data arrays belonging to this dataset"""
+  dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
   description: String
   dimDescriptors: [DimDescriptor!]!
   dims: [String!]!
@@ -15,20 +24,54 @@ input ADatasetFilter {
   DISTINCT: Boolean
   NOT: ADatasetFilter
   OR: ADatasetFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
   createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
   createdBefore: DateTime
-  dataset: DatasetFilter
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  description: StrFilterLookup
+  id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
   name: StrFilterLookup
-  notDerived: Boolean = null
-  owner: ID = null
-  scope: ScopeFilter = null
-  search: String = null
-  store: ZarrStoreFilter
-  timepointViews: TimepointViewFilter
-  transformationViews: AffineTransformationViewFilter
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by visibility scope"""
+  scope: ScopeKind
+
+  """Search by name (case-insensitive substring)"""
+  search: String
 }
 
+input ADatasetOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
+An accessor declares how the values of specific columns (keys) of a table should be interpreted, e.g. as pixel labels of a mask or as ids of images.
+"""
 interface Accessor {
   id: ID!
   keys: [String!]!
@@ -42,6 +85,9 @@ input AccessorFilter {
   DISTINCT: Boolean
   NOT: AccessorFilter
   OR: AccessorFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
   keys: JSON
 }
 
@@ -50,6 +96,9 @@ enum AccessorKind {
   LABEL
 }
 
+"""
+A view recording when and by whom an image region was acquired at the microscope. Use it to trace an image back to its acquisition session and operator.
+"""
 type AcquisitionView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -78,6 +127,9 @@ type AcquisitionView implements View {
   zMin: Int
 }
 
+"""
+A view placing an image region in physical space: a 4x4 affine matrix maps pixel coordinates onto a stage, encoding position and pixel size.
+"""
 type AffineTransformationView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -122,12 +174,28 @@ input AffineTransformationViewFilter {
   DISTINCT: Boolean
   NOT: AffineTransformationViewFilter
   OR: AffineTransformationViewFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
   isGlobal: Boolean
-  pixelSize: FloatFilterLookup
+
+  """Search by the name of the image this view belongs to"""
+  search: String
   stage: StageFilter
 }
 
+"""
+Input for creating an affine transformation view on an existing image, referenced by ID
+"""
 input AffineTransformationViewInput {
+  """The 4x4 affine matrix mapping image coordinates to stage coordinates"""
   affineMatrix: FourByFourMatrix!
 
   """The maximum c (channel) coordinate of the view"""
@@ -138,7 +206,11 @@ input AffineTransformationViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The ID of the stage this transformation maps the image onto"""
   stage: ID = null
 
   """The maximum t coordinate of the view"""
@@ -174,15 +246,31 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar ArrayLike
 
+"""Input for assigning object-level permissions to a user"""
 input AssignUserPermissionInput {
+  """
+  The type identifier of the object, e.g. "@mikro/image"
+  """
   identifier: String!
+
+  """The primary key of the object to assign permissions on"""
   object: ID!
+
+  """The permissions to assign, e.g. ["view_image", "change_image"]"""
   permissions: [String!]!
+
+  """The primary key of the user to assign permissions to"""
   user: ID!
 }
 
+"""
+An input for associating a set of items with another item, e.g. putting images into a dataset
+"""
 input AssociateInput {
+  """The ID of the target item"""
   other: ID!
+
+  """The IDs of the items to associate"""
   selfs: [ID!]!
 }
 
@@ -273,7 +361,22 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
+"""
+The blending mode used to combine multiple channels or layers into a composite image.
+"""
 enum Blending {
+  """
+  Additive blending, where the color values of overlapping layers are summed.
+  """
+  ADDITIVE
+
+  """
+  Multiplicative blending, where the color values of overlapping layers are multiplied.
+  """
+  MULTIPLICATIVE
+}
+
+enum BlendingChoices {
   ADDITIVE
   MULTIPLICATIVE
 }
@@ -300,6 +403,9 @@ type CCDElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+A camera (detector) on a microscope, described by its sensor dimensions, pixel sizes and bit depth. Clients use it through optics views to record which detector acquired an image.
+"""
 type Camera {
   bitDepth: Int
   id: ID!
@@ -323,25 +429,59 @@ input CameraFilter {
   DISTINCT: Boolean
   NOT: CameraFilter
   OR: CameraFilter
+  bitDepth: IntFilterLookup
   id: ID
-  name: String
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  manufacturer: StrFilterLookup
+  model: StrFilterLookup
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+  serialNumber: StrFilterLookup
 }
 
+"""Input for creating or ensuring a camera"""
 input CameraInput {
+  """The bit depth of the camera sensor"""
   bitDepth: Int = null
+
+  """The manufacturer of the camera"""
   manufacturer: String = null
+
+  """The model of the camera"""
   model: String = null
+
+  """The name of the camera"""
   name: String = null
+
+  """The physical pixel size in x direction (micrometers)"""
   pixelSizeX: Micrometers = null
+
+  """The physical pixel size in y direction (micrometers)"""
   pixelSizeY: Micrometers = null
+
+  """The sensor size in x direction (pixels)"""
   sensorSizeX: Int = null
+
+  """The sensor size in y direction (pixels)"""
   sensorSizeY: Int = null
+
+  """The unique serial number of the camera"""
   serialNumber: String!
 }
 
+"""Input for changing an existing dataset's name or parent"""
 input ChangeDatasetInput {
+  """The ID of the dataset to change"""
   id: ID!
+
+  """The name of the dataset"""
   name: String!
+
+  """The ID of the parent dataset to nest this dataset under"""
   parent: ID = null
 }
 
@@ -363,11 +503,17 @@ enum ChannelKind {
   WAVEGUIDE
 }
 
+"""
+The channel truth: a human-readable label for a channel, pinned to a coordinate anchor
+"""
 type ChannelLabel {
   id: ID!
   label: String!
 }
 
+"""
+A channel view describes an acquisition channel of an image, carrying its name and optical properties such as emission and excitation wavelengths.
+"""
 type ChannelView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -405,6 +551,9 @@ type ChannelView implements View {
   zMin: Int
 }
 
+"""
+Input for creating a channel view on an existing image, referenced by ID
+"""
 input ChannelViewInput {
   """The acquisition mode of the channel"""
   acquisitionMode: String = null
@@ -476,18 +625,104 @@ input ChildrenPaginationInput {
   offset: Int = 0
 }
 
+"""
+An OAuth client (application) that can act against the API, e.g. the app a change was made through.
+"""
 type Client {
   clientId: String!
   id: ID!
   name: String!
 }
 
+"""The color space format used to interpret color component values."""
 enum ColorFormat {
+  """Color expressed as hue, saturation and lightness components."""
   HSL
+
+  """Color expressed as red, green and blue components."""
   RGB
 }
 
+"""
+The colormap used to map intensity values of a channel to display colors.
+"""
 enum ColorMap {
+  """A colormap rendering all values as black."""
+  BLACK
+
+  """A monochromatic colormap from black to pure blue."""
+  BLUE
+
+  """A monochromatic colormap from black to brown."""
+  BROWN
+
+  """A colormap of cool tones ranging from cyan to magenta."""
+  COOL
+
+  """A monochromatic colormap from black to cyan."""
+  CYAN
+
+  """A monochromatic colormap from black to pure green."""
+  GREEN
+
+  """A grayscale colormap from black to white."""
+  GREY
+
+  """
+  The perceptually uniform inferno colormap, ranging from black through red to yellow.
+  """
+  INFERNO
+
+  """A grayscale colormap mapping intensity values directly to brightness."""
+  INTENSITY
+
+  """A monochromatic colormap from black to magenta."""
+  MAGENTA
+
+  """
+  The perceptually uniform magma colormap, ranging from black through purple to light yellow.
+  """
+  MAGMA
+
+  """A monochromatic colormap from black to orange."""
+  ORANGE
+
+  """A monochromatic colormap from black to pink."""
+  PINK
+
+  """
+  The perceptually uniform plasma colormap, ranging from dark blue to yellow.
+  """
+  PLASMA
+
+  """A monochromatic colormap from black to purple."""
+  PURPLE
+
+  """A multi-hue rainbow colormap cycling through the visible spectrum."""
+  RAINBOW
+
+  """A monochromatic colormap from black to pure red."""
+  RED
+
+  """A diverging colormap spanning the spectral colors from red to blue."""
+  SPECTRAL
+
+  """
+  The perceptually uniform viridis colormap, ranging from dark purple to yellow.
+  """
+  VIRIDIS
+
+  """A colormap of warm tones ranging from yellow to red."""
+  WARM
+
+  """A monochromatic colormap from black to white."""
+  WHITE
+
+  """A monochromatic colormap from black to yellow."""
+  YELLOW
+}
+
+enum ColorMapChoices {
   BLACK
   BLUE
   BROWN
@@ -512,6 +747,9 @@ enum ColorMap {
   YELLOW
 }
 
+"""
+A constraint on a named dimension of a data ROI, with optional min, max and step
+"""
 type Constraint {
   dim: String!
   max: Int
@@ -528,6 +766,9 @@ enum ContinousScanDirection {
   SLICE_ROW_COLUMN_SNAKE
 }
 
+"""
+A view marking an image region as acquired by a continuous scan, recording the direction the scan traversed the axes in.
+"""
 type ContinousScanView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -560,9 +801,25 @@ input ContinousScanViewFilter {
   NOT: ContinousScanViewFilter
   OR: ContinousScanViewFilter
   direction: ContinousScanDirection
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
   isGlobal: Boolean
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""
+Input for creating a continuous scan view on an existing image, referenced by ID
+"""
 input ContinousScanViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -572,7 +829,11 @@ input ContinousScanViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The direction of the scan"""
   direction: ScanDirection!
+
+  """The ID of the image this view is for"""
   image: ID!
 
   """The maximum t coordinate of the view"""
@@ -600,6 +861,9 @@ input ContinousScanViewInput {
   zMin: Int = null
 }
 
+"""
+The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata, value histograms, channel labels, light paths) to specific coordinates of a dataset
+"""
 type CoordinateAnchor {
   channelLabel: ChannelLabel
   chunkShape: [Int!]!
@@ -644,8 +908,12 @@ input CreateDataRoiInput {
   zDim: String = null
 }
 
+"""Input for creating a new dataset to organize images and files"""
 input CreateDatasetInput {
+  """The name of the dataset"""
   name: String!
+
+  """The ID of the parent dataset to nest this dataset under"""
   parent: ID = null
 }
 
@@ -671,13 +939,27 @@ input CreateLensInput {
   slices: [SliceInput!]!
 }
 
+"""Input for creating an RGB render context for an image"""
 input CreateRGBContextInput {
+  """The channel the context renders"""
   c: Int = null
+
+  """The ID of the image this RGB context renders"""
   image: ID!
+
+  """The name of the RGB context"""
   name: String = null
+
+  """The timepoint the context renders"""
   t: Int = null
+
+  """The ID of an uploaded media store to use as the thumbnail snapshot"""
   thumbnail: ID = null
+
+  """The RGB views (channel rendering settings) to attach to the context"""
   views: [PartialRGBViewInput!] = null
+
+  """The z plane the context renders"""
   z: Int = null
 }
 
@@ -689,6 +971,9 @@ input CreateSceneInput {
   temporalUnit: TemporalUnit = null
 }
 
+"""
+A single scale of a dataset's multiscale pyramid: a zarr-backed array described by its shape, chunk shape, scale factors and pyramid level
+"""
 type DataArray {
   chunkShape: [Int!]!
   id: ID!
@@ -703,10 +988,24 @@ input DataArrayFilter {
   DISTINCT: Boolean
   NOT: DataArrayFilter
   OR: DataArrayFilter
+
+  """Filter by the dataset this array belongs to"""
+  dataset: ID
   id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
   level: IntFilterLookup
 }
 
+input DataArrayOrder @oneOf {
+  id: Ordering
+  level: Ordering
+}
+
+"""
+A region of interest in a data array, described by its vectors and per-dimension constraints
+"""
 type DataRoi {
   constraints: [Constraint!]!
   dataset: ADataset!
@@ -715,7 +1014,7 @@ type DataRoi {
   kind: RoiKind!
   name: String!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this data ROI"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   vectors: [[Float!]!]!
   xDim: String!
@@ -728,26 +1027,55 @@ input DataRoiFilter {
   DISTINCT: Boolean
   NOT: DataRoiFilter
   OR: DataRoiFilter
-  activeFor: [SliceInput!]
-  dataset: IDFilterLookup
-  id: ID
+
+  """Filter by the dataset this ROI belongs to"""
+  dataset: ID
+  description: StrFilterLookup
+  id: UUID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  kind: RoiKindChoices
   name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+  xMax: IntFilterLookup
+  xMin: IntFilterLookup
+  yMax: IntFilterLookup
+  yMin: IntFilterLookup
+  zMax: IntFilterLookup
+  zMin: IntFilterLookup
 }
 
+input DataRoiOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+"""
+A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro.
+"""
 type Dataset {
-  children(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
+  children(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   createdAt: DateTime!
+
+  """The task this dataset was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   creator: User
   description: String
-  files(filters: FileFilter, order: FileOrder, pagination: OffsetPaginationInput): [File!]!
+  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
   id: ID!
-  images(filters: ImageFilter, order: ImageOrder, pagination: OffsetPaginationInput): [Image!]!
+  images(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
   isDefault: Boolean!
   name: String!
   parent: Dataset
   pinned: Boolean!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this dataset"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   tags: [String!]!
 }
@@ -762,23 +1090,72 @@ input DatasetFilter {
   DISTINCT: Boolean
   NOT: DatasetFilter
   OR: DatasetFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
   createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
   createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  description: StrFilterLookup
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  isDefault: Boolean
   name: StrFilterLookup
-  owner: ID = null
-  parentless: Boolean = null
-  scope: ScopeFilter = null
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by the parent dataset (list the children of a dataset)"""
+  parent: ID
+
+  """Filter for datasets with (true) or without (false) a parent"""
+  parentless: Boolean
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Filter by visibility scope"""
+  scope: ScopeKind
+
+  """Search by name (full-text search)"""
   search: String
+
+  """Filter by tag names"""
+  tags: [String!]
 }
 
 union DatasetImageFile = Dataset | File | Image
 
+input DatasetOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
 """Date with time (isoformat)"""
 scalar DateTime
 
+"""Input for deleting a camera by ID"""
 input DeleteCameraInput {
+  """The ID of the camera to delete"""
   id: ID!
 }
 
@@ -788,62 +1165,93 @@ input DeleteDataRoiInput {
   id: ID!
 }
 
+"""Input for deleting a dataset by ID"""
 input DeleteDatasetInput {
+  """The ID of the dataset to delete"""
   id: ID!
 }
 
+"""Input for deleting an era by ID"""
 input DeleteEraInput {
+  """The ID of the era to delete"""
   id: ID!
 }
 
+"""Input for deleting a file by ID"""
 input DeleteFileInput {
+  """The ID of the file to delete"""
   id: ID!
 }
 
+"""Input for deleting an image by ID"""
 input DeleteImageInput {
+  """The ID of the image to delete"""
   id: ID!
 }
 
+"""Input for deleting an instrument by ID"""
 input DeleteInstrumentInput {
+  """The ID of the instrument to delete"""
   id: ID!
 }
 
+"""Input for deleting a mesh by ID"""
 input DeleteMeshInput {
+  """The ID of the mesh to delete"""
   id: ID!
 }
 
+"""Input for deleting a multi-well plate by ID"""
 input DeleteMultiWellInput {
+  """The ID of the multi-well plate to delete"""
   id: ID!
 }
 
+"""Input for deleting an objective by ID"""
 input DeleteObjectiveInput {
+  """The ID of the objective to delete"""
   id: ID!
 }
 
+"""Input for deleting an RGB context by ID"""
 input DeleteRGBContextInput {
+  """The ID of the RGB context to delete"""
   id: ID!
 }
 
+"""Input for deleting a ROI by ID"""
 input DeleteRoiInput {
+  """The ID of the ROI to delete"""
   id: ID!
 }
 
+"""Input for deleting a snapshot by ID"""
 input DeleteSnaphotInput {
+  """The ID of the snapshot to delete"""
   id: ID!
 }
 
+"""Input for deleting a stage by ID"""
 input DeleteStageInput {
+  """The ID of the stage to delete"""
   id: ID!
 }
 
+"""Input for deleting a view collection by ID"""
 input DeleteViewCollectionInput {
+  """The ID of the view collection to delete"""
   id: ID!
 }
 
+"""Input for deleting a view by ID"""
 input DeleteViewInput {
+  """The ID of the view to delete"""
   id: ID!
 }
 
+"""
+A derived view establishes a processing relationship between two images, guaranteeing that the derived image shares the same coordinate system as its origin image so the two can be trivially overlayed and compared (e.g. a segmentation over its source image). Cropped or projected images are not derived views, as they do not share the coordinate system.
+"""
 type DerivedView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -871,14 +1279,23 @@ type DerivedView implements View {
   zMin: Int
 }
 
+"""
+A generic key-value descriptor attached to an object. Clients use descriptors to read arbitrary structured metadata without a dedicated field.
+"""
 type Descriptor {
   description: String
   key: String!
   value: Any!
 }
 
+"""
+An input for releasing a set of items from another item, e.g. removing images from a dataset
+"""
 input DesociateInput {
+  """The ID of the target item"""
   other: ID!
+
+  """The IDs of the items to release"""
   selfs: [ID!]!
 }
 
@@ -916,6 +1333,9 @@ input DimAnchorInput {
   value: Int!
 }
 
+"""
+A descriptor for a single named dimension of a dataset, recording its key, size and kind
+"""
 type DimDescriptor {
   """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
   key: String!
@@ -960,6 +1380,9 @@ type DjangoModelType {
   pk: ID!
 }
 
+"""
+The data type of a column in a DuckDB table, as used by tabular data stored alongside images.
+"""
 enum DuckDBDataType {
   """Large integer for large numeric values"""
   BIGINT
@@ -1066,12 +1489,21 @@ enum ElementKind {
   WAVEPLATE
 }
 
+"""
+An era is a time space corresponding to an epoch on a microscope during an experiment. Clients use eras to contextualize images in real-world time via timepoint views.
+"""
 type Era {
   begin: DateTime
+
+  """The task this era was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   id: ID!
   name: String!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this era"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   views(filters: TimepointViewFilter, pagination: OffsetPaginationInput): [TimepointView!]!
 }
@@ -1081,13 +1513,65 @@ input EraFilter {
   DISTINCT: Boolean
   NOT: EraFilter
   OR: EraFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
   begin: DateTime
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  end: DateTime
   id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the instrument this era belongs to"""
+  instrument: ID
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by name (case-insensitive substring)"""
+  search: String
 }
 
+"""
+Input for creating an era, a time period to which timepoint views relate
+"""
 input EraInput {
+  """The datetime at which the era begins"""
   begin: DateTime = null
+
+  """The name of the era"""
   name: String!
+}
+
+input EraOrder @oneOf {
+  begin: Ordering
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 """Euler angles for 3D orientation"""
@@ -1104,6 +1588,9 @@ input EulerInput {
   rz: Float = null
 }
 
+"""
+An experiment. Experiments are used to group datasets and images that belong to the same scientific investigation, carrying a name and a description.
+"""
 type Experiment {
   createdAt: DateTime!
   creator: User
@@ -1111,7 +1598,7 @@ type Experiment {
   id: ID!
   name: String!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this experiment"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 }
 
@@ -1120,14 +1607,41 @@ input ExperimentFilter {
   DISTINCT: Boolean
   NOT: ExperimentFilter
   OR: ExperimentFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+  description: StrFilterLookup
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
+input ExperimentOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
+A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them.
+"""
 type File {
   """The content type of the file"""
   contentType: String
+
+  """The task this file was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
 
   """The user who created this file"""
   creator: User!
@@ -1136,9 +1650,9 @@ type File {
 
   """The organization this file belongs to"""
   organization: Organization!
-  origins(filters: ImageFilter, order: ImageOrder, pagination: OffsetPaginationInput): [Image!]!
+  origins(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this file"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """The size of the file in bytes"""
@@ -1159,14 +1673,53 @@ input FileFilter {
   DISTINCT: Boolean
   NOT: FileFilter
   OR: FileFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+  contentType: StrFilterLookup
+
+  """Filter for items created after this datetime"""
   createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
   createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+
+  """Filter by the dataset this file belongs to"""
+  dataset: ID
+
+  """Filter by a list of dataset IDs"""
+  datasets: [ID!]
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
   name: StrFilterLookup
+
+  """Filter for files that are not derived from another file"""
+  notDerived: Boolean
+
+  """Filter by the creator's subject ID"""
   owner: ID
+
+  """Filter by visibility scope"""
   scope: ScopeKind
+
+  """Search by name (case-insensitive substring)"""
   search: String
+  size: IntFilterLookup
 }
 
 """
@@ -1174,10 +1727,16 @@ The `FileLike` scalar type represents a reference to a big file storage previous
 """
 scalar FileLike
 
-input FileOrder {
+input FileOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
+  name: Ordering
+  size: Ordering
 }
 
+"""
+A file view establishes a relationship between an image and a file: it records that this view of the image was originally part of the file (optionally a specific series within it) and links back to the source file.
+"""
 type FileView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -1210,9 +1769,27 @@ input FileViewFilter {
   DISTINCT: Boolean
   NOT: FileViewFilter
   OR: FileViewFilter
+
+  """Filter by the file this view belongs to"""
   file: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
+  isGlobal: Boolean
+
+  """Search by the name of the image this view belongs to"""
+  search: String
+  seriesIdentifier: StrFilterLookup
 }
 
+"""Input for creating a file view on an existing image, referenced by ID"""
 input FileViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -1222,8 +1799,14 @@ input FileViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the file this view represents"""
   file: ID!
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The series identifier of the file"""
   seriesIdentifier: String = null
 
   """The maximum t coordinate of the view"""
@@ -1252,7 +1835,7 @@ input FileViewInput {
 }
 
 input FileViewOrder @oneOf {
-  createdAt: Ordering
+  id: Ordering
 }
 
 """A filter"""
@@ -1385,13 +1968,24 @@ input FromArrayLikeInput {
   transformationViews: [PartialAffineTransformationViewInput!] = null
 }
 
+"""Input for creating a file record from an uploaded big-file store"""
 input FromFileLike {
+  """
+  The ID of the dataset to put the file in (defaults to the current default dataset)
+  """
   dataset: ID = null
+
+  """The uploaded big-file store to create the file from"""
   file: FileLike!
+
+  """The name of the file"""
   fileName: String!
+
+  """The IDs of entities this file was derived from"""
   origins: [ID!] = null
 }
 
+"""Input for creating a table from an uploaded parquet store"""
 input FromParquetLike {
   """The parquet dataframe to create the table from"""
   dataframe: ParquetLike!
@@ -1460,6 +2054,9 @@ enum Granularity {
   YEAR
 }
 
+"""
+A histogram view describes the distribution of pixel values in a subset of an image, providing bins, min/max bounds and the histogram counts. Useful for clients that want to display or auto-scale contrast.
+"""
 type HistogramView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -1489,7 +2086,11 @@ type HistogramView implements View {
   zMin: Int
 }
 
+"""
+Input for creating a histogram view on an existing image, referenced by ID
+"""
 input HistogramViewInput {
+  """The bin indices of the histogram (x values)"""
   bins: [Float!]!
 
   """The maximum c (channel) coordinate of the view"""
@@ -1500,9 +2101,17 @@ input HistogramViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The histogram of the image (y values)"""
   histogram: [Float!]!
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The maximum pixel value of the histogram"""
   max: Float!
+
+  """The minimum pixel value of the histogram"""
   min: Float!
 
   """The maximum t coordinate of the view"""
@@ -1537,26 +2146,9 @@ enum HistoryKind {
   UPDATE
 }
 
-input IDFilterLookup {
-  contains: ID
-  endsWith: ID
-  exact: ID
-  gt: ID
-  gte: ID
-  iContains: ID
-  iEndsWith: ID
-  iExact: ID
-  iRegex: String
-  iStartsWith: ID
-  inList: [ID!]
-  isNull: Boolean
-  lt: ID
-  lte: ID
-  range: [ID!]
-  regex: String
-  startsWith: ID
-}
-
+"""
+An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to.
+"""
 type Image {
   """The affine transformation views describing position and scale"""
   affineTransformationViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
@@ -1569,6 +2161,12 @@ type Image {
 
   """When this image was created"""
   createdAt: DateTime!
+
+  """The task this image was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
 
   """Who created this image"""
   creator: User
@@ -1629,7 +2227,7 @@ type Image {
   """The channels of this image"""
   planes: [PlaneInfo!]!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this image"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """Reference views describing relationships to other views"""
@@ -1637,7 +2235,7 @@ type Image {
   renders(filters: ViewFilter, types: [RenderKind!]): [Render!]!
 
   """RGB rendering contexts"""
-  rgbContexts(filters: RGBContextFilter, pagination: OffsetPaginationInput): [RGBContext!]!
+  rgbContexts(filters: RGBContextFilter, ordering: [RGBContextOrder!]! = [], pagination: OffsetPaginationInput): [RGBContext!]!
 
   """Region of interest views"""
   roiViews: [ROIView!]!
@@ -1647,7 +2245,7 @@ type Image {
   scaleViews: [ScaleView!]!
 
   """Associated snapshots"""
-  snapshots(filters: SnapshotFilter, pagination: OffsetPaginationInput): [Snapshot!]!
+  snapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
 
   """The store where the image data is stored."""
   store: ZarrStore!
@@ -1669,6 +2267,9 @@ type Image {
   ): [View!]!
 }
 
+"""
+An image accessor declares that the values of its table columns are ids of associated images, allowing clients to resolve table rows to images.
+"""
 type ImageAccessor implements Accessor {
   id: ID!
   keys: [String!]!
@@ -1698,18 +2299,73 @@ input ImageFilter {
   DISTINCT: Boolean
   NOT: ImageFilter
   OR: ImageFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
   createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
   createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
   dataset: DatasetFilter
+
+  """Filter by a list of dataset IDs"""
+  datasets: [ID!]
+  description: StrFilterLookup
+
+  """Filter for images converted from this file (through their file views)"""
+  file: ID
+
+  """Filter for images that have (or have no) ROIs"""
+  hasRois: Boolean
+  id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  kind: ImageKind
   name: StrFilterLookup
-  notDerived: Boolean = null
-  owner: ID = null
-  scope: ScopeFilter = null
-  search: String = null
+
+  """Filter for images that are not derived from another image"""
+  notDerived: Boolean
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Filter by visibility scope"""
+  scope: ScopeKind
+
+  """Search by name (full-text search)"""
+  search: String
   store: ZarrStoreFilter
+
+  """Filter by tag names"""
+  tags: [String!]
   timepointViews: TimepointViewFilter
   transformationViews: AffineTransformationViewFilter
+}
+
+enum ImageKind {
+  MASK
+  RGB
+  UNKNOWN
+  VOXEL
 }
 
 """
@@ -1717,8 +2373,10 @@ The `ImageLike` scalar type represents a reference to an image previously create
 """
 scalar ImageLike
 
-input ImageOrder {
+input ImageOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 type ImageStats {
@@ -1749,6 +2407,9 @@ enum ImageTimestampField {
   CREATED_AT
 }
 
+"""
+A view marking an image region as an instance segmentation mask, where each pixel value identifies an individual object instance. It points to the reference view it was computed from and can carry a per-instance label table.
+"""
 type InstanceMaskView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -1783,11 +2444,27 @@ input InstanceMaskViewFilter {
   NOT: InstanceMaskViewFilter
   OR: InstanceMaskViewFilter
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
-  image: ID = null
-  search: String = null
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
+  isGlobal: Boolean
+
+  """Filter by the reference view this mask refers to"""
+  referenceView: ID
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""
+Input for creating an instance mask view on an existing image, referenced by ID
+"""
 input InstanceMaskViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -1797,8 +2474,14 @@ input InstanceMaskViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The instance labels of the mask and their corresponding colors"""
   labels: LabelsLike = null
+
+  """The ID of the view that is masked by this instance mask"""
   referenceView: ID = null
 
   """The maximum t coordinate of the view"""
@@ -1826,12 +2509,18 @@ input InstanceMaskViewInput {
   zMin: Int = null
 }
 
+"""
+One labelled instance of an instance mask: the row of the mask's label table describing a single segmented object.
+"""
 type InstanceMaskViewLabel {
   id: String!
   mask: InstanceMaskView!
   values: Any!
 }
 
+"""
+A microscope or other instrument, identified by its manufacturer, model and serial number. Clients use it through optics views to record which instrument acquired an image.
+"""
 type Instrument {
   id: ID!
   manufacturer: String
@@ -1848,14 +2537,36 @@ input InstrumentFilter {
   NOT: InstrumentFilter
   OR: InstrumentFilter
   id: ID
-  name: String
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  manufacturer: StrFilterLookup
+  model: StrFilterLookup
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+  serialNumber: StrFilterLookup
 }
 
+"""Input for creating or ensuring a microscope instrument"""
 input InstrumentInput {
+  """The manufacturer of the instrument"""
   manufacturer: String = null
+
+  """The model of the instrument"""
   model: String = null
+
+  """The name of the instrument"""
   name: String = null
+
+  """The unique serial number of the instrument"""
   serialNumber: String!
+}
+
+input InstrumentOrder @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 input IntFilterLookup {
@@ -1883,6 +2594,9 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
+"""
+A label accessor declares that the values of its table columns are pixel values of an associated mask view, allowing clients to join table rows to mask labels.
+"""
 type LabelAccessor implements Accessor {
   id: ID!
   keys: [String!]!
@@ -1899,6 +2613,9 @@ input LabelInput {
   label: String!
 }
 
+"""
+A label view gives a label to a specific image channel, e.g. mapping an antibody to the channel it stains, so the labeling agent can be easily identified. Labels can also be used for other purposes, such as marking a channel as poor quality.
+"""
 type LabelView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -1925,6 +2642,7 @@ type LabelView implements View {
   zMin: Int
 }
 
+"""Input for creating a label view on an existing image, referenced by ID"""
 input LabelViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -1934,7 +2652,11 @@ input LabelViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The label of the entity class annotated by this view"""
   label: String!
 
   """The maximum t coordinate of the view"""
@@ -2017,6 +2739,9 @@ type LaserElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+The placement of a lens in a scene, including rendering settings such as colormap, contrast limits and an affine transformation matrix
+"""
 type Layer {
   affineMatrix: FourByFourMatrix
   climMax: Float
@@ -2039,11 +2764,28 @@ input LayerFilter {
   DISTINCT: Boolean
   NOT: LayerFilter
   OR: LayerFilter
-  description: StrFilterLookup
+  blending: BlendingChoices
   id: ID
-  name: StrFilterLookup
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the lens this layer renders"""
+  lens: ID
+
+  """Filter by the scene this layer is placed in"""
+  scene: ID
+  status: PlacementStatus
+  validity: PlacementValidity
 }
 
+input LayerOrder @oneOf {
+  id: Ordering
+}
+
+"""
+A Lens is a way of looking at a dataset: a dimensional selection (slices) over a dataset that defines a view of its data
+"""
 type Lens {
   activeAnchors: [CoordinateAnchor!]!
   dataset: ADataset!
@@ -2082,8 +2824,17 @@ input LensFilter {
   DISTINCT: Boolean
   NOT: LensFilter
   OR: LensFilter
+
+  """Filter by the dataset this lens looks at"""
+  dataset: ID
   id: ID
-  name: StrFilterLookup
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+}
+
+input LensOrder @oneOf {
+  id: Ordering
 }
 
 """Directed edge connecting two ports"""
@@ -2112,6 +2863,9 @@ input LightEdgeInput {
   targetPortId: ID!
 }
 
+"""
+The light path truth: the optical light path graph pinned to a coordinate anchor
+"""
 type LightPath {
   graph: LightpathGraph!
   id: ID!
@@ -2148,6 +2902,9 @@ input LightpathGraphInput {
   elements: [OpticalElementInput!]!
 }
 
+"""
+A view attaching the optical path (light sources, filters, detectors and their connections) that light travelled through when this image region was acquired.
+"""
 type LightpathView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -2178,6 +2935,9 @@ type LightpathView implements View {
   zMin: Int
 }
 
+"""
+A view marking an image region as a semantic segmentation mask, where pixel values are class labels. It points to the reference view it was computed from and can carry a label table.
+"""
 type MaskView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -2211,11 +2971,25 @@ input MaskViewFilter {
   NOT: MaskViewFilter
   OR: MaskViewFilter
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
-  image: ID = null
-  search: String = null
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
+  isGlobal: Boolean
+
+  """Filter by the reference view this mask refers to"""
+  referenceView: ID
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""Input for creating a mask view on an existing image, referenced by ID"""
 input MaskViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -2225,8 +2999,14 @@ input MaskViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The labels of the mask and their corresponding colors"""
   labels: LabelsLike = null
+
+  """The ID of the view that is masked by this mask"""
   referenceView: ID = null
 
   """The maximum t coordinate of the view"""
@@ -2254,6 +3034,9 @@ input MaskViewInput {
   zMin: Int = null
 }
 
+"""
+Display information for one pixel value of a mask: the label it represents and the color it is rendered with.
+"""
 type MaskedPixelInfo {
   color: String!
   label: String!
@@ -2306,8 +3089,11 @@ type MediaUploadGrant {
   uploadFormField: String!
 }
 
+"""
+A user's membership in an organization, carrying the roles they hold there.
+"""
 type Membership {
-  datasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
+  datasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   id: ID!
   isActive: Boolean!
   organization: Organization!
@@ -2315,6 +3101,9 @@ type Membership {
   user: User!
 }
 
+"""
+A 3D mesh belonging to a dataset, with its geometry kept in a big file store. Clients use it to download or visualize surface reconstructions derived from image data.
+"""
 type Mesh {
   id: ID!
   name: String!
@@ -2326,13 +3115,37 @@ input MeshFilter {
   DISTINCT: Boolean
   NOT: MeshFilter
   OR: MeshFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by the dataset this mesh belongs to"""
+  dataset: ID
+
+  """Filter by a list of dataset IDs"""
+  datasets: [ID!]
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
+"""Input for creating a 3D mesh from an uploaded mesh file"""
 input MeshInput {
+  """The uploaded mesh file store to create the mesh from"""
   mesh: MeshLike!
+
+  """The name of the mesh"""
   name: String!
 }
 
@@ -2340,6 +3153,12 @@ input MeshInput {
 The `MeshLike` scalar type represents a reference to a mesh previously created by the user n a datalayer
 """
 scalar MeshLike
+
+input MeshOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
 
 """Schema for unstructured metadata attached to a file."""
 type MetaSchema {
@@ -2393,11 +3212,15 @@ type ModelChange {
   oldValue: String
 }
 
+"""
+A multi-well plate with a grid of rows and columns used during acquisition. Clients use it to locate images within specific wells via well position views.
+"""
 type MultiWellPlate {
   columns: Int
   description: String
   id: ID!
   name: String
+  organization: DjangoModelType!
   rows: Int
   views(filters: WellPositionViewFilter, pagination: OffsetPaginationInput): [WellPositionView!]!
 }
@@ -2407,15 +3230,37 @@ input MultiWellPlateFilter {
   DISTINCT: Boolean
   NOT: MultiWellPlateFilter
   OR: MultiWellPlateFilter
+  columns: IntFilterLookup
+  description: StrFilterLookup
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+  rows: IntFilterLookup
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
+"""Input for creating or ensuring a multi-well plate"""
 input MultiWellPlateInput {
+  """The number of columns in the plate"""
   columns: Int = null
+
+  """The name of the multi-well plate"""
   name: String!
+
+  """The number of rows in the plate"""
   rows: Int = null
+}
+
+input MultiWellPlateOrder @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 type Mutation {
@@ -2645,7 +3490,7 @@ type Mutation {
   pinInstrument(input: PinInstrumentInput!): Instrument!
 
   """Pin a mesh for quick access"""
-  pinMesh(input: DeleteMeshInput!): Snapshot!
+  pinMesh(input: PinMeshInput!): Mesh!
 
   """Pin a multi-well plate for quick access"""
   pinMultiWellPlate(input: PintMultiWellPlateInput!): MultiWellPlate!
@@ -2752,6 +3597,9 @@ type Mutation {
   updateRoi(input: UpdateRoiInput!): ROI!
 }
 
+"""
+A microscope objective, described by its magnification, numerical aperture and immersion medium. Clients use it through optics views to record which objective an image was acquired with.
+"""
 type Objective {
   id: ID!
   immersion: String
@@ -2815,7 +3663,17 @@ input ObjectiveFilter {
   NOT: ObjectiveFilter
   OR: ObjectiveFilter
   id: ID
-  name: String
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  immersion: StrFilterLookup
+  magnification: FloatFilterLookup
+  na: FloatFilterLookup
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+  serialNumber: StrFilterLookup
 }
 
 enum ObjectiveImmersion {
@@ -2828,12 +3686,28 @@ enum ObjectiveImmersion {
   WATER_DIPPING
 }
 
+"""Input for creating or ensuring a microscope objective"""
 input ObjectiveInput {
+  """The immersion medium of the objective (e.g. oil, water, air)"""
   immersion: String = null
+
+  """The magnification of the objective"""
   magnification: Float = null
+
+  """The numerical aperture of the objective"""
   na: Float = null
+
+  """The name of the objective"""
   name: String = null
+
+  """The unique serial number of the objective"""
   serialNumber: String!
+}
+
+input ObjectiveOrder @oneOf {
+  id: Ordering
+  magnification: Ordering
+  name: Ordering
 }
 
 input OffsetPaginationInput {
@@ -2908,6 +3782,9 @@ input OpticalElementInput {
   workingDistanceMm: Float = null
 }
 
+"""
+A view describing the optics used to acquire an image region: the instrument, objective and camera. Use it to inspect or compare acquisition hardware settings.
+"""
 type OpticsView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -2942,23 +3819,47 @@ input OpticsViewFilter {
   NOT: OpticsViewFilter
   OR: OpticsViewFilter
   camera: CameraFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
   instrument: InstrumentFilter
   isGlobal: Boolean
   objective: ObjectiveFilter
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""
+Input for creating an optics view on an existing image, referenced by ID
+"""
 input OpticsViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
 
   """The minimum c (channel) coordinate of the view"""
   cMin: Int = null
+
+  """The ID of the camera used to acquire the image"""
   camera: ID = null
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The ID of the instrument used to acquire the image"""
   instrument: ID = null
+
+  """The ID of the objective used to acquire the image"""
   objective: ID = null
 
   """The maximum t coordinate of the view"""
@@ -2986,6 +3887,9 @@ input OpticsViewInput {
   zMin: Int = null
 }
 
+"""
+The hardware truth: the recorded microscope (Optikit) state pinned to a coordinate anchor
+"""
 type OptikitState {
   chunkShape: [Int!]!
   dims: [String!]!
@@ -3003,6 +3907,9 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+"""
+An organization (tenant). Every object in mikro is scoped to exactly one organization, and queries only ever see the current organization's data.
+"""
 type Organization {
   id: ID!
   slug: String!
@@ -3098,7 +4005,11 @@ type ParquetUploadGrant {
   uploadFormField: String!
 }
 
+"""
+Input for creating an acquisition view (when and by whom the image was acquired) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialAcquisitionViewInput {
+  """The time the image was acquired"""
   acquiredAt: DateTime = null
 
   """The maximum c (channel) coordinate of the view"""
@@ -3109,7 +4020,11 @@ input PartialAcquisitionViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """A cleartext description of the image acquisition"""
   description: String = null
+
+  """The ID of the user that acquired the image"""
   operator: ID = null
 
   """The maximum t coordinate of the view"""
@@ -3137,7 +4052,11 @@ input PartialAcquisitionViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating an affine transformation view (mapping the image onto a stage) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialAffineTransformationViewInput {
+  """The 4x4 affine matrix mapping image coordinates to stage coordinates"""
   affineMatrix: FourByFourMatrix!
 
   """The maximum c (channel) coordinate of the view"""
@@ -3148,6 +4067,8 @@ input PartialAffineTransformationViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the stage this transformation maps the image onto"""
   stage: ID = null
 
   """The maximum t coordinate of the view"""
@@ -3175,6 +4096,9 @@ input PartialAffineTransformationViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a channel view (channel metadata such as name and wavelengths) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialChannelViewInput {
   """The acquisition mode of the channel"""
   acquisitionMode: String = null
@@ -3222,6 +4146,9 @@ input PartialChannelViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a derived view (recording the image this image was derived from) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialDerivedViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3231,6 +4158,8 @@ input PartialDerivedViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this image was derived from"""
   originImage: ID!
 
   """The maximum t coordinate of the view"""
@@ -3258,6 +4187,9 @@ input PartialDerivedViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a file view (linking the image region to the originating file) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialFileViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3267,7 +4199,11 @@ input PartialFileViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the file this view represents"""
   file: ID!
+
+  """The series identifier of the file"""
   seriesIdentifier: String = null
 
   """The maximum t coordinate of the view"""
@@ -3295,13 +4231,26 @@ input PartialFileViewInput {
   zMin: Int = null
 }
 
+"""
+Input for an image accessor on a table, linking columns to an image (without the table reference)
+"""
 input PartialImageAccessorInput {
+  """The ID of the image the accessor values refer to"""
   image: ID!
+
+  """The column keys of the table this accessor refers to"""
   keys: [String!]!
+
+  """The maximum row index this accessor applies to"""
   maxIndex: Int = null
+
+  """The minimum row index this accessor applies to"""
   minIndex: Int = null
 }
 
+"""
+Input for creating an instance mask view (an instance mask of another image) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialInstanceMaskViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3311,7 +4260,11 @@ input PartialInstanceMaskViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The instance labels of the mask and their corresponding colors"""
   labels: LabelsLike = null
+
+  """The ID of the view that is masked by this instance mask"""
   referenceView: ID = null
 
   """The maximum t coordinate of the view"""
@@ -3339,13 +4292,26 @@ input PartialInstanceMaskViewInput {
   zMin: Int = null
 }
 
+"""
+Input for a label accessor on a table, linking columns to a pixel view (without the table reference)
+"""
 input PartialLabelAccessorInput {
+  """The column keys of the table this accessor refers to"""
   keys: [String!]!
+
+  """The maximum row index this accessor applies to"""
   maxIndex: Int = null
+
+  """The minimum row index this accessor applies to"""
   minIndex: Int = null
+
+  """The ID of the pixel view the label values refer to"""
   pixelView: ID!
 }
 
+"""
+Input for creating a lightpath view (the optical path of the instrument) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialLightpathViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3355,6 +4321,8 @@ input PartialLightpathViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The lightpath graph of the instrument"""
   graph: LightpathGraphInput!
 
   """The maximum t coordinate of the view"""
@@ -3382,6 +4350,9 @@ input PartialLightpathViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a mask view (a label mask of another image) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialMaskViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3391,7 +4362,11 @@ input PartialMaskViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The labels of the mask and their corresponding colors"""
   labels: LabelsLike = null
+
+  """The ID of the view that is masked by this mask"""
   referenceView: ID = null
 
   """The maximum t coordinate of the view"""
@@ -3419,17 +4394,26 @@ input PartialMaskViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating an optics view (instrument, objective and camera used) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialOpticsViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
 
   """The minimum c (channel) coordinate of the view"""
   cMin: Int = null
+
+  """The ID of the camera used to acquire the image"""
   camera: ID = null
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the instrument used to acquire the image"""
   instrument: ID = null
+
+  """The ID of the objective used to acquire the image"""
   objective: ID = null
 
   """The maximum t coordinate of the view"""
@@ -3457,8 +4441,16 @@ input PartialOpticsViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating an RGB render view (how a channel is rendered in an RGB context) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialRGBViewInput {
+  """Whether the view is active"""
   active: Boolean = null
+
+  """
+  The base color of the channel as RGBA values (if using a mapped scaler)
+  """
   baseColor: [Float!] = null
 
   """The maximum c (channel) coordinate of the view"""
@@ -3469,12 +4461,26 @@ input PartialRGBViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The color map applied to the channel"""
   colorMap: ColorMap = null
+
+  """The ID of the RGB render context this view belongs to"""
   context: ID = null
+
+  """The maximum contrast limit of the channel"""
   contrastLimitMax: Float = null
+
+  """The minimum contrast limit of the channel"""
   contrastLimitMin: Float = null
+
+  """The gamma correction applied to the channel"""
   gamma: Float = null
+
+  """Whether to rescale the channel data to the contrast limits"""
   rescale: Boolean = null
+
+  """The scale factor applied to the channel when rendering"""
   scale: Float = null
 
   """The maximum t coordinate of the view"""
@@ -3502,6 +4508,9 @@ input PartialRGBViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a ROI view (marking the image as a cutout of a parent image's ROI) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialROIViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3511,6 +4520,8 @@ input PartialROIViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the ROI of the parent image this view is a cutout of"""
   roi: ID!
 
   """The maximum t coordinate of the view"""
@@ -3538,6 +4549,9 @@ input PartialROIViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a reference view (marking the region as a reference for other views) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialReferenceViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3573,6 +4587,9 @@ input PartialReferenceViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a scale view (the scale factors relative to a parent view) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialScaleViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3582,11 +4599,23 @@ input PartialScaleViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the parent view this scale view is derived from"""
   parent: ID = null
+
+  """The scale in c direction"""
   scaleC: Float = null
+
+  """The scale in t direction"""
   scaleT: Float = null
+
+  """The scale in x direction"""
   scaleX: Float = null
+
+  """The scale in y direction"""
   scaleY: Float = null
+
+  """The scale in z direction"""
   scaleZ: Float = null
 
   """The maximum t coordinate of the view"""
@@ -3614,6 +4643,9 @@ input PartialScaleViewInput {
   zMin: Int = null
 }
 
+"""
+Input for creating a timepoint view (placing the region in time relative to an era) as part of creating an image; the image is taken from the surrounding input
+"""
 input PartialTimepointViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -3623,8 +4655,14 @@ input PartialTimepointViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the era this timepoint belongs to"""
   era: ID = null
+
+  """The index of the timepoint since the start of the era"""
   indexSinceStart: Int = null
+
+  """The time in ms since the start of the era"""
   msSinceStart: Milliseconds = null
 
   """The maximum t coordinate of the view"""
@@ -3657,58 +4695,111 @@ type PermissionOption {
   value: ID!
 }
 
+"""Input for pinning or unpinning a camera for quick access"""
 input PinCameraInput {
+  """The ID of the camera to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a dataset for quick access"""
 input PinDatasetInput {
+  """The ID of the dataset to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning an era for quick access"""
 input PinEraInput {
+  """The ID of the era to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning an image for quick access"""
 input PinImageInput {
+  """The ID of the image to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning an instrument for quick access"""
 input PinInstrumentInput {
+  """The ID of the instrument to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a mesh for quick access"""
+input PinMeshInput {
+  """The ID of the mesh to pin or unpin"""
+  id: ID!
+
+  """True to pin, false to unpin"""
+  pin: Boolean!
+}
+
+"""Input for pinning or unpinning an objective for quick access"""
 input PinObjectiveInput {
+  """The ID of the objective to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a ROI for quick access"""
 input PinROIInput {
+  """The ID of the ROI to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a snapshot for quick access"""
 input PinSnapshotInput {
+  """The ID of the snapshot to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a stage for quick access"""
 input PinStageInput {
+  """The ID of the stage to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a view collection for quick access"""
 input PinViewCollectionInput {
+  """The ID of the view collection to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a view for quick access"""
 input PinViewInput {
+  """The ID of the view to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
@@ -3733,8 +4824,12 @@ type PinholeElement implements OpticalElement {
   serialNumber: String
 }
 
+"""Input for pinning or unpinning a multi-well plate for quick access"""
 input PintMultiWellPlateInput {
+  """The ID of the multi-well plate to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
@@ -3743,6 +4838,13 @@ enum PlacementStatus {
   ARCHIVED
   DELETED
   INACTIVE
+}
+
+enum PlacementValidity {
+  INFERRED
+  MANUAL
+  UNKNOWN
+  VALIDATED
 }
 
 """A channel descriptor"""
@@ -3774,11 +4876,6 @@ type ProvenanceEntry {
   """The date of the change."""
   date: DateTime!
 
-  """
-  The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None.
-  """
-  during: String
-
   """The effective changes made to the model."""
   effectiveChanges: [ModelChange!]!
 
@@ -3787,6 +4884,9 @@ type ProvenanceEntry {
 
   """The type of change that was made."""
   kind: HistoryKind!
+
+  """The task during which the change occurred, if any."""
+  task: Task
 
   """User who made the change."""
   user: User
@@ -3804,168 +4904,358 @@ enum PulseKind {
 type Query {
   _entities(representations: [_Any!]!): [_Entity]!
   _service: _Service!
+
+  """
+  List acquisition views (recording when and by whom images were acquired)
+  """
   acquisitionViews: [AcquisitionView!]!
 
   """Get all active views for a specific image"""
   activeViews(exclude: [ViewKind!], image: ID!, include: [ViewKind!], selector: Selector = null): [View!]!
+
+  """Get a single array dataset by ID"""
   adataset(id: ID!): ADataset!
-  adatasets(filters: ADatasetFilter, pagination: OffsetPaginationInput): [ADataset!]!
+
+  """
+  List array datasets (N-dimensional arrays with named dimensions and anchored metadata)
+  """
+  adatasets(filters: ADatasetFilter, ordering: [ADatasetOrder!]! = [], pagination: OffsetPaginationInput): [ADataset!]!
+
+  """
+  List affine transformation views (placing images in physical stage space)
+  """
   affineTransformationViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
 
   """Get available permissions for a specific identifier"""
   availablePermissions(identifier: String!, search: String = null, values: [ID!] = null): [PermissionOption!]!
+
+  """Get a single camera by ID"""
   camera(
     """The unique identifier of an object"""
     id: ID!
   ): Camera!
+
+  """List channel views (describing the channels of images)"""
   channelViews: [ChannelView!]!
+
+  """Get the channel infos of a specific image"""
   channelsFor(
     filters: ChannelInfoFilter = null
 
     """The unique identifier of an object"""
     image: ID!
   ): [ChannelInfo!]!
+
+  """List the child datasets of a dataset"""
   children(filters: DatasetChildrenFilter = null, order: ChildrenOrder = null, pagination: ChildrenPaginationInput = null, parent: ID!): [DatasetImageFile!]!
+
+  """List continuous scan views (recording scan directions)"""
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
+
+  """Get a single data array by ID"""
   dataArray(id: ID!): DataArray!
-  dataArrays(filters: DataArrayFilter, pagination: OffsetPaginationInput): [DataArray!]!
+
+  """List data arrays (the multiscale zarr arrays backing array datasets)"""
+  dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
+
+  """Get a single data ROI by ID"""
   dataRoi(id: ID!): DataRoi!
-  dataRois(filters: DataRoiFilter, pagination: OffsetPaginationInput): [DataRoi!]!
+
+  """List data ROIs (regions of interest on array datasets)"""
+  dataRois(filters: DataRoiFilter, ordering: [DataRoiOrder!]! = [], pagination: OffsetPaginationInput): [DataRoi!]!
+
+  """Get a single dataset by ID"""
   dataset(
     """The unique identifier of an object"""
     id: ID!
   ): Dataset!
-  datasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
+
+  """List datasets (folder-like collections of images, files and tables)"""
+  datasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
+
+  """
+  Get generic key-value descriptors for an object identified by identifier and ID
+  """
   describe(id: ID!, identifier: String!): [Descriptor!]!
-  eras(filters: EraFilter, pagination: OffsetPaginationInput): [Era!]!
+
+  """
+  List eras (named time epochs on a microscope that timepoint views anchor to)
+  """
+  eras(filters: EraFilter, ordering: [EraOrder!]! = [], pagination: OffsetPaginationInput): [Era!]!
+
+  """Get a single experiment by ID"""
   experiment(
     """The unique identifier of an object"""
     id: ID!
   ): Experiment!
-  experiments(filters: ExperimentFilter, pagination: OffsetPaginationInput): [Experiment!]!
+
+  """List experiments"""
+  experiments(filters: ExperimentFilter, ordering: [ExperimentOrder!]! = [], pagination: OffsetPaginationInput): [Experiment!]!
+
+  """Get a single file by ID"""
   file(
     """The unique identifier of an object"""
     id: ID!
   ): File!
+
+  """Get a single file view by ID"""
   fileView(id: ID!): FileView!
+
+  """
+  List file views (linking images to the raw files they were converted from)
+  """
   fileViews(filters: FileViewFilter, ordering: [FileViewOrder!]! = [], pagination: OffsetPaginationInput): [FileView!]!
-  files(filters: FileFilter, order: FileOrder, pagination: OffsetPaginationInput): [File!]!
+
+  """List files (raw microscopy files such as .czi or .ome.tiff)"""
+  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
 
   """Returns a single image by ID"""
   image(
     """The unique identifier of an object"""
     id: ID!
   ): Image!
+
+  """List image accessors (columns of tables that reference images)"""
   imageAccessors: [ImageAccessor!]!
-  images(filters: ImageFilter, order: ImageOrder, pagination: OffsetPaginationInput): [Image!]!
+
+  """List images in the current organization, filterable and orderable"""
+  images(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
 
   """Get statistics about images"""
   imagesStats(filters: ImageFilter = null): ImageStats!
+
+  """
+  Get one labelled instance of an instance mask by its compound ID (maskId-rowId)
+  """
   instanceMaskViewLabel(
     """The unique identifier of an object"""
     id: ID!
   ): InstanceMaskViewLabel!
+
+  """Get a single instrument by ID"""
   instrument(
     """The unique identifier of an object"""
     id: ID!
   ): Instrument!
-  instruments: [Instrument!]!
-  labelAccessors: [LabelAccessor!]!
-  labelViews: [LabelView!]!
-  layer(id: ID!): Layer!
-  layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
-  lens(id: ID!): Lens!
-  lenses(filters: LensFilter, pagination: OffsetPaginationInput): [Lens!]!
 
-  """Returns a single image by ID"""
+  """List microscopes/instruments"""
+  instruments(filters: InstrumentFilter, ordering: [InstrumentOrder!]! = [], pagination: OffsetPaginationInput): [Instrument!]!
+
+  """List label accessors (columns of tables that reference mask labels)"""
+  labelAccessors: [LabelAccessor!]!
+
+  """List label views (mapping image channels to labels)"""
+  labelViews: [LabelView!]!
+
+  """Get a single layer by ID"""
+  layer(id: ID!): Layer!
+
+  """List layers (placements of a lens inside a scene)"""
+  layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
+
+  """Get a single lens by ID"""
+  lens(id: ID!): Lens!
+
+  """List lenses (parameterized ways of looking at an array dataset)"""
+  lenses(filters: LensFilter, ordering: [LensOrder!]! = [], pagination: OffsetPaginationInput): [Lens!]!
+
+  """Get a single lightpath view by ID"""
   lightpathView(
     """The unique identifier of an object"""
     id: ID!
   ): LightpathView!
+
+  """
+  Get display information (label and color) for one pixel value of a mask
+  """
   maskedPixelInfo(
     """The unique identifier of an object"""
     id: ID!
   ): MaskedPixelInfo!
+
+  """List the memberships of the current organization (excluding bots)"""
   members: [Membership!]!
+
+  """Get a single 3D mesh by ID"""
   mesh(
     """The unique identifier of an object"""
     id: ID!
   ): Mesh!
-  meshes(filters: MeshFilter, pagination: OffsetPaginationInput): [Mesh!]!
+
+  """List 3D meshes"""
+  meshes(filters: MeshFilter, ordering: [MeshOrder!]! = [], pagination: OffsetPaginationInput): [Mesh!]!
+
+  """Get a single multi well plate by ID"""
   multiWellPlate(
     """The unique identifier of an object"""
     id: ID!
   ): MultiWellPlate!
-  multiWellPlates(filters: MultiWellPlateFilter, pagination: OffsetPaginationInput): [MultiWellPlate!]!
-  mydatasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
-  myeras(filters: EraFilter, pagination: OffsetPaginationInput): [Era!]!
-  myfiles(filters: FileFilter, order: FileOrder, pagination: OffsetPaginationInput): [File!]!
-  myimages(filters: ImageFilter, order: ImageOrder, pagination: OffsetPaginationInput): [Image!]!
-  myobjectives: [Objective!]!
-  mysnapshots(filters: SnapshotFilter, pagination: OffsetPaginationInput): [Snapshot!]!
-  mytables(filters: TableFilter, pagination: OffsetPaginationInput): [Table!]!
+
+  """List multi well plates"""
+  multiWellPlates(filters: MultiWellPlateFilter, ordering: [MultiWellPlateOrder!]! = [], pagination: OffsetPaginationInput): [MultiWellPlate!]!
+
+  """List datasets created by the current user"""
+  mydatasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
+
+  """List eras created by the current user"""
+  myeras(filters: EraFilter, ordering: [EraOrder!]! = [], pagination: OffsetPaginationInput): [Era!]!
+
+  """List files created by the current user"""
+  myfiles(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
+
+  """List images created by the current user"""
+  myimages(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
+
+  """List objectives created by the current user"""
+  myobjectives(filters: ObjectiveFilter, ordering: [ObjectiveOrder!]! = [], pagination: OffsetPaginationInput): [Objective!]!
+
+  """List snapshots created by the current user"""
+  mysnapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """List tables created by the current user"""
+  mytables(filters: TableFilter, ordering: [TableOrder!]! = [], pagination: OffsetPaginationInput): [Table!]!
+
+  """Get a single objective by ID"""
   objective(
     """The unique identifier of an object"""
     id: ID!
   ): Objective!
-  objectives: [Objective!]!
+
+  """List microscope objectives"""
+  objectives(filters: ObjectiveFilter, ordering: [ObjectiveOrder!]! = [], pagination: OffsetPaginationInput): [Objective!]!
 
   """Get permissions for a specific object"""
   permissions(identifier: String!, object: ID!): [UserObjectPermission!]!
+
+  """Get a random image of the current organization"""
   randomImage: Image!
+
+  """Get a single render tree by ID"""
   renderTree(
     """The unique identifier of an object"""
     id: ID!
   ): RenderTree!
-  renderTrees(filters: RenderTreeFilter, order: RenderTreeOrder, pagination: OffsetPaginationInput): [RenderTree!]!
+
+  """List render trees (saved client-side render configurations)"""
+  renderTrees(filters: RenderTreeFilter, ordering: [RenderTreeOrder!]! = [], pagination: OffsetPaginationInput): [RenderTree!]!
+
+  """Get a single RGB render view by ID"""
   rgbView(
     """The unique identifier of an object"""
     id: ID!
   ): RGBView!
+
+  """List RGB render views (per-channel display settings)"""
   rgbViews(filters: RGBViewFilter, pagination: OffsetPaginationInput): [RGBView!]!
+
+  """Get a single RGB render context by ID"""
   rgbcontext(
     """The unique identifier of an object"""
     id: ID!
   ): RGBContext!
-  rgbcontexts(filters: RGBContextFilter, pagination: OffsetPaginationInput): [RGBContext!]!
+
+  """
+  List RGB render contexts (groups of RGB views composing a displayable image)
+  """
+  rgbcontexts(filters: RGBContextFilter, ordering: [RGBContextOrder!]! = [], pagination: OffsetPaginationInput): [RGBContext!]!
+
+  """Get a single region of interest by ID"""
   roi(
     """The unique identifier of an object"""
     id: ID!
   ): ROI!
-  rois(filters: ROIFilter, order: ROIOrder, pagination: OffsetPaginationInput): [ROI!]!
+
+  """List regions of interest drawn on images"""
+  rois(filters: ROIFilter, ordering: [ROIOrder!]! = [], pagination: OffsetPaginationInput): [ROI!]!
+
+  """List the rows of a table"""
   rows(filters: RowFilter = null, pagination: TablePaginationInput = null, table: ID!): [MetricMap!]!
+
+  """List scale views (the levels of multiscale image pyramids)"""
   scaleViews: [ScaleView!]!
+
+  """Get a single scene by ID"""
   scene(id: ID!): Scene!
+
+  """List scenes (compositions of layers over array datasets)"""
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
+
+  """Get a single snapshot by ID"""
   snapshot(
     """The unique identifier of an object"""
     id: ID!
   ): Snapshot!
-  snapshots(filters: SnapshotFilter, pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """List snapshots (pre-rendered thumbnail images of images)"""
+  snapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """Get a single stage by ID"""
   stage(
     """The unique identifier of an object"""
     id: ID!
   ): Stage!
-  stages(filters: StageFilter, pagination: OffsetPaginationInput): [Stage!]!
+
+  """List stages (the 3D physical spaces images are positioned in)"""
+  stages(filters: StageFilter, ordering: [StageOrder!]! = [], pagination: OffsetPaginationInput): [Stage!]!
+
+  """Get a single table by ID"""
   table(
     """The unique identifier of an object"""
     id: ID!
   ): Table!
+
+  """Get a single table cell by its compound ID (tableId-rowId-columnId)"""
   tableCell(
     """The unique identifier of an object"""
     id: ID!
   ): TableCell!
-  tableCells(filters: TableCellFilter!, pagination: OffsetPaginationInput!): [TableCell!]!
+
+  """List the cells of a table, row-major over the table's parquet data"""
+  tableCells(
+    filters: TableCellFilter = null
+    pagination: OffsetPaginationInput = null
+
+    """The unique identifier of an object"""
+    table: ID!
+  ): [TableCell!]!
+
+  """Get a single table row by its compound ID (tableId-rowId)"""
   tableRow(
     """The unique identifier of an object"""
     id: ID!
   ): TableRow!
-  tableRows(filters: TableRowFilter!, pagination: OffsetPaginationInput!): [TableRow!]!
-  tables(filters: TableFilter, pagination: OffsetPaginationInput): [Table!]!
+
+  """List the rows of a table, paginated over the table's parquet data"""
+  tableRows(
+    filters: TableRowFilter = null
+    pagination: OffsetPaginationInput = null
+
+    """The unique identifier of an object"""
+    table: ID!
+  ): [TableRow!]!
+
+  """List tables (tabular data backed by parquet stores)"""
+  tables(filters: TableFilter, ordering: [TableOrder!]! = [], pagination: OffsetPaginationInput): [Table!]!
+
+  """Get a single Rekuest task by ID"""
+  task(
+    """The unique identifier of an object"""
+    id: ID!
+  ): Task!
+
+  """List the Rekuest tasks under which objects were created or changed"""
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [Task!]!
+
+  """List timepoint views (anchoring image regions in real time)"""
   timepointViews(filters: TimepointViewFilter, pagination: OffsetPaginationInput): [TimepointView!]!
+
+  """List well position views (mapping images to multi well plate wells)"""
   wellPositionViews(filters: WellPositionViewFilter, pagination: OffsetPaginationInput): [WellPositionView!]!
 }
 
+"""
+An RGB context is a collection of RGB views that together describe how an image should be rendered in RGB, e.g. grouping the views that represent each channel with its color map and contrast settings.
+"""
 type RGBContext {
   blending: Blending!
   c: Int!
@@ -3973,7 +5263,7 @@ type RGBContext {
   image: Image!
   name: String!
   pinned: Boolean!
-  snapshots(filters: SnapshotFilter, pagination: OffsetPaginationInput): [Snapshot!]!
+  snapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
   t: Int!
   views: [RGBView!]!
   z: Int!
@@ -3984,11 +5274,31 @@ input RGBContextFilter {
   DISTINCT: Boolean
   NOT: RGBContextFilter
   OR: RGBContextFilter
+  blending: BlendingChoices
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+
+  """Filter by the image this context renders"""
+  image: ID
+  name: StrFilterLookup
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
+input RGBContextOrder @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+"""
+An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings.
+"""
 type RGBView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -4004,7 +5314,7 @@ type RGBView implements View {
     filters: ViewFilter
     types: [ViewKind!]
   ): [View!]!
-  contexts(filters: RGBContextFilter, pagination: OffsetPaginationInput): [RGBContext!]!
+  contexts(filters: RGBContextFilter, ordering: [RGBContextOrder!]! = [], pagination: OffsetPaginationInput): [RGBContext!]!
   contrastLimitMax: Float
   contrastLimitMin: Float
   fullColour(format: ColorFormat = RGB): String!
@@ -4028,13 +5338,37 @@ input RGBViewFilter {
   DISTINCT: Boolean
   NOT: RGBViewFilter
   OR: RGBViewFilter
+  active: Boolean
+  colorMap: ColorMapChoices
+
+  """Filter by the RGB contexts this view belongs to"""
+  contexts: [ID!]
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
+  isGlobal: Boolean
+
+  """Search by the name of the image this view belongs to"""
   search: String
 }
 
+"""
+Input for creating an RGB render view on an existing image, referenced by ID
+"""
 input RGBViewInput {
+  """Whether the view is active"""
   active: Boolean = null
+
+  """
+  The base color of the channel as RGBA values (if using a mapped scaler)
+  """
   baseColor: [Float!] = null
 
   """The maximum c (channel) coordinate of the view"""
@@ -4045,13 +5379,29 @@ input RGBViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The color map applied to the channel"""
   colorMap: ColorMap = null
+
+  """The ID of the RGB render context this view belongs to"""
   context: ID!
+
+  """The maximum contrast limit of the channel"""
   contrastLimitMax: Float = null
+
+  """The minimum contrast limit of the channel"""
   contrastLimitMin: Float = null
+
+  """The gamma correction applied to the channel"""
   gamma: Float = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """Whether to rescale the channel data to the contrast limits"""
   rescale: Boolean = null
+
+  """The scale factor applied to the channel when rendering"""
   scale: Float = null
 
   """The maximum t coordinate of the view"""
@@ -4079,8 +5429,17 @@ input RGBViewInput {
   zMin: Int = null
 }
 
+"""
+A region of interest drawn on an image, defined by a list of 5D vectors (c, t, z, y, x) and a kind (rectangle, path, point, ...). Use ROIs to mark and share structures of interest.
+"""
 type ROI {
   createdAt: DateTime!
+
+  """The task this ROI was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   creator: User
   id: ID!
   image: Image!
@@ -4088,7 +5447,7 @@ type ROI {
   name: String!
   pinned: Boolean!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this ROI"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   vectors: [FiveDVector!]!
 }
@@ -4098,17 +5457,70 @@ input ROIFilter {
   DISTINCT: Boolean
   NOT: ROIFilter
   OR: ROIFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+
+  """Filter by the group this ROI belongs to"""
+  group: ID
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
-  image: ID = null
+
+  """Filter by the image this ROI was drawn on"""
+  image: ID
+
+  """Filter by a list of images this ROI was drawn on"""
+  images: [ID!]
   kind: RoiKindChoices
+  label: StrFilterLookup
+  maxT: IntFilterLookup
+  maxX: IntFilterLookup
+  maxY: IntFilterLookup
+  maxZ: IntFilterLookup
+  minT: IntFilterLookup
+  minX: IntFilterLookup
+  minY: IntFilterLookup
+  minZ: IntFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by the name of the image this ROI was drawn on"""
   search: String
 }
 
-input ROIOrder {
+input ROIOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
+"""
+A ROI view establishes a relationship between an image region and a region of interest, e.g. recording that this image was cropped from the area described by the ROI on another image.
+"""
 type ROIView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -4135,6 +5547,7 @@ type ROIView implements View {
   zMin: Int
 }
 
+"""Input for creating a ROI view on an existing image, referenced by ID"""
 input ROIViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -4144,7 +5557,11 @@ input ROIViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The ID of the ROI of the parent image this view is a cutout of"""
   roi: ID!
 
   """The maximum t coordinate of the view"""
@@ -4172,6 +5589,9 @@ input ROIViewInput {
   zMin: Int = null
 }
 
+"""
+A view marking an image region as the reference that other views (e.g. mask views) point back to, for example the raw channel a segmentation mask was computed from.
+"""
 type ReferenceView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -4203,11 +5623,24 @@ input ReferenceViewFilter {
   NOT: ReferenceViewFilter
   OR: ReferenceViewFilter
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
-  image: ID = null
-  search: String = null
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
+  isGlobal: Boolean
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""
+Input for creating a reference view on an existing image, referenced by ID
+"""
 input ReferenceViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -4217,6 +5650,8 @@ input ReferenceViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
 
   """The maximum t coordinate of the view"""
@@ -4246,6 +5681,12 @@ input ReferenceViewInput {
 
 interface Render {
   createdAt: DateTime!
+
+  """The task this render was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   creator: User
 }
 
@@ -4261,9 +5702,12 @@ enum RenderNodeKind {
   SPIT
 }
 
+"""
+A render tree is a tree structure that describes the rendering of multiple images together, by linking several RGB contexts into one composite visualization.
+"""
 type RenderTree {
   id: ID!
-  linkedContexts(filters: RGBContextFilter, pagination: OffsetPaginationInput): [RGBContext!]!
+  linkedContexts(filters: RGBContextFilter, ordering: [RGBContextOrder!]! = [], pagination: OffsetPaginationInput): [RGBContext!]!
   name: String!
 }
 
@@ -4273,6 +5717,13 @@ input RenderTreeFilter {
   NOT: RenderTreeFilter
   OR: RenderTreeFilter
   id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
 }
 
 input RenderTreeInput {
@@ -4280,8 +5731,9 @@ input RenderTreeInput {
   tree: TreeInput!
 }
 
-input RenderTreeOrder {
-  createdAt: Ordering
+input RenderTreeOrder @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 input RequestBigFileAccessInput {
@@ -4340,8 +5792,12 @@ input RequestZarrUploadInput {
   version: String = null
 }
 
+"""Input for reverting a dataset to a previous history revision"""
 input RevertInput {
+  """The ID of the provenance history entry to revert the dataset to"""
   historyId: ID!
+
+  """The ID of the dataset to revert"""
   id: ID!
 }
 
@@ -4351,6 +5807,7 @@ type RoiEvent {
   update: ROI
 }
 
+"""Input for creating a region of interest (ROI) on an image"""
 input RoiInput {
   """The image this ROI belongs to"""
   image: ID!
@@ -4362,21 +5819,53 @@ input RoiInput {
   vectors: [FiveDVector!]!
 }
 
+"""
+The geometric kind of a region of interest (ROI), defining how its vectors are interpreted.
+"""
 enum RoiKind {
+  """A three-dimensional cuboid spanning the spatial axes (XYZ)."""
   CUBE
+
+  """An elliptical region in the XY plane."""
   ELLIPSIS
+
+  """A single frame of the image, e.g. one timepoint."""
   FRAME
+
+  """A four-dimensional region spanning space and time (XYZT)."""
   HYPERCUBE
+
+  """A straight line between two points."""
   LINE
+
+  """An open path defined by a sequence of connected points."""
   PATH
+
+  """A single point."""
   POINT
+
+  """A closed polygon defined by a sequence of vertices."""
   POLYGON
+
+  """An axis-aligned rectangle in the XY plane."""
   RECTANGLE
+
+  """A single slice of the image, e.g. one Z plane."""
   SLICE
+
+  """A cuboid extended along the channel axis (XYZC)."""
   SPECTRAL_CUBE
+
+  """A five-dimensional region spanning space, time and channels (XYZTC)."""
   SPECTRAL_HYPERCUBE
+
+  """A rectangle extended along the channel axis (XYC)."""
   SPECTRAL_RECTANGLE
+
+  """A cuboid extended along the time axis (XYZT)."""
   TEMPORAL_CUBE
+
+  """A rectangle extended along the time axis (XYT)."""
   TEMPORAL_RECTANGLE
 }
 
@@ -4438,6 +5927,9 @@ input ScaleInput {
   scaleMethod: String = null
 }
 
+"""
+A view linking an image to a downscaled version of another image. Scale views form the levels of a multiscale pyramid: the parent is the full-resolution image and the scale factors give the downsampling per dimension.
+"""
 type ScaleView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -4469,20 +5961,43 @@ type ScaleView implements View {
   zMin: Int
 }
 
+"""
+The axis traversal order of a continuous scan, i.e. the order in which rows, columns and slices are acquired.
+"""
 enum ScanDirection {
+  """Scan columns first, then rows, then slices (Column -> Row -> Slice)."""
   COLUMN_ROW_SLICE
+
+  """
+  Scan columns, then rows, then slices, reversing direction on alternate lines (Column -> Row -> Slice, snake).
+  """
   COLUMN_ROW_SLICE_SNAKE
+
+  """Scan rows first, then columns, then slices (Row -> Column -> Slice)."""
   ROW_COLUMN_SLICE
+
+  """
+  Scan rows, then columns, then slices, reversing direction on alternate lines (Row -> Column -> Slice, snake).
+  """
   ROW_COLUMN_SLICE_SNAKE
+
+  """Scan slices first, then rows, then columns (Slice -> Row -> Column)."""
   SLICE_ROW_COLUMN
+
+  """
+  Scan slices, then rows, then columns, reversing direction on alternate lines (Slice -> Row -> Column, snake).
+  """
   SLICE_ROW_COLUMN_SNAKE
 }
 
+"""
+The absolute coordinate universe in which layers are placed, with defined spatial and temporal base units
+"""
 type Scene {
   id: ID!
 
-  """Provenance entries for this camera"""
-  layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
+  """The layers placed in this scene"""
+  layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   name: String!
   spatialUnit: SpatialUnit!
   temporalUnit: TemporalUnit!
@@ -4493,10 +6008,20 @@ input SceneFilter {
   DISTINCT: Boolean
   NOT: SceneFilter
   OR: SceneFilter
-  description: StrFilterLookup
+  blending: BlendingChoices
   id: ID
-  ids: [ID!] = null
+
+  """Filter by list of IDs"""
+  ids: [ID!]
   name: StrFilterLookup
+
+  """Filter by the parent scene"""
+  parent: ID
+
+  """Filter for scenes with (true) or without (false) a parent"""
+  parentless: Boolean
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
@@ -4505,17 +6030,18 @@ input SceneOrder @oneOf {
   name: Ordering
 }
 
-input ScopeFilter {
-  me: Boolean = null
-  org: Boolean = null
-  public: Boolean = null
-  shared: Boolean = null
-}
-
+"""The visibility scope of an object, determining which users can see it."""
 enum ScopeKind {
+  """The object is visible only to its creator."""
   ME
+
+  """The object is visible to everyone in the organization."""
   ORG
+
+  """The object is visible to everyone."""
   PUBLIC
+
+  """The object is visible only to users it was explicitly shared with."""
   SHARED
 }
 
@@ -4527,6 +6053,7 @@ input Selector {
   z: DimSelector = null
 }
 
+"""A slice along a named dimension, with optional start, stop and step"""
 type Slice {
   """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
   dim: String!
@@ -4551,8 +6078,17 @@ input SliceInput {
   stop: Int = null
 }
 
+"""
+A snapshot is a pre-rendered thumbnail image of an image. Clients use snapshots to display previews without loading the full underlying data.
+"""
 type Snapshot implements Render {
   createdAt: DateTime!
+
+  """The task this render was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   creator: User
   id: ID!
   majorColor: [Float!]
@@ -4565,21 +6101,93 @@ input SnapshotFilter {
   DISTINCT: Boolean
   NOT: SnapshotFilter
   OR: SnapshotFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter by the RGB context this snapshot was rendered with"""
+  context: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+
+  """Filter by the image this snapshot renders"""
+  image: ID
+
+  """
+  Filter by a list of images this snapshot renders (fetch thumbnails for a set of images)
+  """
+  images: [ID!]
   name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
 }
 
+"""
+Input for creating a snapshot (pre-rendered thumbnail) of an image from an uploaded media file
+"""
 input SnapshotInput {
+  """The uploaded media file store containing the rendered snapshot"""
   file: ImageFileLike!
+
+  """The ID of the image this snapshot belongs to"""
   image: ID!
+
+  """The name of the snapshot"""
   name: String = null
 }
 
+input SnapshotOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
+The physical unit used to express spatial dimensions, e.g. of pixel sizes or stage positions.
+"""
 enum SpatialUnit {
+  """
+  Angstroms (1e-10 meters), the typical scale of atomic and molecular structures.
+  """
   ANGSTROMS
+
+  """
+  Micrometers (1e-6 meters), the typical scale of cells in light microscopy.
+  """
   MICROMETERS
+
+  """Nanometers (1e-9 meters), the typical scale of subcellular structures."""
   NANOMETERS
+
+  """Raw pixel units without a calibrated physical size."""
   PIXELS
+
+  """The spatial unit is not known or not specified."""
   UNKNOWN
 }
 
@@ -4595,14 +6203,23 @@ input SpectrumInput {
   minNm: Float!
 }
 
+"""
+A stage is a 3D space corresponding to the physical space on a microscope during an experiment. Clients use stages to contextualize images according to their real-world physical location via affine transformation views.
+"""
 type Stage {
   affineViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
+
+  """The task this stage was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   description: String
   id: ID!
   name: String!
   pinned: Boolean!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this stage"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 }
 
@@ -4611,16 +6228,63 @@ input StageFilter {
   DISTINCT: Boolean
   NOT: StageFilter
   OR: StageFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+
+  """Filter by the instrument this stage belongs to"""
+  instrument: ID
   kind: String
   name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by name (case-insensitive substring)"""
   search: String
 }
 
+"""
+Input for creating a stage, a physical coordinate system for positioning images
+"""
 input StageInput {
+  """The ID of the instrument this stage belongs to"""
   instrument: ID = null
+
+  """The name of the stage"""
   name: String!
+}
+
+input StageOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 input StrFilterLookup {
@@ -4657,21 +6321,37 @@ type Subscription {
   rois(image: ID!): RoiEvent!
 }
 
+"""
+A table of tabular data, stored as a Parquet file. Tables are typically derived from images (e.g. measurements or localisations) and can be queried column- and row-wise through the API.
+"""
 type Table {
   accessors(filters: AccessorFilter, types: [AccessorKind!]): [Accessor!]!
+
+  """The column descriptors of the table's parquet data"""
   columns: [TableColumn!]!
+
+  """The task this table was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   id: ID!
   name: String!
-  origins(filters: ImageFilter, order: ImageOrder, pagination: OffsetPaginationInput): [Image!]!
+  origins(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
+
+  """All rows of the table's parquet data"""
   rows: [MetricMap!]!
   store: ParquetStore!
 }
 
 """A cell of a table"""
 type TableCell {
+  """The column this cell belongs to"""
   column: TableColumn!
   columnId: Int!
   id: ID!
+
+  """The name of the column this cell belongs to"""
   name: String!
   rowId: Int!
   table: Table!
@@ -4698,9 +6378,54 @@ input TableFilter {
   DISTINCT: Boolean
   NOT: TableFilter
   OR: TableFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+
+  """Filter by the dataset this table belongs to"""
+  dataset: ID
+
+  """Filter by a list of dataset IDs"""
+  datasets: [ID!]
   id: ID
+
+  """Filter by list of IDs"""
   ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter for tables that are not derived from another table"""
+  notDerived: Boolean
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Search by name (full-text search)"""
   search: String
+}
+
+input TableOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 input TablePaginationInput {
@@ -4708,13 +6433,18 @@ input TablePaginationInput {
   offset: Int = 0
 }
 
-"""A cell of a table"""
+"""A row of a table"""
 type TableRow {
+  """The column descriptors of the table"""
   columns: [TableColumn!]!
   id: ID!
+
+  """The display name of this row"""
   name: String!
   rowId: Int!
   table: Table!
+
+  """The values of this row, one per column"""
   values: [Any!]!
 }
 
@@ -4723,13 +6453,92 @@ input TableRowFilter {
   search: String = null
 }
 
+"""A validated Rekuest task under which objects were created or changed."""
+type Task {
+  """The action hash"""
+  action: String!
+
+  """The assigning app"""
+  app: String!
+
+  """The arguments the task was assigned with"""
+  args: Any!
+
+  """The user that assigned the task"""
+  assigner: User
+
+  """The raw sub claim of the assigning user"""
+  assignerSub: String!
+  createdAt: DateTime!
+  id: ID!
+
+  """The organization the task ran in"""
+  organization: Organization!
+
+  """The parent task id, if any"""
+  parentId: String
+
+  """The rekuest task id"""
+  taskId: String!
+}
+
+input TaskFilter {
+  AND: TaskFilter
+  DISTINCT: Boolean
+  NOT: TaskFilter
+  OR: TaskFilter
+  action: StrFilterLookup
+  app: StrFilterLookup
+
+  """Filter by the assigner's subject ID"""
+  assigner: ID
+
+  """Filter by the assigner's database user ID"""
+  assignerId: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  parentId: StrFilterLookup
+
+  """Search by app or action (case-insensitive substring)"""
+  search: String
+  taskId: StrFilterLookup
+}
+
+input TaskOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+}
+
+"""
+The physical unit used to express temporal dimensions, e.g. of time-lapse intervals.
+"""
 enum TemporalUnit {
+  """Days (86400 seconds)."""
   DAYS
+
+  """Hours (3600 seconds)."""
   HOURS
+
+  """Milliseconds (1e-3 seconds)."""
   MILLISECONDS
+
+  """Minutes (60 seconds)."""
   MINUTES
+
+  """Nanoseconds (1e-9 seconds)."""
   NANOSECONDS
+
+  """Seconds, the SI base unit of time."""
   SECONDS
+
+  """The temporal unit is not known or not specified."""
   UNKNOWN
 }
 
@@ -4746,6 +6555,9 @@ type TimeBucket {
   ts: DateTime!
 }
 
+"""
+A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start.
+"""
 type TimepointView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -4780,11 +6592,27 @@ input TimepointViewFilter {
   NOT: TimepointViewFilter
   OR: TimepointViewFilter
   era: EraFilter
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
   indexSinceStart: Int
   isGlobal: Boolean
   msSinceStart: Float
+
+  """Search by the name of the image this view belongs to"""
+  search: String
 }
 
+"""
+Input for creating a timepoint view on an existing image, referenced by ID
+"""
 input TimepointViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -4794,9 +6622,17 @@ input TimepointViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The ID of the era this timepoint belongs to"""
   era: ID = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The index of the timepoint since the start of the era"""
   indexSinceStart: Int = null
+
+  """The time in ms since the start of the era"""
   msSinceStart: Milliseconds = null
 
   """The maximum t coordinate of the view"""
@@ -4847,16 +6683,30 @@ type UnstructuredMeta {
   schema: MetaSchema
 }
 
+"""Input for attaching free-form JSON metadata to a file"""
 input UnstructuredMetaInput {
+  """The ID of the file to attach the metadata to"""
   file: ID!
+
+  """The free-form JSON metadata to attach"""
   meta: Any!
+
+  """The name of the metadata entry"""
   name: String!
+
+  """The ID of the schema describing the metadata structure"""
   schema: ID = null
 }
 
+"""Input for updating an image's name or tags"""
 input UpdateImageInput {
+  """The ID of the image to update"""
   id: ID!
+
+  """The new name of the image"""
   name: String = null
+
+  """Tags to add to the image"""
   tags: [String!] = null
 }
 
@@ -4877,18 +6727,40 @@ input UpdateLayerInput {
   zDim: String = null
 }
 
+"""Input for updating an existing RGB render context"""
 input UpdateRGBContextInput {
+  """The channel the context renders"""
   c: Int = null
+
+  """The ID of the RGB context to update"""
   id: ID!
+
+  """The new name of the RGB context"""
   name: String = null
+
+  """The timepoint the context renders"""
   t: Int = null
+
+  """The ID of an uploaded media store to use as the thumbnail snapshot"""
   thumbnail: ID = null
+
+  """
+  The RGB views (channel rendering settings) to replace the context's views with
+  """
   views: [PartialRGBViewInput!] = null
+
+  """The z plane the context renders"""
   z: Int = null
 }
 
+"""Input for updating an existing RGB view, referenced by ID"""
 input UpdateRGBViewInput {
+  """Whether the view is active"""
   active: Boolean = null
+
+  """
+  The base color of the channel as RGBA values (if using a mapped scaler)
+  """
   baseColor: [Float!] = null
 
   """The maximum c (channel) coordinate of the view"""
@@ -4899,15 +6771,29 @@ input UpdateRGBViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The color map applied to the channel"""
   colorMap: ColorMap = null
+
+  """The ID of the RGB render context this view belongs to"""
   context: ID = null
+
+  """The maximum contrast limit of the channel"""
   contrastLimitMax: Float = null
+
+  """The minimum contrast limit of the channel"""
   contrastLimitMin: Float = null
+
+  """The gamma correction applied to the channel"""
   gamma: Float = null
 
   """The ID of the RGB view to update"""
   id: ID!
+
+  """Whether to rescale the channel data to the contrast limits"""
   rescale: Boolean = null
+
+  """The scale factor applied to the channel when rendering"""
   scale: Float = null
 
   """The maximum t coordinate of the view"""
@@ -4935,12 +6821,21 @@ input UpdateRGBViewInput {
   zMin: Int = null
 }
 
+"""Input for updating an existing region of interest (ROI)"""
 input UpdateRoiInput {
+  """The new type/kind of ROI"""
   kind: RoiKind = null
+
+  """The ID of the ROI to update"""
   roi: ID!
+
+  """The new vector coordinates defining the ROI"""
   vectors: [FiveDVector!] = null
 }
 
+"""
+A user account. The sub is the stable subject identifier from the identity provider; creator and assigner fields across the API reference this type.
+"""
 type User {
   activeOrganization: Organization
   id: ID!
@@ -4948,11 +6843,17 @@ type User {
   sub: String!
 }
 
+"""
+A permission a specific user holds on a specific object. Clients use it to inspect and manage per-object access control.
+"""
 type UserObjectPermission {
   permission: String!
   user: User!
 }
 
+"""
+The distribution of pixel values pinned to a coordinate anchor, including histogram bins, min/max and percentile limits
+"""
 type ValueHistogram {
   bins: [Float!]!
   histogram: [Float!]!
@@ -5000,14 +6901,26 @@ input Vec3Input {
   z: Float = null
 }
 
+"""
+A video is a rendered video of an image, accompanied by a thumbnail. Clients use videos to play back multidimensional image data without loading the raw arrays.
+"""
 type Video implements Render {
   createdAt: DateTime!
+
+  """The task this render was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
   creator: User
   id: ID!
   store: MediaStore!
   thumbnail: MediaStore!
 }
 
+"""
+A view is a subset of an image, delimited by its coordinates (c, t, z, x, y) within the 5D array. Views attach metadata (channels, labels, transformations, timepoints, ...) to that subregion of the image.
+"""
 interface View {
   """The accessor"""
   accessor: [String!]!
@@ -5032,6 +6945,9 @@ interface View {
   zMin: Int
 }
 
+"""
+A collection of views. View collections provide overarching views on your data that are not bound to a specific image, e.g. all middle-z views of all images with a certain tag. They are a pure metadata construct and do not map to an ordering of binary data.
+"""
 type ViewCollection {
   affineTransformationViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
   channelViews: [ChannelView!]!
@@ -5039,12 +6955,14 @@ type ViewCollection {
   labelViews: [LabelView!]!
   name: String!
 
-  """Provenance entries for this camera"""
+  """Provenance entries for this view collection"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   views: [View!]!
 }
 
+"""Input for creating a view collection to group views"""
 input ViewCollectionInput {
+  """The name of the view collection"""
   name: String!
 }
 
@@ -5053,12 +6971,19 @@ input ViewFilter {
   DISTINCT: Boolean
   NOT: ViewFilter
   OR: ViewFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!]
   isGlobal: Boolean
 }
 
 enum ViewKind {
+  ACQUISITION
   AFFINE_TRANSFORMATION
   CHANNEL
+  CONTINOUS_SCAN
+  DERIVED
+  FILE
   HISTOGRAM
   INSTANCE_MASK_VIEW
   LABEL
@@ -5067,9 +6992,15 @@ enum ViewKind {
   OPTICS
   REFERENCE
   RGB
+  ROI
+  SCALE
   TIMEPOINT
+  WELL_POSITION
 }
 
+"""
+A view mapping an image region to a well (row/column) of a multi well plate, so plate-based acquisitions can be traced back to their well.
+"""
 type WellPositionView implements View {
   """The accessor"""
   accessor: [String!]!
@@ -5104,11 +7035,27 @@ input WellPositionViewFilter {
   NOT: WellPositionViewFilter
   OR: WellPositionViewFilter
   column: Int
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the image this view belongs to"""
+  image: ID
+
+  """Filter by a list of images this view belongs to"""
+  images: [ID!]
   isGlobal: Boolean
   row: Int
+
+  """Search by the name of the image this view belongs to"""
+  search: String
   well: MultiWellPlateFilter
 }
 
+"""
+Input for creating a well position view on an existing image, referenced by ID
+"""
 input WellPositionViewInput {
   """The maximum c (channel) coordinate of the view"""
   cMax: Int = null
@@ -5118,8 +7065,14 @@ input WellPositionViewInput {
 
   """The collection this view belongs to"""
   collection: ID = null
+
+  """The column of the well"""
   column: Int = null
+
+  """The ID of the image this view is for"""
   image: ID!
+
+  """The row of the well"""
   row: Int = null
 
   """The maximum t coordinate of the view"""
@@ -5127,6 +7080,8 @@ input WellPositionViewInput {
 
   """The minimum t coordinate of the view"""
   tMin: Int = null
+
+  """The ID of the multi-well plate this view belongs to"""
   well: ID = null
 
   """The maximum x coordinate of the view"""
@@ -5210,7 +7165,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | Task | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

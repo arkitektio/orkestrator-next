@@ -33,27 +33,23 @@ fragment Agent on Agent {
   states {
     ...State
   }
-  registry {
-    client {
-      clientId
-      release {
-        version
-        app {
-          identifier
-        }
+  client {
+    clientId
+    release {
+      version
+      app {
+        identifier
       }
-      device {
-        deviceId
-      }
-
     }
-    user {
-      sub
+    device {
+      deviceId
     }
+  }
+  user {
+    sub
   }
   blocked
   pinned
-  extensions
   name
   active
   connected
@@ -75,13 +71,8 @@ fragment ListAgent on Agent {
   lastSeen
   pinned
   blocked
-  registry {
-    client {
-      clientId
-    }
-    user {
-      sub
-    }
+  client {
+    clientId
   }
   user {
     sub
@@ -136,7 +127,6 @@ fragment HoverAgent on Agent {
   blocked
   pinned
   lastSeen
-  extensions
   app {
     identifier
   }

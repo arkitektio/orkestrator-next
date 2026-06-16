@@ -62,7 +62,7 @@ async function formatAssignationInfo(
   info += `- **Created At**: ${new Date(assignation.createdAt).toISOString()}\n`;
 
   if (assignation.implementation) {
-    info += `- **Implementation**: ${assignation.implementation.interface} (${assignation.implementation.extension})\n`;
+    info += `- **Implementation**: ${assignation.implementation.interface}\n`;
   }
 
   // Get descriptions if not provided
@@ -180,7 +180,7 @@ export const ReportBugDialog = ({ assignationId }: ReportBugDialogProps) => {
 
   const { data: clientData } = useClientQuery({
     variables: {
-      clientId: detailData?.assignation?.implementation?.agent?.registry.client.clientId || "",
+      clientId: detailData?.assignation?.implementation?.agent?.client.clientId || "",
 
     }
   })

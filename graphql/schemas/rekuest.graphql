@@ -282,14 +282,14 @@ type Agent {
   """Get the count of implementations available on this agent."""
   blocked: Boolean!
 
+  """The client (app instance) this agent runs as."""
+  client: Client!
+
   """Is the agent currently connected."""
   connected: Boolean!
 
   """Device associated with the agent."""
   device: Device!
-
-  """List of installed agent extensions."""
-  extensions: [String!]!
 
   """Filesystem shelves available on the agent."""
   fileSystemShelves(filters: FilesystemShelveFilter, pagination: OffsetPaginationInput): [FilesystemShelve!]!
@@ -330,14 +330,14 @@ type Agent {
   """Agent name."""
   name: String!
 
+  """The organization this agent belongs to."""
+  organization: Organization!
+
   """Check if this agent is pinned by the current user."""
   pinned: Boolean!
 
   """Placements associated with this agent."""
   placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
-
-  """Registry entry this agent belongs to."""
-  registry: Registry!
 
   """The release this agent belongs to."""
   release: Release!
@@ -423,9 +423,6 @@ input AgentFilter {
   """Filter based on device"""
   deviceId: ID
   distinct: Boolean
-
-  """Filter by extensions of the agents"""
-  extensions: [String!]
 
   """Filter by implementations of the agents"""
   hasImplementations: [String!]
@@ -656,6 +653,9 @@ type Assignation {
   """Arguments used in the assignation."""
   args: AnyDefault!
 
+  """Caller that created this assignation."""
+  caller: Caller
+
   """
   Indicates if the assignation is being captured for logging or debugging.
   """
@@ -710,9 +710,6 @@ type Assignation {
 
   """Optional external reference for tracking."""
   reference: String
-
-  """Registry that created this assignation."""
-  registry: Registry
 
   """Reservation that caused this assignation."""
   reservation: Reservation
@@ -1023,6 +1020,21 @@ input BounceInput {
   agent: ID!
 }
 
+"""The (client, user, organization) identity that requests work."""
+type Caller {
+  """The associated client."""
+  client: Client!
+
+  """Unique identifier for the caller."""
+  id: ID!
+
+  """The organization this caller belongs to."""
+  organization: Organization!
+
+  """The associated user."""
+  user: User!
+}
+
 """The input for canceling an assignation."""
 input CancelInput {
   assignation: ID!
@@ -1175,19 +1187,8 @@ input CreateDashboardInput {
   organization: String = null
 }
 
-"""The input for creating a implementation in another agents extension."""
-input CreateForeignImplementationInput {
-  """
-  The agent ID to create the implementation in. This is used to identify the agent in the system.
-  """
-  agent: ID!
-  extension: String!
-  implementation: ImplementationInput!
-}
-
 """The input for creating a implementation."""
 input CreateImplementationInput {
-  extension: String!
   implementation: ImplementationInput!
 }
 
@@ -1699,7 +1700,6 @@ Implement an agent with the given implementations, states and locks. This will c
 """
 input ImplementAgentInput {
   bloks: [BlokImplementationInput!] = null
-  extensions: [String!] = null
   hash: String = null
   implementations: [ImplementationInput!] = null
   locks: [LockImplementationInput!] = null
@@ -1717,9 +1717,6 @@ type Implementation {
 
   """Dependencies required by this action."""
   dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
-
-  """Extension or module name."""
-  extension: String!
 
   """
   Projection config (bound params, arg/dependency/return maps) when this is a higher-order implementation.
@@ -1784,7 +1781,6 @@ input ImplementationAgentFilter {
   NOT: ImplementationAgentFilter
   OR: ImplementationAgentFilter
   clientId: String
-  extensions: [String!]
   hasImplementations: [String!]
   hasStates: [String!]
   ids: [ID!]
@@ -1800,7 +1796,6 @@ input ImplementationFilter {
   actionHash: ActionHash
   active: Boolean
   agent: ImplementationAgentFilter
-  extension: String
   ids: [ID!]
   interface: StrFilterLookup
   parameters: [ParamPair!]
@@ -1815,7 +1810,6 @@ input ImplementationInput {
   definition: DefinitionInput!
   dependencies: [AgentDependencyInput!]! = []
   dynamic: Boolean! = false
-  extension: String = null
   interface: String
   locks: [String!] = null
   logo: String = null
@@ -2193,9 +2187,6 @@ type Mutation {
 
   """Create a dashboard layout."""
   createDashboard(input: CreateDashboardInput!): Dashboard!
-
-  """Register an external implementation."""
-  createForeignImplementation(input: CreateForeignImplementationInput!): Implementation!
 
   """Create a new implementation entry."""
   createImplementation(input: CreateImplementationInput!): Implementation!
@@ -2745,7 +2736,7 @@ type Query {
   implementation(id: ID!): Implementation!
 
   """Find implementation at given interface."""
-  implementationAt(actionHash: String = null, agent: ID!, demand: ActionDemandInput = null, extension: String = null, interface: String = null): Implementation!
+  implementationAt(actionHash: String = null, agent: ID!, demand: ActionDemandInput = null, interface: String = null): Implementation!
 
   """All registered implementations."""
   implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
@@ -2899,24 +2890,6 @@ input ReInitInput {
   agent: ID = null
 }
 
-"""Links a user and a client for registry tracking."""
-type Registry {
-  """Agents registered under this registry."""
-  agents(filters: AgentFilter, ordering: [AgentOrder!]! = [], pagination: OffsetPaginationInput): [Agent!]!
-
-  """The associated client."""
-  client: Client!
-
-  """Unique identifier for the registry."""
-  id: ID!
-
-  """The organization this registry belongs to."""
-  organization: Organization!
-
-  """The associated user."""
-  user: User!
-}
-
 """Profile information for a user."""
 type Release {
   """The app this release belongs to."""
@@ -2969,6 +2942,9 @@ type Reservation {
   """Action this reservation is for."""
   action: Action!
 
+  """Caller that created the reservation."""
+  caller: Caller
+
   """Dependency that triggered the reservation."""
   causingDependency: Dependency
 
@@ -2989,9 +2965,6 @@ type Reservation {
 
   """Reference string for identification."""
   reference: String!
-
-  """Registry that created the reservation."""
-  registry: Registry
 
   """Reservation strategy applied."""
   strategy: ReservationStrategy!
@@ -3041,7 +3014,7 @@ input ReserveInput {
   assignationId: ID = null
   hash: ActionHash = null
   implementation: ID = null
-  reference: String = "3f411192-2b16-4483-a811-0d3063638b1a"
+  reference: String = "1486c11c-e197-4bd8-a874-0201f67ea580"
   title: String = null
 }
 

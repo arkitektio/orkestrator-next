@@ -27,7 +27,14 @@ fragment PostmanAssignation on Assignation {
   implementation {
     id
     interface
-    extension
+    higherOrderFor {
+      id
+      action {
+        id
+        key
+        interfaces
+      }
+    }
   }
   createdAt
   finishedAt
@@ -56,12 +63,10 @@ fragment NoChildrenDetailAssignation on Assignation {
   finishedAt
   implementation {
     agent {
-      registry {
-        client {
-          clientId
-          device {
-            deviceId
-          }
+      client {
+        clientId
+        device {
+          deviceId
         }
       }
 
@@ -82,12 +87,10 @@ fragment DetailAssignation on Assignation {
   implementation {
     agent {
       id
-      registry {
-        client {
-          clientId
-          device {
-            deviceId
-          }
+      client {
+        clientId
+        device {
+          deviceId
         }
       }
 
@@ -152,7 +155,6 @@ fragment AssignationEvent on AssignationEvent {
       action {
         name
       }
-      extension
     }
   }
 }
@@ -187,7 +189,6 @@ fragment ListAsssignation on Assignation {
   implementation {
     id
     interface
-    extension
   }
   createdAt
 }

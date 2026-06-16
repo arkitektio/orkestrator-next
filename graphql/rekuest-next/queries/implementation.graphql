@@ -35,13 +35,11 @@ query ImplementationOptions($search: String, $values: [ID!], $dependency: ID) {
 
 query ImplementationAt(
   $agent: ID!
-  $extension: String
   $interface: String
   $demand: ActionDemandInput
 ) {
   implementationAt(
     agent: $agent
-    extension: $extension
     interface: $interface
     demand: $demand
   ) {

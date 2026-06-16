@@ -74,7 +74,7 @@ export const AgentCarousel = (props: { agent: AgentFragment }) => {
                 <div className="p-1">
                   <Card>
                     <CardContent className="flex aspect-square max-h-[200px] p-6 ">
-                      <ClientAvatar clientId={props.agent.registry.client.clientId} />
+                      <ClientAvatar clientId={props.agent.client.clientId} />
                     </CardContent>
                   </Card>
                 </div>

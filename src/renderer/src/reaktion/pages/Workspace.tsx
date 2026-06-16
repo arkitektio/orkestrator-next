@@ -9,7 +9,6 @@ import {
   WorkspacesDocument,
 } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
-import { DeployPane } from "../edit/components/deploy/DeployPane";
 
 export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
   const [saveFlow] = useUpdateWorkspaceMutation({
@@ -31,13 +30,6 @@ export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
         <MultiSidebar
           map={{
             Comments: <FlussWorkspace.Komments object={data.workspace} />,
-            Deployments: (
-              <>
-                {data?.workspace.latestFlow && (
-                  <DeployPane flow={data?.workspace.latestFlow} />
-                )}
-              </>
-            ),
             Versions: (
               <div className="p-4 flex flex-col gap-2">
                 {data?.workspace.flows.map((fl) => (

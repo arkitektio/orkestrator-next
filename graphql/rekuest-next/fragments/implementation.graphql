@@ -4,7 +4,6 @@ fragment DetailImplementation on Implementation {
   action {
     ...DetailAction
   }
-  extension
   params
   agent {
     id
@@ -51,7 +50,6 @@ fragment ListImplementation on Implementation {
 fragment MinimalImplementation on Implementation {
   id
   interface
-  extension
   agent {
     name
   }
@@ -66,7 +64,6 @@ query ImplementationStats($id: ID!) {
 fragment HoverImplementation on Implementation {
   id
   interface
-  extension
   pinned
   action {
     id

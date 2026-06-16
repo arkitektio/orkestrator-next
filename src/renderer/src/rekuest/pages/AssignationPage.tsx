@@ -445,7 +445,9 @@ export const TPage = asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full relative">
-          {data?.assignation?.implementation?.extension === "reaktion" ? (
+          {data?.assignation?.implementation?.higherOrderFor?.action?.interfaces?.includes(
+            "run_flow",
+          ) ? (
             <>
               <Tabs className="flex-grow flex flex-col " defaultValue="flow">
                 <TabsList className="h-8 flex-initial">

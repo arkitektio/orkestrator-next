@@ -1,6 +1,6 @@
 import { Assign } from "@/app/agent/message";
 import { AppContext, AvailableService } from "@/lib/arkitekt/provider";
-import { ImplementationInput } from "src/renderer/src/rekuest/api/graphql";
+import { ImplementationInput } from "@/rekuest/api/graphql";
 import { ElectronAPI } from "@electron-toolkit/preload";
 
 declare global {

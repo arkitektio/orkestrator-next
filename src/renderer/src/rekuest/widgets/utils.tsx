@@ -147,15 +147,25 @@ export const portToZod = (port: LabellablePort): any => {
       break;
     case PortKind.Union:
       const variants = port.children?.filter(notEmpty);
-      if (!variants) {
+      if (!variants || variants.length === 0) {
         throw new Error("Union port is not defined");
         break;
       }
-      baseType = z.union(
-        variants.map((v, index) =>
-          portToZod(v)
-        ) || [],
+      // The UnionWidget stores the value as { __use: "<variantIndex>", __value }
+      // so the selected variant tab stays unambiguous (see UnionWidget.tsx).
+      // Validate that wrapper, delegating the inner value to the selected
+      // variant's schema. recursiveExtract unwraps it back to the bare value on
+      // submit.
+      const variantSchemas = variants.map((v, index) =>
+        z.object({
+          __use: z.literal(index.toString()),
+          __value: portToZod(v),
+        }),
       );
+      baseType =
+        variantSchemas.length === 1
+          ? variantSchemas[0]
+          : z.union(variantSchemas as [any, any, ...any[]]);
       break;
     case PortKind.Bool:
       baseType = z.boolean({
@@ -336,6 +346,13 @@ export const recursiveExtract = (data: any, port: PortablePort): any => {
       );
   }
 
+  if (port.kind == PortKind.Union) {
+    const variants = port.children?.filter(notEmpty) || [];
+    const variant = variants[Number(data.__use)];
+    if (!variant) return null;
+    return recursiveExtract(data.__value, variant);
+  }
+
   if (port.kind == PortKind.Model) {
     return submittedDataToRekuestFormat(
       data,
@@ -379,6 +396,19 @@ export const recursiveSet = (data: any, port: PortablePort): any => {
       __key: key,
       __value: recursiveSet(value, childPort),
     }));
+  }
+
+  if (port.kind == PortKind.Union) {
+    const variants = port.children?.filter(notEmpty) || [];
+    // Pick the first variant whose schema accepts the raw value and wrap it in
+    // the { __use, __value } shape the UnionWidget expects.
+    const index = variants.findIndex(
+      (v) => portToZod(v).safeParse(data).success,
+    );
+    const useIndex = index === -1 ? 0 : index;
+    const variant = variants[useIndex];
+    if (!variant) return null;
+    return { __use: useIndex.toString(), __value: recursiveSet(data, variant) };
   }
 
   if (port.kind == PortKind.Model) {

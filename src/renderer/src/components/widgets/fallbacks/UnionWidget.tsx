@@ -12,11 +12,6 @@ import {
   useFormContext,
 } from "react-hook-form";
 
-export type UnionValue = {
-  use: number;
-  value: any;
-};
-
 const RenderDownWidget = ({
   port,
   path,
@@ -62,6 +57,7 @@ const SubForm = ({
       <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground w-full mb-1">
         {choices.map((c) => (
           <div
+            key={c.value}
             className="cursor-pointer inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow"
             data-state={field.value && field.value.__use == c.value && "active"}
             onClick={() =>
@@ -82,7 +78,7 @@ const SubForm = ({
   );
 };
 
-const UnionWidget: React.FC<InputWidgetProps> = ({ port, widget, path }) => {
+const UnionWidget: React.FC<InputWidgetProps> = ({ port, path }) => {
   const form = useFormContext();
   const validate = usePortValidate(port);
   return (

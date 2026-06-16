@@ -27,7 +27,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Simulations"
           description="Simulations are runs of neuron models, where specific recording and stimulation protocols are applied. They are the result of a simulation run."
         />
-        <SimulationList pagination={{ limit: 30 }} />
+        <SimulationList defaultLimit={30} />
       </div>
     </ElektroSimulation.ListPage>
   );

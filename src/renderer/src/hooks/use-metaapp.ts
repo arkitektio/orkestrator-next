@@ -114,8 +114,7 @@ export const build = {
 export type StatePort = { zodType: zod.ZodTypeAny } & Omit<PortInput, 'key'>
 
 export const statePortsToDemand = <T extends Record<string, StatePort>>(
-  ports: T,
-  options?: StateOptions
+  ports: T
 ): SchemaDemandInput => {
   const matches = Object.entries(ports).map(([key, value]) => {
     return {
@@ -126,7 +125,6 @@ export const statePortsToDemand = <T extends Record<string, StatePort>>(
   })
 
   return {
-    hash: options?.forceHash,
     matches: matches
   }
 }
@@ -178,7 +176,7 @@ export const buildState = <T extends Record<string, StatePort>>(
 
   return {
     ports: zod.object(shape) as any,
-    demand: statePortsToDemand(options.keys, options)
+    demand: statePortsToDemand(options.keys)
   }
 }
 

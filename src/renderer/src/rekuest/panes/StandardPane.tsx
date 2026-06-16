@@ -55,7 +55,7 @@ export const NavigationPane = () => {
   const { data } = useAgentsQuery({
     variables: {
       filters: { pinned: false },
-      order: { lastSeen: Ordering.Desc },
+      ordering: [{ lastSeen: Ordering.Desc }],
       pagination: { limit: 10 },
     },
   });

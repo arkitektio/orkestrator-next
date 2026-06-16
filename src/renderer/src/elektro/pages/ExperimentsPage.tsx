@@ -27,7 +27,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Experiments"
           description="Experiments are plots combining the results of various simulations (i.e. comparing the soma traces of various models) "
         />
-        <ExperimentList pagination={{ limit: 30 }} />
+        <ExperimentList defaultLimit={30} />
       </div>
     </ElektroExperiment.ListPage>
   );

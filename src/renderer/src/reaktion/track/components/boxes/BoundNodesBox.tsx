@@ -18,7 +18,7 @@ export const BoundNodesBox = (props: { nodes: FlowNode[] }) => {
   const { data, error } = useClientsQuery({
     variables: {
       filters: {
-        hasTemplatesFor: hashes,
+        hasImplementationsFor: hashes,
       },
     },
   });

@@ -63,7 +63,7 @@ export const BounceAgentButton = (props: { agent: AgentFragment }) => {
       onClick={() => {
         bounce({
           variables: {
-            input: { agent: props.agent.id, duration: 10 },
+            input: { agent: props.agent.id },
           },
         });
       }}

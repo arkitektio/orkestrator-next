@@ -102,10 +102,10 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
             </CardDescription>
           </CardHeader>
 
-          <BlockList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <SimulationList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <NeuronModelList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <ExperimentList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
+          <BlockList ordering={[{ createdAt: Ordering.Desc }]} filters={temporalFilter} />
+          <SimulationList ordering={[{ createdAt: Ordering.Desc }]} filters={temporalFilter} />
+          <NeuronModelList ordering={[{ createdAt: Ordering.Desc }]} filters={temporalFilter} />
+          <ExperimentList ordering={[{ createdAt: Ordering.Desc }]} filters={temporalFilter} />
 
           <Separator />
         </div>

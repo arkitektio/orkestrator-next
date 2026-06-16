@@ -7,9 +7,9 @@ query DetailNeuronModel($id: ID!) {
 query ListNeuronModels(
   $pagination: OffsetPaginationInput
   $filters: NeuronModelFilter
-  $order: NeuronModelOrder
+  $ordering: [NeuronModelOrder!]
 ) {
-  neuronModels(pagination: $pagination, filters: $filters, order: $order) {
+  neuronModels(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListNeuronModel
   }
 }

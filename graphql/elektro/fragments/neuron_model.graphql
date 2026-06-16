@@ -28,10 +28,13 @@ fragment Compartment on Compartment {
   globalParams {
     param
     value
+    description
   }
   sectionParams {
+    mechanism
     param
     value
+    description
   }
 }
 
@@ -39,6 +42,9 @@ fragment DetailNeuronModel on NeuronModel {
   id
   name
   config {
+    celsius
+    vInit
+    label
     cells {
       id
       biophysics {

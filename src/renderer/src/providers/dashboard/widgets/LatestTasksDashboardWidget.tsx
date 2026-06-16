@@ -36,7 +36,7 @@ const LatestTasksWidget = () => {
   const { data, loading } = useListAssignationsQuery({
     variables: {
       pagination: { limit: 10 },
-      order: { createdAt: Ordering.Desc },
+      ordering: [{ createdAt: Ordering.Desc }],
     },
     fetchPolicy: "cache-and-network",
   });

@@ -20,6 +20,7 @@ import CreateProtocolEventCategoryForm from "@/kraph/forms/CreateProtocolEventCa
 import { TForm as CreateRelationCategoryForm } from "@/kraph/forms/CreateRelationCategoryForm";
 import { TForm as CreateStructureRelationCategoryForm } from "@/kraph/forms/CreateStructureRelationCategoryForm";
 import UpdateEntityCategoryForm from "@/kraph/forms/UpdateEntityCategoryForm";
+import { NeuronEditorHelp } from "@/elektro/components/NeuronEditorHelp";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 import { CreateRedeemTokenForm } from "@/lok-next/forms/CreateRedeemTokenForm";
@@ -76,6 +77,8 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   createomeroarkcataset: CreateOmeroDatasetForm,
   // reaktion
   createworkspace: CreateWorkspaceForm,
+  // elektro
+  neuroneditorhelp: NeuronEditorHelp,
   // mikro-next
   createmikrodataset: CreateMikroDatasetForm,
   updateimage: UpdateImageForm,

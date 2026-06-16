@@ -7,9 +7,9 @@ query DetailBlock($id: ID!) {
 query ListBlocks(
   $pagination: OffsetPaginationInput
   $filters: BlockFilter
-  $order: BlockOrder
+  $ordering: [BlockOrder!]
 ) {
-  blocks(pagination: $pagination, filters: $filters, order: $order) {
+  blocks(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListBlock
   }
 }

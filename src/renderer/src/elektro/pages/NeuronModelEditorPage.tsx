@@ -3,21 +3,37 @@ import { ElektroNeuronModel } from "@/linkers";
 import { toast } from "sonner";
 import { useCreateNeuronModelMutation, useDetailNeuronModelQuery } from "../api/graphql";
 import { NeuronEditor } from "../components/NeuronEditor";
+import {
+  EditableModelConfig,
+  serializeModelConfig,
+  validateModelConfig,
+} from "../lib/modelSerialization";
 
 export const NeuronModelEditorPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data }) => {
     const [createModel] = useCreateNeuronModelMutation();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleSave = async (config: any) => {
+    const handleSave = async (config: EditableModelConfig) => {
+      // Refuse to send a structurally broken model; surface the reason.
+      const validation = validateModelConfig(config);
+      if (!validation.ok) {
+        validation.errors.slice(0, 3).forEach(e => toast.error(e.message));
+        if (validation.errors.length > 3) {
+          toast.error(`…and ${validation.errors.length - 3} more validation error(s).`);
+        }
+        return;
+      }
+      // Non-blocking concerns (e.g. disconnected roots) — warn but proceed.
+      validation.warnings.slice(0, 3).forEach(w => toast.warning(w.message));
+
       try {
         const result = await createModel({
           variables: {
             input: {
               name: `${data.neuronModel.name} (Edited)`,
               description: `Edited version of ${data.neuronModel.name}`,
-              config: config
+              config: serializeModelConfig(config)
             }
           }
         });

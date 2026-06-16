@@ -26,7 +26,7 @@ export const MemoryStructureWidget = (
       const w = await searchD({
         variables: {
           ...searching,
-          template: props.bound,
+          implementation: props.bound,
 
         }
       })

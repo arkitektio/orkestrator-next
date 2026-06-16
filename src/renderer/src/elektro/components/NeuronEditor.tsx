@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Html, OrbitControls, useCursor } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { GitBranch, Trash2, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { GitBranch, HelpCircle, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { v4 as uuidv4 } from 'uuid';
+import { useDialog } from "@/app/dialog";
 import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { EditableModelConfig } from "../lib/modelSerialization";
 
 // --- Types & Helpers ---
 
@@ -54,48 +56,32 @@ const calculateBranchDirection = (
   siblingCount: number,
   groupSeed: number
 ) => {
-  const isStartTip = location < 0.05;
-  const isEndTip = location > 0.95;
-  const isTip = isStartTip || isEndTip;
+  const axis = parentDir.clone().normalize();
+  const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
 
-  let poleVector: THREE.Vector3;
+  // Perpendicular "side" direction, with co-located siblings spread evenly
+  // around the parent axis.
+  const radial = getPerpendicularVector(axis);
+  const azimuth = siblingCount > 1 ? (siblingIndex * (Math.PI * 2)) / siblingCount : 0;
+  radial.applyAxisAngle(axis, azimuth + groupPhase);
 
-  if (isEndTip) {
-    poleVector = parentDir.clone().normalize();
-  } else if (isStartTip) {
-    poleVector = parentDir.clone().normalize().negate();
-  } else {
-    const baseOrtho = getPerpendicularVector(parentDir);
-    poleVector = baseOrtho;
-  }
+  // Axial bias runs smoothly from -1 (points back, at the parent's start) through
+  // 0 (points sideways, mid-segment) to +1 (points forward, at the parent's end).
+  // This lets a branch swing continuously onto the side of its parent as it is
+  // moved away from a tip — no dead zone, no discontinuous jump.
+  const axialBias = (location - 0.5) * 2;
 
-  const finalDir = poleVector.clone();
+  // Split between axial and radial so the result stays unit length.
+  let radialMag = Math.sqrt(Math.max(0, 1 - axialBias * axialBias));
 
-  if (isTip) {
-    if (siblingCount <= 1) return finalDir;
+  // Stop co-located siblings collapsing onto each other at the tips by forcing a
+  // minimum sideways spread — this re-creates the classic bifurcation cone.
+  if (siblingCount > 1) radialMag = Math.max(radialMag, Math.sin(Math.PI / 4));
+  const axialMag = Math.sign(axialBias) * Math.sqrt(Math.max(0, 1 - radialMag * radialMag));
 
-    const hinge = getPerpendicularVector(poleVector);
-    const azimuthalAngle = (siblingIndex * (Math.PI * 2)) / siblingCount;
-    const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-
-    hinge.applyAxisAngle(poleVector, azimuthalAngle + groupPhase);
-
-    const spreadAngle = Math.PI / 4;
-    finalDir.applyAxisAngle(hinge, spreadAngle);
-
-    return finalDir;
-
-  } else {
-    if (siblingCount > 1) {
-      const angleStep = (Math.PI * 2) / siblingCount;
-      const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-      finalDir.applyAxisAngle(parentDir.clone().normalize(), (siblingIndex * angleStep) + groupPhase);
-    } else {
-      const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-      finalDir.applyAxisAngle(parentDir.clone().normalize(), groupPhase);
-    }
-    return finalDir;
-  }
+  const finalDir = axis.multiplyScalar(axialMag).add(radial.multiplyScalar(radialMag));
+  if (finalDir.lengthSq() < 1e-6) return radial.clone().normalize();
+  return finalDir.normalize();
 };
 
 // --- Layout Hook ---
@@ -193,6 +179,57 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
 };
 
 
+// --- Auto-fit camera ---
+// Keeps the whole neuron framed in the viewport. Reframes whenever the model's
+// bounding box changes meaningfully, while preserving the user's current orbit
+// direction so editing doesn't yank the camera around on every tiny tweak.
+const FitCamera = ({ segments }: { segments: ProcessedSegment[] }) => {
+  const camera = useThree(s => s.camera);
+  // OrbitControls registers itself here via `makeDefault`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const controls = useThree(s => s.controls) as any;
+  const lastKey = useRef<string>("");
+
+  useEffect(() => {
+    if (!segments.length || !controls) return;
+
+    const box = new THREE.Box3();
+    segments.forEach(seg => {
+      box.expandByPoint(seg.start);
+      box.expandByPoint(seg.end);
+    });
+    if (box.isEmpty()) return;
+
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 1);
+
+    // Skip refits when the bounds haven't changed in any visible way.
+    const key = `${center.x.toFixed(1)}|${center.y.toFixed(1)}|${center.z.toFixed(1)}|${radius.toFixed(1)}`;
+    if (key === lastKey.current) return;
+    lastKey.current = key;
+
+    const fov = (camera as THREE.PerspectiveCamera).fov ?? 50;
+    const distance = (radius * 1.4) / Math.sin((fov / 2) * (Math.PI / 180));
+
+    // Preserve current viewing direction; only adjust distance and target.
+    const dir = camera.position.clone().sub(controls.target);
+    if (dir.lengthSq() < 1e-6) dir.set(1, 1, 1);
+    dir.normalize();
+
+    camera.position.copy(center.clone().add(dir.multiplyScalar(distance)));
+    const persp = camera as THREE.PerspectiveCamera;
+    persp.near = Math.max(distance / 100, 0.01);
+    persp.far = distance * 100;
+    persp.updateProjectionMatrix();
+
+    controls.target.copy(center);
+    controls.update();
+  }, [segments, camera, controls]);
+
+  return null;
+};
+
+
 const InteractiveSegment = ({
   segment,
   isSelected,
@@ -253,8 +290,13 @@ const InteractiveSegment = ({
     setHoverLocation(location);
   };
 
+  // Hit-zone radius: a comfortable minimum so thin branches stay easy to click,
+  // and always a bit fatter than the visible cylinder.
+  const hitRadius = Math.max(section.diam / 2 + 1.5, 2);
+
   return (
     <group>
+      {/* Invisible, fatter cylinder that captures pointer events. */}
       <mesh
         position={mid}
         quaternion={quaternion}
@@ -263,6 +305,12 @@ const InteractiveSegment = ({
         onPointerOut={() => { setHovered(false); setHoverLocation(null); }}
         onPointerMove={handlePointerMove}
       >
+        <cylinderGeometry args={[hitRadius, hitRadius, length, 12]} />
+        <meshStandardMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      {/* Visible cylinder (non-interactive; the hit-zone above handles input). */}
+      <mesh position={mid} quaternion={quaternion} raycast={() => null}>
         <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
         <meshStandardMaterial ref={materialRef} color={isSelected ? "hotpink" : color} />
       </mesh>
@@ -296,13 +344,13 @@ export const NeuronEditor = ({
   onSave
 }: {
   initialModel: DetailNeuronModelFragment,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSave: (config: any) => void
+  onSave: (config: EditableModelConfig) => void
 }) => {
   // Flatten all sections from all cells for editing
   // We assume single cell for simplicity or merge them?
   // The fragment has `config.cells`.
 
+  const { openSheet } = useDialog();
   const [cells, setCells] = useState(initialModel.config.cells);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [rebranchingId, setRebranchingId] = useState<string | null>(null);
@@ -453,7 +501,20 @@ export const NeuronEditor = ({
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 w-80 max-h-[calc(100vh-2rem)]">
         <Card className="p-4 flex flex-col gap-4 h-full">
           <div className="flex-none">
-            <h3 className="font-bold">Neuron Editor</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold">Neuron Editor</h3>
+            </div>
+            <div className="mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => openSheet("neuroneditorhelp", {})}
+              >
+                <HelpCircle className="w-3 h-3 mr-2" />
+                How does this work?
+              </Button>
+            </div>
             {rebranchingId && (
               <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-xs flex justify-between items-center mt-2">
                 <span>Select new parent...</span>
@@ -462,7 +523,17 @@ export const NeuronEditor = ({
                 </Button>
               </div>
             )}
-            <Button className="w-full mt-2" onClick={() => onSave({ cells })}>Save Model</Button>
+            <Button
+              className="w-full mt-2"
+              onClick={() => onSave({
+                cells,
+                celsius: initialModel.config.celsius,
+                vInit: initialModel.config.vInit,
+                label: initialModel.config.label,
+              })}
+            >
+              Save Model
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2">
@@ -500,6 +571,29 @@ export const NeuronEditor = ({
                           onValueChange={([val]) => updateSection(section.id, { diam: val })}
                         />
                       </div>
+
+                      {(() => {
+                        const parentInfo = getParentInfo(section);
+                        if (!parentInfo) return null;
+                        const conn = section.connections![0];
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <Label className="text-xs">Location on parent</Label>
+                              <span className="text-xs text-muted-foreground">{(parentInfo.location * 100).toFixed(0)}%</span>
+                            </div>
+                            <Slider
+                              value={[parentInfo.location]}
+                              min={0} max={1} step={0.01}
+                              onValueChange={([val]) =>
+                                updateSection(section.id, {
+                                  connections: [{ ...conn, parent: parentInfo.id, location: val }]
+                                })
+                              }
+                            />
+                          </div>
+                        );
+                      })()}
 
                       <div className="space-y-2">
                         <Label className="text-xs">Compartment</Label>
@@ -550,6 +644,7 @@ export const NeuronEditor = ({
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <OrbitControls makeDefault />
+        <FitCamera segments={segments} />
 
         {segments.map(segment => (
           <InteractiveSegment

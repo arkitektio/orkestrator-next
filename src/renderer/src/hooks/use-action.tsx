@@ -81,7 +81,7 @@ export const useAction = <T extends any>(
     }
     return assign({
       args: latestAssignation.args,
-      template: latestAssignation?.template?.id,
+      implementation: latestAssignation?.implementation?.id,
       hooks: [],
     });
   }, [assign]);

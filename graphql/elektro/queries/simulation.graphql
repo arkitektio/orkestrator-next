@@ -7,9 +7,9 @@ query DetailSimulation($id: ID!) {
 query ListSimulations(
   $pagination: OffsetPaginationInput
   $filters: SimulationFilter
-  $order: SimulationOrder
+  $ordering: [SimulationOrder!]
 ) {
-  simulations(pagination: $pagination, filters: $filters, order: $order) {
+  simulations(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListSimulation
   }
 }

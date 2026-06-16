@@ -18,11 +18,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** The `Any` scalar any type */
   Any: { input: any; output: any; }
-  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
-  AnyDefault: { input: any; output: any; }
-  /** The `Arg` scalar type represents a an Argument in a Action assignment */
-  Arg: { input: any; output: any; }
-  /** A type representing an array-like store reference, which can be either a string ID or a more complex object. */
+  /** A type representing an array-like structure, which can be a list or any iterable. */
   ArrayLike: { input: any; output: any; }
   /** A type representing a big file store reference, which can be either a string ID or a more complex object. */
   BigFileLike: { input: any; output: any; }
@@ -32,25 +28,14 @@ export type Scalars = {
   FileLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
   FiveDVector: { input: any; output: any; }
-  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
-  Identifier: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   /** The `Matrix` scalar type represents a matrix values as specified by */
   Milliseconds: { input: any; output: any; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
-  SearchQuery: { input: any; output: any; }
-  /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   TraceLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
   TwoDVector: { input: any; output: any; }
-  /**
-   *
-   *     The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)
-   *       to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.
-   *         The otherValues parameter is an object with the other values in the form {fieldName: value}.
-   */
-  ValidatorFunction: { input: any; output: any; }
   _Any: { input: any; output: any; }
 };
 
@@ -68,6 +53,7 @@ export type AnalogSignal = Signal & {
 
 export type AnalogSignalChannelsArgs = {
   filters?: InputMaybe<AnalogSignalChannelFilter>;
+  ordering?: Array<AnalogSignalChannelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -104,6 +90,9 @@ export type AnalogSignalChannelInput = {
   unit?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AnalogSignalChannelOrder =
+  { id: Ordering; };
+
 export type AnalogSignalFilter = {
   AND?: InputMaybe<AnalogSignalFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -126,103 +115,14 @@ export type AnalogSignalInput = {
   unit?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AnalogSignalOrder =
+  { id: Ordering; };
+
 export type App = {
   __typename?: 'App';
   id: Scalars['ID']['output'];
   identifier: Scalars['String']['output'];
 };
-
-export type ArgPort = {
-  __typename?: 'ArgPort';
-  children?: Maybe<Array<ArgPort>>;
-  choices?: Maybe<Array<Choice>>;
-  default?: Maybe<Scalars['AnyDefault']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  effects?: Maybe<Array<Effect>>;
-  identifier?: Maybe<Scalars['Identifier']['output']>;
-  key: Scalars['String']['output'];
-  kind: PortKind;
-  label?: Maybe<Scalars['String']['output']>;
-  nullable: Scalars['Boolean']['output'];
-  requires?: Maybe<Array<Requires>>;
-  validators?: Maybe<Array<Validator>>;
-  widget?: Maybe<AssignWidget>;
-};
-
-/**
- * Port
- *
- *     A Port is a single input or output of a action. It is composed of a key and a kind
- *     which are used to uniquely identify the port.
- *
- *     If the Port is a structure, we need to define a identifier and scope,
- *     Identifiers uniquely identify a specific type of model for the scopes (e.g
- *     all the ports that have the identifier "@mikro/image" are of the same type, and
- *     are hence compatible with each other). Scopes are used to define in which context
- *     the identifier is valid (e.g. a port with the identifier "@mikro/image" and the
- *     scope "local", can only be wired to other ports that have the same identifier and
- *     are running in the same app). Global ports are ports that have the scope "global",
- *     and can be wired to any other port that has the same identifier, as there exists a
- *     mechanism to resolve and retrieve the object for each app. Please check the rekuest
- *     documentation for more information on how this works.
- *
- *
- *
- */
-export type ArgPortInput = {
-  children?: InputMaybe<Array<ArgPortInput>>;
-  choices?: InputMaybe<Array<ChoiceInput>>;
-  default?: InputMaybe<Scalars['AnyDefault']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  effects?: InputMaybe<Array<EffectInput>>;
-  identifier?: InputMaybe<Scalars['String']['input']>;
-  key: Scalars['String']['input'];
-  kind: PortKind;
-  label?: InputMaybe<Scalars['String']['input']>;
-  nullable?: Scalars['Boolean']['input'];
-  requires?: InputMaybe<Array<RequiresInput>>;
-  validators?: InputMaybe<Array<ValidatorInput>>;
-  widget?: InputMaybe<AssignWidgetInput>;
-};
-
-export type AssignWidget = {
-  followValue?: Maybe<Scalars['String']['output']>;
-  kind: AssignWidgetKind;
-};
-
-export type AssignWidgetInput = {
-  /** Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns */
-  asParagraph?: InputMaybe<Scalars['Boolean']['input']>;
-  choices?: InputMaybe<Array<ChoiceInput>>;
-  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
-  dependency?: InputMaybe<Scalars['String']['input']>;
-  fallback?: InputMaybe<AssignWidgetInput>;
-  filters?: InputMaybe<Array<ArgPortInput>>;
-  hook?: InputMaybe<Scalars['String']['input']>;
-  kind: AssignWidgetKind;
-  max?: InputMaybe<Scalars['Float']['input']>;
-  min?: InputMaybe<Scalars['Float']['input']>;
-  placeholder?: InputMaybe<Scalars['String']['input']>;
-  query?: InputMaybe<Scalars['SearchQuery']['input']>;
-  stateAccessors?: InputMaybe<Array<StateAccessorInput>>;
-  statePath?: InputMaybe<Scalars['String']['input']>;
-  step?: InputMaybe<Scalars['Float']['input']>;
-  targetAction?: InputMaybe<Scalars['String']['input']>;
-  targetDependency?: InputMaybe<Scalars['String']['input']>;
-  targetPort?: InputMaybe<Scalars['String']['input']>;
-  ward?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The kind of assign widget. */
-export enum AssignWidgetKind {
-  Choice = 'CHOICE',
-  Custom = 'CUSTOM',
-  Proxy = 'PROXY',
-  Search = 'SEARCH',
-  Slider = 'SLIDER',
-  StateChoice = 'STATE_CHOICE',
-  String = 'STRING'
-}
 
 export type AssociateInput = {
   other: Scalars['ID']['input'];
@@ -312,6 +212,7 @@ export type Block = {
 
 export type BlockGroupsArgs = {
   filters?: InputMaybe<BlockGroupFilter>;
+  ordering?: Array<BlockGroupOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -323,6 +224,7 @@ export type BlockProvenanceEntriesArgs = {
 
 export type BlockSegmentsArgs = {
   filters?: InputMaybe<BlockSegmentFilter>;
+  ordering?: Array<BlockSegmentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -363,18 +265,21 @@ export type BlockGroup = {
 
 export type BlockGroupAnalogSignalsArgs = {
   filters?: InputMaybe<AnalogSignalFilter>;
+  ordering?: Array<AnalogSignalOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type BlockGroupIrregularlySampledSignalsArgs = {
   filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  ordering?: Array<IrregularlySampledSignalOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type BlockGroupSpikeTrainsArgs = {
   filters?: InputMaybe<SpikeTrainFilter>;
+  ordering?: Array<SpikeTrainOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -390,9 +295,12 @@ export type BlockGroupFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type BlockOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type BlockGroupOrder =
+  { id: Ordering; };
+
+export type BlockOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type BlockSegment = {
   __typename?: 'BlockSegment';
@@ -418,18 +326,21 @@ export type BlockSegment = {
 
 export type BlockSegmentAnalogSignalsArgs = {
   filters?: InputMaybe<AnalogSignalFilter>;
+  ordering?: Array<AnalogSignalOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type BlockSegmentGroupsArgs = {
   filters?: InputMaybe<BlockGroupFilter>;
+  ordering?: Array<BlockGroupOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type BlockSegmentIrregularlySampledSignalsArgs = {
   filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  ordering?: Array<IrregularlySampledSignalOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -441,6 +352,7 @@ export type BlockSegmentProvenanceEntriesArgs = {
 
 export type BlockSegmentSpikeTrainsArgs = {
   filters?: InputMaybe<SpikeTrainFilter>;
+  ordering?: Array<SpikeTrainOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -463,6 +375,9 @@ export type BlockSegmentInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   spikeTrains?: Array<SpikeTrainInput>;
 };
+
+export type BlockSegmentOrder =
+  { id: Ordering; };
 
 export type BlockStats = {
   __typename?: 'BlockStats';
@@ -550,32 +465,6 @@ export enum ChangeType {
   Changed = 'CHANGED',
   Removed = 'REMOVED'
 }
-
-export type Choice = {
-  __typename?: 'Choice';
-  description?: Maybe<Scalars['String']['output']>;
-  image?: Maybe<Scalars['String']['output']>;
-  label: Scalars['String']['output'];
-  value: Scalars['String']['output'];
-};
-
-/**
- *
- * A choice is a value that can be selected in a dropdown.
- *
- * It is composed of a value, a label, and a description. The value is the
- * value that is returned when the choice is selected. The label is the
- * text that is displayed in the dropdown. The description is the text
- * that is displayed when the user hovers over the choice.
- *
- *
- */
-export type ChoiceInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  image?: InputMaybe<Scalars['String']['input']>;
-  label: Scalars['String']['input'];
-  value: Scalars['AnyDefault']['input'];
-};
 
 export type Client = {
   __typename?: 'Client';
@@ -704,19 +593,21 @@ export type Dataset = {
 
 export type DatasetChildrenArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type DatasetFilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type DatasetImagesArgs = {
   filters?: InputMaybe<TraceFilter>;
-  order?: InputMaybe<TraceOrder>;
+  ordering?: Array<TraceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -733,6 +624,10 @@ export type DatasetFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<StrFilterLookup>;
 };
+
+export type DatasetOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type DeleteBlockInput = {
   id: Scalars['ID']['input'];
@@ -759,40 +654,6 @@ export type DesociateInput = {
   selfs: Array<Scalars['ID']['input']>;
 };
 
-export type Effect = {
-  dependencies: Array<Scalars['String']['output']>;
-  function: Scalars['ValidatorFunction']['output'];
-  kind: EffectKind;
-};
-
-/**
- *
- *                  An effect is a way to modify a port based on a condition. For example,
- *     you could have an effect that sets a port to null if another port is null.
- *
- *     Or, you could have an effect that hides the port if another port meets a condition.
- *     E.g when the user selects a certain option in a dropdown, another port is hidden.
- *
- *
- *
- */
-export type EffectInput = {
-  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
-  fade?: InputMaybe<Scalars['Boolean']['input']>;
-  function: Scalars['ValidatorFunction']['input'];
-  hook?: InputMaybe<Scalars['String']['input']>;
-  kind: EffectKind;
-  message?: InputMaybe<Scalars['String']['input']>;
-  ward?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The kind of effect. */
-export enum EffectKind {
-  Custom = 'CUSTOM',
-  Hide = 'HIDE',
-  Message = 'MESSAGE'
-}
-
 export type Exp2Synapse = NetSynapse & {
   __typename?: 'Exp2Synapse';
   cell: Scalars['String']['output'];
@@ -818,15 +679,15 @@ export type Experiment = {
 
 
 export type ExperimentRecordingViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  filters?: InputMaybe<ExperimentRecordingViewFilter>;
+  ordering?: Array<ExperimentRecordingViewOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type ExperimentStimulusViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  filters?: InputMaybe<ExperimentStimulusViewFilter>;
+  ordering?: Array<ExperimentStimulusViewOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -843,9 +704,9 @@ export type ExperimentFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type ExperimentOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type ExperimentOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type ExperimentRecordingView = {
   __typename?: 'ExperimentRecordingView';
@@ -857,6 +718,20 @@ export type ExperimentRecordingView = {
   recording: Recording;
 };
 
+export type ExperimentRecordingViewFilter = {
+  AND?: InputMaybe<ExperimentRecordingViewFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ExperimentRecordingViewFilter>;
+  OR?: InputMaybe<ExperimentRecordingViewFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ExperimentRecordingViewOrder =
+  { id: Ordering; };
+
 export type ExperimentStimulusView = {
   __typename?: 'ExperimentStimulusView';
   duration?: Maybe<Scalars['Float']['output']>;
@@ -866,6 +741,20 @@ export type ExperimentStimulusView = {
   offset?: Maybe<Scalars['Float']['output']>;
   stimulus: Stimulus;
 };
+
+export type ExperimentStimulusViewFilter = {
+  AND?: InputMaybe<ExperimentStimulusViewFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ExperimentStimulusViewFilter>;
+  OR?: InputMaybe<ExperimentStimulusViewFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ExperimentStimulusViewOrder =
+  { id: Ordering; };
 
 export type File = {
   __typename?: 'File';
@@ -878,7 +767,7 @@ export type File = {
 
 export type FileOriginsArgs = {
   filters?: InputMaybe<TraceFilter>;
-  order?: InputMaybe<TraceOrder>;
+  ordering?: Array<TraceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -900,6 +789,10 @@ export type FileFilter = {
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type FileOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type FinishBigFileUploadInput = {
   storeId: Scalars['String']['input'];
@@ -1012,13 +905,16 @@ export type IrregularlySampledSignalInput = {
   unit?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type IrregularlySampledSignalOrder =
+  { id: Ordering; };
+
 export type Mechanism = {
   __typename?: 'Mechanism';
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** The parameter ports of the mechanism */
-  parameters: Array<ArgPort>;
+  parameters: Array<Parameter>;
 };
 
 export type MechanismFilter = {
@@ -1037,11 +933,12 @@ export type MechanismFilter = {
 export type MechanismInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  parameters: Array<ArgPortInput>;
+  parameters: Array<ParameterInput>;
 };
 
 export type MechanismOrder =
-  { createdAt: Ordering; };
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 /** Temporary S3 credentials for reading a media object. */
 export type MediaAccessGrant = {
@@ -1131,7 +1028,8 @@ export type ModEnvironmentFilter = {
 };
 
 export type ModEnvironmentOrder =
-  { createdAt: Ordering; };
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 /** A change made to a model. */
 export type ModelChange = {
@@ -1155,7 +1053,7 @@ export type ModelCollection = {
 
 export type ModelCollectionModelsArgs = {
   filters?: InputMaybe<NeuronModelFilter>;
-  order?: InputMaybe<NeuronModelOrder>;
+  ordering?: Array<NeuronModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1171,6 +1069,10 @@ export type ModelCollectionFilter = {
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type ModelCollectionOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type ModelConfig = {
   __typename?: 'ModelConfig';
@@ -1557,13 +1459,14 @@ export type NeuronModelChangesArgs = {
 
 export type NeuronModelModelCollectionsArgs = {
   filters?: InputMaybe<ModelCollectionFilter>;
+  ordering?: Array<ModelCollectionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type NeuronModelSimulationsArgs = {
   filters?: InputMaybe<SimulationFilter>;
-  order?: InputMaybe<SimulationOrder>;
+  ordering?: Array<SimulationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1580,21 +1483,14 @@ export type NeuronModelFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type NeuronModelOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type NeuronModelOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
-
-export enum OptionKey {
-  Description = 'DESCRIPTION',
-  Label = 'LABEL',
-  Logo = 'LOGO',
-  Value = 'VALUE'
-}
 
 export enum Ordering {
   Asc = 'ASC',
@@ -1610,6 +1506,35 @@ export type Organization = {
   id: Scalars['ID']['output'];
   slug: Scalars['String']['output'];
 };
+
+/** A parameter port of a mechanism */
+export type Parameter = {
+  __typename?: 'Parameter';
+  default?: Maybe<Scalars['Any']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  kind: ParameterKind;
+  label?: Maybe<Scalars['String']['output']>;
+  nullable: Scalars['Boolean']['output'];
+};
+
+/** A parameter port of a mechanism */
+export type ParameterInput = {
+  default?: InputMaybe<Scalars['Any']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  kind?: ParameterKind;
+  label?: InputMaybe<Scalars['String']['input']>;
+  nullable?: Scalars['Boolean']['input'];
+};
+
+/** The kind of a mechanism parameter. */
+export enum ParameterKind {
+  Bool = 'BOOL',
+  Float = 'FLOAT',
+  Int = 'INT',
+  String = 'STRING'
+}
 
 /** Temporary S3 credentials for reading a parquet object. */
 export type ParquetAccessGrant = {
@@ -1685,37 +1610,20 @@ export type PinRoiInput = {
   pin: Scalars['Boolean']['input'];
 };
 
-/** The kind of port. */
-export enum PortKind {
-  Bool = 'BOOL',
-  Date = 'DATE',
-  Dict = 'DICT',
-  Enum = 'ENUM',
-  Float = 'FLOAT',
-  Int = 'INT',
-  Interface = 'INTERFACE',
-  List = 'LIST',
-  MemoryStructure = 'MEMORY_STRUCTURE',
-  Model = 'MODEL',
-  String = 'STRING',
-  Structure = 'STRUCTURE',
-  Union = 'UNION'
-}
-
 /** A provenance event for a model. */
 export type ProvenanceEntry = {
   __typename?: 'ProvenanceEntry';
   client?: Maybe<Client>;
   /** The date of the change. */
   date: Scalars['DateTime']['output'];
-  /** The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None. */
-  during?: Maybe<Scalars['String']['output']>;
   /** The effective changes made to the model. */
   effectiveChanges: Array<ModelChange>;
   /** The ID of the history entry. */
   id: Scalars['ID']['output'];
   /** The type of change that was made. */
   kind: HistoryKind;
+  /** The task during which the change occurred, if any. */
+  task?: Maybe<Task>;
   /** User who made the change. */
   user?: Maybe<User>;
 };
@@ -1788,12 +1696,14 @@ export type QueryAnalogSignalChannelArgs = {
 
 export type QueryAnalogSignalChannelsArgs = {
   filters?: InputMaybe<AnalogSignalChannelFilter>;
+  ordering?: Array<AnalogSignalChannelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryAnalogSignalsArgs = {
   filters?: InputMaybe<AnalogSignalFilter>;
+  ordering?: Array<AnalogSignalOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1810,7 +1720,7 @@ export type QueryBlockStatsArgs = {
 
 export type QueryBlocksArgs = {
   filters?: InputMaybe<BlockFilter>;
-  order?: InputMaybe<BlockOrder>;
+  ordering?: Array<BlockOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1829,6 +1739,7 @@ export type QueryDatasetArgs = {
 
 export type QueryDatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1840,7 +1751,7 @@ export type QueryExperimentArgs = {
 
 export type QueryExperimentsArgs = {
   filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  ordering?: Array<ExperimentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1852,6 +1763,7 @@ export type QueryFileArgs = {
 
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1887,18 +1799,21 @@ export type QueryModelCollectionArgs = {
 
 export type QueryModelCollectionsArgs = {
   filters?: InputMaybe<ModelCollectionFilter>;
+  ordering?: Array<ModelCollectionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMydatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMyfilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1910,7 +1825,7 @@ export type QueryNeuronModelArgs = {
 
 export type QueryNeuronModelsArgs = {
   filters?: InputMaybe<NeuronModelFilter>;
-  order?: InputMaybe<NeuronModelOrder>;
+  ordering?: Array<NeuronModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1922,7 +1837,7 @@ export type QueryRecordingArgs = {
 
 export type QueryRecordingsArgs = {
   filters?: InputMaybe<RecordingFilter>;
-  order?: InputMaybe<RecordingOrder>;
+  ordering?: Array<RecordingOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1934,6 +1849,7 @@ export type QueryRoiArgs = {
 
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
+  ordering?: Array<RoiOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1953,14 +1869,14 @@ export type QuerySimulationArgs = {
 
 export type QuerySimulationsArgs = {
   filters?: InputMaybe<SimulationFilter>;
-  order?: InputMaybe<SimulationOrder>;
+  ordering?: Array<SimulationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryStimuliArgs = {
   filters?: InputMaybe<StimulusFilter>;
-  order?: InputMaybe<StimulusOrder>;
+  ordering?: Array<StimulusOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1977,7 +1893,7 @@ export type QueryTraceArgs = {
 
 export type QueryTracesArgs = {
   filters?: InputMaybe<TraceFilter>;
-  order?: InputMaybe<TraceOrder>;
+  ordering?: Array<TraceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2013,6 +1929,10 @@ export type RoiFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
   trace?: InputMaybe<Scalars['ID']['input']>;
 };
+
+export type RoiOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type Recording = {
   __typename?: 'Recording';
@@ -2055,9 +1975,8 @@ export enum RecordingKind {
   Voltage = 'VOLTAGE'
 }
 
-export type RecordingOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type RecordingOrder =
+  { id: Ordering; };
 
 export type RecordingViewInput = {
   duration?: InputMaybe<Scalars['Float']['input']>;
@@ -2106,7 +2025,6 @@ export type RequestParquetAccessInput = {
 export type RequestParquetUploadInput = {
   contentType?: InputMaybe<Scalars['String']['input']>;
   host?: InputMaybe<Scalars['String']['input']>;
-  originalFileName: Scalars['String']['input'];
   port?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2121,32 +2039,6 @@ export type RequestZarrUploadInput = {
   shape?: InputMaybe<Array<Scalars['Int']['input']>>;
   version?: InputMaybe<Scalars['String']['input']>;
 };
-
-export type Requires = {
-  __typename?: 'Requires';
-  key: Scalars['String']['output'];
-  operator: RequiresOperator;
-  value: Scalars['Arg']['output'];
-};
-
-export type RequiresInput = {
-  key: Scalars['String']['input'];
-  operator: RequiresOperator;
-  value: Scalars['Arg']['input'];
-};
-
-/** The operator for matching descriptors. */
-export enum RequiresOperator {
-  Contains = 'CONTAINS',
-  Equals = 'EQUALS',
-  Exists = 'EXISTS',
-  Gte = 'GTE',
-  In = 'IN',
-  Lte = 'LTE',
-  Matches = 'MATCHES',
-  NotEquals = 'NOT_EQUALS',
-  NotIn = 'NOT_IN'
-}
 
 export type RevertInput = {
   historyId: Scalars['ID']['input'];
@@ -2255,29 +2147,29 @@ export type Simulation = {
 
 
 export type SimulationRecordingViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  filters?: InputMaybe<ExperimentRecordingViewFilter>;
+  ordering?: Array<ExperimentRecordingViewOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type SimulationRecordingsArgs = {
   filters?: InputMaybe<RecordingFilter>;
-  order?: InputMaybe<RecordingOrder>;
+  ordering?: Array<RecordingOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type SimulationStimuliArgs = {
   filters?: InputMaybe<StimulusFilter>;
-  order?: InputMaybe<StimulusOrder>;
+  ordering?: Array<StimulusOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type SimulationStimulusViewsArgs = {
-  filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  filters?: InputMaybe<ExperimentStimulusViewFilter>;
+  ordering?: Array<ExperimentStimulusViewOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2294,9 +2186,9 @@ export type SimulationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type SimulationOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type SimulationOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type SpikeTrain = Signal & {
   __typename?: 'SpikeTrain';
@@ -2328,10 +2220,8 @@ export type SpikeTrainInput = {
   waveforms?: InputMaybe<Scalars['TraceLike']['input']>;
 };
 
-export type StateAccessorInput = {
-  optionKey: OptionKey;
-  subPath?: InputMaybe<Scalars['String']['input']>;
-};
+export type SpikeTrainOrder =
+  { id: Ordering; };
 
 export type Stimulus = {
   __typename?: 'Stimulus';
@@ -2372,9 +2262,8 @@ export enum StimulusKind {
   Voltage = 'VOLTAGE'
 }
 
-export type StimulusOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type StimulusOrder =
+  { id: Ordering; };
 
 export type StimulusViewInput = {
   duration?: InputMaybe<Scalars['Float']['input']>;
@@ -2443,6 +2332,29 @@ export type SynapticConnection = NetConnection & {
   weight?: Maybe<Scalars['Float']['output']>;
 };
 
+/** A validated Rekuest task under which changes were made. */
+export type Task = {
+  __typename?: 'Task';
+  /** The action hash. */
+  action: Scalars['String']['output'];
+  /** The assigning app. */
+  app: Scalars['String']['output'];
+  /** The arguments the task was assigned with. */
+  args: Scalars['JSON']['output'];
+  /** The user that assigned the task. */
+  assigner?: Maybe<User>;
+  /** The raw sub claim of the assigning user. */
+  assignerSub: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** The organization the task ran in. */
+  organization: Organization;
+  /** The parent task id, if any. */
+  parentId?: Maybe<Scalars['String']['output']>;
+  /** The rekuest task id. */
+  taskId: Scalars['String']['output'];
+};
+
 export type TimeBucket = {
   __typename?: 'TimeBucket';
   avg?: Maybe<Scalars['Float']['output']>;
@@ -2497,6 +2409,7 @@ export type TraceProvenanceEntriesArgs = {
 
 export type TraceRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
+  ordering?: Array<RoiOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2519,9 +2432,9 @@ export type TraceFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type TraceOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type TraceOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 export type UpdateRoiInput = {
   kind?: InputMaybe<RoiKind>;
@@ -2542,29 +2455,6 @@ export type User = {
   id: Scalars['ID']['output'];
   preferredUsername: Scalars['String']['output'];
   sub: Scalars['String']['output'];
-};
-
-export type Validator = {
-  __typename?: 'Validator';
-  dependencies?: Maybe<Array<Scalars['String']['output']>>;
-  errorMessage?: Maybe<Scalars['String']['output']>;
-  function: Scalars['ValidatorFunction']['output'];
-  label?: Maybe<Scalars['String']['output']>;
-};
-
-/**
- *
- * A validating function for a port. Can specify a function that will run when validating values of the port.
- * If outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax
- * when transversing the tree of ports.
- *
- *
- */
-export type ValidatorInput = {
-  dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
-  errorMessage?: InputMaybe<Scalars['String']['input']>;
-  function: Scalars['ValidatorFunction']['input'];
-  label?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Temporary S3 credentials for reading a Zarr store. */
@@ -2636,7 +2526,7 @@ export type _Service = {
 
 export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
@@ -2658,15 +2548,15 @@ export type BlockFragment = { __typename?: 'Block', id: string, name: string, de
 
 export type ListBlockFragment = { __typename?: 'Block', id: string, name: string };
 
-export type ModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> };
+export type ModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> };
 
-export type ListModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> };
+export type ListModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> };
 
 export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, stimulusViews: Array<{ __typename?: 'ExperimentStimulusView', id: string, label?: string | null, stimulus: { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } }>, recordingViews: Array<{ __typename?: 'ExperimentRecordingView', id: string, label?: string | null, recording: { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } }> };
 
 export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string };
 
-export type MechanismFragment = { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> };
+export type MechanismFragment = { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> };
 
 export type ListMechanismFragment = { __typename?: 'Mechanism', id: string, name: string };
 
@@ -2680,19 +2570,19 @@ export type SectionFragment = { __typename?: 'Section', id: string, diam: number
 
 export type ConnectionFragment = { __typename?: 'Connection', parent: string, location: number };
 
-export type CompartmentFragment = { __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> };
+export type CompartmentFragment = { __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> };
 
-export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } };
+export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } };
 
 export type ListNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string };
 
 export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } };
 
-export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListRecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
-export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
+export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } };
 
@@ -2726,7 +2616,7 @@ export type DetailBlockQuery = { __typename?: 'Query', block: { __typename?: 'Bl
 export type ListBlocksQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<BlockFilter>;
-  order?: InputMaybe<BlockOrder>;
+  ordering?: InputMaybe<Array<BlockOrder> | BlockOrder>;
 }>;
 
 
@@ -2737,7 +2627,7 @@ export type DetailModEnvironmentQueryVariables = Exact<{
 }>;
 
 
-export type DetailModEnvironmentQuery = { __typename?: 'Query', modEnvironment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } };
+export type DetailModEnvironmentQuery = { __typename?: 'Query', modEnvironment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } };
 
 export type ListModEnvironmentsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2746,7 +2636,7 @@ export type ListModEnvironmentsQueryVariables = Exact<{
 }>;
 
 
-export type ListModEnvironmentsQuery = { __typename?: 'Query', modEnvironments: Array<{ __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> }> };
+export type ListModEnvironmentsQuery = { __typename?: 'Query', modEnvironments: Array<{ __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> }> };
 
 export type DetailExperimentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2758,7 +2648,7 @@ export type DetailExperimentQuery = { __typename?: 'Query', experiment: { __type
 export type ListExperimentsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<ExperimentFilter>;
-  order?: InputMaybe<ExperimentOrder>;
+  ordering?: InputMaybe<Array<ExperimentOrder> | ExperimentOrder>;
 }>;
 
 
@@ -2779,7 +2669,7 @@ export type DetailMechanismQueryVariables = Exact<{
 }>;
 
 
-export type DetailMechanismQuery = { __typename?: 'Query', mechanism: { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> } };
+export type DetailMechanismQuery = { __typename?: 'Query', mechanism: { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> } };
 
 export type ListMechanismsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2800,6 +2690,7 @@ export type DetailModelCollectionQuery = { __typename?: 'Query', modelCollection
 export type ListModelCollectionsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<ModelCollectionFilter>;
+  ordering?: InputMaybe<Array<ModelCollectionOrder> | ModelCollectionOrder>;
 }>;
 
 
@@ -2810,12 +2701,12 @@ export type DetailNeuronModelQueryVariables = Exact<{
 }>;
 
 
-export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } } };
+export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } } };
 
 export type ListNeuronModelsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<NeuronModelFilter>;
-  order?: InputMaybe<NeuronModelOrder>;
+  ordering?: InputMaybe<Array<NeuronModelOrder> | NeuronModelOrder>;
 }>;
 
 
@@ -2826,11 +2717,12 @@ export type DetailRecordingQueryVariables = Exact<{
 }>;
 
 
-export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListRecordingsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<RecordingFilter>;
+  ordering?: InputMaybe<Array<RecordingOrder> | RecordingOrder>;
 }>;
 
 
@@ -2854,6 +2746,7 @@ export type DetailAnalogSignalQuery = { __typename?: 'Query', analogSignal: { __
 export type ListAnalogSignalQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<AnalogSignalFilter>;
+  ordering?: InputMaybe<Array<AnalogSignalOrder> | AnalogSignalOrder>;
 }>;
 
 
@@ -2869,6 +2762,7 @@ export type DetailAnalogSignalChannelQuery = { __typename?: 'Query', analogSigna
 export type ListAnalogSignalChannelQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<AnalogSignalChannelFilter>;
+  ordering?: InputMaybe<Array<AnalogSignalChannelOrder> | AnalogSignalChannelOrder>;
 }>;
 
 
@@ -2879,12 +2773,12 @@ export type DetailSimulationQueryVariables = Exact<{
 }>;
 
 
-export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListSimulationsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<SimulationFilter>;
-  order?: InputMaybe<SimulationOrder>;
+  ordering?: InputMaybe<Array<SimulationOrder> | SimulationOrder>;
 }>;
 
 
@@ -2895,11 +2789,12 @@ export type DetailStimulusQueryVariables = Exact<{
 }>;
 
 
-export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'ArgPort', key: string, kind: PortKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: number, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListStimuliQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<StimulusFilter>;
+  ordering?: InputMaybe<Array<StimulusOrder> | StimulusOrder>;
 }>;
 
 
@@ -2912,7 +2807,11 @@ export type DetailTraceQueryVariables = Exact<{
 
 export type DetailTraceQuery = { __typename?: 'Query', trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type TracesQueryVariables = Exact<{ [key: string]: never; }>;
+export type TracesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<TraceFilter>;
+  ordering?: InputMaybe<Array<TraceOrder> | TraceOrder>;
+}>;
 
 
 export type TracesQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
@@ -2924,10 +2823,13 @@ export const CompartmentFragmentDoc = gql`
   globalParams {
     param
     value
+    description
   }
   sectionParams {
+    mechanism
     param
     value
+    description
   }
 }
     `;
@@ -2996,6 +2898,9 @@ export const DetailNeuronModelFragmentDoc = gql`
   id
   name
   config {
+    celsius
+    vInit
+    label
     cells {
       id
       biophysics {
@@ -3436,8 +3341,8 @@ export type DetailBlockQueryHookResult = ReturnType<typeof useDetailBlockQuery>;
 export type DetailBlockLazyQueryHookResult = ReturnType<typeof useDetailBlockLazyQuery>;
 export type DetailBlockQueryResult = Apollo.QueryResult<DetailBlockQuery, DetailBlockQueryVariables>;
 export const ListBlocksDocument = gql`
-    query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter, $order: BlockOrder) {
-  blocks(pagination: $pagination, filters: $filters, order: $order) {
+    query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter, $ordering: [BlockOrder!]) {
+  blocks(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListBlock
   }
 }
@@ -3457,7 +3362,7 @@ export const ListBlocksDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -3580,8 +3485,8 @@ export type DetailExperimentQueryHookResult = ReturnType<typeof useDetailExperim
 export type DetailExperimentLazyQueryHookResult = ReturnType<typeof useDetailExperimentLazyQuery>;
 export type DetailExperimentQueryResult = Apollo.QueryResult<DetailExperimentQuery, DetailExperimentQueryVariables>;
 export const ListExperimentsDocument = gql`
-    query ListExperiments($pagination: OffsetPaginationInput, $filters: ExperimentFilter, $order: ExperimentOrder) {
-  experiments(pagination: $pagination, filters: $filters, order: $order) {
+    query ListExperiments($pagination: OffsetPaginationInput, $filters: ExperimentFilter, $ordering: [ExperimentOrder!]) {
+  experiments(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListExperiment
   }
 }
@@ -3601,7 +3506,7 @@ export const ListExperimentsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -3618,10 +3523,10 @@ export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperi
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
 export const HomePageDocument = gql`
     query HomePage {
-  blocks: blocks(pagination: {limit: 1}, order: {createdAt: DESC}) {
+  blocks: blocks(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
     ...ListBlock
   }
-  models: neuronModels(pagination: {limit: 1}, order: {createdAt: DESC}) {
+  models: neuronModels(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
     ...ListNeuronModel
   }
 }
@@ -3796,8 +3701,12 @@ export type DetailModelCollectionQueryHookResult = ReturnType<typeof useDetailMo
 export type DetailModelCollectionLazyQueryHookResult = ReturnType<typeof useDetailModelCollectionLazyQuery>;
 export type DetailModelCollectionQueryResult = Apollo.QueryResult<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>;
 export const ListModelCollectionsDocument = gql`
-    query ListModelCollections($pagination: OffsetPaginationInput, $filters: ModelCollectionFilter) {
-  modelCollections(pagination: $pagination, filters: $filters) {
+    query ListModelCollections($pagination: OffsetPaginationInput, $filters: ModelCollectionFilter, $ordering: [ModelCollectionOrder!]) {
+  modelCollections(
+    pagination: $pagination
+    filters: $filters
+    ordering: $ordering
+  ) {
     ...ListModelCollection
   }
 }
@@ -3817,6 +3726,7 @@ export const ListModelCollectionsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -3867,8 +3777,8 @@ export type DetailNeuronModelQueryHookResult = ReturnType<typeof useDetailNeuron
 export type DetailNeuronModelLazyQueryHookResult = ReturnType<typeof useDetailNeuronModelLazyQuery>;
 export type DetailNeuronModelQueryResult = Apollo.QueryResult<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>;
 export const ListNeuronModelsDocument = gql`
-    query ListNeuronModels($pagination: OffsetPaginationInput, $filters: NeuronModelFilter, $order: NeuronModelOrder) {
-  neuronModels(pagination: $pagination, filters: $filters, order: $order) {
+    query ListNeuronModels($pagination: OffsetPaginationInput, $filters: NeuronModelFilter, $ordering: [NeuronModelOrder!]) {
+  neuronModels(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListNeuronModel
   }
 }
@@ -3888,7 +3798,7 @@ export const ListNeuronModelsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -3939,8 +3849,8 @@ export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordin
 export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>;
 export type DetailRecordingQueryResult = Apollo.QueryResult<DetailRecordingQuery, DetailRecordingQueryVariables>;
 export const ListRecordingsDocument = gql`
-    query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter) {
-  recordings(pagination: $pagination, filters: $filters) {
+    query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter, $ordering: [RecordingOrder!]) {
+  recordings(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListRecording
   }
 }
@@ -3960,6 +3870,7 @@ export const ListRecordingsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -4046,8 +3957,8 @@ export type DetailAnalogSignalQueryHookResult = ReturnType<typeof useDetailAnalo
 export type DetailAnalogSignalLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalLazyQuery>;
 export type DetailAnalogSignalQueryResult = Apollo.QueryResult<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>;
 export const ListAnalogSignalDocument = gql`
-    query ListAnalogSignal($pagination: OffsetPaginationInput, $filters: AnalogSignalFilter) {
-  analogSignals(pagination: $pagination, filters: $filters) {
+    query ListAnalogSignal($pagination: OffsetPaginationInput, $filters: AnalogSignalFilter, $ordering: [AnalogSignalOrder!]) {
+  analogSignals(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListAnalogSignal
   }
 }
@@ -4067,6 +3978,7 @@ export const ListAnalogSignalDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -4117,8 +4029,12 @@ export type DetailAnalogSignalChannelQueryHookResult = ReturnType<typeof useDeta
 export type DetailAnalogSignalChannelLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalChannelLazyQuery>;
 export type DetailAnalogSignalChannelQueryResult = Apollo.QueryResult<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>;
 export const ListAnalogSignalChannelDocument = gql`
-    query ListAnalogSignalChannel($pagination: OffsetPaginationInput, $filters: AnalogSignalChannelFilter) {
-  analogSignalChannels(pagination: $pagination, filters: $filters) {
+    query ListAnalogSignalChannel($pagination: OffsetPaginationInput, $filters: AnalogSignalChannelFilter, $ordering: [AnalogSignalChannelOrder!]) {
+  analogSignalChannels(
+    pagination: $pagination
+    filters: $filters
+    ordering: $ordering
+  ) {
     ...ListAnalogSignalChannel
   }
 }
@@ -4138,6 +4054,7 @@ export const ListAnalogSignalChannelDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -4188,8 +4105,8 @@ export type DetailSimulationQueryHookResult = ReturnType<typeof useDetailSimulat
 export type DetailSimulationLazyQueryHookResult = ReturnType<typeof useDetailSimulationLazyQuery>;
 export type DetailSimulationQueryResult = Apollo.QueryResult<DetailSimulationQuery, DetailSimulationQueryVariables>;
 export const ListSimulationsDocument = gql`
-    query ListSimulations($pagination: OffsetPaginationInput, $filters: SimulationFilter, $order: SimulationOrder) {
-  simulations(pagination: $pagination, filters: $filters, order: $order) {
+    query ListSimulations($pagination: OffsetPaginationInput, $filters: SimulationFilter, $ordering: [SimulationOrder!]) {
+  simulations(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListSimulation
   }
 }
@@ -4209,7 +4126,7 @@ export const ListSimulationsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -4260,8 +4177,8 @@ export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQ
 export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>;
 export type DetailStimulusQueryResult = Apollo.QueryResult<DetailStimulusQuery, DetailStimulusQueryVariables>;
 export const ListStimuliDocument = gql`
-    query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter) {
-  stimuli(pagination: $pagination, filters: $filters) {
+    query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter, $ordering: [StimulusOrder!]) {
+  stimuli(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListStimulus
   }
 }
@@ -4281,6 +4198,7 @@ export const ListStimuliDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -4331,8 +4249,8 @@ export type DetailTraceQueryHookResult = ReturnType<typeof useDetailTraceQuery>;
 export type DetailTraceLazyQueryHookResult = ReturnType<typeof useDetailTraceLazyQuery>;
 export type DetailTraceQueryResult = Apollo.QueryResult<DetailTraceQuery, DetailTraceQueryVariables>;
 export const TracesDocument = gql`
-    query Traces {
-  traces(pagination: {limit: 10}) {
+    query Traces($pagination: OffsetPaginationInput = {limit: 10}, $filters: TraceFilter, $ordering: [TraceOrder!]) {
+  traces(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListTrace
   }
 }
@@ -4350,6 +4268,9 @@ export const TracesDocument = gql`
  * @example
  * const { data, loading, error } = useTracesQuery({
  *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */

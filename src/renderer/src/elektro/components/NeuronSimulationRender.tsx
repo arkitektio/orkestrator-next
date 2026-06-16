@@ -1,8 +1,9 @@
-import { Bounds, Html, OrbitControls, useCursor } from "@react-three/drei";
+import { Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
+import { FitCamera } from "../lib/fitCamera";
 import { RecordingMarker } from "../model_render/RecordingMarker";
 import { StimulusMarker } from "../model_render/StimulusMarker";
 import { interpolateCoords } from "../model_render/utils";
@@ -128,6 +129,34 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Rotation center = centroid of every cell's root-node position; the enclosing
+  // radius (from all coords) keeps the whole model framed regardless of aspect.
+  const { points, target } = useMemo(() => {
+    const points: THREE.Vector3[] = [];
+    const rootNodes: THREE.Vector3[] = [];
+    cells.forEach(cell =>
+      cell.topology.sections.forEach(section => {
+        const isRoot = !section.connections || section.connections.length === 0;
+        if (section.coords && section.coords.length > 0) {
+          section.coords.forEach(c => points.push(new THREE.Vector3(c.x, c.y, c.z)));
+          if (isRoot) {
+            const c = section.coords[0];
+            rootNodes.push(new THREE.Vector3(c.x, c.y, c.z));
+          }
+        } else {
+          const half = (section.length || 10) / 2;
+          points.push(new THREE.Vector3(0, 0, -half), new THREE.Vector3(0, 0, half));
+          if (isRoot) rootNodes.push(new THREE.Vector3(0, 0, -half));
+        }
+      }),
+    );
+    const basis = rootNodes.length > 0 ? rootNodes : points;
+    const target = new THREE.Vector3();
+    basis.forEach(p => target.add(p));
+    if (basis.length > 0) target.multiplyScalar(1 / basis.length);
+    return { points, target };
+  }, [cells]);
+
   return (
     <Canvas
       camera={{ position: [0, 0, 200], fov: 50 }}
@@ -137,7 +166,9 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
       <directionalLight position={[20, 10, 10]} />
       <OrbitControls makeDefault />
 
-      <Bounds fit clip observe margin={1.2}>
+      <FitCamera points={points} target={target} />
+
+      <>
         {cells.map(cell =>
           <>
             {cell.topology.sections.flatMap((section, secIndex) => {
@@ -202,8 +233,7 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
             <StimulusMarker key={`rec-marker-${i}`} stimulus={stim} position={point} />
           );
         })}
-
-      </Bounds>
+      </>
     </Canvas>
   );
 };

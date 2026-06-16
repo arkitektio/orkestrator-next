@@ -184,6 +184,7 @@ export type BigFileUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+/** Represents a biophysics model, which consists of compartments, each with their own mechanisms and parameters. */
 export type Biophysics = {
   __typename?: 'Biophysics';
   compartments: Array<Compartment>;
@@ -434,6 +435,7 @@ export enum BlockTimestampField {
   CreatedAt = 'CREATED_AT'
 }
 
+/** Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell. */
 export type Cell = {
   __typename?: 'Cell';
   biophysics: Biophysics;
@@ -480,6 +482,7 @@ export type Comparison = {
   collection: ModelCollection;
 };
 
+/** Represents a compartment in a biophysics model. */
 export type Compartment = {
   __typename?: 'Compartment';
   globalParams: Array<GlobalParamMap>;
@@ -654,6 +657,7 @@ export type DesociateInput = {
   selfs: Array<Scalars['ID']['input']>;
 };
 
+/** Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model. */
 export type Exp2Synapse = NetSynapse & {
   __typename?: 'Exp2Synapse';
   cell: Scalars['String']['output'];
@@ -847,6 +851,35 @@ export type GeneralMediaAccessGrant = {
   store?: Maybe<Scalars['String']['output']>;
 };
 
+/** Temporary S3 credentials for reading a parquet object. */
+export type GeneralParquetAccessGrant = {
+  __typename?: 'GeneralParquetAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+/** Temporary S3 credentials for reading a Zarr store. */
+export type GeneralZarrAccessGrant = {
+  __typename?: 'GeneralZarrAccessGrant';
+  accessKey: Scalars['String']['output'];
+  bucket: Scalars['String']['output'];
+  expiresIn: Scalars['Int']['output'];
+  path: Scalars['String']['output'];
+  region: Scalars['String']['output'];
+  secretKey: Scalars['String']['output'];
+  sessionToken: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  store?: Maybe<Scalars['String']['output']>;
+};
+
+/** Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model) */
 export type GlobalParamMap = {
   __typename?: 'GlobalParamMap';
   description?: Maybe<Scalars['String']['output']>;
@@ -1074,6 +1107,7 @@ export type ModelCollectionOrder =
   { createdAt: Ordering; id?: never; }
   |  { createdAt?: never; id: Ordering; };
 
+/** Represents the configuration for the model. */
 export type ModelConfig = {
   __typename?: 'ModelConfig';
   cells: Array<Cell>;
@@ -1160,6 +1194,10 @@ export type Mutation = {
   requestBigfileUpload: BigFileUploadGrant;
   /** Request temporary S3 read credentials for media files in the organization */
   requestGeneralMediaAccess: GeneralMediaAccessGrant;
+  /** Request temporary S3 read credentials for Parquet files in the organization */
+  requestGeneralParquetAccess: GeneralParquetAccessGrant;
+  /** Request temporary S3 read credentials for Zarr stores in the organization */
+  requestGeneralZarrAccess: GeneralZarrAccessGrant;
   /** Request temporary S3 read credentials for a media file */
   requestMediaAccess: MediaAccessGrant;
   /** Upload media and return a URL for access */
@@ -1338,6 +1376,16 @@ export type MutationRequestGeneralMediaAccessArgs = {
 };
 
 
+export type MutationRequestGeneralParquetAccessArgs = {
+  input: RequestGeneralParquetAccessInput;
+};
+
+
+export type MutationRequestGeneralZarrAccessArgs = {
+  input: RequestGeneralZarrAccessInput;
+};
+
+
 export type MutationRequestMediaAccessArgs = {
   input: RequestMediaAccessInput;
 };
@@ -1387,6 +1435,7 @@ export type MutationUpdateRoiArgs = {
   input: UpdateRoiInput;
 };
 
+/** Base class for net connection parameters. */
 export type NetConnection = {
   delay?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
@@ -1404,6 +1453,7 @@ export type NetConnectionInput = {
   weight?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model. */
 export type NetStimulator = {
   __typename?: 'NetStimulator';
   id: Scalars['ID']['output'];
@@ -1419,6 +1469,7 @@ export type NetStimulatorInput = {
   start?: Scalars['Float']['input'];
 };
 
+/** Base class for synaptic stimulus parameters. */
 export type NetSynapse = {
   cell: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -2008,6 +2059,14 @@ export type RequestGeneralMediaAccessInput = {
   expiresIn?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RequestGeneralParquetAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RequestGeneralZarrAccessInput = {
+  expiresIn?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type RequestMediaAccessInput = {
   storeId: Scalars['String']['input'];
 };
@@ -2100,6 +2159,7 @@ export type SectionInput = {
   nseg?: Scalars['Int']['input'];
 };
 
+/** Represents a section parameter mapping for a biophysics model. (this will be set on the mechanisms of the compartments of the model) */
 export type SectionParamMap = {
   __typename?: 'SectionParamMap';
   /** Description of the parameter */
@@ -2322,6 +2382,7 @@ export enum SynapseKind {
   Gabaa = 'GABAA'
 }
 
+/** Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse). */
 export type SynapticConnection = NetConnection & {
   __typename?: 'SynapticConnection';
   delay?: Maybe<Scalars['Float']['output']>;
@@ -2605,6 +2666,15 @@ export type CreateNeuronModelMutationVariables = Exact<{
 
 
 export type CreateNeuronModelMutation = { __typename?: 'Mutation', createNeuronModel: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string }> } } };
+
+export type GeneralZarrAccessGrantFragment = { __typename?: 'GeneralZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string };
+
+export type RequestGeneralZarrAccessMutationVariables = Exact<{
+  input: RequestGeneralZarrAccessInput;
+}>;
+
+
+export type RequestGeneralZarrAccessMutation = { __typename?: 'Mutation', requestGeneralZarrAccess: { __typename?: 'GeneralZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string } };
 
 export type DetailBlockQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3235,6 +3305,16 @@ export const ListTraceFragmentDoc = gql`
   name
 }
     `;
+export const GeneralZarrAccessGrantFragmentDoc = gql`
+    fragment GeneralZarrAccessGrant on GeneralZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}
+    `;
 export const DeleteBlockDocument = gql`
     mutation DeleteBlock($id: ID!) {
   deleteBlock(input: {id: $id})
@@ -3305,6 +3385,39 @@ export function useCreateNeuronModelMutation(baseOptions?: ApolloReactHooks.Muta
 export type CreateNeuronModelMutationHookResult = ReturnType<typeof useCreateNeuronModelMutation>;
 export type CreateNeuronModelMutationResult = Apollo.MutationResult<CreateNeuronModelMutation>;
 export type CreateNeuronModelMutationOptions = Apollo.BaseMutationOptions<CreateNeuronModelMutation, CreateNeuronModelMutationVariables>;
+export const RequestGeneralZarrAccessDocument = gql`
+    mutation RequestGeneralZarrAccess($input: RequestGeneralZarrAccessInput!) {
+  requestGeneralZarrAccess(input: $input) {
+    ...GeneralZarrAccessGrant
+  }
+}
+    ${GeneralZarrAccessGrantFragmentDoc}`;
+export type RequestGeneralZarrAccessMutationFn = Apollo.MutationFunction<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>;
+
+/**
+ * __useRequestGeneralZarrAccessMutation__
+ *
+ * To run a mutation, you first call `useRequestGeneralZarrAccessMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestGeneralZarrAccessMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestGeneralZarrAccessMutation, { data, loading, error }] = useRequestGeneralZarrAccessMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRequestGeneralZarrAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>(RequestGeneralZarrAccessDocument, options);
+      }
+export type RequestGeneralZarrAccessMutationHookResult = ReturnType<typeof useRequestGeneralZarrAccessMutation>;
+export type RequestGeneralZarrAccessMutationResult = Apollo.MutationResult<RequestGeneralZarrAccessMutation>;
+export type RequestGeneralZarrAccessMutationOptions = Apollo.BaseMutationOptions<RequestGeneralZarrAccessMutation, RequestGeneralZarrAccessMutationVariables>;
 export const DetailBlockDocument = gql`
     query DetailBlock($id: ID!) {
   block(id: $id) {

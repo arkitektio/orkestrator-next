@@ -1537,7 +1537,7 @@
       {
         "kind": "OBJECT",
         "name": "Biophysics",
-        "description": null,
+        "description": "Represents a biophysics model, which consists of compartments, each with their own mechanisms and parameters.",
         "isOneOf": null,
         "fields": [
           {
@@ -3541,7 +3541,7 @@
       {
         "kind": "OBJECT",
         "name": "Cell",
-        "description": null,
+        "description": "Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.",
         "isOneOf": null,
         "fields": [
           {
@@ -3935,7 +3935,7 @@
       {
         "kind": "OBJECT",
         "name": "Compartment",
-        "description": null,
+        "description": "Represents a compartment in a biophysics model.",
         "isOneOf": null,
         "fields": [
           {
@@ -4741,7 +4741,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4769,7 +4769,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -5632,7 +5632,7 @@
       {
         "kind": "OBJECT",
         "name": "Exp2Synapse",
-        "description": null,
+        "description": "Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.",
         "isOneOf": null,
         "fields": [
           {
@@ -7517,8 +7517,312 @@
       },
       {
         "kind": "OBJECT",
+        "name": "GeneralParquetAccessGrant",
+        "description": "Temporary S3 credentials for reading a parquet object.",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "accessKey",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bucket",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "expiresIn",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "path",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "region",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "secretKey",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sessionToken",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "status",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "store",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "GeneralZarrAccessGrant",
+        "description": "Temporary S3 credentials for reading a Zarr store.",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "accessKey",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bucket",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "expiresIn",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "path",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "region",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "secretKey",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sessionToken",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "status",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "store",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "GlobalParamMap",
-        "description": null,
+        "description": "Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)",
         "isOneOf": null,
         "fields": [
           {
@@ -9622,7 +9926,7 @@
       {
         "kind": "OBJECT",
         "name": "ModelConfig",
-        "description": null,
+        "description": "Represents the configuration for the model.",
         "isOneOf": null,
         "fields": [
           {
@@ -10953,6 +11257,72 @@
             "deprecationReason": null
           },
           {
+            "name": "requestGeneralParquetAccess",
+            "description": "Request temporary S3 read credentials for Parquet files in the organization",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "RequestGeneralParquetAccessInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "GeneralParquetAccessGrant",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "requestGeneralZarrAccess",
+            "description": "Request temporary S3 read credentials for Zarr stores in the organization",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "RequestGeneralZarrAccessInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "GeneralZarrAccessGrant",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "requestMediaAccess",
             "description": "Request temporary S3 read credentials for a media file",
             "args": [
@@ -11291,7 +11661,7 @@
       {
         "kind": "INTERFACE",
         "name": "NetConnection",
-        "description": null,
+        "description": "Base class for net connection parameters.",
         "isOneOf": null,
         "fields": [
           {
@@ -11473,7 +11843,7 @@
       {
         "kind": "OBJECT",
         "name": "NetStimulator",
-        "description": null,
+        "description": "Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model.",
         "isOneOf": null,
         "fields": [
           {
@@ -11617,7 +11987,7 @@
       {
         "kind": "INTERFACE",
         "name": "NetSynapse",
-        "description": null,
+        "description": "Base class for synaptic stimulus parameters.",
         "isOneOf": null,
         "fields": [
           {
@@ -16189,7 +16559,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -16217,7 +16587,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -16229,7 +16599,7 @@
               "name": "Float",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -16551,6 +16921,54 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "RequestGeneralMediaAccessInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "expiresIn",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "RequestGeneralParquetAccessInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "expiresIn",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "RequestGeneralZarrAccessInput",
         "description": null,
         "isOneOf": false,
         "fields": null,
@@ -17235,7 +17653,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17347,7 +17765,7 @@
       {
         "kind": "OBJECT",
         "name": "SectionParamMap",
-        "description": null,
+        "description": "Represents a section parameter mapping for a biophysics model. (this will be set on the mechanisms of the compartments of the model)",
         "isOneOf": null,
         "fields": [
           {
@@ -17431,7 +17849,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -18817,7 +19235,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -18845,7 +19263,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -18857,7 +19275,7 @@
               "name": "Float",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -19373,7 +19791,7 @@
       {
         "kind": "OBJECT",
         "name": "SynapticConnection",
-        "description": null,
+        "description": "Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).",
         "isOneOf": null,
         "fields": [
           {

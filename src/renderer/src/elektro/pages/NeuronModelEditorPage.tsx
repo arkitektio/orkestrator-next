@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ElektroNeuronModel } from "@/linkers";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useCreateNeuronModelMutation, useDetailNeuronModelQuery } from "../api/graphql";
 import { NeuronEditor } from "../components/NeuronEditor";
 import {
@@ -13,6 +14,7 @@ export const NeuronModelEditorPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data }) => {
     const [createModel] = useCreateNeuronModelMutation();
+    const navigate = useNavigate();
 
     const handleSave = async (config: EditableModelConfig) => {
       // Refuse to send a structurally broken model; surface the reason.
@@ -33,18 +35,17 @@ export const NeuronModelEditorPage = asDetailQueryRoute(
             input: {
               name: `${data.neuronModel.name} (Edited)`,
               description: `Edited version of ${data.neuronModel.name}`,
+              // Track lineage: the new model descends from the one we edited.
+              parent: data.neuronModel.id,
               config: serializeModelConfig(config)
             }
           }
         });
+        const newId = result.data?.createNeuronModel?.id;
         toast.success("Model saved successfully!");
-        if (result.data?.createNeuronModel?.id) {
-          // Navigate to the new model
-          // We need to know the route. Assuming standard linker.
-          // ElektroNeuronModel.link(result.data.createNeuronModel.id)
-          // But linkers usually return a component or string.
-          // I'll just reload or stay here.
-          // Ideally navigate to the new model page.
+        if (newId) {
+          // Open the freshly saved model.
+          navigate(ElektroNeuronModel.linkBuilder(newId));
         }
       } catch (e) {
         console.error(e);

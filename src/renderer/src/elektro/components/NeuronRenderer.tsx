@@ -1,9 +1,10 @@
 import { Html, OrbitControls, useCursor } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Vignette } from '@react-three/postprocessing';
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
 
 // --- Types & Helpers ---
 type CompartmentMap = Record<string, CompartmentFragment>;
@@ -185,48 +186,6 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
   }, [model.id]);
 };
 
-// --- Camera Controller ---
-
-/**
- * Calculates the bounding box of the neuron and moves the camera
- * to fit it, while setting the OrbitControls target to the exact center.
- */
-const AutoCenter = ({ bounds, center }: { bounds: THREE.Box3, center: THREE.Vector3 }) => {
-  const { camera, controls } = useThree();
-
-  useEffect(() => {
-    if (bounds.isEmpty()) return;
-
-    // 1. Calculate distance needed to fit the box
-    const size = new THREE.Vector3();
-    bounds.getSize(size);
-    const maxDim = Math.max(size.x, size.y, size.z);
-
-    // Simple heuristic for distance: Fit largest dimension within 45deg FOV
-    // Distance = (Size / 2) / tan(FOV/2)
-    const fov = 45 * (Math.PI / 180);
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-    cameraZ *= 1.5; // Add margin (zoom out a bit)
-
-    // 2. Set Controls Target to the Geometric Center
-    // This is the crucial part: Rotation happens around THIS point
-    if (controls) {
-      // @ts-ignore
-      controls.target.copy(center);
-      // @ts-ignore
-      controls.update();
-    }
-
-    // 3. Move Camera back along Z axis relative to center
-    camera.position.set(center.x, center.y, center.z + cameraZ);
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
-
-  }, [bounds, center, camera, controls]);
-
-  return null;
-};
-
 // --- Visual Components ---
 
 const CylinderWithTooltip = ({
@@ -258,34 +217,13 @@ const CylinderWithTooltip = ({
   );
 };
 
-// ... imports (same as before)
-
-// --- Camera Controller (UPDATED) ---
-
-
-
 // --- Main Component ---
 
 export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }) => {
   const segments = useNeuronLayout(model);
 
-  // Calculate Bounding Box and Center
-  const { bounds, center } = useMemo(() => {
-    const box = new THREE.Box3();
-    if (segments.length === 0) return { bounds: box, center: new THREE.Vector3(0, 0, 0) };
-
-    segments.forEach(seg => {
-      box.expandByPoint(seg.start);
-      box.expandByPoint(seg.end);
-    });
-
-    const c = new THREE.Vector3();
-    box.getCenter(c);
-
-    return { bounds: box, center: c };
-  }, [segments]);
-
   const compartmentMap = useMemo(() => Object.fromEntries(model.config.cells.flatMap((cell) => cell.biophysics.compartments.map((c) => [c.id, c]))), [model]);
+  const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
@@ -294,10 +232,10 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 50, 20]} />
 
-        {/* Controls: Target is controlled by AutoCenter */}
         <OrbitControls makeDefault />
 
-        <AutoCenter bounds={bounds} center={center} />
+        {/* Fit the whole neuron into view, rotating around the root-node centroid. */}
+        <FitCamera points={points} target={target} />
 
         {segments.map((seg) => (
           <CylinderWithTooltip

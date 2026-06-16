@@ -141,6 +141,9 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
+"""
+Represents a biophysics model, which consists of compartments, each with their own mechanisms and parameters.
+"""
 type Biophysics {
   compartments: [Compartment!]!
 }
@@ -299,6 +302,9 @@ enum BlockTimestampField {
   CREATED_AT
 }
 
+"""
+Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.
+"""
 type Cell {
   biophysics: Biophysics!
   id: String!
@@ -341,6 +347,7 @@ type Comparison {
   collection: ModelCollection!
 }
 
+"""Represents a compartment in a biophysics model."""
 type Compartment {
   globalParams: [GlobalParamMap!]!
   id: String!
@@ -417,9 +424,9 @@ input CreateModelCollectionInput {
 input CreateNeuronModelInput {
   config: ModelConfigInput!
   description: String = null
-  environment: ID
+  environment: ID = null
   name: String!
-  parent: ID
+  parent: ID = null
 }
 
 input CreateSimulationInput {
@@ -489,6 +496,9 @@ input DesociateInput {
   selfs: [ID!]!
 }
 
+"""
+Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.
+"""
 type Exp2Synapse implements NetSynapse {
   cell: String!
   delay: Float!
@@ -669,6 +679,35 @@ type GeneralMediaAccessGrant {
   store: String
 }
 
+"""Temporary S3 credentials for reading a parquet object."""
+type GeneralParquetAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""Temporary S3 credentials for reading a Zarr store."""
+type GeneralZarrAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""
+Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)
+"""
 type GlobalParamMap {
   description: String
   param: String!
@@ -879,6 +918,7 @@ input ModelCollectionOrder @oneOf {
   id: Ordering
 }
 
+"""Represents the configuration for the model."""
 type ModelConfig {
   cells: [Cell!]!
   celsius: Float!
@@ -996,6 +1036,16 @@ type Mutation {
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
 
+  """
+  Request temporary S3 read credentials for Parquet files in the organization
+  """
+  requestGeneralParquetAccess(input: RequestGeneralParquetAccessInput!): GeneralParquetAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Zarr stores in the organization
+  """
+  requestGeneralZarrAccess(input: RequestGeneralZarrAccessInput!): GeneralZarrAccessGrant!
+
   """Request temporary S3 read credentials for a media file"""
   requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
 
@@ -1027,6 +1077,7 @@ type Mutation {
   updateRoi(input: UpdateRoiInput!): ROI!
 }
 
+"""Base class for net connection parameters."""
 interface NetConnection {
   delay: Float
   id: ID!
@@ -1044,6 +1095,9 @@ input NetConnectionInput {
   weight: Float = null
 }
 
+"""
+Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model.
+"""
 type NetStimulator {
   id: ID!
   interval: Float
@@ -1058,6 +1112,7 @@ input NetStimulatorInput {
   start: Float! = 100
 }
 
+"""Base class for synaptic stimulus parameters."""
 interface NetSynapse {
   cell: String!
   id: ID!
@@ -1406,10 +1461,10 @@ input RecordingFilter {
 }
 
 input RecordingInput {
-  cell: ID
+  cell: ID = null
   kind: RecordingKind!
-  location: ID
-  position: Float
+  location: ID = null
+  position: Float = null
   trace: ArrayLike!
 }
 
@@ -1451,6 +1506,14 @@ input RequestBigFileUploadInput {
 }
 
 input RequestGeneralMediaAccessInput {
+  expiresIn: Int = null
+}
+
+input RequestGeneralParquetAccessInput {
+  expiresIn: Int = null
+}
+
+input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
 }
 
@@ -1538,7 +1601,7 @@ type Section {
 }
 
 input SectionInput {
-  category: String
+  category: String = null
   connections: [ConnectionInput!] = []
   coords: [CoordInput!] = null
   diam: Float! = 1
@@ -1549,6 +1612,9 @@ input SectionInput {
   nseg: Int! = 1
 }
 
+"""
+Represents a section parameter mapping for a biophysics model. (this will be set on the mechanisms of the compartments of the model)
+"""
 type SectionParamMap {
   """Description of the parameter"""
   description: String
@@ -1563,7 +1629,7 @@ type SectionParamMap {
 
 input SectionParamMapInput {
   """Description of the parameter"""
-  description: String
+  description: String = null
 
   """The governing mechanism"""
   mechanism: String!
@@ -1672,10 +1738,10 @@ input StimulusFilter {
 }
 
 input StimulusInput {
-  cell: ID
+  cell: ID = null
   kind: StimulusKind!
-  location: ID
-  position: Float
+  location: ID = null
+  position: Float = null
   trace: ArrayLike!
 }
 
@@ -1732,6 +1798,9 @@ enum SynapseKind {
   GABAA
 }
 
+"""
+Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
+"""
 type SynapticConnection implements NetConnection {
   delay: Float
   id: ID!

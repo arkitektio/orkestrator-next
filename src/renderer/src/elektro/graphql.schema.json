@@ -1573,7 +1573,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "BiophysicsInput",
-        "description": null,
+        "description": "Input for a biophysics model, which consists of compartments, each with their own mechanisms and parameters.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -3538,7 +3538,7 @@
         "fields": [
           {
             "name": "biophysics",
-            "description": null,
+            "description": "The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3554,7 +3554,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the cell within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3570,7 +3570,7 @@
           },
           {
             "name": "topology",
-            "description": null,
+            "description": "The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3593,13 +3593,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CellInput",
-        "description": null,
+        "description": "Input for a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "biophysics",
-            "description": null,
+            "description": "The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3615,7 +3615,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the cell within the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3631,7 +3631,7 @@
           },
           {
             "name": "topology",
-            "description": null,
+            "description": "The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3932,7 +3932,7 @@
         "fields": [
           {
             "name": "globalParams",
-            "description": null,
+            "description": "The non-mechanistic (global) parameters applied to this compartment.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3956,7 +3956,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the compartment within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3972,7 +3972,7 @@
           },
           {
             "name": "mechanisms",
-            "description": null,
+            "description": "The set of mechanisms active in this compartment.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3996,7 +3996,7 @@
           },
           {
             "name": "sectionParams",
-            "description": null,
+            "description": "The mechanism-specific parameters applied to the sections of this compartment.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4027,13 +4027,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CompartmentInput",
-        "description": null,
+        "description": "Input for a compartment in a biophysics model.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "globalParams",
-            "description": null,
+            "description": "The non-mechanistic (global) parameters applied to this compartment.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -4053,7 +4053,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the compartment within the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4069,7 +4069,7 @@
           },
           {
             "name": "mechanisms",
-            "description": null,
+            "description": "The set of mechanisms active in this compartment.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4093,7 +4093,7 @@
           },
           {
             "name": "sectionParams",
-            "description": null,
+            "description": "The mechanism-specific parameters applied to the sections of this compartment.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -4119,12 +4119,12 @@
       {
         "kind": "OBJECT",
         "name": "Connection",
-        "description": null,
+        "description": "Represents a connection of a section to its parent section, defining the morphology tree.",
         "isOneOf": null,
         "fields": [
           {
             "name": "location",
-            "description": null,
+            "description": "The position along the parent section where this section attaches, between 0 and 1.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4140,7 +4140,7 @@
           },
           {
             "name": "parent",
-            "description": null,
+            "description": "The ID of the parent section this section connects to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4163,13 +4163,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ConnectionInput",
-        "description": null,
+        "description": "Input for a connection of a section to its parent section, defining the morphology tree.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "location",
-            "description": null,
+            "description": "The position along the parent section where this section attaches, between 0 and 1.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4185,7 +4185,7 @@
           },
           {
             "name": "parent",
-            "description": null,
+            "description": "The ID of the parent section this section connects to.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4225,12 +4225,12 @@
       {
         "kind": "OBJECT",
         "name": "Coord",
-        "description": null,
+        "description": "Represents a 3D coordinate (in space) of a point along a section.",
         "isOneOf": null,
         "fields": [
           {
             "name": "x",
-            "description": null,
+            "description": "The x coordinate of the point.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4246,7 +4246,7 @@
           },
           {
             "name": "y",
-            "description": null,
+            "description": "The y coordinate of the point.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4262,7 +4262,7 @@
           },
           {
             "name": "z",
-            "description": null,
+            "description": "The z coordinate of the point.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4285,13 +4285,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CoordInput",
-        "description": null,
+        "description": "Input for a 3D coordinate (in space) of a point along a section.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "x",
-            "description": null,
+            "description": "The x coordinate of the point.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4307,7 +4307,7 @@
           },
           {
             "name": "y",
-            "description": null,
+            "description": "The y coordinate of the point.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4323,7 +4323,7 @@
           },
           {
             "name": "z",
-            "description": null,
+            "description": "The z coordinate of the point.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5718,7 +5718,7 @@
         "fields": [
           {
             "name": "cell",
-            "description": null,
+            "description": "The ID of the cell this synapse is located on.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5734,7 +5734,7 @@
           },
           {
             "name": "delay",
-            "description": null,
+            "description": "Delay before the synapse activates.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5750,7 +5750,7 @@
           },
           {
             "name": "e",
-            "description": null,
+            "description": "Reversal potential.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5766,7 +5766,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the synapse within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5782,7 +5782,7 @@
           },
           {
             "name": "location",
-            "description": null,
+            "description": "The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5798,7 +5798,7 @@
           },
           {
             "name": "position",
-            "description": null,
+            "description": "The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5814,7 +5814,7 @@
           },
           {
             "name": "tau1",
-            "description": null,
+            "description": "Rise time constant.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5830,7 +5830,7 @@
           },
           {
             "name": "tau2",
-            "description": null,
+            "description": "Decay time constant.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7919,7 +7919,7 @@
         "fields": [
           {
             "name": "description",
-            "description": null,
+            "description": "Description of the parameter",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -7931,7 +7931,7 @@
           },
           {
             "name": "param",
-            "description": null,
+            "description": "The name of the parameter to set.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7947,7 +7947,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the parameter",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7970,13 +7970,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "GlobalParamMapInput",
-        "description": null,
+        "description": "Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "description",
-            "description": null,
+            "description": "Description of the parameter",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -7988,7 +7988,7 @@
           },
           {
             "name": "param",
-            "description": null,
+            "description": "The name of the parameter to set.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8004,7 +8004,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the parameter",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10023,7 +10023,7 @@
         "fields": [
           {
             "name": "cells",
-            "description": null,
+            "description": "The list of cells in the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10046,24 +10046,8 @@
             "deprecationReason": null
           },
           {
-            "name": "celsius",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "label",
-            "description": null,
+            "description": "An optional label for the model configuration.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10075,7 +10059,7 @@
           },
           {
             "name": "netConnections",
-            "description": null,
+            "description": "The list of net connections in the model.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -10095,7 +10079,7 @@
           },
           {
             "name": "netStimulators",
-            "description": null,
+            "description": "The list of net stimulators in the model.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -10115,7 +10099,7 @@
           },
           {
             "name": "netSynapses",
-            "description": null,
+            "description": "The list of net synapses in the model.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -10134,8 +10118,24 @@
             "deprecationReason": null
           },
           {
+            "name": "temperature",
+            "description": "Simulation bath temperature.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Temperature",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "vInit",
-            "description": null,
+            "description": "Initial membrane potential.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10158,13 +10158,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ModelConfigInput",
-        "description": null,
+        "description": "Input for the configuration of a model.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "cells",
-            "description": null,
+            "description": "The list of cells in the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10187,24 +10187,8 @@
             "deprecationReason": null
           },
           {
-            "name": "celsius",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": "36",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "label",
-            "description": null,
+            "description": "An optional label for the model configuration.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -10216,7 +10200,7 @@
           },
           {
             "name": "netConnections",
-            "description": null,
+            "description": "The list of net connections in the model.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -10236,7 +10220,7 @@
           },
           {
             "name": "netStimulators",
-            "description": null,
+            "description": "The list of net stimulators in the model.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -10256,7 +10240,7 @@
           },
           {
             "name": "netSynapses",
-            "description": null,
+            "description": "The list of net synapses in the model.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -10275,8 +10259,24 @@
             "deprecationReason": null
           },
           {
+            "name": "temperature",
+            "description": "Simulation bath temperature.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Temperature",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "\"309.15 K\"",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "vInit",
-            "description": null,
+            "description": "Initial membrane potential.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12361,7 +12361,7 @@
         "fields": [
           {
             "name": "delay",
-            "description": null,
+            "description": "The delay for the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -12373,7 +12373,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the connection within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12389,7 +12389,7 @@
           },
           {
             "name": "threshold",
-            "description": null,
+            "description": "The threshold for the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -12401,7 +12401,7 @@
           },
           {
             "name": "weight",
-            "description": null,
+            "description": "The weight (conductance) of the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -12426,13 +12426,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "NetConnectionInput",
-        "description": null,
+        "description": "Input for a synaptic connection between two cells in the model. Each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "delay",
-            "description": null,
+            "description": "The delay for the connection.",
             "type": {
               "kind": "SCALAR",
               "name": "Duration",
@@ -12444,7 +12444,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the connection within the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12460,7 +12460,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of connection to create.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12476,7 +12476,7 @@
           },
           {
             "name": "netStimulator",
-            "description": null,
+            "description": "The ID of the net stimulator that is the pre-synaptic cell in this connection.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12492,7 +12492,7 @@
           },
           {
             "name": "synapse",
-            "description": null,
+            "description": "The ID of the synapse that is the post-synaptic cell in this connection.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12508,7 +12508,7 @@
           },
           {
             "name": "threshold",
-            "description": null,
+            "description": "The threshold for the connection.",
             "type": {
               "kind": "SCALAR",
               "name": "ElectricPotential",
@@ -12520,7 +12520,7 @@
           },
           {
             "name": "weight",
-            "description": null,
+            "description": "The weight (conductance) of the connection.",
             "type": {
               "kind": "SCALAR",
               "name": "ElectricalConductance",
@@ -12543,7 +12543,7 @@
         "fields": [
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the stimulator within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12559,7 +12559,7 @@
           },
           {
             "name": "interval",
-            "description": null,
+            "description": "Interval between spikes.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -12571,7 +12571,7 @@
           },
           {
             "name": "number",
-            "description": null,
+            "description": "Number of spikes to emit.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12587,7 +12587,7 @@
           },
           {
             "name": "start",
-            "description": null,
+            "description": "Start time of the first spike.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12610,13 +12610,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "NetStimulatorInput",
-        "description": null,
+        "description": "Input for a net stimulator in the model. This specifies the parameters of stimulators that drive synaptic connections.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the stimulator within the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12632,7 +12632,7 @@
           },
           {
             "name": "interval",
-            "description": null,
+            "description": "Interval between spikes.",
             "type": {
               "kind": "SCALAR",
               "name": "Duration",
@@ -12644,7 +12644,7 @@
           },
           {
             "name": "number",
-            "description": null,
+            "description": "Number of spikes to emit.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12660,7 +12660,7 @@
           },
           {
             "name": "start",
-            "description": null,
+            "description": "Start time of the first spike.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12687,7 +12687,7 @@
         "fields": [
           {
             "name": "cell",
-            "description": null,
+            "description": "The ID of the cell this synapse is located on.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12703,7 +12703,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the synapse within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12719,7 +12719,7 @@
           },
           {
             "name": "location",
-            "description": null,
+            "description": "The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12735,7 +12735,7 @@
           },
           {
             "name": "position",
-            "description": null,
+            "description": "The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12764,13 +12764,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "NetSynapseInput",
-        "description": null,
+        "description": "Input for an exponential synapse, a synaptic stimulus with an exponential rise and decay. This specifies the parameters of synapses in the model.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "cell",
-            "description": null,
+            "description": "The ID of the cell this synapse is located on.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12786,7 +12786,7 @@
           },
           {
             "name": "e",
-            "description": null,
+            "description": "Reversal potential.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12802,7 +12802,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the synapse within the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12818,7 +12818,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of synapse model to use.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12834,7 +12834,7 @@
           },
           {
             "name": "location",
-            "description": null,
+            "description": "The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12850,7 +12850,7 @@
           },
           {
             "name": "position",
-            "description": null,
+            "description": "The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12866,7 +12866,7 @@
           },
           {
             "name": "tau1",
-            "description": null,
+            "description": "Rise time constant.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12882,7 +12882,7 @@
           },
           {
             "name": "tau2",
-            "description": null,
+            "description": "Decay time constant.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -18204,12 +18204,12 @@
       {
         "kind": "OBJECT",
         "name": "Section",
-        "description": null,
+        "description": "Represents a section of a cell's morphology, the basic structural unit of the topology.",
         "isOneOf": null,
         "fields": [
           {
             "name": "category",
-            "description": null,
+            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend').",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18225,7 +18225,7 @@
           },
           {
             "name": "connections",
-            "description": null,
+            "description": "The connections of this section to its parent section(s).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18249,7 +18249,7 @@
           },
           {
             "name": "coords",
-            "description": null,
+            "description": "The 3D coordinates describing the section's geometry. Required if length is not provided.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -18269,7 +18269,7 @@
           },
           {
             "name": "diam",
-            "description": null,
+            "description": "The diameter of the section.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18285,7 +18285,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the section within the cell.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18313,7 +18313,7 @@
           },
           {
             "name": "nseg",
-            "description": null,
+            "description": "The number of segments the section is discretized into.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18336,13 +18336,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "SectionInput",
-        "description": null,
+        "description": "Input for a section of a cell's morphology, the basic structural unit of the topology.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "category",
-            "description": null,
+            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend').",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -18354,7 +18354,7 @@
           },
           {
             "name": "connections",
-            "description": null,
+            "description": "The connections of this section to its parent section(s).",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -18374,7 +18374,7 @@
           },
           {
             "name": "coords",
-            "description": null,
+            "description": "The 3D coordinates describing the section's geometry. Required if length is not provided.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -18394,7 +18394,7 @@
           },
           {
             "name": "diam",
-            "description": null,
+            "description": "The diameter of the section.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -18410,7 +18410,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the section within the cell.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -18438,7 +18438,7 @@
           },
           {
             "name": "nseg",
-            "description": null,
+            "description": "The number of segments the section is discretized into.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -18493,7 +18493,7 @@
           },
           {
             "name": "param",
-            "description": null,
+            "description": "The name of the parameter to set.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18532,7 +18532,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "SectionParamMapInput",
-        "description": null,
+        "description": "Input for a section parameter mapping of a biophysics model. (this will be set on the mechanisms of the compartments of the model)",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -18566,7 +18566,7 @@
           },
           {
             "name": "param",
-            "description": null,
+            "description": "The name of the parameter to set.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -20491,7 +20491,7 @@
         "fields": [
           {
             "name": "delay",
-            "description": null,
+            "description": "The delay for the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20503,7 +20503,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The unique identifier of the connection within the model.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20519,7 +20519,7 @@
           },
           {
             "name": "netStimulator",
-            "description": null,
+            "description": "The ID of the net stimulator that is the pre-synaptic cell in this connection.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20535,7 +20535,7 @@
           },
           {
             "name": "synapse",
-            "description": null,
+            "description": "The ID of the synapse that is the post-synaptic cell in this connection.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20551,7 +20551,7 @@
           },
           {
             "name": "threshold",
-            "description": null,
+            "description": "The threshold for the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20563,7 +20563,7 @@
           },
           {
             "name": "weight",
-            "description": null,
+            "description": "The weight (conductance) of the connection.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20750,6 +20750,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Temperature",
+        "description": "A temperature (``\"310 K\"``, ``\"37 degC\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "TimeBucket",
         "description": null,
@@ -20860,12 +20871,12 @@
       {
         "kind": "OBJECT",
         "name": "Topology",
-        "description": null,
+        "description": "Represents the topology of a cell, which defines its structure as a set of connected sections.",
         "isOneOf": null,
         "fields": [
           {
             "name": "sections",
-            "description": null,
+            "description": "The list of sections that make up the cell's morphology.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20896,13 +20907,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "TopologyInput",
-        "description": null,
+        "description": "Input for the topology of a cell, which defines its structure as a set of connected sections.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "sections",
-            "description": null,
+            "description": "The list of sections that make up the cell's morphology.",
             "type": {
               "kind": "NON_NULL",
               "name": null,

@@ -45,6 +45,8 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   /** A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``). */
   Length: { input: Length; output: Length; }
+  /** A temperature (``"310 K"``, ``"37 degC"``). */
+  Temperature: { input: any; output: any; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   TraceLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
@@ -203,6 +205,7 @@ export type Biophysics = {
   compartments: Array<Compartment>;
 };
 
+/** Input for a biophysics model, which consists of compartments, each with their own mechanisms and parameters. */
 export type BiophysicsInput = {
   compartments?: Array<CompartmentInput>;
 };
@@ -451,14 +454,21 @@ export enum BlockTimestampField {
 /** Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell. */
 export type Cell = {
   __typename?: 'Cell';
+  /** The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters. */
   biophysics: Biophysics;
+  /** The unique identifier of the cell within the model. */
   id: Scalars['String']['output'];
+  /** The topology of the cell, which defines the structure of the cell such as its morphology and connectivity. */
   topology: Topology;
 };
 
+/** Input for a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell. */
 export type CellInput = {
+  /** The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters. */
   biophysics: BiophysicsInput;
+  /** The unique identifier of the cell within the model. */
   id: Scalars['String']['input'];
+  /** The topology of the cell, which defines the structure of the cell such as its morphology and connectivity. */
   topology: TopologyInput;
 };
 
@@ -498,27 +508,42 @@ export type Comparison = {
 /** Represents a compartment in a biophysics model. */
 export type Compartment = {
   __typename?: 'Compartment';
+  /** The non-mechanistic (global) parameters applied to this compartment. */
   globalParams: Array<GlobalParamMap>;
+  /** The unique identifier of the compartment within the model. */
   id: Scalars['String']['output'];
+  /** The set of mechanisms active in this compartment. */
   mechanisms: Array<Scalars['String']['output']>;
+  /** The mechanism-specific parameters applied to the sections of this compartment. */
   sectionParams: Array<SectionParamMap>;
 };
 
+/** Input for a compartment in a biophysics model. */
 export type CompartmentInput = {
+  /** The non-mechanistic (global) parameters applied to this compartment. */
   globalParams?: InputMaybe<Array<GlobalParamMapInput>>;
+  /** The unique identifier of the compartment within the model. */
   id: Scalars['String']['input'];
+  /** The set of mechanisms active in this compartment. */
   mechanisms?: Array<Scalars['String']['input']>;
+  /** The mechanism-specific parameters applied to the sections of this compartment. */
   sectionParams?: InputMaybe<Array<SectionParamMapInput>>;
 };
 
+/** Represents a connection of a section to its parent section, defining the morphology tree. */
 export type Connection = {
   __typename?: 'Connection';
+  /** The position along the parent section where this section attaches, between 0 and 1. */
   location: Scalars['Float']['output'];
+  /** The ID of the parent section this section connects to. */
   parent: Scalars['String']['output'];
 };
 
+/** Input for a connection of a section to its parent section, defining the morphology tree. */
 export type ConnectionInput = {
+  /** The position along the parent section where this section attaches, between 0 and 1. */
   location?: Scalars['Float']['input'];
+  /** The ID of the parent section this section connects to. */
   parent: Scalars['String']['input'];
 };
 
@@ -526,16 +551,24 @@ export enum ConnectionKind {
   Synapse = 'SYNAPSE'
 }
 
+/** Represents a 3D coordinate (in space) of a point along a section. */
 export type Coord = {
   __typename?: 'Coord';
+  /** The x coordinate of the point. */
   x: Scalars['Length']['output'];
+  /** The y coordinate of the point. */
   y: Scalars['Length']['output'];
+  /** The z coordinate of the point. */
   z: Scalars['Length']['output'];
 };
 
+/** Input for a 3D coordinate (in space) of a point along a section. */
 export type CoordInput = {
+  /** The x coordinate of the point. */
   x: Scalars['Length']['input'];
+  /** The y coordinate of the point. */
   y: Scalars['Length']['input'];
+  /** The z coordinate of the point. */
   z: Scalars['Length']['input'];
 };
 
@@ -682,13 +715,21 @@ export type DesociateInput = {
 /** Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model. */
 export type Exp2Synapse = NetSynapse & {
   __typename?: 'Exp2Synapse';
+  /** The ID of the cell this synapse is located on. */
   cell: Scalars['String']['output'];
+  /** Delay before the synapse activates. */
   delay: Scalars['Duration']['output'];
+  /** Reversal potential. */
   e: Scalars['ElectricPotential']['output'];
+  /** The unique identifier of the synapse within the model. */
   id: Scalars['ID']['output'];
+  /** The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model. */
   location: Scalars['String']['output'];
+  /** The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name. */
   position: Scalars['Float']['output'];
+  /** Rise time constant. */
   tau1: Scalars['Duration']['output'];
+  /** Decay time constant. */
   tau2: Scalars['Duration']['output'];
 };
 
@@ -904,14 +945,21 @@ export type GeneralZarrAccessGrant = {
 /** Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model) */
 export type GlobalParamMap = {
   __typename?: 'GlobalParamMap';
+  /** Description of the parameter */
   description?: Maybe<Scalars['String']['output']>;
+  /** The name of the parameter to set. */
   param: Scalars['String']['output'];
+  /** The value of the parameter */
   value: Scalars['Float']['output'];
 };
 
+/** Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model) */
 export type GlobalParamMapInput = {
+  /** Description of the parameter */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the parameter to set. */
   param: Scalars['String']['input'];
+  /** The value of the parameter */
   value: Scalars['Float']['input'];
 };
 
@@ -1132,22 +1180,37 @@ export type ModelCollectionOrder =
 /** Represents the configuration for the model. */
 export type ModelConfig = {
   __typename?: 'ModelConfig';
+  /** The list of cells in the model. */
   cells: Array<Cell>;
-  celsius: Scalars['Float']['output'];
+  /** An optional label for the model configuration. */
   label?: Maybe<Scalars['String']['output']>;
+  /** The list of net connections in the model. */
   netConnections?: Maybe<Array<NetConnection>>;
+  /** The list of net stimulators in the model. */
   netStimulators?: Maybe<Array<NetStimulator>>;
+  /** The list of net synapses in the model. */
   netSynapses?: Maybe<Array<NetSynapse>>;
+  /** Simulation bath temperature. */
+  temperature: Scalars['Temperature']['output'];
+  /** Initial membrane potential. */
   vInit: Scalars['ElectricPotential']['output'];
 };
 
+/** Input for the configuration of a model. */
 export type ModelConfigInput = {
+  /** The list of cells in the model. */
   cells?: Array<CellInput>;
-  celsius?: Scalars['Float']['input'];
+  /** An optional label for the model configuration. */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** The list of net connections in the model. */
   netConnections?: InputMaybe<Array<NetConnectionInput>>;
+  /** The list of net stimulators in the model. */
   netStimulators?: InputMaybe<Array<NetStimulatorInput>>;
+  /** The list of net synapses in the model. */
   netSynapses?: InputMaybe<Array<NetSynapseInput>>;
+  /** Simulation bath temperature. */
+  temperature?: Scalars['Temperature']['input'];
+  /** Initial membrane potential. */
   vInit?: Scalars['ElectricPotential']['input'];
 };
 
@@ -1591,54 +1654,88 @@ export type MutationUpdateRoiArgs = {
 
 /** Base class for net connection parameters. */
 export type NetConnection = {
+  /** The delay for the connection. */
   delay?: Maybe<Scalars['Duration']['output']>;
+  /** The unique identifier of the connection within the model. */
   id: Scalars['ID']['output'];
+  /** The threshold for the connection. */
   threshold?: Maybe<Scalars['ElectricPotential']['output']>;
+  /** The weight (conductance) of the connection. */
   weight?: Maybe<Scalars['ElectricalConductance']['output']>;
 };
 
+/** Input for a synaptic connection between two cells in the model. Each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse). */
 export type NetConnectionInput = {
+  /** The delay for the connection. */
   delay?: InputMaybe<Scalars['Duration']['input']>;
+  /** The unique identifier of the connection within the model. */
   id: Scalars['ID']['input'];
+  /** The kind of connection to create. */
   kind?: ConnectionKind;
+  /** The ID of the net stimulator that is the pre-synaptic cell in this connection. */
   netStimulator: Scalars['ID']['input'];
+  /** The ID of the synapse that is the post-synaptic cell in this connection. */
   synapse: Scalars['ID']['input'];
+  /** The threshold for the connection. */
   threshold?: InputMaybe<Scalars['ElectricPotential']['input']>;
+  /** The weight (conductance) of the connection. */
   weight?: InputMaybe<Scalars['ElectricalConductance']['input']>;
 };
 
 /** Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model. */
 export type NetStimulator = {
   __typename?: 'NetStimulator';
+  /** The unique identifier of the stimulator within the model. */
   id: Scalars['ID']['output'];
+  /** Interval between spikes. */
   interval?: Maybe<Scalars['Duration']['output']>;
+  /** Number of spikes to emit. */
   number: Scalars['Int']['output'];
+  /** Start time of the first spike. */
   start: Scalars['Duration']['output'];
 };
 
+/** Input for a net stimulator in the model. This specifies the parameters of stimulators that drive synaptic connections. */
 export type NetStimulatorInput = {
+  /** The unique identifier of the stimulator within the model. */
   id: Scalars['ID']['input'];
+  /** Interval between spikes. */
   interval?: InputMaybe<Scalars['Duration']['input']>;
+  /** Number of spikes to emit. */
   number?: Scalars['Int']['input'];
+  /** Start time of the first spike. */
   start?: Scalars['Duration']['input'];
 };
 
 /** Base class for synaptic stimulus parameters. */
 export type NetSynapse = {
+  /** The ID of the cell this synapse is located on. */
   cell: Scalars['String']['output'];
+  /** The unique identifier of the synapse within the model. */
   id: Scalars['ID']['output'];
+  /** The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model. */
   location: Scalars['String']['output'];
+  /** The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name. */
   position: Scalars['Float']['output'];
 };
 
+/** Input for an exponential synapse, a synaptic stimulus with an exponential rise and decay. This specifies the parameters of synapses in the model. */
 export type NetSynapseInput = {
+  /** The ID of the cell this synapse is located on. */
   cell: Scalars['ID']['input'];
+  /** Reversal potential. */
   e: Scalars['ElectricPotential']['input'];
+  /** The unique identifier of the synapse within the model. */
   id: Scalars['ID']['input'];
+  /** The kind of synapse model to use. */
   kind?: SynapseKind;
+  /** The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model. */
   location: Scalars['ID']['input'];
+  /** The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name. */
   position?: Scalars['Float']['input'];
+  /** Rise time constant. */
   tau1: Scalars['Duration']['input'];
+  /** Decay time constant. */
   tau2: Scalars['Duration']['input'];
 };
 
@@ -2290,26 +2387,40 @@ export enum RoiKindChoices {
   Spike = 'SPIKE'
 }
 
+/** Represents a section of a cell's morphology, the basic structural unit of the topology. */
 export type Section = {
   __typename?: 'Section';
+  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). */
   category: Scalars['String']['output'];
+  /** The connections of this section to its parent section(s). */
   connections: Array<Connection>;
+  /** The 3D coordinates describing the section's geometry. Required if length is not provided. */
   coords?: Maybe<Array<Coord>>;
+  /** The diameter of the section. */
   diam: Scalars['Length']['output'];
+  /** The unique identifier of the section within the cell. */
   id: Scalars['String']['output'];
   /** Length of the section in picometers. Required if coords is not provided. */
   length?: Maybe<Scalars['Length']['output']>;
+  /** The number of segments the section is discretized into. */
   nseg: Scalars['Int']['output'];
 };
 
+/** Input for a section of a cell's morphology, the basic structural unit of the topology. */
 export type SectionInput = {
+  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). */
   category?: InputMaybe<Scalars['String']['input']>;
+  /** The connections of this section to its parent section(s). */
   connections?: InputMaybe<Array<ConnectionInput>>;
+  /** The 3D coordinates describing the section's geometry. Required if length is not provided. */
   coords?: InputMaybe<Array<CoordInput>>;
+  /** The diameter of the section. */
   diam?: Scalars['Length']['input'];
+  /** The unique identifier of the section within the cell. */
   id: Scalars['String']['input'];
   /** Length of the section in picometers. Required if coords is not provided. */
   length?: InputMaybe<Scalars['Length']['input']>;
+  /** The number of segments the section is discretized into. */
   nseg?: Scalars['Int']['input'];
 };
 
@@ -2320,16 +2431,19 @@ export type SectionParamMap = {
   description?: Maybe<Scalars['String']['output']>;
   /** The governing mechanism */
   mechanism: Scalars['String']['output'];
+  /** The name of the parameter to set. */
   param: Scalars['String']['output'];
   /** The value of the parameter */
   value: Scalars['Float']['output'];
 };
 
+/** Input for a section parameter mapping of a biophysics model. (this will be set on the mechanisms of the compartments of the model) */
 export type SectionParamMapInput = {
   /** Description of the parameter */
   description?: InputMaybe<Scalars['String']['input']>;
   /** The governing mechanism */
   mechanism: Scalars['String']['input'];
+  /** The name of the parameter to set. */
   param: Scalars['String']['input'];
   /** The value of the parameter */
   value: Scalars['Float']['input'];
@@ -2539,11 +2653,17 @@ export enum SynapseKind {
 /** Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse). */
 export type SynapticConnection = NetConnection & {
   __typename?: 'SynapticConnection';
+  /** The delay for the connection. */
   delay?: Maybe<Scalars['Duration']['output']>;
+  /** The unique identifier of the connection within the model. */
   id: Scalars['ID']['output'];
+  /** The ID of the net stimulator that is the pre-synaptic cell in this connection. */
   netStimulator: Scalars['ID']['output'];
+  /** The ID of the synapse that is the post-synaptic cell in this connection. */
   synapse: Scalars['ID']['output'];
+  /** The threshold for the connection. */
   threshold?: Maybe<Scalars['ElectricPotential']['output']>;
+  /** The weight (conductance) of the connection. */
   weight?: Maybe<Scalars['ElectricalConductance']['output']>;
 };
 
@@ -2581,12 +2701,16 @@ export type TimeBucket = {
   ts: Scalars['DateTime']['output'];
 };
 
+/** Represents the topology of a cell, which defines its structure as a set of connected sections. */
 export type Topology = {
   __typename?: 'Topology';
+  /** The list of sections that make up the cell's morphology. */
   sections: Array<Section>;
 };
 
+/** Input for the topology of a cell, which defines its structure as a set of connected sections. */
 export type TopologyInput = {
+  /** The list of sections that make up the cell's morphology. */
   sections: Array<SectionInput>;
 };
 
@@ -2741,7 +2865,7 @@ export type _Service = {
 
 export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
@@ -2787,17 +2911,17 @@ export type ConnectionFragment = { __typename?: 'Connection', parent: string, lo
 
 export type CompartmentFragment = { __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> };
 
-export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } };
+export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } };
 
 export type ListNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string };
 
 export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } };
 
-export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListRecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
-export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
+export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } };
 
@@ -2932,7 +3056,7 @@ export type DetailNeuronModelQueryVariables = Exact<{
 }>;
 
 
-export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } } };
+export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } } };
 
 export type ListNeuronModelsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2948,7 +3072,7 @@ export type DetailRecordingQueryVariables = Exact<{
 }>;
 
 
-export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListRecordingsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3004,7 +3128,7 @@ export type DetailSimulationQueryVariables = Exact<{
 }>;
 
 
-export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListSimulationsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3020,7 +3144,7 @@ export type DetailStimulusQueryVariables = Exact<{
 }>;
 
 
-export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', celsius: number, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, kind: ParameterKind }> }> } }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListStimuliQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3129,7 +3253,7 @@ export const DetailNeuronModelFragmentDoc = gql`
   id
   name
   config {
-    celsius
+    temperature
     vInit
     label
     cells {

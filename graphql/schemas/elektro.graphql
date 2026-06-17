@@ -148,6 +148,9 @@ type Biophysics {
   compartments: [Compartment!]!
 }
 
+"""
+Input for a biophysics model, which consists of compartments, each with their own mechanisms and parameters.
+"""
 input BiophysicsInput {
   compartments: [CompartmentInput!]! = []
 }
@@ -306,14 +309,35 @@ enum BlockTimestampField {
 Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.
 """
 type Cell {
+  """
+  The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.
+  """
   biophysics: Biophysics!
+
+  """The unique identifier of the cell within the model."""
   id: String!
+
+  """
+  The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.
+  """
   topology: Topology!
 }
 
+"""
+Input for a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.
+"""
 input CellInput {
+  """
+  The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.
+  """
   biophysics: BiophysicsInput!
+
+  """The unique identifier of the cell within the model."""
   id: String!
+
+  """
+  The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.
+  """
   topology: TopologyInput!
 }
 
@@ -349,26 +373,61 @@ type Comparison {
 
 """Represents a compartment in a biophysics model."""
 type Compartment {
+  """The non-mechanistic (global) parameters applied to this compartment."""
   globalParams: [GlobalParamMap!]!
+
+  """The unique identifier of the compartment within the model."""
   id: String!
+
+  """The set of mechanisms active in this compartment."""
   mechanisms: [String!]!
+
+  """
+  The mechanism-specific parameters applied to the sections of this compartment.
+  """
   sectionParams: [SectionParamMap!]!
 }
 
+"""Input for a compartment in a biophysics model."""
 input CompartmentInput {
+  """The non-mechanistic (global) parameters applied to this compartment."""
   globalParams: [GlobalParamMapInput!]
+
+  """The unique identifier of the compartment within the model."""
   id: String!
+
+  """The set of mechanisms active in this compartment."""
   mechanisms: [String!]! = []
+
+  """
+  The mechanism-specific parameters applied to the sections of this compartment.
+  """
   sectionParams: [SectionParamMapInput!]
 }
 
+"""
+Represents a connection of a section to its parent section, defining the morphology tree.
+"""
 type Connection {
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
   location: Float!
+
+  """The ID of the parent section this section connects to."""
   parent: String!
 }
 
+"""
+Input for a connection of a section to its parent section, defining the morphology tree.
+"""
 input ConnectionInput {
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
   location: Float! = 1
+
+  """The ID of the parent section this section connects to."""
   parent: String!
 }
 
@@ -376,15 +435,27 @@ enum ConnectionKind {
   SYNAPSE
 }
 
+"""Represents a 3D coordinate (in space) of a point along a section."""
 type Coord {
+  """The x coordinate of the point."""
   x: Length!
+
+  """The y coordinate of the point."""
   y: Length!
+
+  """The z coordinate of the point."""
   z: Length!
 }
 
+"""Input for a 3D coordinate (in space) of a point along a section."""
 input CoordInput {
+  """The x coordinate of the point."""
   x: Length!
+
+  """The y coordinate of the point."""
   y: Length!
+
+  """The z coordinate of the point."""
   z: Length!
 }
 
@@ -518,13 +589,32 @@ scalar ElectricalConductance
 Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.
 """
 type Exp2Synapse implements NetSynapse {
+  """The ID of the cell this synapse is located on."""
   cell: String!
+
+  """Delay before the synapse activates."""
   delay: Duration!
+
+  """Reversal potential."""
   e: ElectricPotential!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: String!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float!
+
+  """Rise time constant."""
   tau1: Duration!
+
+  """Decay time constant."""
   tau2: Duration!
 }
 
@@ -730,14 +820,27 @@ type GeneralZarrAccessGrant {
 Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)
 """
 type GlobalParamMap {
+  """Description of the parameter"""
   description: String
+
+  """The name of the parameter to set."""
   param: String!
+
+  """The value of the parameter"""
   value: Float!
 }
 
+"""
+Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)
+"""
 input GlobalParamMapInput {
+  """Description of the parameter"""
   description: String = null
+
+  """The name of the parameter to set."""
   param: String!
+
+  """The value of the parameter"""
   value: Float!
 }
 
@@ -941,22 +1044,49 @@ input ModelCollectionOrder @oneOf {
 
 """Represents the configuration for the model."""
 type ModelConfig {
+  """The list of cells in the model."""
   cells: [Cell!]!
-  celsius: Float!
+
+  """An optional label for the model configuration."""
   label: String
+
+  """The list of net connections in the model."""
   netConnections: [NetConnection!]
+
+  """The list of net stimulators in the model."""
   netStimulators: [NetStimulator!]
+
+  """The list of net synapses in the model."""
   netSynapses: [NetSynapse!]
+
+  """Simulation bath temperature."""
+  temperature: Temperature!
+
+  """Initial membrane potential."""
   vInit: ElectricPotential!
 }
 
+"""Input for the configuration of a model."""
 input ModelConfigInput {
+  """The list of cells in the model."""
   cells: [CellInput!]! = []
-  celsius: Float! = 36
+
+  """An optional label for the model configuration."""
   label: String = null
+
+  """The list of net connections in the model."""
   netConnections: [NetConnectionInput!] = []
+
+  """The list of net stimulators in the model."""
   netStimulators: [NetStimulatorInput!] = []
+
+  """The list of net synapses in the model."""
   netSynapses: [NetSynapseInput!] = []
+
+  """Simulation bath temperature."""
+  temperature: Temperature! = "309.15 K"
+
+  """Initial membrane potential."""
   vInit: ElectricPotential! = "-67 mV"
 }
 
@@ -1156,19 +1286,46 @@ type Mutation {
 
 """Base class for net connection parameters."""
 interface NetConnection {
+  """The delay for the connection."""
   delay: Duration
+
+  """The unique identifier of the connection within the model."""
   id: ID!
+
+  """The threshold for the connection."""
   threshold: ElectricPotential
+
+  """The weight (conductance) of the connection."""
   weight: ElectricalConductance
 }
 
+"""
+Input for a synaptic connection between two cells in the model. Each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
+"""
 input NetConnectionInput {
+  """The delay for the connection."""
   delay: Duration = null
+
+  """The unique identifier of the connection within the model."""
   id: ID!
+
+  """The kind of connection to create."""
   kind: ConnectionKind! = SYNAPSE
+
+  """
+  The ID of the net stimulator that is the pre-synaptic cell in this connection.
+  """
   netStimulator: ID!
+
+  """
+  The ID of the synapse that is the post-synaptic cell in this connection.
+  """
   synapse: ID!
+
+  """The threshold for the connection."""
   threshold: ElectricPotential = null
+
+  """The weight (conductance) of the connection."""
   weight: ElectricalConductance = null
 }
 
@@ -1176,35 +1333,85 @@ input NetConnectionInput {
 Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model.
 """
 type NetStimulator {
+  """The unique identifier of the stimulator within the model."""
   id: ID!
+
+  """Interval between spikes."""
   interval: Duration
+
+  """Number of spikes to emit."""
   number: Int!
+
+  """Start time of the first spike."""
   start: Duration!
 }
 
+"""
+Input for a net stimulator in the model. This specifies the parameters of stimulators that drive synaptic connections.
+"""
 input NetStimulatorInput {
+  """The unique identifier of the stimulator within the model."""
   id: ID!
+
+  """Interval between spikes."""
   interval: Duration = null
+
+  """Number of spikes to emit."""
   number: Int! = 1
+
+  """Start time of the first spike."""
   start: Duration! = "100 ms"
 }
 
 """Base class for synaptic stimulus parameters."""
 interface NetSynapse {
+  """The ID of the cell this synapse is located on."""
   cell: String!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: String!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float!
 }
 
+"""
+Input for an exponential synapse, a synaptic stimulus with an exponential rise and decay. This specifies the parameters of synapses in the model.
+"""
 input NetSynapseInput {
+  """The ID of the cell this synapse is located on."""
   cell: ID!
+
+  """Reversal potential."""
   e: ElectricPotential!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """The kind of synapse model to use."""
   kind: SynapseKind! = EXP2SYN
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: ID!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float! = 0.5
+
+  """Rise time constant."""
   tau1: Duration!
+
+  """Decay time constant."""
   tau2: Duration!
 }
 
@@ -1665,31 +1872,63 @@ enum RoiKindChoices {
   SPIKE
 }
 
+"""
+Represents a section of a cell's morphology, the basic structural unit of the topology.
+"""
 type Section {
+  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
   category: String!
+
+  """The connections of this section to its parent section(s)."""
   connections: [Connection!]!
+
+  """
+  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  """
   coords: [Coord!]
+
+  """The diameter of the section."""
   diam: Length!
+
+  """The unique identifier of the section within the cell."""
   id: String!
 
   """
   Length of the section in picometers. Required if coords is not provided.
   """
   length: Length
+
+  """The number of segments the section is discretized into."""
   nseg: Int!
 }
 
+"""
+Input for a section of a cell's morphology, the basic structural unit of the topology.
+"""
 input SectionInput {
+  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
   category: String = null
+
+  """The connections of this section to its parent section(s)."""
   connections: [ConnectionInput!] = []
+
+  """
+  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  """
   coords: [CoordInput!] = null
+
+  """The diameter of the section."""
   diam: Length! = "1 µm"
+
+  """The unique identifier of the section within the cell."""
   id: String!
 
   """
   Length of the section in picometers. Required if coords is not provided.
   """
   length: Length = null
+
+  """The number of segments the section is discretized into."""
   nseg: Int! = 1
 }
 
@@ -1702,18 +1941,25 @@ type SectionParamMap {
 
   """The governing mechanism"""
   mechanism: String!
+
+  """The name of the parameter to set."""
   param: String!
 
   """The value of the parameter"""
   value: Float!
 }
 
+"""
+Input for a section parameter mapping of a biophysics model. (this will be set on the mechanisms of the compartments of the model)
+"""
 input SectionParamMapInput {
   """Description of the parameter"""
   description: String = null
 
   """The governing mechanism"""
   mechanism: String!
+
+  """The name of the parameter to set."""
   param: String!
 
   """The value of the parameter"""
@@ -1883,11 +2129,26 @@ enum SynapseKind {
 Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
 """
 type SynapticConnection implements NetConnection {
+  """The delay for the connection."""
   delay: Duration
+
+  """The unique identifier of the connection within the model."""
   id: ID!
+
+  """
+  The ID of the net stimulator that is the pre-synaptic cell in this connection.
+  """
   netStimulator: ID!
+
+  """
+  The ID of the synapse that is the post-synaptic cell in this connection.
+  """
   synapse: ID!
+
+  """The threshold for the connection."""
   threshold: ElectricPotential
+
+  """The weight (conductance) of the connection."""
   weight: ElectricalConductance
 }
 
@@ -1920,6 +2181,9 @@ type Task {
   taskId: String!
 }
 
+"""A temperature (``"310 K"``, ``"37 degC"``)."""
+scalar Temperature
+
 type TimeBucket {
   avg: Float
   count: Int!
@@ -1930,11 +2194,19 @@ type TimeBucket {
   ts: DateTime!
 }
 
+"""
+Represents the topology of a cell, which defines its structure as a set of connected sections.
+"""
 type Topology {
+  """The list of sections that make up the cell's morphology."""
   sections: [Section!]!
 }
 
+"""
+Input for the topology of a cell, which defines its structure as a set of connected sections.
+"""
 input TopologyInput {
+  """The list of sections that make up the cell's morphology."""
   sections: [SectionInput!]!
 }
 

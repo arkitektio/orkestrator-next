@@ -42,7 +42,7 @@ fragment DetailNeuronModel on NeuronModel {
   id
   name
   config {
-    celsius
+    temperature
     vInit
     label
     cells {

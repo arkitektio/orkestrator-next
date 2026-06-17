@@ -132,7 +132,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Frequency",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -766,7 +766,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Frequency",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -782,7 +782,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -2678,13 +2678,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Duration",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2982,13 +2978,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Duration",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4244,7 +4236,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4260,7 +4252,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4276,7 +4268,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4304,7 +4296,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4320,7 +4312,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4336,7 +4328,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4790,7 +4782,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Milliseconds",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -4804,7 +4796,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Milliseconds",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -5523,6 +5515,62 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "DeleteInput",
+        "description": "Input for deleting an object by its id",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DeleteMechanismInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "DeleteRoiInput",
         "description": null,
         "isOneOf": false,
@@ -5630,6 +5678,39 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Duration",
+        "description": "A quantity of time (``\"5 ms\"``, ``\"2 s\"``, ``\"1 hour\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "ElectricPotential",
+        "description": "An electric potential / voltage (``\"-70 mV\"``, ``\"5 V\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "ElectricalConductance",
+        "description": "An electrical conductance (``\"5 nS\"``, ``\"2 µS\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Exp2Synapse",
         "description": "Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.",
@@ -5659,7 +5740,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -5675,7 +5756,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "ElectricPotential",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -5739,7 +5820,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -5755,7 +5836,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -6197,7 +6278,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6253,7 +6334,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6433,7 +6514,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6489,7 +6570,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -7204,6 +7285,17 @@
         "kind": "SCALAR",
         "name": "Float",
         "description": "The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](https://en.wikipedia.org/wiki/IEEE_floating_point).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Frequency",
+        "description": "A quantity of frequency (``\"50 Hz\"``, ``\"1 kHz\"``).",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -8369,6 +8461,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Length",
+        "description": "A spatial length (``\"2.5 µm\"``, ``\"1 mm\"``, ``\"3 m\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Mechanism",
         "description": null,
@@ -9247,17 +9350,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "SCALAR",
-        "name": "Milliseconds",
-        "description": "The `Matrix` scalar type represents a matrix values as specified by",
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "OBJECT",
         "name": "ModEnvironment",
         "description": null,
@@ -10049,7 +10141,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "ElectricPotential",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -10107,30 +10199,6 @@
               }
             },
             "defaultValue": "36",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "environments",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "String",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -10213,12 +10281,12 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "ElectricPotential",
                 "kind": "SCALAR",
                 "ofType": null
               }
             },
-            "defaultValue": "-67",
+            "defaultValue": "\"-67 mV\"",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -10498,6 +10566,72 @@
             "deprecationReason": null
           },
           {
+            "name": "deleteAnalogSignal",
+            "description": "Delete an existing analog signal",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteAnalogSignalChannel",
+            "description": "Delete an existing analog signal channel",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "deleteBlock",
             "description": "Delete an existing block",
             "args": [
@@ -10531,6 +10665,72 @@
             "deprecationReason": null
           },
           {
+            "name": "deleteBlockGroup",
+            "description": "Delete an existing block group",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteBlockSegment",
+            "description": "Delete an existing block segment",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "deleteDataset",
             "description": "Delete an existing dataset",
             "args": [
@@ -10542,6 +10742,105 @@
                   "name": null,
                   "ofType": {
                     "name": "DeleteDatasetInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteExperiment",
+            "description": "Delete an existing experiment",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteExperimentRecordingView",
+            "description": "Delete an existing experiment recording view",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteExperimentStimulusView",
+            "description": "Delete an existing experiment stimulus view",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
                     "kind": "INPUT_OBJECT",
                     "ofType": null
                   }
@@ -10630,6 +10929,237 @@
             "deprecationReason": null
           },
           {
+            "name": "deleteInstrument",
+            "description": "Delete an existing instrument",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteIrregularlySampledSignal",
+            "description": "Delete an existing irregularly sampled signal",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteMechanism",
+            "description": "Delete an existing mechanism",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteMechanismInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteModEnvironment",
+            "description": "Delete an existing mod environment",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteModelCollection",
+            "description": "Delete an existing model collection",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteNeuronModel",
+            "description": "Delete an existing neuron model",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteRecording",
+            "description": "Delete an existing recording",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "deleteRoi",
             "description": "Delete an existing region of interest",
             "args": [
@@ -10641,6 +11171,171 @@
                   "name": null,
                   "ofType": {
                     "name": "DeleteRoiInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteSimulation",
+            "description": "Delete an existing simulation",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteSpikeTrain",
+            "description": "Delete an existing spike train",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteStimulus",
+            "description": "Delete an existing stimulus",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteTimelineView",
+            "description": "Delete an existing timeline view",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteViewCollection",
+            "description": "Delete an existing view collection",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "DeleteInput",
                     "kind": "INPUT_OBJECT",
                     "ofType": null
                   }
@@ -11670,7 +12365,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -11698,7 +12393,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricPotential",
               "ofType": null
             },
             "isDeprecated": false,
@@ -11710,7 +12405,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricalConductance",
               "ofType": null
             },
             "isDeprecated": false,
@@ -11740,7 +12435,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -11816,7 +12511,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricPotential",
               "ofType": null
             },
             "defaultValue": "null",
@@ -11828,7 +12523,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricalConductance",
               "ofType": null
             },
             "defaultValue": "null",
@@ -11868,7 +12563,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -11898,7 +12593,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -11940,7 +12635,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -11970,12 +12665,12 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
             },
-            "defaultValue": "100",
+            "defaultValue": "\"100 ms\"",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -12096,7 +12791,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "ElectricPotential",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -12176,7 +12871,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -12192,7 +12887,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -16702,7 +17397,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -16726,7 +17421,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -17580,7 +18275,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -17606,11 +18301,11 @@
           },
           {
             "name": "length",
-            "description": "Length of the section. Required if coords is not provided.",
+            "description": "Length of the section in picometers. Required if coords is not provided.",
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Length",
               "ofType": null
             },
             "isDeprecated": false,
@@ -17704,12 +18399,12 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Length",
                 "kind": "SCALAR",
                 "ofType": null
               }
             },
-            "defaultValue": "1",
+            "defaultValue": "\"1 µm\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17731,10 +18426,10 @@
           },
           {
             "name": "length",
-            "description": "Length of the section. Required if coords is not provided.",
+            "description": "Length of the section in picometers. Required if coords is not provided.",
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Length",
               "ofType": null
             },
             "defaultValue": "null",
@@ -18020,7 +18715,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -18036,7 +18731,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Int",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -18832,7 +19527,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -18858,7 +19553,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -18874,7 +19569,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "Duration",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -19366,7 +20061,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -19390,7 +20085,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "defaultValue": "null",
@@ -19800,7 +20495,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "Duration",
               "ofType": null
             },
             "isDeprecated": false,
@@ -19860,7 +20555,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricPotential",
               "ofType": null
             },
             "isDeprecated": false,
@@ -19872,7 +20567,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "ElectricalConductance",
               "ofType": null
             },
             "isDeprecated": false,

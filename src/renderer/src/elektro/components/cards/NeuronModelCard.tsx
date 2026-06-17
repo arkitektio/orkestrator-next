@@ -11,7 +11,7 @@ interface Props {
 
 const TheCard = ({ item, className }: Props) => {
   return (
-    <ElektroNeuronModel.Smart object={item}>
+    <ElektroNeuronModel.Smart object={item} hover>
       <Card
         className={cn(
           "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",

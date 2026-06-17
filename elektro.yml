@@ -16,6 +16,15 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/elektro/funcs"
+      scalars:
+        # Pint-like quantity scalars: unit-bearing strings ("100 ms", "1 µm").
+        # Mapped to named types in ./scalars.ts so generated fields read as
+        # `Duration`/`Length`/… rather than `any`. Parse via lib/quantities.ts.
+        Duration: "@/elektro/api/scalars#Duration"
+        Length: "@/elektro/api/scalars#Length"
+        ElectricPotential: "@/elektro/api/scalars#ElectricPotential"
+        ElectricalConductance: "@/elektro/api/scalars#ElectricalConductance"
+        Frequency: "@/elektro/api/scalars#Frequency"
 
   src/renderer/src/elektro/graphql.schema.json:
     plugins:

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
+import { toBase } from "../lib/quantities";
 
 // --- Types & Helpers ---
 type CompartmentMap = Record<string, CompartmentFragment>;
@@ -157,7 +158,8 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
         direction = new THREE.Vector3(0, 1, 0);
       }
 
-      const length = section.length || 10;
+      // `length` is a `Length` quantity string ("10 µm"); normalise to µm.
+      const length = toBase(section.length, "length", 10);
       const end = start.clone().add(direction.clone().normalize().multiplyScalar(length));
 
       segments.push({
@@ -195,6 +197,8 @@ const CylinderWithTooltip = ({
   const isSelected = selectedId === section.id;
   const dir = new THREE.Vector3().subVectors(end, start);
   const length = dir.length();
+  // `diam` is a `Length` quantity string ("1 µm"); normalise to µm for geometry.
+  const diamUm = toBase(section.diam, "length", 1);
 
   if (length < 0.001) return null;
 
@@ -205,11 +209,11 @@ const CylinderWithTooltip = ({
   return (
     <group position={position.toArray()} quaternion={orientation}>
       <mesh onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }} onPointerOut={() => setHovered(false)} onClick={(e) => { e.stopPropagation(); setSelectedId(section.id); }}>
-        <cylinderGeometry args={[Math.max(section.diam, 2), Math.max(section.diam, 2), length, 8]} />
+        <cylinderGeometry args={[Math.max(diamUm, 2), Math.max(diamUm, 2), length, 8]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
       <mesh>
-        <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
+        <cylinderGeometry args={[diamUm / 2, diamUm / 2, length, 8]} />
         <meshStandardMaterial color={hovered ? "hotpink" : color} roughness={0.3} />
       </mesh>
       {isSelected && <Html center><div style={{ background: "rgba(0,0,0,0.8)", color: "white", padding: "8px", borderRadius: "4px" }}><strong>{section.id}</strong><br />Type: {section.category}</div></Html>}

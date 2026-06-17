@@ -16,6 +16,8 @@ import { useDialog } from "@/app/dialog";
 import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
 import { EditableModelConfig } from "../lib/modelSerialization";
+import { toBase } from "../lib/quantities";
+import { QuantityInput } from "./QuantityInput";
 
 // --- Types & Helpers ---
 
@@ -150,7 +152,8 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
         direction = new THREE.Vector3(0, 1, 0);
       }
 
-      const length = section.length || 10;
+      // `length` is now a `Length` quantity string ("10 µm"); normalise to µm.
+      const length = toBase(section.length, "length", 10);
       const end = start.clone().add(direction.clone().normalize().multiplyScalar(length));
 
       segments.push({
@@ -191,9 +194,10 @@ const InteractiveSegment = ({
   isSelected: boolean,
   onSelect: (id: string) => void,
   onAddChild: (parentId: string, location?: number) => void,
-  onUpdateLength: (id: string, newLength: number) => void
 }) => {
   const { start, end, direction, section, color } = segment;
+  // `diam` is a `Length` quantity string ("1 µm"); normalise to µm for geometry.
+  const diamUm = toBase(section.diam, "length", 1);
   const length = start.distanceTo(end);
   const mid = start.clone().add(end).multiplyScalar(0.5);
 
@@ -243,7 +247,7 @@ const InteractiveSegment = ({
 
   // Hit-zone radius: a comfortable minimum so thin branches stay easy to click,
   // and always a bit fatter than the visible cylinder.
-  const hitRadius = Math.max(section.diam / 2 + 1.5, 2);
+  const hitRadius = Math.max(diamUm / 2 + 1.5, 2);
 
   return (
     <group>
@@ -262,7 +266,7 @@ const InteractiveSegment = ({
 
       {/* Visible cylinder (non-interactive; the hit-zone above handles input). */}
       <mesh position={mid} quaternion={quaternion} raycast={() => null}>
-        <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
+        <cylinderGeometry args={[diamUm / 2, diamUm / 2, length, 8]} />
         <meshStandardMaterial ref={materialRef} color={isSelected ? "hotpink" : color} />
       </mesh>
 
@@ -340,8 +344,8 @@ export const NeuronEditor = ({
     const newId = uuidv4();
     const newSection: SectionFragment = {
       id: newId,
-      diam: 1,
-      length: 10,
+      diam: "1 µm",
+      length: "10 µm",
       category: "dendrite", // Default
       coords: [],
       connections: [{ parent: parentId, location: location }]
@@ -678,29 +682,19 @@ export const NeuronEditor = ({
 
                       <div className="space-y-1">
                         <Label className="text-xs">Length</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={0.1}
-                          value={section.length ?? 10}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            if (!isNaN(val)) updateSection(section.id, { length: val });
-                          }}
+                        <QuantityInput
+                          dimension="length"
+                          value={section.length}
+                          onChange={(val) => updateSection(section.id, { length: val })}
                         />
                       </div>
 
                       <div className="space-y-1">
                         <Label className="text-xs">Diameter</Label>
-                        <Input
-                          type="number"
-                          min={0.1}
-                          step={0.1}
-                          value={section.diam ?? 1}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            if (!isNaN(val)) updateSection(section.id, { diam: val });
-                          }}
+                        <QuantityInput
+                          dimension="length"
+                          value={section.diam}
+                          onChange={(val) => updateSection(section.id, { diam: val })}
                         />
                       </div>
 
@@ -710,7 +704,11 @@ export const NeuronEditor = ({
                         const conn = section.connections![0];
                         // Absolute distance of the connection point from the parent's
                         // start, in µm — location is a 0–1 fraction of the parent length.
-                        const parentLength = sections.find(s => s.id === parentInfo.id)?.length ?? 0;
+                        const parentLength = toBase(
+                          sections.find(s => s.id === parentInfo.id)?.length,
+                          "length",
+                          0,
+                        );
                         const absoluteUm = parentInfo.location * parentLength;
                         return (
                           <div className="space-y-1">
@@ -824,7 +822,6 @@ export const NeuronEditor = ({
             isSelected={segment.id === selectedSectionId}
             onSelect={handleSegmentSelect}
             onAddChild={addSection}
-            onUpdateLength={(id, len) => updateSection(id, { length: len })}
           />
         ))}
       </Canvas>

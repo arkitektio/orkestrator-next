@@ -2,7 +2,7 @@ type AnalogSignal implements Signal {
   channels(filters: AnalogSignalChannelFilter, ordering: [AnalogSignalChannelOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
   id: ID!
   name: String!
-  samplingRate: Float!
+  samplingRate: Frequency!
   segment: BlockSegment!
   timeTrace: Trace!
   unit: String
@@ -60,8 +60,8 @@ input AnalogSignalInput {
   channels: [AnalogSignalChannelInput!]!
   description: String = null
   name: String = null
-  samplingRate: Float!
-  tStart: Float!
+  samplingRate: Frequency!
+  tStart: Duration!
   timeTrace: TraceLike!
   unit: String = null
 }
@@ -234,7 +234,7 @@ type BlockSegment {
   """Who created this segment"""
   creator: User
   description: String
-  endTime: Float!
+  endTime: Duration
 
   """The groups that this segment belongs to"""
   groups(filters: BlockGroupFilter, ordering: [BlockGroupOrder!]! = [], pagination: OffsetPaginationInput): [BlockGroup!]!
@@ -247,7 +247,7 @@ type BlockSegment {
 
   """The spike trains in this group"""
   spikeTrains(filters: SpikeTrainFilter, ordering: [SpikeTrainOrder!]! = [], pagination: OffsetPaginationInput): [SpikeTrain!]!
-  startTime: Float!
+  startTime: Duration
 }
 
 input BlockSegmentFilter {
@@ -377,15 +377,15 @@ enum ConnectionKind {
 }
 
 type Coord {
-  x: Float!
-  y: Float!
-  z: Float!
+  x: Length!
+  y: Length!
+  z: Length!
 }
 
 input CoordInput {
-  x: Float!
-  y: Float!
-  z: Float!
+  x: Length!
+  y: Length!
+  z: Length!
 }
 
 input CreateBlockInput {
@@ -430,8 +430,8 @@ input CreateNeuronModelInput {
 }
 
 input CreateSimulationInput {
-  dt: Milliseconds = null
-  duration: Milliseconds!
+  dt: Duration = null
+  duration: Duration!
   model: ID!
   name: String!
   recordings: [RecordingInput!]!
@@ -483,6 +483,15 @@ input DeleteFileInput {
   id: ID!
 }
 
+"""Input for deleting an object by its id"""
+input DeleteInput {
+  id: ID!
+}
+
+input DeleteMechanismInput {
+  id: ID!
+}
+
 input DeleteRoiInput {
   id: ID!
 }
@@ -496,18 +505,27 @@ input DesociateInput {
   selfs: [ID!]!
 }
 
+"""A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``)."""
+scalar Duration
+
+"""An electric potential / voltage (``"-70 mV"``, ``"5 V"``)."""
+scalar ElectricPotential
+
+"""An electrical conductance (``"5 nS"``, ``"2 µS"``)."""
+scalar ElectricalConductance
+
 """
 Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.
 """
 type Exp2Synapse implements NetSynapse {
   cell: String!
-  delay: Float!
-  e: Float!
+  delay: Duration!
+  e: ElectricPotential!
   id: ID!
   location: String!
   position: Float!
-  tau1: Float!
-  tau2: Float!
+  tau1: Duration!
+  tau2: Duration!
 }
 
 type Experiment {
@@ -539,11 +557,11 @@ input ExperimentOrder @oneOf {
 }
 
 type ExperimentRecordingView {
-  duration: Float
+  duration: Duration
   experiment: Experiment!
   id: ID!
   label: String
-  offset: Float
+  offset: Duration
   recording: Recording!
 }
 
@@ -563,11 +581,11 @@ input ExperimentRecordingViewOrder @oneOf {
 }
 
 type ExperimentStimulusView {
-  duration: Float
+  duration: Duration
   experiment: Experiment!
   id: ID!
   label: String
-  offset: Float
+  offset: Duration
   stimulus: Stimulus!
 }
 
@@ -643,6 +661,9 @@ input FinishZarrUploadInput {
 
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar FiveDVector
+
+"""A quantity of frequency (``"50 Hz"``, ``"1 kHz"``)."""
+scalar Frequency
 
 input FromFileLike {
   dataset: ID = null
@@ -773,6 +794,9 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
+"""A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``)."""
+scalar Length
+
 type Mechanism {
   description: String
   id: ID!
@@ -853,9 +877,6 @@ type MediaUploadGrant {
   uploadFormField: String!
 }
 
-"""The `Matrix` scalar type represents a matrix values as specified by"""
-scalar Milliseconds
-
 type ModEnvironment {
   description: String
   id: ID!
@@ -926,18 +947,17 @@ type ModelConfig {
   netConnections: [NetConnection!]
   netStimulators: [NetStimulator!]
   netSynapses: [NetSynapse!]
-  vInit: Float!
+  vInit: ElectricPotential!
 }
 
 input ModelConfigInput {
   cells: [CellInput!]! = []
   celsius: Float! = 36
-  environments: [String!]! = []
   label: String = null
   netConnections: [NetConnectionInput!] = []
   netStimulators: [NetStimulatorInput!] = []
   netSynapses: [NetSynapseInput!] = []
-  vInit: Float! = -67
+  vInit: ElectricPotential! = "-67 mV"
 }
 
 type Mutation {
@@ -965,11 +985,32 @@ type Mutation {
   """Create a new simulsation"""
   createSimulation(input: CreateSimulationInput!): Simulation!
 
+  """Delete an existing analog signal"""
+  deleteAnalogSignal(input: DeleteInput!): ID!
+
+  """Delete an existing analog signal channel"""
+  deleteAnalogSignalChannel(input: DeleteInput!): ID!
+
   """Delete an existing block"""
   deleteBlock(input: DeleteBlockInput!): ID!
 
+  """Delete an existing block group"""
+  deleteBlockGroup(input: DeleteInput!): ID!
+
+  """Delete an existing block segment"""
+  deleteBlockSegment(input: DeleteInput!): ID!
+
   """Delete an existing dataset"""
   deleteDataset(input: DeleteDatasetInput!): ID!
+
+  """Delete an existing experiment"""
+  deleteExperiment(input: DeleteInput!): ID!
+
+  """Delete an existing experiment recording view"""
+  deleteExperimentRecordingView(input: DeleteInput!): ID!
+
+  """Delete an existing experiment stimulus view"""
+  deleteExperimentStimulusView(input: DeleteInput!): ID!
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
@@ -977,8 +1018,44 @@ type Mutation {
   """Delete an existing image"""
   deleteImage(input: DeleteTraceInput!): ID!
 
+  """Delete an existing instrument"""
+  deleteInstrument(input: DeleteInput!): ID!
+
+  """Delete an existing irregularly sampled signal"""
+  deleteIrregularlySampledSignal(input: DeleteInput!): ID!
+
+  """Delete an existing mechanism"""
+  deleteMechanism(input: DeleteMechanismInput!): ID!
+
+  """Delete an existing mod environment"""
+  deleteModEnvironment(input: DeleteInput!): ID!
+
+  """Delete an existing model collection"""
+  deleteModelCollection(input: DeleteInput!): ID!
+
+  """Delete an existing neuron model"""
+  deleteNeuronModel(input: DeleteInput!): ID!
+
+  """Delete an existing recording"""
+  deleteRecording(input: DeleteInput!): ID!
+
   """Delete an existing region of interest"""
   deleteRoi(input: DeleteRoiInput!): ID!
+
+  """Delete an existing simulation"""
+  deleteSimulation(input: DeleteInput!): ID!
+
+  """Delete an existing spike train"""
+  deleteSpikeTrain(input: DeleteInput!): ID!
+
+  """Delete an existing stimulus"""
+  deleteStimulus(input: DeleteInput!): ID!
+
+  """Delete an existing timeline view"""
+  deleteTimelineView(input: DeleteInput!): ID!
+
+  """Delete an existing view collection"""
+  deleteViewCollection(input: DeleteInput!): ID!
 
   """Finalize a big file upload after the client has written the object"""
   finishBigfileUpload(input: FinishBigFileUploadInput!): BigFileStore!
@@ -1079,20 +1156,20 @@ type Mutation {
 
 """Base class for net connection parameters."""
 interface NetConnection {
-  delay: Float
+  delay: Duration
   id: ID!
-  threshold: Float
-  weight: Float
+  threshold: ElectricPotential
+  weight: ElectricalConductance
 }
 
 input NetConnectionInput {
-  delay: Float = null
+  delay: Duration = null
   id: ID!
   kind: ConnectionKind! = SYNAPSE
   netStimulator: ID!
   synapse: ID!
-  threshold: Float = null
-  weight: Float = null
+  threshold: ElectricPotential = null
+  weight: ElectricalConductance = null
 }
 
 """
@@ -1100,16 +1177,16 @@ Represents a net stimulator in the model. This will be used to specify the param
 """
 type NetStimulator {
   id: ID!
-  interval: Float
+  interval: Duration
   number: Int!
-  start: Float!
+  start: Duration!
 }
 
 input NetStimulatorInput {
   id: ID!
-  interval: Float = null
+  interval: Duration = null
   number: Int! = 1
-  start: Float! = 100
+  start: Duration! = "100 ms"
 }
 
 """Base class for synaptic stimulus parameters."""
@@ -1122,13 +1199,13 @@ interface NetSynapse {
 
 input NetSynapseInput {
   cell: ID!
-  e: Float!
+  e: ElectricPotential!
   id: ID!
   kind: SynapseKind! = EXP2SYN
   location: ID!
   position: Float! = 0.5
-  tau1: Float!
-  tau2: Float!
+  tau1: Duration!
+  tau2: Duration!
 }
 
 type NeuronModel {
@@ -1481,9 +1558,9 @@ input RecordingOrder @oneOf {
 }
 
 input RecordingViewInput {
-  duration: Float = null
+  duration: Duration = null
   label: String = null
-  offset: Float = null
+  offset: Duration = null
   recording: ID!
 }
 
@@ -1592,11 +1669,13 @@ type Section {
   category: String!
   connections: [Connection!]!
   coords: [Coord!]
-  diam: Float!
+  diam: Length!
   id: String!
 
-  """Length of the section. Required if coords is not provided."""
-  length: Float
+  """
+  Length of the section in picometers. Required if coords is not provided.
+  """
+  length: Length
   nseg: Int!
 }
 
@@ -1604,11 +1683,13 @@ input SectionInput {
   category: String = null
   connections: [ConnectionInput!] = []
   coords: [CoordInput!] = null
-  diam: Float! = 1
+  diam: Length! = "1 µm"
   id: String!
 
-  """Length of the section. Required if coords is not provided."""
-  length: Float = null
+  """
+  Length of the section in picometers. Required if coords is not provided.
+  """
+  length: Length = null
   nseg: Int! = 1
 }
 
@@ -1649,8 +1730,8 @@ type Simulation {
   createdAt: DateTime!
   creator: User
   description: String
-  dt: Float!
-  duration: Int!
+  dt: Duration!
+  duration: Duration!
   id: ID!
   kind: StimulusKind!
   model: NeuronModel!
@@ -1701,10 +1782,10 @@ input SpikeTrainFilter {
 
 input SpikeTrainInput {
   description: String = null
-  leftSweep: Float = null
+  leftSweep: Duration = null
   name: String = null
-  tStart: Float!
-  tStop: Float!
+  tStart: Duration!
+  tStop: Duration!
   times: TraceLike!
   waveforms: TraceLike = null
 }
@@ -1756,9 +1837,9 @@ input StimulusOrder @oneOf {
 }
 
 input StimulusViewInput {
-  duration: Float = null
+  duration: Duration = null
   label: String = null
-  offset: Float = null
+  offset: Duration = null
   stimulus: ID!
 }
 
@@ -1802,12 +1883,12 @@ enum SynapseKind {
 Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
 """
 type SynapticConnection implements NetConnection {
-  delay: Float
+  delay: Duration
   id: ID!
   netStimulator: ID!
   synapse: ID!
-  threshold: Float
-  weight: Float
+  threshold: ElectricPotential
+  weight: ElectricalConductance
 }
 
 """A validated Rekuest task under which changes were made."""

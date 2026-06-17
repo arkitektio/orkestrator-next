@@ -56,6 +56,15 @@ const LazyAssignationHoverCard = lazy(
 const LazyImplementationHoverCard = lazy(
   () => import("@/rekuest/components/hovers/ImplementationHoverCard"),
 );
+const LazyNeuronModelHoverCard = lazy(
+  () => import("@/elektro/components/hovers/NeuronModelHoverCard"),
+);
+const LazySimulationHoverCard = lazy(
+  () => import("@/elektro/components/hovers/SimulationHoverCard"),
+);
+const LazyExperimentHoverCard = lazy(
+  () => import("@/elektro/components/hovers/ExperimentHoverCard"),
+);
 
 // Maps a smart model identifier to the component rendered inside its on-demand
 // hover card, together with the module guard that gates it. The hover cards run
@@ -80,6 +89,18 @@ const hoverCards: Record<string, HoverCardEntry> = {
   "@rekuest/implementation": {
     Component: LazyImplementationHoverCard,
     Guard: Guard.Rekuest,
+  },
+  "@elektro/neuronmodel": {
+    Component: LazyNeuronModelHoverCard,
+    Guard: Guard.Elektro,
+  },
+  "@elektro/simulation": {
+    Component: LazySimulationHoverCard,
+    Guard: Guard.Elektro,
+  },
+  "@elektro/experiment": {
+    Component: LazyExperimentHoverCard,
+    Guard: Guard.Elektro,
   },
 };
 

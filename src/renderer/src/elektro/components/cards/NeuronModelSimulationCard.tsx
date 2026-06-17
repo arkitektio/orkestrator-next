@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ElektroSimulation } from "@/linkers";
 import { ListSimulationFragment } from "../../api/graphql";
+import { toBase } from "../../lib/quantities";
 import Timestamp from "react-timestamp";
 import { Badge } from "@/components/ui/badge";
 
@@ -12,7 +13,8 @@ interface Props {
 }
 
 const TheCard = ({ item, className }: Props) => {
-  const durationMs = item.duration ?? 0;
+  // `duration` is a `Duration` quantity string ("100 ms"); normalise to ms.
+  const durationMs = toBase(item.duration, "time", 0);
   const seconds = durationMs / 1000;
   const formatted = durationMs >= 1000 ? `${seconds.toFixed(2)} seconds` : `${durationMs} ms`;
 

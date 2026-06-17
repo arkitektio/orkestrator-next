@@ -9,6 +9,7 @@ import {
   SectionInput,
   SectionParamMapInput,
 } from "../api/graphql";
+import { toBase } from "./quantities";
 
 // The editor works on the `config` object read via `DetailNeuronModelFragment`.
 // These aliases pin the exact runtime shapes so the serializer can map them to
@@ -25,7 +26,7 @@ export type EditableModelConfig = Pick<EditableConfig, "cells"> &
 
 // --- Serialization -------------------------------------------------------
 
-const serializeCoord = (c: { x: number; y: number; z: number }): CoordInput => ({
+const serializeCoord = (c: { x: string; y: string; z: string }): CoordInput => ({
   x: c.x,
   y: c.y,
   z: c.z,
@@ -149,10 +150,12 @@ const validateCell = (cell: EditableCell): ValidationIssue[] => {
     if (s.length == null && (!s.coords || s.coords.length === 0)) {
       push("error", "NO_GEOMETRY", `Section "${s.id}" has neither length nor coords.`, s.id);
     }
-    if (s.length != null && s.length <= 0) {
+    // `length`/`diam` are `Length` quantity strings ("10 µm"); compare in µm.
+    const lengthUm = toBase(s.length, "length");
+    if (s.length != null && !(lengthUm > 0)) {
       push("error", "BAD_LENGTH", `Section "${s.id}" has non-positive length (${s.length}).`, s.id);
     }
-    if (s.diam <= 0) {
+    if (!(toBase(s.diam, "length") > 0)) {
       push("error", "BAD_DIAM", `Section "${s.id}" has non-positive diameter (${s.diam}).`, s.id);
     }
     if (s.category && compartmentIds.size > 0 && !compartmentIds.has(s.category)) {

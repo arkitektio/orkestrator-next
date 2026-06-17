@@ -9,3 +9,7 @@ mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
     }
   }
 }
+
+mutation DeleteNeuronModel($id: ID!) {
+  deleteNeuronModel(input: { id: $id })
+}

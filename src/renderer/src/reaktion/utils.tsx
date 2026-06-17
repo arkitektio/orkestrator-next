@@ -361,8 +361,7 @@ export const streamToReactNode = (
 
 const rekuestNodeToActionDemand = (node: RekuestMapActionNodeFragment): ActionDemandInput => {
   return {
-    key: node.id,
-    hash: "aaaa"
+    hash: node.hash,
   }
 }
 

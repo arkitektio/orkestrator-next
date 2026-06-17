@@ -186,7 +186,6 @@ const buildImplementationDemand = (
     : undefined;
 
   return {
-    key: options?.batch ? "smart-batch" : "smart-context",
     ...(argMatches.length ? { argMatches } : {}),
     ...(typeof forceArgLength === "number" ? { forceArgLength } : {}),
     ...(returnMatches.length ? { returnMatches } : {}),

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CollapsibleSearch } from "@/components/ui/collapsible-search";
+import { useDebounce } from "@/hooks/use-debounce";
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import {
   DropdownMenu,
@@ -72,7 +73,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
     createdBefore: createdBefore ?? undefined,
   };
 
-  const searchTerm = search.trim();
+  // Debounce the value that drives the queries so each keystroke doesn't fire a
+  // request; the input itself (`search`) stays immediate so typing feels snappy.
+  const searchTerm = useDebounce(search.trim(), 400);
   const searchFilter = searchTerm ? { search: searchTerm } : {};
 
   const direction = Ordering[sortDirection === "ASC" ? "Asc" : "Desc"];

@@ -1,10 +1,12 @@
-import { Html, OrbitControls, useCursor } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Card } from "@/components/ui/card";
+import { OrbitControls, useCursor } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { EffectComposer, Vignette } from '@react-three/postprocessing';
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
+import { useNeuronPanelStore } from "../lib/neuronPanelStore";
 import { toBase } from "../lib/quantities";
 
 // --- Types & Helpers ---
@@ -190,34 +192,225 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
 
 // --- Visual Components ---
 
-const CylinderWithTooltip = ({
-  section, start, end, color, compartmentMap, selectedId, setSelectedId
-}: any) => {
-  const [hovered, setHovered] = useState(false);
-  const isSelected = selectedId === section.id;
+const Branch = ({
+  section, start, end, color,
+}: {
+  section: SectionFragment;
+  start: THREE.Vector3;
+  end: THREE.Vector3;
+  color: string;
+}) => {
+  const hasPanel = useNeuronPanelStore((s) => Boolean(s.panels[section.id]));
+  const isHovered = useNeuronPanelStore((s) => s.hoveredId === section.id);
+  const setHovered = useNeuronPanelStore((s) => s.setHovered);
+  const togglePanel = useNeuronPanelStore((s) => s.togglePanel);
+  const toggleExclusive = useNeuronPanelStore((s) => s.toggleExclusive);
+
   const dir = new THREE.Vector3().subVectors(end, start);
   const length = dir.length();
   // `diam` is a `Length` quantity string ("1 µm"); normalise to µm for geometry.
   const diamUm = toBase(section.diam, "length", 1);
 
+  useCursor(isHovered);
+
   if (length < 0.001) return null;
 
   const position = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
   const orientation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-  useCursor(hovered);
+  const active = hasPanel || isHovered;
 
   return (
     <group position={position.toArray()} quaternion={orientation}>
-      <mesh onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }} onPointerOut={() => setHovered(false)} onClick={(e) => { e.stopPropagation(); setSelectedId(section.id); }}>
+      <mesh
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(section.id); }}
+        onPointerOut={() => setHovered(null)}
+        onClick={(e) => {
+          e.stopPropagation();
+          // Anchor the panel at the exact point on the branch that was clicked.
+          const panel = { sectionId: section.id, position: e.point.toArray() as [number, number, number] };
+          // Ctrl/Cmd-click stacks panels; a plain click shows only this one.
+          if (e.ctrlKey || e.metaKey) togglePanel(panel);
+          else toggleExclusive(panel);
+        }}
+      >
         <cylinderGeometry args={[Math.max(diamUm, 2), Math.max(diamUm, 2), length, 8]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
       <mesh>
         <cylinderGeometry args={[diamUm / 2, diamUm / 2, length, 8]} />
-        <meshStandardMaterial color={hovered ? "hotpink" : color} roughness={0.3} />
+        <meshStandardMaterial
+          color={active ? "hotpink" : color}
+          emissive={hasPanel ? "hotpink" : "black"}
+          emissiveIntensity={hasPanel ? 0.4 : 0}
+          roughness={0.3}
+        />
       </mesh>
-      {isSelected && <Html center><div style={{ background: "rgba(0,0,0,0.8)", color: "white", padding: "8px", borderRadius: "4px" }}><strong>{section.id}</strong><br />Type: {section.category}</div></Html>}
     </group>
+  );
+};
+
+// --- Panel projection (scene api) ---
+
+/**
+ * Lives inside the <Canvas>. Each frame it projects every open panel's
+ * world-space anchor into screen pixels using the camera (the three.js scene
+ * api) and writes the result straight onto the matching DOM node's transform.
+ * Doing it imperatively avoids a React re-render on every frame.
+ */
+const PanelProjector = ({
+  nodes,
+}: {
+  nodes: React.RefObject<Map<string, HTMLDivElement>>;
+}) => {
+  const projected = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame(({ camera, size }) => {
+    const { panels } = useNeuronPanelStore.getState();
+    for (const id in panels) {
+      const node = nodes.current?.get(id);
+      if (!node) continue;
+
+      const [x, y, z] = panels[id].position;
+      projected.set(x, y, z).project(camera);
+
+      const screenX = (projected.x * 0.5 + 0.5) * size.width;
+      const screenY = (-projected.y * 0.5 + 0.5) * size.height;
+      const behindCamera = projected.z > 1;
+
+      node.style.transform = `translate(-50%, calc(-100% - 12px)) translate(${screenX}px, ${screenY}px)`;
+      node.style.opacity = behindCamera ? "0" : "1";
+      node.style.pointerEvents = behindCamera ? "none" : "auto";
+    }
+  });
+
+  return null;
+};
+
+// --- DOM panel ---
+
+const ParamRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="flex items-baseline justify-between gap-3 text-xs">
+    <span className="text-white/50">{label}</span>
+    <span className="font-mono text-white/90">{value}</span>
+  </div>
+);
+
+const NeuronPanelCard = ({
+  section,
+  compartment,
+  onClose,
+}: {
+  section?: SectionFragment;
+  compartment?: CompartmentFragment;
+  onClose: () => void;
+}) => {
+  if (!section) return null;
+
+  return (
+    <Card className="flex max-h-72 w-52 flex-col gap-0 border-white/10 bg-black/70 py-0 text-white shadow-2xl shadow-black/60 ring-white/10 backdrop-blur-xl hover:bg-black/70">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-2.5 py-1.5">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-semibold tracking-tight">{section.id}</p>
+          <p className="text-[0.5625rem] uppercase tracking-widest text-white/40">
+            {section.category}
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="shrink-0 rounded p-0.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Close panel"
+        >
+          <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="shrink-0 space-y-1 px-2.5 py-2">
+        <ParamRow label="Diameter" value={section.diam} />
+        {section.length && <ParamRow label="Length" value={section.length} />}
+        <ParamRow label="Segments" value={section.nseg} />
+      </div>
+
+      {compartment && (
+        <div className="flex min-h-0 flex-col border-t border-white/10 px-2.5 py-2">
+          <p className="mb-1 shrink-0 text-[0.5625rem] uppercase tracking-widest text-white/40">
+            Mechanisms
+          </p>
+          {compartment.mechanisms.length === 0 ? (
+            <p className="text-[0.6875rem] text-white/40">None</p>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
+              <div className="flex flex-wrap gap-1">
+                {compartment.mechanisms.map((mech) => (
+                  <span
+                    key={mech}
+                    className="rounded-full bg-white/10 px-1.5 py-0.5 text-[0.5625rem] font-medium"
+                  >
+                    {mech}
+                  </span>
+                ))}
+              </div>
+
+              {compartment.sectionParams.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {compartment.sectionParams.map((p, i) => (
+                    <ParamRow
+                      key={`${p.mechanism}-${p.param}-${i}`}
+                      label={`${p.mechanism}.${p.param}`}
+                      value={String(p.value)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
+/**
+ * Sits on top of the <Canvas> as a normal DOM layer. It renders one panel per
+ * open entry in the store; positioning is handled imperatively by
+ * <PanelProjector>, which writes onto the refs we register here.
+ */
+const PanelOverlay = ({
+  sectionMap,
+  compartmentMap,
+  nodes,
+}: {
+  sectionMap: Map<string, SectionFragment>;
+  compartmentMap: Record<string, CompartmentFragment>;
+  nodes: React.RefObject<Map<string, HTMLDivElement>>;
+}) => {
+  const panels = useNeuronPanelStore((s) => s.panels);
+  const closePanel = useNeuronPanelStore((s) => s.closePanel);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {Object.values(panels).map((panel) => {
+        const section = sectionMap.get(panel.sectionId);
+        return (
+          <div
+            key={panel.sectionId}
+            ref={(el) => {
+              if (el) nodes.current?.set(panel.sectionId, el);
+              else nodes.current?.delete(panel.sectionId);
+            }}
+            className="absolute left-0 top-0 will-change-transform"
+            style={{ pointerEvents: "auto" }}
+          >
+            <NeuronPanelCard
+              section={section}
+              compartment={section ? compartmentMap[section.category] : undefined}
+              onClose={() => closePanel(panel.sectionId)}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -227,12 +420,25 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
   const segments = useNeuronLayout(model);
 
   const compartmentMap = useMemo(() => Object.fromEntries(model.config.cells.flatMap((cell) => cell.biophysics.compartments.map((c) => [c.id, c]))), [model]);
+  const sectionMap = useMemo(
+    () => new Map(segments.map((seg) => [seg.section.id, seg.section])),
+    [segments],
+  );
   const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const nodes = useRef<Map<string, HTMLDivElement>>(new Map());
+  const closeAll = useNeuronPanelStore((s) => s.closeAll);
+  const hasPanels = useNeuronPanelStore((s) => Object.keys(s.panels).length > 0);
+
+  // Panels are anchored to section ids of *this* model — drop them when the
+  // model changes or the renderer unmounts so they can't leak across pages.
+  useEffect(() => {
+    return () => closeAll();
+  }, [model.id, closeAll]);
 
   return (
-    <div style={{ width: "100%", height: "100%", minHeight: "500px" }}>
-      <Canvas camera={{ fov: 34 }} onPointerMissed={() => setSelectedId(null)}>
+    <div style={{ position: "relative", width: "100%", height: "100%", minHeight: "500px" }}>
+      <Canvas camera={{ fov: 34 }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 50, 20]} />
 
@@ -242,22 +448,32 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
         <FitCamera points={points} target={target} />
 
         {segments.map((seg) => (
-          <CylinderWithTooltip
+          <Branch
             key={seg.uniqueKey}
             section={seg.section}
             start={seg.start}
             end={seg.end}
             color={seg.color}
-            compartmentMap={compartmentMap}
-            selectedId={selectedId}
-            setSelectedId={setSelectedId}
           />
         ))}
+
+        <PanelProjector nodes={nodes} />
 
         <EffectComposer>
           <Vignette eskil={false} offset={0.1} darkness={1.1} />
         </EffectComposer>
       </Canvas>
+
+      <PanelOverlay sectionMap={sectionMap} compartmentMap={compartmentMap} nodes={nodes} />
+
+      {hasPanels && (
+        <button
+          onClick={closeAll}
+          className="pointer-events-auto absolute right-3 top-3 rounded-md border border-white/10 bg-black/60 px-2.5 py-1 text-xs text-white/70 backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white"
+        >
+          Close all
+        </button>
+      )}
     </div>
   );
 };

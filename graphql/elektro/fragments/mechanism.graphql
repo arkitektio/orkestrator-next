@@ -1,9 +1,14 @@
 fragment Mechanism on Mechanism {
   id
   name
+  description
   parameters {
-   key
-   kind
+    key
+    label
+    kind
+    description
+    default
+    nullable
   }
 }
 

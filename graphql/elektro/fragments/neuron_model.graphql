@@ -39,6 +39,28 @@ fragment Compartment on Compartment {
   }
 }
 
+fragment ProvenanceEntry on ProvenanceEntry {
+  id
+  task {
+    id
+    assignationId
+    assigner {
+      sub
+    }
+  }
+  kind
+  user {
+    sub
+  }
+  client {
+    clientId
+  }
+  date
+  effectiveChanges {
+    field
+  }
+}
+
 fragment DetailNeuronModel on NeuronModel {
   id
   name
@@ -78,6 +100,9 @@ fragment DetailNeuronModel on NeuronModel {
   }
   environment {
     ...ModEnvironment
+  }
+  provenanceEntries {
+    ...ProvenanceEntry
   }
 }
 

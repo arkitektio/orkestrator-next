@@ -1746,11 +1746,21 @@ type Implementation {
   """Constructed name for display, combining interface and agent name."""
   name: String!
 
+  """
+  Whether a signed provenance token is minted when this implementation is assigned.
+  """
+  needsToken: Boolean!
+
   """Arbitrary parameters for the implementation."""
   params: AnyDefault!
 
   """Check if this implementation is pinned by the current user."""
   pinned: Boolean!
+
+  """
+  Declared audience for the provenance token's `aud`, or null to derive it at dispatch.
+  """
+  provenanceAudience: [String!]
 
   """The resolved dependencies"""
   resolutions(filters: ResolutionFilter, pagination: OffsetPaginationInput): [Resolution!]!
@@ -1814,12 +1824,14 @@ input ImplementationInput {
   locks: [String!] = null
   logo: String = null
   manipulates: [String!] = null
+  needsToken: Boolean! = true
 
   """
   The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
   """
   optimistics: [OptimisticInput!] = null
   params: AnyDefault = null
+  provenanceAudience: [String!] = null
   tracks: [TrackInput!] = null
 }
 
@@ -3014,7 +3026,7 @@ input ReserveInput {
   assignationId: ID = null
   hash: ActionHash = null
   implementation: ID = null
-  reference: String = "1486c11c-e197-4bd8-a874-0201f67ea580"
+  reference: String = "d0a1d14a-668d-4061-bdfd-df84a5ff59aa"
   title: String = null
 }
 

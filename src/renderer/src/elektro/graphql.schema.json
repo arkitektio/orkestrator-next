@@ -125,6 +125,43 @@
             "deprecationReason": null
           },
           {
+            "name": "provenanceEntries",
+            "description": null,
+            "args": [
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ProvenanceEntry",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "samplingRate",
             "description": null,
             "args": [],
@@ -5737,13 +5774,9 @@
             "description": "Delay before the synapse activates.",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Duration",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Duration",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -5917,6 +5950,43 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "provenanceEntries",
+            "description": null,
+            "args": [
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ProvenanceEntry",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -8156,6 +8226,43 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "provenanceEntries",
+            "description": null,
+            "args": [
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ProvenanceEntry",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -13120,6 +13227,43 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "provenanceEntries",
+            "description": null,
+            "args": [
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ProvenanceEntry",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -18301,7 +18445,7 @@
           },
           {
             "name": "length",
-            "description": "Length of the section in picometers. Required if coords is not provided.",
+            "description": "Length of the section. Required if coords is not provided.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -18426,7 +18570,7 @@
           },
           {
             "name": "length",
-            "description": "Length of the section in picometers. Required if coords is not provided.",
+            "description": "Length of the section. Required if coords is not provided.",
             "type": {
               "kind": "SCALAR",
               "name": "Length",
@@ -19326,6 +19470,43 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "provenanceEntries",
+            "description": null,
+            "args": [
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ProvenanceEntry",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -20588,12 +20769,12 @@
       {
         "kind": "OBJECT",
         "name": "Task",
-        "description": "A validated Rekuest task under which changes were made.",
+        "description": "A verified provenance assignation under which changes were made.",
         "isOneOf": null,
         "fields": [
           {
-            "name": "action",
-            "description": "The action hash.",
+            "name": "agentClientId",
+            "description": "The executing agent client id.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20608,8 +20789,8 @@
             "deprecationReason": null
           },
           {
-            "name": "app",
-            "description": "The assigning app.",
+            "name": "agentSub",
+            "description": "The executing agent user sub.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20624,14 +20805,46 @@
             "deprecationReason": null
           },
           {
-            "name": "args",
-            "description": "The arguments the task was assigned with.",
+            "name": "argsHash",
+            "description": "The SHA-256 of the canonicalized args.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "JSON",
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "argsHashAlgorithm",
+            "description": "The args canonicalization algorithm/version.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "assignationId",
+            "description": "This assignation id.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -20641,7 +20854,7 @@
           },
           {
             "name": "assigner",
-            "description": "The user that assigned the task.",
+            "description": "The root human causer.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -20653,7 +20866,23 @@
           },
           {
             "name": "assignerSub",
-            "description": "The raw sub claim of the assigning user.",
+            "description": "The raw root human causer sub.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "callerSub",
+            "description": "The immediate causer of this hop.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20700,6 +20929,22 @@
             "deprecationReason": null
           },
           {
+            "name": "issuer",
+            "description": "The provenance issuer id.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "organization",
             "description": "The organization the task ran in.",
             "args": [],
@@ -20716,8 +20961,8 @@
             "deprecationReason": null
           },
           {
-            "name": "parentId",
-            "description": "The parent task id, if any.",
+            "name": "parentAssignationId",
+            "description": "The immediate parent assignation id, if any.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20728,8 +20973,24 @@
             "deprecationReason": null
           },
           {
-            "name": "taskId",
-            "description": "The rekuest task id.",
+            "name": "rootAssignationId",
+            "description": "The root assignation id of the whole causal tree.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tokenId",
+            "description": "The unique single-use token id.",
             "args": [],
             "type": {
               "kind": "NON_NULL",

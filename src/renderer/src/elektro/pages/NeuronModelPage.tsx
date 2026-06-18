@@ -4,6 +4,7 @@ import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNe
 import { useDetailNeuronModelQuery } from "../api/graphql";
 import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -16,6 +17,11 @@ export const NeuronModelPage = asDetailQueryRoute(
         variant="black"
         title={data?.neuronModel?.name}
         object={data.neuronModel}
+        additionalSidebars={{
+          Provenance: (
+            <ProvenanceSidebar items={data.neuronModel.provenanceEntries} />
+          ),
+        }}
         pageActions={
           <div className="flex flex-row gap-2">
             <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>

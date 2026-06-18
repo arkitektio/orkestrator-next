@@ -1,14 +1,30 @@
 fragment DetailImplementation on Implementation {
   id
+  name
   interface
+  pinned
+  needsToken
+  provenanceAudience
+  params
+  higherOrderConfig
   action {
     ...DetailAction
   }
-  params
   agent {
     id
     name
     active
+    connected
+    blocked
+    kind
+    lastSeen
+    hash
+    app {
+      identifier
+    }
+    client {
+      id
+    }
   }
 
   dependencies {
@@ -18,14 +34,40 @@ fragment DetailImplementation on Implementation {
     dependencyKey
     stateKey
     valueKey
+    label
     description
   }
   manipulates {
     id
     interface
+    definition {
+      name
+    }
   }
 
+  resolutions {
+    id
+    name
+    resolvedAt
+  }
 
+  higherOrderFor {
+    id
+    interface
+    name
+  }
+
+  lowerOrderImplementations {
+    id
+    interface
+    name
+  }
+
+  tests {
+    id
+    interface
+    name
+  }
 
   myLatestAssignation {
     ...PostmanAssignation

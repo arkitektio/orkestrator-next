@@ -2,6 +2,7 @@ type AnalogSignal implements Signal {
   channels(filters: AnalogSignalChannelFilter, ordering: [AnalogSignalChannelOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   samplingRate: Frequency!
   segment: BlockSegment!
   timeTrace: Trace!
@@ -593,7 +594,7 @@ type Exp2Synapse implements NetSynapse {
   cell: String!
 
   """Delay before the synapse activates."""
-  delay: Duration!
+  delay: Duration
 
   """Reversal potential."""
   e: ElectricPotential!
@@ -623,6 +624,7 @@ type Experiment {
   description: String
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   recordingViews(filters: ExperimentRecordingViewFilter, ordering: [ExperimentRecordingViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
   stimulusViews(filters: ExperimentStimulusViewFilter, ordering: [ExperimentStimulusViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentStimulusView!]!
   timeTrace: Trace!
@@ -863,6 +865,7 @@ enum HistoryKind {
 type IrregularlySampledSignal implements Signal {
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   segment: BlockSegment!
   trace: Trace!
   unit: String
@@ -1425,6 +1428,7 @@ type NeuronModel {
   id: ID!
   modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   simulations(filters: SimulationFilter, ordering: [SimulationOrder!]! = [], pagination: OffsetPaginationInput): [Simulation!]!
 }
 
@@ -1893,9 +1897,7 @@ type Section {
   """The unique identifier of the section within the cell."""
   id: String!
 
-  """
-  Length of the section in picometers. Required if coords is not provided.
-  """
+  """Length of the section. Required if coords is not provided."""
   length: Length
 
   """The number of segments the section is discretized into."""
@@ -1923,9 +1925,7 @@ input SectionInput {
   """The unique identifier of the section within the cell."""
   id: String!
 
-  """
-  Length of the section in picometers. Required if coords is not provided.
-  """
+  """Length of the section. Required if coords is not provided."""
   length: Length = null
 
   """The number of segments the section is discretized into."""
@@ -2010,6 +2010,7 @@ input SimulationOrder @oneOf {
 type SpikeTrain implements Signal {
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   segment: BlockSegment!
   trace: Trace!
 }
@@ -2152,33 +2153,48 @@ type SynapticConnection implements NetConnection {
   weight: ElectricalConductance
 }
 
-"""A validated Rekuest task under which changes were made."""
+"""A verified provenance assignation under which changes were made."""
 type Task {
-  """The action hash."""
-  action: String!
+  """The executing agent client id."""
+  agentClientId: String!
 
-  """The assigning app."""
-  app: String!
+  """The executing agent user sub."""
+  agentSub: String!
 
-  """The arguments the task was assigned with."""
-  args: JSON!
+  """The SHA-256 of the canonicalized args."""
+  argsHash: String!
 
-  """The user that assigned the task."""
+  """The args canonicalization algorithm/version."""
+  argsHashAlgorithm: String!
+
+  """This assignation id."""
+  assignationId: String!
+
+  """The root human causer."""
   assigner: User
 
-  """The raw sub claim of the assigning user."""
+  """The raw root human causer sub."""
   assignerSub: String!
+
+  """The immediate causer of this hop."""
+  callerSub: String!
   createdAt: DateTime!
   id: ID!
+
+  """The provenance issuer id."""
+  issuer: String!
 
   """The organization the task ran in."""
   organization: Organization!
 
-  """The parent task id, if any."""
-  parentId: String
+  """The immediate parent assignation id, if any."""
+  parentAssignationId: String
 
-  """The rekuest task id."""
-  taskId: String!
+  """The root assignation id of the whole causal tree."""
+  rootAssignationId: String!
+
+  """The unique single-use token id."""
+  tokenId: String!
 }
 
 """A temperature (``"310 K"``, ``"37 degC"``)."""

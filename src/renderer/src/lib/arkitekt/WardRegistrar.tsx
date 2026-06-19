@@ -27,7 +27,6 @@ export const WardRegistrar = () => {
       const service = serviceMap[key] as Service | undefined;
       if (!service?.ward) continue;
 
-      console.log(`[ArkitektProvider] Registering ward "${wardKey}" from service "${key}"`);
       const unregister = registry.registerWard(wardKey, service.ward);
       cleanups.push(unregister);
     }

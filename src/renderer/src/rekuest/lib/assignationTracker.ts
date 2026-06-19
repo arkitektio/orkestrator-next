@@ -48,10 +48,22 @@ export const trackAssignation = (
  */
 const bufferedEvents: Record<string, AssignationEventFragment[]> = {};
 
+// Cap the number of distinct assignations we buffer. A buffer orphans forever if
+// its `create` payload never arrives (so takeBufferedEvents is never called), so
+// evict the oldest buffer once we exceed this bound.
+const MAX_BUFFERED_ASSIGNATIONS = 500;
+
 export const bufferEvent = (
   assignationId: string,
   event: AssignationEventFragment,
 ) => {
+  if (
+    !(assignationId in bufferedEvents) &&
+    Object.keys(bufferedEvents).length >= MAX_BUFFERED_ASSIGNATIONS
+  ) {
+    const oldestKey = Object.keys(bufferedEvents)[0];
+    if (oldestKey !== undefined) delete bufferedEvents[oldestKey];
+  }
   (bufferedEvents[assignationId] ??= []).push(event);
 };
 

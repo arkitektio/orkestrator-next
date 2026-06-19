@@ -67,10 +67,26 @@ const api = {
   },
   initAgent: (context: any) => ipcRenderer.invoke("agent:init", context),
   executeElectron: (assignation: Assign) => ipcRenderer.invoke("agent:execute", assignation),
-  onAgentYield: (cb: (data: any) => void) => ipcRenderer.on("agent:yield", (_e, data) => {console.log(data); cb(data)}),
-  onAgentDone: (cb: (data: any) => void) => ipcRenderer.on("agent:done", (_e, data) => {console.log(data); cb(data)}),
-  onAgentError: (cb: (data: any) => void) => ipcRenderer.on("agent:error", (_e, data) =>{console.log(data); cb(data)}),
-  onAgentLog: (cb: (data: any) => void) => ipcRenderer.on("agent:log", (_e, data) =>{console.log(data); cb(data)}),
+  onAgentYield: (cb: (data: any) => void) => {
+    const listener = (_e: unknown, data: any) => cb(data);
+    ipcRenderer.on("agent:yield", listener);
+    return () => ipcRenderer.removeListener("agent:yield", listener);
+  },
+  onAgentDone: (cb: (data: any) => void) => {
+    const listener = (_e: unknown, data: any) => cb(data);
+    ipcRenderer.on("agent:done", listener);
+    return () => ipcRenderer.removeListener("agent:done", listener);
+  },
+  onAgentError: (cb: (data: any) => void) => {
+    const listener = (_e: unknown, data: any) => cb(data);
+    ipcRenderer.on("agent:error", listener);
+    return () => ipcRenderer.removeListener("agent:error", listener);
+  },
+  onAgentLog: (cb: (data: any) => void) => {
+    const listener = (_e: unknown, data: any) => cb(data);
+    ipcRenderer.on("agent:log", listener);
+    return () => ipcRenderer.removeListener("agent:log", listener);
+  },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

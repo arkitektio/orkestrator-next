@@ -48,6 +48,35 @@ export const buildServiceMap = ({
   return services;
 };
 
+/**
+ * Tear down every client/socket held by a connection that is being replaced or
+ * dropped. Without this, the Apollo clients and their graphql-ws sockets created
+ * by the builders are orphaned (the socket stays open / retry loops keep running,
+ * and the whole cache+link graph is retained) when the connection is overwritten.
+ */
+export const disposeConnection = (
+  connection:
+    | { serviceMap: Record<string, Service | undefined>; selfService?: unknown }
+    | undefined
+    | null,
+): void => {
+  if (!connection) {
+    return;
+  }
+  Object.values(connection.serviceMap).forEach((service) => {
+    try {
+      (service as Service | undefined)?.dispose?.();
+    } catch (e) {
+      console.warn("[arkitekt] failed to dispose service during teardown:", e);
+    }
+  });
+  try {
+    (connection.selfService as Service | undefined)?.dispose?.();
+  } catch (e) {
+    console.warn("[arkitekt] failed to dispose selfService during teardown:", e);
+  }
+};
+
 export const instantiateConnection = <
   T extends ServiceBuilderMap,
   S extends ServiceBuilder,

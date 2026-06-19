@@ -24,6 +24,8 @@ const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
     if (!props.id) return;
     if (!token) return;
     if (img.current === null) return;
+    let objectURL: string | undefined;
+    let cancelled = false;
     fetch(apiUrlFromImageID(props.id, fakts), {
       headers: {
         Accept: "image/jpeg",
@@ -32,10 +34,15 @@ const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
     })
       .then((res) => res.blob())
       .then((res) => {
-        console.log("blob: ", res);
-        const objectURL = URL.createObjectURL(res);
-        img.current.src = objectURL;
+        if (cancelled) return;
+        objectURL = URL.createObjectURL(res);
+        if (img.current) img.current.src = objectURL;
       });
+    // Revoke the blob URL on unmount / id change, otherwise it leaks per image.
+    return () => {
+      cancelled = true;
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    };
   }, [fakts, props.id, token]);
 
   return <img src={""} alt={"Loading..."} ref={img} />;

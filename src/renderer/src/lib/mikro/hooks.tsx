@@ -6,14 +6,12 @@ export const useCreateFile = () => {
   });
 
   const upload = async (file: File, key: string) => {
-    const { data } = await createFile({
+    await createFile({
       variables: {
         file: key,
         name: file.name,
       },
     });
-
-    console.log("data", data);
   };
 
   return upload;

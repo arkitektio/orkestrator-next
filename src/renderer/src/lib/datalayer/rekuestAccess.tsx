@@ -61,10 +61,26 @@ export const WithMediaUrl = (props: { children: (url) => React.ReactNode, media?
     if (!endpointUrl) return;
     if (!props.media) return;
 
+    let isMounted = true;
+
     createBlobedUrl(props.media, rekuest, endpointUrl)
-      .then(setUrl)
+      .then((blobUrl) => {
+        if (isMounted) setUrl(blobUrl);
+        else URL.revokeObjectURL(blobUrl);
+      })
       .catch(err => console.error("Error creating blob URL:", err));
+
+    return () => {
+      isMounted = false;
+    };
   }, [props.media, endpointUrl, rekuest]);
+
+  // Revoke the previous blob URL when it is replaced or the component unmounts —
+  // otherwise every rendered media object leaks its object URL.
+  React.useEffect(() => {
+    if (!url) return;
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
 
   if (!url) {
     return null;

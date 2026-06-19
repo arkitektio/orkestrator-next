@@ -36,8 +36,6 @@ export const useMutation: MutationFuncType = (doc, options) => {
 export const useQuery: QueryFuncType = (doc, options) => {
   const lok = Arkitekt.useSelfService();
 
-  console.log("lok", lok);
-
   return useApolloQuery(doc, { ...options, client: lok?.client });
 };
 

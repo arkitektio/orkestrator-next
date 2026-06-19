@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSpaceViewStore } from "../store";
 import { SpaceGroup, SpaceGroupPlacement } from "../types";
 import * as THREE from "three";
@@ -55,6 +55,10 @@ const DirectTube = ({
     const curve = new THREE.LineCurve3(from, to);
     return new THREE.TubeGeometry(curve, 1, TUBE_RADIUS, 8, false);
   }, [from, to]);
+
+  // Dispose the previous TubeGeometry when from/to change and on unmount —
+  // a useMemo'd geometry is otherwise leaked on every recompute.
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
     <mesh geometry={geometry}>

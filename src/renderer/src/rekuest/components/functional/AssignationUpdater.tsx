@@ -74,10 +74,22 @@ export const borderColorForAss = (ass: any) => {
   return "border-muted-foreground/10";
 };
 
+// Tracks dismissed assignation ids so their toast isn't re-shown. Bounded with
+// FIFO eviction so it doesn't grow unbounded over a long session (one entry would
+// otherwise leak per dismissed toast forever).
+const MAX_DISMISSED_TOASTS = 200;
 const dismissedToasts = new Set<string>();
 
-const dismissAssignationToast = (id: string) => {
+const rememberDismissed = (id: string) => {
+  if (dismissedToasts.size >= MAX_DISMISSED_TOASTS) {
+    const oldest = dismissedToasts.values().next().value;
+    if (oldest !== undefined) dismissedToasts.delete(oldest);
+  }
   dismissedToasts.add(id);
+};
+
+const dismissAssignationToast = (id: string) => {
+  rememberDismissed(id);
   toast.dismiss(id);
 };
 
@@ -89,7 +101,7 @@ const showAssignationToast = (id: string) => {
     id,
     duration: Infinity, // Dismissal is driven by AssignationToast
     dismissible: true,
-    onDismiss: () => dismissedToasts.add(id),
+    onDismiss: () => rememberDismissed(id),
   });
 };
 

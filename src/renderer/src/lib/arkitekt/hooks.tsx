@@ -28,7 +28,7 @@ const useArkitektStore = <T,>(selector: (state: AppContext) => T) => {
   return useStore(store, selector);
 };
 
-const useArkitektActions = (): AppFunctions => useArkitektContext().actions;
+export const useArkitektActions = (): AppFunctions => useArkitektContext().actions;
 
 export const useArkitekt = () => {
   const state = useArkitektStore((currentState) => currentState) as AppContext;
@@ -91,6 +91,8 @@ export const useToken = () => {
   const token = useArkitektStore((state) => state.connection?.token ?? state.storedSession?.token ?? null);
   return token?.access_token || null;
 };
+
+export const useConnection = () => useArkitektStore((state) => state.connection);
 
 export const useManifest = () => useArkitektStore((state) => state.manifest);
 

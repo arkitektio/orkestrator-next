@@ -53,10 +53,10 @@ export const AssignationFlow = (props: {
   });
 
   useEffect(() => {
-    if (error) {
-      console.error(error);
-      setTimeout(refetch, 1000);
-    }
+    if (!error) return;
+    console.error(error);
+    const t = setTimeout(refetch, 1000);
+    return () => clearTimeout(t);
   }, [error]);
 
   return (

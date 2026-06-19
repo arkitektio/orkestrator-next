@@ -10,8 +10,10 @@ import {
   ConnectedGuard,
   useAvailableModules,
   useArkitekt,
+  useArkitektActions,
   useAvailableServices,
   useConfigurationIssues,
+  useConnection,
   usePotentialService,
   useService,
   useServiceState,
@@ -100,7 +102,8 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
     useCancelConnection: () => useArkitekt().cancelConnection,
     useManifest: () => realManifest,
     useConnectedManifest: () => useArkitekt().connection?.manifest,
-    useConnection: (): AppContext<T>["connection"] => useArkitekt().connection as AppContext<T>["connection"],
+    useConnection: (): AppContext<T>["connection"] => useConnection() as AppContext<T>["connection"],
+    useActions: () => useArkitektActions(),
     useFakts: () => useArkitekt().connection?.fakts,
     useAlias: <K extends keyof T>(serviceKey: K) => {
       const service = useService(serviceKey as string);

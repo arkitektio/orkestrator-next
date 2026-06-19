@@ -226,7 +226,7 @@ const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
 
 const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobile?: boolean }) => {
   const availableModules = Arkitekt.useAvailableModules();
-  const arkitekt = Arkitekt.useArkitekt();
+  const { retryModule } = Arkitekt.useActions();
   const moduleState = availableModules.find((entry) => entry.key === moduleKey);
 
   if (!moduleState) {
@@ -277,7 +277,7 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
           <ContextMenuSeparator />
           <ContextMenuItem
             onClick={() => {
-              void arkitekt.retryModule(moduleKey);
+              void retryModule(moduleKey);
             }}
           >
             <RefreshCw className="mr-2 h-3 w-3" />
@@ -328,7 +328,7 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
             size="sm"
             className="flex-1"
             onClick={() => {
-              void arkitekt.retryModule(moduleKey);
+              void retryModule(moduleKey);
             }}
           >
             <RefreshCw className="mr-2 h-3 w-3" />
@@ -344,7 +344,7 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
       <ContextMenuSeparator />
       <ContextMenuItem
         onClick={() => {
-          void arkitekt.retryModule(moduleKey);
+          void retryModule(moduleKey);
         }}
       >
         <RefreshCw className="mr-2 h-3 w-3" />

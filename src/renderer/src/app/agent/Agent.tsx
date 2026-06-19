@@ -58,6 +58,10 @@ const getAccessToken = (token: TokenResponse | string) => {
   throw new Error("No access token available for agent connection");
 };
 
+// Cap the retained error history so a long-lived connection that keeps hitting
+// websocket errors doesn't accumulate strings without bound.
+const MAX_AGENT_ERRORS = 50;
+
 export class OrkestratorAgent {
   context: AppContext;
   rekuestClient: ApolloClient<NormalizedCache>;
@@ -65,6 +69,7 @@ export class OrkestratorAgent {
   cancelControllers: Map<string, AbortController> = new Map();
   requestControllers: Set<AbortController> = new Set();
   electronListeners: Map<string, (type: string, data: unknown) => void> = new Map();
+  electronUnsubscribers: Array<() => void> = [];
   registry: Map<string, RegisteredAgentFunction> = new Map();
   implementations: ImplementationInput[] = [];
   reconnectTimer: NodeJS.Timeout | null = null;
@@ -102,10 +107,15 @@ export class OrkestratorAgent {
     this.token = getAccessToken(this.context.connection.token)
 
     if (window.api) {
-      window.api.onAgentYield((data) => this.notifyElectronListener(data.assignation, "yield", data));
-      window.api.onAgentDone((data) => this.notifyElectronListener(data.assignation, "done", data));
-      window.api.onAgentError((data) => this.notifyElectronListener(data.assignation, "error", data));
-      window.api.onAgentLog((data) => this.notifyElectronListener(data.assignation, "log", data));
+      // Capture the disposers so disconnect() can remove these IPC listeners —
+      // a new agent is built on every connection change, so without this each
+      // reconnect leaks four IPC callbacks closing over the dead agent.
+      this.electronUnsubscribers.push(
+        window.api.onAgentYield((data) => this.notifyElectronListener(data.assignation, "yield", data)),
+        window.api.onAgentDone((data) => this.notifyElectronListener(data.assignation, "done", data)),
+        window.api.onAgentError((data) => this.notifyElectronListener(data.assignation, "error", data)),
+        window.api.onAgentLog((data) => this.notifyElectronListener(data.assignation, "log", data)),
+      );
     }
 
     // Register global registry entries
@@ -264,7 +274,7 @@ export class OrkestratorAgent {
     this.connected = false;
     this.lastCode = code;
     this.lastReason = reason;
-    this.errors = [...this.errors, reason];
+    this.errors = [...this.errors, reason].slice(-MAX_AGENT_ERRORS);
     this.notify();
   }
 
@@ -383,7 +393,7 @@ export class OrkestratorAgent {
     this.ws.onerror = (e) => {
       console.error("Agent error", e);
       this.clearStableConnectionTimer();
-      this.errors.push("Websocket error");
+      this.errors = [...this.errors, "Websocket error"].slice(-MAX_AGENT_ERRORS);
       this.connected = false;
       this.notify();
     };
@@ -394,6 +404,8 @@ export class OrkestratorAgent {
     this.clearReconnectTimer();
     this.clearStableConnectionTimer();
     this.abortAllControllers();
+    this.electronUnsubscribers.forEach((unsub) => unsub());
+    this.electronUnsubscribers = [];
     this.ws?.close();
     this.connected = false;
     this.notify();

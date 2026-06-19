@@ -112,6 +112,13 @@ export const WithMikroMediaUrl = (props: { children: (url: string) => React.Reac
     };
   }, [props.media, endpointUrl, mikro]);
 
+  // Revoke the previous blob URL when it is replaced or the component unmounts —
+  // otherwise every rendered media object leaks its object URL.
+  React.useEffect(() => {
+    if (!url) return;
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
+
   if (!url) {
     return null;
   }

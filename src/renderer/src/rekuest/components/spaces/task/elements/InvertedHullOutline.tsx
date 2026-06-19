@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -36,6 +36,10 @@ export const InvertedHullOutline = ({
     }
     outlinesRef.current.clear();
   }, []);
+
+  // Dispose any remaining outline materials when the component unmounts —
+  // otherwise the BackSide MeshBasicMaterials in outlinesRef leak.
+  useEffect(() => removeAll, [removeAll]);
 
   useFrame(() => {
     const group = groupRef.current;

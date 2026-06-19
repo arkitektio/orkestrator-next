@@ -36,6 +36,11 @@ export interface UploadProps {
 
 export type UploadStore = ReturnType<typeof createUploadStore>;
 
+// Auto-remove completed uploads after this delay so the list (and the File
+// objects each task pins in memory) doesn't grow for the whole session waiting
+// on a manual "Clear".
+const COMPLETED_UPLOAD_TTL_MS = 8000;
+
 export const createUploadStore = () =>
   createStore<UploadProps>((set, get) => ({
     uploads: [],
@@ -66,6 +71,13 @@ export const createUploadStore = () =>
 
       let removeProgress: (() => void) | undefined;
       let removeError: (() => void) | undefined;
+
+      // Drop a completed upload (and its pinned File) from the list after a delay.
+      const scheduleEviction = () => {
+        setTimeout(() => {
+          set((state) => ({ uploads: state.uploads.filter((u) => u.id !== id) }));
+        }, COMPLETED_UPLOAD_TTL_MS);
+      };
 
       try {
         set((state) => ({
@@ -112,6 +124,7 @@ export const createUploadStore = () =>
               u.id === id ? { ...u, status: "completed", progress: 100 } : u
             ),
           }));
+          scheduleEviction();
           return createResult;
         }
 
@@ -120,6 +133,7 @@ export const createUploadStore = () =>
             u.id === id ? { ...u, status: "completed", progress: 100 } : u
           ),
         }));
+        scheduleEviction();
         return result;
       } catch (err: any) {
         if (removeProgress) removeProgress();

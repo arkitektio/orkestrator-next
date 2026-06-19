@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
@@ -10,6 +10,10 @@ export function PointDrawer(props: PointDrawerProps) {
   const { event_key = "shift" } = props;
   const planeRef = useRef<THREE.Mesh>(null);
   const [previewPoint, setPreviewPoint] = useState<THREE.Vector3 | null>(null);
+  const previewTimer = useRef<number | undefined>(undefined);
+
+  // Clear the pending preview-reset timer on unmount to avoid a setState-after-unmount.
+  useEffect(() => () => window.clearTimeout(previewTimer.current), []);
 
   const checkEventKey = createEventKeyChecker(event_key);
 
@@ -22,7 +26,8 @@ export function PointDrawer(props: PointDrawerProps) {
 
     // Show brief preview
     setPreviewPoint(point);
-    setTimeout(() => setPreviewPoint(null), 1000);
+    window.clearTimeout(previewTimer.current);
+    previewTimer.current = window.setTimeout(() => setPreviewPoint(null), 1000);
   };
 
   const handlePointerMove = (e) => {

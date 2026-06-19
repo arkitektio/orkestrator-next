@@ -41,10 +41,10 @@ declare global {
       onUploadProgress: (uploadId: string, cb: (data: any) => void) => () => void;
       onUploadError: (uploadId: string, cb: (data: any) => void) => () => void;
       executeElectron: (assignation: Assign) => Promise<void>;
-      onAgentYield: (cb: (data: any) => void) => void;
-      onAgentDone: (cb: (data: any) => void) => void;
-      onAgentError: (cb: (data: any) => void) => void;
-      onAgentLog: (cb: (data: any) => void) => void;
+      onAgentYield: (cb: (data: any) => void) => () => void;
+      onAgentDone: (cb: (data: any) => void) => () => void;
+      onAgentError: (cb: (data: any) => void) => () => void;
+      onAgentLog: (cb: (data: any) => void) => () => void;
     };
     updates: {
       checkForUpdates: () => Promise<{ success: boolean; result?: any; error?: string }>;

@@ -137,5 +137,15 @@ export const useAsyncChunk = (props: {
     props.shouldRender, // Include shouldRender in dependencies
   ]);
 
+  // Dispose the GPU texture when it is replaced or the component unmounts.
+  // Mirrors the disposal pattern in ChunkVolume/ChunkPlane/VolumeLayer — without
+  // this, a fresh DataTexture is created on every z/t/c/chunk change and the old
+  // one leaks on the GPU.
+  useEffect(() => {
+    return () => {
+      texture?.texture?.dispose();
+    };
+  }, [texture]);
+
   return texture;
 };

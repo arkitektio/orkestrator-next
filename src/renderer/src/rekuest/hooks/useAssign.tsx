@@ -4,11 +4,9 @@ import {
   AssignationEventFragment,
   AssignInput,
   PostmanAssignationFragment,
-  ReserveMutationVariables,
   useAssignMutation
 } from "../api/graphql";
 import { trackAssignation } from "../lib/assignationTracker";
-export type ActionReserveVariables = ReserveMutationVariables;
 export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {

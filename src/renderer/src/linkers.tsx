@@ -83,12 +83,6 @@ export const FlussRun = buildSmart(
   { name: "Run" },
 );
 
-export const RekuestReservation = buildSmart(
-  "@rekuest/reservation",
-  "rekuest/reservations",
-  { name: "Reservation" },
-);
-
 export const RekuestProvision = buildSmart(
   "@rekuest/reservation",
   "rekuest/provisions",

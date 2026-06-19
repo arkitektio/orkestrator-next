@@ -14,13 +14,6 @@ fragment PostmanAssignation on Assignation {
     name
     ...Ports
   }
-  reservation {
-    id
-    title
-    action {
-      name
-    }
-  }
   dependencyMethod
   dependency
   dependencies
@@ -198,7 +191,6 @@ fragment HoverAssignation on Assignation {
   reference
   latestEventKind
   isDone
-  statusMessage
   createdAt
   finishedAt
   action {

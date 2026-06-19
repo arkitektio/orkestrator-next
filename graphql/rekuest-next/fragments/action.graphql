@@ -60,9 +60,6 @@ fragment DetailAction on Action {
   implementations {
     ...MinimalImplementation
   }
-  reservations {
-    ...ListReservation
-  }
   testCases {
     ...ListTestCase
   }

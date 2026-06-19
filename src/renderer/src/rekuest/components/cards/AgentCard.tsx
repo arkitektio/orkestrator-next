@@ -33,7 +33,9 @@ const TheCard = ({ item }: Props) => {
         </CardFooter>
 
         <UserAvatar sub={item.user.sub} className="absolute bottom-2 right-2 w-8 h-8" />
-        <DeviceImprint deviceId={item.device.deviceId} className="absolute bottom-0  w-[80%] translate-y-1/2" />
+        {item.device && (
+          <DeviceImprint deviceId={item.device.deviceId} className="absolute bottom-0  w-[80%] translate-y-1/2" />
+        )}
       </Card>
     </RekuestAgent.Smart>
   );

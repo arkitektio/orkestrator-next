@@ -2,14 +2,12 @@ import {
   AssignationEventKind,
   AssignInput,
   PostmanAssignationFragment,
-  ReserveMutationVariables,
   useAssignationsQuery,
   useAssignMutation,
   useCancelMutation,
 } from "@/rekuest/api/graphql";
 import { useCallback, useState } from "react";
 
-export type ActionReserveVariables = ReserveMutationVariables;
 export type ActionAssignVariables = AssignInput;
 
 export type PartialTemplateOptions = Partial<ActionAssignVariables>;

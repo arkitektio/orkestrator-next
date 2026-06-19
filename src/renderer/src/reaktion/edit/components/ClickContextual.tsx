@@ -373,7 +373,7 @@ const ClickAgents = (props: {
           globalsMap: {},
           appFilter: agent.app.identifier,
           versionFilter: agent.release.version,
-          deviceFilter: agent.device.id,
+          deviceFilter: agent.device?.id,
           userFilter: agent.user.sub,
           autoResolvable: false,
         },

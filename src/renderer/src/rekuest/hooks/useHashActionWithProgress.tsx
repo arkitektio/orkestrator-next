@@ -6,13 +6,11 @@ import { v4 as uuidv4 } from "uuid";
 import {
   AssignationEventFragment,
   AssignInput,
-  ReserveMutationVariables,
   useActionByHashQuery
 } from "../api/graphql";
 import { trackAssignation } from "../lib/assignationTracker";
 import { useAssign } from "./useAssign";
 
-export type ActionReserveVariables = ReserveMutationVariables;
 export type ActionAssignVariables = AssignInput;
 
 

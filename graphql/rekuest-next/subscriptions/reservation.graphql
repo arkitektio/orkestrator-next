@@ -1,7 +1,0 @@
-
-
-subscription WatchReservations {
-  reservations {
-    ...PostmanReservation
-  }
-}

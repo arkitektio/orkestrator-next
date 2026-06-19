@@ -5,14 +5,12 @@ import {
   AssignationEventKind,
   DetailImplementationFragment,
   PostmanAssignationFragment,
-  ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
   useCancelMutation,
   useImplementationQuery,
 } from "../api/graphql";
 
-export type ActionReserveVariables = ReserveMutationVariables;
 export type ActionAssignVariables = AssignInput;
 
 export type UseImplementationActionReturn<T> = {

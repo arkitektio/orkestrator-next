@@ -17,8 +17,6 @@ import Implementation from "./pages/ImplementationPage";
 import MemoryShelve from "./pages/MemoryShelve";
 import MaterializedBlokPage from "./pages/MaterializedBlok";
 import MaterializedBloks from "./pages/MaterializedBloks";
-import Reservation from "./pages/Reservation";
-import Reservations from "./pages/Reservations";
 import Shortcut from "./pages/Shortcut";
 import Shortcuts from "./pages/Shortcuts";
 import Toolbox from "./pages/Toolbox";
@@ -60,12 +58,10 @@ const Module: React.FC = () => {
           <Route path="home" element={<Home />} />
           <Route path="actions/:id" element={<Action />} />
           <Route path="agents" element={<AgentsPage />} />
-          <Route path="reservations/:id" element={<Reservation />} />
           <Route path="shortcuts/:id" element={<Shortcut />} />
           <Route path="shortcuts" element={<Shortcuts />} />
           <Route path="toolboxes" element={<Toolboxes />} />
           <Route path="toolboxes/:id" element={<Toolbox />} />
-          <Route path="reservations" element={<Reservations />} />
           <Route path="actions" element={<Actions />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />

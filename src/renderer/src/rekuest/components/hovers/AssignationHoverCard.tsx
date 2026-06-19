@@ -32,9 +32,9 @@ export const AssignationHoverCard = ({ object }: { object: Object }) => {
   const latestProgress = assignation.events.find(
     (event) => event.progress != null,
   )?.progress;
-  const latestMessage =
-    assignation.statusMessage ||
-    assignation.events.find((event) => event.message)?.message;
+  const latestMessage = assignation.events.find(
+    (event) => event.message,
+  )?.message;
 
   return (
     <HoverShell

@@ -20,6 +20,7 @@ import {
 import {
   useArkitekt,
   useArkitektActions,
+  useArkitektStore,
   useAvailableModules,
   useAvailableServices,
   useConfigurationIssues,
@@ -805,6 +806,7 @@ export const buildArkitektProvider =
 export {
   useArkitekt,
   useArkitektActions,
+  useArkitektStore,
   useAvailableModules,
   useAvailableServices,
   useConfigurationIssues,

@@ -2,17 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 import { Object } from "@/types";
 import { formatDistanceToNow } from "date-fns";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useGetImageQuery } from "../../api/graphql";
 import { HoverRow, HoverShell, HoverSkeleton } from "./HoverShell";
-
-// The live zarr renderer is heavy, so we both lazy-load its chunk and delay
-// mounting it until the hover card has been open for a moment (see below).
-const LazyImageDisplay = lazy(() =>
-  import("../../displays/ImageDisplay").then((module) => ({
-    default: module.ImageDisplay,
-  })),
-);
+import { ImageDisplay } from "../../displays/ImageDisplay";
 
 export const ImageHoverCard = ({ object }: { object: Object }) => {
   // Wait an extra 300ms after the hover card opens before kicking off the
@@ -70,15 +63,13 @@ export const ImageHoverCard = ({ object }: { object: Object }) => {
             )
           )}
           {showLive && (
-            <Suspense fallback={null}>
-              <div className="absolute inset-0">
-                <LazyImageDisplay
-                  identifier="@mikro/image"
-                  object={image.id}
-                  context="widget"
-                />
-              </div>
-            </Suspense>
+            <div className="absolute inset-0">
+              <ImageDisplay
+                identifier="@mikro/image"
+                object={image.id}
+                context="widget"
+              />
+            </div>
           )}
         </div>
       }

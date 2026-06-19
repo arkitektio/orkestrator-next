@@ -11,6 +11,7 @@ import {
   useAvailableModules,
   useArkitekt,
   useArkitektActions,
+  useArkitektStore,
   useAvailableServices,
   useConfigurationIssues,
   useConnection,
@@ -96,31 +97,34 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
     }),
     buildServiceGuard: <K extends keyof T>(serviceKey: K) => buildGuard(serviceKey as string),
     Guard: ConnectedGuard,
-    useConnect: () => useArkitekt().connect,
-    useDisconnect: () => useArkitekt().disconnect,
-    useReconnect: () => useArkitekt().reconnect,
-    useCancelConnection: () => useArkitekt().cancelConnection,
+    useConnect: () => useArkitektActions().connect,
+    useDisconnect: () => useArkitektActions().disconnect,
+    useReconnect: () => useArkitektActions().reconnect,
+    useCancelConnection: () => useArkitektActions().cancelConnection,
     useManifest: () => realManifest,
-    useConnectedManifest: () => useArkitekt().connection?.manifest,
+    useConnectedManifest: () => useArkitektStore((s) => s.connection?.manifest),
     useConnection: (): AppContext<T>["connection"] => useConnection() as AppContext<T>["connection"],
     useActions: () => useArkitektActions(),
-    useFakts: () => useArkitekt().connection?.fakts,
+    useFakts: () => useArkitektStore((s) => s.connection?.fakts),
     useAlias: <K extends keyof T>(serviceKey: K) => {
       const service = useService(serviceKey as string);
       return service?.alias;
     },
     useSelfService: () => useSelfService(),
-    useSelf: () => useArkitekt().connection?.fakts.self,
-    useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitekt().autoLoginError,
+    useSelf: () => useArkitektStore((s) => s.connection?.fakts.self),
+    useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitektStore((s) => s.autoLoginError),
     useAvailableServices: useAvailableServices,
     useAvailableModules: useAvailableModules,
     useConfigurationIssues: useConfigurationIssues,
     useService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> => useService(service as string) as ReturnType<T[K]["builder"]>,
     usePotentialService: <K extends keyof T,>(service: K): ReturnType<T[K]["builder"]> | undefined => usePotentialService(service as string) as ReturnType<T[K]["builder"]> | undefined,
-    useToken: () => {
-      const arkitekt = useArkitekt();
-      return arkitekt.connection?.token?.access_token || arkitekt.storedSession?.token?.access_token || null;
-    },
+    useToken: () =>
+      useArkitektStore(
+        (s) =>
+          s.connection?.token?.access_token ||
+          s.storedSession?.token?.access_token ||
+          null,
+      ),
     useArkitekt: useArkitekt,
   };
 };

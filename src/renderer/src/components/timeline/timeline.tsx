@@ -93,10 +93,10 @@ const TimelineIcon = React.forwardRef<
 TimelineIcon.displayName = "TimelineIcon";
 
 const TimelineDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <p
+  <div
     ref={ref}
     className={cn("text-sm text-muted-foreground max-w-sm", className)}
     {...props}

@@ -23,8 +23,6 @@ function getReadableFileSizeString(fileSizeInBytes) {
   return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
 }
 
-console.log(getReadableFileSizeString(1551859712)); // output is "1.4 GB"
-
 const TheCard = ({ item, className }: Props) => {
   return (
     <MikroFile.Smart object={item} key={item.id} hover>

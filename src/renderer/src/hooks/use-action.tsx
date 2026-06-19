@@ -41,8 +41,6 @@ export const useAction = <T extends any>(
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       try {
         const mutation = await postAssign({
           variables: {
@@ -53,8 +51,6 @@ export const useAction = <T extends any>(
             },
           },
         });
-
-        console.log(mutation);
 
         const assignation = mutation.data?.assign;
 
@@ -73,7 +69,6 @@ export const useAction = <T extends any>(
   );
 
   const reassign = useCallback(() => {
-    console.log("Not");
     if (!latestAssignation) {
       throw Error("No latest assignation");
     }

@@ -22,7 +22,7 @@ const useArkitektContext = () => {
   return context;
 };
 
-const useArkitektStore = <T,>(selector: (state: AppContext) => T) => {
+export const useArkitektStore = <T,>(selector: (state: AppContext) => T) => {
   const { store } = useArkitektContext();
 
   return useStore(store, selector);

@@ -20,14 +20,14 @@ const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = (props) => {
       <Breadcrumb className="flex-initial text-md">
         <BreadcrumbList>
           {breadcrumbs.slice(0, -1).map(({ match, breadcrumb }) => (
-            <>
-              <BreadcrumbItem key={match.pathname}>
+            <React.Fragment key={match.pathname}>
+              <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <NavLink to={match.pathname}>{breadcrumb}</NavLink>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
-            </>
+            </React.Fragment>
           ))}
           <BreadcrumbItem>
             <BreadcrumbPage>

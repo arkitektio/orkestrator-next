@@ -23,7 +23,6 @@ const buildValidators = (validators: ValidatorFragment[]) => {
     const wrappedValidator = (v: any, values: any) => {
       const params = validator.dependencies?.map((param) => values[param]);
       if (params?.every((predicate) => predicate != undefined)) {
-        console.log("Calling validator with params", params);
         return func(v, ...params);
       } else {
         return undefined;
@@ -67,10 +66,7 @@ export const usePortValidate = <
         );
       }
 
-      console.log(port);
-
       if (port.validators) {
-        console.log("Building validators", port.validators);
         const builtValidators = buildValidators(port.validators);
         validators.push(...builtValidators);
       }

@@ -36,7 +36,7 @@ import {
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
 import { ChevronDown } from "lucide-react";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useAction } from "../hooks/useAction";
@@ -197,7 +197,7 @@ export const AssignationTimeLine = (props: {
   return (
     <Timeline className="w-full flex-grow">
       {props.assignation?.events.map((e) => (
-        <>
+        <Fragment key={e.id}>
           {e.kind === AssignationEventKind.Yield && (
             <YieldItem assignation={props.assignation} event={e} />
           )}
@@ -217,7 +217,7 @@ export const AssignationTimeLine = (props: {
             AssignationEventKind.Log,
             AssignationEventKind.Progress,
           ].includes(e.kind) && <LogItem event={e} />}
-        </>
+        </Fragment>
       ))}
     </Timeline>
   );

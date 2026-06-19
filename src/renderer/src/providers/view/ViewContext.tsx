@@ -33,7 +33,6 @@ export const nullOrSmaller = (
   if (b == undefined || b == null) {
     return true;
   }
-  console.log("is_smaller", a, b);
   return a <= b;
 };
 
@@ -47,7 +46,6 @@ export const nullOrBigger = (
   if (b == undefined || b == null) {
     return true;
   }
-  console.log("is_bigger", a, b);
   return a >= b;
 };
 
@@ -62,7 +60,6 @@ export const viewIncludesView = (
     nullOrSmaller(viewToCheck.tMin, activeView.tMax) &&
     nullOrBigger(viewToCheck.zMax, activeView.zMin) &&
     nullOrSmaller(viewToCheck.zMin, activeView.zMax);
-  console.log(activeView, viewToCheck, result);
   return result;
 };
 

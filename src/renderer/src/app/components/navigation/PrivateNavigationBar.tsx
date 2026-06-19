@@ -224,10 +224,16 @@ const ServiceConnectionInfo = ({ moduleKey }: { moduleKey: string }) => {
   );
 };
 
-const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobile?: boolean }) => {
-  const availableModules = Arkitekt.useAvailableModules();
+const ModuleNavItem = React.memo(({
+  moduleKey,
+  moduleState,
+  mobile = false,
+}: {
+  moduleKey: string;
+  moduleState?: ReturnType<typeof Arkitekt.useAvailableModules>[number];
+  mobile?: boolean;
+}) => {
   const { retryModule } = Arkitekt.useActions();
-  const moduleState = availableModules.find((entry) => entry.key === moduleKey);
 
   if (!moduleState) {
     return null;
@@ -253,6 +259,7 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
               <Tooltip>
                 <TooltipTrigger asChild>
                   <NavigationMenuLink
+                    asChild
                     active={isActive}
                     className={cn(
                       "flex-1 cursor-pointer",
@@ -353,7 +360,8 @@ const ModuleNavItem = ({ moduleKey, mobile = false }: { moduleKey: string; mobil
     </ContextMenuContent>
   </ContextMenu>
   );
-};
+});
+ModuleNavItem.displayName = "ModuleNavItem";
 
 const SettingsNavItem = ({ mobile = false }: { mobile?: boolean }) => {
   return (
@@ -362,6 +370,7 @@ const SettingsNavItem = ({ mobile = false }: { mobile?: boolean }) => {
         <Tooltip>
           <TooltipTrigger asChild>
             <NavigationMenuLink
+              asChild
               active={isActive}
               className={cn(
                 "flex-1 cursor-pointer",
@@ -458,8 +467,12 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const moduleOrder = Object.keys(moduleRegistry).filter((key) =>
-    availableModules.some((entry) => entry.key === key),
+  const moduleOrder = React.useMemo(
+    () =>
+      Object.keys(moduleRegistry).filter((key) =>
+        availableModules.some((entry) => entry.key === key),
+      ),
+    [availableModules],
   );
 
   const onClick = () => {
@@ -505,19 +518,23 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
 
       <div className="flex-grow flex-row md:flex-col flex justify-start md:gap-2 items-center gap-2 overflow-hidden md:flex hidden">
         {moduleOrder.map((moduleKey) => (
-          <ModuleNavItem key={moduleKey} moduleKey={moduleKey} />
+          <ModuleNavItem
+            key={moduleKey}
+            moduleKey={moduleKey}
+            moduleState={availableModules.find((entry) => entry.key === moduleKey)}
+          />
         ))}
       </div>
 
       <div className="flex-grow block md:hidden">
 
         <Drawer>
-          <DrawerTrigger className="flex w-full h-full justify-start items-start">
-            <IconContext.Provider value={{ className: "w-8 h-8 mx-auto text-foreground" }}>
-              <Button variant="ghost" className="w-full h-full">
+          <DrawerTrigger asChild>
+            <Button variant="ghost" className="w-full h-full flex justify-start items-start">
+              <IconContext.Provider value={{ className: "w-8 h-8 mx-auto text-foreground" }}>
                 <ChevronUp />
-              </Button>
-            </IconContext.Provider>
+              </IconContext.Provider>
+            </Button>
           </DrawerTrigger>
           <DrawerContent className="p-2 mb-2 border-seperator grid grid-cols-1 gap-2">
             {moduleOrder.map((moduleKey) => (
@@ -526,7 +543,11 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = () => {
                   <div className="text-xs font-medium">
                     {moduleRegistry[moduleKey]?.label || moduleKey}
                   </div>
-                  <ModuleNavItem moduleKey={moduleKey} mobile />
+                  <ModuleNavItem
+                    moduleKey={moduleKey}
+                    moduleState={availableModules.find((entry) => entry.key === moduleKey)}
+                    mobile
+                  />
                 </div>
               </div>
             ))}

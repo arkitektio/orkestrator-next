@@ -1,3 +1,9 @@
+input AddModelsToWorkspaceInput {
+  models: [ID!]!
+  workspace: ID!
+  workspaceGroup: String! = ""
+}
+
 type AnalogSignal implements Signal {
   channels(filters: AnalogSignalChannelFilter, ordering: [AnalogSignalChannelOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
   id: ID!
@@ -490,6 +496,11 @@ input CreateModEnvironmentInput {
 input CreateModelCollectionInput {
   description: String = null
   models: [ID!]!
+  name: String!
+}
+
+input CreateModelWorkspaceInput {
+  description: String = null
   name: String!
 }
 
@@ -1093,7 +1104,40 @@ input ModelConfigInput {
   vInit: ElectricPotential! = "-67 mV"
 }
 
+type ModelWorkspace {
+  createdAt: DateTime!
+  creator: User
+  description: String
+  id: ID!
+  mappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
+  name: String!
+
+  """Whether the current user has pinned this workspace"""
+  pinned: Boolean!
+}
+
+input ModelWorkspaceFilter {
+  AND: ModelWorkspaceFilter
+  DISTINCT: Boolean
+  NOT: ModelWorkspaceFilter
+  OR: ModelWorkspaceFilter
+  createdAfter: DateTime
+  createdBefore: DateTime
+  id: ID
+  ids: [ID!]
+  name: StrFilterLookup
+  search: String
+}
+
+input ModelWorkspaceOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+}
+
 type Mutation {
+  """Add neuron models to a workspace (optionally into a group)"""
+  addModelsToWorkspace(input: AddModelsToWorkspaceInput!): ModelWorkspace!
+
   """Create a new block"""
   createBlock(input: CreateBlockInput!): Block!
 
@@ -1108,6 +1152,9 @@ type Mutation {
 
   """Create a new model collection"""
   createModelCollection(input: CreateModelCollectionInput!): ModelCollection!
+
+  """Create a new model workspace"""
+  createModelWorkspace(input: CreateModelWorkspaceInput!): ModelWorkspace!
 
   """Create a new neuron model"""
   createNeuronModel(input: CreateNeuronModelInput!): NeuronModel!
@@ -1166,6 +1213,9 @@ type Mutation {
   """Delete an existing model collection"""
   deleteModelCollection(input: DeleteInput!): ID!
 
+  """Delete an existing model workspace"""
+  deleteModelWorkspace(input: DeleteInput!): ID!
+
   """Delete an existing neuron model"""
   deleteNeuronModel(input: DeleteInput!): ID!
 
@@ -1189,6 +1239,9 @@ type Mutation {
 
   """Delete an existing view collection"""
   deleteViewCollection(input: DeleteInput!): ID!
+
+  """Delete an existing workspace mapping"""
+  deleteWorkspaceMapping(input: DeleteInput!): ID!
 
   """Finalize a big file upload after the client has written the object"""
   finishBigfileUpload(input: FinishBigFileUploadInput!): BigFileStore!
@@ -1214,6 +1267,9 @@ type Mutation {
   """Pin an image for quick access"""
   pinImage(input: PinImageInput!): Trace!
 
+  """Pin or unpin a model workspace for the current user"""
+  pinModelWorkspace(input: PinModelWorkspaceInput!): ModelWorkspace!
+
   """Pin a region of interest for quick access"""
   pinRoi(input: PinROIInput!): ROI!
 
@@ -1234,6 +1290,9 @@ type Mutation {
 
   """Remove images from a dataset"""
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
+
+  """Remove neuron models from a workspace"""
+  removeModelsFromWorkspace(input: DesociateInput!): ModelWorkspace!
 
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
@@ -1283,8 +1342,14 @@ type Mutation {
   """Update an existing image's metadata"""
   updateImage(input: UpdateTraceInput!): Trace!
 
+  """Update an existing model workspace"""
+  updateModelWorkspace(input: UpdateModelWorkspaceInput!): ModelWorkspace!
+
   """Update an existing region of interest"""
   updateRoi(input: UpdateRoiInput!): ROI!
+
+  """Update a workspace mapping (e.g. change its group)"""
+  updateWorkspaceMapping(input: UpdateWorkspaceMappingInput!): WorkspaceMapping!
 }
 
 """Base class for net connection parameters."""
@@ -1426,6 +1491,7 @@ type NeuronModel {
   description: String
   environment: ModEnvironment!
   id: ID!
+  mappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
   modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]
   name: String!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
@@ -1554,6 +1620,11 @@ input PinImageInput {
   pin: Boolean!
 }
 
+input PinModelWorkspaceInput {
+  id: ID!
+  pin: Boolean!
+}
+
 input PinROIInput {
   id: ID!
   pin: Boolean!
@@ -1638,6 +1709,11 @@ type Query {
     id: ID!
   ): ModelCollection!
   modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]!
+  modelWorkspace(
+    """The unique identifier of an object"""
+    id: ID!
+  ): ModelWorkspace!
+  modelWorkspaces(filters: ModelWorkspaceFilter, ordering: [ModelWorkspaceOrder!]! = [], pagination: OffsetPaginationInput): [ModelWorkspace!]!
   mydatasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   myfiles(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
 
@@ -1690,6 +1766,11 @@ type Query {
     id: ID!
   ): Trace!
   traces(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
+  workspaceMapping(
+    """The unique identifier of an object"""
+    id: ID!
+  ): WorkspaceMapping!
+  workspaceMappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
 }
 
 type ROI {
@@ -2283,6 +2364,12 @@ input TraceOrder @oneOf {
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar TwoDVector
 
+input UpdateModelWorkspaceInput {
+  description: String = null
+  id: ID!
+  name: String = null
+}
+
 input UpdateRoiInput {
   kind: RoiKind = null
   label: String = null
@@ -2296,11 +2383,38 @@ input UpdateTraceInput {
   tags: [String!] = null
 }
 
+input UpdateWorkspaceMappingInput {
+  id: ID!
+  workspaceGroup: String!
+}
+
 type User {
   activeOrganization: Organization
   id: ID!
   preferredUsername: String!
   sub: String!
+}
+
+type WorkspaceMapping {
+  createdAt: DateTime!
+  id: ID!
+  model: NeuronModel!
+  workspace: ModelWorkspace!
+  workspaceGroup: String!
+}
+
+input WorkspaceMappingFilter {
+  AND: WorkspaceMappingFilter
+  DISTINCT: Boolean
+  NOT: WorkspaceMappingFilter
+  OR: WorkspaceMappingFilter
+  id: ID
+  ids: [ID!]
+}
+
+input WorkspaceMappingOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 """Temporary S3 credentials for reading a Zarr store."""

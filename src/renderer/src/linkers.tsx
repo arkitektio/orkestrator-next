@@ -291,6 +291,12 @@ export const ElektroNeuronModel = buildSmart(
   { name: "Neuron Model" },
 );
 
+export const ElektroModelWorkspace = buildSmart(
+  "@elektro/modelworkspace",
+  "elektro/modelworkspaces",
+  { name: "Model Workspace" },
+);
+
 export const KraphNode = buildSmart(
   "@kraph/node",
   "kraph/nodes",

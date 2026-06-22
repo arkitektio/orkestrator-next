@@ -2,8 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ElektroNeuronModel } from "@/linkers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useCreateNeuronModelMutation, useDetailNeuronModelQuery } from "../api/graphql";
+import {
+  useAddModelsToWorkspaceMutation,
+  useCreateNeuronModelMutation,
+  useDetailNeuronModelQuery,
+} from "../api/graphql";
 import { NeuronEditor } from "../components/NeuronEditor";
+import { useActiveWorkspaceStore } from "../lib/activeWorkspaceStore";
 import {
   EditableModelConfig,
   serializeModelConfig,
@@ -14,6 +19,7 @@ export const NeuronModelEditorPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data }) => {
     const [createModel] = useCreateNeuronModelMutation();
+    const [addModelsToWorkspace] = useAddModelsToWorkspaceMutation();
     const navigate = useNavigate();
 
     const handleSave = async (config: EditableModelConfig) => {
@@ -43,6 +49,24 @@ export const NeuronModelEditorPage = asDetailQueryRoute(
         });
         const newId = result.data?.createNeuronModel?.id;
         toast.success("Model saved successfully!");
+
+        // If a workspace is active, the freshly saved model joins it. Best-effort:
+        // a workspace error must never block saving the model itself.
+        const { activeWorkspaceId, setActiveModel } = useActiveWorkspaceStore.getState();
+        if (newId && activeWorkspaceId) {
+          try {
+            await addModelsToWorkspace({
+              variables: {
+                input: { workspace: activeWorkspaceId, models: [newId] },
+              },
+            });
+            setActiveModel(newId);
+          } catch (workspaceError) {
+            console.error(workspaceError);
+            toast.error("Saved, but could not add the model to the active workspace");
+          }
+        }
+
         if (newId) {
           // Open the freshly saved model.
           navigate(ElektroNeuronModel.linkBuilder(newId));

@@ -1,0 +1,21 @@
+mutation CreateModelWorkspace($input: CreateModelWorkspaceInput!) {
+  createModelWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+
+mutation AddModelsToWorkspace($input: AddModelsToWorkspaceInput!) {
+  addModelsToWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+
+mutation RemoveModelsFromWorkspace($input: DesociateInput!) {
+  removeModelsFromWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+
+mutation DeleteModelWorkspace($id: ID!) {
+  deleteModelWorkspace(input: { id: $id })
+}

@@ -1,0 +1,15 @@
+query DetailModelWorkspace($id: ID!) {
+  modelWorkspace(id: $id) {
+    ...DetailModelWorkspace
+  }
+}
+
+query ListModelWorkspaces(
+  $pagination: OffsetPaginationInput
+  $filters: ModelWorkspaceFilter
+  $ordering: [ModelWorkspaceOrder!]
+) {
+  modelWorkspaces(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListModelWorkspace
+  }
+}

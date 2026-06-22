@@ -54,6 +54,12 @@ export type Scalars = {
   _Any: { input: any; output: any; }
 };
 
+export type AddModelsToWorkspaceInput = {
+  models: Array<Scalars['ID']['input']>;
+  workspace: Scalars['ID']['input'];
+  workspaceGroup?: Scalars['String']['input'];
+};
+
 export type AnalogSignal = Signal & {
   __typename?: 'AnalogSignal';
   channels: Array<AnalogSignalChannel>;
@@ -608,6 +614,11 @@ export type CreateModEnvironmentInput = {
 export type CreateModelCollectionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   models: Array<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+};
+
+export type CreateModelWorkspaceInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
 
@@ -1232,8 +1243,46 @@ export type ModelConfigInput = {
   vInit?: Scalars['ElectricPotential']['input'];
 };
 
+export type ModelWorkspace = {
+  __typename?: 'ModelWorkspace';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  mappings: Array<WorkspaceMapping>;
+  name: Scalars['String']['output'];
+  /** Whether the current user has pinned this workspace */
+  pinned: Scalars['Boolean']['output'];
+};
+
+
+export type ModelWorkspaceMappingsArgs = {
+  filters?: InputMaybe<WorkspaceMappingFilter>;
+  ordering?: Array<WorkspaceMappingOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ModelWorkspaceFilter = {
+  AND?: InputMaybe<ModelWorkspaceFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ModelWorkspaceFilter>;
+  OR?: InputMaybe<ModelWorkspaceFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ModelWorkspaceOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
+
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Add neuron models to a workspace (optionally into a group) */
+  addModelsToWorkspace: ModelWorkspace;
   /** Create a new block */
   createBlock: Block;
   /** Create a new dataset to organize data */
@@ -1244,6 +1293,8 @@ export type Mutation = {
   createModEnvironment: ModEnvironment;
   /** Create a new model collection */
   createModelCollection: ModelCollection;
+  /** Create a new model workspace */
+  createModelWorkspace: ModelWorkspace;
   /** Create a new neuron model */
   createNeuronModel: NeuronModel;
   /** Create a new region of interest */
@@ -1282,6 +1333,8 @@ export type Mutation = {
   deleteModEnvironment: Scalars['ID']['output'];
   /** Delete an existing model collection */
   deleteModelCollection: Scalars['ID']['output'];
+  /** Delete an existing model workspace */
+  deleteModelWorkspace: Scalars['ID']['output'];
   /** Delete an existing neuron model */
   deleteNeuronModel: Scalars['ID']['output'];
   /** Delete an existing recording */
@@ -1298,6 +1351,8 @@ export type Mutation = {
   deleteTimelineView: Scalars['ID']['output'];
   /** Delete an existing view collection */
   deleteViewCollection: Scalars['ID']['output'];
+  /** Delete an existing workspace mapping */
+  deleteWorkspaceMapping: Scalars['ID']['output'];
   /** Finalize a big file upload after the client has written the object */
   finishBigfileUpload: BigFileStore;
   /** Finalize a media upload after the client has written the object */
@@ -1314,6 +1369,8 @@ export type Mutation = {
   pinDataset: Dataset;
   /** Pin an image for quick access */
   pinImage: Trace;
+  /** Pin or unpin a model workspace for the current user */
+  pinModelWorkspace: ModelWorkspace;
   /** Pin a region of interest for quick access */
   pinRoi: Roi;
   /** Add datasets as children of another dataset */
@@ -1328,6 +1385,8 @@ export type Mutation = {
   releaseFilesFromDataset: Dataset;
   /** Remove images from a dataset */
   releaseImagesFromDataset: Dataset;
+  /** Remove neuron models from a workspace */
+  removeModelsFromWorkspace: ModelWorkspace;
   /** Request temporary S3 read credentials for a big file */
   requestBigfileAccess: BigFileAccessGrant;
   /** Request an upload grant for a big file store */
@@ -1356,8 +1415,17 @@ export type Mutation = {
   updateDataset: Dataset;
   /** Update an existing image's metadata */
   updateImage: Trace;
+  /** Update an existing model workspace */
+  updateModelWorkspace: ModelWorkspace;
   /** Update an existing region of interest */
   updateRoi: Roi;
+  /** Update a workspace mapping (e.g. change its group) */
+  updateWorkspaceMapping: WorkspaceMapping;
+};
+
+
+export type MutationAddModelsToWorkspaceArgs = {
+  input: AddModelsToWorkspaceInput;
 };
 
 
@@ -1383,6 +1451,11 @@ export type MutationCreateModEnvironmentArgs = {
 
 export type MutationCreateModelCollectionArgs = {
   input: CreateModelCollectionInput;
+};
+
+
+export type MutationCreateModelWorkspaceArgs = {
+  input: CreateModelWorkspaceInput;
 };
 
 
@@ -1481,6 +1554,11 @@ export type MutationDeleteModelCollectionArgs = {
 };
 
 
+export type MutationDeleteModelWorkspaceArgs = {
+  input: DeleteInput;
+};
+
+
 export type MutationDeleteNeuronModelArgs = {
   input: DeleteInput;
 };
@@ -1517,6 +1595,11 @@ export type MutationDeleteTimelineViewArgs = {
 
 
 export type MutationDeleteViewCollectionArgs = {
+  input: DeleteInput;
+};
+
+
+export type MutationDeleteWorkspaceMappingArgs = {
   input: DeleteInput;
 };
 
@@ -1561,6 +1644,11 @@ export type MutationPinImageArgs = {
 };
 
 
+export type MutationPinModelWorkspaceArgs = {
+  input: PinModelWorkspaceInput;
+};
+
+
 export type MutationPinRoiArgs = {
   input: PinRoiInput;
 };
@@ -1592,6 +1680,11 @@ export type MutationReleaseFilesFromDatasetArgs = {
 
 
 export type MutationReleaseImagesFromDatasetArgs = {
+  input: DesociateInput;
+};
+
+
+export type MutationRemoveModelsFromWorkspaceArgs = {
   input: DesociateInput;
 };
 
@@ -1666,8 +1759,18 @@ export type MutationUpdateImageArgs = {
 };
 
 
+export type MutationUpdateModelWorkspaceArgs = {
+  input: UpdateModelWorkspaceInput;
+};
+
+
 export type MutationUpdateRoiArgs = {
   input: UpdateRoiInput;
+};
+
+
+export type MutationUpdateWorkspaceMappingArgs = {
+  input: UpdateWorkspaceMappingInput;
 };
 
 /** Base class for net connection parameters. */
@@ -1766,6 +1869,7 @@ export type NeuronModel = {
   description?: Maybe<Scalars['String']['output']>;
   environment: ModEnvironment;
   id: Scalars['ID']['output'];
+  mappings: Array<WorkspaceMapping>;
   modelCollections?: Maybe<Array<ModelCollection>>;
   name: Scalars['String']['output'];
   provenanceEntries: Array<ProvenanceEntry>;
@@ -1775,6 +1879,13 @@ export type NeuronModel = {
 
 export type NeuronModelChangesArgs = {
   to?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type NeuronModelMappingsArgs = {
+  filters?: InputMaybe<WorkspaceMappingFilter>;
+  ordering?: Array<WorkspaceMappingOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1931,6 +2042,11 @@ export type PinImageInput = {
   pin: Scalars['Boolean']['input'];
 };
 
+export type PinModelWorkspaceInput = {
+  id: Scalars['ID']['input'];
+  pin: Scalars['Boolean']['input'];
+};
+
 export type PinRoiInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
@@ -1981,6 +2097,8 @@ export type Query = {
   modEnvironments: Array<ModEnvironment>;
   modelCollection: ModelCollection;
   modelCollections: Array<ModelCollection>;
+  modelWorkspace: ModelWorkspace;
+  modelWorkspaces: Array<ModelWorkspace>;
   mydatasets: Array<Dataset>;
   myfiles: Array<File>;
   /** Returns a single image by ID */
@@ -2002,6 +2120,8 @@ export type Query = {
   /** Returns a single image by ID */
   trace: Trace;
   traces: Array<Trace>;
+  workspaceMapping: WorkspaceMapping;
+  workspaceMappings: Array<WorkspaceMapping>;
 };
 
 
@@ -2130,6 +2250,18 @@ export type QueryModelCollectionsArgs = {
 };
 
 
+export type QueryModelWorkspaceArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryModelWorkspacesArgs = {
+  filters?: InputMaybe<ModelWorkspaceFilter>;
+  ordering?: Array<ModelWorkspaceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryMydatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
   ordering?: Array<DatasetOrder>;
@@ -2220,6 +2352,18 @@ export type QueryTraceArgs = {
 export type QueryTracesArgs = {
   filters?: InputMaybe<TraceFilter>;
   ordering?: Array<TraceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryWorkspaceMappingArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkspaceMappingsArgs = {
+  filters?: InputMaybe<WorkspaceMappingFilter>;
+  ordering?: Array<WorkspaceMappingOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2815,6 +2959,12 @@ export type TraceOrder =
   { createdAt: Ordering; id?: never; }
   |  { createdAt?: never; id: Ordering; };
 
+export type UpdateModelWorkspaceInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateRoiInput = {
   kind?: InputMaybe<RoiKind>;
   label?: InputMaybe<Scalars['String']['input']>;
@@ -2828,6 +2978,11 @@ export type UpdateTraceInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type UpdateWorkspaceMappingInput = {
+  id: Scalars['ID']['input'];
+  workspaceGroup: Scalars['String']['input'];
+};
+
 export type User = {
   __typename?: 'User';
   activeOrganization?: Maybe<Organization>;
@@ -2835,6 +2990,28 @@ export type User = {
   preferredUsername: Scalars['String']['output'];
   sub: Scalars['String']['output'];
 };
+
+export type WorkspaceMapping = {
+  __typename?: 'WorkspaceMapping';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  model: NeuronModel;
+  workspace: ModelWorkspace;
+  workspaceGroup: Scalars['String']['output'];
+};
+
+export type WorkspaceMappingFilter = {
+  AND?: InputMaybe<WorkspaceMappingFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<WorkspaceMappingFilter>;
+  OR?: InputMaybe<WorkspaceMappingFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type WorkspaceMappingOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 /** Temporary S3 credentials for reading a Zarr store. */
 export type ZarrAccessGrant = {
@@ -2943,6 +3120,12 @@ export type ModelCollectionFragment = { __typename?: 'ModelCollection', id: stri
 
 export type ListModelCollectionFragment = { __typename?: 'ModelCollection', id: string, name: string };
 
+export type ListModelWorkspaceFragment = { __typename?: 'ModelWorkspace', id: string, name: string, pinned: boolean };
+
+export type WorkspaceMappingFragment = { __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } };
+
+export type DetailModelWorkspaceFragment = { __typename?: 'ModelWorkspace', id: string, name: string, description?: string | null, pinned: boolean, mappings: Array<{ __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } }> };
+
 export type CoordFragment = { __typename?: 'Coord', x: Length, y: Length, z: Length };
 
 export type SectionFragment = { __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> };
@@ -2979,6 +3162,34 @@ export type DeleteBlockMutationVariables = Exact<{
 
 
 export type DeleteBlockMutation = { __typename?: 'Mutation', deleteBlock: string };
+
+export type CreateModelWorkspaceMutationVariables = Exact<{
+  input: CreateModelWorkspaceInput;
+}>;
+
+
+export type CreateModelWorkspaceMutation = { __typename?: 'Mutation', createModelWorkspace: { __typename?: 'ModelWorkspace', id: string, name: string, description?: string | null, pinned: boolean, mappings: Array<{ __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } }> } };
+
+export type AddModelsToWorkspaceMutationVariables = Exact<{
+  input: AddModelsToWorkspaceInput;
+}>;
+
+
+export type AddModelsToWorkspaceMutation = { __typename?: 'Mutation', addModelsToWorkspace: { __typename?: 'ModelWorkspace', id: string, name: string, description?: string | null, pinned: boolean, mappings: Array<{ __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } }> } };
+
+export type RemoveModelsFromWorkspaceMutationVariables = Exact<{
+  input: DesociateInput;
+}>;
+
+
+export type RemoveModelsFromWorkspaceMutation = { __typename?: 'Mutation', removeModelsFromWorkspace: { __typename?: 'ModelWorkspace', id: string, name: string, description?: string | null, pinned: boolean, mappings: Array<{ __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } }> } };
+
+export type DeleteModelWorkspaceMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteModelWorkspaceMutation = { __typename?: 'Mutation', deleteModelWorkspace: string };
 
 export type CreateNeuronModelMutationVariables = Exact<{
   input: CreateNeuronModelInput;
@@ -3092,6 +3303,22 @@ export type ListModelCollectionsQueryVariables = Exact<{
 
 
 export type ListModelCollectionsQuery = { __typename?: 'Query', modelCollections: Array<{ __typename?: 'ModelCollection', id: string, name: string }> };
+
+export type DetailModelWorkspaceQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailModelWorkspaceQuery = { __typename?: 'Query', modelWorkspace: { __typename?: 'ModelWorkspace', id: string, name: string, description?: string | null, pinned: boolean, mappings: Array<{ __typename?: 'WorkspaceMapping', id: string, workspaceGroup: string, model: { __typename?: 'NeuronModel', id: string, name: string } }> } };
+
+export type ListModelWorkspacesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ModelWorkspaceFilter>;
+  ordering?: InputMaybe<Array<ModelWorkspaceOrder> | ModelWorkspaceOrder>;
+}>;
+
+
+export type ListModelWorkspacesQuery = { __typename?: 'Query', modelWorkspaces: Array<{ __typename?: 'ModelWorkspace', id: string, name: string, pinned: boolean }> };
 
 export type DetailNeuronModelQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3640,6 +3867,33 @@ export const ListModelCollectionFragmentDoc = gql`
   name
 }
     `;
+export const ListModelWorkspaceFragmentDoc = gql`
+    fragment ListModelWorkspace on ModelWorkspace {
+  id
+  name
+  pinned
+}
+    `;
+export const WorkspaceMappingFragmentDoc = gql`
+    fragment WorkspaceMapping on WorkspaceMapping {
+  id
+  workspaceGroup
+  model {
+    ...ListNeuronModel
+  }
+}
+    ${ListNeuronModelFragmentDoc}`;
+export const DetailModelWorkspaceFragmentDoc = gql`
+    fragment DetailModelWorkspace on ModelWorkspace {
+  id
+  name
+  description
+  pinned
+  mappings {
+    ...WorkspaceMapping
+  }
+}
+    ${WorkspaceMappingFragmentDoc}`;
 export const DetailRecordingFragmentDoc = gql`
     fragment DetailRecording on Recording {
   id
@@ -3706,6 +3960,136 @@ export function useDeleteBlockMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>;
 export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>;
 export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<DeleteBlockMutation, DeleteBlockMutationVariables>;
+export const CreateModelWorkspaceDocument = gql`
+    mutation CreateModelWorkspace($input: CreateModelWorkspaceInput!) {
+  createModelWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+    ${DetailModelWorkspaceFragmentDoc}`;
+export type CreateModelWorkspaceMutationFn = Apollo.MutationFunction<CreateModelWorkspaceMutation, CreateModelWorkspaceMutationVariables>;
+
+/**
+ * __useCreateModelWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useCreateModelWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateModelWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createModelWorkspaceMutation, { data, loading, error }] = useCreateModelWorkspaceMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateModelWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateModelWorkspaceMutation, CreateModelWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateModelWorkspaceMutation, CreateModelWorkspaceMutationVariables>(CreateModelWorkspaceDocument, options);
+      }
+export type CreateModelWorkspaceMutationHookResult = ReturnType<typeof useCreateModelWorkspaceMutation>;
+export type CreateModelWorkspaceMutationResult = Apollo.MutationResult<CreateModelWorkspaceMutation>;
+export type CreateModelWorkspaceMutationOptions = Apollo.BaseMutationOptions<CreateModelWorkspaceMutation, CreateModelWorkspaceMutationVariables>;
+export const AddModelsToWorkspaceDocument = gql`
+    mutation AddModelsToWorkspace($input: AddModelsToWorkspaceInput!) {
+  addModelsToWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+    ${DetailModelWorkspaceFragmentDoc}`;
+export type AddModelsToWorkspaceMutationFn = Apollo.MutationFunction<AddModelsToWorkspaceMutation, AddModelsToWorkspaceMutationVariables>;
+
+/**
+ * __useAddModelsToWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useAddModelsToWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddModelsToWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addModelsToWorkspaceMutation, { data, loading, error }] = useAddModelsToWorkspaceMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddModelsToWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AddModelsToWorkspaceMutation, AddModelsToWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<AddModelsToWorkspaceMutation, AddModelsToWorkspaceMutationVariables>(AddModelsToWorkspaceDocument, options);
+      }
+export type AddModelsToWorkspaceMutationHookResult = ReturnType<typeof useAddModelsToWorkspaceMutation>;
+export type AddModelsToWorkspaceMutationResult = Apollo.MutationResult<AddModelsToWorkspaceMutation>;
+export type AddModelsToWorkspaceMutationOptions = Apollo.BaseMutationOptions<AddModelsToWorkspaceMutation, AddModelsToWorkspaceMutationVariables>;
+export const RemoveModelsFromWorkspaceDocument = gql`
+    mutation RemoveModelsFromWorkspace($input: DesociateInput!) {
+  removeModelsFromWorkspace(input: $input) {
+    ...DetailModelWorkspace
+  }
+}
+    ${DetailModelWorkspaceFragmentDoc}`;
+export type RemoveModelsFromWorkspaceMutationFn = Apollo.MutationFunction<RemoveModelsFromWorkspaceMutation, RemoveModelsFromWorkspaceMutationVariables>;
+
+/**
+ * __useRemoveModelsFromWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useRemoveModelsFromWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveModelsFromWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeModelsFromWorkspaceMutation, { data, loading, error }] = useRemoveModelsFromWorkspaceMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRemoveModelsFromWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RemoveModelsFromWorkspaceMutation, RemoveModelsFromWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RemoveModelsFromWorkspaceMutation, RemoveModelsFromWorkspaceMutationVariables>(RemoveModelsFromWorkspaceDocument, options);
+      }
+export type RemoveModelsFromWorkspaceMutationHookResult = ReturnType<typeof useRemoveModelsFromWorkspaceMutation>;
+export type RemoveModelsFromWorkspaceMutationResult = Apollo.MutationResult<RemoveModelsFromWorkspaceMutation>;
+export type RemoveModelsFromWorkspaceMutationOptions = Apollo.BaseMutationOptions<RemoveModelsFromWorkspaceMutation, RemoveModelsFromWorkspaceMutationVariables>;
+export const DeleteModelWorkspaceDocument = gql`
+    mutation DeleteModelWorkspace($id: ID!) {
+  deleteModelWorkspace(input: {id: $id})
+}
+    `;
+export type DeleteModelWorkspaceMutationFn = Apollo.MutationFunction<DeleteModelWorkspaceMutation, DeleteModelWorkspaceMutationVariables>;
+
+/**
+ * __useDeleteModelWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useDeleteModelWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteModelWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteModelWorkspaceMutation, { data, loading, error }] = useDeleteModelWorkspaceMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteModelWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteModelWorkspaceMutation, DeleteModelWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteModelWorkspaceMutation, DeleteModelWorkspaceMutationVariables>(DeleteModelWorkspaceDocument, options);
+      }
+export type DeleteModelWorkspaceMutationHookResult = ReturnType<typeof useDeleteModelWorkspaceMutation>;
+export type DeleteModelWorkspaceMutationResult = Apollo.MutationResult<DeleteModelWorkspaceMutation>;
+export type DeleteModelWorkspaceMutationOptions = Apollo.BaseMutationOptions<DeleteModelWorkspaceMutation, DeleteModelWorkspaceMutationVariables>;
 export const CreateNeuronModelDocument = gql`
     mutation CreateNeuronModel($input: CreateNeuronModelInput!) {
   createNeuronModel(input: $input) {
@@ -4245,6 +4629,78 @@ export function useListModelCollectionsLazyQuery(baseOptions?: ApolloReactHooks.
 export type ListModelCollectionsQueryHookResult = ReturnType<typeof useListModelCollectionsQuery>;
 export type ListModelCollectionsLazyQueryHookResult = ReturnType<typeof useListModelCollectionsLazyQuery>;
 export type ListModelCollectionsQueryResult = Apollo.QueryResult<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>;
+export const DetailModelWorkspaceDocument = gql`
+    query DetailModelWorkspace($id: ID!) {
+  modelWorkspace(id: $id) {
+    ...DetailModelWorkspace
+  }
+}
+    ${DetailModelWorkspaceFragmentDoc}`;
+
+/**
+ * __useDetailModelWorkspaceQuery__
+ *
+ * To run a query within a React component, call `useDetailModelWorkspaceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailModelWorkspaceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailModelWorkspaceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailModelWorkspaceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailModelWorkspaceQuery, DetailModelWorkspaceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailModelWorkspaceQuery, DetailModelWorkspaceQueryVariables>(DetailModelWorkspaceDocument, options);
+      }
+export function useDetailModelWorkspaceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailModelWorkspaceQuery, DetailModelWorkspaceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailModelWorkspaceQuery, DetailModelWorkspaceQueryVariables>(DetailModelWorkspaceDocument, options);
+        }
+export type DetailModelWorkspaceQueryHookResult = ReturnType<typeof useDetailModelWorkspaceQuery>;
+export type DetailModelWorkspaceLazyQueryHookResult = ReturnType<typeof useDetailModelWorkspaceLazyQuery>;
+export type DetailModelWorkspaceQueryResult = Apollo.QueryResult<DetailModelWorkspaceQuery, DetailModelWorkspaceQueryVariables>;
+export const ListModelWorkspacesDocument = gql`
+    query ListModelWorkspaces($pagination: OffsetPaginationInput, $filters: ModelWorkspaceFilter, $ordering: [ModelWorkspaceOrder!]) {
+  modelWorkspaces(pagination: $pagination, filters: $filters, ordering: $ordering) {
+    ...ListModelWorkspace
+  }
+}
+    ${ListModelWorkspaceFragmentDoc}`;
+
+/**
+ * __useListModelWorkspacesQuery__
+ *
+ * To run a query within a React component, call `useListModelWorkspacesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListModelWorkspacesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListModelWorkspacesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useListModelWorkspacesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListModelWorkspacesQuery, ListModelWorkspacesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListModelWorkspacesQuery, ListModelWorkspacesQueryVariables>(ListModelWorkspacesDocument, options);
+      }
+export function useListModelWorkspacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListModelWorkspacesQuery, ListModelWorkspacesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListModelWorkspacesQuery, ListModelWorkspacesQueryVariables>(ListModelWorkspacesDocument, options);
+        }
+export type ListModelWorkspacesQueryHookResult = ReturnType<typeof useListModelWorkspacesQuery>;
+export type ListModelWorkspacesLazyQueryHookResult = ReturnType<typeof useListModelWorkspacesLazyQuery>;
+export type ListModelWorkspacesQueryResult = Apollo.QueryResult<ListModelWorkspacesQuery, ListModelWorkspacesQueryVariables>;
 export const DetailNeuronModelDocument = gql`
     query DetailNeuronModel($id: ID!) {
   neuronModel(id: $id) {

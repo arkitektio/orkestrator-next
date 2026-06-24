@@ -59,8 +59,23 @@ export const buildDeleteAction = <
       throw new Error("Service not found");
     }
 
+    // Only act on the selected structures this action actually applies to. The
+    // identifier condition matches when ANY selected item matches, so a mixed
+    // selection can include items of other types — never delete those here.
+    const identifier = identifierFromSmartOrString(params.identifier);
+    const targets = state.left.filter(
+      (structure) => structure.identifier === identifier,
+    );
+    const typenames = Array.isArray(params.typename)
+      ? params.typename
+      : [params.typename];
+
+    if (targets.length === 0) {
+      return;
+    }
+
     if (!modifiers.ctrlKey) {
-      const itemCount = state.left.length;
+      const itemCount = targets.length;
       const confirmed = await confirm({
         title:
           itemCount > 1
@@ -80,38 +95,41 @@ export const buildDeleteAction = <
       }
     }
 
-    for (const i in state.left) {
-      await service.mutate({
-        mutation: params.mutation,
-        variables: {
-          id: state.left[i].object.id,
-        },
-      });
+    // Delete every target, isolating failures so one bad mutation never aborts
+    // the rest of the batch.
+    const failures: { id: string; error: unknown }[] = [];
+    let done = 0;
+    for (const structure of targets) {
+      const id = structure.object.id;
+      try {
+        await service.mutate({
+          mutation: params.mutation,
+          variables: { id },
+        });
 
-      // Evict the item from the cache
-      if (Array.isArray(params.typename)) {
-        for (const typename of params.typename) {
+        for (const typename of typenames) {
           service.cache.evict({
-            id: service.cache.identify({
-              __typename: typename,
-              id: state.left[i].object.id,
-            }),
+            id: service.cache.identify({ __typename: typename, id }),
           });
         }
-      } else {
-
-
-        service.cache.evict({
-          id: service.cache.identify({
-            __typename: params.typename,
-            id: state.left[i].object.id,
-          }),
-        });
+      } catch (error) {
+        failures.push({ id, error });
+        console.error(`Failed to delete ${identifier} ${id}`, error);
+      } finally {
+        done += 1;
+        onProgress(Math.round((done / targets.length) * 100));
       }
     }
 
     service.cache.gc();
-    onProgress(100);
+
+    if (failures.length > 0) {
+      const deleted = targets.length - failures.length;
+      throw new Error(
+        `Deleted ${deleted} of ${targets.length} — ${failures.length} failed.`,
+      );
+    }
+
     return {
       left: [],
       isCommand: false,

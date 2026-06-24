@@ -10,7 +10,7 @@ export const useAssignProgress = (options: {
 }) => {
   const { data } = useTasks();
 
-  const tasks = data?.tasks.filter((a) => {
+  const tasks = data?.myTasks.filter((a) => {
     if (a.isDone || a.latestEventKind == TaskEventKind.Completed) {
       return false;
     }

@@ -20,9 +20,10 @@ import {
   TaskEventKind,
   TaskQuery,
   TaskQueryVariables,
-  TasksDocument,
-  TasksQuery,
+  MyTasksDocument,
+  MyTasksQuery,
   useDetailActionQuery,
+  useMyTasksQuery,
   WatchMyTasksDocument,
   WatchMyTasksSubscription,
   WatchMyTasksSubscriptionVariables,
@@ -261,17 +262,26 @@ const hydrateAndInsert = async (
   // Apply any events that arrived during the hydration round-trip.
   flushBufferedEvents(client, create.id);
 
-  client.cache.updateQuery<TasksQuery>({ query: TasksDocument }, (data) => {
-    if (!data) return { tasks: [task!] };
-    if (data.tasks.some((t) => t.id === task!.id)) return data;
-    return { tasks: data.tasks.concat([task!]) };
-  });
+  client.cache.updateQuery<MyTasksQuery>(
+    { query: MyTasksDocument },
+    (data) => {
+      if (!data) return { myTasks: [task!] };
+      if (data.myTasks.some((t) => t.id === task!.id)) return data;
+      return { myTasks: data.myTasks.concat([task!]) };
+    },
+  );
 
   return task;
 };
 
 export const TaskUpdater = () => {
   const client = useRekuest();
+
+  // Seed the global "my tasks" list on first mount (and refetch on reload) so
+  // currently-active tasks are present even before any list view renders. The
+  // subscription below keeps the cache live afterwards.
+  useMyTasksQuery({ fetchPolicy: "cache-and-network" });
+
   useEffect(() => {
     if (!client) return undefined;
 
@@ -309,10 +319,10 @@ export const TaskUpdater = () => {
         if (create) {
           mapReference(create.id, create.reference);
 
-          const existing = client.readQuery<TasksQuery>({
-            query: TasksDocument,
+          const existing = client.readQuery<MyTasksQuery>({
+            query: MyTasksDocument,
           });
-          if (existing?.tasks.some((t) => t.id === create.id)) {
+          if (existing?.myTasks.some((t) => t.id === create.id)) {
             flushBufferedEvents(client, create.id);
             return;
           }

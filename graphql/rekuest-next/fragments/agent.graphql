@@ -109,12 +109,30 @@ fragment SearchAgent on Agent {
 
 
 
+# Non-traversable agent subscription delta. Relations are scalar IDs; the client
+# hydrates the full agent once via query on `create` and merges hot scalars into
+# the normalized cache on `update`. See AgentUpdater.tsx.
+fragment AgentChange on AgentChange {
+  id
+  name
+  kind
+  latestEvent
+  connected
+  blocked
+  lastSeen
+  client
+  user
+  organization
+  app
+  release
+}
+
 fragment AgentChangeEvent on AgentChangeEvent {
   create {
-    ...ListAgent
+    ...AgentChange
   }
   update {
-    ...ListAgent
+    ...AgentChange
   }
   delete
 }

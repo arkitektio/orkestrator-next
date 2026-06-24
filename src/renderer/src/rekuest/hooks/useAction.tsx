@@ -4,7 +4,7 @@ import {
   DetailActionFragment,
   PostmanTaskFragment,
   useAssignMutation,
-  useTasksQuery,
+  useMyTasksQuery,
   useCancelMutation,
   useDetailActionQuery
 } from "../api/graphql";
@@ -35,12 +35,12 @@ export const useAction = <T extends any>(
     },
   });
 
-  const { data: tasks_data } = useTasksQuery();
+  const { data: tasks_data } = useMyTasksQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
 
-  const tasks = tasks_data?.tasks.filter(
+  const tasks = tasks_data?.myTasks.filter(
     (x) => x.action.id == options.id,
   );
 

@@ -5,7 +5,7 @@ import {
   AssignInput,
   PostmanTaskFragment,
   useAssignActionQuery,
-  useTasksQuery,
+  useMyTasksQuery,
   useAssignMutation,
   useCancelMutation,
 } from "../api/graphql";
@@ -36,12 +36,12 @@ export const useHashAction = <T extends any>(
     },
   });
 
-  const { data: tasks_data } = useTasksQuery();
+  const { data: tasks_data } = useMyTasksQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
 
-  const tasks = tasks_data?.tasks.filter(
+  const tasks = tasks_data?.myTasks.filter(
     (x) => x.action.hash == data?.action.hash,
   );
 

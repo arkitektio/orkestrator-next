@@ -14,6 +14,14 @@ query Agent($id: ID!) {
   }
 }
 
+# Single-agent hydration for the non-traversable subscription `create` path:
+# fetches the list-shaped agent to populate the Agents list cache. See AgentUpdater.
+query HydrateAgent($id: ID!) {
+  agent(id: $id) {
+    ...ListAgent
+  }
+}
+
 query AgentForProtocol($id: ID!) {
   agent(id: $id) {
     ...ProtocolAgent

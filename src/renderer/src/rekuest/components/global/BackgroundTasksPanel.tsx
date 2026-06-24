@@ -60,7 +60,7 @@ export const BackgroundTasksButton = () => {
   const { data } = useTasks();
 
   const { running, recent } = useMemo(() => {
-    const tasks = (data?.tasks || []).filter(
+    const tasks = (data?.myTasks || []).filter(
       (a) => !a.ephemeral,
     );
 
@@ -81,7 +81,7 @@ export const BackgroundTasksButton = () => {
         )
         .slice(0, 10),
     };
-  }, [data?.tasks]);
+  }, [data?.myTasks]);
 
   return (
     <Popover>

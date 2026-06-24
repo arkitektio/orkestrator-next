@@ -3,18 +3,22 @@ import {
   TaskEventKind,
   PortKind,
   PostmanTaskFragment,
-  useTasksQuery,
+  useMyTasksQuery,
 } from "../api/graphql";
 
 export const useTasks = () => {
-  const queryResult = useTasksQuery();
+  // Seed the global "my tasks" list from the caller-scoped myTasks query.
+  // cache-and-network refetches on every mount so currently-active tasks
+  // reappear immediately after a reload; the WatchMyTasks subscription
+  // (TaskUpdater) keeps it live thereafter.
+  const queryResult = useMyTasksQuery({ fetchPolicy: "cache-and-network" });
 
   return queryResult;
 };
 
 export const useTask = (options: { task?: string }) => {
   const { data } = useTasks();
-  const task = data?.tasks.find(
+  const task = data?.myTasks.find(
     (a) => a.id === options.task,
   );
 
@@ -39,7 +43,7 @@ export const useFilteredTasks = (options?: FilterOptions) => {
 
   const tasks = useMemo(
     () =>
-      data?.tasks.filter((a) => {
+      data?.myTasks.filter((a) => {
         if (!options) {
           return true;
         }
@@ -104,7 +108,7 @@ export const useFilteredTasks = (options?: FilterOptions) => {
         return true;
       }) || [],
     [
-      data?.tasks,
+      data?.myTasks,
       options?.action,
       options?.implementation,
       options?.assignedImplementation,

@@ -1,5 +1,7 @@
-query Tasks {
-  tasks {
+# Global "my tasks" seed: caller-scoped, currently-active root tasks. Fetched on
+# first mount (survives reload) and kept live by the WatchMyTasks subscription.
+query MyTasks {
+  myTasks {
     ...PostmanTask
   }
 }

@@ -477,10 +477,26 @@ input AgentCallInput {
   operation: String!
 }
 
+"""Slim, non-traversable snapshot of an agent for change feeds."""
+type AgentChange {
+  app: ID!
+  blocked: Boolean!
+  client: ID!
+  connected: Boolean!
+  id: ID!
+  kind: AgentKind!
+  lastSeen: DateTime
+  latestEvent: AgentEventKind!
+  name: String!
+  organization: ID!
+  release: ID!
+  user: ID!
+}
+
 type AgentChangeEvent {
-  create: Agent
+  create: AgentChange
   delete: ID
-  update: Agent
+  update: AgentChange
 }
 
 """
@@ -553,6 +569,12 @@ input AgentDependencyInput {
 
   """The version of the app this dependency corresponds to."""
   version: String = null
+}
+
+"""The event kind of the agentevent"""
+enum AgentEventKind {
+  CONNECT
+  DISCONNECT
 }
 
 """A way to filter agents"""
@@ -3274,6 +3296,9 @@ type Query {
 
   """Find your implementation at a specific interface."""
   myImplementationAt(actionId: ID = null, interface: String = null): Implementation!
+
+  """Fetch the root tasks this client created (caller-scoped)."""
+  myTasks: [Task!]!
 
   """Get patch events between global revisions."""
   patchEventsBetweenGlobalRevs(fromGlobalRevision: Int!, sessionId: String = null, stateIds: [ID!] = null, toGlobalRevision: Int!): [Patch!]!

@@ -1,6 +1,6 @@
 import {
   PostmanTaskFragment,
-  useTasksQuery,
+  useMyTasksQuery,
 } from "../api/graphql";
 
 export type InTransactionOptions = {
@@ -15,9 +15,9 @@ export type InTransactionReturn = {
 export const useInTransaction = (
   options: InTransactionOptions,
 ): InTransactionReturn => {
-  const { data: tasks_data } = useTasksQuery();
+  const { data: tasks_data } = useMyTasksQuery();
 
-  const asArgs = tasks_data?.tasks.filter(
+  const asArgs = tasks_data?.myTasks.filter(
     (x) =>
       x.args[
       x.action.args.find((x) => x.identifier == options.identifier)?.key ||

@@ -20,13 +20,3 @@ fragment ListMemoryShelve on MemoryShelve {
   name
 
 }
-
-fragment AgentChangeEvent on AgentChangeEvent {
-  create {
-    ...ListAgent
-  }
-  update {
-    ...ListAgent
-  }
-  delete
-}

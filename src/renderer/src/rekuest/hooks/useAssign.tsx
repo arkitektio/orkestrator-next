@@ -24,8 +24,6 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       const mutation = await postAssign({
         variables: {
           input: {
@@ -36,8 +34,6 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
           },
         },
       });
-
-      console.log(mutation);
 
       const task = mutation.data?.assign;
 

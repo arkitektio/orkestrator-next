@@ -42,7 +42,6 @@ export const useHashActionWithProgress = (
 
   const doStuff = useCallback(
     (event: TaskEventFragment) => {
-      console.log("Task event received:", event);
       if (event.kind == "COMPLETED") {
         setDoing(false);
         setProgress(null);

@@ -35,9 +35,7 @@ export const DoForm = ({ id, resolution }: { id: string, resolution: string }) =
       resolution: resolution,
       hooks: [],
     }).then(
-      (result) => {
-        console.log("Result", result);
-      },
+      () => {},
       (error) => {
         toast.error(error.message);
       },

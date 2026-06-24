@@ -164,7 +164,6 @@ export const propagateChange = (
   data: FlowNodeData<GraphNodeFragment>,
   event: ChangeEvent,
 ): ChangeOutcome => {
-  console.log("Propagating change", data, event);
   if (!data.kind) {
     return { denied: "Kind not found" };
   }
@@ -807,7 +806,6 @@ export const integrate = (
   };
 
   transitionOrCut(validatableChangeLeftState, transitionLeftOptions);
-  console.log(transitionLeftOptions, transitionRightOptions);
 
   // Lets find out which one is better
   const edgeIsInLeft = validatableChangeLeftState.edges.find(
@@ -817,8 +815,6 @@ export const integrate = (
   const edgeIsInRight = validatableChangeRightState.edges.find(
     (e) => e.id == newID,
   );
-
-  console.log(validatableChangeRightState, validatableChangeLeftState);
 
   if (edgeIsInLeft && edgeIsInRight) {
     // Find out which one is better

@@ -237,7 +237,6 @@ const AgentCheckoutPanel = ({
           {data?.agent?.states.map((state) =>{
 
             const value =  revData?.checkoutAgent.values[state.interface];
-            console.log("Rendering state:", state.definition.name, "with value:", value);
 
 
             return <div key={state.id} className="space-y-2 rounded-lg border p-4">

@@ -214,7 +214,6 @@ const useMaterializedDispatchAction = (
 
   return React.useCallback<BlokDispatchActionHandler>(
     (action) => {
-      console.log('Dispatching action with raw data:', {action, agentMappings, agentIdByDependency});
       const agentId = action?.dependency ? agentIdByDependency.get(action.dependency) : undefined;
 
       if (!agentId) {
@@ -222,8 +221,6 @@ const useMaterializedDispatchAction = (
         return;
       }
 
-
-      console.log(`Dispatching action ${action.operation} to agent ${agentId} with arguments:`, action.arguments);
       void assign({
         variables: {
           input: {

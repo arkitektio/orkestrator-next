@@ -61,12 +61,6 @@ export const usePanelOpen = () => {
     const vector = worldPos.clone().project(camera);
     const x = ((vector.x + 1) / 2) * size.width;
     const y = ((-vector.y + 1) / 2) * size.height; // Invert Y for screen coords
-    console.log(
-      "Opening panel at world pos",
-      worldPos,
-      "which projects to screen pos",
-      { x, y },
-    );
     openPanel({ screenPos: { x, y }, worldPos, panelType });
   };
 

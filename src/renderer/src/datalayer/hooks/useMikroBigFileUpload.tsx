@@ -79,7 +79,6 @@ export type ExtraRequest = RequestInit & {
 
 const customFetch = (uri: any, options: ExtraRequest) => {
   if (options.onProgress) {
-    console.log("uploadFetch", uri, options);
     return uploadFetch(uri, options);
   }
   return fetch(uri, options);
@@ -100,8 +99,6 @@ const uploadToStore = async (
   if (!z) {
     throw Error("No client configured",);
   }
-
-  console.log("uploadToStore (big file IPC)", z, file);
 
   // Fallback if we are not in Electron (shouldn't happen in this app context, but good for safety)
   if (!window.api?.uploadBigFile) {
@@ -165,11 +162,9 @@ export const useMikroBigFileUpload = () => {
 
       const z = data.data.requestBigfileUpload;
 
-      console.log("Got upload grant", z);
-
       const result = await uploadToStore(file, datalayerEndpoint, z, options);
 
-      const finishData = await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
+      await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
         mutation: FinishBigfileUploadDocument,
         variables: {
           input: {
@@ -178,7 +173,6 @@ export const useMikroBigFileUpload = () => {
         },
       });
 
-      console.log("Finished upload", finishData);
       return z.store;
     },
     [client, datalayerEndpoint],

@@ -42,7 +42,6 @@ export const ActionAssignForm = (props: {
 
   const onSubmit = async (data: any) => {
     console.log("Submitting");
-    console.log(data);
 
     const reference = uuidv4()
 

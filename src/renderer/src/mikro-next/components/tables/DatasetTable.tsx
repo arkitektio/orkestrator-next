@@ -166,7 +166,6 @@ export const DatasetTable = (props: { dataset: string }) => {
     };
     refetch(variables);
 
-    console.log(variables);
     setColumns(calculateColumns());
   }, [metrics, kinds, search, refetch]);
 

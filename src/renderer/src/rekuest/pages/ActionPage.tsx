@@ -36,7 +36,6 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   });
 
   const onSubmit = (data: any) => {
-    console.log(data);
     assign({
       action: action.id,
       args: data,

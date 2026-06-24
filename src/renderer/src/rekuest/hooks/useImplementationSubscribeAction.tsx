@@ -62,8 +62,6 @@ export const useImplementationSubscribeAction = <T extends any>(
         },
       });
 
-      console.log(mutation);
-
       const task = mutation.data?.assign;
 
       if (!task) {
@@ -93,7 +91,6 @@ export const useImplementationSubscribeAction = <T extends any>(
   }, [assign]);
 
   const cancel = useCallback(async () => {
-    console.log("Cancelling", causedTask);
     if (!causedTask) {
       throw Error("Cannot Reassign");
     }
@@ -101,8 +98,6 @@ export const useImplementationSubscribeAction = <T extends any>(
     if (causedTask.latestEventKind == TaskEventKind.Completed) {
       throw Error("Cannot Cancel as it is done");
     }
-
-    console.log("Cancelling", causedTask);
 
     const mutation = await cancelAssign({
       variables: {

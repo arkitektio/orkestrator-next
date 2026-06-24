@@ -76,7 +76,6 @@ export type ExtraRequest = RequestInit & {
 
 const customFetch = (uri: any, options: ExtraRequest) => {
   if (options.onProgress) {
-    console.log("uploadFetch", uri, options);
     return uploadFetch(uri, options);
   }
   return fetch(uri, options);
@@ -97,8 +96,6 @@ const uploadToStore = async (
     throw Error("No client configured");
   }
 
-  console.log("uploadToStore", z);
-
   const data = new FormData();
   data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
@@ -115,7 +112,6 @@ const uploadToStore = async (
 
 
   await x;
-  console.log("done", x, z.store.id);
   return `${z.store}`;
 };
 
@@ -145,7 +141,6 @@ export const useKraphMediaUpload = () => {
 
       const z = data.data.requestMediaUpload;
 
-      console.log("Got upload grant", z);
 
       return await uploadToStore(file, datalayerEndpoint, z, {});
     },

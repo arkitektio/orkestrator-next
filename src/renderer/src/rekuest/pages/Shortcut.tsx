@@ -30,7 +30,6 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
 
   const onSubmit = (data: any) => {
     console.log("Submiftting");
-    console.log(data);
     assign({
       action: shortcut.action.id,
       args: { ...data, ...shortcut.savedArgs },

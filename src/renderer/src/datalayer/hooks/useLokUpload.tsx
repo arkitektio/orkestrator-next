@@ -76,7 +76,6 @@ export type ExtraRequest = RequestInit & {
 
 const customFetch = (uri: any, options: ExtraRequest) => {
   if (options.onProgress) {
-    console.log("uploadFetch", uri, options);
     return uploadFetch(uri, options);
   }
   return fetch(uri, options);
@@ -96,8 +95,6 @@ const uploadToStore = async (
   if (!z) {
     throw Error("No client configured");
   }
-
-  console.log("uploadToStore", z);
 
   const data = new FormData();
   data.append("key", z.key);
@@ -119,7 +116,6 @@ const uploadToStore = async (
   });
 
   await x;
-  console.log("done", x, z.store);
   return `${z.store}`;
 };
 

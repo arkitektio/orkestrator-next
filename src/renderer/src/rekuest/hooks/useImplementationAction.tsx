@@ -51,8 +51,6 @@ export const useImplementationAction = <T extends any>(
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       try {
         const mutation = await postAssign({
           variables: {
@@ -64,8 +62,6 @@ export const useImplementationAction = <T extends any>(
             },
           },
         });
-
-        console.log(mutation);
 
         const task = mutation.data?.assign;
 

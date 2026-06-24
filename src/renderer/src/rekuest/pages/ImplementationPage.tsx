@@ -65,7 +65,6 @@ export const DoForm = ({ id }: { id: string }) => {
      dependencies: Record<string, ResolvedDependencyInput>;
    }) => {
      console.log("Submitting");
-     console.log(data);
      try {
        const task = await assign({
          implementation: id,

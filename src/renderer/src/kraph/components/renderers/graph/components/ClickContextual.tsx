@@ -32,12 +32,9 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
 
   const formdata = watch();
 
-  console.log("Rendering", formdata);
-
   useEffect(() => {
     console.log(formState.isValid, isValidating);
     if (formState.isValid && !isValidating) {
-      console.log("submiting", formdata);
       props.onSubmit(formdata);
     }
   }, [formState, formdata, isValidating]);

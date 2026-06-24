@@ -49,8 +49,6 @@ export const useHashAction = <T extends any>(
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       const mutation = await postAssign({
         variables: {
           input: {
@@ -60,8 +58,6 @@ export const useHashAction = <T extends any>(
           },
         },
       });
-
-      console.log(mutation);
 
       const task = mutation.data?.assign;
 

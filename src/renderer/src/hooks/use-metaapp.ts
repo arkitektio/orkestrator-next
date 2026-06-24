@@ -331,7 +331,6 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
 
     useEffect(() => {
       if (data?.state) {
-        console.log('State', state, 'subscribing to', data.state.id)
         return subscribeToMore<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>(
           {
             document: WatchStateEventsDocument,
@@ -340,7 +339,6 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
             },
             updateQuery: (prev, { subscriptionData }) => {
               if (!subscriptionData.data) return prev
-              console.log('State update for', state, subscriptionData.data)
               // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
               if (subscriptionData.data.stateUpdateEvents.id !== data.state.id) {
                 return prev

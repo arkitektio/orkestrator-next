@@ -31,6 +31,7 @@ import StructuresPage from "./pages/StructuresPage";
 import TaskLogPage from "./pages/task/TaskLogPage";
 import TaskSpacePage from "./pages/task/TaskSpacePage";
 import TasksPage from "./pages/TasksPage";
+import OrgTasksPage from "./pages/OrgTasksPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
 import TaskTimelinePage from "./pages/task/TaskTimelinePage";
 import { ResolutionPage } from "./pages/ResolutionPage";
@@ -91,6 +92,7 @@ const Module: React.FC = () => {
 
           <Route path="states/:id" element={<StatePage />} />
           <Route path="tasks" element={<TasksPage />} />
+          <Route path="org-tasks" element={<OrgTasksPage />} />
           <Route path="tasks/:id" element={<TaskPage />} />
           <Route path="tasks/:id/log" element={<TaskLogPage />} />
           <Route path="tasks/:id/space" element={<TaskSpacePage />} />

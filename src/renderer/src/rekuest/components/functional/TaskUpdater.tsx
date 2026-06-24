@@ -209,7 +209,12 @@ const writeEventToCache = (
         if (list.some((ref) => readField("id", ref) === synth.id)) {
           return list;
         }
-        const ref = toReference(synth, true);
+        // Write the nested task back-ref as id-only so Apollo's merge never
+        // clobbers the real `reference` already on the normalized Task entity.
+        const ref = toReference(
+          { ...synth, task: { __typename: "Task", id: event.task } },
+          true,
+        );
         return ref ? [ref, ...list] : list;
       },
       latestEventKind: () => event.kind,

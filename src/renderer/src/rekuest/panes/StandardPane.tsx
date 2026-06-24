@@ -107,6 +107,13 @@ export const NavigationPane = () => {
             Tasks
           </PaneLink>
           <PaneLink
+            to="/rekuest/org-tasks"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Org Tasks
+          </PaneLink>
+          <PaneLink
             to="/rekuest/implementations"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

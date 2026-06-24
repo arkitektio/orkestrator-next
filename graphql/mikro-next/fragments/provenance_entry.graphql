@@ -1,7 +1,9 @@
 fragment ProvenanceEntry on ProvenanceEntry {
   id
+
   task {
     id
+    taskId
   }
   kind
   user {

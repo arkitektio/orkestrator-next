@@ -2101,7 +2101,7 @@ export type Query = {
   modelWorkspaces: Array<ModelWorkspace>;
   mydatasets: Array<Dataset>;
   myfiles: Array<File>;
-  /** Returns a single image by ID */
+  /** Returns a single neuron model by ID */
   neuronModel: NeuronModel;
   neuronModels: Array<NeuronModel>;
   randomTrace: Trace;

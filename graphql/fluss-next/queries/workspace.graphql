@@ -13,9 +13,9 @@ query Workspaces($pagination: OffsetPaginationInput) {
 query WorkspaceCarousel(
   $pagination: OffsetPaginationInput
   $filters: WorkspaceFilter
-  $order: WorkspaceOrder
+  $ordering: [WorkspaceOrder!]
 ) {
-  workspaces(pagination: $pagination, filters: $filters, order: $order) {
+  workspaces(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...CarouselWorkspace
   }
 }

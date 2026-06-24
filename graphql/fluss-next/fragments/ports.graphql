@@ -130,16 +130,6 @@ fragment FlussPortEffect on Effect {
   ...FlussMessageEffect
 }
 
-fragment FlussAssignWidget on AssignWidget {
-  __typename
-  kind
-  ...FlussStringAssignWidget
-  ...FlussSearchAssignWidget
-  ...FlussSliderAssignWidget
-  ...FlussChoiceAssignWidget
-  ...FlussCustomAssignWidget
-}
-
 fragment Validator on Validator {
   function
   dependencies

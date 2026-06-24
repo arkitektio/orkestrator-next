@@ -9,6 +9,7 @@
     "AssignWidget": [
       "ChoiceAssignWidget",
       "CustomAssignWidget",
+      "ProxyWidget",
       "SearchAssignWidget",
       "SliderAssignWidget",
       "StateChoiceAssignWidget",
@@ -46,6 +47,14 @@
     "ReturnWidget": [
       "ChoiceReturnWidget",
       "CustomReturnWidget"
+    ],
+    "_Entity": [
+      "Flow",
+      "ReactiveTemplate",
+      "Run",
+      "RunEvent",
+      "Snapshot",
+      "Workspace"
     ]
   }
 };

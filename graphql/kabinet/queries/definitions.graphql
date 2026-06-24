@@ -14,10 +14,10 @@ query PrimaryDefinitions(
   $pagination: OffsetPaginationInput
   $identifier: String
   $search: String
-  $order: DefinitionOrder
+  $ordering: [DefinitionOrder!]
 ) {
   definitions(
-    order: $order
+    ordering: $ordering
     pagination: $pagination
     filters: {
       demands: [
@@ -36,9 +36,9 @@ query PrimaryDefinitions(
 query AllPrimaryDefinitions(
   $pagination: OffsetPaginationInput
   $filters: DefinitionFilter
-  $order: DefinitionOrder
+  $ordering: [DefinitionOrder!]
 ) {
-  definitions(order: $order, pagination: $pagination, filters: $filters) {
+  definitions(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListDefinition
   }
 }

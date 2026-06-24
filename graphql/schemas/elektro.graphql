@@ -1717,7 +1717,7 @@ type Query {
   mydatasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   myfiles(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
 
-  """Returns a single image by ID"""
+  """Returns a single neuron model by ID"""
   neuronModel(
     """The unique identifier of an object"""
     id: ID!

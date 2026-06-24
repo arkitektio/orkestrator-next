@@ -2019,7 +2019,7 @@ type GeneralMediaAccessGrant {
   store: String
 }
 
-"""Temporary S3 credentials for reading a Zarr store."""
+"""Temporary S3 credentials for reading a parquet object."""
 type GeneralParquetAccessGrant {
   accessKey: String!
   bucket: String!
@@ -6455,31 +6455,46 @@ input TableRowFilter {
 
 """A validated Rekuest task under which objects were created or changed."""
 type Task {
-  """The action hash"""
-  action: String!
+  """The executing agent OAuth client id"""
+  agentClientId: String!
 
-  """The assigning app"""
-  app: String!
+  """The executing agent user sub"""
+  agentSub: String!
 
-  """The arguments the task was assigned with"""
-  args: Any!
+  """The SHA-256 of the canonicalized args"""
+  argsHash: String!
 
-  """The user that assigned the task"""
+  """The args canonicalization algorithm/version"""
+  argsHashAlgorithm: String!
+
+  """The root human causer that assigned the task"""
   assigner: User
 
-  """The raw sub claim of the assigning user"""
+  """The raw root human causer sub claim"""
   assignerSub: String!
+
+  """The immediate causer of this hop"""
+  callerSub: String!
   createdAt: DateTime!
   id: ID!
+
+  """The provenance issuer id"""
+  issuer: String!
 
   """The organization the task ran in"""
   organization: Organization!
 
-  """The parent task id, if any"""
-  parentId: String
+  """The immediate parent task id, if any"""
+  parentTaskId: String
+
+  """The root task id of the whole causal tree"""
+  rootTaskId: String!
 
   """The rekuest task id"""
   taskId: String!
+
+  """The unique single-use token id"""
+  tokenId: String!
 }
 
 input TaskFilter {
@@ -6487,8 +6502,7 @@ input TaskFilter {
   DISTINCT: Boolean
   NOT: TaskFilter
   OR: TaskFilter
-  action: StrFilterLookup
-  app: StrFilterLookup
+  agentClientId: StrFilterLookup
 
   """Filter by the assigner's subject ID"""
   assigner: ID
@@ -6504,9 +6518,13 @@ input TaskFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
-  parentId: StrFilterLookup
+  issuer: StrFilterLookup
+  parentTaskId: StrFilterLookup
+  rootTaskId: StrFilterLookup
 
-  """Search by app or action (case-insensitive substring)"""
+  """
+  Search by task id or executing agent client id (case-insensitive substring)
+  """
   search: String
   taskId: StrFilterLookup
 }

@@ -14,7 +14,7 @@ fragment Snapshot on Snapshot {
   id
   run {
     id
-    assignation
+    taskId
   }
   status
   events {
@@ -27,14 +27,14 @@ fragment ListSnapshot on Snapshot {
   id
   run {
     id
-    assignation
+    taskId
   }
   t
 }
 
 fragment DetailRun on Run {
   id
-  assignation
+  taskId
   snapshots {
     id
     status
@@ -57,7 +57,7 @@ fragment DetailRun on Run {
 
 fragment ListRun on Run {
   id
-  assignation
+  taskId
   createdAt
   status
   flow {
@@ -69,7 +69,7 @@ fragment ListRun on Run {
 
 fragment CarouselRun on Run {
   id
-  assignation
+  taskId
   snapshots {
     id
     status

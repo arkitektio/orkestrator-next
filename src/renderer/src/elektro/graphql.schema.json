@@ -16921,7 +16921,7 @@
           },
           {
             "name": "neuronModel",
-            "description": "Returns a single image by ID",
+            "description": "Returns a single neuron model by ID",
             "args": [
               {
                 "name": "id",

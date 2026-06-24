@@ -10,8 +10,8 @@ query GetPod($id: ID!) {
   }
 }
 
-query GetPodForAgent($clientId: ID!, $instanceId: ID!) {
-  podForAgent(clientId: $clientId, instanceId: $instanceId) {
+query GetPodForAgent($clientId: ID!) {
+  podForAgent(clientId: $clientId) {
     ...Pod
   }
 }

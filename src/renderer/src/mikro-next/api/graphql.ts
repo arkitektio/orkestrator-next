@@ -1833,7 +1833,7 @@ export type GeneralMediaAccessGrant = {
   store?: Maybe<Scalars['String']['output']>;
 };
 
-/** Temporary S3 credentials for reading a Zarr store. */
+/** Temporary S3 credentials for reading a parquet object. */
 export type GeneralParquetAccessGrant = {
   __typename?: 'GeneralParquetAccessGrant';
   accessKey: Scalars['String']['output'];
@@ -6534,24 +6534,34 @@ export type TableRowFilter = {
 /** A validated Rekuest task under which objects were created or changed. */
 export type Task = {
   __typename?: 'Task';
-  /** The action hash */
-  action: Scalars['String']['output'];
-  /** The assigning app */
-  app: Scalars['String']['output'];
-  /** The arguments the task was assigned with */
-  args: Scalars['Any']['output'];
-  /** The user that assigned the task */
+  /** The executing agent OAuth client id */
+  agentClientId: Scalars['String']['output'];
+  /** The executing agent user sub */
+  agentSub: Scalars['String']['output'];
+  /** The SHA-256 of the canonicalized args */
+  argsHash: Scalars['String']['output'];
+  /** The args canonicalization algorithm/version */
+  argsHashAlgorithm: Scalars['String']['output'];
+  /** The root human causer that assigned the task */
   assigner?: Maybe<User>;
-  /** The raw sub claim of the assigning user */
+  /** The raw root human causer sub claim */
   assignerSub: Scalars['String']['output'];
+  /** The immediate causer of this hop */
+  callerSub: Scalars['String']['output'];
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  /** The provenance issuer id */
+  issuer: Scalars['String']['output'];
   /** The organization the task ran in */
   organization: Organization;
-  /** The parent task id, if any */
-  parentId?: Maybe<Scalars['String']['output']>;
+  /** The immediate parent task id, if any */
+  parentTaskId?: Maybe<Scalars['String']['output']>;
+  /** The root task id of the whole causal tree */
+  rootTaskId: Scalars['String']['output'];
   /** The rekuest task id */
   taskId: Scalars['String']['output'];
+  /** The unique single-use token id */
+  tokenId: Scalars['String']['output'];
 };
 
 export type TaskFilter = {
@@ -6559,8 +6569,7 @@ export type TaskFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
-  action?: InputMaybe<StrFilterLookup>;
-  app?: InputMaybe<StrFilterLookup>;
+  agentClientId?: InputMaybe<StrFilterLookup>;
   /** Filter by the assigner's subject ID */
   assigner?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the assigner's database user ID */
@@ -6571,8 +6580,10 @@ export type TaskFilter = {
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  parentId?: InputMaybe<StrFilterLookup>;
-  /** Search by app or action (case-insensitive substring) */
+  issuer?: InputMaybe<StrFilterLookup>;
+  parentTaskId?: InputMaybe<StrFilterLookup>;
+  rootTaskId?: InputMaybe<StrFilterLookup>;
+  /** Search by task id or executing agent client id (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
   taskId?: InputMaybe<StrFilterLookup>;
 };

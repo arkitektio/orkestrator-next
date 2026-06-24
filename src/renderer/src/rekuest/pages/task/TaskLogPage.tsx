@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestTask } from "@/linkers";
-import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
+import { useRunForTaskQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
   TaskEventFragment,
@@ -33,7 +33,7 @@ export const TaskFlow = (props: {
   id: string;
   task: DetailTaskFragment;
 }) => {
-  const { data, error, refetch } = useRunForAssignationQuery({
+  const { data, error, refetch } = useRunForTaskQuery({
     variables: {
       id: props.task.id,
     },
@@ -48,9 +48,9 @@ export const TaskFlow = (props: {
 
   return (
     <>
-      {data?.runForAssignation && (
+      {data?.runForTask && (
         <TrackFlow
-          run={data.runForAssignation}
+          run={data.runForTask}
           task={props.task}
         />
       )}

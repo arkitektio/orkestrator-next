@@ -30,7 +30,7 @@ export type Scalars = {
   JSONSerializable: { input: any; output: any; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   SearchQuery: { input: any; output: any; }
-  /** UntypedParams represents an untyped options object returned by the Dask Gateway API. */
+  /** An untyped, free-form JSON object whose shape is not known to the schema. */
   UntypedParams: { input: any; output: any; }
   /**
    *
@@ -43,12 +43,19 @@ export type Scalars = {
 
 /** A JSON-serializable argument entry for a multi-agent action trigger. */
 export type ActionArgumentInput = {
+  /** Defines a nested agent call if this argument should trigger an agent interaction. */
   agentCall?: InputMaybe<AgentCallInput>;
+  /** The argument property name. */
   key?: InputMaybe<Scalars['String']['input']>;
+  /** Defines a nested utility call if this argument should trigger a system utility interaction. */
   utilCall?: InputMaybe<UtilCallInput>;
+  /** Defines a list of key-value pairs if this argument should be a dictionary. */
   valueDict?: InputMaybe<Array<ActionArgumentInput>>;
+  /** Defines a list of values if this argument should be an array. */
   valueList?: InputMaybe<Array<ActionArgumentInput>>;
+  /** Static literal value if not dynamically bound. */
   valueLiteral?: InputMaybe<Scalars['JSONSerializable']['input']>;
+  /** JSON Pointer referencing the shared Blok state to inject into this argument slot dynamically. */
   valuePath?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -57,19 +64,32 @@ export type ActionArgumentInput = {
  *     create a dependency graph for your implementations and actions
  */
 export type ActionDependencyInput = {
+  /** The key of the state this dependency corresponds to. (i.e frame:acquireimage) */
   actionKey?: InputMaybe<Scalars['String']['input']>;
+  /** Allow inactive nodes, defaults to true */
   allowInactive?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance) */
   app?: InputMaybe<Scalars['String']['input']>;
+  /** The demands for the action args, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system. */
   argMatches?: InputMaybe<Array<PortMatchInput>>;
+  /** The description of the action. This can describe the action and its purpose. */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Require that the action has a specific number of args. When loosing the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system. */
   forceArgLength?: InputMaybe<Scalars['Int']['input']>;
+  /** Require that the action has a specific number of returns. This is used to identify the demand in the system. */
   forceReturnLength?: InputMaybe<Scalars['Int']['input']>;
+  /** The key of the action. This is used to identify the dependency in the system. */
   key: Scalars['String']['input'];
   /** The name of the action. This is used to identify the action in the system. */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable */
   optional?: Scalars['Boolean']['input'];
+  /** The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together. */
   protocols?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** The demands for the action returns, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the returns. This is used to identify the demand in the system. */
   returnMatches?: InputMaybe<Array<PortMatchInput>>;
+  /** The version of the action this dependency corresponds to. */
+  version?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The kind of action. */
@@ -88,8 +108,11 @@ export enum ActionScope {
 
 /** Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest. */
 export type AgentCallInput = {
+  /** Key-value arguments map compiled for the target agent call. */
   arguments?: InputMaybe<Array<ActionArgumentInput>>;
+  /** The abstract agent dependency key declared in the Blok manifest (e.g., 'stage_dep'). */
   dependency: Scalars['String']['input'];
+  /** The target function name registered on that specific agent's worker thread loop. */
   operation: Scalars['String']['input'];
 };
 
@@ -98,31 +121,45 @@ export type AgentCallInput = {
  *     create a dependency graph for your implementations and actions
  */
 export type AgentDependencyInput = {
+  /** The action demands of the agent. This is used to identify the demand in the system. */
   actionDemands?: InputMaybe<Array<ActionDependencyInput>>;
+  /** Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance) */
   app?: InputMaybe<Scalars['String']['input']>;
+  /** The policy used to pick which instance of the agent to assign to. */
+  assignPolicy?: AssignPolicy;
+  /** Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable */
   autoResolvable?: Scalars['Boolean']['input'];
+  /** A description of the dependency, why it is needed and what it is used for. This can be used to provide more context to users when assigning dependencies. */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The key of this dependency, when assigning you can reference this key to specify which agent_dependency you are assigning to. */
   key: Scalars['String']['input'];
+  /** The maximum amount of viable instances for the agent. This is used to identify the demand in the system. */
   maxViableInstances?: InputMaybe<Scalars['Int']['input']>;
+  /** The minimum amount of viable instances for the agent. This is used to identify the demand in the system. */
   minViableInstances?: InputMaybe<Scalars['Int']['input']>;
   /** A list of keys of other agent dependencies that are mutually exclusive with this one. This means two agent dependencies with mutually exclusive keys cannot be assigned to the same implementing agent. This is used to identify the demand in the system. */
   mutuallyExclusiveKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   /** The name of the agent. This is used to identify the agent in the system. */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Whether the dependency is optional or not. If the dependency is optional, users can choose to not provide it */
   optional?: Scalars['Boolean']['input'];
+  /** The prefered amount of instances for the agent. This is used to identify the demand in the system. */
   preferedInstances?: InputMaybe<Scalars['Int']['input']>;
+  /** The state demands of the agent. This is used to identify the demand in the system. */
   stateDemands?: InputMaybe<Array<StateDependencyInput>>;
+  /** The version of the app this dependency corresponds to. */
   version?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** An application, identified by a globally unique, reverse-domain identifier (e.g. live.arkitekt.app). */
 export type App = {
   __typename?: 'App';
   id: Scalars['ID']['output'];
+  /** The globally unique, reverse-domain identifier of the app. */
   identifier: Scalars['String']['output'];
 };
 
-/** Create a new Github repository input */
+/** Input describing a built app image to register (its manifest, image, selectors and inspection). */
 export type AppImageInput = {
   appImageId: Scalars['String']['input'];
   flavourName?: InputMaybe<Scalars['String']['input']>;
@@ -170,20 +207,41 @@ export type ArgPort = {
  *
  */
 export type ArgPortInput = {
+  /** The child ports (used for list, dict, union and model ports). */
   children?: InputMaybe<Array<ArgPortInput>>;
+  /** The options for the port. This is used for dropdowns and text inputs */
   choices?: InputMaybe<Array<ChoiceInput>>;
+  /** The default value for the port. */
   default?: InputMaybe<Scalars['AnyDefault']['input']>;
+  /** The description of the port. This is the text that is displayed in the UI when the user hovers over the port */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The effects of the port */
   effects?: InputMaybe<Array<EffectInput>>;
+  /** The identifier of a structure port. This is used to uniquely identify a specific type of structure. */
   identifier?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the port */
   key: Scalars['String']['input'];
+  /** The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model */
   kind: PortKind;
+  /** The label of the port. This is the text that is displayed in the UI */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null */
   nullable?: Scalars['Boolean']['input'];
+  /** The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors */
   requires?: InputMaybe<Array<RequiresInput>>;
+  /** The validators for the port */
   validators?: InputMaybe<Array<ValidatorInput>>;
+  /** The assign widget to use for this port. */
   widget?: InputMaybe<AssignWidgetInput>;
 };
+
+export enum AssignPolicy {
+  Automatic = 'AUTOMATIC',
+  Balanced = 'BALANCED',
+  FastestResponse = 'FASTEST_RESPONSE',
+  LeastBusy = 'LEAST_BUSY',
+  RoundRobin = 'ROUND_ROBIN'
+}
 
 export type AssignWidget = {
   followValue?: Maybe<Scalars['String']['output']>;
@@ -193,23 +251,45 @@ export type AssignWidget = {
 export type AssignWidgetInput = {
   /** Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns */
   asParagraph?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The choices to display in the dropdown. This is used for dropdowns and text inputs */
   choices?: InputMaybe<Array<ChoiceInput>>;
+  /** The dependencies of the assign widget, which will be passed to the search or the hook widget. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar' */
   dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The dependency that we are going to use to fullfill the state choices. If none is provided its the own state that will be queried */
   dependency?: InputMaybe<Scalars['String']['input']>;
+  /** The fallback assign widget to use if the current one fails. This is used for custom assign widgets */
   fallback?: InputMaybe<AssignWidgetInput>;
+  /** The filters to apply to a search widget. This is used for custom assign widgets */
   filters?: InputMaybe<Array<ArgPortInput>>;
+  /** The key of another port whose value this widget should follow and mirror. */
+  followValue?: InputMaybe<Scalars['String']['input']>;
+  /** The hook to run when the input is changed. This is used for custom assign widgets */
   hook?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the assign widget. Can be either dropdown, text, slider, checkbox, radio or custom */
   kind: AssignWidgetKind;
+  /** The maximum value of the slider (if a slider). This is used for sliders and text inputs */
   max?: InputMaybe<Scalars['Float']['input']>;
+  /** The minimum value of the slider (if a slider). This is used for sliders and text inputs */
   min?: InputMaybe<Scalars['Float']['input']>;
+  /** The placeholder of the input. This is used for text inputs and dropdowns */
   placeholder?: InputMaybe<Scalars['String']['input']>;
+  /** The query to run when searching for choices. This is used for dropdowns and text inputs */
   query?: InputMaybe<Scalars['SearchQuery']['input']>;
+  /** State accessors are used to specify how to access the state values that we are going to use to fullfill the state choices. This is used when the state value that we want to use is not the same as the one of the port, e.g. when we want to use a specific key of a state object, or when we want to use a dynamic key based on the other arguments. The option_key field is used to specify which part of the state accessor we want to use as the value for the assign widget (e.g. the key, the description, the logo, etc.) */
   stateAccessors?: InputMaybe<Array<StateAccessorInput>>;
+  /** The key of a state whose value provides the choices for this widget (state-driven choices). */
+  stateChoices?: InputMaybe<Scalars['String']['input']>;
+  /** The path to the state value that we are going to use to fullfill the state choices. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo] */
   statePath?: InputMaybe<Scalars['String']['input']>;
+  /** The step value of the slider (if a slider). This is used for sliders and text inputs */
   step?: InputMaybe<Scalars['Float']['input']>;
+  /** The action that we are going to target with a proxy widget. This is used for proxy widgets */
   targetAction?: InputMaybe<Scalars['String']['input']>;
+  /** The dependency that we are going to target with a proxy widget. This is used for proxy widgets */
   targetDependency?: InputMaybe<Scalars['String']['input']>;
+  /** The port that we are going to target with a proxy widget. This is used for proxy widgets */
   targetPort?: InputMaybe<Scalars['String']['input']>;
+  /** The ward that is responsible for handling querying the choices */
   ward?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -224,59 +304,81 @@ export enum AssignWidgetKind {
   String = 'STRING'
 }
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A deployment target (agent) registered by a client that runs pods on behalf of an organization. */
 export type Backend = {
   __typename?: 'Backend';
+  /** The OAuth2 client this backend authenticates as. */
   client: Client;
+  /** The OAuth2 client ID of this backend. */
   clientId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  instanceId: Scalars['String']['output'];
+  /** The kind of backend (its runtime type). */
   kind: Scalars['String']['output'];
+  /** The human-readable name of this backend. */
   name: Scalars['String']['output'];
+  /** The organization this backend belongs to. */
   organization: Organization;
+  /** The pods currently running on this backend. */
   pods: Array<Pod>;
+  /** The resources declared on this backend. */
   resources: Array<Resource>;
+  /** The user that registered this backend. */
   user: User;
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A deployment target (agent) registered by a client that runs pods on behalf of an organization. */
 export type BackendPodsArgs = {
   filters?: InputMaybe<PodFilter>;
+  ordering?: Array<PodOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A deployment target (agent) registered by a client that runs pods on behalf of an organization. */
 export type BackendResourcesArgs = {
   filters?: InputMaybe<ResourceFilter>;
+  ordering?: Array<ResourceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Filter for Resources */
+/** Filter for backends. */
 export type BackendFilter = {
   AND?: InputMaybe<BackendFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<BackendFilter>;
   OR?: InputMaybe<BackendFilter>;
+  /** Keep only backends whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the backend name. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type BackendOrder =
+  { id: Ordering; lastHeartbeat?: never; name?: never; }
+  |  { id?: never; lastHeartbeat: Ordering; name?: never; }
+  |  { id?: never; lastHeartbeat?: never; name: Ordering; };
+
 /** Which locks does the agent provide in general */
 export type BlokImplementationInput = {
+  /** The optional catalog name if this Blok should be registered inside a specific namespace in your Electron app's UI component registry. */
   catalog?: InputMaybe<Scalars['String']['input']>;
+  /** The UI component tree blueprint for this Blok. */
   components: Array<ComponentNodeInput>;
+  /** An optional JSON-serializable object providing demo state values for this Blok's internal reactive data model, useful for testing and development purposes. */
   demoState?: InputMaybe<Scalars['JSONSerializable']['input']>;
   /** The dependencies required by this Blok. */
   dependencies?: Array<AgentDependencyInput>;
+  /** A human-readable description about this Blok's purpose and functionality. */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The key of this Blok implementation. */
   key: Scalars['String']['input'];
 };
 
-/**  A selector is a way to select a release */
+/** Requires CPU resources on the backend. */
 export type CpuSelector = Selector & {
   __typename?: 'CPUSelector';
+  /** The minimum CPU frequency required, in MHz */
   frequency?: Maybe<Scalars['Float']['output']>;
   kind: Scalars['String']['output'];
   min?: Maybe<Scalars['Int']['output']>;
@@ -310,9 +412,13 @@ export type ChoiceAssignWidget = AssignWidget & {
  *
  */
 export type ChoiceInput = {
+  /** The description of the choice. This is the text that is displayed in the UI when the user hovers over the choice */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The image of the choice. This is the image that is displayed in the UI (must be a URL) */
   image?: InputMaybe<Scalars['String']['input']>;
+  /** The label of the choice. This is the text that is displayed in the UI */
   label: Scalars['String']['input'];
+  /** The value of the choice. This is the value that is returned when the choice is selected */
   value: Scalars['AnyDefault']['input'];
 };
 
@@ -337,16 +443,16 @@ export type Client = {
   release?: Maybe<ClientRelease>;
 };
 
-/** Profile information for a user. */
+/** A client application registered with the authentication provider. */
 export type ClientApp = {
   __typename?: 'ClientApp';
   /** Unique ID of the app. */
   id: Scalars['ID']['output'];
-  /** Name of the app. */
+  /** The unique identifier of the app. */
   identifier: Scalars['String']['output'];
 };
 
-/** Profile information for a user. */
+/** A released version of a client application. */
 export type ClientRelease = {
   __typename?: 'ClientRelease';
   /** The app this release belongs to. */
@@ -357,75 +463,117 @@ export type ClientRelease = {
   version: Scalars['String']['output'];
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A named grouping of related action definitions. */
 export type Collection = {
   __typename?: 'Collection';
+  /** When this collection was defined. */
   definedAt: Scalars['DateTime']['output'];
+  /** A description of this collection. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The name of this collection. */
   name: Scalars['String']['output'];
 };
 
+/** Filter for collections. */
+export type CollectionFilter = {
+  AND?: InputMaybe<CollectionFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<CollectionFilter>;
+  OR?: InputMaybe<CollectionFilter>;
+  /** Keep only collections whose ID is in this list. */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the collection name. */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CollectionOrder =
+  { definedAt: Ordering; id?: never; name?: never; }
+  |  { definedAt?: never; id: Ordering; name?: never; }
+  |  { definedAt?: never; id?: never; name: Ordering; };
+
 /** An abstract structural visual element inside a Blok blueprint manifest. */
 export type ComponentNodeInput = {
+  /** Flat adjacency pointer list mapping out IDs nested inside this specific component layer. */
   children?: InputMaybe<Array<ComponentNodeInput>>;
+  /** The type indicator token matching your Electron app's registered catalog specs (e.g. 'Slider'). */
   component: Scalars['String']['input'];
+  /** Unique structural string identifying this node instance inside the flat workspace layout tree. */
   id: Scalars['String']['input'];
+  /** The collection of static values, state pointers, or action endpoints assigned to this component. */
   props?: InputMaybe<Array<ComponentPropInput>>;
 };
 
 /** A single key-value prop configuration for a component layout node. */
 export type ComponentPropInput = {
+  /** Defines an imperative interactive network action callback loop if this prop should trigger an agent interaction. */
   agentCall?: InputMaybe<AgentCallInput>;
+  /** If set, this prop declares a new 'value' in the Blok state that can be referenced by other props or actions. The value of this field should be the name of the declared value (e.g., 'selected_user'). */
   declaresValue?: InputMaybe<Scalars['String']['input']>;
+  /** A reactive state data-binding rule. */
   dynamicValue?: InputMaybe<DynamicValueInput>;
+  /** The prop key name matching the target UI catalog constraint. */
   key: Scalars['String']['input'];
+  /** A raw scalar or JSON-stringified literal configuration parameter (e.g. '40x' or True). */
   staticValue?: InputMaybe<Scalars['JSONSerializable']['input']>;
+  /** Defines an imperative interactive network action callback loop if this prop should trigger a system utility interaction. */
   utilCall?: InputMaybe<UtilCallInput>;
 };
 
-/** The state of a dask cluster */
+/** The container runtime used to run a pod. */
 export enum ContainerType {
   Apptainer = 'APPTAINER',
   Docker = 'DOCKER'
 }
 
 export type CpuSelectorInput = {
-  /** The frequency in MHz */
+  /** The minimum CPU frequency required, in MHz. */
   frequency?: InputMaybe<Scalars['Int']['input']>;
-  /** The memory in MB */
+  /** The minimum memory required, in MB. */
   memory?: InputMaybe<Scalars['Int']['input']>;
 };
 
-/** Create a new Github repository input */
+/** Input for creating a deployment of a flavour on a backend. */
 export type CreateDeploymentInput = {
+  /** The ID of the flavour to deploy. */
   flavour: Scalars['ID']['input'];
-  instanceId: Scalars['String']['input'];
+  /** When the flavour's image was last pulled, if known. */
   lastPulled?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The identifier of the deployment as known to the backend. */
   localId: Scalars['ID']['input'];
+  /** Secret parameters passed to the deployment (e.g. credentials). */
   secretParams?: InputMaybe<Scalars['UntypedParams']['input']>;
 };
 
-/** Create a new Github repository input */
+/** Input for tracking a new GitHub repository. */
 export type CreateGithubRepoInput = {
+  /** Whether to scan the repository immediately after adding it. */
   autoScan?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The branch to scan for app manifests. */
   branch?: InputMaybe<Scalars['String']['input']>;
+  /** An optional identifier (e.g. 'user/repo') used to derive the other fields. */
   identifier?: InputMaybe<Scalars['String']['input']>;
+  /** An optional human-readable name for the repository. */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The repository name on GitHub. */
   repo?: InputMaybe<Scalars['String']['input']>;
+  /** The GitHub owner (user or organization) of the repository. */
   user?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Create a new Github repository input */
+/** Input for registering a running pod for a deployment. */
 export type CreatePodInput = {
+  /** The OAuth2 client ID this pod authenticates as, if any. */
   clientId?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the deployment this pod is an instance of. */
   deployment: Scalars['ID']['input'];
-  instanceId: Scalars['String']['input'];
+  /** The identifier of the pod as known to the backend. */
   localId: Scalars['ID']['input'];
+  /** The resource this pod is scheduled onto, if any. */
   resource?: InputMaybe<Scalars['ID']['input']>;
 };
 
-/**  A selector is a way to select a release */
+/** Requires a CUDA-capable (NVIDIA) GPU on the backend. */
 export type CudaSelector = Selector & {
   __typename?: 'CudaSelector';
   /** The number of cuda cores */
@@ -437,9 +585,7 @@ export type CudaSelector = Selector & {
 };
 
 export type CudaSelectorInput = {
-  /** The cuda cores */
   cudaCores?: InputMaybe<Scalars['Int']['input']>;
-  /** The minimum cuda version */
   cudaVersion?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -467,68 +613,109 @@ export type CustomReturnWidget = ReturnWidget & {
   ward: Scalars['String']['output'];
 };
 
-/** Create a new Github repository input */
+/** Input for declaring (registering or updating) a backend. */
 export type DeclareBackendInput = {
-  instanceId: Scalars['String']['input'];
+  /** The kind of backend (its runtime type). */
   kind: Scalars['String']['input'];
+  /** The human-readable name of the backend. */
   name: Scalars['String']['input'];
 };
 
-/** Create a resource */
+/** Input for declaring (registering or updating) a resource on a backend. */
 export type DeclareResourceInput = {
+  /** The ID of the backend to declare the resource on. */
   backend: Scalars['ID']['input'];
+  /** The identifier of the resource as known to the backend. */
   localId: Scalars['String']['input'];
+  /** An optional human-readable name for the resource. */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Free-form key/value qualifiers describing the resource. */
   qualifiers?: InputMaybe<Array<QualifierInput>>;
 };
 
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
 export type Definition = {
   __typename?: 'Definition';
+  /** The input ports (arguments) of this action. */
   args: Array<ArgPort>;
+  /** The collections this action belongs to. */
   collections: Array<Collection>;
+  /** When this action definition was first defined. */
   definedAt: Scalars['DateTime']['output'];
+  /** A human-readable description of this action. */
   description?: Maybe<Scalars['String']['output']>;
+  /** The flavours that provide this action. */
   flavours: Array<Flavour>;
+  /** The unique hash identifying this action definition. */
   hash: Scalars['ActionHash']['output'];
   id: Scalars['ID']['output'];
+  /** The action definitions that this definition is a test for. */
   isTestFor: Array<Definition>;
+  /** The kind of action, e.g. a function or a generator. */
   kind: ActionKind;
+  /** The cleartext name of this action. */
   name: Scalars['String']['output'];
+  /** The protocols this action implements. */
   protocols: Array<Protocol>;
+  /** The output ports (return values) of this action. */
   returns: Array<ReturnPort>;
+  /** The data scope of this action (e.g. local, global or bridge). */
   scope: ActionScope;
+  /** The action definitions that act as tests for this definition. */
   tests: Array<Definition>;
 };
 
 
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
+export type DefinitionCollectionsArgs = {
+  filters?: InputMaybe<CollectionFilter>;
+  ordering?: Array<CollectionOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
 export type DefinitionFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
-  order?: InputMaybe<FlavourOrder>;
+  ordering?: Array<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
 export type DefinitionIsTestForArgs = {
   filters?: InputMaybe<DefinitionFilter>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: Array<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
+export type DefinitionProtocolsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
+  ordering?: Array<ProtocolOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** An action definition: the abstract, hashed description of an RPC task that a flavour provides. */
 export type DefinitionTestsArgs = {
   filters?: InputMaybe<DefinitionFilter>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: Array<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Filter for Dask Clusters */
+/** Filter for action definitions. */
 export type DefinitionFilter = {
   AND?: InputMaybe<DefinitionFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DefinitionFilter>;
   OR?: InputMaybe<DefinitionFilter>;
+  /** Keep only definitions whose ports satisfy all of the given demands. */
   demands?: InputMaybe<Array<PortDemandInput>>;
+  /** Keep only definitions whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the action name. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -579,11 +766,12 @@ export type DefinitionInput = {
   version: Scalars['String']['input'];
 };
 
-export type DefinitionOrder = {
-  definedAt?: InputMaybe<Ordering>;
-};
+export type DefinitionOrder =
+  { definedAt: Ordering; };
 
+/** Input for deleting a pod. */
 export type DeletePodInput = {
+  /** The ID of the pod to delete. */
   id: Scalars['ID']['input'];
 };
 
@@ -592,26 +780,38 @@ export enum DemandKind {
   Returns = 'RETURNS'
 }
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A flavour scheduled to run on a particular backend. */
 export type Deployment = {
   __typename?: 'Deployment';
+  /** The API token the deployed pod uses to authenticate. */
   apiToken: Scalars['String']['output'];
+  /** The backend this deployment runs on. */
   backend: Backend;
+  /** The flavour that is deployed. */
   flavour: Flavour;
   id: Scalars['ID']['output'];
+  /** The identifier of this deployment as known to the backend. */
   localId: Scalars['ID']['output'];
+  /** The display name of this deployment, combining backend and flavour names. */
   name: Scalars['String']['output'];
 };
 
-/** Filter for Dask Clusters */
+/** Filter for deployments. */
 export type DeploymentFilter = {
   AND?: InputMaybe<DeploymentFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DeploymentFilter>;
   OR?: InputMaybe<DeploymentFilter>;
+  /** Keep only deployments whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the deployment name. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type DeploymentOrder =
+  { createdAt: Ordering; id?: never; localId?: never; }
+  |  { createdAt?: never; id: Ordering; localId?: never; }
+  |  { createdAt?: never; id?: never; localId: Ordering; };
 
 /** Represents a device assigned to users within an organization. */
 export type Device = {
@@ -622,16 +822,20 @@ export type Device = {
   id: Scalars['ID']['output'];
 };
 
-/** The Feature you are trying to match */
+/** A single hardware feature of a device to match against. */
 export type DeviceFeature = {
+  /** The number of CPUs the feature describes. */
   cpuCount: Scalars['String']['input'];
+  /** The kind of feature (e.g. 'gpu', 'cpu'). */
   kind: Scalars['String']['input'];
 };
 
-/** A docker image descriptor */
+/** A reference to a built Docker image. */
 export type DockerImage = {
   __typename?: 'DockerImage';
+  /** When this image was built. */
   buildAt: Scalars['DateTime']['output'];
+  /** The fully-qualified image reference (registry/name:tag). */
   imageString: Scalars['String']['output'];
 };
 
@@ -640,14 +844,17 @@ export type DockerImageInput = {
   imageString: Scalars['String']['input'];
 };
 
-/** Create a new Github repository input */
+/** Input for attaching a log dump to a pod. */
 export type DumpLogsInput = {
+  /** The captured log output to store. */
   logs: Scalars['String']['input'];
+  /** The ID of the pod the logs belong to. */
   pod: Scalars['ID']['input'];
 };
 
 /** A bound state pointer referencing a variable inside a Blok state instance. */
 export type DynamicValueInput = {
+  /** JSON Pointer to a variable inside the Blok's isolated data model (e.g., '/microscope/exposure'). */
   path?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -656,6 +863,12 @@ export type Effect = {
   function: Scalars['ValidatorFunction']['output'];
   kind: EffectKind;
 };
+
+/** The effect class of an implementation — declared by the implementation, never the caller. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world (no UPSERT), so an ambiguous failure is terminal and must not be retried. */
+export enum EffectClass {
+  None = 'NONE',
+  Physical = 'PHYSICAL'
+}
 
 /**
  *
@@ -669,12 +882,19 @@ export type Effect = {
  *
  */
 export type EffectInput = {
+  /** The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar' */
   dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Whether to fade out the port when the effect is applied (if it is a hide effect) */
   fade?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The function to run to determine if the effect should be applied */
   function: Scalars['ValidatorFunction']['input'];
+  /** The hook to run when the effect is applied (if it is a custom effect) */
   hook?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the effect. Can be either message, hide or custom */
   kind: EffectKind;
+  /** The message to display when the effect is applied (if it is a message effect) */
   message?: InputMaybe<Scalars['String']['input']>;
+  /** The ward to run when the effect is applied (if it is a custom effect) */
   ward?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -685,81 +905,108 @@ export enum EffectKind {
   Message = 'MESSAGE'
 }
 
-/** Which environment do you want to match against? */
+/** The target environment that flavours are matched against. */
 export type EnvironmentInput = {
+  /** The container runtime available in the environment. */
   containerType: ContainerType;
+  /** The hardware features available in the environment. */
   features?: InputMaybe<Array<DeviceFeature>>;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A buildable variant of a release: a specific Docker image together with the selectors and requirements needed to run it. */
 export type Flavour = {
   __typename?: 'Flavour';
+  /** The action definitions this flavour provides. */
   definitions: Array<Definition>;
+  /** The deployments that run this flavour. */
   deployments: Array<Deployment>;
+  /** A human-readable description of this flavour. */
   description: Scalars['String']['output'];
-  entrypoint: CudaSelector;
   id: Scalars['ID']['output'];
+  /** The Docker image this flavour deploys. */
   image: DockerImage;
+  /** The stored logo of this flavour. */
   logo?: Maybe<Scalars['String']['output']>;
+  /** The raw app manifest this flavour was built from. */
   manifest: Scalars['UntypedParams']['output'];
+  /** The name of this flavour (e.g. 'vanilla', 'cuda'). */
   name: Scalars['String']['output'];
+  /** The original (upstream) logo URL of this flavour. */
   originalLogo?: Maybe<Scalars['String']['output']>;
+  /** The release this flavour belongs to. */
   release: Release;
+  /** The GitHub repository this flavour was built from. */
   repo: GithubRepo;
+  /** The services this flavour requires in order to run. */
   requirements: Array<Requirement>;
+  /** The hardware/capability selectors a backend must satisfy to run this flavour. */
   selectors: Array<Selector>;
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A buildable variant of a release: a specific Docker image together with the selectors and requirements needed to run it. */
 export type FlavourDefinitionsArgs = {
   filters?: InputMaybe<DefinitionFilter>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: Array<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A buildable variant of a release: a specific Docker image together with the selectors and requirements needed to run it. */
 export type FlavourDeploymentsArgs = {
   filters?: InputMaybe<DeploymentFilter>;
+  ordering?: Array<DeploymentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Filter for Dask Clusters */
+/** Filter for flavours. */
 export type FlavourFilter = {
   AND?: InputMaybe<FlavourFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FlavourFilter>;
   OR?: InputMaybe<FlavourFilter>;
+  /** Keep only flavours that provide one of the given definitions. */
   hasDefinitions?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Keep only flavours whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the flavour name. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type FlavourOrder =
   { releasedAt: Ordering; };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A GitHub repository tracked by Kabinet and scanned for deployable Arkitekt apps. */
 export type GithubRepo = {
   __typename?: 'GithubRepo';
+  /** When this repository was first added to Kabinet. */
   addedAt: Scalars['DateTime']['output'];
+  /** The branch that is scanned for app manifests. */
   branch: Scalars['String']['output'];
+  /** The flavours discovered by scanning this repository. */
   flavours: Array<Flavour>;
   id: Scalars['ID']['output'];
+  /** The URL for opening a new issue against this repository on GitHub. */
   issueUrl: Scalars['String']['output'];
+  /** The human-readable name of the repository. */
   name: Scalars['String']['output'];
+  /** The organization that owns this repository. */
   organization: Organization;
+  /** The repository name on GitHub (the part after the owner). */
   repo: Scalars['String']['output'];
+  /** When this repository was last updated. */
   updatedAt: Scalars['DateTime']['output'];
+  /** The URL of this repository on GitHub. */
   url: Scalars['String']['output'];
+  /** The GitHub owner (user or organization) of the repository. */
   user: Scalars['String']['output'];
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A GitHub repository tracked by Kabinet and scanned for deployable Arkitekt apps. */
 export type GithubRepoFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
-  order?: InputMaybe<FlavourOrder>;
+  ordering?: Array<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -768,18 +1015,29 @@ export enum GithubRepoField {
   CreatedAt = 'CREATED_AT'
 }
 
-/** Filter for Dask Clusters */
+/** Filter for tracked GitHub repositories. */
 export type GithubRepoFilter = {
   AND?: InputMaybe<GithubRepoFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<GithubRepoFilter>;
   OR?: InputMaybe<GithubRepoFilter>;
+  /** Case-insensitive match on the branch name. */
   branch?: InputMaybe<Scalars['String']['input']>;
+  /** Keep only repositories whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive match on the GitHub repository name. */
   repo?: InputMaybe<Scalars['String']['input']>;
+  /** Case-insensitive search on the repository name. */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Case-insensitive match on the GitHub owner. */
   user?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type GithubRepoOrder =
+  { addedAt: Ordering; id?: never; name?: never; updatedAt?: never; }
+  |  { addedAt?: never; id: Ordering; name?: never; updatedAt?: never; }
+  |  { addedAt?: never; id?: never; name: Ordering; updatedAt?: never; }
+  |  { addedAt?: never; id?: never; name?: never; updatedAt: Ordering; };
 
 export type GithubRepoStats = {
   __typename?: 'GithubRepoStats';
@@ -855,22 +1113,38 @@ export type HideEffect = Effect & {
 
 /** A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params. */
 export type ImplementationInput = {
+  /** The definition of the implementation. This is used to uniquely identify the implementation */
   definition: DefinitionInput;
+  /** The agent dependencies required by this implementation. */
   dependencies?: Array<AgentDependencyInput>;
+  /** Whether the implementation is dynamic or not. If the implementation is dynamic, it can be used to create a dynamic action. If the implementation is not dynamic, it cannot be used to create a dynamic action */
   dynamic?: Scalars['Boolean']['input'];
-  extension?: InputMaybe<Scalars['String']['input']>;
+  /** The effect class of this implementation. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world and an ambiguous failure is terminal (never retried). Declared by the implementation here — never by the caller. */
+  effect?: EffectClass;
+  /** The instance id of the agent this implementation is bound to. */
+  instanceId?: InputMaybe<Scalars['String']['input']>;
+  /** The interface of the implementation. This is used to group implementations together in the UI */
   interface?: InputMaybe<Scalars['String']['input']>;
+  /** The locks of the implementation. This is used to specify which resources the implementation needs to run */
   locks?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The logo of the implementation. This is used to display the logo in the UI either it should be 'custom:svg-paths' or a lucide icon name like 'lucide:activity' urls are not supported at the moment */
   logo?: InputMaybe<Scalars['String']['input']>;
+  /** The states that the implementation manipulates. This is used to identify which states are manipulated by the implementation, and can be use to enhance state safety in the system */
   manipulates?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state */
+  /** Whether Rekuest should mint a signed provenance token when this implementation is assigned. Default true (provenance-by-default); set false for trivial/internal tasks that never produce external provenance. */
+  needsToken?: Scalars['Boolean']['input'];
+  /** The optimistics of the definition. This is used to optimistically set state values when the action is assigned, to provide a better user experience. */
   optimistics?: InputMaybe<Array<OptimisticInput>>;
+  /** The params of the implementation. This is used to pass parameters to the implementation */
   params?: InputMaybe<Scalars['AnyDefault']['input']>;
+  /** The downstream service(s) the provenance token should be scoped to (the token's `aud`). If omitted, Rekuest derives the audience from the structures the assignment acts on. */
+  provenanceAudience?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The tracks of the definition. This is used to track values over time during the runtime of an action. This is the state of a dependency */
   tracks?: InputMaybe<Array<TrackInput>>;
 };
 
 export type InspectionInput = {
-  bloks: Array<BlokImplementationInput>;
+  bloks?: Array<BlokImplementationInput>;
   implementations: Array<ImplementationInput>;
   locks: Array<LockImplementationInput>;
   requirements: Array<RequirementInput>;
@@ -880,22 +1154,29 @@ export type InspectionInput = {
 
 /** Which locks does the agent provide in general */
 export type LockDefinitionInput = {
+  /** Describe the lock a bit */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the lock. This is used to uniquely identify the lock */
   key: Scalars['String']['input'];
 };
 
 /** Which locks does the agent provide in general */
 export type LockImplementationInput = {
+  /** The lock definition this implementation fulfills. */
   definition: LockDefinitionInput;
+  /** The key of the lock implementation. */
   key: Scalars['String']['input'];
 };
 
-/** The logs of a pod */
+/** A captured snapshot of a pod's logs at a point in time. */
 export type LogDump = {
   __typename?: 'LogDump';
+  /** When these logs were captured. */
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  /** The captured log output. */
   logs: Scalars['String']['output'];
+  /** The pod these logs were captured from. */
   pod: Pod;
 };
 
@@ -909,10 +1190,13 @@ export type ManifestInput = {
   version: Scalars['String']['input'];
 };
 
-/** Create a new Github repository input */
+/** Input for matching the best flavour for a release in a given environment. */
 export type MatchFlavoursInput = {
+  /** The action hashes that the matched flavour must provide. */
   actions?: InputMaybe<Array<Scalars['ActionHash']['input']>>;
+  /** The target environment to match flavours against. */
   environment?: InputMaybe<EnvironmentInput>;
+  /** The release whose flavours should be matched. */
   release?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -926,31 +1210,31 @@ export type MessageEffect = Effect & {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Create a new release */
+  /** Register a built app image, creating its release and flavour as needed. */
   createAppImage: Release;
-  /** Create a new dask cluster on a bridge server */
+  /** Schedule a flavour onto a backend, creating a new deployment. */
   createDeployment: Deployment;
-  /** Create a new Github repository on a bridge server */
+  /** Start tracking a new GitHub repository so it can be scanned for apps. */
   createGithubRepo: GithubRepo;
-  /** Create a new dask cluster on a bridge server */
+  /** Register a running pod for a deployment on a backend. */
   createPod: Pod;
-  /** Create a new dask cluster on a bridge server */
+  /** Declare (register or update) a backend for the current client. */
   declareBackend: Backend;
-  /** Create a new resource for your backend */
+  /** Declare (register or update) a resource on one of your backends. */
   declareResource: Resource;
-  /** Create a new dask cluster on a bridge server */
+  /** Delete a backend and return its ID. */
   deleteBackend: Scalars['ID']['output'];
-  /** Create a new dask cluster on a bridge server */
+  /** Delete a pod and return its ID. */
   deletePod: Scalars['ID']['output'];
-  /** Create a new dask cluster on a bridge server */
+  /** Attach a captured log dump to a pod. */
   dumpLogs: LogDump;
-  /** Rescan all repos */
+  /** Rescan every tracked GitHub repository for new or updated app manifests. */
   rescanRepos: Array<GithubRepo>;
-  /** Create a new dask cluster on a bridge server */
+  /** Scan a tracked GitHub repository for app manifests and update its flavours. */
   scanRepo: GithubRepo;
-  /** Create a new dask cluster on a bridge server */
+  /** Update the status of an existing deployment. */
   updateDeployment: Deployment;
-  /** Create a new dask cluster on a bridge server */
+  /** Update the status of an existing pod. */
   updatePod: Pod;
 };
 
@@ -1020,7 +1304,6 @@ export type OffsetPaginationInput = {
 };
 
 export type OneApiSelectorInput = {
-  /** The api versison of the selector */
   oneapiVersion?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1030,8 +1313,11 @@ export type OneApiSelectorInput = {
  *
  */
 export type OptimisticInput = {
+  /** The accessor to get the value to optimistically set. This is used when the value to optimistically set is not the same as the value of the port */
   accessor?: InputMaybe<Scalars['String']['input']>;
+  /** The path to the state.value to optimistically set the value, always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo] */
   path: Scalars['String']['input'];
+  /** The state to optimistically set when the action is assigned */
   state: Scalars['String']['input'];
 };
 
@@ -1058,32 +1344,48 @@ export type Organization = {
   slug: Scalars['String']['output'];
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A running instance of a deployment on a backend. */
 export type Pod = {
   __typename?: 'Pod';
+  /** The backend this pod runs on. */
   backend: Backend;
+  /** The OAuth2 client ID this pod authenticates as, if any. */
   clientId?: Maybe<Scalars['String']['output']>;
+  /** The deployment this pod is an instance of. */
   deployment: Deployment;
   id: Scalars['ID']['output'];
+  /** The most recent log dump captured from this pod. */
   latestLogDump?: Maybe<LogDump>;
+  /** The display name of this pod, combining backend, flavour and app identifier. */
   name: Scalars['String']['output'];
+  /** The identifier of this pod as known to the backend. */
   podId: Scalars['String']['output'];
+  /** The resource this pod is scheduled onto, if any. */
   resource?: Maybe<Resource>;
+  /** The current lifecycle status of this pod. */
   status: PodStatus;
 };
 
-/** Filter for Dask Clusters */
+/** Filter for pods. */
 export type PodFilter = {
   AND?: InputMaybe<PodFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<PodFilter>;
   OR?: InputMaybe<PodFilter>;
+  /** Keep only pods running on the given backend. */
   backend?: InputMaybe<Scalars['ID']['input']>;
+  /** Keep only pods whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Match pods by the name of their backend. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** The state of a dask cluster */
+export type PodOrder =
+  { createdAt: Ordering; id?: never; status?: never; }
+  |  { createdAt?: never; id: Ordering; status?: never; }
+  |  { createdAt?: never; id?: never; status: Ordering; };
+
+/** The lifecycle status of a pod. */
 export enum PodStatus {
   Failed = 'FAILED',
   Pending = 'PENDING',
@@ -1093,15 +1395,20 @@ export enum PodStatus {
   Unkown = 'UNKOWN'
 }
 
-/** An update on a pod */
+/** A status update for a pod, pushed over a subscription. */
 export type PodUpdateMessage = {
   __typename?: 'PodUpdateMessage';
+  /** Whether this update corresponds to the pod's creation. */
   created: Scalars['Boolean']['output'];
+  /** The ID of the pod this update is about. */
   id: Scalars['String']['output'];
+  /** Optional progress indicator for the update, as a percentage. */
   progress?: Maybe<Scalars['Int']['output']>;
+  /** The new status of the pod. */
   status: Scalars['String']['output'];
 };
 
+/** A demand on the ports (args or returns) of an action. */
 export type PortDemandInput = {
   /** Require that the action has a specific number of ports. This is used to identify the demand in the system. */
   forceLength?: InputMaybe<Scalars['Int']['input']>;
@@ -1147,23 +1454,45 @@ export enum PortKind {
  *     create a dependency graph for your implementations and actions
  */
 export type PortMatchInput = {
+  /** The index of the port to match. */
   at?: InputMaybe<Scalars['Int']['input']>;
+  /** The matches for the children of the port to match. */
   children?: InputMaybe<Array<PortMatchInput>>;
+  /** The identifier of the port to match. */
   identifier?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the port to match. */
   key?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the port to match. */
   kind?: InputMaybe<PortKind>;
+  /** Whether the port is nullable. */
   nullable?: InputMaybe<Scalars['Boolean']['input']>;
-  /** The object of the port to match. This is used for adanved pattern matching based on the exact object descriptors of the object. i.e { x: 1, y: 2}  */
-  object?: InputMaybe<Scalars['Arg']['input']>;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** An interface that an action definition can implement (e.g. Predicate). */
 export type Protocol = {
   __typename?: 'Protocol';
+  /** A description of this protocol. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The name of this protocol. */
   name: Scalars['String']['output'];
 };
+
+/** Filter for protocols. */
+export type ProtocolFilter = {
+  AND?: InputMaybe<ProtocolFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ProtocolFilter>;
+  OR?: InputMaybe<ProtocolFilter>;
+  /** Keep only protocols whose ID is in this list. */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the protocol name. */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ProtocolOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type Provides = {
   __typename?: 'Provides';
@@ -1173,8 +1502,11 @@ export type Provides = {
 };
 
 export type ProvidesInput = {
+  /** The key of the provision. This is used to uniquely identify the provision */
   key: Scalars['String']['input'];
+  /** The operator for the provision */
   operator: ProvidesOperator;
+  /** The value of the provision. This can be any JSON serializable value */
   value: Scalars['Arg']['input'];
 };
 
@@ -1202,45 +1534,55 @@ export type ProxyWidget = AssignWidget & {
 
 /** A qualifier that describes some property of the action */
 export type QualifierInput = {
+  /** The key of the qualifier. */
   key: Scalars['String']['input'];
+  /** The value of the qualifier. */
   value: Scalars['String']['input'];
 };
 
 export type Query = {
   __typename?: 'Query';
-  /** Return all dask clusters */
+  /** Return a single backend by its ID. */
   backend: Backend;
+  /** List all backends visible to the current organization. */
   backends: Array<Backend>;
-  /** Return all dask clusters */
+  /** Return a single action definition by its ID. */
   definition: Definition;
+  /** List all action definitions visible to the current organization. */
   definitions: Array<Definition>;
-  /** Return all dask clusters */
+  /** Return a single deployment by its ID. */
   deployment: Deployment;
+  /** List all deployments visible to the current organization. */
   deployments: Array<Deployment>;
-  /** Return all dask clusters */
+  /** Return a single flavour (a buildable variant of a release) by its ID. */
   flavour: Flavour;
+  /** List all flavours visible to the current organization. */
   flavours: Array<Flavour>;
-  /** Return all dask clusters */
+  /** Return a single tracked GitHub repository by its ID. */
   githubRepo: GithubRepo;
   /** Stats about github repos */
   githubRepoStats: GithubRepoStats;
+  /** List all tracked GitHub repositories visible to the current organization. */
   githubRepos: Array<GithubRepo>;
-  /** Return the currently logged in user */
+  /** Return the flavour that best matches the requested release, actions and target environment. */
   matchFlavour: Flavour;
-  /** Return the currently logged in user */
+  /** Return the currently authenticated user. */
   me: User;
-  /** Let a backend discover its own pods */
+  /** Let a backend discover one of its own pods by local identifier. */
   myPodAt: Pod;
-  /** Return all dask clusters */
+  /** Return a single pod by its ID. */
   pod: Pod;
-  /** Return the pod for an agent */
+  /** Return the pod that a given agent (client) is running for a deployment. */
   podForAgent?: Maybe<Pod>;
+  /** List all pods visible to the current organization. */
   pods: Array<Pod>;
-  /** Return all dask clusters */
+  /** Return a single app release by its ID. */
   release: Release;
+  /** List all app releases visible to the current organization. */
   releases: Array<Release>;
-  /** Return all dask clusters */
+  /** Return a single backend resource by its ID. */
   resource: Resource;
+  /** List all backend resources visible to the current organization. */
   resources: Array<Resource>;
 };
 
@@ -1252,6 +1594,7 @@ export type QueryBackendArgs = {
 
 export type QueryBackendsArgs = {
   filters?: InputMaybe<BackendFilter>;
+  ordering?: Array<BackendOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1264,7 +1607,7 @@ export type QueryDefinitionArgs = {
 
 export type QueryDefinitionsArgs = {
   filters?: InputMaybe<DefinitionFilter>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: Array<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1276,6 +1619,7 @@ export type QueryDeploymentArgs = {
 
 export type QueryDeploymentsArgs = {
   filters?: InputMaybe<DeploymentFilter>;
+  ordering?: Array<DeploymentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1287,7 +1631,7 @@ export type QueryFlavourArgs = {
 
 export type QueryFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
-  order?: InputMaybe<FlavourOrder>;
+  ordering?: Array<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1304,6 +1648,7 @@ export type QueryGithubRepoStatsArgs = {
 
 export type QueryGithubReposArgs = {
   filters?: InputMaybe<GithubRepoFilter>;
+  ordering?: Array<GithubRepoOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1314,7 +1659,6 @@ export type QueryMatchFlavourArgs = {
 
 
 export type QueryMyPodAtArgs = {
-  instanceId: Scalars['ID']['input'];
   localId: Scalars['ID']['input'];
 };
 
@@ -1326,12 +1670,12 @@ export type QueryPodArgs = {
 
 export type QueryPodForAgentArgs = {
   clientId: Scalars['ID']['input'];
-  instanceId: Scalars['ID']['input'];
 };
 
 
 export type QueryPodsArgs = {
   filters?: InputMaybe<PodFilter>;
+  ordering?: Array<PodOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1343,6 +1687,7 @@ export type QueryReleaseArgs = {
 
 export type QueryReleasesArgs = {
   filters?: InputMaybe<ReleaseFilter>;
+  ordering?: Array<ReleaseOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1354,56 +1699,76 @@ export type QueryResourceArgs = {
 
 export type QueryResourcesArgs = {
   filters?: InputMaybe<ResourceFilter>;
+  ordering?: Array<ResourceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A specific version of an app, bundling the flavours that can be deployed for it. */
 export type Release = {
   __typename?: 'Release';
+  /** The app this release belongs to. */
   app: App;
-  /** Is this release deployed */
+  /** A display colour for this release, as a hex string. */
   colour: Scalars['String']['output'];
-  /** Is this release deployed */
+  /** The deployments that run a flavour of this release. */
   deployments: Array<Deployment>;
-  /** Is this release deployed */
+  /** A human-readable description of this release. */
   description: Scalars['String']['output'];
+  /** The entrypoint used to start the app. */
   entrypoint: Scalars['String']['output'];
+  /** The flavours (buildable variants) available for this release. */
   flavours: Array<Flavour>;
   id: Scalars['ID']['output'];
-  /** Is this release deployed */
+  /** Whether this release is currently deployed somewhere. */
   installed: Scalars['Boolean']['output'];
+  /** The stored logo of this release. */
   logo?: Maybe<Scalars['String']['output']>;
-  /** Is this release deployed */
+  /** The display name of this release, in the form 'identifier:version'. */
   name: Scalars['String']['output'];
+  /** The original (upstream) logo URL of this release. */
   originalLogo?: Maybe<Scalars['String']['output']>;
+  /** The OAuth2 scopes this release requires. */
   scopes: Array<Scalars['String']['output']>;
+  /** The semantic version of this release. */
   version: Scalars['String']['output'];
 };
 
 
-/** A user of the bridge server. Maps to an authentikate user */
+/** A specific version of an app, bundling the flavours that can be deployed for it. */
 export type ReleaseFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
-  order?: InputMaybe<FlavourOrder>;
+  ordering?: Array<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Filter for Dask Clusters */
+/** Filter for app releases. */
 export type ReleaseFilter = {
   AND?: InputMaybe<ReleaseFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ReleaseFilter>;
   OR?: InputMaybe<ReleaseFilter>;
+  /** Keep only releases whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the release version. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** A requirement */
+export type ReleaseOrder =
+  { createdAt: Ordering; id?: never; releasedAt?: never; version?: never; }
+  |  { createdAt?: never; id: Ordering; releasedAt?: never; version?: never; }
+  |  { createdAt?: never; id?: never; releasedAt: Ordering; version?: never; }
+  |  { createdAt?: never; id?: never; releasedAt?: never; version: Ordering; };
+
+/** A service that a flavour requires in order to run (e.g. mikro, rekuest). */
 export type Requirement = {
   __typename?: 'Requirement';
+  /** An optional human-readable description of the requirement. */
   description?: Maybe<Scalars['String']['output']>;
+  /** The key identifying this requirement within the flavour. */
   key: Scalars['String']['output'];
+  /** Whether the flavour can still run if this service is unavailable. */
   optional: Scalars['Boolean']['output'];
+  /** The name of the required service. */
   service: Scalars['String']['output'];
 };
 
@@ -1422,8 +1787,11 @@ export type Requires = {
 };
 
 export type RequiresInput = {
+  /** The key of the requirement. This is used to uniquely identify the requirement */
   key: Scalars['String']['input'];
+  /** The operator for the requirement */
   operator: RequiresOperator;
+  /** The value of the requirement. This can be any JSON serializable value */
   value: Scalars['Arg']['input'];
 };
 
@@ -1440,33 +1808,46 @@ export enum RequiresOperator {
   NotIn = 'NOT_IN'
 }
 
-/** A resource on a backend. Resource define allocated resources on a backend. E.g a computational action */
+/** An allocatable resource on a backend (e.g. a compute slot) that pods can be scheduled onto. */
 export type Resource = {
   __typename?: 'Resource';
+  /** The backend this resource belongs to. */
   backend: Backend;
   id: Scalars['ID']['output'];
+  /** The human-readable name of this resource. */
   name: Scalars['String']['output'];
+  /** The pods scheduled onto this resource. */
   pods: Array<Pod>;
+  /** Free-form key/value qualifiers describing this resource. */
   qualifiers?: Maybe<Scalars['UntypedParams']['output']>;
+  /** The identifier of this resource as known to the backend. */
   resourceId: Scalars['String']['output'];
 };
 
 
-/** A resource on a backend. Resource define allocated resources on a backend. E.g a computational action */
+/** An allocatable resource on a backend (e.g. a compute slot) that pods can be scheduled onto. */
 export type ResourcePodsArgs = {
   filters?: InputMaybe<PodFilter>;
+  ordering?: Array<PodOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Filter for Resources */
+/** Filter for resources. */
 export type ResourceFilter = {
   AND?: InputMaybe<ResourceFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ResourceFilter>;
   OR?: InputMaybe<ResourceFilter>;
+  /** Keep only resources whose ID is in this list. */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Case-insensitive search on the resource name. */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type ResourceOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
 
 export type ReturnPort = {
   __typename?: 'ReturnPort';
@@ -1505,18 +1886,31 @@ export type ReturnPort = {
  *
  */
 export type ReturnPortInput = {
+  /** The child ports (used for list, dict, union and model ports). */
   children?: InputMaybe<Array<ReturnPortInput>>;
+  /** The options for the port. This is used for dropdowns and text inputs */
   choices?: InputMaybe<Array<ChoiceInput>>;
+  /** The default value for the port. */
   default?: InputMaybe<Scalars['AnyDefault']['input']>;
+  /** The description of the port. This is the text that is displayed in the UI when the user hovers over the port */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The effects of the port */
   effects?: InputMaybe<Array<EffectInput>>;
+  /** The identifier of a structure port. This is used to uniquely identify a specific type of structure. */
   identifier?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the port */
   key: Scalars['String']['input'];
+  /** The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model */
   kind: PortKind;
+  /** The label of the port. This is the text that is displayed in the UI */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null */
   nullable?: Scalars['Boolean']['input'];
+  /** The provisions for the port. Provisions are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port provisions */
   provides?: InputMaybe<Array<ProvidesInput>>;
+  /** The validators for the port */
   validators?: InputMaybe<Array<ValidatorInput>>;
+  /** The return widget to use for this port. */
   widget?: InputMaybe<ReturnWidgetInput>;
 };
 
@@ -1540,14 +1934,23 @@ export type ReturnWidget = {
  *
  */
 export type ReturnWidgetInput = {
+  /** The choices to display in the dropdown. This is used for dropdowns and text inputs */
   choices?: InputMaybe<Array<ChoiceInput>>;
+  /** The hook to run (if it is a custom return widget). */
   hook?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the return widget. Can be either dropdown, text, slider, checkbox, radio or custom */
   kind: ReturnWidgetKind;
+  /** The maximum value to display (if a slider). */
   max?: InputMaybe<Scalars['Int']['input']>;
+  /** The minimum value to display (if a slider). */
   min?: InputMaybe<Scalars['Int']['input']>;
+  /** The placeholder text of the return widget. */
   placeholder?: InputMaybe<Scalars['String']['input']>;
+  /** The query to run when searching for choices. This is used for dropdowns and text inputs */
   query?: InputMaybe<Scalars['SearchQuery']['input']>;
+  /** The step value to display (if a slider). */
   step?: InputMaybe<Scalars['Int']['input']>;
+  /** The ward responsible for handling the return widget. */
   ward?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1558,24 +1961,25 @@ export enum ReturnWidgetKind {
   Proxy = 'PROXY'
 }
 
-/**  A selector is a way to select a release */
+/** Requires a ROCm-capable (AMD) GPU on the backend. */
 export type RocmSelector = Selector & {
   __typename?: 'RocmSelector';
+  /** An additional ROCm capability qualifier */
   apiThing?: Maybe<Scalars['String']['output']>;
+  /** The minimum ROCm API version required */
   apiVersion?: Maybe<Scalars['String']['output']>;
   kind: Scalars['String']['output'];
   required: Scalars['Boolean']['output'];
 };
 
 export type RocmSelectorInput = {
-  /** The api thing of the selector */
   apiThing?: InputMaybe<Scalars['String']['input']>;
-  /** The api version of the selector */
   apiVersion?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Create a dask cluster input */
+/** Input for scanning a tracked GitHub repository for app manifests. */
 export type ScanRepoInput = {
+  /** The ID of the GitHub repository to scan. */
   id: Scalars['String']['input'];
 };
 
@@ -1589,26 +1993,26 @@ export type SearchAssignWidget = AssignWidget & {
   ward: Scalars['String']['output'];
 };
 
-/**  A selector is a way to select a release */
+/** A selector expresses a hardware (or capability) requirement that a backend must satisfy to run a flavour. */
 export type Selector = {
   kind: Scalars['String']['output'];
   required: Scalars['Boolean']['output'];
 };
 
 export type SelectorInput = {
-  /** The api thing of the selector */
+  /** An additional ROCm capability qualifier (rocm selectors). */
   apiThing?: InputMaybe<Scalars['String']['input']>;
-  /** The api version of the selector */
+  /** The minimum ROCm API version required (rocm selectors). */
   apiVersion?: InputMaybe<Scalars['String']['input']>;
-  /** The cuda cores */
+  /** The minimum number of CUDA cores required (cuda selectors). */
   cudaCores?: InputMaybe<Scalars['Int']['input']>;
-  /** The frequency in MHz */
+  /** The minimum CPU frequency required, in MHz (cpu selectors). */
   frequency?: InputMaybe<Scalars['Int']['input']>;
-  /** The kind of the selector */
+  /** The discriminator identifying which kind of selector this is (e.g. 'cuda', 'rocm', 'cpu', 'oneapi'). */
   kind: Scalars['String']['input'];
-  /** The memory in MB */
+  /** The minimum memory required, in MB (cpu selectors). */
   memory?: InputMaybe<Scalars['Int']['input']>;
-  /** The api version of the selector */
+  /** The minimum oneAPI version required (oneapi selectors). */
   oneapiVersion?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1628,7 +2032,9 @@ export type StateAccessor = {
 };
 
 export type StateAccessorInput = {
+  /** The part of the state accessor to use as the value for the assign widget (e.g. the key, the description, the logo, etc.) */
   optionKey: OptionKey;
+  /** The sub path to access a specific part of the state value. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo] */
   subPath?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1643,7 +2049,9 @@ export type StateChoiceAssignWidget = AssignWidget & {
 
 /** A state schema is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params. */
 export type StateDefinitionInput = {
+  /** The name of the state schema. This is used to uniquely identify the state schema */
   name: Scalars['String']['input'];
+  /** The ports of the state schema. This is used to define the structure of the state */
   ports: Array<ReturnPortInput>;
 };
 
@@ -1652,22 +2060,33 @@ export type StateDefinitionInput = {
  *     create a dependency graph for your implementations and actions
  */
 export type StateDependencyInput = {
+  /** Allow inactive nodes, defaults to true */
   allowInactive?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance) */
   app?: InputMaybe<Scalars['String']['input']>;
+  /** The description of the state. This can describe the state and its purpose. */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the state. This is used to identify the dependency in the system. */
   key: Scalars['String']['input'];
-  /** The name of the state. This is used to identify the action in the system. */
+  /** The name of the state. This is used to identify the state in the system. */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable */
   optional?: Scalars['Boolean']['input'];
+  /** The demands for the state ports, this can be additionaly specified so that when we loosen the matching criteria for a state in a resolver, we can still make sure to match the right state based on the demands for the ports. This is used to identify the demand in the system. */
   portMatches?: InputMaybe<Array<PortMatchInput>>;
-  /** The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together. */
+  /** The protocols that the state is implementing or relying on. This is used to identify the demand in the system, and can be used to match states that are implementing the same protocol together. */
   protocols?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** The key of the state this dependency corresponds to. (i.e frame:count) */
   stateKey?: InputMaybe<Scalars['String']['input']>;
+  /** The version of the state this dependency corresponds to. */
+  version?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A state implementation is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params. */
 export type StateImplementationInput = {
+  /** The schema of the state implementation. This is used to define the structure of the state */
   definition: StateDefinitionInput;
+  /** The key of the state implementation. This is used to uniquely identify the state implementation */
   interface: Scalars['String']['input'];
 };
 
@@ -1681,9 +2100,9 @@ export type StringAssignWidget = AssignWidget & {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  /** Create a new dask cluster on a bridge server */
+  /** Subscribe to status updates for a single pod. */
   pod: PodUpdateMessage;
-  /** Create a new dask cluster on a bridge server */
+  /** Subscribe to status updates for all pods visible to the current organization. */
   pods: PodUpdateMessage;
 };
 
@@ -1705,25 +2124,35 @@ export type TimeBucket = {
 
 /** A value that is being tracked over time during the runtime of an action. This is the state of a dependency */
 export type TrackInput = {
+  /** The key of the dependency whose state is being tracked. */
   dependencyKey?: InputMaybe<Scalars['String']['input']>;
+  /** An optional description for the track. */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional human-readable label for the track. */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the state to track. */
   stateKey: Scalars['String']['input'];
+  /** The key of the value within the state to track. */
   valueKey: Scalars['String']['input'];
+  /** The windows (aggregations) computed over the tracked value. */
   windows?: InputMaybe<Array<WindowInput>>;
 };
 
-/** Create a new Github repository input */
+/** Input for updating a deployment's status. */
 export type UpdateDeploymentInput = {
+  /** The ID of the deployment to update. */
   deployment: Scalars['ID']['input'];
+  /** The new status of the deployment. */
   status: PodStatus;
 };
 
-/** Create a new Github repository input */
+/** Input for updating a pod's status. */
 export type UpdatePodInput = {
-  instanceId: Scalars['String']['input'];
+  /** The backend-local identifier of the pod to update. */
   localId?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the pod to update; required unless 'local_id' is given. */
   pod?: InputMaybe<Scalars['ID']['input']>;
+  /** The new status of the pod. */
   status: PodStatus;
 };
 
@@ -1736,7 +2165,9 @@ export type User = {
 
 /** Defines a utility call that can be invoked within the system. */
 export type UtilCallInput = {
+  /** Key-value arguments map compiled for the target utility call. */
   arguments?: InputMaybe<Array<ActionArgumentInput>>;
+  /** The utility function name to invoke. */
   operation: Scalars['String']['input'];
 };
 
@@ -1757,21 +2188,27 @@ export type Validator = {
  *
  */
 export type ValidatorInput = {
+  /** The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar' */
   dependencies?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The error message to display when the validation fails */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
+  /** The function to run when validating the port */
   function: Scalars['ValidatorFunction']['input'];
+  /** An optional human-readable label for the validator. */
   label?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A window that is calculated */
 export type WindowInput = {
+  /** An optional human-readable label for the window. */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** The window function to apply over the tracked value. */
   windowFunction: Scalars['String']['input'];
 };
 
 export type ListBackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } };
 
-export type BackendFragment = { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
+export type BackendFragment = { __typename?: 'Backend', id: string, clientId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
 
 export type DefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename: 'ArgPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ArgPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null }> | null, widget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'ProxyWidget', kind: AssignWidgetKind } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'ArgPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, widget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'ProxyWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, statePath: string, dependency?: string | null, stateAccessors?: Array<{ __typename?: 'StateAccessor', optionKey: OptionKey, subPath?: string | null }> | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'ReturnPort', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<string>, function: any } | { __typename: 'HideEffect', fade: boolean, kind: EffectKind, dependencies: Array<string>, function: any } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<string>, function: any }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ReturnPort', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ReturnPort', kind: PortKind, identifier?: any | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, widget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null }> | null, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null, provides?: Array<{ __typename?: 'Provides', key: string, operator: ProvidesOperator, value: any }> | null }>, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> }> };
 
@@ -1783,7 +2220,7 @@ export type FlavourFragment = { __typename?: 'Flavour', description: string, id:
 
 export type ListPodFragment = { __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null };
 
-export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
+export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
 
 export type StringAssignWidgetFragment = { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean };
 
@@ -1913,7 +2350,7 @@ export type GetBackendQueryVariables = Exact<{
 }>;
 
 
-export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
+export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, clientId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
 
 export type GetDefinitionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1931,7 +2368,7 @@ export type PrimaryDefinitionsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: InputMaybe<Array<DefinitionOrder> | DefinitionOrder>;
 }>;
 
 
@@ -1940,7 +2377,7 @@ export type PrimaryDefinitionsQuery = { __typename?: 'Query', definitions: Array
 export type AllPrimaryDefinitionsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   filters?: InputMaybe<DefinitionFilter>;
-  order?: InputMaybe<DefinitionOrder>;
+  ordering?: InputMaybe<Array<DefinitionOrder> | DefinitionOrder>;
 }>;
 
 
@@ -1978,15 +2415,14 @@ export type GetPodQueryVariables = Exact<{
 }>;
 
 
-export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
+export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
 
 export type GetPodForAgentQueryVariables = Exact<{
   clientId: Scalars['ID']['input'];
-  instanceId: Scalars['ID']['input'];
 }>;
 
 
-export type GetPodForAgentQuery = { __typename?: 'Query', podForAgent?: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } | null };
+export type GetPodForAgentQuery = { __typename?: 'Query', podForAgent?: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } | null };
 
 export type ListReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2504,7 +2940,6 @@ export const BackendFragmentDoc = gql`
     clientId
   }
   clientId
-  instanceId
   name
   kind
   pods {
@@ -2904,9 +3339,9 @@ export type ListDefinitionsQueryHookResult = ReturnType<typeof useListDefinition
 export type ListDefinitionsLazyQueryHookResult = ReturnType<typeof useListDefinitionsLazyQuery>;
 export type ListDefinitionsQueryResult = Apollo.QueryResult<ListDefinitionsQuery, ListDefinitionsQueryVariables>;
 export const PrimaryDefinitionsDocument = gql`
-    query PrimaryDefinitions($pagination: OffsetPaginationInput, $identifier: String, $search: String, $order: DefinitionOrder) {
+    query PrimaryDefinitions($pagination: OffsetPaginationInput, $identifier: String, $search: String, $ordering: [DefinitionOrder!]) {
   definitions(
-    order: $order
+    ordering: $ordering
     pagination: $pagination
     filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}], search: $search}
   ) {
@@ -2930,7 +3365,7 @@ export const PrimaryDefinitionsDocument = gql`
  *      pagination: // value for 'pagination'
  *      identifier: // value for 'identifier'
  *      search: // value for 'search'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -2946,8 +3381,8 @@ export type PrimaryDefinitionsQueryHookResult = ReturnType<typeof usePrimaryDefi
 export type PrimaryDefinitionsLazyQueryHookResult = ReturnType<typeof usePrimaryDefinitionsLazyQuery>;
 export type PrimaryDefinitionsQueryResult = Apollo.QueryResult<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>;
 export const AllPrimaryDefinitionsDocument = gql`
-    query AllPrimaryDefinitions($pagination: OffsetPaginationInput, $filters: DefinitionFilter, $order: DefinitionOrder) {
-  definitions(order: $order, pagination: $pagination, filters: $filters) {
+    query AllPrimaryDefinitions($pagination: OffsetPaginationInput, $filters: DefinitionFilter, $ordering: [DefinitionOrder!]) {
+  definitions(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListDefinition
   }
 }
@@ -2967,7 +3402,7 @@ export const AllPrimaryDefinitionsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      filters: // value for 'filters'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
@@ -3189,8 +3624,8 @@ export type GetPodQueryHookResult = ReturnType<typeof useGetPodQuery>;
 export type GetPodLazyQueryHookResult = ReturnType<typeof useGetPodLazyQuery>;
 export type GetPodQueryResult = Apollo.QueryResult<GetPodQuery, GetPodQueryVariables>;
 export const GetPodForAgentDocument = gql`
-    query GetPodForAgent($clientId: ID!, $instanceId: ID!) {
-  podForAgent(clientId: $clientId, instanceId: $instanceId) {
+    query GetPodForAgent($clientId: ID!) {
+  podForAgent(clientId: $clientId) {
     ...Pod
   }
 }
@@ -3209,7 +3644,6 @@ export const GetPodForAgentDocument = gql`
  * const { data, loading, error } = useGetPodForAgentQuery({
  *   variables: {
  *      clientId: // value for 'clientId'
- *      instanceId: // value for 'instanceId'
  *   },
  * });
  */

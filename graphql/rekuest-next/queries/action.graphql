@@ -18,8 +18,8 @@ query AssignAction($implementation: ID, $id: ID, $hash: ActionHash) {
   }
 }
 
-query ReturnAction($assignation: ID!) {
-  action(assignation: $assignation) {
+query ReturnAction($task: ID!) {
+  action(task: $task) {
     name
     description
     ...Ports

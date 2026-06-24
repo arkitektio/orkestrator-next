@@ -1,10 +1,10 @@
 
 import { Identifier, Object } from "@/types";
-import { useListAssignationsQuery } from "../api/graphql";
-import ListAssignationCard from "../components/cards/ListAssignationCard";
+import { useListTasksQuery } from "../api/graphql";
+import ListTaskCard from "../components/cards/ListTaskCard";
 
 export const RunsSidebar = (props: { object: Object, identifier: Identifier }) => {
-  const { data, error, loading } = useListAssignationsQuery({
+  const { data, error, loading } = useListTasksQuery({
     variables: {
       filter: { actedOn: [`${props.identifier}:${props.object}`] },
       pagination: { limit: 10, offset: 0 },
@@ -35,7 +35,7 @@ export const RunsSidebar = (props: { object: Object, identifier: Identifier }) =
         </p>
       </div>
       {data?.tasks.map((card) => (
-        <ListAssignationCard key={card.id} item={card} />
+        <ListTaskCard key={card.id} item={card} />
       ))}
     </div>
   );

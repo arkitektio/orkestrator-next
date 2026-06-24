@@ -122,7 +122,7 @@ export const AgentPage = asDetailQueryRoute(
       });
     }, [subscribeToMore, data.agent.id]);
 
-    const recentTasks = data.agent.assignations.slice(0, 5);
+    const recentTasks = data.agent.tasks.slice(0, 5);
 
     return (
       <RekuestAgent.ModelPage

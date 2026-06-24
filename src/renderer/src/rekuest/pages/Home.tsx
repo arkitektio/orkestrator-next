@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAppsQuery, useListComputeNodeQuery, useUsersQuery } from "@/lok-next/api/graphql";
 import ActionList from "@/rekuest/components/lists/ActionList";
 import AgentList from "@/rekuest/components/lists/AgentList";
-import AssignationList from "@/rekuest/components/lists/AssignationList";
+import TaskList from "@/rekuest/components/lists/TaskList";
 import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,7 +170,7 @@ const Page = () => {
 
       <ActionList />
 
-      <AssignationList />
+      <TaskList />
       <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: "DESC" }} />
       </div>
     </PageLayout>

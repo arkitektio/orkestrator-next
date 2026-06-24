@@ -15,7 +15,7 @@ import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
-import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
+import { TaskUpdater } from "@/rekuest/components/functional/TaskUpdater";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
@@ -125,7 +125,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <WardRegistrar />
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest fallback={<></>}>
-                                      <AssignationUpdater />
+                                      <TaskUpdater />
                                       <AgentUpdater />
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />

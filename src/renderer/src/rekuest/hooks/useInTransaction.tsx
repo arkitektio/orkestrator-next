@@ -1,6 +1,6 @@
 import {
-  PostmanAssignationFragment,
-  useAssignationsQuery,
+  PostmanTaskFragment,
+  useTasksQuery,
 } from "../api/graphql";
 
 export type InTransactionOptions = {
@@ -9,15 +9,15 @@ export type InTransactionOptions = {
 };
 
 export type InTransactionReturn = {
-  asArgs?: PostmanAssignationFragment[] | undefined;
+  asArgs?: PostmanTaskFragment[] | undefined;
 };
 
 export const useInTransaction = (
   options: InTransactionOptions,
 ): InTransactionReturn => {
-  const { data: assignations_data } = useAssignationsQuery();
+  const { data: tasks_data } = useTasksQuery();
 
-  const asArgs = assignations_data?.assignations.filter(
+  const asArgs = tasks_data?.tasks.filter(
     (x) =>
       x.args[
       x.action.args.find((x) => x.identifier == options.identifier)?.key ||

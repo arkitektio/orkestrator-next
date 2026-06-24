@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { RekuestResolution, RekuestToolbox } from "@/linkers";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   useGetResolutionQuery
 } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
@@ -19,7 +19,7 @@ import { portToLabel } from "../widgets/utils";
 import { ResolutionGraph } from "../components/global/ResolutionGraph";
 
 export const DoForm = ({ id, resolution }: { id: string, resolution: string }) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+  const { assign, latestTask, cancel, implementation } = useImplementationAction({
     id: id,
   });
 
@@ -46,12 +46,12 @@ export const DoForm = ({ id, resolution }: { id: string, resolution: string }) =
 
   const { registry } = useWidgetRegistry();
 
-  const yieldEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Yield,
+  const yieldEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Critical,
+  const errorEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Critical,
   );
 
   return (

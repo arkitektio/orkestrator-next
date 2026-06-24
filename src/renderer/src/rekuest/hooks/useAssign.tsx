@@ -1,18 +1,18 @@
 import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
-  AssignationEventFragment,
+  TaskEventFragment,
   AssignInput,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   useAssignMutation
 } from "../api/graphql";
-import { trackAssignation } from "../lib/assignationTracker";
+import { trackTask } from "../lib/taskTracker";
 export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
 };
 
 export type useActionOptions<T> = {
@@ -39,15 +39,15 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
       console.log(mutation);
 
-      const assignation = mutation.data?.assign;
+      const task = mutation.data?.assign;
 
-      if (!assignation) {
+      if (!task) {
         console.error(mutation);
         const errorMessages = mutation.errors || "Unknown error";
         throw Error(`Couldn't assign: ${errorMessages}`);
       }
 
-      return assignation;
+      return task;
     },
     [postAssign],
   );
@@ -59,7 +59,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
 
 export const useAssignWithCallback = <T extends any>({ onDone }: {
-  onDone?: (event: AssignationEventFragment) => void,
+  onDone?: (event: TaskEventFragment) => void,
 
 }): useActionReturn<T> => {
   const { assign } = useAssign();
@@ -69,9 +69,9 @@ export const useAssignWithCallback = <T extends any>({ onDone }: {
     async (vars: ActionAssignVariables) => {
       const reference = vars.reference || uuidv4();
 
-      const untrack = trackAssignation(
+      const untrack = trackTask(
         reference,
-        (event: AssignationEventFragment) => {
+        (event: TaskEventFragment) => {
           onDone?.(event);
         },
       );

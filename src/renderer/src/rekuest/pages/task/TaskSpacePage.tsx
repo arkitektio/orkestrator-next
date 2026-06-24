@@ -1,11 +1,11 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
 import { MultiSidebar } from '@/components/layout/MultiSidebar'
 import { Button } from '@/components/ui/button'
-import { RekuestAssignation } from '@/linkers'
+import { RekuestTask } from '@/linkers'
 import {
-  DetailAssignationFragment,
+  DetailTaskFragment,
   useCancelMutation,
-  useDetailAssignationQuery,
+  useDetailTaskQuery,
   useInterruptMutation
 } from '@/rekuest/api/graphql'
 import { TaskSpaceScene } from '@/rekuest/components/spaces/task/SpaceScene'
@@ -17,48 +17,48 @@ import {
 import { TaskTimeline } from '@/rekuest/components/spaces/task/panels/TaskTimeline'
 import { LiveTicker } from '@/rekuest/components/spaces/task/LiveTicker'
 import { LiveStatusStrip } from '@/rekuest/components/spaces/task/panels/LiveStatusStrip'
-import { ChildAssignationUpdater } from '@/rekuest/components/updaters/ChildAssignationUpdater'
+import { ChildTaskUpdater } from '@/rekuest/components/updaters/ChildTaskUpdater'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import type {} from '@react-three/fiber'
 import { useEffect, useState } from 'react'
 import Timestamp from 'react-timestamp'
-import { isCancalable, isInterruptable, useReassign } from '../AssignationPage'
+import { isCancalable, isInterruptable, useReassign } from '../TaskPage'
 
 /**
  * Keeps the store in sync when the GraphQL cache updates
- * (e.g. via the ChildAssignationUpdater subscription).
+ * (e.g. via the ChildTaskUpdater subscription).
  */
-const StoreRefresher = ({ assignation }: { assignation: DetailAssignationFragment }) => {
+const StoreRefresher = ({ task }: { task: DetailTaskFragment }) => {
   const refreshTimeline = useSpaceViewStore((s) => s.refreshTimeline)
 
   useEffect(() => {
-    refreshTimeline(assignation)
-  }, [assignation, refreshTimeline])
+    refreshTimeline(task)
+  }, [task, refreshTimeline])
 
   return null
 }
 
-export const TaskSpacePage = asDetailQueryRoute(useDetailAssignationQuery, ({ data, id }) => {
-  const reassign = useReassign({ assignation: data.assignation })
+export const TaskSpacePage = asDetailQueryRoute(useDetailTaskQuery, ({ data, id }) => {
+  const reassign = useReassign({ task: data.task })
   const [cancel] = useCancelMutation()
   const [interrupt] = useInterruptMutation()
 
-  const [store] = useState(() => createSpaceViewStore(data.assignation))
+  const [store] = useState(() => createSpaceViewStore(data.task))
 
   return (
     <SpaceViewStoreContext.Provider value={store}>
-      <StoreRefresher assignation={data.assignation} />
+      <StoreRefresher task={data.task} />
       <LiveTicker />
-      <RekuestAssignation.ModelPage
+      <RekuestTask.ModelPage
         title={
           <div className="flex flex-row gap-2">
-            {data?.assignation?.action.name}
+            {data?.task?.action.name}
             <p className="text-md font-light text-muted-foreground">
-              <Timestamp date={data.assignation.createdAt} relative />
+              <Timestamp date={data.task.createdAt} relative />
             </p>
           </div>
         }
-        object={data.assignation}
+        object={data.task}
         pageActions={
           <div className="flex gap-2">
             <Button
@@ -70,11 +70,11 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailAssignationQuery, ({ da
             >
               Rerun
             </Button>
-            {isCancalable(data.assignation) && (
+            {isCancalable(data.task) && (
               <Button
                 onClick={() =>
                   cancel({
-                    variables: { input: { assignation: data.assignation.id } }
+                    variables: { input: { task: data.task.id } }
                   })
                 }
                 variant={'destructive'}
@@ -83,11 +83,11 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailAssignationQuery, ({ da
                 Cancel
               </Button>
             )}
-            {isInterruptable(data.assignation) && (
+            {isInterruptable(data.task) && (
               <Button
                 onClick={() =>
                   interrupt({
-                    variables: { input: { assignation: data.assignation.id } }
+                    variables: { input: { task: data.task.id } }
                   })
                 }
                 variant={'destructive'}
@@ -101,12 +101,12 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailAssignationQuery, ({ da
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <RekuestAssignation.Komments object={data?.assignation} />
+              Comments: <RekuestTask.Komments object={data?.task} />
             }}
           />
         }
       >
-        <ChildAssignationUpdater assignationId={id} />
+        <ChildTaskUpdater taskId={id} />
         <LiveStatusStrip />
         <ResizablePanelGroup
           direction="vertical"
@@ -120,7 +120,7 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailAssignationQuery, ({ da
             <TaskTimeline />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </RekuestAssignation.ModelPage>
+      </RekuestTask.ModelPage>
     </SpaceViewStoreContext.Provider>
   )
 })

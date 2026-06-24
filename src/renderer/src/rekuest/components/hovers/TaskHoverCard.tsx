@@ -7,11 +7,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Object } from "@/types";
 import { formatDistanceToNow } from "date-fns";
-import { useHoverAssignationQuery } from "../../api/graphql";
-import { AssignationStatusIcon, formatEventKind } from "./status";
+import { useHoverTaskQuery } from "../../api/graphql";
+import { TaskStatusIcon, formatEventKind } from "./status";
 
-export const AssignationHoverCard = ({ object }: { object: Object }) => {
-  const { data, error } = useHoverAssignationQuery({
+export const TaskHoverCard = ({ object }: { object: Object }) => {
+  const { data, error } = useHoverTaskQuery({
     variables: { id: object.id },
     fetchPolicy: "cache-first",
   });
@@ -28,53 +28,53 @@ export const AssignationHoverCard = ({ object }: { object: Object }) => {
     return <HoverSkeleton />;
   }
 
-  const assignation = data.assignation;
-  const latestProgress = assignation.events.find(
+  const task = data.task;
+  const latestProgress = task.events.find(
     (event) => event.progress != null,
   )?.progress;
-  const latestMessage = assignation.events.find(
+  const latestMessage = task.events.find(
     (event) => event.message,
   )?.message;
 
   return (
     <HoverShell
-      title={assignation.action.name}
-      subtitle={assignation.reference ?? undefined}
+      title={task.action.name}
+      subtitle={task.reference ?? undefined}
       icon={
-        <AssignationStatusIcon
-          kind={assignation.latestEventKind}
-          isDone={assignation.isDone}
+        <TaskStatusIcon
+          kind={task.latestEventKind}
+          isDone={task.isDone}
         />
       }
     >
       <div className="flex flex-col gap-1">
         <HoverRow
           label="Status"
-          value={formatEventKind(assignation.latestEventKind)}
+          value={formatEventKind(task.latestEventKind)}
         />
-        {assignation.implementation?.agent && (
+        {task.implementation?.agent && (
           <HoverRow
             label="Agent"
-            value={assignation.implementation.agent.name}
+            value={task.implementation.agent.name}
           />
         )}
         <HoverRow
           label="Started"
-          value={formatDistanceToNow(new Date(assignation.createdAt), {
+          value={formatDistanceToNow(new Date(task.createdAt), {
             addSuffix: true,
           })}
         />
-        {assignation.finishedAt && (
+        {task.finishedAt && (
           <HoverRow
             label="Finished"
-            value={formatDistanceToNow(new Date(assignation.finishedAt), {
+            value={formatDistanceToNow(new Date(task.finishedAt), {
               addSuffix: true,
             })}
           />
         )}
       </div>
 
-      {!assignation.isDone && latestProgress != null && (
+      {!task.isDone && latestProgress != null && (
         <div className="flex flex-col gap-1">
           <Progress value={latestProgress} className="h-1.5" />
           <span className="text-[10px] text-muted-foreground text-right">
@@ -95,4 +95,4 @@ export const AssignationHoverCard = ({ object }: { object: Object }) => {
   );
 };
 
-export default AssignationHoverCard;
+export default TaskHoverCard;

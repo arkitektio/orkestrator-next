@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MikroHistory, RekuestAssignation } from "@/linkers";
+import { MikroHistory, RekuestTask } from "@/linkers";
 import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
@@ -42,7 +42,7 @@ const TheCard = ({ history }: HistoryCardProps) => {
                 )}
               </div>
               {history.task && (
-                <RekuestAssignation.DetailLink
+                <RekuestTask.DetailLink
                   className={({ isActive } /*  */) =>
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
@@ -50,7 +50,7 @@ const TheCard = ({ history }: HistoryCardProps) => {
                   object={history.task.id}
                 >
                   <Badge> during</Badge>
-                </RekuestAssignation.DetailLink>
+                </RekuestTask.DetailLink>
               )}
             </CardDescription>
           </div>

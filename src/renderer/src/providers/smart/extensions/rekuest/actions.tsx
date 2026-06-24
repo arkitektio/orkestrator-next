@@ -12,7 +12,7 @@ import React from "react";
 import * as LucideIcons from "lucide-react";
 import {
   ActionDemandInput,
-  AssignationEventFragment,
+  TaskEventFragment,
   DetailImplementationFragment,
   DemandKind,
   ImplementationOrder,
@@ -23,7 +23,7 @@ import {
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
-import { trackAssignation } from "@/rekuest/lib/assignationTracker";
+import { trackTask } from "@/rekuest/lib/taskTracker";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Boxes, PlayCircle } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
@@ -93,7 +93,6 @@ const buildActionDemands = (
             at: 0,
             kind: PortKind.Structure,
             identifier: props.objects[0].identifier,
-            object: props.objects[0].object,
           },
         ],
       });
@@ -127,7 +126,6 @@ const buildActionDemands = (
             at: 1,
             kind: PortKind.Structure,
             identifier: props.partners[0].identifier,
-            object: props.partners[0].object,
           },
         ],
       });
@@ -300,7 +298,7 @@ export const DirectImplementationAssignment = (
     }
 
     const reference = uuidv4();
-    const untrack = trackAssignation(reference, (event) => {
+    const untrack = trackTask(reference, (event) => {
       props.onDone?.({ event, kind: "action" });
     });
 
@@ -401,14 +399,14 @@ const useAssignActionProgress = (props: SmartContextProps) => {
   }, []);
 
   const onEvent = React.useCallback(
-    (event: AssignationEventFragment) => {
-      if (event.kind === "DONE") {
+    (event: TaskEventFragment) => {
+      if (event.kind === "COMPLETED") {
         setDoing(false);
         setProgress(null);
         setError(null);
         props.onDone?.({ event, kind: "action" });
       }
-      if (event.kind === "ERROR" || event.kind === "CRITICAL") {
+      if (event.kind === "FAILED" || event.kind === "CRITICAL") {
         const message = event.message || "Unknown error";
         triggerErrorFeedback(message);
       }
@@ -468,7 +466,7 @@ export const ImplementationAssignButton = (
     }
 
     const reference = uuidv4();
-    const untrack = trackAssignation(reference, onEvent);
+    const untrack = trackTask(reference, onEvent);
 
     try {
       await assign({
@@ -560,7 +558,7 @@ export const BatchImplementationAssignButton = (
       }
 
       const reference = uuidv4();
-      const untrack = trackAssignation(reference, onEvent);
+      const untrack = trackTask(reference, onEvent);
 
       try {
         await assign({
@@ -644,7 +642,7 @@ export const AssignButton = (
     }
 
     const reference = uuidv4();
-    const untrack = trackAssignation(reference, onEvent);
+    const untrack = trackTask(reference, onEvent);
 
     try {
       await assign({
@@ -768,7 +766,7 @@ export const BatchAssignButton = (
       }
 
       const reference = uuidv4();
-      const untrack = trackAssignation(reference, onEvent);
+      const untrack = trackTask(reference, onEvent);
 
       try {
         await assign({

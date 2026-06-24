@@ -1,44 +1,53 @@
-query Assignations {
-  assignations {
-    ...PostmanAssignation
+query Tasks {
+  tasks {
+    ...PostmanTask
   }
 }
 
-query DetailAssignation($id: ID!) {
-  assignation(id: $id) {
-    ...DetailAssignation
+query DetailTask($id: ID!) {
+  task(id: $id) {
+    ...DetailTask
   }
 }
 
-query ListAssignations(
-  $filter: AssignationFilter
-  $ordering: [AssignationOrder!]
+# Single-task hydration for the non-traversable subscription `create` path:
+# a thin TaskChange only carries ids, so the client fetches the full PostmanTask
+# once to populate the normalized cache. See TaskUpdater / ChildTaskUpdater.
+query Task($id: ID!) {
+  task(id: $id) {
+    ...PostmanTask
+  }
+}
+
+query ListTasks(
+  $filter: TaskFilter
+  $ordering: [TaskOrder!]
   $pagination: OffsetPaginationInput
 ) {
   tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
-    ...ListAsssignation
+    ...ListTask
   }
 }
 
-query ListAssignationsDetails(
-  $filter: AssignationFilter
-  $ordering: [AssignationOrder!]
+query ListTasksDetails(
+  $filter: TaskFilter
+  $ordering: [TaskOrder!]
   $pagination: OffsetPaginationInput
 ) {
   tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
-    ...PostmanAssignation
+    ...PostmanTask
   }
 }
 
 
-query NoChildrenDetailAssignation($id: ID!) {
-  assignation(id: $id) {
-    ...NoChildrenDetailAssignation
+query NoChildrenDetailTask($id: ID!) {
+  task(id: $id) {
+    ...NoChildrenDetailTask
   }
 }
 
-query HoverAssignation($id: ID!) {
-  assignation(id: $id) {
-    ...HoverAssignation
+query HoverTask($id: ID!) {
+  task(id: $id) {
+    ...HoverTask
   }
 }

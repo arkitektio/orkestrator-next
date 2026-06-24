@@ -12,7 +12,7 @@ import {
 } from "@/providers/smart/buildSmartAdapters";
 import { ObjectButton } from "@/providers/smart/extensions/context";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useLiveTask } from "@/rekuest/hooks/useTasks";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { ComponentType, ReactNode } from "react";
 import { Komments } from "@/lok-next/components/komments/Komments";
@@ -23,7 +23,7 @@ import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
 import DatasetHoverCard from "@/mikro-next/components/hovers/DatasetHoverCard";
 import ActionHoverCard from "@/rekuest/components/hovers/ActionHoverCard";
 import AgentHoverCard from "@/rekuest/components/hovers/AgentHoverCard";
-import AssignationHoverCard from "@/rekuest/components/hovers/AssignationHoverCard";
+import TaskHoverCard from "@/rekuest/components/hovers/TaskHoverCard";
 import ImplementationHoverCard from "@/rekuest/components/hovers/ImplementationHoverCard";
 import NeuronModelHoverCard from "@/elektro/components/hovers/NeuronModelHoverCard";
 import SimulationHoverCard from "@/elektro/components/hovers/SimulationHoverCard";
@@ -45,8 +45,8 @@ const hoverCards: Record<string, HoverCardEntry> = {
   "@mikro/dataset": { Component: DatasetHoverCard, Guard: Guard.Mikro },
   "@rekuest/action": { Component: ActionHoverCard, Guard: Guard.Rekuest },
   "@rekuest/agent": { Component: AgentHoverCard, Guard: Guard.Rekuest },
-  "@rekuest/assignation": {
-    Component: AssignationHoverCard,
+  "@rekuest/task": {
+    Component: TaskHoverCard,
     Guard: Guard.Rekuest,
   },
   "@rekuest/implementation": {
@@ -134,7 +134,7 @@ configureSmartBuilder({
     });
   },
   useLive: (identifier, object) => {
-    return useLiveAssignation({
+    return useLiveTask({
       identifier,
       object,
     });

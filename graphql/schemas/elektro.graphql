@@ -2234,7 +2234,7 @@ type SynapticConnection implements NetConnection {
   weight: ElectricalConductance
 }
 
-"""A verified provenance assignation under which changes were made."""
+"""A verified provenance task under which changes were made."""
 type Task {
   """The executing agent client id."""
   agentClientId: String!
@@ -2247,9 +2247,6 @@ type Task {
 
   """The args canonicalization algorithm/version."""
   argsHashAlgorithm: String!
-
-  """This assignation id."""
-  assignationId: String!
 
   """The root human causer."""
   assigner: User
@@ -2268,11 +2265,14 @@ type Task {
   """The organization the task ran in."""
   organization: Organization!
 
-  """The immediate parent assignation id, if any."""
-  parentAssignationId: String
+  """The immediate parent task id, if any."""
+  parentTaskId: String
 
-  """The root assignation id of the whole causal tree."""
-  rootAssignationId: String!
+  """The root task id of the whole causal tree."""
+  rootTaskId: String!
+
+  """This task id."""
+  taskId: String!
 
   """The unique single-use token id."""
   tokenId: String!

@@ -6,14 +6,14 @@ import React from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import {
-  AssignationEventFragment,
+  TaskEventFragment,
   DemandKind,
   ListShortcutFragment,
   PortDemandInput,
   PortKind,
   useShortcutsQuery,
 } from "@/rekuest/api/graphql";
-import { trackAssignation } from "@/rekuest/lib/assignationTracker";
+import { trackTask } from "@/rekuest/lib/taskTracker";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Zap } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
@@ -147,13 +147,13 @@ export const ShortcutButton = (
   const [progress, setProgress] = React.useState<number | null>(0);
 
   const doStuff = React.useCallback(
-    (event: AssignationEventFragment) => {
-      if (event.kind === "DONE") {
+    (event: TaskEventFragment) => {
+      if (event.kind === "COMPLETED") {
         setDoing(false);
         setProgress(null);
         props.onDone?.({ event, kind: "shortcut" });
       }
-      if (event.kind === "ERROR" || event.kind === "CRITICAL") {
+      if (event.kind === "FAILED" || event.kind === "CRITICAL") {
         const message = event.message || "Unknown error";
         setDoing(false);
         setProgress(null);
@@ -185,7 +185,7 @@ export const ShortcutButton = (
       }
 
       const reference = uuidv4();
-      const untrack = trackAssignation(reference, doStuff);
+      const untrack = trackTask(reference, doStuff);
 
       try {
         await assign({

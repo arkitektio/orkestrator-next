@@ -12,7 +12,7 @@ import { RekuestImplementation } from "@/linkers";
 import {
   MinimalImplementationFragment
 } from "@/rekuest/api/graphql";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useLiveTask } from "@/rekuest/hooks/useTasks";
 
 interface Props {
   item: MinimalImplementationFragment;
@@ -21,7 +21,7 @@ interface Props {
 
 const TheCard = ({ item }: Props) => {
 
-  const progress = useLiveAssignation({
+  const progress = useLiveTask({
     assignedImplementation: item.id,
   });
 

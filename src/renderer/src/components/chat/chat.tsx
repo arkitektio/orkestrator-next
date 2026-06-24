@@ -39,7 +39,7 @@ import {
   useDetailActionQuery,
   DemandKind,
   PortKind,
-  AssignationEventKind,
+  TaskEventKind,
   useCancelMutation,
 } from "@/rekuest/api/graphql";
 import {
@@ -203,7 +203,7 @@ const InstallReplyerPopover = (props: {
   );
 };
 
-export interface ActiveAssignation {
+export interface ActiveTask {
   id: string;
   reference: string;
   actionName: string;
@@ -300,19 +300,19 @@ export function Chat({ isMobile, room }: ChatProps) {
   });
   const action = actionDetailData?.action;
 
-  const [activeAssignations, setActiveAssignations] = useState<ActiveAssignation[]>([]);
+  const [activeTasks, setActiveTasks] = useState<ActiveTask[]>([]);
 
   const { assign } = useAssignWithCallback({
     onDone: (event) => {
-      setActiveAssignations((prev) => {
+      setActiveTasks((prev) => {
         return prev.map((ass) => {
-          if (ass.reference === event.assignation.reference) {
-            let status: ActiveAssignation["status"] = ass.status;
-            if (event.kind === AssignationEventKind.Done) {
+          if (ass.reference === event.task.reference) {
+            let status: ActiveTask["status"] = ass.status;
+            if (event.kind === TaskEventKind.Completed) {
               status = "DONE";
-            } else if (event.kind === AssignationEventKind.Error) {
+            } else if (event.kind === TaskEventKind.Failed) {
               status = "ERROR";
-            } else if (event.kind === AssignationEventKind.Cancelled) {
+            } else if (event.kind === TaskEventKind.Cancelled) {
               status = "CANCELLED";
             } else {
               status = "RUNNING";
@@ -333,32 +333,32 @@ export function Chat({ isMobile, room }: ChatProps) {
   });
 
   useEffect(() => {
-    const doneAssignations = activeAssignations.filter((ass) => ass.status === "DONE");
-    if (doneAssignations.length > 0) {
-      const timers = doneAssignations.map((ass) => {
+    const doneTasks = activeTasks.filter((ass) => ass.status === "DONE");
+    if (doneTasks.length > 0) {
+      const timers = doneTasks.map((ass) => {
         return setTimeout(() => {
-          setActiveAssignations((prev) => prev.filter((p) => p.reference !== ass.reference));
+          setActiveTasks((prev) => prev.filter((p) => p.reference !== ass.reference));
         }, 3000);
       });
       return () => {
         timers.forEach((t) => clearTimeout(t));
       };
     }
-  }, [activeAssignations]);
+  }, [activeTasks]);
 
-  const dismissAssignation = (reference: string) => {
-    setActiveAssignations((prev) => prev.filter((ass) => ass.reference !== reference));
+  const dismissTask = (reference: string) => {
+    setActiveTasks((prev) => prev.filter((ass) => ass.reference !== reference));
   };
 
   const [cancelAssign] = useCancelMutation();
 
-  const handleCancelAssignation = async (id: string, reference: string) => {
+  const handleCancelTask = async (id: string, reference: string) => {
     if (!id) return;
     try {
       toast.info("Canceling replyer...");
       await cancelAssign({
         variables: {
-          input: { assignation: id },
+          input: { task: id },
         },
       });
       toast.success("Cancellation requested");
@@ -389,7 +389,7 @@ export function Chat({ isMobile, room }: ChatProps) {
 
       const reference = uuidv4();
 
-      setActiveAssignations((prev) => [
+      setActiveTasks((prev) => [
         ...prev,
         {
           id: "",
@@ -402,23 +402,23 @@ export function Chat({ isMobile, room }: ChatProps) {
       ]);
 
       try {
-        const assignation = await assign({
+        const task = await assign({
           action: selectedActionId,
           args: assignArgs,
           reference,
         });
 
-        setActiveAssignations((prev) =>
+        setActiveTasks((prev) =>
           prev.map((ass) =>
             ass.reference === reference
-              ? { ...ass, id: assignation.id, status: "RUNNING" }
+              ? { ...ass, id: task.id, status: "RUNNING" }
               : ass
           )
         );
       } catch (err: any) {
         console.error(err);
         toast.error(`Replyer failed: ${err.message || err}`);
-        setActiveAssignations((prev) =>
+        setActiveTasks((prev) =>
           prev.map((ass) =>
             ass.reference === reference
               ? { ...ass, status: "ERROR", message: err.message || "Failed to trigger" }
@@ -438,7 +438,7 @@ export function Chat({ isMobile, room }: ChatProps) {
     return actionsData.actions.find((act) => act.id === selectedActionId);
   }, [actionsData, selectedActionId]);
 
-  const latestAssignation = selectedAction?.latestAssignation;
+  const latestTask = selectedAction?.latestTask;
 
   const messageArg = useMemo(() => {
     return action?.args.find(
@@ -459,8 +459,8 @@ export function Chat({ isMobile, room }: ChatProps) {
   const formOverwrites = useMemo(() => {
     const overwrites: Record<string, any> = {};
 
-    if (latestAssignation?.args) {
-      Object.assign(overwrites, latestAssignation.args);
+    if (latestTask?.args) {
+      Object.assign(overwrites, latestTask.args);
     }
 
     if (messageKey) {
@@ -470,7 +470,7 @@ export function Chat({ isMobile, room }: ChatProps) {
       };
     }
     return overwrites;
-  }, [messageKey, latestAssignation]);
+  }, [messageKey, latestTask]);
 
   const form = usePortForm({
     ports: (action?.args || []) as any,
@@ -516,7 +516,7 @@ export function Chat({ isMobile, room }: ChatProps) {
 
         const reference = uuidv4();
 
-        setActiveAssignations((prev) => [
+        setActiveTasks((prev) => [
           ...prev,
           {
             id: "",
@@ -529,23 +529,23 @@ export function Chat({ isMobile, room }: ChatProps) {
         ]);
 
         try {
-          const assignation = await assign({
+          const task = await assign({
             action: selectedActionId,
             args: assignArgs,
             reference,
           });
 
-          setActiveAssignations((prev) =>
+          setActiveTasks((prev) =>
             prev.map((ass) =>
               ass.reference === reference
-                ? { ...ass, id: assignation.id, status: "RUNNING" }
+                ? { ...ass, id: task.id, status: "RUNNING" }
                 : ass
             )
           );
         } catch (err: any) {
           console.error(err);
           toast.error(`Replyer failed: ${err.message || err}`);
-          setActiveAssignations((prev) =>
+          setActiveTasks((prev) =>
             prev.map((ass) =>
               ass.reference === reference
                 ? { ...ass, status: "ERROR", message: err.message || "Failed to trigger" }
@@ -683,9 +683,9 @@ export function Chat({ isMobile, room }: ChatProps) {
           setStagedStructures((prev) => prev.filter((_, i) => i !== idx));
         }}
         prefillText={prefillText}
-        activeAssignations={activeAssignations}
-        onDismissAssignation={dismissAssignation}
-        onCancelAssignation={handleCancelAssignation}
+        activeTasks={activeTasks}
+        onDismissTask={dismissTask}
+        onCancelTask={handleCancelTask}
         onRereply={selectedActionId !== "none" ? handleRereply : undefined}
       />
     </div>

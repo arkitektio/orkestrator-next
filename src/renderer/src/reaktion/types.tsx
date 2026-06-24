@@ -154,7 +154,7 @@ export type Connector<
 export enum RiverMode {
   EDIT = "EDIT",
   VIEW = "VIEW",
-  ASSIGNATION = "ASSIGNATION",
+  TASK = "TASK",
   PROVISION = "PROVISION",
 }
 

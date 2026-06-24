@@ -8,7 +8,7 @@ import { useMeQuery } from "@/lok-next/api/graphql";
 import { PortKind } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Loader2, CheckCircle2, AlertCircle, XCircle, X, Ban, RefreshCw } from "lucide-react";
-import { ActiveAssignation } from "./chat";
+import { ActiveTask } from "./chat";
 import React, { useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DelegatingStructureWidget } from "../widgets/returns/DelegatingStructureWidget";
@@ -23,9 +23,9 @@ interface ChatListProps {
   stagedStructures: { identifier: string; object: string }[];
   onRemoveStructure: (index: number) => void;
   prefillText?: string;
-  activeAssignations?: ActiveAssignation[];
-  onDismissAssignation?: (reference: string) => void;
-  onCancelAssignation?: (id: string, reference: string) => void;
+  activeTasks?: ActiveTask[];
+  onDismissTask?: (reference: string) => void;
+  onCancelTask?: (id: string, reference: string) => void;
   onRereply?: (messageId: string) => void;
 }
 
@@ -47,9 +47,9 @@ export function ChatList({
   stagedStructures,
   onRemoveStructure,
   prefillText,
-  activeAssignations = [],
-  onDismissAssignation,
-  onCancelAssignation,
+  activeTasks = [],
+  onDismissTask,
+  onCancelTask,
   onRereply,
 }: ChatListProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -213,10 +213,10 @@ export function ChatList({
         </div>
       </div>
       <div className="sticky bottom-0 px-3">
-        {activeAssignations.length > 0 && (
+        {activeTasks.length > 0 && (
           <div className="flex flex-col gap-2 items-center">
             <AnimatePresence>
-              {activeAssignations.map((ass) => (
+              {activeTasks.map((ass) => (
                 <motion.div
                   key={ass.reference}
                   initial={{ opacity: 0, y: 15, scale: 0.96 }}
@@ -283,7 +283,7 @@ export function ChatList({
                     <button
                       type="button"
                       disabled={!ass.id}
-                      onClick={() => ass.id && onCancelAssignation?.(ass.id, ass.reference)}
+                      onClick={() => ass.id && onCancelTask?.(ass.id, ass.reference)}
                       className="rounded-full p-1 hover:bg-red-500/20 text-muted-foreground hover:text-red-500 transition-colors shrink-0 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                       title="Cancel Replyer"
                     >
@@ -292,7 +292,7 @@ export function ChatList({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => onDismissAssignation?.(ass.reference)}
+                      onClick={() => onDismissTask?.(ass.reference)}
                       className="rounded-full p-1 hover:bg-muted/20 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                       title="Dismiss"
                     >

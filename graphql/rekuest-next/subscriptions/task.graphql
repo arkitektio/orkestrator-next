@@ -1,19 +1,21 @@
-subscription WatchAssignationEvents {
-  assignationEvents {
-    ...AssignationEvent
+# Global, always-running stream: root tasks created by THIS client (caller scoped,
+# no child tasks). Consumed by the global TaskUpdater.
+subscription WatchMyTasks {
+  mytasks {
+    ...TaskChangeEvent
   }
 }
 
-subscription WatchAssignations {
-  assignations {
-    ...AssignationChangeEvent
+# Org-wide root task changes. Only for the dedicated org-wide tasks page.
+subscription WatchOrgTasks {
+  tasks {
+    ...TaskChangeEvent
   }
 }
 
-
-
-subscription WatchChildAssignations($parentId: ID!) {
-  childAssignations(id: $parentId) {
-    ...ChildAssignationEvent
+# All descendant task changes of a task. Only on the task-detail page.
+subscription WatchChildTasks($parentId: ID!) {
+  childTasks(id: $parentId) {
+    ...ChildTaskEvent
   }
 }

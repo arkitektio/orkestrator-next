@@ -1,11 +1,11 @@
-fragment PostmanAssignation on Assignation {
+fragment PostmanTask on Task {
   id
   latestEventKind
   args
   reference
   isDone
   events(ordering: {createdAt: DESC}) {
-    ...AssignationEvent
+    ...TaskEvent
   }
   ephemeral
   action {
@@ -33,7 +33,7 @@ fragment PostmanAssignation on Assignation {
   finishedAt
 }
 
-fragment MinimalAssignation on Assignation {
+fragment MinimalTask on Task {
   id
   reference
   latestEventKind
@@ -48,8 +48,8 @@ fragment MinimalAssignation on Assignation {
   }
 }
 
-fragment NoChildrenDetailAssignation on Assignation {
-  ...PostmanAssignation
+fragment NoChildrenDetailTask on Task {
+  ...PostmanTask
   parent {
     id
   }
@@ -68,10 +68,10 @@ fragment NoChildrenDetailAssignation on Assignation {
   }
 }
 
-fragment DetailAssignation on Assignation {
-  ...PostmanAssignation
+fragment DetailTask on Task {
+  ...PostmanTask
   children {
-    ...PostmanAssignation
+    ...PostmanTask
   }
   parent {
     id
@@ -127,12 +127,12 @@ fragment DetailAssignation on Assignation {
   }
 }
 
-fragment AssignationEvent on AssignationEvent {
+fragment TaskEvent on TaskEvent {
   id
   kind
   level
   returns
-  assignation {
+  task {
     id
     reference
   }
@@ -151,24 +151,55 @@ fragment AssignationEvent on AssignationEvent {
     }
   }
 }
-fragment AssignationChangeEvent on AssignationChangeEvent {
+# Non-traversable subscription delta types. Relations are scalar IDs; the client
+# hydrates the immutable graph (action/implementation/agent/children) once via
+# query (see `query Task`) and merges hot scalars + events into the normalized
+# cache. See TaskUpdater.tsx / ChildTaskUpdater.tsx.
+fragment TaskChange on TaskChange {
+  id
+  reference
+  isDone
+  latestEventKind
+  latestInstructKind
+  statusMessage
+  action
+  implementation
+  agent
+  root
+  parent
+  createdAt
+  updatedAt
+  finishedAt
+}
+
+fragment TaskEventChange on TaskEventChange {
+  id
+  task
+  kind
+  message
+  progress
+  returns
+  createdAt
+}
+
+fragment TaskChangeEvent on TaskChangeEvent {
   create {
-    ...PostmanAssignation
+    ...TaskChange
   }
   event {
-    ...AssignationEvent
+    ...TaskEventChange
   }
 }
-fragment ChildAssignationEvent on ChildAssignationEvent {
+fragment ChildTaskEvent on ChildTaskEvent {
   create {
-    ...PostmanAssignation
+    ...TaskChange
   }
   update {
-    ...PostmanAssignation
+    ...TaskChange
   }
 }
 
-fragment ListAsssignation on Assignation {
+fragment ListTask on Task {
   id
   reference
   latestEventKind
@@ -186,7 +217,7 @@ fragment ListAsssignation on Assignation {
   createdAt
 }
 
-fragment HoverAssignation on Assignation {
+fragment HoverTask on Task {
   id
   reference
   latestEventKind

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { DetailClientFragment, useClientQuery } from "@/lok-next/api/graphql";
-import { DetailAssignationFragment, PortKind, PostmanAssignationFragment, useDetailAssignationQuery } from "@/rekuest/api/graphql";
+import { DetailTaskFragment, PortKind, PostmanTaskFragment, useDetailTaskQuery } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { WidgetRegistryType } from "@/rekuest/widgets/types";
 import { useEffect } from "react";
@@ -19,7 +19,7 @@ type ReportBugFormData = {
 };
 
 export interface ReportBugDialogProps {
-  assignationId: string; // Optional: if you want to fetch full details
+  taskId: string; // Optional: if you want to fetch full details
 }
 
 /**
@@ -44,35 +44,35 @@ function buildGitHubIssueUrl({
 }
 
 /**
- * Format assignation data for the bug report
+ * Format task data for the bug report
  */
-async function formatAssignationInfo(
-  assignation: PostmanAssignationFragment,
+async function formatTaskInfo(
+  task: PostmanTaskFragment,
   registry: WidgetRegistryType,
   descriptions?: Record<string, Array<{ key: string; value: string }>>
 ): Promise<string> {
-  const errorEvent = assignation.events.find(
-    (e) => e.kind === "CRITICAL" || e.kind === "ERROR"
+  const errorEvent = task.events.find(
+    (e) => e.kind === "CRITICAL" || e.kind === "FAILED"
   );
 
   let info = `## Task Information\n\n`;
-  info += `- **Action**: ${assignation.action.name}\n`;
-  info += `- **Status**: ${assignation.latestEventKind}\n`;
-  info += `- **Reference**: ${assignation.reference || "N/A"}\n`;
-  info += `- **Created At**: ${new Date(assignation.createdAt).toISOString()}\n`;
+  info += `- **Action**: ${task.action.name}\n`;
+  info += `- **Status**: ${task.latestEventKind}\n`;
+  info += `- **Reference**: ${task.reference || "N/A"}\n`;
+  info += `- **Created At**: ${new Date(task.createdAt).toISOString()}\n`;
 
-  if (assignation.implementation) {
-    info += `- **Implementation**: ${assignation.implementation.interface}\n`;
+  if (task.implementation) {
+    info += `- **Implementation**: ${task.implementation.interface}\n`;
   }
 
   // Get descriptions if not provided
-  const argDescriptions = descriptions || (await describeArgs(assignation, registry));
+  const argDescriptions = descriptions || (await describeArgs(task, registry));
 
   info += `\n## Arguments\n\n`;
 
   // Show described arguments in a readable format with list of descriptors
-  assignation.action.args.forEach((arg) => {
-    const value = assignation.args[arg.key];
+  task.action.args.forEach((arg) => {
+    const value = task.args[arg.key];
     const descriptorList = argDescriptions[arg.key] || [];
 
     info += `### ${arg.key}`;
@@ -96,7 +96,7 @@ async function formatAssignationInfo(
   });
 
   info += `\n### Raw Arguments (JSON)\n\n`;
-  info += `\`\`\`json\n${JSON.stringify(assignation.args, null, 2)}\n\`\`\`\n`;
+  info += `\`\`\`json\n${JSON.stringify(task.args, null, 2)}\n\`\`\`\n`;
 
   if (errorEvent) {
     info += `\n## Error Message\n\n`;
@@ -104,7 +104,7 @@ async function formatAssignationInfo(
   }
 
   info += `\n## Event Timeline\n\n`;
-  assignation.events.forEach((event, idx) => {
+  task.events.forEach((event, idx) => {
     info += `${idx + 1}. **${event.kind}** (${new Date(event.createdAt).toLocaleString()})`;
     if (event.message) {
       info += `: ${event.message}`;
@@ -118,25 +118,25 @@ async function formatAssignationInfo(
 
 
 export const describeArgs = async (
-  assignation: PostmanAssignationFragment,
+  task: PostmanTaskFragment,
   registry: WidgetRegistryType
 ): Promise<Record<string, Array<{ key: string; value: string }>>> => {
   const descriptions: Record<string, Array<{ key: string; value: string }>> = {};
 
   // Use Promise.all to wait for all async operations
   await Promise.all(
-    assignation.action.args.map(async (arg) => {
+    task.action.args.map(async (arg) => {
       if (arg.kind === PortKind.Structure) {
         const assignWidget = arg.assignWidget;
 
         if (assignWidget?.__typename === "SearchAssignWidget") {
           const ward = registry.getWard(assignWidget.ward);
 
-          if (ward?.describe && assignation.args[arg.key]) {
+          if (ward?.describe && task.args[arg.key]) {
             try {
               const desc = await ward.describe({
                 identifier: arg.identifier,
-                id: assignation.args[arg.key],
+                id: task.args[arg.key],
               });
               descriptions[arg.key] = Array.isArray(desc) ? desc : [{ key: "value", value: String(desc) }];
               console.log("Described", arg.key, desc);
@@ -145,18 +145,18 @@ export const describeArgs = async (
               const errorMessage = error instanceof Error ? error.message : "Unknown error";
               descriptions[arg.key] = [
                 { key: "describe_error", value: errorMessage },
-                { key: "raw_value", value: String(assignation.args[arg.key]) }
+                { key: "raw_value", value: String(task.args[arg.key]) }
               ];
             }
           } else {
-            descriptions[arg.key] = [{ key: "value", value: String(assignation.args[arg.key]) }];
+            descriptions[arg.key] = [{ key: "value", value: String(task.args[arg.key]) }];
           }
         } else {
-          descriptions[arg.key] = [{ key: "value", value: String(assignation.args[arg.key]) }];
+          descriptions[arg.key] = [{ key: "value", value: String(task.args[arg.key]) }];
         }
       } else {
         // For non-structure args, show the value directly
-        descriptions[arg.key] = [{ key: "value", value: String(assignation.args[arg.key]) }];
+        descriptions[arg.key] = [{ key: "value", value: String(task.args[arg.key]) }];
       }
     })
   );
@@ -169,29 +169,29 @@ export const describeArgs = async (
 
 
 
-export const ReportBugDialog = ({ assignationId }: ReportBugDialogProps) => {
+export const ReportBugDialog = ({ taskId }: ReportBugDialogProps) => {
   const { closeDialog } = useDialog();
 
 
-  // Optionally fetch full assignation details if only ID is provided
-  const { data: detailData } = useDetailAssignationQuery({
-    variables: { id: assignationId },
+  // Optionally fetch full task details if only ID is provided
+  const { data: detailData } = useDetailTaskQuery({
+    variables: { id: taskId },
   });
 
   const { data: clientData } = useClientQuery({
     variables: {
-      clientId: detailData?.assignation?.implementation?.agent?.client.clientId || "",
+      clientId: detailData?.task?.implementation?.agent?.client.clientId || "",
 
     }
   })
 
 
-  if (!detailData?.assignation || !clientData?.client) {
+  if (!detailData?.task || !clientData?.client) {
     return (
       <DialogHeader>
         <DialogTitle>Report Bug</DialogTitle>
         <div className="text-sm text-red-500">
-          Unable to load assignation details for reporting the bug.
+          Unable to load task details for reporting the bug.
         </div>
         <DialogFooter>
           <Button
@@ -207,7 +207,7 @@ export const ReportBugDialog = ({ assignationId }: ReportBugDialogProps) => {
 
   return (
     <ReportBugDialogInner
-      assignation={detailData.assignation}
+      task={detailData.task}
       client={clientData.client}
     />
   );
@@ -222,7 +222,7 @@ export const ReportBugDialog = ({ assignationId }: ReportBugDialogProps) => {
 
 
 
-export const ReportBugDialogInner = ({ assignation, client }: { assignation: DetailAssignationFragment, client: DetailClientFragment }) => {
+export const ReportBugDialogInner = ({ task, client }: { task: DetailTaskFragment, client: DetailClientFragment }) => {
   const { closeDialog } = useDialog();
   const { registry } = useWidgetRegistry();
 
@@ -230,20 +230,20 @@ export const ReportBugDialogInner = ({ assignation, client }: { assignation: Det
 
   const form = useForm<ReportBugFormData>({
     defaultValues: {
-      title: `Bug in ${assignation?.action.name}: ${assignation?.latestEventKind}`,
+      title: `Bug in ${task?.action.name}: ${task?.latestEventKind}`,
       description: "",
       additionalContext: "Loading argument descriptions...",
     },
   });
 
-  // Update form when assignation data changes - now async
+  // Update form when task data changes - now async
   useEffect(() => {
-    if (assignation && registry) {
-      formatAssignationInfo(assignation, registry).then((info) => {
+    if (task && registry) {
+      formatTaskInfo(task, registry).then((info) => {
         form.setValue("additionalContext", info);
       });
     }
-  }, [assignation, registry, form]);
+  }, [task, registry, form]);
 
   const onSubmit = async (data: ReportBugFormData) => {
     const { title, description, additionalContext } = data;
@@ -289,7 +289,7 @@ export const ReportBugDialogInner = ({ assignation, client }: { assignation: Det
 
         <div className="grid gap-4 py-4">
           <div className="text-sm text-muted-foreground">
-            Report a bug for the failed task: <strong>{assignation?.action.name}</strong>
+            Report a bug for the failed task: <strong>{task?.action.name}</strong>
           </div>
 
           <StringField

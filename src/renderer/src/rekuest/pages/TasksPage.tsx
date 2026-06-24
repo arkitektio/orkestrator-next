@@ -1,5 +1,5 @@
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { Ordering } from "../api/graphql";
 import TaskList from "../components/lists/TaskList";
@@ -23,7 +23,7 @@ const Page = () => {
 
 
   return (
-    <RekuestAssignation.ListPage title={"Tasks"}
+    <RekuestTask.ListPage title={"Tasks"}
       pageActions={
         <>
           {/* 3. Picker updates the URL params */}
@@ -53,7 +53,7 @@ const Page = () => {
 
         <TaskList order={{ createdAt: Ordering.Desc }} filters={{ ...temporalFilter }} />
       </div>
-    </RekuestAssignation.ListPage>
+    </RekuestTask.ListPage>
   );
 };
 

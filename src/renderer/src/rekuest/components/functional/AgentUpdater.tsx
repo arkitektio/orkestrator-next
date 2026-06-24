@@ -67,7 +67,7 @@ export const AgentUpdater = (props: {}) => {
               },
             );
 
-            const toastId = create.id; // Use the assignation id as the toastId
+            const toastId = create.id; // Use the task id as the toastId
             toast(<AgentToatser id={toastId} />, {
               id: toastId,
               duration: 300, // Keep toast open until manually closed or task completes

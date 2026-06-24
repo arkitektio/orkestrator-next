@@ -43,7 +43,7 @@ fragment ProvenanceEntry on ProvenanceEntry {
   id
   task {
     id
-    assignationId
+    taskId
     assigner {
       sub
     }

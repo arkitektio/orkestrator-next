@@ -12,15 +12,15 @@ import {
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
-  AssignationEventFragment,
-  AssignationEventKind,
-  DetailAssignationFragment,
+  TaskEventFragment,
+  TaskEventKind,
+  DetailTaskFragment,
   useCancelMutation,
-  useDetailAssignationQuery,
+  useDetailTaskQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
 import { useEffect } from "react";
@@ -29,13 +29,13 @@ import Timestamp from "react-timestamp";
 import { useAction } from "../../hooks/useAction";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 
-export const AssignationFlow = (props: {
+export const TaskFlow = (props: {
   id: string;
-  assignation: DetailAssignationFragment;
+  task: DetailTaskFragment;
 }) => {
   const { data, error, refetch } = useRunForAssignationQuery({
     variables: {
-      id: props.assignation.id,
+      id: props.task.id,
     },
   });
 
@@ -51,7 +51,7 @@ export const AssignationFlow = (props: {
       {data?.runForAssignation && (
         <TrackFlow
           run={data.runForAssignation}
-          assignation={props.assignation}
+          task={props.task}
         />
       )}
       {error && <div>Error: {error.message}</div>}
@@ -79,7 +79,7 @@ export const LogItem = (props: { event: any }) => {
   );
 };
 
-export const DelegateItem = (props: { event: AssignationEventFragment }) => {
+export const DelegateItem = (props: { event: TaskEventFragment }) => {
   return (
     <TimelineItem className="w-full">
       <TimelineConnector />
@@ -94,13 +94,13 @@ export const DelegateItem = (props: { event: AssignationEventFragment }) => {
           </p>
           This assignmenent was delegated to{" "}
           {props.event.delegatedTo?.implementation.action.name}
-          <RekuestAssignation.DetailLink
+          <RekuestTask.DetailLink
             object={props.event.delegatedTo?.id || ""}
             className="font-semibold"
           >
             {" "}
             (see details)
-          </RekuestAssignation.DetailLink>
+          </RekuestTask.DetailLink>
         </TimelineDescription>
       </TimelineContent>
     </TimelineItem>
@@ -108,8 +108,8 @@ export const DelegateItem = (props: { event: AssignationEventFragment }) => {
 };
 
 export const YieldItem = (props: {
-  assignation: DetailAssignationFragment;
-  event: AssignationEventFragment;
+  task: DetailTaskFragment;
+  event: TaskEventFragment;
 }) => {
   const { registry } = useWidgetRegistry();
 
@@ -127,7 +127,7 @@ export const YieldItem = (props: {
           </p>
           <ReturnsContainer
             registry={registry}
-            ports={props.assignation.action.returns}
+            ports={props.task.action.returns}
             values={props.event.returns}
             options={{ labels: false }}
           />
@@ -138,32 +138,32 @@ export const YieldItem = (props: {
 };
 
 export const DefaultRenderer = (props: {
-  assignation: DetailAssignationFragment;
+  task: DetailTaskFragment;
 }) => {
   return (
     <>
-      <AssignationTimeLine assignation={props.assignation} />
+      <TaskTimeLine task={props.task} />
     </>
   );
 };
 
-export const AssignationTimeLine = (props: {
-  assignation: DetailAssignationFragment;
+export const TaskTimeLine = (props: {
+  task: DetailTaskFragment;
 }) => {
   return (
     <Timeline className="w-full p-2 flex-grow">
-      {props.assignation?.events.map((e) => (
+      {props.task?.events.map((e) => (
         <>
-          {e.kind === AssignationEventKind.Yield && (
-            <YieldItem assignation={props.assignation} event={e} />
+          {e.kind === TaskEventKind.Yield && (
+            <YieldItem task={props.task} event={e} />
           )}
-          {e.kind === AssignationEventKind.Delegate && (
+          {e.kind === TaskEventKind.Delegate && (
             <DelegateItem event={e} />
           )}
 
           {![
-            AssignationEventKind.Yield,
-            AssignationEventKind.Delegate,
+            TaskEventKind.Yield,
+            TaskEventKind.Delegate,
           ].includes(e.kind) && <LogItem event={e} />}
         </>
       ))}
@@ -172,56 +172,56 @@ export const AssignationTimeLine = (props: {
 };
 
 export const useReassign = ({
-  assignation,
+  task,
 }: {
-  assignation: DetailAssignationFragment;
+  task: DetailTaskFragment;
 }) => {
   const { assign } = useAction({
-    id: assignation?.implementation.id || "",
+    id: task?.implementation.id || "",
   });
   const navigate = useNavigate();
 
   const reassign = async () => {
     const x = await assign({
-      args: assignation.args,
-      implementation: assignation?.implementation.id || "",
+      args: task.args,
+      implementation: task?.implementation.id || "",
       hooks: [],
     });
 
-    navigate(RekuestAssignation.linkBuilder(x.id));
+    navigate(RekuestTask.linkBuilder(x.id));
   };
 
   return reassign;
 };
 
-export const isCancalable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone;
+export const isCancalable = (task: DetailTaskFragment) => {
+  return task.isDone;
 };
-export const isInterruptable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone;
+export const isInterruptable = (task: DetailTaskFragment) => {
+  return task.isDone;
 };
 
 export const TPage = asDetailQueryRoute(
-  useDetailAssignationQuery,
+  useDetailTaskQuery,
   ({ data, refetch, subscribeToMore }) => {
     const navigate = useNavigate();
 
-    const reassign = useReassign({ assignation: data.assignation });
+    const reassign = useReassign({ task: data.task });
 
     const [cancel, _] = useCancelMutation();
     const [interrupt, __] = useInterruptMutation();
 
     return (
-      <RekuestAssignation.ModelPage
+      <RekuestTask.ModelPage
         title={
           <div className="flex flex-row gap-2">
-            {data?.assignation?.action.name}
+            {data?.task?.action.name}
             <p className="text-md font-light text-muted-foreground">
-              <Timestamp date={data.assignation.createdAt} relative />
+              <Timestamp date={data.task.createdAt} relative />
             </p>
           </div>
         }
-        object={data.assignation}
+        object={data.task}
         pageActions={
           <div className="flex gap-2">
             <Button
@@ -233,11 +233,11 @@ export const TPage = asDetailQueryRoute(
             >
               Rerun
             </Button>
-            {isCancalable(data.assignation) && (
+            {isCancalable(data.task) && (
               <Button
                 onClick={() =>
                   cancel({
-                    variables: { input: { assignation: data.assignation.id } },
+                    variables: { input: { task: data.task.id } },
                   })
                 }
                 variant={"destructive"}
@@ -246,11 +246,11 @@ export const TPage = asDetailQueryRoute(
                 Cancel
               </Button>
             )}
-            {isInterruptable(data.assignation) && (
+            {isInterruptable(data.task) && (
               <Button
                 onClick={() =>
                   interrupt({
-                    variables: { input: { assignation: data.assignation.id } },
+                    variables: { input: { task: data.task.id } },
                   })
                 }
                 variant={"destructive"}
@@ -265,19 +265,19 @@ export const TPage = asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestAssignation.Komments object={data?.assignation} />
+                <RekuestTask.Komments object={data?.task} />
               ),
             }}
           />
         }
       >
         <pre className="rounded rounded-md p-3 bg-gray-900 border border-gray-800 text-sm mb-4 overflow-x-auto">
-          {data.assignation.events.map((event) => (
+          {data.task.events.map((event) => (
             <div key={event.id}>[<Timestamp date={event.createdAt} />] {event.kind}[{event.level}]: {event.message} {event.returns && JSON.stringify(event.returns)}</div>
           ))}
         </pre>
 
-      </RekuestAssignation.ModelPage>
+      </RekuestTask.ModelPage>
     );
   },
 );

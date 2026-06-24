@@ -1,17 +1,17 @@
 mutation assign($input: AssignInput!) {
   assign(input: $input) {
-    ...PostmanAssignation
+    ...PostmanTask
   }
 }
 
 mutation cancel($input: CancelInput!) {
   cancel(input: $input) {
-    ...PostmanAssignation
+    ...PostmanTask
   }
 }
 
 mutation interrupt($input: InterruptInput!) {
   interrupt(input: $input) {
-    ...PostmanAssignation
+    ...PostmanTask
   }
 }

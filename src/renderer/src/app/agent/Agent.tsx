@@ -111,10 +111,10 @@ export class OrkestratorAgent {
       // a new agent is built on every connection change, so without this each
       // reconnect leaks four IPC callbacks closing over the dead agent.
       this.electronUnsubscribers.push(
-        window.api.onAgentYield((data) => this.notifyElectronListener(data.assignation, "yield", data)),
-        window.api.onAgentDone((data) => this.notifyElectronListener(data.assignation, "done", data)),
-        window.api.onAgentError((data) => this.notifyElectronListener(data.assignation, "error", data)),
-        window.api.onAgentLog((data) => this.notifyElectronListener(data.assignation, "log", data)),
+        window.api.onAgentYield((data) => this.notifyElectronListener(data.task, "yield", data)),
+        window.api.onAgentDone((data) => this.notifyElectronListener(data.task, "done", data)),
+        window.api.onAgentError((data) => this.notifyElectronListener(data.task, "error", data)),
+        window.api.onAgentLog((data) => this.notifyElectronListener(data.task, "log", data)),
       );
     }
 
@@ -228,7 +228,7 @@ export class OrkestratorAgent {
         impls.forEach(impl => {
           if (!impl.interface) return;
           this.register(impl.interface, async (context) => {
-            this.electronListeners.set(context.message.assignation, (type, data) => {
+            this.electronListeners.set(context.message.task, (type, data) => {
               if (!data || typeof data !== "object") {
                 return;
               }
@@ -238,12 +238,12 @@ export class OrkestratorAgent {
               if (type === "error" && "error" in data) context.error(String(data.error));
             });
             try {
-              console.log("Executing electron agent assignation:", context.message);
+              console.log("Executing electron agent task:", context.message);
               await window.api.executeElectron(context.message);
             } catch (e) {
               context.error(String(e));
             } finally {
-              this.electronListeners.delete(context.message.assignation);
+              this.electronListeners.delete(context.message.task);
             }
           }, impl.definition);
         });
@@ -426,22 +426,22 @@ export class OrkestratorAgent {
   }
 
   private async handleCancel(message: CancelMessage) {
-    const controller = this.cancelControllers.get(message.assignation);
+    const controller = this.cancelControllers.get(message.task);
     if (controller) {
       controller.abort();
-      this.cancelControllers.delete(message.assignation);
+      this.cancelControllers.delete(message.task);
       this.send(CancelledEvent.parse({
         type: "CANCELLED",
-        assignation: message.assignation,
+        task: message.task,
       }));
-      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.assignments = this.assignments.filter(a => a.task !== message.task);
       this.notify();
     }
     else {
       this.send(ErrorEvent.parse({
         type: "ERROR",
-        assignation: message.assignation,
-        error: `The assignation ${message.assignation} could not be cancelled because it was not found.`,
+        task: message.task,
+        error: `The task ${message.task} could not be cancelled because it was not found.`,
       }));
     }
 
@@ -466,14 +466,14 @@ export class OrkestratorAgent {
   }
 
   private async handleAssign(message: Assign) {
-    const { assignation, interface: interfaceName } = message;
+    const { task, interface: interfaceName } = message;
     const handler = this.registry.get(interfaceName);
 
     if (!handler) {
       this.send(
         ErrorEvent.parse({
           type: "ERROR",
-          assignation,
+          task,
           error: `No handler for interface ${interfaceName}`,
         })
       );
@@ -483,7 +483,7 @@ export class OrkestratorAgent {
     try {
 
       const newController = new AbortController();
-      this.cancelControllers.set(message.assignation, newController);
+      this.cancelControllers.set(message.task, newController);
       this.assignments.push(message);
       this.notify();
 
@@ -496,7 +496,7 @@ export class OrkestratorAgent {
           this.send(
             YieldEvent.parse({
               type: "YIELD",
-              assignation: message.assignation,
+              task: message.task,
               returns,
             })
           );
@@ -505,30 +505,30 @@ export class OrkestratorAgent {
           this.send(
             ErrorEvent.parse({
               type: "ERROR",
-              assignation: message.assignation,
+              task: message.task,
               error,
             })
           );
-          this.cancelControllers.delete(message.assignation);
-          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.cancelControllers.delete(message.task);
+          this.assignments = this.assignments.filter(a => a.task !== message.task);
           this.notify();
         },
         return: (returns) => {
           this.send(
             YieldEvent.parse({
               type: "YIELD",
-              assignation: message.assignation,
+              task: message.task,
               returns,
             })
           );
           this.send(
             DoneEvent.parse({
               type: "DONE",
-              assignation: message.assignation,
+              task: message.task,
             })
           );
-          this.cancelControllers.delete(message.assignation);
-          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.cancelControllers.delete(message.task);
+          this.assignments = this.assignments.filter(a => a.task !== message.task);
           this.notify();
         },
         controller: newController,
@@ -539,12 +539,12 @@ export class OrkestratorAgent {
       this.send(
         CriticalEvent.parse({
           type: "ERROR",
-          assignation: message.assignation,
+          task: message.task,
           error: errorMessage,
         })
       );
-      this.cancelControllers.delete(message.assignation);
-      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.cancelControllers.delete(message.task);
+      this.assignments = this.assignments.filter(a => a.task !== message.task);
       this.notify();
     }
   }

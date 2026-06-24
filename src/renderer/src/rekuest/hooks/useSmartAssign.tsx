@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import {
   AssignInput,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   PrimaryActionFragment,
 } from "../api/graphql";
 
@@ -10,7 +10,7 @@ export type ActionAssignVariables = AssignInput;
 export type useActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
 };
 
 export type useActionOptions<T> = {

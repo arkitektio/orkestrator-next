@@ -3,7 +3,7 @@ import {
   MaterializedBlokFragment,
   PortInput,
   PortKind,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   SchemaDemandInput,
   useGetStateQuery,
   WatchStateEventsDocument,
@@ -11,7 +11,7 @@ import {
   WatchStateEventsSubscriptionVariables
 } from '@/rekuest/api/graphql'
 import { useAssign } from '@/rekuest/hooks/useAssign'
-import { useFilteredAssignations } from '@/rekuest/hooks/useAssignations'
+import { useFilteredTasks } from '@/rekuest/hooks/useTasks'
 import React, { useEffect } from 'react'
 import zod from 'zod'
 
@@ -271,12 +271,12 @@ export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
     action: K,
     options?: UseActionOptions
   ) => {
-    assign: (args: zod.infer<T['actions'][K]['args']>) => Promise<PostmanAssignationFragment>
-    reassign: () => Promise<PostmanAssignationFragment>
+    assign: (args: zod.infer<T['actions'][K]['args']>) => Promise<PostmanTaskFragment>
+    reassign: () => Promise<PostmanTaskFragment>
     cancel: () => void
     returns?: zod.infer<T['actions'][K]['returns']>
-    events?: PostmanAssignationFragment['events']
-    latestEvent?: PostmanAssignationFragment['events'][0]
+    events?: PostmanTaskFragment['events']
+    latestEvent?: PostmanTaskFragment['events'][0]
     done: boolean
   }
 }
@@ -391,7 +391,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
 
     const { assign } = useAssign()
 
-    const assingation = useFilteredAssignations({
+    const assingation = useFilteredTasks({
       implementation: actionId
     })
 

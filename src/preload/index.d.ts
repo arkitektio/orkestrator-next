@@ -40,7 +40,7 @@ declare global {
       onDownloadError: (downloadId: string, cb: (data: any) => void) => () => void;
       onUploadProgress: (uploadId: string, cb: (data: any) => void) => () => void;
       onUploadError: (uploadId: string, cb: (data: any) => void) => () => void;
-      executeElectron: (assignation: Assign) => Promise<void>;
+      executeElectron: (task: Assign) => Promise<void>;
       onAgentYield: (cb: (data: any) => void) => () => void;
       onAgentDone: (cb: (data: any) => void) => () => void;
       onAgentError: (cb: (data: any) => void) => () => void;

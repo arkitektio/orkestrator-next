@@ -1,22 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import { Clock } from "lucide-react";
 import Timestamp from "react-timestamp";
-import { ListAsssignationFragment } from "../../api/graphql";
+import { ListTaskFragment } from "../../api/graphql";
 
 interface Props {
-  item: ListAsssignationFragment;
+  item: ListTaskFragment;
 }
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAssignation.Smart object={item}>
+    <RekuestTask.Smart object={item}>
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader className="pb-0">
           <CardTitle className="text-base">
-            <RekuestAssignation.DetailLink object={item} className="hover:text-primary transition-colors">
+            <RekuestTask.DetailLink object={item} className="hover:text-primary transition-colors">
               {item.action.name}
-            </RekuestAssignation.DetailLink>
+            </RekuestTask.DetailLink>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
@@ -28,7 +28,7 @@ const TheCard = ({ item }: Props) => {
           </div>
         </CardContent>
       </Card>
-    </RekuestAssignation.Smart>
+    </RekuestTask.Smart>
   );
 };
 

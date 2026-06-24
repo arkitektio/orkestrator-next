@@ -13,10 +13,10 @@ import { ListFileFragment, ListImageFragment } from "./mikro-next/api/graphql";
 
 
 
-export const RekuestAssignation = buildSmart(
-  "@rekuest/assignation",
-  "rekuest/assignations",
-  { name: "Assignation" },
+export const RekuestTask = buildSmart(
+  "@rekuest/task",
+  "rekuest/tasks",
+  { name: "Task" },
 );
 
 export const RekuestState = buildSmart(

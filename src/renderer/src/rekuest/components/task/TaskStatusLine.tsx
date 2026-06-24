@@ -1,51 +1,51 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import { useMemo } from "react";
 import {
-  AssignationEventKind,
-  PostmanAssignationFragment,
+  TaskEventKind,
+  PostmanTaskFragment,
   useCancelMutation,
 } from "../../api/graphql";
-import { deriveLiveState } from "../../hooks/useAssignations";
-import { isTerminalEvent } from "../../lib/assignationTracker";
-import { AssignationStatusIcon, formatEventKind } from "../hovers/status";
+import { deriveLiveState } from "../../hooks/useTasks";
+import { isTerminalEvent } from "../../lib/taskTracker";
+import { TaskStatusIcon, formatEventKind } from "../hovers/status";
 
 /**
- * Shared status presentation for an assignation: icon, action name, formatted
+ * Shared status presentation for an task: icon, action name, formatted
  * status, progress bar, latest message and cancel / detail actions. Used by
  * the global toast and the background tasks panel so both stay consistent.
  */
-export const AssignationStatusLine = (props: {
-  assignation: PostmanAssignationFragment;
+export const TaskStatusLine = (props: {
+  task: PostmanTaskFragment;
   compact?: boolean;
   showCancel?: boolean;
   showLink?: boolean;
 }) => {
-  const { assignation, compact, showCancel, showLink } = props;
-  const live = useMemo(() => deriveLiveState(assignation), [assignation]);
+  const { task, compact, showCancel, showLink } = props;
+  const live = useMemo(() => deriveLiveState(task), [task]);
 
   const [cancel, { loading: cancelling }] = useCancelMutation({
-    variables: { input: { assignation: assignation.id } },
+    variables: { input: { task: task.id } },
   });
 
   const running =
-    !assignation.isDone && !isTerminalEvent(assignation.latestEventKind);
+    !task.isDone && !isTerminalEvent(task.latestEventKind);
   const canceling =
-    assignation.latestEventKind === AssignationEventKind.Canceling;
+    task.latestEventKind === TaskEventKind.Cancelling;
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-1.5">
       <div className="flex min-w-0 flex-row items-center gap-2">
-        <AssignationStatusIcon
-          kind={assignation.latestEventKind}
-          isDone={assignation.isDone}
+        <TaskStatusIcon
+          kind={task.latestEventKind}
+          isDone={task.isDone}
         />
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {live.actionName || "Unknown action"}
         </span>
         <span className="shrink-0 text-xs text-muted-foreground">
-          {formatEventKind(assignation.latestEventKind)}
+          {formatEventKind(task.latestEventKind)}
         </span>
       </div>
 
@@ -71,12 +71,12 @@ export const AssignationStatusLine = (props: {
       {(showLink || (showCancel && running)) && (
         <div className="flex flex-row items-center gap-2">
           {showLink && (
-            <RekuestAssignation.DetailLink
-              object={assignation}
+            <RekuestTask.DetailLink
+              object={task}
               className="text-xs text-muted-foreground underline-offset-2 hover:underline"
             >
               View
-            </RekuestAssignation.DetailLink>
+            </RekuestTask.DetailLink>
           )}
           {showCancel && running && (
             <Button

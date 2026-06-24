@@ -1,27 +1,27 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import Timestamp from "react-timestamp";
-import { MinimalAssignationFragment } from "../../api/graphql";
+import { MinimalTaskFragment } from "../../api/graphql";
 interface Props {
-  item: MinimalAssignationFragment;
+  item: MinimalTaskFragment;
 }
 
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestAssignation.Smart object={item}>
+    <RekuestTask.Smart object={item}>
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestAssignation.DetailLink object={item}>
+            <RekuestTask.DetailLink object={item}>
               {item.implementation.interface}
-            </RekuestAssignation.DetailLink>
+            </RekuestTask.DetailLink>
             <div className="text-muted-foreground font-light mt-2">
               <Timestamp date={item.createdAt} relative />
             </div>
           </CardTitle>
         </CardHeader>
       </Card>
-    </RekuestAssignation.Smart>
+    </RekuestTask.Smart>
   );
 };
 

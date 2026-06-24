@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { LokUser, RekuestAssignation } from "@/linkers";
+import { LokUser, RekuestTask } from "@/linkers";
 import { JustClientName } from "@/lok-next/components/ClientAvatar";
 import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { ArrowUpDown } from "lucide-react";
@@ -78,12 +78,12 @@ const columns: ColumnDef<MetricsTableItem>[] = [
     header: () => <div>Created While</div>,
     cell: ({ row }) =>
       row.original.createdThrough ? (
-        <RekuestAssignation.DetailLink
+        <RekuestTask.DetailLink
           object={{id: row.original.createdThrough}}
           className="text-xs text-scroll font-light"
         >
           View
-        </RekuestAssignation.DetailLink>
+        </RekuestTask.DetailLink>
       ) : (
         <div className="text-muted-foreground"></div>
       ),

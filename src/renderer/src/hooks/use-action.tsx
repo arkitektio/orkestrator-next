@@ -1,8 +1,8 @@
 import {
-  AssignationEventKind,
+  TaskEventKind,
   AssignInput,
-  PostmanAssignationFragment,
-  useAssignationsQuery,
+  PostmanTaskFragment,
+  useTasksQuery,
   useAssignMutation,
   useCancelMutation,
 } from "@/rekuest/api/graphql";
@@ -15,29 +15,29 @@ export type PartialTemplateOptions = Partial<ActionAssignVariables>;
 export type UseActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
-  reassign: () => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
+  reassign: () => Promise<PostmanTaskFragment>;
   cancel: () => void;
-  assignations?: PostmanAssignationFragment[];
-  latestAssignation?: PostmanAssignationFragment;
+  tasks?: PostmanTaskFragment[];
+  latestTask?: PostmanTaskFragment;
 };
 
 export const useAction = <T extends any>(
   options: PartialTemplateOptions,
 ): UseActionReturn<T> => {
   const [currentAssign, setCurrentAssign] =
-    useState<PostmanAssignationFragment | null>(null);
+    useState<PostmanTaskFragment | null>(null);
 
-  const { data: assignations_data } = useAssignationsQuery();
+  const { data: tasks_data } = useTasksQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
 
-  const assignations = assignations_data?.assignations.filter(
+  const tasks = tasks_data?.tasks.filter(
     (x) => x.id == currentAssign?.id,
   );
 
-  const latestAssignation = assignations?.at(0);
+  const latestTask = tasks?.at(0);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
@@ -52,15 +52,15 @@ export const useAction = <T extends any>(
           },
         });
 
-        const assignation = mutation.data?.assign;
+        const task = mutation.data?.assign;
 
-        if (!assignation) {
+        if (!task) {
           throw Error(`Couldn't assign`);
         }
 
-        setCurrentAssign(assignation);
+        setCurrentAssign(task);
 
-        return assignation;
+        return task;
       } catch (error: any) {
         throw Error(`Couldn't assign: ${error.message}`);
       }
@@ -69,34 +69,34 @@ export const useAction = <T extends any>(
   );
 
   const reassign = useCallback(() => {
-    if (!latestAssignation) {
-      throw Error("No latest assignation");
+    if (!latestTask) {
+      throw Error("No latest task");
     }
     return assign({
-      args: latestAssignation.args,
-      implementation: latestAssignation?.implementation?.id,
+      args: latestTask.args,
+      implementation: latestTask?.implementation?.id,
       hooks: [],
     });
   }, [assign]);
 
   const cancel = useCallback(async () => {
-    if (!latestAssignation) {
+    if (!latestTask) {
       throw Error("Cannot Reassign");
     }
 
-    if (latestAssignation.status == AssignationEventKind.Done) {
+    if (latestTask.latestEventKind == TaskEventKind.Completed) {
       throw Error("Cannot Cancel as it is done");
     }
 
     const mutation = await cancelAssign({
       variables: {
-        input: { assignation: latestAssignation.id },
+        input: { task: latestTask.id },
       },
     });
 
-    const assignation = mutation.data?.cancel;
+    const task = mutation.data?.cancel;
 
-    if (!assignation) {
+    if (!task) {
       console.error(mutation);
       const errorMessages =
         mutation.errors?.map((error) => error.message).join(", ") ||
@@ -104,13 +104,13 @@ export const useAction = <T extends any>(
       throw Error(`Couldn't assign: ${errorMessages}`);
     }
 
-    return assignation;
-  }, [cancelAssign, latestAssignation]);
+    return task;
+  }, [cancelAssign, latestTask]);
 
   return {
     assign,
     reassign,
-    latestAssignation,
+    latestTask,
     cancel,
   };
 };

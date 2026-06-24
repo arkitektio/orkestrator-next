@@ -7,13 +7,13 @@ import {
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAgent } from "@/linkers";
 import {
-  AssignationEventKind,
-  PostmanAssignationFragment,
+  TaskEventKind,
+  PostmanTaskFragment,
   useAgentQuery,
-  useDetailAssignationQuery,
-  useNoChildrenDetailAssignationQuery
+  useDetailTaskQuery,
+  useNoChildrenDetailTaskQuery
 } from "@/rekuest/api/graphql";
-import { ChildAssignationUpdater } from "@/rekuest/components/updaters/ChildAssignationUpdater";
+import { ChildTaskUpdater } from "@/rekuest/components/updaters/ChildTaskUpdater";
 import { Environment, Float, OrbitControls, useGLTF } from "@react-three/drei";
 import type { } from "@react-three/fiber";
 import { Canvas } from "@react-three/fiber";
@@ -34,14 +34,14 @@ export function notEmpty<TValue>(
 }
 
 export type TimelineEvent = {
-  kind: AssignationEventKind;
+  kind: TaskEventKind;
   message?: string | null;
   createdAt: string;
   position: number;
 };
 
 export type TimelineItem = {
-  assignation: PostmanAssignationFragment;
+  task: PostmanTaskFragment;
   start: number;
   end: number;
   startTime: number;
@@ -87,18 +87,18 @@ const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
   return undefined;
 };
 
-const getStatusColor = (status: AssignationEventKind | undefined | string) => {
+const getStatusColor = (status: TaskEventKind | undefined | string) => {
   switch (status) {
-    case AssignationEventKind.Done:
+    case TaskEventKind.Completed:
       return "bg-green-500 border-green-600";
-    case AssignationEventKind.Yield:
+    case TaskEventKind.Yield:
       return "bg-purple-500 border-purple-600";
-    case AssignationEventKind.Error:
-    case AssignationEventKind.Critical:
+    case TaskEventKind.Failed:
+    case TaskEventKind.Critical:
       return "bg-red-500 border-red-600";
-    case AssignationEventKind.Cancelled:
+    case TaskEventKind.Cancelled:
       return "bg-gray-500 border-gray-600";
-    case AssignationEventKind.Assign:
+    case TaskEventKind.Bound:
       return "bg-blue-500 border-blue-600";
     default:
       return "bg-slate-500 border-slate-600";
@@ -125,7 +125,7 @@ const SpaceScene = () => {
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-4">
         <div>
           <div className="text-[11px] uppercase tracking-[0.24em] text-amber-300/80">
-            Assignation Space
+            Task Space
           </div>
           <div className="text-sm text-white/80">
             Delegations are rendered below the active scene.
@@ -166,34 +166,34 @@ const SpaceScene = () => {
 
 
 const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
-  const { data } = useNoChildrenDetailAssignationQuery({
-    variables: { id: item.assignation.id },
+  const { data } = useNoChildrenDetailTaskQuery({
+    variables: { id: item.task.id },
   });
 
   const { registry } = useWidgetRegistry();
 
-  const assignation = data?.assignation || item.assignation;
-  const latestEvent = assignation.events
-    ?.filter((i) => i.kind == AssignationEventKind.Yield)
+  const task = data?.task || item.task;
+  const latestEvent = task.events
+    ?.filter((i) => i.kind == TaskEventKind.Yield)
     .at(-1);
 
   return (
     <div className="grid gap-4">
       <div className="space-y-2">
-        <h4 className="font-medium leading-none">{assignation.action?.name}</h4>
-        <p className="text-sm text-muted-foreground">{assignation.id}</p>
+        <h4 className="font-medium leading-none">{task.action?.name}</h4>
+        <p className="text-sm text-muted-foreground">{task.id}</p>
       </div>
       <div className="grid gap-2">
         <div className="grid grid-cols-3 items-center gap-4">
           <span className="text-sm font-medium">Status</span>
           <span className="col-span-2 text-sm">
-            {assignation.latestEventKind}
+            {task.latestEventKind}
           </span>
         </div>
         <div className="grid grid-cols-3 items-center gap-4">
           <span className="text-sm font-medium">Created</span>
           <span className="col-span-2 text-sm">
-            <Timestamp date={assignation.createdAt} relative />
+            <Timestamp date={task.createdAt} relative />
           </span>
         </div>
         <div className="grid grid-cols-3 items-center gap-4">
@@ -202,13 +202,13 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
             {item.endTime - item.startTime} ms
           </span>
         </div>
-        {latestEvent && latestEvent.returns && assignation.action?.returns && (
+        {latestEvent && latestEvent.returns && task.action?.returns && (
           <div className="flex flex-col gap-2 mt-2">
             <span className="text-sm font-medium">Latest Result</span>
             <div className="bg-muted p-2 rounded-md">
               <ReturnsContainer
                 registry={registry}
-                ports={assignation.action.returns}
+                ports={task.action.returns}
                 values={latestEvent.returns}
                 showKeys={false}
               />
@@ -252,15 +252,15 @@ const TimelineBars = ({
           <TimelineItemPopover
             key={index}
             item={item}
-            highlighted={highlighted.includes(item.assignation.id)}
+            highlighted={highlighted.includes(item.task.id)}
           >
             <div
               className={`${
-                highlighted.includes(item.assignation.id)
+                highlighted.includes(item.task.id)
                   ? "ring-2 ring-offset-1 ring-primary z-20 opacity-100"
                   : "opacity-60 hover:opacity-100 hover:z-20"
               } ${getStatusColor(
-                item.assignation.latestEventKind
+                item.task.latestEventKind
               )} absolute h-full border rounded-md cursor-pointer transition-all flex items-center justify-center shadow-sm`}
               style={{
                 left: item.start * 100 + "%",
@@ -268,9 +268,9 @@ const TimelineBars = ({
               }}
             >
               <div className="text-[10px] truncate w-full text-center px-1 text-white font-medium drop-shadow-md">
-                {item.assignation.action?.name}
+                {item.task.action?.name}
               </div>
-              {!item.assignation.isDone && (
+              {!item.task.isDone && (
                 <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
                   <Loader2 className="w-3 h-3 animate-spin text-white" />
                 </div>
@@ -390,8 +390,8 @@ export const TimelineRender = ({
   );
 };
 
-export const AssignationTimeline = ({ id }: { id: string }) => {
-  const { data } = useDetailAssignationQuery({
+export const TaskTimeline = ({ id }: { id: string }) => {
+  const { data } = useDetailTaskQuery({
     variables: { id },
   });
 
@@ -400,13 +400,13 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
-    if (data?.assignation) {
-      const assignation = data.assignation;
-      const children = (assignation.children || []).filter(notEmpty);
+    if (data?.task) {
+      const task = data.task;
+      const children = (task.children || []).filter(notEmpty);
 
-      const allAssignations = children
+      const allTasks = children
 
-      const getEndTime = (a: PostmanAssignationFragment) => {
+      const getEndTime = (a: PostmanTaskFragment) => {
         if (a.finishedAt) return new Date(a.finishedAt).getTime();
         if (a.events && a.events.length > 0) {
           const eventTimes = a.events.map((e) =>
@@ -417,7 +417,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
         return new Date().getTime();
       };
 
-      const times = allAssignations.flatMap((a) => [
+      const times = allTasks.flatMap((a) => [
         new Date(a.createdAt).getTime(),
         getEndTime(a),
       ]);
@@ -430,7 +430,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
         return (time - min) / (max - min);
       };
 
-      const parentEvents = (assignation.events || []).map((e) => ({
+      const parentEvents = (task.events || []).map((e) => ({
         kind: e.kind,
         message: e.message,
         createdAt: e.createdAt,
@@ -441,7 +441,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
       const groupMap = new Map<string, TimelineDependencyGroup>();
       const methodMap = new Map<string, Map<string, TimelineMethodRow>>();
 
-      const buildDependencyGroup = (a: PostmanAssignationFragment) => {
+      const buildDependencyGroup = (a: PostmanTaskFragment) => {
         const dependencyMethod = a.dependencyMethod?.trim() || "dynamic";
         const dependencyKey = a.dependency?.trim() || "catch-all";
 
@@ -485,13 +485,13 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
         };
       };
 
-      allAssignations.forEach((a) => {
+      allTasks.forEach((a) => {
         const startTime = new Date(a.createdAt).getTime();
         const endTime = getEndTime(a);
         const dependencyGroup = buildDependencyGroup(a);
 
         const item: TimelineItem = {
-          assignation: a,
+          task: a,
           start: interpolate(startTime),
           end: interpolate(endTime),
           startTime: startTime,
@@ -580,7 +580,7 @@ export const AssignationTimeline = ({ id }: { id: string }) => {
                 style={{ left: `${event.position * 100}%` }}
               >
                 <div className="-translate-x-1/2 text-xs flex items-center justify-center w-16 p-1 border bg-background/90 rounded-md ">
-                  {event.kind == AssignationEventKind.Log && event.message}
+                  {event.kind == TaskEventKind.Log && event.message}
                   </div>
               </div>
             ))}
@@ -618,10 +618,10 @@ export const AgentSpacePage = asDetailQueryRoute(
         pageActions={<> </>
         }
       >
-        <ChildAssignationUpdater assignationId={id} />
+        <ChildTaskUpdater taskId={id} />
         <div className="flex h-full min-h-[calc(100vh-12rem)] flex-col gap-4 px-3 pb-3">
           <SpaceScene />
-          <AssignationTimeline id={id} />
+          <TaskTimeline id={id} />
         </div>
       </RekuestAgent.ModelPage>
     );

@@ -1,5 +1,5 @@
-import { AssignationEventKind, PortKind } from "../api/graphql";
-import { useAssignations } from "./useAssignations";
+import { TaskEventKind, PortKind } from "../api/graphql";
+import { useTasks } from "./useTasks";
 
 export const useAssignProgress = (options: {
   identifier?: string;
@@ -8,10 +8,10 @@ export const useAssignProgress = (options: {
   implementation?: string;
   assignedImplementation?: string;
 }) => {
-  const { data } = useAssignations();
+  const { data } = useTasks();
 
-  const assignations = data?.assignations.filter((a) => {
-    if (a.isDone || a.latestEventKind == AssignationEventKind.Done) {
+  const tasks = data?.tasks.filter((a) => {
+    if (a.isDone || a.latestEventKind == TaskEventKind.Completed) {
       return false;
     }
 
@@ -28,8 +28,8 @@ export const useAssignProgress = (options: {
     }
 
     if (options.assignedImplementation) {
-      console.log(a.provision?.implementation.id, options.assignedImplementation);
-      if (a.provision?.implementation.id != options.assignedImplementation) {
+      console.log(a.implementation?.id, options.assignedImplementation);
+      if (a.implementation?.id != options.assignedImplementation) {
         return false;
       }
     }
@@ -56,21 +56,21 @@ export const useAssignProgress = (options: {
     return true;
   });
 
-  const latestProgress = assignations
+  const latestProgress = tasks
     ?.at(-1)
     ?.events.filter(
       (e) =>
-        e.kind == AssignationEventKind.Progress ||
-        e.kind == AssignationEventKind.Done,
+        e.kind == TaskEventKind.Progress ||
+        e.kind == TaskEventKind.Completed,
     )
     .at(0);
 
-  const latestError = assignations
+  const latestError = tasks
     ?.at(-1)
     ?.events.filter(
       (e) =>
-        e.kind == AssignationEventKind.Error ||
-        e.kind == AssignationEventKind.Critical,
+        e.kind == TaskEventKind.Failed ||
+        e.kind == TaskEventKind.Critical,
     )
     .at(0);
 

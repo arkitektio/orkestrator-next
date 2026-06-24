@@ -66,7 +66,7 @@ const api = {
     return () => ipcRenderer.removeListener(channel, listener);
   },
   initAgent: (context: any) => ipcRenderer.invoke("agent:init", context),
-  executeElectron: (assignation: Assign) => ipcRenderer.invoke("agent:execute", assignation),
+  executeElectron: (task: Assign) => ipcRenderer.invoke("agent:execute", task),
   onAgentYield: (cb: (data: any) => void) => {
     const listener = (_e: unknown, data: any) => cb(data);
     ipcRenderer.on("agent:yield", listener);

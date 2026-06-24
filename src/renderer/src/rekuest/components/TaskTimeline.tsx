@@ -12,17 +12,17 @@ import {
 } from "@/components/timeline/timeline";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import Timestamp from "react-timestamp";
-import { PostmanAssignationFragment } from "../api/graphql";
+import { PostmanTaskFragment } from "../api/graphql";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 interface TimelineLayoutProps {
-  assignation: PostmanAssignationFragment;
+  task: PostmanTaskFragment;
 }
-export const AssignationTimeline = ({ assignation }: TimelineLayoutProps) => {
+export const TaskTimeline = ({ task }: TimelineLayoutProps) => {
   const { registry } = useWidgetRegistry();
   return (
     <Timeline className="w-full">
-      {assignation.events.map((e) => (
+      {task.events.map((e) => (
         <TimelineItem>
           <TimelineConnector />
           <TimelineHeader>
@@ -35,7 +35,7 @@ export const AssignationTimeline = ({ assignation }: TimelineLayoutProps) => {
               <br />
               {e.returns && (
                 <ReturnsContainer
-                  ports={assignation.action.returns}
+                  ports={task.action.returns}
                   values={e.returns}
                   registry={registry}
                 />

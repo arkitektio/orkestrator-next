@@ -18,7 +18,7 @@ fragment ListAction on Action {
   app {
     identifier
   }
-  latestAssignation {
+  latestTask {
     id
     args
   }
@@ -72,8 +72,8 @@ fragment DetailAction on Action {
       latestEventKind
     }
   }
-  assignations(pagination: { limit: 10, offset: 0 }) {
-    ...MinimalAssignation
+  tasks(pagination: { limit: 10, offset: 0 }) {
+    ...MinimalTask
   }
   key
   version
@@ -122,7 +122,7 @@ fragment HoverAction on Action {
       active
     }
   }
-  assignations(pagination: { limit: 5 }, ordering: { createdAt: DESC }) {
+  tasks(pagination: { limit: 5 }, ordering: { createdAt: DESC }) {
     id
     latestEventKind
     isDone

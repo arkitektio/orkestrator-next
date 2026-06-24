@@ -4,11 +4,11 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
 import {
-  AssignationEventFragment,
+  TaskEventFragment,
   AssignInput,
   useActionByHashQuery
 } from "../api/graphql";
-import { trackAssignation } from "../lib/assignationTracker";
+import { trackTask } from "../lib/taskTracker";
 import { useAssign } from "./useAssign";
 
 export type ActionAssignVariables = AssignInput;
@@ -17,7 +17,7 @@ export type ActionAssignVariables = AssignInput;
 
 export type useActionOptions = {
   hash?: string;
-  onDone?: (event: AssignationEventFragment) => void;
+  onDone?: (event: TaskEventFragment) => void;
   onError?: (error: string) => void;
   ephemeral?: boolean;
   object?: string;
@@ -41,14 +41,14 @@ export const useHashActionWithProgress = (
   const { openDialog } = useDialog();
 
   const doStuff = useCallback(
-    (event: AssignationEventFragment) => {
-      console.log("Assignation event received:", event);
-      if (event.kind == "DONE") {
+    (event: TaskEventFragment) => {
+      console.log("Task event received:", event);
+      if (event.kind == "COMPLETED") {
         setDoing(false);
         setProgress(null);
         options.onDone?.(event);
       }
-      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+      if (event.kind == "FAILED" || event.kind == "CRITICAL") {
         setDoing(false);
         setProgress(null);
         setError(event.message || "Unknown error");
@@ -74,7 +74,7 @@ export const useHashActionWithProgress = (
 
 
     const reference = uuidv4();
-    const untrack = trackAssignation(reference, doStuff);
+    const untrack = trackTask(reference, doStuff);
 
     try {
       await postAssign({

@@ -1,24 +1,24 @@
 import { useMemo } from "react";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   PortKind,
-  PostmanAssignationFragment,
-  useAssignationsQuery,
+  PostmanTaskFragment,
+  useTasksQuery,
 } from "../api/graphql";
 
-export const useAssignations = () => {
-  const queryResult = useAssignationsQuery();
+export const useTasks = () => {
+  const queryResult = useTasksQuery();
 
   return queryResult;
 };
 
-export const useAssignation = (options: { assignation?: string }) => {
-  const { data } = useAssignations();
-  const assignation = data?.assignations.find(
-    (a) => a.id === options.assignation,
+export const useTask = (options: { task?: string }) => {
+  const { data } = useTasks();
+  const task = data?.tasks.find(
+    (a) => a.id === options.task,
   );
 
-  return assignation;
+  return task;
 };
 
 export type FilterOptions = {
@@ -26,7 +26,7 @@ export type FilterOptions = {
   object?: string;
   action?: string;
   implementation?: string;
-  assignation?: string;
+  task?: string;
   assignedImplementation?: string;
   assignedAction?: string;
   allowDone?: boolean;
@@ -34,25 +34,25 @@ export type FilterOptions = {
 };
 
 
-export const useFilteredAssignations = (options?: FilterOptions) => {
-  const { data } = useAssignations();
+export const useFilteredTasks = (options?: FilterOptions) => {
+  const { data } = useTasks();
 
-  const assignations = useMemo(
+  const tasks = useMemo(
     () =>
-      data?.assignations.filter((a) => {
+      data?.tasks.filter((a) => {
         if (!options) {
           return true;
         }
 
-        if (options.assignation) {
-          if (a.id != options.assignation) {
+        if (options.task) {
+          if (a.id != options.task) {
             return false;
           }
         }
 
         if (
           !options.allowDone &&
-          (a.isDone || a.latestEventKind == AssignationEventKind.Done)
+          (a.isDone || a.latestEventKind == TaskEventKind.Completed)
         ) {
           return false;
         }
@@ -76,8 +76,8 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
         }
 
         if (options.assignedImplementation) {
-          console.log(a.provision?.implementation.id, options.assignedImplementation);
-          if (a.provision?.implementation.id != options.assignedImplementation) {
+          console.log(a.implementation?.id, options.assignedImplementation);
+          if (a.implementation?.id != options.assignedImplementation) {
             return false;
           }
         }
@@ -104,52 +104,52 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
         return true;
       }) || [],
     [
-      data?.assignations,
+      data?.tasks,
       options?.action,
       options?.implementation,
       options?.assignedImplementation,
       options?.identifier,
       options?.object,
-      options?.assignation,
+      options?.task,
       options?.allowDone,
       options?.refetch,
     ],
   );
 
-  return assignations;
+  return tasks;
 };
 
-export const useLatestAssignation = (options: FilterOptions) => {
-  const assignations = useFilteredAssignations(options);
-  const latestAssignation = assignations.at(-1);
-  return latestAssignation;
+export const useLatestTask = (options: FilterOptions) => {
+  const tasks = useFilteredTasks(options);
+  const latestTask = tasks.at(-1);
+  return latestTask;
 };
 
 export const deriveLiveState = (
-  assignation: PostmanAssignationFragment | undefined,
+  task: PostmanTaskFragment | undefined,
 ) => {
-  const latestProgress = assignation?.events
-    .filter((x) => x.kind == AssignationEventKind.Progress)
+  const latestProgress = task?.events
+    .filter((x) => x.kind == TaskEventKind.Progress)
     .at(0)?.progress;
-  const latestYield = assignation?.events
-    .filter((x) => x.kind == AssignationEventKind.Yield)
+  const latestYield = task?.events
+    .filter((x) => x.kind == TaskEventKind.Yield)
     .at(0)?.returns;
-  const done = assignation?.events
-    .filter((x) => x.kind == AssignationEventKind.Done)
+  const done = task?.events
+    .filter((x) => x.kind == TaskEventKind.Completed)
     .at(0);
-  const cancelled = assignation?.events
-    .filter((x) => x.kind == AssignationEventKind.Cancelled)
+  const cancelled = task?.events
+    .filter((x) => x.kind == TaskEventKind.Cancelled)
     .at(0);
 
-  const error = assignation?.events
+  const error = task?.events
     .filter(
       (x) =>
-        x.kind == AssignationEventKind.Critical ||
-        x.kind == AssignationEventKind.Error,
+        x.kind == TaskEventKind.Critical ||
+        x.kind == TaskEventKind.Failed,
     )
     .at(0)?.message;
 
-  const latestMessage = assignation?.events.find(
+  const latestMessage = task?.events.find(
     (x) => x.message != undefined,
   )?.message;
 
@@ -160,25 +160,25 @@ export const deriveLiveState = (
     cancelled: cancelled,
     done,
     error,
-    actionId: assignation?.action.id,
-    actionName: assignation?.action.name,
+    actionId: task?.action.id,
+    actionName: task?.action.name,
     message: latestMessage,
-    event: assignation?.events.at(0),
-    assignationId: assignation?.id,
-    id: assignation?.id,
-    reference: assignation?.reference,
-    latestEventKind: assignation?.latestEventKind,
-    isDone: assignation?.isDone,
-    createdAt: assignation?.createdAt,
+    event: task?.events.at(0),
+    taskId: task?.id,
+    id: task?.id,
+    reference: task?.reference,
+    latestEventKind: task?.latestEventKind,
+    isDone: task?.isDone,
+    createdAt: task?.createdAt,
   };
 };
 
-export type LiveAssignationState = ReturnType<typeof deriveLiveState>;
+export type LiveTaskState = ReturnType<typeof deriveLiveState>;
 
-export const useLiveAssignation = (options: FilterOptions) => {
-  // Live trackers follow a specific assignation through completion, so Done
-  // assignations stay in scope unless the caller opts out explicitly.
-  const assignation = useLatestAssignation({ allowDone: true, ...options });
+export const useLiveTask = (options: FilterOptions) => {
+  // Live trackers follow a specific task through completion, so Done
+  // tasks stay in scope unless the caller opts out explicitly.
+  const task = useLatestTask({ allowDone: true, ...options });
 
-  return useMemo(() => deriveLiveState(assignation), [assignation]);
+  return useMemo(() => deriveLiveState(task), [task]);
 };

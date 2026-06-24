@@ -1,9 +1,9 @@
 
-import { useListAssignationsQuery } from "../api/graphql";
-import ListAssignationCard from "../components/cards/ListAssignationCard";
+import { useListTasksQuery } from "../api/graphql";
+import ListTaskCard from "../components/cards/ListTaskCard";
 
 export const AgentTasksSidebar = (props: { agent: string }) => {
-  const { data, error, loading } = useListAssignationsQuery({
+  const { data, error, loading } = useListTasksQuery({
     variables: {
       filter: { agent: props.agent },
       pagination: { limit: 10, offset: 0 },
@@ -34,7 +34,7 @@ export const AgentTasksSidebar = (props: { agent: string }) => {
         </p>
       </div>
       {data?.tasks.map((card) => (
-        <ListAssignationCard key={card.id} item={card} />
+        <ListTaskCard key={card.id} item={card} />
       ))}
     </div>
   );

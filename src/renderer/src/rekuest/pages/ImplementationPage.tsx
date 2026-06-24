@@ -25,7 +25,7 @@ import {
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   DetailImplementationFragment,
   ResolvedDependencyInput,
   WatchImplementationDocument,
@@ -46,7 +46,7 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 export const DoForm = ({ id }: { id: string }) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+  const { assign, latestTask, cancel, implementation } = useImplementationAction({
     id: id,
   });
 
@@ -56,7 +56,7 @@ export const DoForm = ({ id }: { id: string }) => {
 
    const form = useImplementationForm({
      implementation: implementation,
-     overwrites: { ...latestAssignation?.args },
+     overwrites: { ...latestTask?.args },
      reValidateMode: "onChange",
    });
 
@@ -67,7 +67,7 @@ export const DoForm = ({ id }: { id: string }) => {
      console.log("Submitting");
      console.log(data);
      try {
-       const assignation = await assign({
+       const task = await assign({
          implementation: id,
          args: data.args,
          dependencies: Object.values(data.dependencies),
@@ -89,12 +89,12 @@ export const DoForm = ({ id }: { id: string }) => {
 
 
 
-  const yieldEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Yield,
+  const yieldEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Critical,
+  const errorEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Critical,
   );
 
   return (

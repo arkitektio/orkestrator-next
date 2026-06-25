@@ -1,11 +1,24 @@
-import { dialog, BrowserWindow } from 'electron';
+import { dialog, app } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import Store from 'electron-store';
 import { IpcTransport } from './IpcTransport';
 import { WindowManager } from './WindowManager';
 import { AppModule } from './AppModule';
 
+// User-facing update channels. "next" surfaces prereleases; "latest" is stable.
+// NOTE: the "next" channel rides electron-builder's standard `beta.yml` carrier
+// file — `generateUpdatesFilesForAllChannels` only emits latest/beta/alpha and
+// the GitHub publisher does not auto-detect channels, so there is no `rc.yml`.
+// The visible identity ("Next" label, `-rc` version suffix) is intentionally
+// decoupled from the internal carrier (`beta.yml`).
+type UpdateChannel = "latest" | "next";
+
+const STORE_KEY = "updateChannel";
+
 export class AppUpdater implements AppModule {
+    private store = new Store();
+
     constructor(private ipcTransport: IpcTransport, private windowManager: WindowManager) {}
 
     setup() {
@@ -14,6 +27,9 @@ export class AppUpdater implements AppModule {
 
         autoUpdater.autoDownload = true;
         autoUpdater.autoInstallOnAppQuit = true;
+
+        // Resolve the active channel and configure electron-updater accordingly.
+        this.applyChannel(this.resolveChannel());
 
         autoUpdater.on("checking-for-update", () =>
             this.broadcast("updater:status", "Checking…"),
@@ -56,6 +72,51 @@ export class AppUpdater implements AppModule {
                 return { success: false, error: String(error) };
             }
         });
+
+        this.ipcTransport.handleChannel("get-update-channel", async () => {
+            return { channel: this.resolveChannel(), version: app.getVersion() };
+        });
+
+        this.ipcTransport.handleChannel("set-update-channel", async (_e, channel: UpdateChannel) => {
+            try {
+                const next: UpdateChannel = channel === "next" ? "next" : "latest";
+                this.store.set(STORE_KEY, next);
+                this.applyChannel(next);
+                const result = await autoUpdater.checkForUpdates();
+                return { success: true, result };
+            } catch (error) {
+                console.error("Set update channel failed:", error);
+                return { success: false, error: String(error) };
+            }
+        });
+    }
+
+    /**
+     * The active channel: the stored choice if present, otherwise derived from
+     * the running version — a prerelease build (e.g. `1.66.0-rc.1`) defaults to
+     * "next" so it keeps receiving prereleases.
+     */
+    private resolveChannel(): UpdateChannel {
+        const stored = this.store.get(STORE_KEY) as UpdateChannel | undefined;
+        if (stored === "next" || stored === "latest") return stored;
+        // A semver prerelease version carries a `-` suffix (e.g. `1.66.0-rc.1`).
+        return app.getVersion().includes("-") ? "next" : "latest";
+    }
+
+    /**
+     * Map the user-facing channel to electron-updater. "next" reads the standard
+     * `beta.yml` carrier and allows prereleases; "latest" is stable-only.
+     * allowDowngrade lets a Next→Stable switch move to a lower stable version.
+     */
+    private applyChannel(channel: UpdateChannel) {
+        autoUpdater.allowDowngrade = true;
+        if (channel === "next") {
+            autoUpdater.allowPrerelease = true;
+            autoUpdater.channel = "beta";
+        } else {
+            autoUpdater.allowPrerelease = false;
+            autoUpdater.channel = "latest";
+        }
     }
 
     private broadcast(channel: string, ...args: any[]) {

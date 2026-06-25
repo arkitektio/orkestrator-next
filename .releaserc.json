@@ -2,8 +2,8 @@
     "branches": [
         "main",
         {
-            "name": "dev",
-            "prerelease": true
+            "name": "next",
+            "prerelease": "rc"
         }
     ],
     "plugins": [

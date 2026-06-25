@@ -99,6 +99,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electronAPI", api);
     contextBridge.exposeInMainWorld("updates", {
       checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+      getChannel: () => ipcRenderer.invoke("get-update-channel"),
+      setChannel: (channel: "latest" | "next") => ipcRenderer.invoke("set-update-channel", channel),
       onStatus: (cb) => ipcRenderer.on("updater:status", (_e, s) => cb(s)),
       onAvailable: (cb) => ipcRenderer.on("updater:available", (_e, info) => cb(info)),
       onNone: (cb) => ipcRenderer.on("updater:none", cb),

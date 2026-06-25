@@ -48,6 +48,8 @@ declare global {
     };
     updates: {
       checkForUpdates: () => Promise<{ success: boolean; result?: any; error?: string }>;
+      getChannel: () => Promise<{ channel: "latest" | "next"; version: string }>;
+      setChannel: (channel: "latest" | "next") => Promise<{ success: boolean; result?: any; error?: string }>;
       onStatus: (callback: (status: string) => void) => void;
       onAvailable: (callback: (info: any) => void) => void;
       onNone: (callback: () => void) => void;

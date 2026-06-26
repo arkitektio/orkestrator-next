@@ -612,6 +612,11 @@ const staticContinuousTextures: Partial<Record<ColorMap, THREE.Texture>> = {
   [ColorMap.Grey]: grayColormap,
 };
 
+// Bounded LRU keyed by colormap×baseColor. Without a cap this grows once per
+// distinct base color and never frees the GPU textures. The cap is generous (well
+// above any realistic on-screen set), so the least-recently-used entry we dispose
+// on eviction is not one currently bound to a visible mesh.
+const CONTINUOUS_TEXTURE_CACHE_LIMIT = 256;
 const continuousTextureCache = new Map<string, THREE.Texture>();
 
 const getContinuousColorMapTexture = (
@@ -621,6 +626,9 @@ const getContinuousColorMapTexture = (
   const cacheKey = `${colormap}:${resolveBaseColorRgb(baseColor).join(",")}`;
   const cached = continuousTextureCache.get(cacheKey);
   if (cached) {
+    // Refresh recency (move to most-recently-used).
+    continuousTextureCache.delete(cacheKey);
+    continuousTextureCache.set(cacheKey, cached);
     return cached;
   }
 
@@ -629,6 +637,16 @@ const getContinuousColorMapTexture = (
       sampleColorMapRgb(colormap, i / 255, baseColor),
     ),
   );
+
+  if (continuousTextureCache.size >= CONTINUOUS_TEXTURE_CACHE_LIMIT) {
+    const oldestKey = continuousTextureCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      const evicted = continuousTextureCache.get(oldestKey);
+      continuousTextureCache.delete(oldestKey);
+      evicted?.dispose();
+    }
+  }
+
   continuousTextureCache.set(cacheKey, texture);
   return texture;
 };

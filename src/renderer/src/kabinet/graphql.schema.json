@@ -22,7 +22,7 @@
         "inputFields": [
           {
             "name": "agentCall",
-            "description": null,
+            "description": "Defines a nested agent call if this argument should trigger an agent interaction.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "AgentCallInput",
@@ -34,7 +34,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The argument property name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -46,7 +46,7 @@
           },
           {
             "name": "utilCall",
-            "description": null,
+            "description": "Defines a nested utility call if this argument should trigger a system utility interaction.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "UtilCallInput",
@@ -58,7 +58,7 @@
           },
           {
             "name": "valueDict",
-            "description": null,
+            "description": "Defines a list of key-value pairs if this argument should be a dictionary.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -78,7 +78,7 @@
           },
           {
             "name": "valueList",
-            "description": null,
+            "description": "Defines a list of values if this argument should be an array.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -98,7 +98,7 @@
           },
           {
             "name": "valueLiteral",
-            "description": null,
+            "description": "Static literal value if not dynamically bound.",
             "type": {
               "kind": "SCALAR",
               "name": "JSONSerializable",
@@ -110,7 +110,7 @@
           },
           {
             "name": "valuePath",
-            "description": null,
+            "description": "JSON Pointer referencing the shared Blok state to inject into this argument slot dynamically.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -134,7 +134,7 @@
         "inputFields": [
           {
             "name": "actionKey",
-            "description": null,
+            "description": "The key of the state this dependency corresponds to. (i.e frame:acquireimage)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -146,7 +146,7 @@
           },
           {
             "name": "allowInactive",
-            "description": null,
+            "description": "Allow inactive nodes, defaults to true",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -158,7 +158,7 @@
           },
           {
             "name": "app",
-            "description": null,
+            "description": "Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -170,7 +170,7 @@
           },
           {
             "name": "argMatches",
-            "description": null,
+            "description": "The demands for the action args, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -190,7 +190,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the action. This can describe the action and its purpose.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -202,7 +202,7 @@
           },
           {
             "name": "forceArgLength",
-            "description": null,
+            "description": "Require that the action has a specific number of args. When loosing the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -214,7 +214,7 @@
           },
           {
             "name": "forceReturnLength",
-            "description": null,
+            "description": "Require that the action has a specific number of returns. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -226,7 +226,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the action. This is used to identify the dependency in the system.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -254,7 +254,7 @@
           },
           {
             "name": "optional",
-            "description": null,
+            "description": "Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -270,7 +270,7 @@
           },
           {
             "name": "protocols",
-            "description": null,
+            "description": "The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -290,7 +290,7 @@
           },
           {
             "name": "returnMatches",
-            "description": null,
+            "description": "The demands for the action returns, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the returns. This is used to identify the demand in the system.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -303,6 +303,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "version",
+            "description": "The version of the action this dependency corresponds to.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -393,7 +405,7 @@
         "inputFields": [
           {
             "name": "arguments",
-            "description": null,
+            "description": "Key-value arguments map compiled for the target agent call.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -413,7 +425,7 @@
           },
           {
             "name": "dependency",
-            "description": null,
+            "description": "The abstract agent dependency key declared in the Blok manifest (e.g., 'stage_dep').",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -429,7 +441,7 @@
           },
           {
             "name": "operation",
-            "description": null,
+            "description": "The target function name registered on that specific agent's worker thread loop.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -457,7 +469,7 @@
         "inputFields": [
           {
             "name": "actionDemands",
-            "description": null,
+            "description": "The action demands of the agent. This is used to identify the demand in the system.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -477,7 +489,7 @@
           },
           {
             "name": "app",
-            "description": null,
+            "description": "Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -488,8 +500,24 @@
             "deprecationReason": null
           },
           {
+            "name": "assignPolicy",
+            "description": "The policy used to pick which instance of the agent to assign to.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "AssignPolicy",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "defaultValue": "BALANCED",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "autoResolvable",
-            "description": null,
+            "description": "Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -505,7 +533,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "A description of the dependency, why it is needed and what it is used for. This can be used to provide more context to users when assigning dependencies.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -517,7 +545,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of this dependency, when assigning you can reference this key to specify which agent_dependency you are assigning to.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -533,7 +561,7 @@
           },
           {
             "name": "maxViableInstances",
-            "description": null,
+            "description": "The maximum amount of viable instances for the agent. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -545,7 +573,7 @@
           },
           {
             "name": "minViableInstances",
-            "description": null,
+            "description": "The minimum amount of viable instances for the agent. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -589,7 +617,7 @@
           },
           {
             "name": "optional",
-            "description": null,
+            "description": "Whether the dependency is optional or not. If the dependency is optional, users can choose to not provide it",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -605,7 +633,7 @@
           },
           {
             "name": "preferedInstances",
-            "description": null,
+            "description": "The prefered amount of instances for the agent. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -617,7 +645,7 @@
           },
           {
             "name": "stateDemands",
-            "description": null,
+            "description": "The state demands of the agent. This is used to identify the demand in the system.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -637,7 +665,7 @@
           },
           {
             "name": "version",
-            "description": null,
+            "description": "The version of the app this dependency corresponds to.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -666,7 +694,7 @@
       {
         "kind": "OBJECT",
         "name": "App",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "An application, identified by a globally unique, reverse-domain identifier (e.g. live.arkitekt.app).",
         "isOneOf": null,
         "fields": [
           {
@@ -687,7 +715,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "The globally unique, reverse-domain identifier of the app.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -710,7 +738,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "AppImageInput",
-        "description": "Create a new Github repository input",
+        "description": "Input describing a built app image to register (its manifest, image, selectors and inspection).",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -1059,7 +1087,7 @@
         "inputFields": [
           {
             "name": "children",
-            "description": null,
+            "description": "The child ports (used for list, dict, union and model ports).",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1079,7 +1107,7 @@
           },
           {
             "name": "choices",
-            "description": null,
+            "description": "The options for the port. This is used for dropdowns and text inputs",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1099,7 +1127,7 @@
           },
           {
             "name": "default",
-            "description": null,
+            "description": "The default value for the port.",
             "type": {
               "kind": "SCALAR",
               "name": "AnyDefault",
@@ -1111,7 +1139,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the port. This is the text that is displayed in the UI when the user hovers over the port",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1123,7 +1151,7 @@
           },
           {
             "name": "effects",
-            "description": null,
+            "description": "The effects of the port",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1143,7 +1171,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "The identifier of a structure port. This is used to uniquely identify a specific type of structure.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1155,7 +1183,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the port",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -1171,7 +1199,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -1187,7 +1215,7 @@
           },
           {
             "name": "label",
-            "description": null,
+            "description": "The label of the port. This is the text that is displayed in the UI",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1199,7 +1227,7 @@
           },
           {
             "name": "nullable",
-            "description": null,
+            "description": "Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -1215,7 +1243,7 @@
           },
           {
             "name": "requires",
-            "description": null,
+            "description": "The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1235,7 +1263,7 @@
           },
           {
             "name": "validators",
-            "description": null,
+            "description": "The validators for the port",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1255,7 +1283,7 @@
           },
           {
             "name": "widget",
-            "description": null,
+            "description": "The assign widget to use for this port.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "AssignWidgetInput",
@@ -1268,6 +1296,48 @@
         ],
         "interfaces": null,
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "AssignPolicy",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "AUTOMATIC",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "BALANCED",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "FASTEST_RESPONSE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "LEAST_BUSY",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ROUND_ROBIN",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "possibleTypes": null
       },
       {
@@ -1367,7 +1437,7 @@
           },
           {
             "name": "choices",
-            "description": null,
+            "description": "The choices to display in the dropdown. This is used for dropdowns and text inputs",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1387,7 +1457,7 @@
           },
           {
             "name": "dependencies",
-            "description": null,
+            "description": "The dependencies of the assign widget, which will be passed to the search or the hook widget. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1407,7 +1477,7 @@
           },
           {
             "name": "dependency",
-            "description": null,
+            "description": "The dependency that we are going to use to fullfill the state choices. If none is provided its the own state that will be queried",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1419,7 +1489,7 @@
           },
           {
             "name": "fallback",
-            "description": null,
+            "description": "The fallback assign widget to use if the current one fails. This is used for custom assign widgets",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "AssignWidgetInput",
@@ -1431,7 +1501,7 @@
           },
           {
             "name": "filters",
-            "description": null,
+            "description": "The filters to apply to a search widget. This is used for custom assign widgets",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1450,8 +1520,20 @@
             "deprecationReason": null
           },
           {
+            "name": "followValue",
+            "description": "The key of another port whose value this widget should follow and mirror.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "hook",
-            "description": null,
+            "description": "The hook to run when the input is changed. This is used for custom assign widgets",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1463,7 +1545,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the assign widget. Can be either dropdown, text, slider, checkbox, radio or custom",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -1479,7 +1561,7 @@
           },
           {
             "name": "max",
-            "description": null,
+            "description": "The maximum value of the slider (if a slider). This is used for sliders and text inputs",
             "type": {
               "kind": "SCALAR",
               "name": "Float",
@@ -1491,7 +1573,7 @@
           },
           {
             "name": "min",
-            "description": null,
+            "description": "The minimum value of the slider (if a slider). This is used for sliders and text inputs",
             "type": {
               "kind": "SCALAR",
               "name": "Float",
@@ -1503,7 +1585,7 @@
           },
           {
             "name": "placeholder",
-            "description": null,
+            "description": "The placeholder of the input. This is used for text inputs and dropdowns",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1515,7 +1597,7 @@
           },
           {
             "name": "query",
-            "description": null,
+            "description": "The query to run when searching for choices. This is used for dropdowns and text inputs",
             "type": {
               "kind": "SCALAR",
               "name": "SearchQuery",
@@ -1527,7 +1609,7 @@
           },
           {
             "name": "stateAccessors",
-            "description": null,
+            "description": "State accessors are used to specify how to access the state values that we are going to use to fullfill the state choices. This is used when the state value that we want to use is not the same as the one of the port, e.g. when we want to use a specific key of a state object, or when we want to use a dynamic key based on the other arguments. The option_key field is used to specify which part of the state accessor we want to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1546,8 +1628,20 @@
             "deprecationReason": null
           },
           {
+            "name": "stateChoices",
+            "description": "The key of a state whose value provides the choices for this widget (state-driven choices).",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "statePath",
-            "description": null,
+            "description": "The path to the state value that we are going to use to fullfill the state choices. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1559,7 +1653,7 @@
           },
           {
             "name": "step",
-            "description": null,
+            "description": "The step value of the slider (if a slider). This is used for sliders and text inputs",
             "type": {
               "kind": "SCALAR",
               "name": "Float",
@@ -1571,7 +1665,7 @@
           },
           {
             "name": "targetAction",
-            "description": null,
+            "description": "The action that we are going to target with a proxy widget. This is used for proxy widgets",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1583,7 +1677,7 @@
           },
           {
             "name": "targetDependency",
-            "description": null,
+            "description": "The dependency that we are going to target with a proxy widget. This is used for proxy widgets",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1595,7 +1689,7 @@
           },
           {
             "name": "targetPort",
-            "description": null,
+            "description": "The port that we are going to target with a proxy widget. This is used for proxy widgets",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1607,7 +1701,7 @@
           },
           {
             "name": "ward",
-            "description": null,
+            "description": "The ward that is responsible for handling querying the choices",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -1679,12 +1773,12 @@
       {
         "kind": "OBJECT",
         "name": "Backend",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A deployment target (agent) registered by a client that runs pods on behalf of an organization.",
         "isOneOf": null,
         "fields": [
           {
             "name": "client",
-            "description": null,
+            "description": "The OAuth2 client this backend authenticates as.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1700,7 +1794,7 @@
           },
           {
             "name": "clientId",
-            "description": null,
+            "description": "The OAuth2 client ID of this backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1731,24 +1825,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instanceId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "kind",
-            "description": null,
+            "description": "The kind of backend (its runtime type).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1764,7 +1842,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The human-readable name of this backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1780,7 +1858,7 @@
           },
           {
             "name": "organization",
-            "description": null,
+            "description": "The organization this backend belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1796,7 +1874,7 @@
           },
           {
             "name": "pods",
-            "description": null,
+            "description": "The pods currently running on this backend.",
             "args": [
               {
                 "name": "filters",
@@ -1807,6 +1885,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "PodOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -1845,7 +1947,7 @@
           },
           {
             "name": "resources",
-            "description": null,
+            "description": "The resources declared on this backend.",
             "args": [
               {
                 "name": "filters",
@@ -1856,6 +1958,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ResourceOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -1894,7 +2020,7 @@
           },
           {
             "name": "user",
-            "description": null,
+            "description": "The user that registered this backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1917,7 +2043,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "BackendFilter",
-        "description": "Filter for Resources",
+        "description": "Filter for backends.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -1971,7 +2097,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only backends whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -1985,19 +2111,67 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the backend name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "BackendOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "lastHeartbeat",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -2015,7 +2189,7 @@
         "inputFields": [
           {
             "name": "catalog",
-            "description": null,
+            "description": "The optional catalog name if this Blok should be registered inside a specific namespace in your Electron app's UI component registry.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -2027,7 +2201,7 @@
           },
           {
             "name": "components",
-            "description": null,
+            "description": "The UI component tree blueprint for this Blok.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2051,7 +2225,7 @@
           },
           {
             "name": "demoState",
-            "description": null,
+            "description": "An optional JSON-serializable object providing demo state values for this Blok's internal reactive data model, useful for testing and development purposes.",
             "type": {
               "kind": "SCALAR",
               "name": "JSONSerializable",
@@ -2087,7 +2261,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "A human-readable description about this Blok's purpose and functionality.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -2099,7 +2273,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of this Blok implementation.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2132,12 +2306,12 @@
       {
         "kind": "OBJECT",
         "name": "CPUSelector",
-        "description": " A selector is a way to select a release",
+        "description": "Requires CPU resources on the backend.",
         "isOneOf": null,
         "fields": [
           {
             "name": "frequency",
-            "description": null,
+            "description": "The minimum CPU frequency required, in MHz",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2346,7 +2520,7 @@
         "inputFields": [
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the choice. This is the text that is displayed in the UI when the user hovers over the choice",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -2358,7 +2532,7 @@
           },
           {
             "name": "image",
-            "description": null,
+            "description": "The image of the choice. This is the image that is displayed in the UI (must be a URL)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -2370,7 +2544,7 @@
           },
           {
             "name": "label",
-            "description": null,
+            "description": "The label of the choice. This is the text that is displayed in the UI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2386,7 +2560,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the choice. This is the value that is returned when the choice is selected",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2546,7 +2720,7 @@
       {
         "kind": "OBJECT",
         "name": "ClientApp",
-        "description": "Profile information for a user.",
+        "description": "A client application registered with the authentication provider.",
         "isOneOf": null,
         "fields": [
           {
@@ -2567,7 +2741,7 @@
           },
           {
             "name": "identifier",
-            "description": "Name of the app.",
+            "description": "The unique identifier of the app.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2590,7 +2764,7 @@
       {
         "kind": "OBJECT",
         "name": "ClientRelease",
-        "description": "Profile information for a user.",
+        "description": "A released version of a client application.",
         "isOneOf": null,
         "fields": [
           {
@@ -2650,12 +2824,12 @@
       {
         "kind": "OBJECT",
         "name": "Collection",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A named grouping of related action definitions.",
         "isOneOf": null,
         "fields": [
           {
             "name": "definedAt",
-            "description": null,
+            "description": "When this collection was defined.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2671,7 +2845,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "A description of this collection.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2703,7 +2877,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of this collection.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2725,6 +2899,146 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "CollectionFilter",
+        "description": "Filter for collections.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CollectionFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CollectionFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CollectionFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": "Keep only collections whose ID is in this list.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": "Case-insensitive search on the collection name.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CollectionOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "definedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ComponentNodeInput",
         "description": "An abstract structural visual element inside a Blok blueprint manifest.",
         "isOneOf": false,
@@ -2732,7 +3046,7 @@
         "inputFields": [
           {
             "name": "children",
-            "description": null,
+            "description": "Flat adjacency pointer list mapping out IDs nested inside this specific component layer.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -2752,7 +3066,7 @@
           },
           {
             "name": "component",
-            "description": null,
+            "description": "The type indicator token matching your Electron app's registered catalog specs (e.g. 'Slider').",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2768,7 +3082,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique structural string identifying this node instance inside the flat workspace layout tree.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2784,7 +3098,7 @@
           },
           {
             "name": "props",
-            "description": null,
+            "description": "The collection of static values, state pointers, or action endpoints assigned to this component.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -2816,7 +3130,7 @@
         "inputFields": [
           {
             "name": "agentCall",
-            "description": null,
+            "description": "Defines an imperative interactive network action callback loop if this prop should trigger an agent interaction.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "AgentCallInput",
@@ -2828,7 +3142,7 @@
           },
           {
             "name": "declaresValue",
-            "description": null,
+            "description": "If set, this prop declares a new 'value' in the Blok state that can be referenced by other props or actions. The value of this field should be the name of the declared value (e.g., 'selected_user').",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -2840,7 +3154,7 @@
           },
           {
             "name": "dynamicValue",
-            "description": null,
+            "description": "A reactive state data-binding rule.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "DynamicValueInput",
@@ -2852,7 +3166,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The prop key name matching the target UI catalog constraint.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2868,7 +3182,7 @@
           },
           {
             "name": "staticValue",
-            "description": null,
+            "description": "A raw scalar or JSON-stringified literal configuration parameter (e.g. '40x' or True).",
             "type": {
               "kind": "SCALAR",
               "name": "JSONSerializable",
@@ -2880,7 +3194,7 @@
           },
           {
             "name": "utilCall",
-            "description": null,
+            "description": "Defines an imperative interactive network action callback loop if this prop should trigger a system utility interaction.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "UtilCallInput",
@@ -2898,7 +3212,7 @@
       {
         "kind": "ENUM",
         "name": "ContainerType",
-        "description": "The state of a dask cluster",
+        "description": "The container runtime used to run a pod.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -2928,25 +3242,25 @@
         "inputFields": [
           {
             "name": "frequency",
-            "description": "The frequency in MHz",
+            "description": "The minimum CPU frequency required, in MHz.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "memory",
-            "description": "The memory in MB",
+            "description": "The minimum memory required, in MB.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -2958,13 +3272,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CreateDeploymentInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for creating a deployment of a flavour on a backend.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "flavour",
-            "description": null,
+            "description": "The ID of the flavour to deploy.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2979,24 +3293,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instanceId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "lastPulled",
-            "description": null,
+            "description": "When the flavour's image was last pulled, if known.",
             "type": {
               "kind": "SCALAR",
               "name": "DateTime",
@@ -3008,7 +3306,7 @@
           },
           {
             "name": "localId",
-            "description": null,
+            "description": "The identifier of the deployment as known to the backend.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3024,13 +3322,13 @@
           },
           {
             "name": "secretParams",
-            "description": null,
+            "description": "Secret parameters passed to the deployment (e.g. credentials).",
             "type": {
               "kind": "SCALAR",
               "name": "UntypedParams",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -3042,13 +3340,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CreateGithubRepoInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for tracking a new GitHub repository.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "autoScan",
-            "description": null,
+            "description": "Whether to scan the repository immediately after adding it.",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -3060,7 +3358,7 @@
           },
           {
             "name": "branch",
-            "description": null,
+            "description": "The branch to scan for app manifests.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3072,7 +3370,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "An optional identifier (e.g. 'user/repo') used to derive the other fields.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3084,7 +3382,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "An optional human-readable name for the repository.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3096,7 +3394,7 @@
           },
           {
             "name": "repo",
-            "description": null,
+            "description": "The repository name on GitHub.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3108,7 +3406,7 @@
           },
           {
             "name": "user",
-            "description": null,
+            "description": "The GitHub owner (user or organization) of the repository.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3126,13 +3424,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "CreatePodInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for registering a running pod for a deployment.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "clientId",
-            "description": null,
+            "description": "The OAuth2 client ID this pod authenticates as, if any.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3144,7 +3442,7 @@
           },
           {
             "name": "deployment",
-            "description": null,
+            "description": "The ID of the deployment this pod is an instance of.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3159,24 +3457,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instanceId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "localId",
-            "description": null,
+            "description": "The identifier of the pod as known to the backend.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3192,7 +3474,7 @@
           },
           {
             "name": "resource",
-            "description": null,
+            "description": "The resource this pod is scheduled onto, if any.",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -3210,7 +3492,7 @@
       {
         "kind": "OBJECT",
         "name": "CudaSelector",
-        "description": " A selector is a way to select a release",
+        "description": "Requires a CUDA-capable (NVIDIA) GPU on the backend.",
         "isOneOf": null,
         "fields": [
           {
@@ -3290,7 +3572,7 @@
         "inputFields": [
           {
             "name": "cudaCores",
-            "description": "The cuda cores",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3302,7 +3584,7 @@
           },
           {
             "name": "cudaVersion",
-            "description": "The minimum cuda version",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3581,29 +3863,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeclareBackendInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for declaring (registering or updating) a backend.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "instanceId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "kind",
-            "description": null,
+            "description": "The kind of backend (its runtime type).",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3619,7 +3885,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The human-readable name of the backend.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3641,13 +3907,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeclareResourceInput",
-        "description": "Create a resource",
+        "description": "Input for declaring (registering or updating) a resource on a backend.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "backend",
-            "description": null,
+            "description": "The ID of the backend to declare the resource on.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3663,7 +3929,7 @@
           },
           {
             "name": "localId",
-            "description": null,
+            "description": "The identifier of the resource as known to the backend.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3679,19 +3945,19 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "An optional human-readable name for the resource.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "qualifiers",
-            "description": null,
+            "description": "Free-form key/value qualifiers describing the resource.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -3717,12 +3983,12 @@
       {
         "kind": "OBJECT",
         "name": "Definition",
-        "description": null,
+        "description": "An action definition: the abstract, hashed description of an RPC task that a flavour provides.",
         "isOneOf": null,
         "fields": [
           {
             "name": "args",
-            "description": null,
+            "description": "The input ports (arguments) of this action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3746,8 +4012,57 @@
           },
           {
             "name": "collections",
-            "description": null,
-            "args": [],
+            "description": "The collections this action belongs to.",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CollectionFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "CollectionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3770,7 +4085,7 @@
           },
           {
             "name": "definedAt",
-            "description": null,
+            "description": "When this action definition was first defined.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3786,7 +4101,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "A human-readable description of this action.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -3798,7 +4113,7 @@
           },
           {
             "name": "flavours",
-            "description": null,
+            "description": "The flavours that provide this action.",
             "args": [
               {
                 "name": "filters",
@@ -3813,14 +4128,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "FlavourOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "FlavourOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3859,7 +4186,7 @@
           },
           {
             "name": "hash",
-            "description": null,
+            "description": "The unique hash identifying this action definition.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3891,7 +4218,7 @@
           },
           {
             "name": "isTestFor",
-            "description": null,
+            "description": "The action definitions that this definition is a test for.",
             "args": [
               {
                 "name": "filters",
@@ -3906,14 +4233,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "DefinitionOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DefinitionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3952,7 +4291,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of action, e.g. a function or a generator.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3968,7 +4307,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The cleartext name of this action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3984,8 +4323,57 @@
           },
           {
             "name": "protocols",
-            "description": null,
-            "args": [],
+            "description": "The protocols this action implements.",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ProtocolFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ProtocolOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4008,7 +4396,7 @@
           },
           {
             "name": "returns",
-            "description": null,
+            "description": "The output ports (return values) of this action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4032,7 +4420,7 @@
           },
           {
             "name": "scope",
-            "description": null,
+            "description": "The data scope of this action (e.g. local, global or bridge).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4048,7 +4436,7 @@
           },
           {
             "name": "tests",
-            "description": null,
+            "description": "The action definitions that act as tests for this definition.",
             "args": [
               {
                 "name": "filters",
@@ -4063,14 +4451,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "DefinitionOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DefinitionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -4116,7 +4516,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DefinitionFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for action definitions.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -4170,7 +4570,7 @@
           },
           {
             "name": "demands",
-            "description": null,
+            "description": "Keep only definitions whose ports satisfy all of the given demands.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -4190,7 +4590,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only definitions whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -4204,19 +4604,19 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the action name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -4529,7 +4929,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DefinitionOrder",
         "description": null,
-        "isOneOf": false,
+        "isOneOf": true,
         "fields": null,
         "inputFields": [
           {
@@ -4552,13 +4952,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeletePodInput",
-        "description": null,
+        "description": "Input for deleting a pod.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "id",
-            "description": null,
+            "description": "The ID of the pod to delete.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4604,12 +5004,12 @@
       {
         "kind": "OBJECT",
         "name": "Deployment",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A flavour scheduled to run on a particular backend.",
         "isOneOf": null,
         "fields": [
           {
             "name": "apiToken",
-            "description": null,
+            "description": "The API token the deployed pod uses to authenticate.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4625,7 +5025,7 @@
           },
           {
             "name": "backend",
-            "description": null,
+            "description": "The backend this deployment runs on.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4641,7 +5041,7 @@
           },
           {
             "name": "flavour",
-            "description": null,
+            "description": "The flavour that is deployed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4673,7 +5073,7 @@
           },
           {
             "name": "localId",
-            "description": null,
+            "description": "The identifier of this deployment as known to the backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4689,7 +5089,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The display name of this deployment, combining backend and flavour names.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4712,7 +5112,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeploymentFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for deployments.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -4766,7 +5166,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only deployments whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -4780,19 +5180,67 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the deployment name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DeploymentOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "localId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -4848,13 +5296,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeviceFeature",
-        "description": "The Feature you are trying to match",
+        "description": "A single hardware feature of a device to match against.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "cpuCount",
-            "description": null,
+            "description": "The number of CPUs the feature describes.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4870,7 +5318,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of feature (e.g. 'gpu', 'cpu').",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4892,12 +5340,12 @@
       {
         "kind": "OBJECT",
         "name": "DockerImage",
-        "description": "A docker image descriptor",
+        "description": "A reference to a built Docker image.",
         "isOneOf": null,
         "fields": [
           {
             "name": "buildAt",
-            "description": null,
+            "description": "When this image was built.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4913,7 +5361,7 @@
           },
           {
             "name": "imageString",
-            "description": null,
+            "description": "The fully-qualified image reference (registry/name:tag).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4980,13 +5428,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DumpLogsInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for attaching a log dump to a pod.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "logs",
-            "description": null,
+            "description": "The captured log output to store.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5002,7 +5450,7 @@
           },
           {
             "name": "pod",
-            "description": null,
+            "description": "The ID of the pod the logs belong to.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5030,7 +5478,7 @@
         "inputFields": [
           {
             "name": "path",
-            "description": null,
+            "description": "JSON Pointer to a variable inside the Blok's isolated data model (e.g., '/microscope/exposure').",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -5130,6 +5578,30 @@
         ]
       },
       {
+        "kind": "ENUM",
+        "name": "EffectClass",
+        "description": "The effect class of an implementation — declared by the implementation, never the caller. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world (no UPSERT), so an ambiguous failure is terminal and must not be retried.",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "NONE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "PHYSICAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "EffectInput",
         "description": "\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    ",
@@ -5138,7 +5610,7 @@
         "inputFields": [
           {
             "name": "dependencies",
-            "description": null,
+            "description": "The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -5158,7 +5630,7 @@
           },
           {
             "name": "fade",
-            "description": null,
+            "description": "Whether to fade out the port when the effect is applied (if it is a hide effect)",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -5170,7 +5642,7 @@
           },
           {
             "name": "function",
-            "description": null,
+            "description": "The function to run to determine if the effect should be applied",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5186,7 +5658,7 @@
           },
           {
             "name": "hook",
-            "description": null,
+            "description": "The hook to run when the effect is applied (if it is a custom effect)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -5198,7 +5670,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the effect. Can be either message, hide or custom",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5214,7 +5686,7 @@
           },
           {
             "name": "message",
-            "description": null,
+            "description": "The message to display when the effect is applied (if it is a message effect)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -5226,7 +5698,7 @@
           },
           {
             "name": "ward",
-            "description": null,
+            "description": "The ward to run when the effect is applied (if it is a custom effect)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -5274,13 +5746,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "EnvironmentInput",
-        "description": "Which environment do you want to match against?",
+        "description": "The target environment that flavours are matched against.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "containerType",
-            "description": null,
+            "description": "The container runtime available in the environment.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5296,7 +5768,7 @@
           },
           {
             "name": "features",
-            "description": null,
+            "description": "The hardware features available in the environment.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -5310,7 +5782,7 @@
                 }
               }
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -5322,12 +5794,12 @@
       {
         "kind": "OBJECT",
         "name": "Flavour",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A buildable variant of a release: a specific Docker image together with the selectors and requirements needed to run it.",
         "isOneOf": null,
         "fields": [
           {
             "name": "definitions",
-            "description": null,
+            "description": "The action definitions this flavour provides.",
             "args": [
               {
                 "name": "filters",
@@ -5342,14 +5814,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "DefinitionOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DefinitionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -5388,7 +5872,7 @@
           },
           {
             "name": "deployments",
-            "description": null,
+            "description": "The deployments that run this flavour.",
             "args": [
               {
                 "name": "filters",
@@ -5399,6 +5883,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DeploymentOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -5437,7 +5945,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "A human-readable description of this flavour.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5445,22 +5953,6 @@
               "ofType": {
                 "name": "String",
                 "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entrypoint",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "CudaSelector",
-                "kind": "OBJECT",
                 "ofType": null
               }
             },
@@ -5485,7 +5977,7 @@
           },
           {
             "name": "image",
-            "description": null,
+            "description": "The Docker image this flavour deploys.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5501,7 +5993,7 @@
           },
           {
             "name": "logo",
-            "description": null,
+            "description": "The stored logo of this flavour.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -5513,7 +6005,7 @@
           },
           {
             "name": "manifest",
-            "description": null,
+            "description": "The raw app manifest this flavour was built from.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5529,7 +6021,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of this flavour (e.g. 'vanilla', 'cuda').",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5545,7 +6037,7 @@
           },
           {
             "name": "originalLogo",
-            "description": null,
+            "description": "The original (upstream) logo URL of this flavour.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -5557,7 +6049,7 @@
           },
           {
             "name": "release",
-            "description": null,
+            "description": "The release this flavour belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5573,7 +6065,7 @@
           },
           {
             "name": "repo",
-            "description": null,
+            "description": "The GitHub repository this flavour was built from.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5589,7 +6081,7 @@
           },
           {
             "name": "requirements",
-            "description": null,
+            "description": "The services this flavour requires in order to run.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5613,7 +6105,7 @@
           },
           {
             "name": "selectors",
-            "description": null,
+            "description": "The hardware/capability selectors a backend must satisfy to run this flavour.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5644,7 +6136,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "FlavourFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for flavours.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -5698,7 +6190,7 @@
           },
           {
             "name": "hasDefinitions",
-            "description": null,
+            "description": "Keep only flavours that provide one of the given definitions.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -5718,7 +6210,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only flavours whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -5738,7 +6230,7 @@
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the flavour name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -5791,12 +6283,12 @@
       {
         "kind": "OBJECT",
         "name": "GithubRepo",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A GitHub repository tracked by Kabinet and scanned for deployable Arkitekt apps.",
         "isOneOf": null,
         "fields": [
           {
             "name": "addedAt",
-            "description": null,
+            "description": "When this repository was first added to Kabinet.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5812,7 +6304,7 @@
           },
           {
             "name": "branch",
-            "description": null,
+            "description": "The branch that is scanned for app manifests.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5828,7 +6320,7 @@
           },
           {
             "name": "flavours",
-            "description": null,
+            "description": "The flavours discovered by scanning this repository.",
             "args": [
               {
                 "name": "filters",
@@ -5843,14 +6335,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "FlavourOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "FlavourOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -5905,7 +6409,7 @@
           },
           {
             "name": "issueUrl",
-            "description": null,
+            "description": "The URL for opening a new issue against this repository on GitHub.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5921,7 +6425,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The human-readable name of the repository.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5937,7 +6441,7 @@
           },
           {
             "name": "organization",
-            "description": null,
+            "description": "The organization that owns this repository.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5953,7 +6457,7 @@
           },
           {
             "name": "repo",
-            "description": null,
+            "description": "The repository name on GitHub (the part after the owner).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5969,7 +6473,7 @@
           },
           {
             "name": "updatedAt",
-            "description": null,
+            "description": "When this repository was last updated.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5985,7 +6489,7 @@
           },
           {
             "name": "url",
-            "description": null,
+            "description": "The URL of this repository on GitHub.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6001,7 +6505,7 @@
           },
           {
             "name": "user",
-            "description": null,
+            "description": "The GitHub owner (user or organization) of the repository.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6042,7 +6546,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "GithubRepoFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for tracked GitHub repositories.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -6096,19 +6600,19 @@
           },
           {
             "name": "branch",
-            "description": null,
+            "description": "Case-insensitive match on the branch name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only repositories whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6122,43 +6626,103 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "repo",
-            "description": null,
+            "description": "Case-insensitive match on the GitHub repository name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the repository name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "user",
-            "description": null,
+            "description": "Case-insensitive match on the GitHub owner.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "GithubRepoOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "addedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "updatedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -6604,7 +7168,7 @@
         "inputFields": [
           {
             "name": "definition",
-            "description": null,
+            "description": "The definition of the implementation. This is used to uniquely identify the implementation",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6620,7 +7184,7 @@
           },
           {
             "name": "dependencies",
-            "description": null,
+            "description": "The agent dependencies required by this implementation.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6644,7 +7208,7 @@
           },
           {
             "name": "dynamic",
-            "description": null,
+            "description": "Whether the implementation is dynamic or not. If the implementation is dynamic, it can be used to create a dynamic action. If the implementation is not dynamic, it cannot be used to create a dynamic action",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6659,8 +7223,24 @@
             "deprecationReason": null
           },
           {
-            "name": "extension",
-            "description": null,
+            "name": "effect",
+            "description": "The effect class of this implementation. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world and an ambiguous failure is terminal (never retried). Declared by the implementation here — never by the caller.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "EffectClass",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "defaultValue": "NONE",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "instanceId",
+            "description": "The instance id of the agent this implementation is bound to.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6672,7 +7252,7 @@
           },
           {
             "name": "interface",
-            "description": null,
+            "description": "The interface of the implementation. This is used to group implementations together in the UI",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6684,7 +7264,7 @@
           },
           {
             "name": "locks",
-            "description": null,
+            "description": "The locks of the implementation. This is used to specify which resources the implementation needs to run",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6704,7 +7284,7 @@
           },
           {
             "name": "logo",
-            "description": null,
+            "description": "The logo of the implementation. This is used to display the logo in the UI either it should be 'custom:svg-paths' or a lucide icon name like 'lucide:activity' urls are not supported at the moment",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6716,7 +7296,7 @@
           },
           {
             "name": "manipulates",
-            "description": null,
+            "description": "The states that the implementation manipulates. This is used to identify which states are manipulated by the implementation, and can be use to enhance state safety in the system",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6735,8 +7315,24 @@
             "deprecationReason": null
           },
           {
+            "name": "needsToken",
+            "description": "Whether Rekuest should mint a signed provenance token when this implementation is assigned. Default true (provenance-by-default); set false for trivial/internal tasks that never produce external provenance.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "true",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "optimistics",
-            "description": "The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state",
+            "description": "The optimistics of the definition. This is used to optimistically set state values when the action is assigned, to provide a better user experience.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6756,7 +7352,7 @@
           },
           {
             "name": "params",
-            "description": null,
+            "description": "The params of the implementation. This is used to pass parameters to the implementation",
             "type": {
               "kind": "SCALAR",
               "name": "AnyDefault",
@@ -6767,8 +7363,28 @@
             "deprecationReason": null
           },
           {
+            "name": "provenanceAudience",
+            "description": "The downstream service(s) the provenance token should be scoped to (the token's `aud`). If omitted, Rekuest derives the audience from the structures the assignment acts on.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "String",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "tracks",
-            "description": null,
+            "description": "The tracks of the definition. This is used to track values over time during the runtime of an action. This is the state of a dependency",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6818,7 +7434,7 @@
                 }
               }
             },
-            "defaultValue": null,
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6966,7 +7582,7 @@
         "inputFields": [
           {
             "name": "description",
-            "description": null,
+            "description": "Describe the lock a bit",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6978,7 +7594,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the lock. This is used to uniquely identify the lock",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -7006,7 +7622,7 @@
         "inputFields": [
           {
             "name": "definition",
-            "description": null,
+            "description": "The lock definition this implementation fulfills.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -7022,7 +7638,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the lock implementation.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -7044,12 +7660,12 @@
       {
         "kind": "OBJECT",
         "name": "LogDump",
-        "description": "The logs of a pod",
+        "description": "A captured snapshot of a pod's logs at a point in time.",
         "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
-            "description": null,
+            "description": "When these logs were captured.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7081,7 +7697,7 @@
           },
           {
             "name": "logs",
-            "description": null,
+            "description": "The captured log output.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7097,7 +7713,7 @@
           },
           {
             "name": "pod",
-            "description": null,
+            "description": "The pod these logs were captured from.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7228,13 +7844,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "MatchFlavoursInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for matching the best flavour for a release in a given environment.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "actions",
-            "description": null,
+            "description": "The action hashes that the matched flavour must provide.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -7254,7 +7870,7 @@
           },
           {
             "name": "environment",
-            "description": null,
+            "description": "The target environment to match flavours against.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "EnvironmentInput",
@@ -7266,7 +7882,7 @@
           },
           {
             "name": "release",
-            "description": null,
+            "description": "The release whose flavours should be matched.",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -7379,7 +7995,7 @@
         "fields": [
           {
             "name": "createAppImage",
-            "description": "Create a new release",
+            "description": "Register a built app image, creating its release and flavour as needed.",
             "args": [
               {
                 "name": "input",
@@ -7412,7 +8028,7 @@
           },
           {
             "name": "createDeployment",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Schedule a flavour onto a backend, creating a new deployment.",
             "args": [
               {
                 "name": "input",
@@ -7445,7 +8061,7 @@
           },
           {
             "name": "createGithubRepo",
-            "description": "Create a new Github repository on a bridge server",
+            "description": "Start tracking a new GitHub repository so it can be scanned for apps.",
             "args": [
               {
                 "name": "input",
@@ -7478,7 +8094,7 @@
           },
           {
             "name": "createPod",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Register a running pod for a deployment on a backend.",
             "args": [
               {
                 "name": "input",
@@ -7511,7 +8127,7 @@
           },
           {
             "name": "declareBackend",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Declare (register or update) a backend for the current client.",
             "args": [
               {
                 "name": "input",
@@ -7544,7 +8160,7 @@
           },
           {
             "name": "declareResource",
-            "description": "Create a new resource for your backend",
+            "description": "Declare (register or update) a resource on one of your backends.",
             "args": [
               {
                 "name": "input",
@@ -7577,7 +8193,7 @@
           },
           {
             "name": "deleteBackend",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Delete a backend and return its ID.",
             "args": [
               {
                 "name": "id",
@@ -7610,7 +8226,7 @@
           },
           {
             "name": "deletePod",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Delete a pod and return its ID.",
             "args": [
               {
                 "name": "input",
@@ -7643,7 +8259,7 @@
           },
           {
             "name": "dumpLogs",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Attach a captured log dump to a pod.",
             "args": [
               {
                 "name": "input",
@@ -7676,7 +8292,7 @@
           },
           {
             "name": "rescanRepos",
-            "description": "Rescan all repos",
+            "description": "Rescan every tracked GitHub repository for new or updated app manifests.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7700,7 +8316,7 @@
           },
           {
             "name": "scanRepo",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Scan a tracked GitHub repository for app manifests and update its flavours.",
             "args": [
               {
                 "name": "input",
@@ -7733,7 +8349,7 @@
           },
           {
             "name": "updateDeployment",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Update the status of an existing deployment.",
             "args": [
               {
                 "name": "input",
@@ -7766,7 +8382,7 @@
           },
           {
             "name": "updatePod",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Update the status of an existing pod.",
             "args": [
               {
                 "name": "input",
@@ -7852,7 +8468,7 @@
         "inputFields": [
           {
             "name": "oneapiVersion",
-            "description": "The api versison of the selector",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -7876,7 +8492,7 @@
         "inputFields": [
           {
             "name": "accessor",
-            "description": null,
+            "description": "The accessor to get the value to optimistically set. This is used when the value to optimistically set is not the same as the value of the port",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -7888,7 +8504,7 @@
           },
           {
             "name": "path",
-            "description": null,
+            "description": "The path to the state.value to optimistically set the value, always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -7904,7 +8520,7 @@
           },
           {
             "name": "state",
-            "description": null,
+            "description": "The state to optimistically set when the action is assigned",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8038,12 +8654,12 @@
       {
         "kind": "OBJECT",
         "name": "Pod",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A running instance of a deployment on a backend.",
         "isOneOf": null,
         "fields": [
           {
             "name": "backend",
-            "description": null,
+            "description": "The backend this pod runs on.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8059,7 +8675,7 @@
           },
           {
             "name": "clientId",
-            "description": null,
+            "description": "The OAuth2 client ID this pod authenticates as, if any.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -8071,7 +8687,7 @@
           },
           {
             "name": "deployment",
-            "description": null,
+            "description": "The deployment this pod is an instance of.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8103,7 +8719,7 @@
           },
           {
             "name": "latestLogDump",
-            "description": null,
+            "description": "The most recent log dump captured from this pod.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -8115,7 +8731,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The display name of this pod, combining backend, flavour and app identifier.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8131,7 +8747,7 @@
           },
           {
             "name": "podId",
-            "description": null,
+            "description": "The identifier of this pod as known to the backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8147,7 +8763,7 @@
           },
           {
             "name": "resource",
-            "description": null,
+            "description": "The resource this pod is scheduled onto, if any.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -8159,7 +8775,7 @@
           },
           {
             "name": "status",
-            "description": null,
+            "description": "The current lifecycle status of this pod.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8182,7 +8798,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "PodFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for pods.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -8236,19 +8852,19 @@
           },
           {
             "name": "backend",
-            "description": null,
+            "description": "Keep only pods running on the given backend.",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only pods whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -8262,19 +8878,67 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Match pods by the name of their backend.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PodOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "status",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -8286,7 +8950,7 @@
       {
         "kind": "ENUM",
         "name": "PodStatus",
-        "description": "The state of a dask cluster",
+        "description": "The lifecycle status of a pod.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -8334,12 +8998,12 @@
       {
         "kind": "OBJECT",
         "name": "PodUpdateMessage",
-        "description": "An update on a pod",
+        "description": "A status update for a pod, pushed over a subscription.",
         "isOneOf": null,
         "fields": [
           {
             "name": "created",
-            "description": null,
+            "description": "Whether this update corresponds to the pod's creation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8355,7 +9019,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "The ID of the pod this update is about.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8371,7 +9035,7 @@
           },
           {
             "name": "progress",
-            "description": null,
+            "description": "Optional progress indicator for the update, as a percentage.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -8383,7 +9047,7 @@
           },
           {
             "name": "status",
-            "description": null,
+            "description": "The new status of the pod.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8406,7 +9070,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "PortDemandInput",
-        "description": null,
+        "description": "A demand on the ports (args or returns) of an action.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -8678,7 +9342,7 @@
         "inputFields": [
           {
             "name": "at",
-            "description": null,
+            "description": "The index of the port to match.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -8690,7 +9354,7 @@
           },
           {
             "name": "children",
-            "description": null,
+            "description": "The matches for the children of the port to match.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -8710,7 +9374,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "The identifier of the port to match.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -8722,7 +9386,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the port to match.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -8734,7 +9398,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the port to match.",
             "type": {
               "kind": "ENUM",
               "name": "PortKind",
@@ -8746,22 +9410,10 @@
           },
           {
             "name": "nullable",
-            "description": null,
+            "description": "Whether the port is nullable.",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "object",
-            "description": "The object of the port to match. This is used for adanved pattern matching based on the exact object descriptors of the object. i.e { x: 1, y: 2} ",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Arg",
               "ofType": null
             },
             "defaultValue": "null",
@@ -8776,12 +9428,12 @@
       {
         "kind": "OBJECT",
         "name": "Protocol",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "An interface that an action definition can implement (e.g. Predicate).",
         "isOneOf": null,
         "fields": [
           {
             "name": "description",
-            "description": null,
+            "description": "A description of this protocol.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8813,7 +9465,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of this protocol.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -8830,6 +9482,134 @@
         ],
         "inputFields": null,
         "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ProtocolFilter",
+        "description": "Filter for protocols.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ProtocolFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ProtocolFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ProtocolFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": "Keep only protocols whose ID is in this list.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": "Case-insensitive search on the protocol name.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ProtocolOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
       },
@@ -8902,7 +9682,7 @@
         "inputFields": [
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the provision. This is used to uniquely identify the provision",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8918,7 +9698,7 @@
           },
           {
             "name": "operator",
-            "description": null,
+            "description": "The operator for the provision",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8934,7 +9714,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the provision. This can be any JSON serializable value",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -9118,7 +9898,7 @@
         "inputFields": [
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the qualifier.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -9134,7 +9914,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the qualifier.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -9161,7 +9941,7 @@
         "fields": [
           {
             "name": "backend",
-            "description": "Return all dask clusters",
+            "description": "Return a single backend by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9194,7 +9974,7 @@
           },
           {
             "name": "backends",
-            "description": null,
+            "description": "List all backends visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9205,6 +9985,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "BackendOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9243,7 +10047,7 @@
           },
           {
             "name": "definition",
-            "description": "Return all dask clusters",
+            "description": "Return a single action definition by its ID.",
             "args": [
               {
                 "name": "hash",
@@ -9284,7 +10088,7 @@
           },
           {
             "name": "definitions",
-            "description": null,
+            "description": "List all action definitions visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9299,14 +10103,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "DefinitionOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DefinitionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9345,7 +10161,7 @@
           },
           {
             "name": "deployment",
-            "description": "Return all dask clusters",
+            "description": "Return a single deployment by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9378,7 +10194,7 @@
           },
           {
             "name": "deployments",
-            "description": null,
+            "description": "List all deployments visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9389,6 +10205,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DeploymentOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9427,7 +10267,7 @@
           },
           {
             "name": "flavour",
-            "description": "Return all dask clusters",
+            "description": "Return a single flavour (a buildable variant of a release) by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9460,7 +10300,7 @@
           },
           {
             "name": "flavours",
-            "description": null,
+            "description": "List all flavours visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9475,14 +10315,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "FlavourOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "FlavourOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9521,7 +10373,7 @@
           },
           {
             "name": "githubRepo",
-            "description": "Return all dask clusters",
+            "description": "Return a single tracked GitHub repository by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9583,7 +10435,7 @@
           },
           {
             "name": "githubRepos",
-            "description": null,
+            "description": "List all tracked GitHub repositories visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9594,6 +10446,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "GithubRepoOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9632,7 +10508,7 @@
           },
           {
             "name": "matchFlavour",
-            "description": "Return the currently logged in user",
+            "description": "Return the flavour that best matches the requested release, actions and target environment.",
             "args": [
               {
                 "name": "input",
@@ -9665,7 +10541,7 @@
           },
           {
             "name": "me",
-            "description": "Return the currently logged in user",
+            "description": "Return the currently authenticated user.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -9681,24 +10557,8 @@
           },
           {
             "name": "myPodAt",
-            "description": "Let a backend discover its own pods",
+            "description": "Let a backend discover one of its own pods by local identifier.",
             "args": [
-              {
-                "name": "instanceId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "ID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
               {
                 "name": "localId",
                 "description": null,
@@ -9730,7 +10590,7 @@
           },
           {
             "name": "pod",
-            "description": "Return all dask clusters",
+            "description": "Return a single pod by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9763,26 +10623,10 @@
           },
           {
             "name": "podForAgent",
-            "description": "Return the pod for an agent",
+            "description": "Return the pod that a given agent (client) is running for a deployment.",
             "args": [
               {
                 "name": "clientId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "ID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "instanceId",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -9808,7 +10652,7 @@
           },
           {
             "name": "pods",
-            "description": null,
+            "description": "List all pods visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9819,6 +10663,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "PodOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9857,7 +10725,7 @@
           },
           {
             "name": "release",
-            "description": "Return all dask clusters",
+            "description": "Return a single app release by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9890,7 +10758,7 @@
           },
           {
             "name": "releases",
-            "description": null,
+            "description": "List all app releases visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9901,6 +10769,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ReleaseOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -9939,7 +10831,7 @@
           },
           {
             "name": "resource",
-            "description": "Return all dask clusters",
+            "description": "Return a single backend resource by its ID.",
             "args": [
               {
                 "name": "id",
@@ -9972,7 +10864,7 @@
           },
           {
             "name": "resources",
-            "description": null,
+            "description": "List all backend resources visible to the current organization.",
             "args": [
               {
                 "name": "filters",
@@ -9983,6 +10875,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ResourceOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -10028,12 +10944,12 @@
       {
         "kind": "OBJECT",
         "name": "Release",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": "A specific version of an app, bundling the flavours that can be deployed for it.",
         "isOneOf": null,
         "fields": [
           {
             "name": "app",
-            "description": null,
+            "description": "The app this release belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10049,7 +10965,7 @@
           },
           {
             "name": "colour",
-            "description": "Is this release deployed",
+            "description": "A display colour for this release, as a hex string.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10065,7 +10981,7 @@
           },
           {
             "name": "deployments",
-            "description": "Is this release deployed",
+            "description": "The deployments that run a flavour of this release.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10089,7 +11005,7 @@
           },
           {
             "name": "description",
-            "description": "Is this release deployed",
+            "description": "A human-readable description of this release.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10105,7 +11021,7 @@
           },
           {
             "name": "entrypoint",
-            "description": null,
+            "description": "The entrypoint used to start the app.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10121,7 +11037,7 @@
           },
           {
             "name": "flavours",
-            "description": null,
+            "description": "The flavours (buildable variants) available for this release.",
             "args": [
               {
                 "name": "filters",
@@ -10136,14 +11052,26 @@
                 "deprecationReason": null
               },
               {
-                "name": "order",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "FlavourOrder",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "FlavourOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
                 },
-                "defaultValue": null,
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -10198,7 +11126,7 @@
           },
           {
             "name": "installed",
-            "description": "Is this release deployed",
+            "description": "Whether this release is currently deployed somewhere.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10214,7 +11142,7 @@
           },
           {
             "name": "logo",
-            "description": null,
+            "description": "The stored logo of this release.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10226,7 +11154,7 @@
           },
           {
             "name": "name",
-            "description": "Is this release deployed",
+            "description": "The display name of this release, in the form 'identifier:version'.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10242,7 +11170,7 @@
           },
           {
             "name": "originalLogo",
-            "description": null,
+            "description": "The original (upstream) logo URL of this release.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10254,7 +11182,7 @@
           },
           {
             "name": "scopes",
-            "description": null,
+            "description": "The OAuth2 scopes this release requires.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10278,7 +11206,7 @@
           },
           {
             "name": "version",
-            "description": null,
+            "description": "The semantic version of this release.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10301,7 +11229,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ReleaseFilter",
-        "description": "Filter for Dask Clusters",
+        "description": "Filter for app releases.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -10355,7 +11283,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only releases whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -10369,19 +11297,79 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the release version.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ReleaseOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "releasedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "version",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -10393,12 +11381,12 @@
       {
         "kind": "OBJECT",
         "name": "Requirement",
-        "description": "A requirement",
+        "description": "A service that a flavour requires in order to run (e.g. mikro, rekuest).",
         "isOneOf": null,
         "fields": [
           {
             "name": "description",
-            "description": null,
+            "description": "An optional human-readable description of the requirement.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10410,7 +11398,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key identifying this requirement within the flavour.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10426,7 +11414,7 @@
           },
           {
             "name": "optional",
-            "description": null,
+            "description": "Whether the flavour can still run if this service is unavailable.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10442,7 +11430,7 @@
           },
           {
             "name": "service",
-            "description": null,
+            "description": "The name of the required service.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10603,7 +11591,7 @@
         "inputFields": [
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the requirement. This is used to uniquely identify the requirement",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10619,7 +11607,7 @@
           },
           {
             "name": "operator",
-            "description": null,
+            "description": "The operator for the requirement",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10635,7 +11623,7 @@
           },
           {
             "name": "value",
-            "description": null,
+            "description": "The value of the requirement. This can be any JSON serializable value",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10723,12 +11711,12 @@
       {
         "kind": "OBJECT",
         "name": "Resource",
-        "description": "A resource on a backend. Resource define allocated resources on a backend. E.g a computational action",
+        "description": "An allocatable resource on a backend (e.g. a compute slot) that pods can be scheduled onto.",
         "isOneOf": null,
         "fields": [
           {
             "name": "backend",
-            "description": null,
+            "description": "The backend this resource belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10760,7 +11748,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The human-readable name of this resource.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10776,7 +11764,7 @@
           },
           {
             "name": "pods",
-            "description": null,
+            "description": "The pods scheduled onto this resource.",
             "args": [
               {
                 "name": "filters",
@@ -10787,6 +11775,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "PodOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -10825,7 +11837,7 @@
           },
           {
             "name": "qualifiers",
-            "description": null,
+            "description": "Free-form key/value qualifiers describing this resource.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10837,7 +11849,7 @@
           },
           {
             "name": "resourceId",
-            "description": null,
+            "description": "The identifier of this resource as known to the backend.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10860,7 +11872,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ResourceFilter",
-        "description": "Filter for Resources",
+        "description": "Filter for resources.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -10914,7 +11926,7 @@
           },
           {
             "name": "ids",
-            "description": null,
+            "description": "Keep only resources whose ID is in this list.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -10928,19 +11940,67 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "search",
-            "description": null,
+            "description": "Case-insensitive search on the resource name.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ResourceOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -11158,7 +12218,7 @@
         "inputFields": [
           {
             "name": "children",
-            "description": null,
+            "description": "The child ports (used for list, dict, union and model ports).",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11178,7 +12238,7 @@
           },
           {
             "name": "choices",
-            "description": null,
+            "description": "The options for the port. This is used for dropdowns and text inputs",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11198,7 +12258,7 @@
           },
           {
             "name": "default",
-            "description": null,
+            "description": "The default value for the port.",
             "type": {
               "kind": "SCALAR",
               "name": "AnyDefault",
@@ -11210,7 +12270,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the port. This is the text that is displayed in the UI when the user hovers over the port",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11222,7 +12282,7 @@
           },
           {
             "name": "effects",
-            "description": null,
+            "description": "The effects of the port",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11242,7 +12302,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "The identifier of a structure port. This is used to uniquely identify a specific type of structure.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11254,7 +12314,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the port",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11270,7 +12330,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11286,7 +12346,7 @@
           },
           {
             "name": "label",
-            "description": null,
+            "description": "The label of the port. This is the text that is displayed in the UI",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11298,7 +12358,7 @@
           },
           {
             "name": "nullable",
-            "description": null,
+            "description": "Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11314,7 +12374,7 @@
           },
           {
             "name": "provides",
-            "description": null,
+            "description": "The provisions for the port. Provisions are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port provisions",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11334,7 +12394,7 @@
           },
           {
             "name": "validators",
-            "description": null,
+            "description": "The validators for the port",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11354,7 +12414,7 @@
           },
           {
             "name": "widget",
-            "description": null,
+            "description": "The return widget to use for this port.",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "ReturnWidgetInput",
@@ -11417,7 +12477,7 @@
         "inputFields": [
           {
             "name": "choices",
-            "description": null,
+            "description": "The choices to display in the dropdown. This is used for dropdowns and text inputs",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11437,7 +12497,7 @@
           },
           {
             "name": "hook",
-            "description": null,
+            "description": "The hook to run (if it is a custom return widget).",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11449,7 +12509,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the return widget. Can be either dropdown, text, slider, checkbox, radio or custom",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11465,7 +12525,7 @@
           },
           {
             "name": "max",
-            "description": null,
+            "description": "The maximum value to display (if a slider).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11477,7 +12537,7 @@
           },
           {
             "name": "min",
-            "description": null,
+            "description": "The minimum value to display (if a slider).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11489,7 +12549,7 @@
           },
           {
             "name": "placeholder",
-            "description": null,
+            "description": "The placeholder text of the return widget.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11501,7 +12561,7 @@
           },
           {
             "name": "query",
-            "description": null,
+            "description": "The query to run when searching for choices. This is used for dropdowns and text inputs",
             "type": {
               "kind": "SCALAR",
               "name": "SearchQuery",
@@ -11513,7 +12573,7 @@
           },
           {
             "name": "step",
-            "description": null,
+            "description": "The step value to display (if a slider).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11525,7 +12585,7 @@
           },
           {
             "name": "ward",
-            "description": null,
+            "description": "The ward responsible for handling the return widget.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11573,12 +12633,12 @@
       {
         "kind": "OBJECT",
         "name": "RocmSelector",
-        "description": " A selector is a way to select a release",
+        "description": "Requires a ROCm-capable (AMD) GPU on the backend.",
         "isOneOf": null,
         "fields": [
           {
             "name": "apiThing",
-            "description": null,
+            "description": "An additional ROCm capability qualifier",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -11590,7 +12650,7 @@
           },
           {
             "name": "apiVersion",
-            "description": null,
+            "description": "The minimum ROCm API version required",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -11653,7 +12713,7 @@
         "inputFields": [
           {
             "name": "apiThing",
-            "description": "The api thing of the selector",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11665,7 +12725,7 @@
           },
           {
             "name": "apiVersion",
-            "description": "The api version of the selector",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11683,13 +12743,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ScanRepoInput",
-        "description": "Create a dask cluster input",
+        "description": "Input for scanning a tracked GitHub repository for app manifests.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "id",
-            "description": null,
+            "description": "The ID of the GitHub repository to scan.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11840,7 +12900,7 @@
       {
         "kind": "INTERFACE",
         "name": "Selector",
-        "description": " A selector is a way to select a release",
+        "description": "A selector expresses a hardware (or capability) requirement that a backend must satisfy to run a flavour.",
         "isOneOf": null,
         "fields": [
           {
@@ -11906,7 +12966,7 @@
         "inputFields": [
           {
             "name": "apiThing",
-            "description": "The api thing of the selector",
+            "description": "An additional ROCm capability qualifier (rocm selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11918,7 +12978,7 @@
           },
           {
             "name": "apiVersion",
-            "description": "The api version of the selector",
+            "description": "The minimum ROCm API version required (rocm selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11930,7 +12990,7 @@
           },
           {
             "name": "cudaCores",
-            "description": "The cuda cores",
+            "description": "The minimum number of CUDA cores required (cuda selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11942,7 +13002,7 @@
           },
           {
             "name": "frequency",
-            "description": "The frequency in MHz",
+            "description": "The minimum CPU frequency required, in MHz (cpu selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11954,7 +13014,7 @@
           },
           {
             "name": "kind",
-            "description": "The kind of the selector",
+            "description": "The discriminator identifying which kind of selector this is (e.g. 'cuda', 'rocm', 'cpu', 'oneapi').",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -11970,7 +13030,7 @@
           },
           {
             "name": "memory",
-            "description": "The memory in MB",
+            "description": "The minimum memory required, in MB (cpu selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11982,7 +13042,7 @@
           },
           {
             "name": "oneapiVersion",
-            "description": "The api version of the selector",
+            "description": "The minimum oneAPI version required (oneapi selectors).",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12128,7 +13188,7 @@
         "inputFields": [
           {
             "name": "optionKey",
-            "description": null,
+            "description": "The part of the state accessor to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12144,7 +13204,7 @@
           },
           {
             "name": "subPath",
-            "description": null,
+            "description": "The sub path to access a specific part of the state value. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12262,7 +13322,7 @@
         "inputFields": [
           {
             "name": "name",
-            "description": null,
+            "description": "The name of the state schema. This is used to uniquely identify the state schema",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12278,7 +13338,7 @@
           },
           {
             "name": "ports",
-            "description": null,
+            "description": "The ports of the state schema. This is used to define the structure of the state",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12314,7 +13374,7 @@
         "inputFields": [
           {
             "name": "allowInactive",
-            "description": null,
+            "description": "Allow inactive nodes, defaults to true",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -12326,7 +13386,7 @@
           },
           {
             "name": "app",
-            "description": null,
+            "description": "Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12338,7 +13398,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the state. This can describe the state and its purpose.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12350,7 +13410,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the state. This is used to identify the dependency in the system.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12366,7 +13426,7 @@
           },
           {
             "name": "name",
-            "description": "The name of the state. This is used to identify the action in the system.",
+            "description": "The name of the state. This is used to identify the state in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12378,7 +13438,7 @@
           },
           {
             "name": "optional",
-            "description": null,
+            "description": "Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12394,7 +13454,7 @@
           },
           {
             "name": "portMatches",
-            "description": null,
+            "description": "The demands for the state ports, this can be additionaly specified so that when we loosen the matching criteria for a state in a resolver, we can still make sure to match the right state based on the demands for the ports. This is used to identify the demand in the system.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -12414,7 +13474,7 @@
           },
           {
             "name": "protocols",
-            "description": "The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together.",
+            "description": "The protocols that the state is implementing or relying on. This is used to identify the demand in the system, and can be used to match states that are implementing the same protocol together.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -12434,7 +13494,19 @@
           },
           {
             "name": "stateKey",
-            "description": null,
+            "description": "The key of the state this dependency corresponds to. (i.e frame:count)",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "version",
+            "description": "The version of the state this dependency corresponds to.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12458,7 +13530,7 @@
         "inputFields": [
           {
             "name": "definition",
-            "description": null,
+            "description": "The schema of the state implementation. This is used to define the structure of the state",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12474,7 +13546,7 @@
           },
           {
             "name": "interface",
-            "description": null,
+            "description": "The key of the state implementation. This is used to uniquely identify the state implementation",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12590,7 +13662,7 @@
         "fields": [
           {
             "name": "pod",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Subscribe to status updates for a single pod.",
             "args": [
               {
                 "name": "podId",
@@ -12623,7 +13695,7 @@
           },
           {
             "name": "pods",
-            "description": "Create a new dask cluster on a bridge server",
+            "description": "Subscribe to status updates for all pods visible to the current organization.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12760,7 +13832,7 @@
         "inputFields": [
           {
             "name": "dependencyKey",
-            "description": null,
+            "description": "The key of the dependency whose state is being tracked.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12772,7 +13844,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "An optional description for the track.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12784,7 +13856,7 @@
           },
           {
             "name": "label",
-            "description": null,
+            "description": "An optional human-readable label for the track.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -12796,7 +13868,7 @@
           },
           {
             "name": "stateKey",
-            "description": null,
+            "description": "The key of the state to track.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12812,7 +13884,7 @@
           },
           {
             "name": "valueKey",
-            "description": null,
+            "description": "The key of the value within the state to track.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12828,7 +13900,7 @@
           },
           {
             "name": "windows",
-            "description": null,
+            "description": "The windows (aggregations) computed over the tracked value.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -12854,7 +13926,7 @@
       {
         "kind": "SCALAR",
         "name": "UntypedParams",
-        "description": "UntypedParams represents an untyped options object returned by the Dask Gateway API.",
+        "description": "An untyped, free-form JSON object whose shape is not known to the schema.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -12865,13 +13937,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "UpdateDeploymentInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for updating a deployment's status.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "deployment",
-            "description": null,
+            "description": "The ID of the deployment to update.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12887,7 +13959,7 @@
           },
           {
             "name": "status",
-            "description": null,
+            "description": "The new status of the deployment.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -12909,29 +13981,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "UpdatePodInput",
-        "description": "Create a new Github repository input",
+        "description": "Input for updating a pod's status.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "instanceId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "localId",
-            "description": null,
+            "description": "The backend-local identifier of the pod to update.",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -12943,7 +13999,7 @@
           },
           {
             "name": "pod",
-            "description": null,
+            "description": "The ID of the pod to update; required unless 'local_id' is given.",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -12955,7 +14011,7 @@
           },
           {
             "name": "status",
-            "description": null,
+            "description": "The new status of the pod.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -13011,7 +14067,7 @@
         "inputFields": [
           {
             "name": "arguments",
-            "description": null,
+            "description": "Key-value arguments map compiled for the target utility call.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -13031,7 +14087,7 @@
           },
           {
             "name": "operation",
-            "description": null,
+            "description": "The utility function name to invoke.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -13136,13 +14192,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ValidatorInput",
-        "description": " \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n",
+        "description": "\nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports.\n\n",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "dependencies",
-            "description": null,
+            "description": "The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -13162,7 +14218,7 @@
           },
           {
             "name": "errorMessage",
-            "description": null,
+            "description": "The error message to display when the validation fails",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -13174,7 +14230,7 @@
           },
           {
             "name": "function",
-            "description": null,
+            "description": "The function to run when validating the port",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -13190,7 +14246,7 @@
           },
           {
             "name": "label",
-            "description": null,
+            "description": "An optional human-readable label for the validator.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -13214,7 +14270,7 @@
         "inputFields": [
           {
             "name": "label",
-            "description": null,
+            "description": "An optional human-readable label for the window.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -13226,7 +14282,7 @@
           },
           {
             "name": "windowFunction",
-            "description": null,
+            "description": "The window function to apply over the tracked value.",
             "type": {
               "kind": "NON_NULL",
               "name": null,

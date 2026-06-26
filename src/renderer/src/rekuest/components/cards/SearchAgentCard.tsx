@@ -1,6 +1,5 @@
 import {
   Card,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -13,16 +12,6 @@ import { SearchAgentFragment } from "@/rekuest/api/graphql";
 interface Props {
   item: SearchAgentFragment;
 }
-
-const formatInstanceId = (instanceId: unknown) => {
-  const value = String(instanceId);
-
-  if (value.length <= 16) {
-    return value;
-  }
-
-  return `${value.slice(0, 6)}...${value.slice(-6)}`;
-};
 
 const SearchAgentCard = ({ item }: Props) => {
   const statusLabel = item.blocked
@@ -58,9 +47,6 @@ const SearchAgentCard = ({ item }: Props) => {
             </RekuestAgent.DetailLink>
           </CardTitle>
 
-          <CardDescription className="font-mono text-xs text-muted-foreground">
-            {formatInstanceId(item.instanceId)}
-          </CardDescription>
         </CardHeader>
 
         <CardFooter className="flex items-center justify-between gap-2 text-xs text-muted-foreground">

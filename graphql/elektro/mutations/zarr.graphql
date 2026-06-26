@@ -1,0 +1,14 @@
+fragment GeneralZarrAccessGrant on GeneralZarrAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}
+
+mutation RequestGeneralZarrAccess($input: RequestGeneralZarrAccessInput!) {
+  requestGeneralZarrAccess(input: $input) {
+    ...GeneralZarrAccessGrant
+  }
+}

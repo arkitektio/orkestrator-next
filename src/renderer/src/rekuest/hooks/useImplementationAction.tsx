@@ -1,34 +1,28 @@
 import { formatApolloError } from "@/lib/errorHandler";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
   AssignInput,
-  AssignationEventKind,
+  TaskEventKind,
   DetailImplementationFragment,
-  PostmanAssignationFragment,
-  ReserveMutationVariables,
+  PostmanTaskFragment,
   useAssignMutation,
-  useAssignationsQuery,
+  useMyTasksQuery,
   useCancelMutation,
   useImplementationQuery,
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionAssignVariables = AssignInput;
 
 export type UseImplementationActionReturn<T> = {
   implementation?: DetailImplementationFragment;
   error?: any;
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
-  reassign: () => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
+  reassign: () => Promise<PostmanTaskFragment>;
   cancel: () => void;
-  assignations?: PostmanAssignationFragment[];
-  latestAssignation?: PostmanAssignationFragment;
+  tasks?: PostmanTaskFragment[];
+  latestTask?: PostmanTaskFragment;
 };
 
 export type UseImplementationAction<T> = {
@@ -38,33 +32,25 @@ export type UseImplementationAction<T> = {
 export const useImplementationAction = <T extends any>(
   options: UseImplementationAction<T>,
 ): UseImplementationActionReturn<T> => {
-  const { settings } = useSettings();
-
   const { data, variables, refetch, error } = useImplementationQuery({
     variables: {
       id: options.id,
     },
   });
 
-  const { data: assignations_data } = useAssignationsQuery({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
+  const { data: tasks_data } = useMyTasksQuery();
 
   const [postAssign] = useAssignMutation({});
   const [cancelAssign] = useCancelMutation({});
 
-  const assignations = assignations_data?.assignations.filter(
+  const tasks = tasks_data?.myTasks.filter(
     (x) => x.implementation?.id == data?.implementation.id,
   );
 
-  const latestAssignation = data?.implementation.myLatestAssignation || assignations?.at(0);
+  const latestTask = data?.implementation.myLatestTask || tasks?.at(0);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       try {
         const mutation = await postAssign({
           variables: {
@@ -72,74 +58,71 @@ export const useImplementationAction = <T extends any>(
               ...vars,
               implementation: options.id,
               args: vars.args,
-              instanceId: settings.instanceId,
               hooks: [],
             },
           },
         });
 
-        console.log(mutation);
+        const task = mutation.data?.assign;
 
-        const assignation = mutation.data?.assign;
-
-        if (!assignation) {
-          throw Error("Couldn't assign: no assignation was returned by the GraphQL API");
+        if (!task) {
+          throw Error("Couldn't assign: no task was returned by the GraphQL API");
         }
 
-        return assignation;
+        return task;
         } catch (error: unknown) {
           throw Error(`Couldn't assign: ${formatApolloError(error, "rekuest")}`);
       }
     },
-    [postAssign, settings.instanceId, options.id],
+    [postAssign, options.id],
   );
 
   const reassign = useCallback(() => {
     console.log("Not");
-    if (!latestAssignation) {
-      throw Error("No latest assignation");
+    if (!latestTask) {
+      throw Error("No latest task");
     }
     return assign({
-      args: latestAssignation.args,
-      implementation: latestAssignation?.implementation?.id,
+      args: latestTask.args,
+      implementation: latestTask?.implementation?.id,
       hooks: [],
     });
   }, [assign]);
 
   const cancel = useCallback(async () => {
-    if (!latestAssignation) {
+    if (!latestTask) {
       throw Error("Cannot Reassign");
     }
 
-    if (latestAssignation.status == AssignationEventKind.Done) {
+    if (latestTask.latestEventKind == TaskEventKind.Completed) {
       throw Error("Cannot Cancel as it is done");
     }
 
     const mutation = await cancelAssign({
       variables: {
-        input: { assignation: latestAssignation.id },
+        input: { task: latestTask.id },
       },
     });
 
-    const assignation = mutation.data?.cancel;
+    const task = mutation.data?.cancel;
 
-    if (!assignation) {
+    if (!task) {
       console.error(mutation);
       const errorMessages =
         mutation.errors?.map((error) => error.message).join(", ") ||
         "Unknown error";
-      throw Error(`Couldn't cancel assignation: ${errorMessages}`);
+      throw Error(`Couldn't cancel task: ${errorMessages}`);
     }
 
-    return assignation;
-  }, [cancelAssign, latestAssignation]);
+    return task;
+  }, [cancelAssign, latestTask]);
 
   return {
     assign,
     reassign,
-    latestAssignation,
+    latestTask,
     cancel,
-    assignations,
+    tasks,
     implementation: data?.implementation,
     error,
   };

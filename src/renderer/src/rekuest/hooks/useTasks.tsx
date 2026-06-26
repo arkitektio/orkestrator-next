@@ -1,0 +1,188 @@
+import { useMemo } from "react";
+import {
+  TaskEventKind,
+  PortKind,
+  PostmanTaskFragment,
+  useMyTasksQuery,
+} from "../api/graphql";
+
+export const useTasks = () => {
+  // Seed the global "my tasks" list from the caller-scoped myTasks query.
+  // cache-and-network refetches on every mount so currently-active tasks
+  // reappear immediately after a reload; the WatchMyTasks subscription
+  // (TaskUpdater) keeps it live thereafter.
+  const queryResult = useMyTasksQuery({ fetchPolicy: "cache-and-network" });
+
+  return queryResult;
+};
+
+export const useTask = (options: { task?: string }) => {
+  const { data } = useTasks();
+  const task = data?.myTasks.find(
+    (a) => a.id === options.task,
+  );
+
+  return task;
+};
+
+export type FilterOptions = {
+  identifier?: string;
+  object?: string;
+  action?: string;
+  implementation?: string;
+  task?: string;
+  assignedImplementation?: string;
+  assignedAction?: string;
+  allowDone?: boolean;
+  refetch?: boolean;
+};
+
+
+export const useFilteredTasks = (options?: FilterOptions) => {
+  const { data } = useTasks();
+
+  const tasks = useMemo(
+    () =>
+      data?.myTasks.filter((a) => {
+        if (!options) {
+          return true;
+        }
+
+        if (options.task) {
+          if (a.id != options.task) {
+            return false;
+          }
+        }
+
+        if (
+          !options.allowDone &&
+          (a.isDone || a.latestEventKind == TaskEventKind.Completed)
+        ) {
+          return false;
+        }
+
+        if (options.action) {
+          if (a.action?.id != options.action) {
+            return false;
+          }
+        }
+
+        if (options.implementation) {
+          if (a.implementation?.id != options.implementation) {
+            return false;
+          }
+        }
+
+        if (options.assignedAction) {
+          if (a?.action.id != options.assignedAction) {
+            return false;
+          }
+        }
+
+        if (options.assignedImplementation) {
+          console.log(a.implementation?.id, options.assignedImplementation);
+          if (a.implementation?.id != options.assignedImplementation) {
+            return false;
+          }
+        }
+
+        if (options.identifier && options.object) {
+          let matches = false;
+          for (const port of a.action.args) {
+            if (
+              port.kind == PortKind.Structure &&
+              port.identifier == options.identifier
+            ) {
+              if (a.args[port.key] == options.object) {
+                matches = true;
+                break;
+              }
+            }
+
+            if (!matches) {
+              return false;
+            }
+          }
+        }
+
+        return true;
+      }) || [],
+    [
+      data?.myTasks,
+      options?.action,
+      options?.implementation,
+      options?.assignedImplementation,
+      options?.identifier,
+      options?.object,
+      options?.task,
+      options?.allowDone,
+      options?.refetch,
+    ],
+  );
+
+  return tasks;
+};
+
+export const useLatestTask = (options: FilterOptions) => {
+  const tasks = useFilteredTasks(options);
+  const latestTask = tasks.at(-1);
+  return latestTask;
+};
+
+export const deriveLiveState = (
+  task: PostmanTaskFragment | undefined,
+) => {
+  const latestProgress = task?.events
+    .filter((x) => x.kind == TaskEventKind.Progress)
+    .at(0)?.progress;
+  const latestYield = task?.events
+    .filter((x) => x.kind == TaskEventKind.Yield)
+    .at(0)?.returns;
+  const done = task?.events
+    .filter((x) => x.kind == TaskEventKind.Completed)
+    .at(0);
+  const cancelled = task?.events
+    .filter((x) => x.kind == TaskEventKind.Cancelled)
+    .at(0);
+
+  const error = task?.events
+    .filter(
+      (x) =>
+        x.kind == TaskEventKind.Critical ||
+        x.kind == TaskEventKind.Failed,
+    )
+    .at(0)?.message;
+
+  const latestMessage = task?.events.find(
+    (x) => x.message != undefined,
+  )?.message;
+
+  return {
+    progress:
+      done == undefined && error == undefined ? latestProgress : undefined,
+    yield: latestYield,
+    cancelled: cancelled,
+    done,
+    error,
+    actionId: task?.action.id,
+    actionName: task?.action.name,
+    message: latestMessage,
+    event: task?.events.at(0),
+    taskId: task?.id,
+    id: task?.id,
+    reference: task?.reference,
+    latestEventKind: task?.latestEventKind,
+    isDone: task?.isDone,
+    createdAt: task?.createdAt,
+  };
+};
+
+export type LiveTaskState = ReturnType<typeof deriveLiveState>;
+
+export const useLiveTask = (options: FilterOptions) => {
+  // Live trackers follow a specific task through completion, so Done
+  // tasks stay in scope unless the caller opts out explicitly.
+  const task = useLatestTask({ allowDone: true, ...options });
+
+  return useMemo(() => deriveLiveState(task), [task]);
+};

@@ -1,24 +1,18 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
-  AssignationEventFragment,
+  TaskEventFragment,
   AssignInput,
-  PostmanAssignationFragment,
-  ReserveMutationVariables,
+  PostmanTaskFragment,
   useAssignMutation
 } from "../api/graphql";
-import { trackAssignation } from "../lib/assignationTracker";
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+import { trackTask } from "../lib/taskTracker";
+export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
 };
 
 export type useActionOptions<T> = {
@@ -26,39 +20,32 @@ export type useActionOptions<T> = {
 };
 
 export const useAssign = <T extends any>(): useActionReturn<T> => {
-  const { settings } = useSettings();
-
   const [postAssign] = useAssignMutation({});
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       const mutation = await postAssign({
         variables: {
           input: {
             ...vars,
             args: vars.args,
-            instanceId: settings.instanceId,
             hooks: [],
             reference: vars.reference || "",
           },
         },
       });
 
-      console.log(mutation);
+      const task = mutation.data?.assign;
 
-      const assignation = mutation.data?.assign;
-
-      if (!assignation) {
+      if (!task) {
         console.error(mutation);
         const errorMessages = mutation.errors || "Unknown error";
         throw Error(`Couldn't assign: ${errorMessages}`);
       }
 
-      return assignation;
+      return task;
     },
-    [postAssign, settings],
+    [postAssign],
   );
 
   return {
@@ -68,7 +55,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 
 
 export const useAssignWithCallback = <T extends any>({ onDone }: {
-  onDone?: (event: AssignationEventFragment) => void,
+  onDone?: (event: TaskEventFragment) => void,
 
 }): useActionReturn<T> => {
   const { assign } = useAssign();
@@ -78,9 +65,9 @@ export const useAssignWithCallback = <T extends any>({ onDone }: {
     async (vars: ActionAssignVariables) => {
       const reference = vars.reference || uuidv4();
 
-      const untrack = trackAssignation(
+      const untrack = trackTask(
         reference,
-        (event: AssignationEventFragment) => {
+        (event: TaskEventFragment) => {
           onDone?.(event);
         },
       );

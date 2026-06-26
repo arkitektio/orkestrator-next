@@ -1,14 +1,14 @@
-import { AssignationEventFragment } from "@/rekuest/api/graphql";
+import { TaskEventFragment } from "@/rekuest/api/graphql";
 import { Structure } from "@/types";
 import React from "react";
 
 export type OnDone = (args: {
-  event?: AssignationEventFragment;
+  event?: TaskEventFragment;
   kind: "local" | "action" | "shortcut" | "relation" | "measurement";
 }) => void;
 
 export type OnError = (args: {
-  event?: AssignationEventFragment;
+  event?: TaskEventFragment;
   kind: "local" | "action" | "shortcut" | "relation" | "measurement";
 }) => void;
 

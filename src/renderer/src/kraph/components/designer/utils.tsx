@@ -168,8 +168,6 @@ const buildEntityFilter = (descriptor: EntityDescriptorFragment) => {
 export const ontologyToEdges = (graph: GraphFragment) => {
   const edges: MyEdge[] = [];
 
-  console.log("Relations", graph.relationCategories);
-
   graph.structureRelationCategories.forEach((cat) => {
     const source_nodes = graph.structureCategories.filter(buildStructureFilter(cat.sourceDescriptor)).map((c) => c.id);
     const target_nodes = graph.structureCategories.filter(buildStructureFilter(cat.targetDescriptor)).map((c) => c.id);

@@ -19,9 +19,12 @@ import {
 } from "./fakts/sessionStorageSchema";
 import {
   useArkitekt,
+  useArkitektActions,
+  useArkitektStore,
   useAvailableModules,
   useAvailableServices,
   useConfigurationIssues,
+  useConnection,
   usePotentialService,
   useService,
   useServiceState,
@@ -45,7 +48,7 @@ import {
   refreshAccessToken,
   shouldRefreshToken,
 } from "./runtime/auth";
-import { instantiateConnection, type ServiceMap } from "./runtime/connection";
+import { disposeConnection, instantiateConnection, type ServiceMap } from "./runtime/connection";
 import {
   buildConfigurationIssues,
   buildModuleStates,
@@ -53,6 +56,15 @@ import {
   createModuleRegistryFromServices,
 } from "./runtime/state";
 import { createArkitektStateStore } from "./store";
+
+// Bootstrap/token tracing is noisy and some of it sits on hot paths (e.g. the
+// token check runs on every GraphQL request via the Apollo auth link). Keep the
+// tracing available for debugging but silent by default so it never floods the
+// console or pays serialization cost during normal use.
+const DEBUG = false;
+const dlog = (...args: unknown[]) => {
+  if (DEBUG) console.log(...args);
+};
 
 type StoredSession = StoredArkitektSession | null;
 type StorageProvider = () => Promise<Storage>;
@@ -119,18 +131,18 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   // Wire up the locked refreshToken now that store exists
   if (!refreshInitialized.current) {
     refreshInitialized.current = true;
-    console.log("[ArkitektProvider] Initializing refreshToken function");
+    dlog("[ArkitektProvider] Initializing refreshToken function");
     refreshTokenRef.current = async () => {
       // If a refresh is already in flight, wait for it and return the new token
       if (refreshLockRef.current) {
-        console.log("[ArkitektProvider] Refresh already in flight, waiting for lock...");
+        dlog("[ArkitektProvider] Refresh already in flight, waiting for lock...");
         await refreshLockRef.current;
         const s = store.getState().storedSession;
         if (!s) {
           console.error("[ArkitektProvider] No stored session after waiting for refresh lock");
           throw new Error("No stored session after refresh");
         }
-        console.log("[ArkitektProvider] Lock released, returning refreshed token");
+        dlog("[ArkitektProvider] Lock released, returning refreshed token");
         return normalizeToken(s.token);
       }
 
@@ -142,7 +154,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
 
       const currentToken = normalizeToken(session.token);
       if (!shouldRefreshToken(currentToken)) {
-        console.log("[ArkitektProvider] Token still valid, returning current token");
+        dlog("[ArkitektProvider] Token still valid, returning current token");
         return currentToken;
       }
 
@@ -151,7 +163,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         throw new Error("No refresh token available – cannot refresh");
       }
 
-      console.log("[ArkitektProvider] Token expired, starting refresh...");
+      dlog("[ArkitektProvider] Token expired, starting refresh...");
       let resolve: () => void;
       refreshLockRef.current = new Promise<void>((r) => { resolve = r; });
 
@@ -163,7 +175,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         );
         const storage = await storageProviderRef.current();
 
-        console.log("[ArkitektProvider] Token refresh succeeded");
+        dlog("[ArkitektProvider] Token refresh succeeded");
         const nextSession = { ...session, token: nextToken };
         writeStoredToken(nextToken, storage);
         writeStoredArkitektSession(nextSession, storage);
@@ -232,12 +244,19 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       manifestOverride?: EnhancedManifest,
       extras: Partial<AppContext<T, S>> = {},
     ) => {
-      console.log("[ArkitektProvider] hydrateConnection called, session:", session ? "present" : "null");
+      dlog("[ArkitektProvider] hydrateConnection called, session:", session ? "present" : "null");
       const activeManifest = manifestOverride ?? store.getState().manifest;
+      // The previous connection is fully superseded here (connect / reconnect /
+      // disconnect-with-null), so tear down its clients/sockets instead of orphaning them.
+      const previousConnection = store.getState().connection;
       const connection = session
         ? instantiateConnection(session, activeManifest, serviceBuilderMap, selfServiceBuilder, () => refreshTokenRef.current())
         : undefined;
-      console.log("[ArkitektProvider] hydrateConnection result, services:", connection ? Object.keys(connection.serviceMap) : "none");
+      dlog("[ArkitektProvider] hydrateConnection result, services:", connection ? Object.keys(connection.serviceMap) : "none");
+
+      if (previousConnection) {
+        disposeConnection(previousConnection);
+      }
 
       store.setState({
         storedSession: session,
@@ -330,7 +349,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
 
   const validateService = useCallback(
     async (serviceKey: string) => {
-      console.log("[ArkitektProvider] validateService started:", serviceKey);
+      dlog("[ArkitektProvider] validateService started:", serviceKey);
       const runId = (validationRunIdsRef.current[serviceKey] || 0) + 1;
       validationRunIdsRef.current[serviceKey] = runId;
 
@@ -340,7 +359,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       const instance = session?.fakts.instances[serviceKey];
 
       if (!session || !serviceState || !instance) {
-        console.log("[ArkitektProvider] validateService skipped (missing data):", serviceKey, { session: !!session, serviceState: !!serviceState, instance: !!instance });
+        dlog("[ArkitektProvider] validateService skipped (missing data):", serviceKey, { session: !!session, serviceState: !!serviceState, instance: !!instance });
         return;
       }
 
@@ -357,11 +376,14 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         const serviceTimeout = serviceBuilderMap[serviceKey]?.timeout ?? 5000;
 
         if (!alias || !(await checkAliasHealth(alias, serviceTimeout, hc))) {
-          console.log("[ArkitektProvider] validateService: cached alias unhealthy, re-resolving:", serviceKey);
+          dlog("[ArkitektProvider] validateService: cached alias unhealthy, re-resolving:", serviceKey);
           alias = await resolveWorkingAlias({ instance, timeout: serviceTimeout, controller: hc });
         }
 
-        const validationResult: { persistedSession?: StoredArkitektSession } = {};
+        const validationResult: {
+          persistedSession?: StoredArkitektSession;
+          supersededService?: Service;
+        } = {};
 
         store.setState((current) => {
           if (validationRunIdsRef.current[serviceKey] !== runId) {
@@ -383,13 +405,42 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
               },
             },
           };
-          const nextConnection = instantiateConnection(
-            nextSession,
-            current.manifest,
-            serviceBuilderMap,
-            selfServiceBuilder,
-            () => refreshTokenRef.current(),
-          );
+
+          // Rebuild only the service that was validated, keeping every other
+          // service (and selfService) intact. Rebuilding the whole map here meant
+          // each of the N parallel validations recreated all N clients — discarding
+          // (and orphaning) N-1 full sets of Apollo clients/graphql-ws sockets per
+          // login. The superseded service is disposed after the state commit below.
+          let nextConnection: ConnectedContext<T, S>;
+          if (current.connection) {
+            const newService = serviceBuilderMap[serviceKey].builder({
+              manifest: current.manifest,
+              alias,
+              fakts: nextSession.fakts,
+              getToken: () => refreshTokenRef.current(),
+            });
+            validationResult.supersededService =
+              current.connection.serviceMap[serviceKey] as Service | undefined;
+            nextConnection = {
+              ...current.connection,
+              serviceMap: {
+                ...current.connection.serviceMap,
+                [serviceKey]: newService,
+              } as ConnectedContext<T, S>["serviceMap"],
+              aliasMap: {
+                ...current.connection.aliasMap,
+                [serviceKey]: alias,
+              } as ConnectedContext<T, S>["aliasMap"],
+            };
+          } else {
+            nextConnection = instantiateConnection(
+              nextSession,
+              current.manifest,
+              serviceBuilderMap,
+              selfServiceBuilder,
+              () => refreshTokenRef.current(),
+            );
+          }
 
           validationResult.persistedSession = nextSession;
 
@@ -412,6 +463,9 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           };
         });
 
+        // Tear down the client/socket of the service we just replaced.
+        validationResult.supersededService?.dispose?.();
+
         const nextPersistedSession = validationResult.persistedSession;
         if (!nextPersistedSession) {
           return;
@@ -421,10 +475,12 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         writeStoredAliasMap(nextPersistedSession.aliasMap, storage);
         writeStoredArkitektSession(nextPersistedSession, storage);
 
-        console.log("[ArkitektProvider] validateService succeeded:", serviceKey, "alias:", alias);
+        dlog("[ArkitektProvider] validateService succeeded:", serviceKey, "alias:", alias);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to validate service";
         console.error("[ArkitektProvider] validateService failed:", serviceKey, message, error);
+
+        let removedService: Service | undefined;
 
         store.setState((current) => {
           if (validationRunIdsRef.current[serviceKey] !== runId) {
@@ -435,6 +491,8 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           if (!currentInstance || currentInstance !== instance) {
             return current;
           }
+
+          removedService = current.connection?.serviceMap[serviceKey] as Service | undefined;
 
           const patchedConn = current.connection
             ? {
@@ -460,6 +518,9 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
             }),
           };
         });
+
+        // Tear down the client/socket of the service we dropped from the map.
+        removedService?.dispose?.();
       }
     },
     [store, serviceBuilderMap, selfServiceBuilder, deriveRuntimeState],
@@ -469,7 +530,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
 
   const connect = useCallback<AppFunctions["connect"]>(
     async ({ endpoint, controller }) => {
-      console.log("[ArkitektProvider] connect called, endpoint:", endpoint);
+      dlog("[ArkitektProvider] connect called, endpoint:", endpoint);
       const prev = store.getState();
       controllerRef.current = controller;
       store.setState({ connecting: true, autoLoginError: undefined });
@@ -477,22 +538,22 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       try {
         const enhancedManifest = await resolveEnhancedManifest();
         const storage = await storageProviderRef.current();
-        console.log("[ArkitektProvider] connect: manifest enhanced, node_id:", enhancedManifest.node_id);
+        dlog("[ArkitektProvider] connect: manifest enhanced, node_id:", enhancedManifest.node_id);
         writeStoredEndpoint(endpoint, storage);
 
         const fakts = await flow({ endpoint, controller, manifest: enhancedManifest });
-        console.log("[ArkitektProvider] connect: fakts resolved, services:", Object.keys(fakts.instances || {}));
+        dlog("[ArkitektProvider] connect: fakts resolved, services:", Object.keys(fakts.instances || {}));
         writeStoredFakts(fakts, storage);
 
         const token = normalizeToken(await login(fakts.auth));
-        console.log("[ArkitektProvider] connect: login succeeded");
+        dlog("[ArkitektProvider] connect: login succeeded");
         const { aliasReports, aliasMap } = await buildAliases({
           fakts,
           manifest: enhancedManifest,
           controller,
           serviceBuilderMap,
         });
-        console.log("[ArkitektProvider] connect: aliases built, keys:", Object.keys(aliasMap));
+        dlog("[ArkitektProvider] connect: aliases built, keys:", Object.keys(aliasMap));
 
         writeStoredAliasMap({ aliasMap }, storage);
         await report(fakts.auth.report_url, {
@@ -505,14 +566,14 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
         writeStoredToken(token, storage);
         writeStoredArkitektSession(nextSession, storage);
 
-        console.log("[ArkitektProvider] connect: session stored, hydrating connection...");
+        dlog("[ArkitektProvider] connect: session stored, hydrating connection...");
         hydrateConnection(nextSession, enhancedManifest, {
           connecting: false,
           hasBootstrapped: true,
           autoLoginError: undefined,
         });
 
-        console.log("[ArkitektProvider] connect: starting background health checks");
+        dlog("[ArkitektProvider] connect: starting background health checks");
         // Background health checks
         void Promise.all(Object.keys(serviceBuilderMap).map((k) => validateService(k)));
       } catch (error) {
@@ -543,7 +604,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   );
 
   const disconnect = useCallback<AppFunctions["disconnect"]>(async () => {
-    console.log("[ArkitektProvider] disconnect called");
+    dlog("[ArkitektProvider] disconnect called");
     controllerRef.current = null;
     const storage = await storageProviderRef.current();
     clearStoredArkitektStorage(undefined, storage);
@@ -555,7 +616,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   }, [store, hydrateConnection]);
 
   const reconnect = useCallback<AppFunctions["reconnect"]>(async () => {
-    console.log("[ArkitektProvider] reconnect called");
+    dlog("[ArkitektProvider] reconnect called");
     const storage = await storageProviderRef.current();
     const endpoint = store.getState().storedSession?.endpoint || loadStoredEndpoint(storage);
     if (!endpoint) {
@@ -566,7 +627,7 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
   }, [store, connect]);
 
   const cancelConnection = useCallback<AppFunctions["cancelConnection"]>(() => {
-    console.log("[ArkitektProvider] cancelConnection called");
+    dlog("[ArkitektProvider] cancelConnection called");
     if (controllerRef.current) {
       controllerRef.current.abort();
       controllerRef.current = null;
@@ -630,10 +691,10 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           loadValidatedStoredSession(),
         ]);
 
-        console.log("[ArkitektProvider]: Bootstrapping ArkitektProvider with session:", session);
+        dlog("[ArkitektProvider]: Bootstrapping ArkitektProvider with session:", session);
 
         if (!session) {
-          console.log("[ArkitektProvider] Bootstrap: no cached session, marking bootstrapped");
+          dlog("[ArkitektProvider] Bootstrap: no cached session, marking bootstrapped");
           setBootstrapped();
           return;
         }
@@ -643,9 +704,9 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           autoLoginError: undefined,
         });
 
-        console.log("[ArkitektProvider] Bootstrap: refreshing token...");
+        dlog("[ArkitektProvider] Bootstrap: refreshing token...");
         await refreshTokenRef.current();
-        console.log("[ArkitektProvider] Bootstrap: token refresh complete");
+        dlog("[ArkitektProvider] Bootstrap: token refresh complete");
 
         const refreshedSession = store.getState().storedSession;
         if (!refreshedSession) {
@@ -657,9 +718,9 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
           hasBootstrapped: true,
           autoLoginError: undefined,
         });
-        console.log("[ArkitektProvider] Hydrated connection from stored session:", store.getState().connection);
+        dlog("[ArkitektProvider] Hydrated connection from stored session:", store.getState().connection);
 
-        console.log("[ArkitektProvider] Bootstrap: starting background health checks");
+        dlog("[ArkitektProvider] Bootstrap: starting background health checks");
         void Promise.all(Object.keys(serviceBuilderMap).map((k) => validateService(k)));
       } catch (error) {
         const message = error instanceof Error
@@ -744,9 +805,12 @@ export const buildArkitektProvider =
 
 export {
   useArkitekt,
+  useArkitektActions,
+  useArkitektStore,
   useAvailableModules,
   useAvailableServices,
   useConfigurationIssues,
+  useConnection,
   usePotentialService,
   useService,
   useServiceState,

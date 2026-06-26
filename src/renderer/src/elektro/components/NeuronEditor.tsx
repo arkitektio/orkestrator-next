@@ -1,17 +1,23 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { GitBranch, Trash2, X } from "lucide-react";
+import { Check, Copy, GitBranch, HelpCircle, Pencil, Save, Trash2, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { v4 as uuidv4 } from 'uuid';
+import { useDialog } from "@/app/dialog";
 import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
+import { EditableModelConfig } from "../lib/modelSerialization";
+import { toBase } from "../lib/quantities";
+import { QuantityInput } from "./QuantityInput";
 
 // --- Types & Helpers ---
 
@@ -54,48 +60,32 @@ const calculateBranchDirection = (
   siblingCount: number,
   groupSeed: number
 ) => {
-  const isStartTip = location < 0.05;
-  const isEndTip = location > 0.95;
-  const isTip = isStartTip || isEndTip;
+  const axis = parentDir.clone().normalize();
+  const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
 
-  let poleVector: THREE.Vector3;
+  // Perpendicular "side" direction, with co-located siblings spread evenly
+  // around the parent axis.
+  const radial = getPerpendicularVector(axis);
+  const azimuth = siblingCount > 1 ? (siblingIndex * (Math.PI * 2)) / siblingCount : 0;
+  radial.applyAxisAngle(axis, azimuth + groupPhase);
 
-  if (isEndTip) {
-    poleVector = parentDir.clone().normalize();
-  } else if (isStartTip) {
-    poleVector = parentDir.clone().normalize().negate();
-  } else {
-    const baseOrtho = getPerpendicularVector(parentDir);
-    poleVector = baseOrtho;
-  }
+  // Axial bias runs smoothly from -1 (points back, at the parent's start) through
+  // 0 (points sideways, mid-segment) to +1 (points forward, at the parent's end).
+  // This lets a branch swing continuously onto the side of its parent as it is
+  // moved away from a tip — no dead zone, no discontinuous jump.
+  const axialBias = (location - 0.5) * 2;
 
-  const finalDir = poleVector.clone();
+  // Split between axial and radial so the result stays unit length.
+  let radialMag = Math.sqrt(Math.max(0, 1 - axialBias * axialBias));
 
-  if (isTip) {
-    if (siblingCount <= 1) return finalDir;
+  // Stop co-located siblings collapsing onto each other at the tips by forcing a
+  // minimum sideways spread — this re-creates the classic bifurcation cone.
+  if (siblingCount > 1) radialMag = Math.max(radialMag, Math.sin(Math.PI / 4));
+  const axialMag = Math.sign(axialBias) * Math.sqrt(Math.max(0, 1 - radialMag * radialMag));
 
-    const hinge = getPerpendicularVector(poleVector);
-    const azimuthalAngle = (siblingIndex * (Math.PI * 2)) / siblingCount;
-    const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-
-    hinge.applyAxisAngle(poleVector, azimuthalAngle + groupPhase);
-
-    const spreadAngle = Math.PI / 4;
-    finalDir.applyAxisAngle(hinge, spreadAngle);
-
-    return finalDir;
-
-  } else {
-    if (siblingCount > 1) {
-      const angleStep = (Math.PI * 2) / siblingCount;
-      const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-      finalDir.applyAxisAngle(parentDir.clone().normalize(), (siblingIndex * angleStep) + groupPhase);
-    } else {
-      const groupPhase = (groupSeed % 100) * 0.01 * Math.PI * 2;
-      finalDir.applyAxisAngle(parentDir.clone().normalize(), groupPhase);
-    }
-    return finalDir;
-  }
+  const finalDir = axis.multiplyScalar(axialMag).add(radial.multiplyScalar(radialMag));
+  if (finalDir.lengthSq() < 1e-6) return radial.clone().normalize();
+  return finalDir.normalize();
 };
 
 // --- Layout Hook ---
@@ -162,7 +152,8 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
         direction = new THREE.Vector3(0, 1, 0);
       }
 
-      const length = section.length || 10;
+      // `length` is now a `Length` quantity string ("10 µm"); normalise to µm.
+      const length = toBase(section.length, "length", 10);
       const end = start.clone().add(direction.clone().normalize().multiplyScalar(length));
 
       segments.push({
@@ -203,9 +194,10 @@ const InteractiveSegment = ({
   isSelected: boolean,
   onSelect: (id: string) => void,
   onAddChild: (parentId: string, location?: number) => void,
-  onUpdateLength: (id: string, newLength: number) => void
 }) => {
   const { start, end, direction, section, color } = segment;
+  // `diam` is a `Length` quantity string ("1 µm"); normalise to µm for geometry.
+  const diamUm = toBase(section.diam, "length", 1);
   const length = start.distanceTo(end);
   const mid = start.clone().add(end).multiplyScalar(0.5);
 
@@ -253,8 +245,13 @@ const InteractiveSegment = ({
     setHoverLocation(location);
   };
 
+  // Hit-zone radius: a comfortable minimum so thin branches stay easy to click,
+  // and always a bit fatter than the visible cylinder.
+  const hitRadius = Math.max(diamUm / 2 + 1.5, 2);
+
   return (
     <group>
+      {/* Invisible, fatter cylinder that captures pointer events. */}
       <mesh
         position={mid}
         quaternion={quaternion}
@@ -263,7 +260,13 @@ const InteractiveSegment = ({
         onPointerOut={() => { setHovered(false); setHoverLocation(null); }}
         onPointerMove={handlePointerMove}
       >
-        <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
+        <cylinderGeometry args={[hitRadius, hitRadius, length, 12]} />
+        <meshStandardMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      {/* Visible cylinder (non-interactive; the hit-zone above handles input). */}
+      <mesh position={mid} quaternion={quaternion} raycast={() => null}>
+        <cylinderGeometry args={[diamUm / 2, diamUm / 2, length, 8]} />
         <meshStandardMaterial ref={materialRef} color={isSelected ? "hotpink" : color} />
       </mesh>
 
@@ -296,16 +299,18 @@ export const NeuronEditor = ({
   onSave
 }: {
   initialModel: DetailNeuronModelFragment,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSave: (config: any) => void
+  onSave: (config: EditableModelConfig) => void
 }) => {
   // Flatten all sections from all cells for editing
   // We assume single cell for simplicity or merge them?
   // The fragment has `config.cells`.
 
+  const { openSheet } = useDialog();
   const [cells, setCells] = useState(initialModel.config.cells);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [rebranchingId, setRebranchingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   // We need a way to update a specific section in the deep structure
   // Or we just flatten them into a list and reconstruct?
@@ -339,8 +344,8 @@ export const NeuronEditor = ({
     const newId = uuidv4();
     const newSection: SectionFragment = {
       id: newId,
-      diam: 1,
-      length: 10,
+      diam: "1 µm",
+      length: "10 µm",
       category: "dendrite", // Default
       coords: [],
       connections: [{ parent: parentId, location: location }]
@@ -357,6 +362,87 @@ export const NeuronEditor = ({
       };
     }));
     setSelectedSectionId(newId);
+  };
+
+  const duplicateSection = (id: string) => {
+    const original = sections.find(s => s.id === id);
+    if (!original) return;
+
+    // Roots have no parent connection; a duplicate would be a second free-floating
+    // root rather than a copy in place, so disallow it.
+    if (!getParentInfo(original)) {
+      toast.error("Root sections cannot be duplicated");
+      return;
+    }
+
+    const newId = uuidv4();
+    // Copy every parameter verbatim, including the parent connection, so the
+    // duplicate sits exactly where the original does. Deep-copy the nested
+    // arrays so the two sections don't share mutable references.
+    const newSection: SectionFragment = {
+      ...original,
+      id: newId,
+      coords: original.coords ? original.coords.map(c => ({ ...c })) : [],
+      connections: original.connections.map(c => ({ ...c })),
+    };
+
+    setCells(prev => prev.map(cell => {
+      if (cell.id !== activeCellId) return cell;
+      return {
+        ...cell,
+        topology: {
+          ...cell.topology,
+          sections: [...cell.topology.sections, newSection]
+        }
+      };
+    }));
+    setSelectedSectionId(newId);
+    toast.success("Section duplicated");
+  };
+
+  const renameSection = (oldId: string, newId: string) => {
+    setCells(prev => prev.map(cell => {
+      if (cell.id !== activeCellId) return cell;
+      return {
+        ...cell,
+        topology: {
+          ...cell.topology,
+          sections: cell.topology.sections.map(s => {
+            if (s.id === oldId) return { ...s, id: newId };
+            // Re-point any child that referenced the old id as its parent.
+            if (s.connections?.some(c => c.parent === oldId)) {
+              return {
+                ...s,
+                connections: s.connections.map(c =>
+                  c.parent === oldId ? { ...c, parent: newId } : c
+                )
+              };
+            }
+            return s;
+          })
+        }
+      };
+    }));
+    if (selectedSectionId === oldId) setSelectedSectionId(newId);
+  };
+
+  const commitRename = (oldId: string) => {
+    const next = renameValue.trim();
+    if (!next) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    if (next === oldId) {
+      setRenamingId(null);
+      return;
+    }
+    if (sections.some(s => s.id === next)) {
+      toast.error("A section with that name already exists");
+      return;
+    }
+    renameSection(oldId, next);
+    setRenamingId(null);
+    toast.success("Section renamed");
   };
 
   const deleteSection = (id: string) => {
@@ -447,59 +533,223 @@ export const NeuronEditor = ({
   };
 
   const segments = useNeuronLayout(sections);
+  const colorMap = useMemo(() => new Map(segments.map(s => [s.id, s.color])), [segments]);
+  const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
 
   return (
     <div className="w-full h-full relative">
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 w-80 max-h-[calc(100vh-2rem)]">
-        <Card className="p-4 flex flex-col gap-4 h-full">
-          <div className="flex-none">
-            <h3 className="font-bold">Neuron Editor</h3>
+        <Card className="p-4 flex flex-col gap-4 h-full bg-card/95 backdrop-blur-sm">
+          <div className="flex-none space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-bold leading-tight">Neuron Editor</h3>
+                <p className="text-xs text-muted-foreground truncate">{initialModel.name}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 flex-none text-muted-foreground"
+                title="How does this work?"
+                onClick={() => openSheet("neuroneditorhelp", {})}
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {sections.length} section{sections.length === 1 ? "" : "s"}
+            </p>
+
             {rebranchingId && (
-              <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-xs flex justify-between items-center mt-2">
-                <span>Select new parent...</span>
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setRebranchingId(null)}>
+              <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-xs flex justify-between items-center gap-2">
+                <span className="flex items-center gap-1.5">
+                  <GitBranch className="w-3 h-3 flex-none" />
+                  Select the new parent in the view…
+                </span>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 flex-none" onClick={() => setRebranchingId(null)}>
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             )}
-            <Button className="w-full mt-2" onClick={() => onSave({ cells })}>Save Model</Button>
+
+            <Button
+              className="w-full"
+              onClick={() => onSave({
+                cells,
+                celsius: initialModel.config.celsius,
+                vInit: initialModel.config.vInit,
+                label: initialModel.config.label,
+              })}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save as new model
+            </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2">
-            <Accordion type="single" collapsible value={selectedSectionId || ""} onValueChange={setSelectedSectionId}>
-              {sections.map(section => (
+          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+            {sections.length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-8 px-2">
+                No sections yet. Add one in the 3D view to start building.
+              </div>
+            ) : (
+            <Accordion
+              type="single"
+              collapsible
+              value={selectedSectionId || ""}
+              onValueChange={(val) => {
+                // While rebranching, clicking another section in the pane picks it
+                // as the new parent — mirroring the click-in-3D-view behaviour.
+                if (rebranchingId && val && val !== rebranchingId) {
+                  handleRebranch(rebranchingId, val);
+                } else {
+                  setSelectedSectionId(val);
+                }
+              }}
+            >
+              {sections.map(section => {
+                const isRootSection = !getParentInfo(section);
+                return (
                 <AccordionItem key={section.id} value={section.id}>
                   <AccordionTrigger className="text-sm py-2 hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      <span>{section.id.slice(0, 8)}</span>
-                      <span className="text-muted-foreground text-xs">({section.category || "dendrite"})</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-none ring-1 ring-black/10"
+                        style={{ background: colorMap.get(section.id) ?? "#888" }}
+                      />
+                      <span className="font-mono truncate">{section.id.slice(0, 8)}</span>
+                      <span className="text-muted-foreground text-xs truncate">({section.category || "dendrite"})</span>
+                      {isRootSection && (
+                        <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground border rounded px-1 py-0.5 flex-none">
+                          root
+                        </span>
+                      )}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="flex flex-col gap-4 pt-2 px-1">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <Label className="text-xs">Length</Label>
-                          <span className="text-xs text-muted-foreground">{section.length?.toFixed(1)}</span>
-                        </div>
-                        <Slider
-                          value={[section.length || 10]}
-                          min={1} max={100} step={0.1}
-                          onValueChange={([val]) => updateSection(section.id, { length: val })}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Name</Label>
+                        {renamingId === section.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              autoFocus
+                              value={renameValue}
+                              className="h-7 font-mono"
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") commitRename(section.id);
+                                if (e.key === "Escape") setRenamingId(null);
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 flex-none"
+                              title="Confirm rename"
+                              onClick={() => commitRename(section.id)}
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 flex-none"
+                              title="Cancel"
+                              onClick={() => setRenamingId(null)}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-mono truncate flex-1">{section.id}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 flex-none"
+                              title="Rename section"
+                              onClick={() => {
+                                setRenamingId(section.id);
+                                setRenameValue(section.id);
+                              }}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs">Length</Label>
+                        <QuantityInput
+                          dimension="length"
+                          value={section.length}
+                          onChange={(val) => updateSection(section.id, { length: val })}
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <Label className="text-xs">Diameter</Label>
-                          <span className="text-xs text-muted-foreground">{section.diam?.toFixed(1)}</span>
-                        </div>
-                        <Slider
-                          value={[section.diam || 1]}
-                          min={0.1} max={10} step={0.1}
-                          onValueChange={([val]) => updateSection(section.id, { diam: val })}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Diameter</Label>
+                        <QuantityInput
+                          dimension="length"
+                          value={section.diam}
+                          onChange={(val) => updateSection(section.id, { diam: val })}
                         />
                       </div>
+
+                      {(() => {
+                        const parentInfo = getParentInfo(section);
+                        if (!parentInfo) return null;
+                        const conn = section.connections![0];
+                        // Absolute distance of the connection point from the parent's
+                        // start, in µm — location is a 0–1 fraction of the parent length.
+                        const parentLength = toBase(
+                          sections.find(s => s.id === parentInfo.id)?.length,
+                          "length",
+                          0,
+                        );
+                        const absoluteUm = parentInfo.location * parentLength;
+                        return (
+                          <div className="space-y-1">
+                            <Label className="text-xs">Location on parent (0–1)</Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min={0} max={1} step={0.01}
+                                className="w-20 flex-none"
+                                value={parentInfo.location}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  if (isNaN(val)) return;
+                                  const clamped = Math.max(0, Math.min(1, val));
+                                  updateSection(section.id, {
+                                    connections: [{ ...conn, parent: parentInfo.id, location: clamped }]
+                                  });
+                                }}
+                              />
+                              <div className="relative flex-1 pt-5">
+                                <div
+                                  className="pointer-events-none absolute top-0 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white"
+                                  style={{ left: `${parentInfo.location * 100}%` }}
+                                  title="Distance from the parent's start"
+                                >
+                                  {absoluteUm.toFixed(1)} µm
+                                </div>
+                                <Slider
+                                  value={[parentInfo.location]}
+                                  min={0} max={1} step={0.01}
+                                  onValueChange={([val]) =>
+                                    updateSection(section.id, {
+                                      connections: [{ ...conn, parent: parentInfo.id, location: val }]
+                                    })
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="space-y-2">
                         <Label className="text-xs">Compartment</Label>
@@ -530,8 +780,19 @@ export const NeuronEditor = ({
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          className="flex-none px-2"
+                          disabled={isRootSection}
+                          title={isRootSection ? "Root sections cannot be duplicated" : "Duplicate section"}
+                          onClick={() => duplicateSection(section.id)}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="destructive"
                           className="flex-none px-2"
+                          title="Delete section"
                           onClick={() => deleteSection(section.id)}
                         >
                           <Trash2 className="w-3 h-3" />
@@ -540,8 +801,10 @@ export const NeuronEditor = ({
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-              ))}
+                );
+              })}
             </Accordion>
+            )}
           </div>
         </Card>
       </div>
@@ -550,6 +813,7 @@ export const NeuronEditor = ({
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <OrbitControls makeDefault />
+        <FitCamera points={points} target={target} />
 
         {segments.map(segment => (
           <InteractiveSegment
@@ -558,7 +822,6 @@ export const NeuronEditor = ({
             isSelected={segment.id === selectedSectionId}
             onSelect={handleSegmentSelect}
             onAddChild={addSection}
-            onUpdateLength={(id, len) => updateSection(id, { length: len })}
           />
         ))}
       </Canvas>

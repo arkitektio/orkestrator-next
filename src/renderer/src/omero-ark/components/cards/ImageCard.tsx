@@ -30,6 +30,8 @@ const TCard = ({ image }: Props) => {
     if (!image.id) return;
     if (!token) return;
     if (ref.current === null) return;
+    let objectURL: string | undefined;
+    let cancelled = false;
     fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
       headers: {
         Accept: "image/jpeg",
@@ -38,13 +40,18 @@ const TCard = ({ image }: Props) => {
     })
       .then((res) => res.blob())
       .then((res) => {
-        console.log("blob: ", res);
-        const objectURL = URL.createObjectURL(res);
+        if (cancelled) return;
+        objectURL = URL.createObjectURL(res);
         if (ref.current === null) return;
         ref.current.style.background = "url('" + objectURL + "')";
         ref.current.style.backgroundSize = "cover";
         ref.current.style.backgroundPosition = "center";
       });
+    // Revoke the blob URL on unmount / id change, otherwise it leaks per card.
+    return () => {
+      cancelled = true;
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    };
   }, [image.id, omeroArk.client.url, token]);
 
   return (

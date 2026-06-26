@@ -12,50 +12,22 @@ import {
 } from "@/providers/smart/buildSmartAdapters";
 import { ObjectButton } from "@/providers/smart/extensions/context";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useLiveTask } from "@/rekuest/hooks/useTasks";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { ComponentType, lazy, ReactNode, Suspense } from "react";
-import { HoverSkeleton } from "@/mikro-next/components/hovers/HoverShell";
-
-const LazyKomments = lazy(() =>
-  import("@/lok-next/components/komments/Komments").then((module) => ({
-    default: module.Komments,
-  })),
-);
-
-const LazyKnowledgeSidebar = lazy(() =>
-  import("@/kraph/components/sidebars/KnowledgeSidebar").then((module) => ({
-    default: module.KnowledgeSidebar,
-  })),
-);
-
-const LazyStructureRoomsSidebar = lazy(() =>
-  import("@/alpaka/sidebars/StructureRoomsSidebar").then((module) => ({
-    default: module.StructureRoomsSidebar,
-  })),
-);
-
-const LazyImageHoverCard = lazy(
-  () => import("@/mikro-next/components/hovers/ImageHoverCard"),
-);
-const LazyFileHoverCard = lazy(
-  () => import("@/mikro-next/components/hovers/FileHoverCard"),
-);
-const LazyDatasetHoverCard = lazy(
-  () => import("@/mikro-next/components/hovers/DatasetHoverCard"),
-);
-const LazyActionHoverCard = lazy(
-  () => import("@/rekuest/components/hovers/ActionHoverCard"),
-);
-const LazyAgentHoverCard = lazy(
-  () => import("@/rekuest/components/hovers/AgentHoverCard"),
-);
-const LazyAssignationHoverCard = lazy(
-  () => import("@/rekuest/components/hovers/AssignationHoverCard"),
-);
-const LazyImplementationHoverCard = lazy(
-  () => import("@/rekuest/components/hovers/ImplementationHoverCard"),
-);
+import { ComponentType, ReactNode } from "react";
+import { Komments } from "@/lok-next/components/komments/Komments";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
+import ImageHoverCard from "@/mikro-next/components/hovers/ImageHoverCard";
+import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
+import DatasetHoverCard from "@/mikro-next/components/hovers/DatasetHoverCard";
+import ActionHoverCard from "@/rekuest/components/hovers/ActionHoverCard";
+import AgentHoverCard from "@/rekuest/components/hovers/AgentHoverCard";
+import TaskHoverCard from "@/rekuest/components/hovers/TaskHoverCard";
+import ImplementationHoverCard from "@/rekuest/components/hovers/ImplementationHoverCard";
+import NeuronModelHoverCard from "@/elektro/components/hovers/NeuronModelHoverCard";
+import SimulationHoverCard from "@/elektro/components/hovers/SimulationHoverCard";
+import ExperimentHoverCard from "@/elektro/components/hovers/ExperimentHoverCard";
 
 // Maps a smart model identifier to the component rendered inside its on-demand
 // hover card, together with the module guard that gates it. The hover cards run
@@ -68,35 +40,39 @@ type HoverCardEntry = {
 };
 
 const hoverCards: Record<string, HoverCardEntry> = {
-  "@mikro/image": { Component: LazyImageHoverCard, Guard: Guard.Mikro },
-  "@mikro/file": { Component: LazyFileHoverCard, Guard: Guard.Mikro },
-  "@mikro/dataset": { Component: LazyDatasetHoverCard, Guard: Guard.Mikro },
-  "@rekuest/action": { Component: LazyActionHoverCard, Guard: Guard.Rekuest },
-  "@rekuest/agent": { Component: LazyAgentHoverCard, Guard: Guard.Rekuest },
-  "@rekuest/assignation": {
-    Component: LazyAssignationHoverCard,
+  "@mikro/image": { Component: ImageHoverCard, Guard: Guard.Mikro },
+  "@mikro/file": { Component: FileHoverCard, Guard: Guard.Mikro },
+  "@mikro/dataset": { Component: DatasetHoverCard, Guard: Guard.Mikro },
+  "@rekuest/action": { Component: ActionHoverCard, Guard: Guard.Rekuest },
+  "@rekuest/agent": { Component: AgentHoverCard, Guard: Guard.Rekuest },
+  "@rekuest/task": {
+    Component: TaskHoverCard,
     Guard: Guard.Rekuest,
   },
   "@rekuest/implementation": {
-    Component: LazyImplementationHoverCard,
+    Component: ImplementationHoverCard,
     Guard: Guard.Rekuest,
+  },
+  "@elektro/neuronmodel": {
+    Component: NeuronModelHoverCard,
+    Guard: Guard.Elektro,
+  },
+  "@elektro/simulation": {
+    Component: SimulationHoverCard,
+    Guard: Guard.Elektro,
+  },
+  "@elektro/experiment": {
+    Component: ExperimentHoverCard,
+    Guard: Guard.Elektro,
   },
 };
 
 configureSmartBuilder({
   renderKomments: ({ identifier, object }) => {
-    return (
-      <Suspense fallback={null}>
-        <LazyKomments identifier={identifier} object={object} />
-      </Suspense>
-    );
+    return <Komments identifier={identifier} object={object} />;
   },
   renderKnowledge: ({ identifier, object }) => {
-    return (
-      <Suspense fallback={null}>
-        <LazyKnowledgeSidebar identifier={identifier} object={object} />
-      </Suspense>
-    );
+    return <KnowledgeSidebar identifier={identifier} object={object} />;
   },
   renderHover: ({ identifier, object }) => {
     const entry = hoverCards[identifier];
@@ -106,17 +82,13 @@ configureSmartBuilder({
     const { Component, Guard: ModuleGuard } = entry;
     return (
       <ModuleGuard>
-        <Suspense fallback={<HoverSkeleton />}>
-          <Component object={object} />
-        </Suspense>
+        <Component object={object} />
       </ModuleGuard>
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {
     const roomsSidebar = (
-      <Suspense fallback={null}>
-        <LazyStructureRoomsSidebar identifier={identifier} object={props.object} />
-      </Suspense>
+      <StructureRoomsSidebar identifier={identifier} object={props.object} />
     );
 
     return (
@@ -162,7 +134,7 @@ configureSmartBuilder({
     });
   },
   useLive: (identifier, object) => {
-    return useLiveAssignation({
+    return useLiveTask({
       identifier,
       object,
     });

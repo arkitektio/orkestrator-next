@@ -7,7 +7,7 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestShortcut } from "@/linkers";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   ShortcutFragment,
   useShortcutQuery,
 } from "@/rekuest/api/graphql";
@@ -20,7 +20,7 @@ import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
-  const { assign, latestAssignation, cancel } = useAction({
+  const { assign, latestTask, cancel } = useAction({
     id: shortcut.action.id,
   });
 
@@ -30,7 +30,6 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
 
   const onSubmit = (data: any) => {
     console.log("Submiftting");
-    console.log(data);
     assign({
       action: shortcut.action.id,
       args: { ...data, ...shortcut.savedArgs },
@@ -47,12 +46,12 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
 
   const { registry } = useWidgetRegistry();
 
-  const yieldEvent = latestAssignation?.events.find(
-    (x) => x.kind == AssignationEventKind.Yield,
+  const yieldEvent = latestTask?.events.find(
+    (x) => x.kind == TaskEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events.find(
-    (x) => x.kind == AssignationEventKind.Critical,
+  const errorEvent = latestTask?.events.find(
+    (x) => x.kind == TaskEventKind.Critical,
   );
 
   return (

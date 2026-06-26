@@ -1,5 +1,5 @@
 import { SpaceViewStoreContext, useSpaceViewStore } from '../store'
-import { AssignationEventKind, useNoChildrenDetailAssignationQuery } from '@/rekuest/api/graphql'
+import { TaskEventKind, useNoChildrenDetailTaskQuery } from '@/rekuest/api/graphql'
 import { ReturnsContainer } from '@/components/widgets/returns/ReturnsContainer'
 import { useWidgetRegistry } from '@/rekuest/widgets/WidgetsContext'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -22,7 +22,7 @@ import type {
   TimelineMethodRow
 } from '../types'
 import { Button } from '@/components/ui/button'
-import { RekuestAssignation } from '@/linkers'
+import { RekuestTask } from '@/linkers'
 import { getStatusColor } from './statusColors'
 
 // ── formatting ───────────────────────────────────────────────────────
@@ -46,16 +46,16 @@ type EventCluster = {
 
 // Only meaningful events get a tick; near-coincident ones collapse into one
 // cluster so bursty logs don't pile up into an unreadable wall of boxes.
-const MEANINGFUL_KINDS = new Set<AssignationEventKind>([
-  AssignationEventKind.Log,
-  AssignationEventKind.Error,
-  AssignationEventKind.Critical
+const MEANINGFUL_KINDS = new Set<TaskEventKind>([
+  TaskEventKind.Log,
+  TaskEventKind.Failed,
+  TaskEventKind.Critical
 ])
 
 const clusterEvents = (events: TimelineEvent[]): EventCluster[] => {
   const meaningful = events
     .filter((e) => MEANINGFUL_KINDS.has(e.kind))
-    .filter((e) => e.kind !== AssignationEventKind.Log || !!e.message)
+    .filter((e) => e.kind !== TaskEventKind.Log || !!e.message)
     .sort((a, b) => a.position - b.position)
 
   const clusters: EventCluster[] = []
@@ -73,24 +73,24 @@ const clusterEvents = (events: TimelineEvent[]): EventCluster[] => {
 // ── item detail popover ──────────────────────────────────────────────
 
 const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
-  const { data } = useNoChildrenDetailAssignationQuery({
-    variables: { id: item.assignation.id }
+  const { data } = useNoChildrenDetailTaskQuery({
+    variables: { id: item.task.id }
   })
 
   const setTimelineTimepoint = useSpaceViewStore((s) => s.selectTimepoint)
   const liveNow = useSpaceViewStore((s) => s.liveNow)
 
   const { registry } = useWidgetRegistry()
-  const assignation = data?.assignation || item.assignation
-  const latestEvent = assignation.events
-    ?.filter((i) => i.kind === AssignationEventKind.Yield)
+  const task = data?.task || item.task
+  const latestEvent = task.events
+    ?.filter((i) => i.kind === TaskEventKind.Yield)
     .at(-1)
 
-  const running = !assignation.isDone
+  const running = !task.isDone
   // Running tasks have no end yet — measure to "now".
   const durationMs = running ? liveNow - item.startTime : item.endTime - item.startTime
   // getStatusColor returns "bg-… border-…"; reuse the bg for the status dot.
-  const dotClass = getStatusColor(assignation.latestEventKind).split(' ')[0]
+  const dotClass = getStatusColor(task.latestEventKind).split(' ')[0]
 
   return (
     <div className="flex flex-col">
@@ -103,12 +103,12 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
         />
         <div className="min-w-0 flex-1">
           <h4 className="truncate font-semibold leading-tight">
-            {assignation.action?.name ?? 'Task'}
+            {task.action?.name ?? 'Task'}
           </h4>
-          <p className="truncate font-mono text-[10px] text-muted-foreground">{assignation.id}</p>
+          <p className="truncate font-mono text-[10px] text-muted-foreground">{task.id}</p>
         </div>
         <span className="shrink-0 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          {assignation.latestEventKind}
+          {task.latestEventKind}
         </span>
       </div>
 
@@ -119,7 +119,7 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
             <Clock className="h-3 w-3" /> Created
           </div>
           <div className="mt-0.5 text-sm">
-            <Timestamp date={assignation.createdAt} relative />
+            <Timestamp date={task.createdAt} relative />
           </div>
         </div>
         <div className="rounded-md border border-border/60 bg-muted/30 px-2.5 py-1.5">
@@ -131,7 +131,7 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
       </div>
 
       {/* latest result */}
-      {latestEvent && latestEvent.returns && assignation.action?.returns && (
+      {latestEvent && latestEvent.returns && task.action?.returns && (
         <div className="flex flex-col gap-1.5 px-4 pb-3">
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Latest Result
@@ -139,7 +139,7 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
           <div className="rounded-md border border-border/60 bg-muted/40 p-2">
             <ReturnsContainer
               registry={registry}
-              ports={assignation.action.returns}
+              ports={task.action.returns}
               values={latestEvent.returns}
               showKeys={false}
             />
@@ -158,12 +158,12 @@ const TimelineItemDetail = ({ item }: { item: TimelineItem }) => {
           <Crosshair className="h-3.5 w-3.5" />
           Jump here
         </Button>
-        <RekuestAssignation.DetailLink object={assignation} className="flex-1">
+        <RekuestTask.DetailLink object={task} className="flex-1">
           <Button size="sm" className="w-full gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" />
             Open task
           </Button>
-        </RekuestAssignation.DetailLink>
+        </RekuestTask.DetailLink>
       </div>
     </div>
   )
@@ -190,7 +190,7 @@ const TimelineBars = ({ items, highlighted }: { items: TimelineItem[]; highlight
       {items.map((item, index) => {
         // Running bars are open-ended: they start at their createdAt and extend
         // to the live "now"; finished bars stop at their real end.
-        const barEndTime = item.assignation.isDone ? item.endTime : effectiveEnd
+        const barEndTime = item.task.isDone ? item.endTime : effectiveEnd
         const fullStart = (item.startTime - startBound) / range
         const fullEnd = (barEndTime - startBound) / range
         // Remap full-range positions into the zoom window and clip to the view.
@@ -199,16 +199,16 @@ const TimelineBars = ({ items, highlighted }: { items: TimelineItem[]; highlight
         if (screenEnd <= 0 || screenStart >= 1) return null
         const left = clamp01(screenStart)
         const right = clamp01(screenEnd)
-        const openEnded = !item.assignation.isDone
+        const openEnded = !item.task.isDone
         return (
           <Popover key={index}>
             <PopoverTrigger asChild>
               <div
                 className={`${
-                  highlighted.includes(item.assignation.id)
+                  highlighted.includes(item.task.id)
                     ? 'ring-2 ring-offset-1 ring-primary z-20 opacity-100'
                     : 'opacity-60 hover:opacity-100 hover:z-20'
-                } ${getStatusColor(item.assignation.latestEventKind)} ${
+                } ${getStatusColor(item.task.latestEventKind)} ${
                   openEnded ? 'animate-pulse rounded-l-md rounded-r-none border-r-0' : 'rounded-md'
                 } absolute h-full border cursor-pointer transition-all flex items-center justify-center shadow-sm`}
                 style={{
@@ -225,7 +225,7 @@ const TimelineBars = ({ items, highlighted }: { items: TimelineItem[]; highlight
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-[10px] truncate w-full text-center px-1 text-white font-medium drop-shadow-md">
-                  {item.assignation.action?.name}
+                  {item.task.action?.name}
                 </div>
               </div>
             </PopoverTrigger>
@@ -324,7 +324,7 @@ const TimelineGroupRender = ({
 export const TaskTimeline = () => {
   const timelineGroups = useSpaceViewStore((s) => s.timelineGroups)
   const timelineEvents = useSpaceViewStore((s) => s.timelineEvents)
-  const highlighted = useSpaceViewStore((s) => s.highlightedAssignationIds)
+  const highlighted = useSpaceViewStore((s) => s.highlightedTaskIds)
   const startTime = useSpaceViewStore((s) => s.timelineStartTime)
   const endTime = useSpaceViewStore((s) => s.timelineEndTime)
   const selectedTimepoint = useSpaceViewStore((s) => s.selectedTimepoint)
@@ -335,7 +335,7 @@ export const TaskTimeline = () => {
   const zoomEnd = useSpaceViewStore((s) => s.zoomEnd)
   const resetZoom = useSpaceViewStore((s) => s.resetZoom)
 
-  const setHighlighted = useSpaceViewStore((s) => s.setHighlightedAssignationIds)
+  const setHighlighted = useSpaceViewStore((s) => s.setHighlightedTaskIds)
 
   // While the task runs, the right edge tracks "now" so the range and any
   // open-ended (running) bars keep growing with the live clock.
@@ -487,8 +487,8 @@ export const TaskTimeline = () => {
                 if (screen < 0 || screen > 1) return null
                 const hasError = cluster.events.some(
                   (e) =>
-                    e.kind === AssignationEventKind.Error ||
-                    e.kind === AssignationEventKind.Critical
+                    e.kind === TaskEventKind.Failed ||
+                    e.kind === TaskEventKind.Critical
                 )
                 return (
                   <Tooltip key={`evt-${index}`}>

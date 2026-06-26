@@ -172,7 +172,6 @@ export const ReserveForm = (props: {
 
   const onSubmit = async (data: any) => {
     console.log("Submitting");
-    console.log(data);
 
     const { toolbox, name, allowQuick, ...rest } = data;
 

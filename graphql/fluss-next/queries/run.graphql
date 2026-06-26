@@ -10,8 +10,8 @@ query DetailSnapshot($id: ID!) {
   }
 }
 
-query RunForAssignation($id: ID!) {
-  runForAssignation(id: $id) {
+query RunForTask($id: ID!) {
+  runForTask(id: $id) {
     ...DetailRun
   }
 }
@@ -22,8 +22,8 @@ query EventsBetween($id: ID!, $min: Int, $max: Int) {
   }
 }
 
-query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput, $order: RunOrder) {
-  runs(filters: $filters, pagination: $pagination, order: $order) {
+query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput, $ordering: [RunOrder!]) {
+  runs(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListRun
   }
 }
@@ -37,9 +37,9 @@ query GetRun($id: ID!) {
 query RunCarousel(
   $pagination: OffsetPaginationInput
   $filters: RunFilter
-  $order: RunOrder
+  $ordering: [RunOrder!]
 ) {
-  runs(pagination: $pagination, filters: $filters, order: $order) {
+  runs(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...CarouselRun
   }
 }

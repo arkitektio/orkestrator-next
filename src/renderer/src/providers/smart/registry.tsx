@@ -41,7 +41,6 @@ export class SmartRegistry {
 
   registeredModels(): Registration[] {
     const registrations = Array.from(this.registry.values());
-    console.log(registrations);
     return registrations;
   }
 

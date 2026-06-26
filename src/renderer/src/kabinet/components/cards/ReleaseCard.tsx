@@ -19,7 +19,7 @@ import {
   PortKind,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useLiveTask } from "@/rekuest/hooks/useTasks";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { ListReleaseFragment } from "../../api/graphql";
 
@@ -32,7 +32,7 @@ export const AssignButton = (props: {
   template: ListImplementationFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation, implementation } = useImplementationAction(
+  const { assign, latestTask, implementation } = useImplementationAction(
     {
       id: props.template.id,
     },
@@ -112,7 +112,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
 };
 
 const TheCard = ({ item }: Props) => {
-  const { progress } = useLiveAssignation({
+  const { progress } = useLiveTask({
     identifier: "@kabinet/release",
     object: item.id,
   });

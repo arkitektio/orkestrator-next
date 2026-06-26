@@ -25,7 +25,6 @@ export const useLiveState = ({
       variables: { stateID: stateID },
       onData: ({ data: subData }) => {
         const event = subData.data?.watchState;
-        console.log("Received subscription data:", subData);
         if (!event) return;
 
         // Lazily initialize the ref from checkout on first patch
@@ -36,7 +35,6 @@ export const useLiveState = ({
         if (event.__typename === "StateSnapshotEvent") {
           // Full snapshot replaces the value
           valueRef.current = event.value;
-          console.log("Received snapshot event:", event);
           setLiveValue({ ...event.value });
           setRevision(event.globalRevision);
         } else if (event.__typename === "StatePatchEvent") {

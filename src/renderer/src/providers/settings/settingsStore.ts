@@ -95,7 +95,6 @@ export function createSettingsStore(
     setSettings: (nextSettings) => {
       const previousSettings = store.getState().settings;
       const normalizedSettings = normalizeSettings(nextSettings, currentDefaultSettings);
-      console.log("Saving settings", normalizedSettings);
       if (normalizedSettings) {
         localStorage.setItem("wasser-settings", JSON.stringify(normalizedSettings));
         console.log("Settings saved to local storage");
@@ -117,7 +116,6 @@ export function createSettingsStore(
       isHydrating = true;
       try {
         const serializedSettings = localStorage.getItem("wasser-settings");
-        console.log("Loaded Settings", serializedSettings);
         if (serializedSettings) {
           localSettings = normalizeSettings(
             JSON.parse(serializedSettings),

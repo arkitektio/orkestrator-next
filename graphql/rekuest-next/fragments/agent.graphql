@@ -1,6 +1,5 @@
 fragment ProtocolAgent on Agent {
   id
-  instanceId
   app {
     identifier
   }
@@ -25,7 +24,6 @@ fragment ProtocolAgent on Agent {
 }
 fragment Agent on Agent {
   id
-  instanceId
   implementations {
     ...ListImplementation
   }
@@ -35,33 +33,29 @@ fragment Agent on Agent {
   states {
     ...State
   }
-  registry {
-    client {
-      clientId
-      release {
-        version
-        app {
-          identifier
-        }
+  client {
+    clientId
+    release {
+      version
+      app {
+        identifier
       }
-      device {
-        deviceId
-      }
-
     }
-    user {
-      sub
+    device {
+      deviceId
     }
+  }
+  user {
+    sub
   }
   blocked
   pinned
-  extensions
   name
   active
   connected
   lastSeen
-  assignations(pagination: { limit: 5 }) {
-    ...ListAsssignation
+  tasks(pagination: { limit: 5 }) {
+    ...ListTask
   }
   placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
     ...AgentPlacement
@@ -71,20 +65,14 @@ fragment Agent on Agent {
 
 fragment ListAgent on Agent {
   id
-  instanceId
   active
   connected
   name
   lastSeen
   pinned
   blocked
-  registry {
-    client {
-      clientId
-    }
-    user {
-      sub
-    }
+  client {
+    clientId
   }
   user {
     sub
@@ -109,7 +97,6 @@ fragment ListAgent on Agent {
 fragment SearchAgent on Agent {
   id
   name
-  instanceId
   connected
   blocked
   app {
@@ -122,12 +109,30 @@ fragment SearchAgent on Agent {
 
 
 
+# Non-traversable agent subscription delta. Relations are scalar IDs; the client
+# hydrates the full agent once via query on `create` and merges hot scalars into
+# the normalized cache on `update`. See AgentUpdater.tsx.
+fragment AgentChange on AgentChange {
+  id
+  name
+  kind
+  latestEvent
+  connected
+  blocked
+  lastSeen
+  client
+  user
+  organization
+  app
+  release
+}
+
 fragment AgentChangeEvent on AgentChangeEvent {
   create {
-    ...ListAgent
+    ...AgentChange
   }
   update {
-    ...ListAgent
+    ...AgentChange
   }
   delete
 }
@@ -140,8 +145,6 @@ fragment HoverAgent on Agent {
   blocked
   pinned
   lastSeen
-  instanceId
-  extensions
   app {
     identifier
   }

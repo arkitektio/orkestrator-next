@@ -1,21 +1,16 @@
 import { toast } from "sonner";
 import {
   AssignInput,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   PrimaryActionFragment,
-  ReserveMutationVariables
 } from "../api/graphql";
 
-export type ActionReserveVariables = Omit<
-  ReserveMutationVariables,
-  "instanceId"
->;
-export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
+export type ActionAssignVariables = AssignInput;
 
 export type useActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
-  ) => Promise<PostmanAssignationFragment>;
+  ) => Promise<PostmanTaskFragment>;
 };
 
 export type useActionOptions<T> = {

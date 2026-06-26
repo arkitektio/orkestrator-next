@@ -21,7 +21,24 @@ export const uploadFetch = (
 ) =>
   new Promise<Response>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+
+    // Remove the progress + abort listeners once the request settles. The abort
+    // listener in particular is attached to a caller-owned AbortSignal that
+    // usually outlives the request, so without this each chunk/retry leaks a
+    // listener (closing over xhr) onto that long-lived signal.
+    const onAbort = () => {
+      xhr.abort();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const cleanup = () => {
+      if (options?.onProgress) {
+        xhr.upload.removeEventListener("progress", options.onProgress);
+      }
+      options?.signal?.removeEventListener("abort", onAbort);
+    };
+
     xhr.onload = () => {
+      cleanup();
       if (xhr.status !== 204) {
         reject(new Error(`Failed to upload file: ${xhr.responseText}`));
       }
@@ -29,9 +46,11 @@ export const uploadFetch = (
       resolve(new Response(body));
     };
     xhr.onerror = () => {
+      cleanup();
       reject(new TypeError("Network request failed"));
     };
     xhr.ontimeout = () => {
+      cleanup();
       reject(new TypeError("Network request failed"));
     };
 
@@ -48,14 +67,7 @@ export const uploadFetch = (
     }
 
     if (options?.signal) {
-      const signal = options.signal;
-
-      if (signal) {
-        signal.addEventListener("abort", () => {
-          xhr.abort();
-          reject(new DOMException("Aborted", "AbortError"));
-        });
-      }
+      options.signal.addEventListener("abort", onAbort);
     }
 
     xhr.send(options?.body as any);
@@ -67,7 +79,6 @@ export type ExtraRequest = RequestInit & {
 
 const customFetch = (uri: any, options: ExtraRequest) => {
   if (options.onProgress) {
-    console.log("uploadFetch", uri, options);
     return uploadFetch(uri, options);
   }
   return fetch(uri, options);
@@ -88,8 +99,6 @@ const uploadToStore = async (
   if (!z) {
     throw Error("No client configured",);
   }
-
-  console.log("uploadToStore (big file IPC)", z, file);
 
   // Fallback if we are not in Electron (shouldn't happen in this app context, but good for safety)
   if (!window.api?.uploadBigFile) {
@@ -153,11 +162,9 @@ export const useMikroBigFileUpload = () => {
 
       const z = data.data.requestBigfileUpload;
 
-      console.log("Got upload grant", z);
-
       const result = await uploadToStore(file, datalayerEndpoint, z, options);
 
-      const finishData = await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
+      await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
         mutation: FinishBigfileUploadDocument,
         variables: {
           input: {
@@ -166,7 +173,6 @@ export const useMikroBigFileUpload = () => {
         },
       });
 
-      console.log("Finished upload", finishData);
       return z.store;
     },
     [client, datalayerEndpoint],

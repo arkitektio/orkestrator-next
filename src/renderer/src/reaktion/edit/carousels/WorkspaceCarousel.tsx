@@ -17,9 +17,11 @@ export const WorkspaceCarousel = ({ }) => {
       pagination: {
         limit: 3,
       },
-      order: {
-        createdAt: Ordering.Desc,
-      },
+      ordering: [
+        {
+          createdAt: Ordering.Desc,
+        },
+      ],
     },
   });
 

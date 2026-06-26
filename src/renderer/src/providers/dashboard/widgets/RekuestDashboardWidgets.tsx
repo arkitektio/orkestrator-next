@@ -15,9 +15,9 @@ const RekuestWidget = () => {
         <div className="flex gap-4">
           <div>
             <p className="text-2xl font-bold">
-              {data?.assignationStats?.count ?? 0}
+              {data?.taskStats?.count ?? 0}
             </p>
-            <p className="text-xs text-muted-foreground">Assignations</p>
+            <p className="text-xs text-muted-foreground">Tasks</p>
           </div>
           <div>
             <p className="text-2xl font-bold">

@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router";
 import Action from "./pages/ActionPage";
 import Actions from "./pages/ActionsPage";
 import AgentPage from "./pages/AgentPage";
-import AssignationPage from "./pages/AssignationPage";
+import TaskPage from "./pages/TaskPage";
 import Blok from "./pages/Blok";
 import Bloks from "./pages/Bloks";
 import Dashboard from "./pages/Dashboard";
@@ -17,8 +17,6 @@ import Implementation from "./pages/ImplementationPage";
 import MemoryShelve from "./pages/MemoryShelve";
 import MaterializedBlokPage from "./pages/MaterializedBlok";
 import MaterializedBloks from "./pages/MaterializedBloks";
-import Reservation from "./pages/Reservation";
-import Reservations from "./pages/Reservations";
 import Shortcut from "./pages/Shortcut";
 import Shortcuts from "./pages/Shortcuts";
 import Toolbox from "./pages/Toolbox";
@@ -30,11 +28,12 @@ import StructurePage from "./pages/StructurePage";
 import InterfacePage from "./pages/InterfacePage";
 import InterfacesPage from "./pages/InterfacesPage";
 import StructuresPage from "./pages/StructuresPage";
-import AssignationLogPage from "./pages/assignation/AssignationLogPage";
-import AssignationSpacePage from "./pages/assignation/AssignationSpacePage";
-import AssignationsPage from "./pages/AssignationsPage";
+import TaskLogPage from "./pages/task/TaskLogPage";
+import TaskSpacePage from "./pages/task/TaskSpacePage";
+import TasksPage from "./pages/TasksPage";
+import OrgTasksPage from "./pages/OrgTasksPage";
 import ImplementationsPage from "./pages/ImplementationsPage";
-import AssignationTimelinePage from "./pages/assignation/AssignationTimelinePage";
+import TaskTimelinePage from "./pages/task/TaskTimelinePage";
 import { ResolutionPage } from "./pages/ResolutionPage";
 import AgentSpacePage from "./pages/agent/AgentSpacePage";
 import AgentStatesPage from "./pages/agent/AgentStatesPage";
@@ -60,12 +59,10 @@ const Module: React.FC = () => {
           <Route path="home" element={<Home />} />
           <Route path="actions/:id" element={<Action />} />
           <Route path="agents" element={<AgentsPage />} />
-          <Route path="reservations/:id" element={<Reservation />} />
           <Route path="shortcuts/:id" element={<Shortcut />} />
           <Route path="shortcuts" element={<Shortcuts />} />
           <Route path="toolboxes" element={<Toolboxes />} />
           <Route path="toolboxes/:id" element={<Toolbox />} />
-          <Route path="reservations" element={<Reservations />} />
           <Route path="actions" element={<Actions />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
@@ -94,11 +91,12 @@ const Module: React.FC = () => {
           <Route path="spaces/:id" element={<SpacePage />} />
 
           <Route path="states/:id" element={<StatePage />} />
-          <Route path="assignations" element={<AssignationsPage />} />
-          <Route path="assignations/:id" element={<AssignationPage />} />
-          <Route path="assignations/:id/log" element={<AssignationLogPage />} />
-          <Route path="assignations/:id/space" element={<AssignationSpacePage />} />
-          <Route path="assignations/:id/timeline" element={<AssignationTimelinePage />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="org-tasks" element={<OrgTasksPage />} />
+          <Route path="tasks/:id" element={<TaskPage />} />
+          <Route path="tasks/:id/log" element={<TaskLogPage />} />
+          <Route path="tasks/:id/space" element={<TaskSpacePage />} />
+          <Route path="tasks/:id/timeline" element={<TaskTimelinePage />} />
         </Routes>
 
       </Guard.Rekuest>

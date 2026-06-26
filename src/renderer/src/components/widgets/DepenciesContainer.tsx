@@ -351,7 +351,7 @@ export const DependencySearchField = ({
                           className="flex items-center gap-3 py-2"
                         >
                           <div className="relative flex-shrink-0">
-                            <UserAvatar sub={agent.registry.user.sub} className="h-7 w-7" />
+                            <UserAvatar sub={agent.user.sub} className="h-7 w-7" />
                             <Circle
                               className={cn(
                                 "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full fill-current ring-2 ring-popover",
@@ -364,7 +364,7 @@ export const DependencySearchField = ({
                               {agent.app.identifier}
                             </span>
                             <span className="text-[10px] text-muted-foreground truncate">
-                              v{agent.release.version} · {agent.instanceId}
+                              v{agent.release.version}
                             </span>
                           </div>
                           <CheckIcon

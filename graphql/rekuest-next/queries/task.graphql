@@ -1,0 +1,55 @@
+# Global "my tasks" seed: caller-scoped, currently-active root tasks. Fetched on
+# first mount (survives reload) and kept live by the WatchMyTasks subscription.
+query MyTasks {
+  myTasks {
+    ...PostmanTask
+  }
+}
+
+query DetailTask($id: ID!) {
+  task(id: $id) {
+    ...DetailTask
+  }
+}
+
+# Single-task hydration for the non-traversable subscription `create` path:
+# a thin TaskChange only carries ids, so the client fetches the full PostmanTask
+# once to populate the normalized cache. See TaskUpdater / ChildTaskUpdater.
+query Task($id: ID!) {
+  task(id: $id) {
+    ...PostmanTask
+  }
+}
+
+query ListTasks(
+  $filter: TaskFilter
+  $ordering: [TaskOrder!]
+  $pagination: OffsetPaginationInput
+) {
+  tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
+    ...ListTask
+  }
+}
+
+query ListTasksDetails(
+  $filter: TaskFilter
+  $ordering: [TaskOrder!]
+  $pagination: OffsetPaginationInput
+) {
+  tasks(filters: $filter, pagination: $pagination, ordering: $ordering) {
+    ...PostmanTask
+  }
+}
+
+
+query NoChildrenDetailTask($id: ID!) {
+  task(id: $id) {
+    ...NoChildrenDetailTask
+  }
+}
+
+query HoverTask($id: ID!) {
+  task(id: $id) {
+    ...HoverTask
+  }
+}

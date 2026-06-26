@@ -1,5 +1,6 @@
 import { AnalogSignalChannelDisplay } from "@/elektro/displays/AnalogSignalChannelDisplay";
 import { BlockDisplay } from "@/elektro/displays/BlockDisplay";
+import { ModelWorkspaceDisplay } from "@/elektro/displays/ModelWorkspaceDisplay";
 import { NeuronModelDisplay } from "@/elektro/displays/NeuronModelDisplay";
 import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
 import { PodDisplay } from "@/kabinet/displays/PodDisplay";
@@ -60,6 +61,7 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@elektro/simulation": SimulationDisplay,
     "@elektro/block": BlockDisplay,
     "@elektro/neuronmodel": NeuronModelDisplay,
+    "@elektro/modelworkspace": ModelWorkspaceDisplay,
     // kraph — instances
     "@kraph/graph": GraphDisplay,
     "@kraph/entity": EntityDisplay,

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGenerateImageMutation } from "../api/graphql";
 
 export const ImageCreator = (props: {
@@ -12,6 +12,13 @@ export const ImageCreator = (props: {
   const [generateImage, { loading }] = useGenerateImageMutation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+
+  // Revoke the preview blob URL when it is replaced (regenerate) or the component
+  // unmounts — otherwise each generated image's object URL leaks.
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
 
   const createImage = async (prompt: string) => {
     const response = await generateImage({

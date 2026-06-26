@@ -1,6 +1,10 @@
 fragment ProvenanceEntry on ProvenanceEntry {
   id
-  during
+
+  task {
+    id
+    taskId
+  }
   kind
   user {
     sub

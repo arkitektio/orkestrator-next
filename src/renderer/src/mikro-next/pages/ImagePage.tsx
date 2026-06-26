@@ -29,6 +29,7 @@ import {
 } from "../api/graphql";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import { FinalRender } from "../components/render/FInalRender";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 
@@ -103,6 +104,11 @@ export const ImagePage =  asDetailQueryRoute(
       <MikroImage.ModelPage
         title={data?.image?.name}
         object={data?.image}
+        additionalSidebars={{
+          Provenance: (
+            <ProvenanceSidebar items={data?.image?.provenanceEntries} />
+          ),
+        }}
         pageActions={
           <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image} />

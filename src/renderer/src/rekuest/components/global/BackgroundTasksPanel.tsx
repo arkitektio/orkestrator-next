@@ -13,19 +13,19 @@ import {
 } from "@/components/ui/tooltip";
 import { Activity } from "lucide-react";
 import { useMemo } from "react";
-import { PostmanAssignationFragment } from "../../api/graphql";
-import { useAssignations } from "../../hooks/useAssignations";
-import { isTerminalEvent } from "../../lib/assignationTracker";
-import { AssignationStatusLine } from "../assignation/AssignationStatusLine";
+import { PostmanTaskFragment } from "../../api/graphql";
+import { useTasks } from "../../hooks/useTasks";
+import { isTerminalEvent } from "../../lib/taskTracker";
+import { TaskStatusLine } from "../task/TaskStatusLine";
 
-const isRunning = (a: PostmanAssignationFragment) =>
+const isRunning = (a: PostmanTaskFragment) =>
   !a.isDone && !isTerminalEvent(a.latestEventKind);
 
 const TaskSection = (props: {
   title: string;
-  assignations: PostmanAssignationFragment[];
+  tasks: PostmanTaskFragment[];
 }) => {
-  if (props.assignations.length === 0) {
+  if (props.tasks.length === 0) {
     return null;
   }
 
@@ -34,13 +34,13 @@ const TaskSection = (props: {
       <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {props.title}
       </div>
-      {props.assignations.map((assignation) => (
+      {props.tasks.map((task) => (
         <div
-          key={assignation.id}
+          key={task.id}
           className="rounded-md border border-muted-foreground/10 p-2"
         >
-          <AssignationStatusLine
-            assignation={assignation}
+          <TaskStatusLine
+            task={task}
             compact
             showCancel
             showLink
@@ -52,27 +52,27 @@ const TaskSection = (props: {
 };
 
 /**
- * Navigation-bar entry point for assignation status: shows how many tasks are
+ * Navigation-bar entry point for task status: shows how many tasks are
  * currently running and opens a panel listing running and recently finished
- * assignations.
+ * tasks.
  */
 export const BackgroundTasksButton = () => {
-  const { data } = useAssignations();
+  const { data } = useTasks();
 
   const { running, recent } = useMemo(() => {
-    const assignations = (data?.assignations || []).filter(
+    const tasks = (data?.myTasks || []).filter(
       (a) => !a.ephemeral,
     );
 
     return {
-      running: assignations
+      running: tasks
         .filter(isRunning)
         .slice()
         .sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         ),
-      recent: assignations
+      recent: tasks
         .filter((a) => !isRunning(a))
         .slice()
         .sort(
@@ -81,7 +81,7 @@ export const BackgroundTasksButton = () => {
         )
         .slice(0, 10),
     };
-  }, [data?.assignations]);
+  }, [data?.myTasks]);
 
   return (
     <Popover>
@@ -116,8 +116,8 @@ export const BackgroundTasksButton = () => {
       <PopoverContent side="right" className="w-80 p-2">
         <ScrollArea className="max-h-96">
           <div className="flex flex-col gap-3">
-            <TaskSection title="Running" assignations={running} />
-            <TaskSection title="Recent" assignations={recent} />
+            <TaskSection title="Running" tasks={running} />
+            <TaskSection title="Recent" tasks={recent} />
             {running.length === 0 && recent.length === 0 && (
               <div className="p-4 text-center text-xs text-muted-foreground">
                 No background tasks yet.

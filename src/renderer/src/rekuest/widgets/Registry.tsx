@@ -152,7 +152,6 @@ export class WidgetRegistry {
 
       return widget;
     }
-    console.log("Getting widget for port", port);
 
     const widget =
       this.typeInputWidgetMap[port?.widget?.__typename] ||

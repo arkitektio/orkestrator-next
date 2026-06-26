@@ -7,9 +7,9 @@ query GetImage($id: ID!) {
 query GetImages(
   $filters: ImageFilter
   $pagination: OffsetPaginationInput
-  $order: ImageOrder
+  $ordering: [ImageOrder!]
 ) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
+  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListImage
   }
 }
@@ -17,9 +17,9 @@ query GetImages(
 query ListImages(
   $filters: ImageFilter
   $pagination: OffsetPaginationInput
-  $order: ImageOrder
+  $ordering: [ImageOrder!]
 ) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
+  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListImage
   }
 }

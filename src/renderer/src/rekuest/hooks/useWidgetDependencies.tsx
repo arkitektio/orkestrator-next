@@ -31,8 +31,6 @@ const resolveValue = (
     current = current[part];
   }
 
-  console.log("Resolved value", current, fullPath, values, wanted_path, my_path);
-
   return current;
 };
 
@@ -58,9 +56,6 @@ export const useWidgetDependencies = (props: {
         }, {}) || {}
     );
   }, [values, props.widget?.dependencies]);
-
-
-  console.log("Found values", foundValues, props.widget?.dependencies, foundValues.length, props.widget?.dependencies?.length);
 
   return {
     values: foundValues,

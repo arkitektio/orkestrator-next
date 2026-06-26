@@ -4,8 +4,12 @@ query DetailModelCollection($id: ID!) {
   }
 }
 
-query ListModelCollections($pagination: OffsetPaginationInput, $filters: ModelCollectionFilter) {
-  modelCollections(pagination: $pagination, filters: $filters) {
+query ListModelCollections(
+  $pagination: OffsetPaginationInput
+  $filters: ModelCollectionFilter
+  $ordering: [ModelCollectionOrder!]
+) {
+  modelCollections(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListModelCollection
   }
 }

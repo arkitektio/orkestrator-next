@@ -9,7 +9,7 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestAction, RekuestImplementation } from "@/linkers";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   DetailActionFragment,
   useAutoResolveMutation,
   useDetailActionQuery,
@@ -18,7 +18,7 @@ import { ArrowRight } from "lucide-react";
 import { useCallback, useState } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
-import MinimalAssignationCard from "../components/cards/MinimalAssignationCard";
+import MinimalTaskCard from "../components/cards/MinimalTaskCard";
 import MinimalImplementationCard from "../components/cards/MinimalImplementationCard";
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
@@ -27,7 +27,7 @@ import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
-  const { assign, latestAssignation, cancel } = useAction({
+  const { assign, latestTask, cancel } = useAction({
     id: action.id,
   });
 
@@ -36,7 +36,6 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   });
 
   const onSubmit = (data: any) => {
-    console.log(data);
     assign({
       action: action.id,
       args: data,
@@ -49,12 +48,12 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
 
   const { registry } = useWidgetRegistry();
 
-  const yieldEvent = latestAssignation?.events.find(
-    (x) => x.kind == AssignationEventKind.Yield,
+  const yieldEvent = latestTask?.events.find(
+    (x) => x.kind == TaskEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events.find(
-    (x) => x.kind == AssignationEventKind.Critical,
+  const errorEvent = latestTask?.events.find(
+    (x) => x.kind == TaskEventKind.Critical,
   );
 
 
@@ -255,7 +254,7 @@ export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data, refe
                             {result?.implementation_id}
                           </RekuestImplementation.DetailLink>
                           <div>
-                            {result.status == AssignationEventKind.Done ? (
+                            {result.latestEventKind == TaskEventKind.Completed ? (
                               <TiTick />
                             ) : (
                               <TbMedicalCross />
@@ -279,8 +278,8 @@ export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data, refe
 
 
 
-        <ListRender array={data?.action?.assignations} title="Tasks">
-          {(item, key) => <MinimalAssignationCard item={item} key={key} />}
+        <ListRender array={data?.action?.tasks} title="Tasks">
+          {(item, key) => <MinimalTaskCard item={item} key={key} />}
         </ListRender>
         <ListRender array={data?.action?.implementations} title="Implementations">
           {(item, key) => <MinimalImplementationCard item={item} key={key} />}

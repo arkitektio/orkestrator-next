@@ -4,24 +4,68 @@ enum ActionKind {
   GENERATOR
 }
 
+"""
+A node that delegates a sub-flow to an agent selected by the app / version / device / user / instance filters, optionally auto-resolving the matching agent.
+"""
 type AgentSubFlowNode implements GraphNode {
+  """Restrict the agent to a specific app."""
   appFilter: String
+
+  """
+  Whether this dependency is auto resolvable. If so the system will try to automatically resolve a matching agent based on the demands of the dependency and the capabilities of available agents.
+  """
   autoResolvable: Boolean!
+
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """Restrict the agent to a specific device."""
   deviceFilter: String
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """Restrict the agent to a specific instance."""
   instanceFilter: String
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """A human-readable title for the node."""
   title: String!
+
+  """Restrict the agent to one owned by a specific user."""
   userFilter: String
+
+  """Restrict the agent to a specific app version."""
   versionFilter: String
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -33,19 +77,51 @@ scalar AnyDefault
 """The `Arg` scalar type represents a an Argument in a Action assignment"""
 scalar Arg
 
+"""
+The entry node of a flow: it provides the flow's arguments as the initial output stream.
+"""
 type ArgNode implements GraphNode {
+  """A placeholder field specific to the args node."""
   argStuff: String
+
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -67,18 +143,53 @@ type ArgPort {
 
 "Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
 input ArgPortInput {
+  """The child ports (used for list, dict, union and model ports)."""
   children: [ArgPortInput!] = null
+
+  """The options for the port. This is used for dropdowns and text inputs"""
   choices: [ChoiceInput!] = null
+
+  """The default value for the port."""
   default: AnyDefault = null
+
+  """
+  The description of the port. This is the text that is displayed in the UI when the user hovers over the port
+  """
   description: String = null
+
+  """The effects of the port"""
   effects: [EffectInput!] = null
+
+  """
+  The identifier of a structure port. This is used to uniquely identify a specific type of structure.
+  """
   identifier: String = null
+
+  """The key of the port"""
   key: String!
+
+  """
+  The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model
+  """
   kind: PortKind!
+
+  """The label of the port. This is the text that is displayed in the UI"""
   label: String = null
+
+  """
+  Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null
+  """
   nullable: Boolean! = false
+
+  """
+  The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors
+  """
   requires: [RequiresInput!] = null
+
+  """The validators for the port"""
   validators: [ValidatorInput!] = null
+
+  """The assign widget to use for this port."""
   widget: AssignWidgetInput = null
 }
 
@@ -92,20 +203,103 @@ input AssignWidgetInput {
   Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns
   """
   asParagraph: Boolean = null
+
+  """
+  The choices to display in the dropdown. This is used for dropdowns and text inputs
+  """
   choices: [ChoiceInput!] = null
+
+  """
+  The dependencies of the assign widget, which will be passed to the search or the hook widget. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """
+  The dependency that we are going to use to fullfill the state choices. If none is provided its the own state that will be queried
+  """
   dependency: String = null
+
+  """
+  The fallback assign widget to use if the current one fails. This is used for custom assign widgets
+  """
   fallback: AssignWidgetInput = null
+
+  """
+  The filters to apply to a search widget. This is used for custom assign widgets
+  """
   filters: [ArgPortInput!] = null
+
+  """
+  The key of another port whose value this widget should follow and mirror.
+  """
+  followValue: String = null
+
+  """
+  The hook to run when the input is changed. This is used for custom assign widgets
+  """
   hook: String = null
+
+  """
+  The kind of the assign widget. Can be either dropdown, text, slider, checkbox, radio or custom
+  """
   kind: AssignWidgetKind!
+
+  """
+  The maximum value of the slider (if a slider). This is used for sliders and text inputs
+  """
   max: Float = null
+
+  """
+  The minimum value of the slider (if a slider). This is used for sliders and text inputs
+  """
   min: Float = null
+
+  """
+  The placeholder of the input. This is used for text inputs and dropdowns
+  """
   placeholder: String = null
+
+  """
+  The query to run when searching for choices. This is used for dropdowns and text inputs
+  """
   query: SearchQuery = null
+
+  """
+  State accessors are used to specify how to access the state values that we are going to use to fullfill the state choices. This is used when the state value that we want to use is not the same as the one of the port, e.g. when we want to use a specific key of a state object, or when we want to use a dynamic key based on the other arguments. The option_key field is used to specify which part of the state accessor we want to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)
+  """
   stateAccessors: [StateAccessorInput!] = null
+
+  """
+  The key of a state whose value provides the choices for this widget (state-driven choices).
+  """
+  stateChoices: String = null
+
+  """
+  The path to the state value that we are going to use to fullfill the state choices. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]
+  """
   statePath: String = null
+
+  """
+  The step value of the slider (if a slider). This is used for sliders and text inputs
+  """
   step: Float = null
+
+  """
+  The action that we are going to target with a proxy widget. This is used for proxy widgets
+  """
+  targetAction: String = null
+
+  """
+  The dependency that we are going to target with a proxy widget. This is used for proxy widgets
+  """
+  targetDependency: String = null
+
+  """
+  The port that we are going to target with a proxy widget. This is used for proxy widgets
+  """
+  targetPort: String = null
+
+  """The ward that is responsible for handling querying the choices"""
   ward: String = null
 }
 
@@ -113,13 +307,20 @@ input AssignWidgetInput {
 enum AssignWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
   SEARCH
   SLIDER
   STATE_CHOICE
   STRING
 }
 
+"""
+Interface for nodes that assign work to an agent, carrying the assignment timeout.
+"""
 interface AssignableNode {
+  """
+  The timeout in milliseconds to wait for the assigned work before failing.
+  """
   nextTimeout: Int
 }
 
@@ -138,9 +339,22 @@ type ChoiceAssignWidget implements AssignWidget {
 
 "\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    "
 input ChoiceInput {
+  """
+  The description of the choice. This is the text that is displayed in the UI when the user hovers over the choice
+  """
   description: String = null
+
+  """
+  The image of the choice. This is the image that is displayed in the UI (must be a URL)
+  """
   image: String = null
+
+  """The label of the choice. This is the text that is displayed in the UI"""
   label: String!
+
+  """
+  The value of the choice. This is the value that is returned when the choice is selected
+  """
   value: AnyDefault!
 }
 
@@ -154,9 +368,9 @@ input CloseRunInput {
 }
 
 input CreateRunInput {
-  assignation: ID!
   flow: ID!
   snapshotInterval: Int!
+  taskId: ID!
 }
 
 input CreateWorkspaceInput {
@@ -206,12 +420,31 @@ interface Effect {
 
 "\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
 input EffectInput {
+  """
+  The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """
+  Whether to fade out the port when the effect is applied (if it is a hide effect)
+  """
   fade: Boolean = true
+
+  """The function to run to determine if the effect should be applied"""
   function: ValidatorFunction!
+
+  """The hook to run when the effect is applied (if it is a custom effect)"""
   hook: String = null
+
+  """The kind of the effect. Can be either message, hide or custom"""
   kind: EffectKind!
+
+  """
+  The message to display when the effect is applied (if it is a message effect)
+  """
   message: String = null
+
+  """The ward to run when the effect is applied (if it is a custom effect)"""
   ward: String = null
 }
 
@@ -222,18 +455,36 @@ enum EffectKind {
   MESSAGE
 }
 
-"""
-The `ArrayLike` scalasr typsse represents a reference to a store previously created by the user n a datalayer
-"""
+"""The JSON-serializable payload carried by a run event."""
 scalar EventValue
 
+"""
+A Flow is a versioned, executable graph of nodes and edges that lives inside a Workspace. It is the concrete definition that Runs (live executions) and Traces (dry runs) are created from. Flows with the same graph hash within a workspace are deduplicated.
+"""
 type Flow {
+  """The time at which the flow was created."""
   createdAt: DateTime!
+
+  """An optional longer description of what the flow does."""
   description: String
+
+  """
+  The full node-and-edge graph (nodes, edges and globals) that defines the flow.
+  """
   graph: Graph!
+
+  """
+  A content hash of the graph, used to deduplicate identical flows within a workspace.
+  """
   hash: String!
+
+  """The unique identifier of the flow."""
   id: ID!
+
+  """A human-readable title for the flow."""
   title: String!
+
+  """The workspace this flow belongs to."""
   workspace: Workspace!
 }
 
@@ -242,13 +493,37 @@ input FlowFilter {
   DISTINCT: Boolean
   NOT: FlowFilter
   OR: FlowFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by a list of IDs"""
   ids: [ID!]
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by title (case-insensitive substring)"""
   search: String
-  workspace: WorkspaceFilter
 }
 
+input FlowOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  title: Ordering
+}
+
+"""
+A graph-level global argument: a named port whose value is shared across the whole flow.
+"""
 type GlobalArg {
+  """The key identifying this global argument within the graph."""
   key: String!
+
+  """The argument port describing the type and widget of the global value."""
   port: ArgPort!
 }
 
@@ -266,20 +541,48 @@ enum Granularity {
   YEAR
 }
 
+"""
+The full definition of a flow: its nodes, the edges connecting them, the graph-level global arguments and the editor zoom level. This is the serialized form stored on a Flow.
+"""
 type Graph {
+  """All edges connecting the nodes in the graph."""
   edges: [GraphEdge!]!
+
+  """The graph-level global arguments shared across nodes."""
   globals: [GlobalArg!]!
+
+  """All nodes in the graph."""
   nodes: [GraphNode!]!
+
+  """The zoom level of the flow editor when the graph was saved."""
   zoom: Float!
 }
 
+"""
+An edge connecting a source node handle to a target node handle in a flow graph. The common interface for all edge kinds, carrying the stream of items that flow across it.
+"""
 interface GraphEdge {
+  """The id of the edge, unique within the graph."""
   id: ID!
+
+  """
+  The kind of edge, discriminating the concrete edge type (VANILLA or LOGGING).
+  """
   kind: GraphEdgeKind!
+
+  """The id of the source node."""
   source: String!
+
+  """The handle (port) on the source node the edge leaves from."""
   sourceHandle: String!
+
+  """The ordered items (the shape of the data) that flow across this edge."""
   stream: [StreamItem!]!
+
+  """The id of the target node."""
   target: String!
+
+  """The handle (port) on the target node the edge arrives at."""
   targetHandle: String!
 }
 
@@ -306,18 +609,48 @@ input GraphInput {
   nodes: [GraphNodeInput!]!
 }
 
+"""
+A node in a flow graph. This is the common interface implemented by every concrete node kind (args, returns, reactive, rekuest map/filter, agent subflow), carrying its id, kind, canvas position and port streams.
+"""
 interface GraphNode {
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -373,14 +706,34 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar Identifier
 
+"""
+An edge that, in addition to streaming items, logs them at the configured level for debugging.
+"""
 type LoggingEdge implements GraphEdge {
+  """The id of the edge, unique within the graph."""
   id: ID!
+
+  """
+  The kind of edge, discriminating the concrete edge type (VANILLA or LOGGING).
+  """
   kind: GraphEdgeKind!
+
+  """The log level at which items crossing this edge are logged."""
   level: String!
+
+  """The id of the source node."""
   source: String!
+
+  """The handle (port) on the source node the edge leaves from."""
   sourceHandle: String!
+
+  """The ordered items (the shape of the data) that flow across this edge."""
   stream: [StreamItem!]!
+
+  """The id of the target node."""
   target: String!
+
+  """The handle (port) on the target node the edge arrives at."""
   targetHandle: String!
 }
 
@@ -398,13 +751,30 @@ type MessageEffect implements Effect {
 }
 
 type Mutation {
+  """Mark a run as COMPLETED."""
   closeRun(input: CloseRunInput!): Run!
+
+  """Start (or reuse) a run of a flow for a given task."""
   createRun(input: CreateRunInput!): Run!
+
+  """Create a new workspace, seeded with an initial flow."""
   createWorkspace(input: CreateWorkspaceInput!): Workspace!
+
+  """Delete a run and its events and snapshots."""
   deleteRun(input: DeleteRunInput!): ID!
+
+  """Delete a run snapshot."""
   deleteSnapshot(input: DeleteSnapshotInput!): ID!
+
+  """Capture a state snapshot of a run at a logical time."""
   snapshot(input: SnapshotRunInput!): Snapshot!
+
+  """Record a single run event (a value, error or completion) for a run."""
   track(input: TrackInput!): RunEvent!
+
+  """
+  Update a workspace's metadata and upsert the flow for the posted graph.
+  """
   updateWorkspace(input: UpdateWorkspaceInput!): Workspace!
 }
 
@@ -446,8 +816,12 @@ enum PortKind {
   UNION
 }
 
+"""The 2D canvas position (x, y) of a node in the flow editor."""
 type Position {
+  """The horizontal position of the node on the editor canvas."""
   x: Float!
+
+  """The vertical position of the node on the editor canvas."""
   y: Float!
 }
 
@@ -463,8 +837,15 @@ type Provides {
 }
 
 input ProvidesInput {
+  """
+  The key of the provision. This is used to uniquely identify the provision
+  """
   key: String!
+
+  """The operator for the provision"""
   operator: ProvidesOperator!
+
+  """The value of the provision. This can be any JSON serializable value"""
   value: Arg!
 }
 
@@ -476,24 +857,63 @@ enum ProvidesOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
 
+type ProxyWidget implements AssignWidget {
+  followValue: String
+  kind: AssignWidgetKind!
+  targetAction: String!
+  targetDependency: String
+  targetPort: String!
+}
+
 type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
+  _service: _Service!
+
+  """
+  Fetch the events of a run between two logical times, seeded from the latest snapshot at or before the lower bound.
+  """
   eventsBetween(max: Int = null, min: Int = null, run: ID!): [RunEvent!]!
+
+  """Fetch a single flow by id."""
   flow(id: ID!): Flow!
-  flows(filters: FlowFilter, pagination: OffsetPaginationInput): [Flow!]!
+
+  """List all flows in your organization."""
+  flows(filters: FlowFilter, ordering: [FlowOrder!]! = [], pagination: OffsetPaginationInput): [Flow!]!
+
+  """Fetch a single reactive template by id."""
   reactiveTemplate(id: ID!): ReactiveTemplate!
-  reactiveTemplates(filters: ReactiveTemplateFilter, pagination: OffsetPaginationInput): [ReactiveTemplate!]!
+
+  """List all reactive operator templates (a shared, global catalog)."""
+  reactiveTemplates(filters: ReactiveTemplateFilter, ordering: [ReactiveTemplateOrder!]! = [], pagination: OffsetPaginationInput): [ReactiveTemplate!]!
+
+  """Fetch a single run by id."""
   run(id: ID!): Run!
-  runForAssignation(id: ID!): Run!
-  runs(filters: RunFilter, order: RunOrder, pagination: OffsetPaginationInput): [Run!]!
+
+  """Fetch the run created for a given task id."""
+  runForTask(id: ID!): Run!
+
+  """List all runs in your organization."""
+  runs(filters: RunFilter, ordering: [RunOrder!]! = [], pagination: OffsetPaginationInput): [Run!]!
+
+  """Fetch a single run snapshot by id."""
   snapshot(id: ID!): Snapshot!
-  snapshots(pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """List all run snapshots in your organization."""
+  snapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """Fetch a single workspace by id."""
   workspace(id: ID!): Workspace!
+
+  """Aggregate statistics over the workspaces in your organization."""
   workspaceStats(filters: WorkspaceFilter = null): WorkspaceStats!
-  workspaces(filters: WorkspaceFilter, order: WorkspaceOrder, pagination: OffsetPaginationInput): [Workspace!]!
+
+  """List all workspaces in your organization."""
+  workspaces(filters: WorkspaceFilter, ordering: [WorkspaceOrder!]! = [], pagination: OffsetPaginationInput): [Workspace!]!
 }
 
 enum ReactiveImplementation {
@@ -529,31 +949,90 @@ enum ReactiveImplementation {
   ZIP
 }
 
+"""
+A node that runs a built-in reactive operator (the implementation) over its input streams.
+"""
 type ReactiveNode implements GraphNode {
   argStuff: String
+
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The reactive operator this node runs (e.g. ZIP, COMBINELATEST, FILTER).
+  """
   implementation: ReactiveImplementation!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
+"""
+A ReactiveTemplate is a reusable, global catalog entry describing a reactive operator — its implementation (zip, combine-latest, chunk, filter, arithmetic, …) together with its input/output port streams and constants. Reactive nodes in a flow instantiate one of these templates.
+"""
 type ReactiveTemplate {
+  """The constant argument ports configured on the operator."""
   constants: [ArgPort!]!
+
+  """An optional longer description of the operator's behaviour."""
   description: String
+
+  """The unique identifier of the reactive template."""
   id: ID!
+
+  """
+  The reactive operator this template implements (e.g. ZIP, COMBINELATEST, FILTER).
+  """
   implementation: ReactiveImplementation!
+
+  """
+  The input port streams the operator consumes (a list of streams, each a list of argument ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """
+  The output port streams the operator produces (a list of streams, each a list of return ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """A human-readable title for the template."""
   title: String!
+
+  """The void ports of the operator (ports that neither stream in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -562,61 +1041,190 @@ input ReactiveTemplateFilter {
   DISTINCT: Boolean
   NOT: ReactiveTemplateFilter
   OR: ReactiveTemplateFilter
+
+  """Filter by a list of IDs"""
   ids: [ID!]
+
+  """Filter by reactive implementation"""
   implementations: [ReactiveImplementation!]
+
+  """Search by title (case-insensitive substring)"""
   search: String
 }
 
+input ReactiveTemplateOrder @oneOf {
+  id: Ordering
+  title: Ordering
+}
+
+"""
+Interface for nodes that invoke a rekuest action, carrying the action hash, the map strategy and whether local execution is allowed.
+"""
 interface RekuestActionNode {
+  """The kind of the rekuest action (e.g. function or generator)."""
   actionKind: ActionKind!
+
+  """
+  Whether the action may be executed locally instead of being assigned to an agent.
+  """
   allowLocalExecution: Boolean!
+
+  """The hash of the rekuest action this node invokes."""
   hash: String!
+
+  """
+  The strategy used to map the input stream onto the action (e.g. MAP, MAP_TO, MAP_FROM).
+  """
   mapStrategy: String!
 }
 
+"""
+A node that uses a rekuest action as a predicate to filter its input stream.
+"""
 type RekuestFilterActionNode implements AssignableNode & GraphNode & RekuestActionNode & RetriableNode {
+  """The kind of the rekuest action (e.g. function or generator)."""
   actionKind: ActionKind!
+
+  """
+  Whether the action may be executed locally instead of being assigned to an agent.
+  """
   allowLocalExecution: Boolean!
+
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The hash of the rekuest action this node invokes."""
   hash: String!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The strategy used to map the input stream onto the action (e.g. MAP, MAP_TO, MAP_FROM).
+  """
   mapStrategy: String!
+
+  """
+  The timeout in milliseconds to wait for the assigned work before failing.
+  """
   nextTimeout: Int
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """A placeholder field used to disambiguate this node type in the schema."""
   path: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """The number of times to retry the node on failure."""
   retries: Int
+
+  """The delay in milliseconds between retries."""
   retryDelay: Int
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
+"""
+A node that maps a rekuest action over its input stream, producing one output per input.
+"""
 type RekuestMapActionNode implements AssignableNode & GraphNode & RekuestActionNode & RetriableNode {
+  """The kind of the rekuest action (e.g. function or generator)."""
   actionKind: ActionKind!
+
+  """
+  Whether the action may be executed locally instead of being assigned to an agent.
+  """
   allowLocalExecution: Boolean!
+
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The hash of the rekuest action this node invokes."""
   hash: String!
+
+  """A placeholder field used to disambiguate this node type in the schema."""
   hello: String
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The strategy used to map the input stream onto the action (e.g. MAP, MAP_TO, MAP_FROM).
+  """
   mapStrategy: String!
+
+  """
+  The timeout in milliseconds to wait for the assigned work before failing.
+  """
   nextTimeout: Int
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """The number of times to retry the node on failure."""
   retries: Int
+
+  """The delay in milliseconds between retries."""
   retryDelay: Int
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -627,8 +1235,15 @@ type Requires {
 }
 
 input RequiresInput {
+  """
+  The key of the requirement. This is used to uniquely identify the requirement
+  """
   key: String!
+
+  """The operator for the requirement"""
   operator: RequiresOperator!
+
+  """The value of the requirement. This can be any JSON serializable value"""
   value: Arg!
 }
 
@@ -640,28 +1255,67 @@ enum RequiresOperator {
   GTE
   IN
   LTE
+  MATCHES
   NOT_EQUALS
   NOT_IN
 }
 
+"""
+Interface for nodes that can retry on failure, carrying the retry count and delay.
+"""
 interface RetriableNode {
+  """The number of times to retry the node on failure."""
   retries: Int
+
+  """The delay in milliseconds between retries."""
   retryDelay: Int
 }
 
+"""
+The exit node of a flow: the values it receives become the flow's return values.
+"""
 type ReturnNode implements GraphNode {
+  """The constant ports configured on the node."""
   constants: [ArgPort!]!
+
+  """A map of constant port keys to their configured values."""
   constantsMap: ValueMap!
+
+  """A human-readable description of what the node does."""
   description: String!
+
+  """A map of global argument keys to the node port keys they feed."""
   globalsMap: ValueMap!
+
+  """The id of the node, unique within the graph."""
   id: ID!
+
+  """
+  The input port streams the node consumes (a list of streams, each a list of ports).
+  """
   ins: [[ArgPort!]!]!
+
+  """The kind of node, discriminating the concrete node type."""
   kind: GraphNodeKind!
+
+  """
+  The output port streams the node produces (a list of streams, each a list of ports).
+  """
   outs: [[ReturnPort!]!]!
+
+  """The id of the parent node, if this node is nested inside another."""
   parentNode: String
+
+  """The position of the node on the editor canvas."""
   position: Position!
+
+  """A placeholder field specific to the returns node."""
   returnStuff: String
+
+  """A human-readable title for the node."""
   title: String!
+
+  """The void ports of the node (neither streamed in nor out)."""
   voids: [ArgPort!]!
 }
 
@@ -682,18 +1336,53 @@ type ReturnPort {
 
 "Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
 input ReturnPortInput {
+  """The child ports (used for list, dict, union and model ports)."""
   children: [ReturnPortInput!] = null
+
+  """The options for the port. This is used for dropdowns and text inputs"""
   choices: [ChoiceInput!] = null
+
+  """The default value for the port."""
   default: AnyDefault = null
+
+  """
+  The description of the port. This is the text that is displayed in the UI when the user hovers over the port
+  """
   description: String = null
+
+  """The effects of the port"""
   effects: [EffectInput!] = null
+
+  """
+  The identifier of a structure port. This is used to uniquely identify a specific type of structure.
+  """
   identifier: String = null
+
+  """The key of the port"""
   key: String!
+
+  """
+  The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model
+  """
   kind: PortKind!
+
+  """The label of the port. This is the text that is displayed in the UI"""
   label: String = null
+
+  """
+  Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null
+  """
   nullable: Boolean! = false
+
+  """
+  The provisions for the port. Provisions are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port provisions
+  """
   provides: [ProvidesInput!] = null
+
+  """The validators for the port"""
   validators: [ValidatorInput!] = null
+
+  """The return widget to use for this port."""
   widget: ReturnWidgetInput = null
 }
 
@@ -703,14 +1392,37 @@ interface ReturnWidget {
 
 "A Return Widget is a UI element that is used to display the value of a port.\n\n    Return Widgets get displayed both if we show the return values of an assignment,\n    but also when we inspect the given arguments of a previous run task. Their primary\n    usecase is to adequately display the value of a port, in a user readable way.\n\n    Return Widgets are often overwriten by the underlying UI framework (e.g. Orkestrator)\n    to provide a better user experience. For example, a return widget that displays a\n    date could be overwriten to display a calendar widget.\n\n    Return Widgets provide more a way to customize this overwriten behavior.\n\n    "
 input ReturnWidgetInput {
+  """
+  The choices to display in the dropdown. This is used for dropdowns and text inputs
+  """
   choices: [ChoiceInput!] = null
+
+  """The hook to run (if it is a custom return widget)."""
   hook: String = null
+
+  """
+  The kind of the return widget. Can be either dropdown, text, slider, checkbox, radio or custom
+  """
   kind: ReturnWidgetKind!
+
+  """The maximum value to display (if a slider)."""
   max: Int = null
+
+  """The minimum value to display (if a slider)."""
   min: Int = null
+
+  """The placeholder text of the return widget."""
   placeholder: String = null
+
+  """
+  The query to run when searching for choices. This is used for dropdowns and text inputs
+  """
   query: SearchQuery = null
+
+  """The step value to display (if a slider)."""
   step: Int = null
+
+  """The ward responsible for handling the return widget."""
   ward: String = null
 }
 
@@ -718,29 +1430,89 @@ input ReturnWidgetInput {
 enum ReturnWidgetKind {
   CHOICE
   CUSTOM
+  PROXY
 }
 
+"""
+A Run is a single live execution of a Flow, tied to a task. As it executes it accumulates RunEvents (per-node values, errors and completions) and periodic Snapshots that capture its state over time.
+"""
 type Run {
-  assignation: ID!
+  """The time at which the run was started."""
   createdAt: DateTime!
-  events(pagination: OffsetPaginationInput): [RunEvent!]!
+
+  """All events emitted during this run, in order."""
+  events(filters: RunEventFilter, ordering: [RunEventOrder!]! = [], pagination: OffsetPaginationInput): [RunEvent!]!
+
+  """The flow that is being executed by this run."""
   flow: Flow!
+
+  """The unique identifier of the run."""
   id: ID!
+
+  """The most recent state snapshot of this run, if any."""
   latestSnapshot: Snapshot
-  snapshots(pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """The state snapshots captured during this run."""
+  snapshots(filters: SnapshotFilter, ordering: [SnapshotOrder!]! = [], pagination: OffsetPaginationInput): [Snapshot!]!
+
+  """The current status of the run (RUNNING or COMPLETED)."""
   status: RunStatus!
+
+  """The id of the task that triggered this run."""
+  taskId: ID!
 }
 
+"""
+A RunEvent is a single event emitted while a Run executes: a streamed value (NEXT), an ERROR, or a COMPLETE, originating from a specific node handle in the flow.
+"""
 type RunEvent {
+  """The ids of the events that caused this event (its causal parents)."""
   causedBy: [ID!]!
+
+  """The wall-clock time at which the event was recorded."""
   createdAt: DateTime!
+
+  """A human-readable exception message, set for ERROR events."""
   exception: String
+
+  """The node handle (port) the event was emitted on."""
   handle: String!
+
+  """The unique identifier of the event."""
   id: ID!
+
+  """The kind of event: NEXT, ERROR, COMPLETE or UNKNOWN."""
   kind: RunEventKind!
+
+  """The id of the node that emitted the event."""
   source: String!
+
+  """The logical time of the run at which this event was emitted."""
   t: Int!
+
+  """
+  The payload of the event (the streamed value, or the exception for an ERROR).
+  """
   value: EventValue
+}
+
+input RunEventFilter {
+  AND: RunEventFilter
+  DISTINCT: Boolean
+  NOT: RunEventFilter
+  OR: RunEventFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by a list of IDs"""
+  ids: [ID!]
+
+  """Filter by event kind"""
+  kinds: [RunEventKind!]
 }
 
 enum RunEventKind {
@@ -750,17 +1522,37 @@ enum RunEventKind {
   UNKNOWN
 }
 
+input RunEventOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  t: Ordering
+}
+
 input RunFilter {
   AND: RunFilter
   DISTINCT: Boolean
   NOT: RunFilter
   OR: RunFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by a list of IDs"""
   ids: [ID!]
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by task id (case-insensitive substring)"""
   search: String
 }
 
-input RunOrder {
+input RunOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 enum RunStatus {
@@ -790,13 +1582,49 @@ type SliderAssignWidget implements AssignWidget {
   step: Float
 }
 
+"""
+A Snapshot captures the state of a Run at a logical time `t`, grouping the events that were active at that point so a client can reconstruct the run's state without replaying every event.
+"""
 type Snapshot {
+  """The wall-clock time at which the snapshot was taken."""
   createdAt: DateTime!
-  events(pagination: OffsetPaginationInput): [RunEvent!]!
+
+  """The events that were active at the snapshot's logical time."""
+  events(filters: RunEventFilter, ordering: [RunEventOrder!]! = [], pagination: OffsetPaginationInput): [RunEvent!]!
+
+  """The unique identifier of the snapshot."""
   id: ID!
+
+  """The run this snapshot belongs to."""
   run: Run!
+
+  """An optional status label describing the run state at this snapshot."""
   status: String
+
+  """The logical time of the run at which this snapshot was taken."""
   t: Int!
+}
+
+input SnapshotFilter {
+  AND: SnapshotFilter
+  DISTINCT: Boolean
+  NOT: SnapshotFilter
+  OR: SnapshotFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by a list of IDs"""
+  ids: [ID!]
+}
+
+input SnapshotOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  t: Ordering
 }
 
 input SnapshotRunInput {
@@ -811,7 +1639,14 @@ type StateAccessor {
 }
 
 input StateAccessorInput {
+  """
+  The part of the state accessor to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)
+  """
   optionKey: OptionKey!
+
+  """
+  The sub path to access a specific part of the state value. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]
+  """
   subPath: String = null
 }
 
@@ -823,8 +1658,16 @@ type StateChoiceAssignWidget implements AssignWidget {
   statePath: String!
 }
 
+"""
+A single item carried on an edge's stream, describing the port kind and a label of the value that flows through.
+"""
 type StreamItem {
+  """The port kind of the value carried at this position of the stream."""
   kind: PortKind!
+
+  """
+  A human-readable label for the value carried at this position of the stream.
+  """
   label: String!
 }
 
@@ -841,6 +1684,7 @@ type StringAssignWidget implements AssignWidget {
 }
 
 type Subscription {
+  """Subscribe to the live stream of events for a given run."""
   events(run: ID!): RunEvent!
 }
 
@@ -884,36 +1728,77 @@ type Validator {
 "\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
 scalar ValidatorFunction
 
-" \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n"
+"\nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports.\n\n"
 input ValidatorInput {
+  """
+  The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """The error message to display when the validation fails"""
   errorMessage: String = null
+
+  """The function to run when validating the port"""
   function: ValidatorFunction!
+
+  """An optional human-readable label for the validator."""
   label: String = null
 }
 
-"""
-The `ArrayLike` scalasr typsse represents a reference to a store previously created by the user n a datalayer
-"""
+"""A JSON-serializable map of port keys to arbitrary values."""
 scalar ValueMap
 
+"""
+A plain edge that streams items from a source handle to a target handle.
+"""
 type VanillaEdge implements GraphEdge {
+  """The id of the edge, unique within the graph."""
   id: ID!
+
+  """
+  The kind of edge, discriminating the concrete edge type (VANILLA or LOGGING).
+  """
   kind: GraphEdgeKind!
+
+  """An optional label shown on the edge in the editor."""
   label: String
+
+  """The id of the source node."""
   source: String!
+
+  """The handle (port) on the source node the edge leaves from."""
   sourceHandle: String!
+
+  """The ordered items (the shape of the data) that flow across this edge."""
   stream: [StreamItem!]!
+
+  """The id of the target node."""
   target: String!
+
+  """The handle (port) on the target node the edge arrives at."""
   targetHandle: String!
 }
 
+"""
+A Workspace is the top-level container that groups the Flows of an organization, mirroring the concept of a project or folder. It is the entry point users edit flows within.
+"""
 type Workspace {
+  """The time at which the workspace was created."""
   createdAt: DateTime!
+
+  """An optional longer description of the workspace."""
   description: String
-  flows(filters: FlowFilter, pagination: OffsetPaginationInput): [Flow!]!
+
+  """All flows contained in this workspace."""
+  flows(filters: FlowFilter, ordering: [FlowOrder!]! = [], pagination: OffsetPaginationInput): [Flow!]!
+
+  """The unique identifier of the workspace."""
   id: ID!
+
+  """The most recently created flow in this workspace, if any."""
   latestFlow: Flow
+
+  """A human-readable title for the workspace."""
   title: String!
 }
 
@@ -927,12 +1812,27 @@ input WorkspaceFilter {
   DISTINCT: Boolean
   NOT: WorkspaceFilter
   OR: WorkspaceFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by a list of IDs"""
   ids: [ID!]
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by title (case-insensitive substring)"""
   search: String
 }
 
-input WorkspaceOrder {
+input WorkspaceOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
+  title: Ordering
 }
 
 type WorkspaceStats {
@@ -961,4 +1861,12 @@ type WorkspaceStats {
 """Datetime fields of Workspace for bucketing"""
 enum WorkspaceTimestampField {
   CREATED_AT
+}
+
+scalar _Any
+
+union _Entity = Flow | ReactiveTemplate | Run | RunEvent | Snapshot | Workspace
+
+type _Service {
+  sdl: String!
 }

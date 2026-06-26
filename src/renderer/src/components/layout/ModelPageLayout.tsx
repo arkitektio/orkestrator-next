@@ -3,7 +3,7 @@ import { CommandMenu } from "@/command/Menu";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
 import { Identifier, Object } from "@/types";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { MultiSidebar } from "./MultiSidebar";
 import { PageLayout, PageVariant } from "./PageLayout";
 import { useNavigate } from "react-router-dom";
@@ -13,24 +13,9 @@ import { AlpakaRoom } from "@/linkers";
 import { MessageSquareMore } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-
-const LazyKomments = lazy(() =>
-  import("@/lok-next/components/komments/Komments").then((module) => ({
-    default: module.Komments,
-  })),
-);
-
-const LazyKnowledgeSidebar = lazy(() =>
-  import("@/kraph/components/sidebars/KnowledgeSidebar").then((module) => ({
-    default: module.KnowledgeSidebar,
-  })),
-);
-
-const LazyStructureRoomsSidebar = lazy(() =>
-  import("@/alpaka/sidebars/StructureRoomsSidebar").then((module) => ({
-    default: module.StructureRoomsSidebar,
-  })),
-);
+import { Komments } from "@/lok-next/components/komments/Komments";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -58,19 +43,13 @@ export const ModelPageLayout = ({
 }: ModelPageLayoutProps) => {
   const objects = useMemo(() => [{ identifier, object }], [identifier, object]);
   const kommentsSidebar = (
-    <Suspense fallback={null}>
-      <LazyKomments identifier={identifier} object={object} />
-    </Suspense>
+    <Komments identifier={identifier} object={object} />
   );
   const knowledgeSidebar = (
-    <Suspense fallback={null}>
-      <LazyKnowledgeSidebar identifier={identifier} object={object} />
-    </Suspense>
+    <KnowledgeSidebar identifier={identifier} object={object} />
   );
   const alpakaRoomsSidebar = (
-    <Suspense fallback={null}>
-      <LazyStructureRoomsSidebar identifier={identifier} object={object} />
-    </Suspense>
+    <StructureRoomsSidebar identifier={identifier} object={object} />
   );
 
   return (

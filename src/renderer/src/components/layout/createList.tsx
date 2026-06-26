@@ -18,9 +18,10 @@ import { Refetcher } from "../ui/refetcher";
 
 // --- Types ---
 
-interface StandardVariables<TFilters, TOrder> {
+interface StandardVariables<TFilters, TOrder, TOrdering> {
   filters?: TFilters;
   order?: TOrder;
+  ordering?: TOrdering;
   pagination: OffsetPaginationInput;
 }
 
@@ -34,9 +35,10 @@ interface HookResult<TData> {
 type ItemComponentType<TItem> = React.ComponentType<{ item: TItem } & any>;
 
 // The props available when you USE the component (<BlockList ... />)
-export interface GeneratedListProps<TFilters, TOrder> {
+export interface GeneratedListProps<TFilters, TOrder, TOrdering> {
   filters?: TFilters;
   order?: TOrder;
+  ordering?: TOrdering;
   // All display props are now optional because they might be defined in the factory
   title?: React.ReactNode;
   actions?: React.ReactNode;
@@ -90,10 +92,10 @@ export const Offseter = ({
 );
 
 // The Configuration Object passed to createList({...})
-interface CreateListOptions<TData, TFilters, TOrder, TItem> {
+interface CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem> {
   // Logic (Required)
   useHook: (options: {
-    variables: StandardVariables<TFilters, TOrder>;
+    variables: StandardVariables<TFilters, TOrder, TOrdering>;
     fetchPolicy?: any;
   }) => HookResult<TData>;
   dataKey: keyof TData;
@@ -114,9 +116,10 @@ export const createList = <
   TData,
   TFilters,
   TOrder,
+  TOrdering,
   TItem extends { id?: string | number }
 >(
-  options: CreateListOptions<TData, TFilters, TOrder, TItem>
+  options: CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem>
 ) => {
   // Destructure options for easier access
   const {
@@ -134,7 +137,7 @@ export const createList = <
     cardProps: defaultCardProps = {}
   } = options;
 
-  const GenericList = (props: GeneratedListProps<TFilters, TOrder>) => {
+  const GenericList = (props: GeneratedListProps<TFilters, TOrder, TOrdering>) => {
     // MERGE: Props passed at runtime override defaults passed at creation
     const title = props.title ?? defaultTitle;
     const actions = props.actions ?? defaultActions;
@@ -152,12 +155,17 @@ export const createList = <
 
     useEffect(() => {
       setPagination((prev) => ({ ...prev, offset: 0 }));
-    }, [JSON.stringify(props.filters), JSON.stringify(props.order)]);
+    }, [
+      JSON.stringify(props.filters),
+      JSON.stringify(props.order),
+      JSON.stringify(props.ordering),
+    ]);
 
     const { data, loading, error, refetch, } = useHook({
       variables: {
         filters: props.filters as TFilters,
         order: props.order as TOrder,
+        ordering: props.ordering as TOrdering,
         pagination: pagination,
       },
       fetchPolicy: "cache-and-network",

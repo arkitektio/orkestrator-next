@@ -71,7 +71,7 @@ export const AgentProvider: React.FC<{
         return;
       }
 
-      const newAgent = new OrkestratorAgent(arkitekt, settings.instanceId, navigate);
+      const newAgent = new OrkestratorAgent(arkitekt, navigate);
       agentRef.current = newAgent;
       setAgent(newAgent);
 
@@ -99,7 +99,7 @@ export const AgentProvider: React.FC<{
       console.error("AgentProvider: Failed to start agent", e);
       return undefined;
     }
-  }, [connection, disabled, navigate, settings.instanceId, settings.startAgent]);
+  }, [connection, disabled, navigate, settings.startAgent]);
 
   const contextValue = useMemo(
     () => ({

@@ -6,7 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Check, ChevronDown, ChevronRight, Copy } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface CypherQueryDisplayProps {
   query: string;
@@ -19,11 +19,16 @@ export const CypherQueryDisplay = ({
 }: CypherQueryDisplayProps) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const copyTimer = useRef<number | undefined>(undefined);
+
+  // Clear the pending copy-reset timer on unmount to avoid a setState-after-unmount.
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(query);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (

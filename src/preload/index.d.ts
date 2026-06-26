@@ -1,6 +1,6 @@
 import { Assign } from "@/app/agent/message";
 import { AppContext, AvailableService } from "@/lib/arkitekt/provider";
-import { ImplementationInput } from "src/renderer/src/rekuest/api/graphql";
+import { ImplementationInput } from "@/rekuest/api/graphql";
 import { ElectronAPI } from "@electron-toolkit/preload";
 
 declare global {
@@ -20,7 +20,7 @@ declare global {
       setZoomLevel: (zoomLevel: number) => Promise<{ success: boolean; error?: string }>;
       getZoomLevel: () => Promise<{ success: boolean; zoomLevel?: number; error?: string }>;
       openWebbrowser: (url: string) => Promise<void>;
-      initAgent: (context: { token: string, url: string, instanceId: string, agentUrl: string, services: AvailableService[] }) => Promise<void>;
+      initAgent: (context: { token: string, url: string, agentUrl: string, services: AvailableService[] }) => Promise<void>;
       reportIssue: (opts: {
         title?: string;
         extra?: string;
@@ -40,14 +40,16 @@ declare global {
       onDownloadError: (downloadId: string, cb: (data: any) => void) => () => void;
       onUploadProgress: (uploadId: string, cb: (data: any) => void) => () => void;
       onUploadError: (uploadId: string, cb: (data: any) => void) => () => void;
-      executeElectron: (assignation: Assign) => Promise<void>;
-      onAgentYield: (cb: (data: any) => void) => void;
-      onAgentDone: (cb: (data: any) => void) => void;
-      onAgentError: (cb: (data: any) => void) => void;
-      onAgentLog: (cb: (data: any) => void) => void;
+      executeElectron: (task: Assign) => Promise<void>;
+      onAgentYield: (cb: (data: any) => void) => () => void;
+      onAgentDone: (cb: (data: any) => void) => () => void;
+      onAgentError: (cb: (data: any) => void) => () => void;
+      onAgentLog: (cb: (data: any) => void) => () => void;
     };
     updates: {
       checkForUpdates: () => Promise<{ success: boolean; result?: any; error?: string }>;
+      getChannel: () => Promise<{ channel: "latest" | "next"; version: string }>;
+      setChannel: (channel: "latest" | "next") => Promise<{ success: boolean; result?: any; error?: string }>;
       onStatus: (callback: (status: string) => void) => void;
       onAvailable: (callback: (info: any) => void) => void;
       onNone: (callback: () => void) => void;

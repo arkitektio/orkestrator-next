@@ -27,7 +27,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Model Collections"
           description="Model collections allow you to group multiple models together. This is useful for organizing your models and sharing them with others."
         />
-        <ModelCollectionList pagination={{ limit: 30 }} />
+        <ModelCollectionList defaultLimit={30} />
       </div>
     </ElektroModelCollection.ListPage>
   );

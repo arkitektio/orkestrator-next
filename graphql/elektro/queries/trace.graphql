@@ -4,8 +4,12 @@ query DetailTrace($id: ID!) {
   }
 }
 
-query Traces {
-  traces(pagination: { limit: 10 }) {
+query Traces(
+  $pagination: OffsetPaginationInput = { limit: 10 }
+  $filters: TraceFilter
+  $ordering: [TraceOrder!]
+) {
+  traces(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListTrace
   }
 }

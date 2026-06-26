@@ -34,17 +34,17 @@ export const createGraphQLServiceBuilder =
         };
       }).concat(httpLink);
 
-      const wslink = new GraphQLWsLink(
-        createClient({
-          url: aliasToWsPath(alias, "graphql"),
-          connectionParams: async () => {
-            const token = await getToken();
-            return {
-              token: token.access_token,
-            };
-          },
-        })
-      );
+      const wsClient = createClient({
+        url: aliasToWsPath(alias, "graphql"),
+        connectionParams: async () => {
+          const token = await getToken();
+          return {
+            token: token.access_token,
+          };
+        },
+      });
+
+      const wslink = new GraphQLWsLink(wsClient);
 
       const splitLink = split(
         ({ query }) => {
@@ -73,6 +73,21 @@ export const createGraphQLServiceBuilder =
         clearCache: async () => {
           await client.clearStore();
           await client.resetStore();
+        },
+        dispose: () => {
+          // Stop the Apollo client (cancels in-flight queries, prevents new ones)
+          // and dispose the underlying graphql-ws client so its WebSocket is
+          // closed instead of being orphaned when this service is superseded.
+          try {
+            client.stop();
+          } catch (e) {
+            console.warn("Failed to stop Apollo client during dispose:", e);
+          }
+          try {
+            wsClient.dispose();
+          } catch (e) {
+            console.warn("Failed to dispose graphql-ws client:", e);
+          }
         },
       }
     };

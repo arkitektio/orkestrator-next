@@ -10,7 +10,7 @@ export const HomePageStatisticsSidebar = () => {
 
     // Calculate additional metrics from available data
     const totalImages = data?.actionStats?.count || 0;
-    const totalAssignations = data?.assignationStats?.count || 0;
+    const totalTasks = data?.taskStats?.count || 0;
 
     const statsCards = [
         {
@@ -23,8 +23,8 @@ export const HomePageStatisticsSidebar = () => {
         },
         {
             title: "Recent Activity",
-            value: loading ? "..." : totalAssignations,
-            description: "Assignations created since you joined",
+            value: loading ? "..." : totalTasks,
+            description: "Tasks created since you joined",
             icon: Activity,
             color: "text-chart-2",
             bgColor: "bg-chart-2/10",
@@ -49,7 +49,7 @@ export const HomePageStatisticsSidebar = () => {
             <div className="mb-6">
                 <h2 className="text-lg font-semibold mb-2">Rekuest Overview</h2>
                 <p className="text-sm text-muted-foreground">
-                    Overview of actions and assignations in your Rekuest instance.
+                    Overview of actions and tasks in your Rekuest instance.
                 </p>
             </div>
             {statsCards.map((card) => (

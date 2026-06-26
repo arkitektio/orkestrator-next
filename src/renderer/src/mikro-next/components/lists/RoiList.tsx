@@ -15,7 +15,7 @@ export type Props = {
 
 const List = ({ filters, pagination }: Props) => {
   const { data, error, subscribeToMore, refetch } = useGetRoIsQuery({
-    variables: { filters, pagination, order: { createdAt: Ordering.Desc } },
+    variables: { filters, pagination, ordering: [{ createdAt: Ordering.Desc }] },
   });
 
 

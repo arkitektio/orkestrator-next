@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokClient, LokComputeNode, LokServiceInstance, RekuestAssignation } from "@/linkers";
+import { LokClient, LokComputeNode, LokServiceInstance, RekuestTask } from "@/linkers";
 import {
-  AssignationEventKind,
-  PostmanAssignationFragment,
-  useListAssignationsDetailsQuery,
+  TaskEventKind,
+  PostmanTaskFragment,
+  useListTasksDetailsQuery,
 } from "@/rekuest/api/graphql";
 import {
   AlertTriangle,
@@ -24,20 +24,20 @@ import { useDetailClientQuery } from "../api/graphql";
 const FailedTasks = ({ clientId }: { clientId: string }) => {
   const { openDialog } = useDialog();
 
-  const { data } = useListAssignationsDetailsQuery({
+  const { data } = useListTasksDetailsQuery({
     variables: {
       filter: {
         clientId: clientId,
-        state: [AssignationEventKind.Critical],
+        state: [TaskEventKind.Critical],
       },
     },
   });
 
   if (!data?.tasks?.length) return null;
 
-  const handleReportBug = (assignation: PostmanAssignationFragment) => {
+  const handleReportBug = (task: PostmanTaskFragment) => {
     openDialog("reportbug", {
-      assignationId: assignation.id,
+      taskId: task.id,
     });
   };
 
@@ -53,7 +53,7 @@ const FailedTasks = ({ clientId }: { clientId: string }) => {
             key={index}
             className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
           >
-            <RekuestAssignation.DetailLink object={ex.id} className="flex flex-col gap-1">
+            <RekuestTask.DetailLink object={ex.id} className="flex flex-col gap-1">
               <div className="font-medium flex items-center gap-2">
                 {ex.action.name}
                 <Badge variant="destructive" className="text-[10px] h-5">
@@ -63,7 +63,7 @@ const FailedTasks = ({ clientId }: { clientId: string }) => {
               <div className="text-xs text-muted-foreground font-mono">
                 {ex.id}
               </div>
-            </RekuestAssignation.DetailLink>
+            </RekuestTask.DetailLink>
             <Button
               variant="ghost"
               size="sm"

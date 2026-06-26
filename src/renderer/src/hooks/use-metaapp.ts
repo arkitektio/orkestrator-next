@@ -3,7 +3,7 @@ import {
   MaterializedBlokFragment,
   PortInput,
   PortKind,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   SchemaDemandInput,
   useGetStateQuery,
   WatchStateEventsDocument,
@@ -11,7 +11,7 @@ import {
   WatchStateEventsSubscriptionVariables
 } from '@/rekuest/api/graphql'
 import { useAssign } from '@/rekuest/hooks/useAssign'
-import { useFilteredAssignations } from '@/rekuest/hooks/useAssignations'
+import { useFilteredTasks } from '@/rekuest/hooks/useTasks'
 import React, { useEffect } from 'react'
 import zod from 'zod'
 
@@ -114,8 +114,7 @@ export const build = {
 export type StatePort = { zodType: zod.ZodTypeAny } & Omit<PortInput, 'key'>
 
 export const statePortsToDemand = <T extends Record<string, StatePort>>(
-  ports: T,
-  options?: StateOptions
+  ports: T
 ): SchemaDemandInput => {
   const matches = Object.entries(ports).map(([key, value]) => {
     return {
@@ -126,7 +125,6 @@ export const statePortsToDemand = <T extends Record<string, StatePort>>(
   })
 
   return {
-    hash: options?.forceHash,
     matches: matches
   }
 }
@@ -178,7 +176,7 @@ export const buildState = <T extends Record<string, StatePort>>(
 
   return {
     ports: zod.object(shape) as any,
-    demand: statePortsToDemand(options.keys, options)
+    demand: statePortsToDemand(options.keys)
   }
 }
 
@@ -273,12 +271,12 @@ export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
     action: K,
     options?: UseActionOptions
   ) => {
-    assign: (args: zod.infer<T['actions'][K]['args']>) => Promise<PostmanAssignationFragment>
-    reassign: () => Promise<PostmanAssignationFragment>
+    assign: (args: zod.infer<T['actions'][K]['args']>) => Promise<PostmanTaskFragment>
+    reassign: () => Promise<PostmanTaskFragment>
     cancel: () => void
     returns?: zod.infer<T['actions'][K]['returns']>
-    events?: PostmanAssignationFragment['events']
-    latestEvent?: PostmanAssignationFragment['events'][0]
+    events?: PostmanTaskFragment['events']
+    latestEvent?: PostmanTaskFragment['events'][0]
     done: boolean
   }
 }
@@ -333,7 +331,6 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
 
     useEffect(() => {
       if (data?.state) {
-        console.log('State', state, 'subscribing to', data.state.id)
         return subscribeToMore<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>(
           {
             document: WatchStateEventsDocument,
@@ -342,7 +339,6 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
             },
             updateQuery: (prev, { subscriptionData }) => {
               if (!subscriptionData.data) return prev
-              console.log('State update for', state, subscriptionData.data)
               // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
               if (subscriptionData.data.stateUpdateEvents.id !== data.state.id) {
                 return prev
@@ -393,7 +389,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
 
     const { assign } = useAssign()
 
-    const assingation = useFilteredAssignations({
+    const assingation = useFilteredTasks({
       implementation: actionId
     })
 

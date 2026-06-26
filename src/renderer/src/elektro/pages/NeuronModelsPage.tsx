@@ -27,7 +27,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Neuron Models"
           description="Neuron Models allow for the simulation of various neurons and their networks. They are the ingest point of simulations"
         />
-        <NeuronModelList pagination={{ limit: 30 }} />
+        <NeuronModelList defaultLimit={30} />
       </div>
     </ElektroNeuronModel.ListPage>
   );

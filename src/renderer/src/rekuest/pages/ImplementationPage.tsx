@@ -1,16 +1,31 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestAction, RekuestAgent, RekuestImplementation, RekuestState } from "@/linkers";
+import {
+  RekuestAction,
+  RekuestAgent,
+  RekuestImplementation,
+  RekuestResolution,
+  RekuestState,
+} from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
-  AssignationEventKind,
+  TaskEventKind,
   DetailImplementationFragment,
   ResolvedDependencyInput,
   WatchImplementationDocument,
@@ -18,10 +33,9 @@ import {
   WatchImplementationSubscriptionVariables,
   useImplementationQuery
 } from "@/rekuest/api/graphql";
-import { ArrowRight } from "lucide-react";
-import { useEffect } from "react";
+import { ArrowRight, SlidersHorizontal } from "lucide-react";
+import { ReactNode, useEffect } from "react";
 import { toast } from "sonner";
-import DependencyCard from "../components/cards/DependencyCard";
 import TaskList from "../components/lists/TaskList";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";
@@ -32,7 +46,7 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 export const DoForm = ({ id }: { id: string }) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+  const { assign, latestTask, cancel, implementation } = useImplementationAction({
     id: id,
   });
 
@@ -42,7 +56,7 @@ export const DoForm = ({ id }: { id: string }) => {
 
    const form = useImplementationForm({
      implementation: implementation,
-     overwrites: { ...latestAssignation?.args },
+     overwrites: { ...latestTask?.args },
      reValidateMode: "onChange",
    });
 
@@ -51,9 +65,8 @@ export const DoForm = ({ id }: { id: string }) => {
      dependencies: Record<string, ResolvedDependencyInput>;
    }) => {
      console.log("Submitting");
-     console.log(data);
      try {
-       const assignation = await assign({
+       const task = await assign({
          implementation: id,
          args: data.args,
          dependencies: Object.values(data.dependencies),
@@ -75,12 +88,12 @@ export const DoForm = ({ id }: { id: string }) => {
 
 
 
-  const yieldEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Yield,
+  const yieldEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events?.find(
-    (x) => x.kind == AssignationEventKind.Critical,
+  const errorEvent = latestTask?.events?.find(
+    (x) => x.kind == TaskEventKind.Critical,
   );
 
   return (
@@ -193,39 +206,381 @@ export const ImplementationFlow = (props: { implementation: DetailImplementation
   );
 };
 
+const Field = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="flex flex-col gap-0.5">
+    <dt className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
+      {label}
+    </dt>
+    <dd className="text-sm break-words">{children}</dd>
+  </div>
+);
+
+const BoolBadge = ({ value, label }: { value: boolean; label: string }) => (
+  <Badge variant={value ? "default" : "outline"}>{label}</Badge>
+);
+
+const JsonBlock = ({ value }: { value: unknown }) => {
+  if (value === null || value === undefined) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  if (typeof value === "object" && Object.keys(value as object).length === 0) {
+    return <span className="text-muted-foreground">empty</span>;
+  }
+  return (
+    <pre className="text-xs bg-muted/40 rounded-md p-3 overflow-auto max-h-64 whitespace-pre-wrap break-words">
+      {JSON.stringify(value, null, 2)}
+    </pre>
+  );
+};
+
+const formatDate = (value: unknown) => {
+  if (!value) return "—";
+  try {
+    return new Date(value as string).toLocaleString();
+  } catch {
+    return String(value);
+  }
+};
+
+const Group = ({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count?: number;
+  children: ReactNode;
+}) => (
+  <section className="space-y-3">
+    <h3 className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      {title}
+      {count !== undefined && (
+        <span className="ml-1.5 text-muted-foreground/50">{count}</span>
+      )}
+    </h3>
+    {children}
+  </section>
+);
+
+const Row = ({ children }: { children: ReactNode }) => (
+  <div className="py-2 first:pt-0 last:pb-0">{children}</div>
+);
+
+const Empty = () => <p className="text-sm text-muted-foreground">None</p>;
+
+const ImplementationDetailSheet = ({
+  implementation: i,
+}: {
+  implementation: DetailImplementationFragment;
+}) => (
+  <Sheet>
+    <SheetTrigger asChild>
+      <Button variant="outline" size="sm" className="gap-2">
+        <SlidersHorizontal className="size-4" />
+        Details
+      </Button>
+    </SheetTrigger>
+    <SheetContent
+      side="right"
+      className="w-full sm:max-w-lg flex flex-col gap-0 p-0"
+    >
+      <SheetHeader className="border-b">
+        <SheetTitle>{i.action.name}</SheetTitle>
+        <SheetDescription className="font-mono">{i.interface}</SheetDescription>
+      </SheetHeader>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <Group title="Implementation">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <Field label="Name">{i.name}</Field>
+            <Field label="ID">
+              <span className="font-mono text-xs">{i.id}</span>
+            </Field>
+            <Field label="Needs token">{i.needsToken ? "Yes" : "No"}</Field>
+            <Field label="Pinned">{i.pinned ? "Yes" : "No"}</Field>
+            <Field label="Provenance audience">
+              {i.provenanceAudience && i.provenanceAudience.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {i.provenanceAudience.map((a) => (
+                    <Badge key={a} variant="outline">
+                      {a}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">derived at dispatch</span>
+              )}
+            </Field>
+          </dl>
+        </Group>
+
+        <Separator />
+
+        <Group title="Action">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <Field label="Name">
+              <RekuestAction.DetailLink
+                object={i.action}
+                className="text-primary hover:underline"
+              >
+                {i.action.name}
+              </RekuestAction.DetailLink>
+            </Field>
+            <Field label="Kind">{i.action.kind}</Field>
+            <Field label="App">{i.action.app.identifier}</Field>
+            <Field label="Version">{i.action.version}</Field>
+            <Field label="Stateful">{i.action.stateful ? "Yes" : "No"}</Field>
+            <Field label="Key">
+              <span className="font-mono text-xs">{i.action.key}</span>
+            </Field>
+            <Field label="Hash">
+              <span className="font-mono text-xs break-all">
+                {String(i.action.hash)}
+              </span>
+            </Field>
+          </dl>
+        </Group>
+
+        <Separator />
+
+        <Group title="Agent">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <Field label="Name">
+              <RekuestAgent.DetailLink
+                object={i.agent}
+                className="text-primary hover:underline"
+              >
+                {i.agent.name}
+              </RekuestAgent.DetailLink>
+            </Field>
+            <Field label="Kind">{i.agent.kind}</Field>
+            <Field label="App">{i.agent.app.identifier}</Field>
+            <Field label="Last seen">{formatDate(i.agent.lastSeen)}</Field>
+            <Field label="Status">
+              <div className="flex flex-wrap gap-1">
+                <BoolBadge value={i.agent.active} label="Active" />
+                <BoolBadge value={i.agent.connected} label="Connected" />
+                {i.agent.blocked && <Badge variant="destructive">Blocked</Badge>}
+              </div>
+            </Field>
+            <Field label="Client">
+              <span className="font-mono text-xs">{i.agent.client.id}</span>
+            </Field>
+          </dl>
+        </Group>
+
+        <Separator />
+
+        <Group title="Dependencies" count={i.dependencies.length}>
+          {i.dependencies.length === 0 ? (
+            <Empty />
+          ) : (
+            <div className="divide-y divide-border/60">
+              {i.dependencies.map((d) => (
+                <Row key={d.id}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{d.key}</span>
+                    <div className="flex gap-1">
+                      {d.autoResolvable && (
+                        <Badge variant="outline">auto</Badge>
+                      )}
+                      {d.singular && <Badge variant="outline">singular</Badge>}
+                    </div>
+                  </div>
+                  {d.description && (
+                    <p className="text-xs text-muted-foreground">
+                      {d.description}
+                    </p>
+                  )}
+                </Row>
+              ))}
+            </div>
+          )}
+        </Group>
+
+        <Separator />
+
+        <Group title="Manipulates" count={i.manipulates.length}>
+          {i.manipulates.length === 0 ? (
+            <Empty />
+          ) : (
+            <div className="divide-y divide-border/60">
+              {i.manipulates.map((s) => (
+                <Row key={s.id}>
+                  <RekuestState.DetailLink
+                    object={s}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {s.definition.name}
+                  </RekuestState.DetailLink>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {s.interface}
+                  </p>
+                </Row>
+              ))}
+            </div>
+          )}
+        </Group>
+
+        <Separator />
+
+        <Group title="Tracks" count={i.tracks.length}>
+          {i.tracks.length === 0 ? (
+            <Empty />
+          ) : (
+            <div className="divide-y divide-border/60">
+              {i.tracks.map((t, idx) => (
+                <Row key={idx}>
+                  <div className="font-medium">{t.label || t.valueKey}</div>
+                  {t.description && (
+                    <p className="text-xs text-muted-foreground">
+                      {t.description}
+                    </p>
+                  )}
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge variant="outline">state: {t.stateKey}</Badge>
+                    <Badge variant="outline">value: {t.valueKey}</Badge>
+                    {t.dependencyKey && (
+                      <Badge variant="outline">dep: {t.dependencyKey}</Badge>
+                    )}
+                  </div>
+                </Row>
+              ))}
+            </div>
+          )}
+        </Group>
+
+        <Separator />
+
+        <Group title="Resolutions" count={i.resolutions.length}>
+          {i.resolutions.length === 0 ? (
+            <Empty />
+          ) : (
+            <div className="divide-y divide-border/60">
+              {i.resolutions.map((r) => (
+                <Row key={r.id}>
+                  <RekuestResolution.DetailLink
+                    object={r}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {r.name}
+                  </RekuestResolution.DetailLink>
+                  <p className="text-xs text-muted-foreground">
+                    resolved {formatDate(r.resolvedAt)}
+                  </p>
+                </Row>
+              ))}
+            </div>
+          )}
+        </Group>
+
+        {(i.higherOrderFor ||
+          i.lowerOrderImplementations.length > 0 ||
+          i.tests.length > 0) && (
+          <>
+            <Separator />
+            <Group title="Relationships">
+              <dl className="space-y-4">
+                {i.higherOrderFor && (
+                  <Field label="Higher-order for">
+                    <RekuestImplementation.DetailLink
+                      object={i.higherOrderFor}
+                      className="text-primary hover:underline"
+                    >
+                      {i.higherOrderFor.name}
+                    </RekuestImplementation.DetailLink>
+                  </Field>
+                )}
+                {i.lowerOrderImplementations.length > 0 && (
+                  <Field label={`Wrapped by (${i.lowerOrderImplementations.length})`}>
+                    <div className="flex flex-col gap-1">
+                      {i.lowerOrderImplementations.map((impl) => (
+                        <RekuestImplementation.DetailLink
+                          key={impl.id}
+                          object={impl}
+                          className="text-primary hover:underline"
+                        >
+                          {impl.name}
+                        </RekuestImplementation.DetailLink>
+                      ))}
+                    </div>
+                  </Field>
+                )}
+                {i.tests.length > 0 && (
+                  <Field label={`Tests (${i.tests.length})`}>
+                    <div className="flex flex-col gap-1">
+                      {i.tests.map((impl) => (
+                        <RekuestImplementation.DetailLink
+                          key={impl.id}
+                          object={impl}
+                          className="text-primary hover:underline"
+                        >
+                          {impl.name}
+                        </RekuestImplementation.DetailLink>
+                      ))}
+                    </div>
+                  </Field>
+                )}
+              </dl>
+            </Group>
+          </>
+        )}
+
+        <Separator />
+
+        <Group title="Params">
+          <JsonBlock value={i.params} />
+        </Group>
+
+        <Group title="Higher-order config">
+          <JsonBlock value={i.higherOrderConfig} />
+        </Group>
+      </div>
+    </SheetContent>
+  </Sheet>
+);
+
 export const DefaultRenderer = (props: {
   implementation: DetailImplementationFragment;
 }) => {
+  const i = props.implementation;
   return (
-    <div className=" p-6">
-      <div className="mb-3">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer">
-          {props?.implementation?.action.name}
-        </h1>
-        <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-          {props?.implementation?.action.description}
-        </p>
+    <div className="p-6 flex flex-col gap-8 max-w-5xl">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            {i.action.name}
+          </h1>
+          {i.action.description && (
+            <p className="mt-3 text-xl text-muted-foreground">
+              {i.action.description}
+            </p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
+            <Badge variant="secondary">{i.action.kind}</Badge>
+            {i.action.stateful && <Badge variant="outline">Stateful</Badge>}
+            <span
+              className={
+                i.agent.connected ? "text-emerald-500" : "text-muted-foreground"
+              }
+            >
+              ●
+            </span>
+            <RekuestAgent.DetailLink
+              object={i.agent}
+              className="hover:text-foreground hover:underline"
+            >
+              {i.agent.name}
+            </RekuestAgent.DetailLink>
+            <span className="font-mono text-xs">{i.interface}</span>
+          </div>
+        </div>
+        <ImplementationDetailSheet implementation={i} />
       </div>
-      <DoForm id={props.implementation.id} />
 
+      <DoForm id={i.id} />
 
-      <div className="my-2">Dependencies</div>
-      <ListRender array={props?.implementation?.dependencies}>
-        {(implementation, key) => <DependencyCard item={implementation} key={key} />}
-      </ListRender>
-
-
-       <div className="my-2">Manipulates</div>
-      <ListRender array={props?.implementation?.manipulates}>
-        {(implementation, key) => <Card key={key}><RekuestState.DetailLink object={implementation}>{implementation.interface}</RekuestState.DetailLink></Card>}
-      </ListRender>
-
-       <div className="my-2">Tracks</div>
-      <ListRender array={props?.implementation?.tracks}>
-        {(implementation, key) => <Card key={key}>{implementation.description}ss</Card>}
-      </ListRender>
-
-      <TaskList filters={{ implementation: props.implementation.id }} />
+      <TaskList filters={{ implementation: i.id }} />
     </div>
   );
 };

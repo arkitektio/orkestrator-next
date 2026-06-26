@@ -1,8 +1,15 @@
+input AddModelsToWorkspaceInput {
+  models: [ID!]!
+  workspace: ID!
+  workspaceGroup: String! = ""
+}
+
 type AnalogSignal implements Signal {
-  channels(filters: AnalogSignalChannelFilter, pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
+  channels(filters: AnalogSignalChannelFilter, ordering: [AnalogSignalChannelOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
   id: ID!
   name: String!
-  samplingRate: Float!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  samplingRate: Frequency!
   segment: BlockSegment!
   timeTrace: Trace!
   unit: String
@@ -40,6 +47,10 @@ input AnalogSignalChannelInput {
   unit: String = null
 }
 
+input AnalogSignalChannelOrder @oneOf {
+  id: Ordering
+}
+
 input AnalogSignalFilter {
   AND: AnalogSignalFilter
   DISTINCT: Boolean
@@ -56,106 +67,28 @@ input AnalogSignalInput {
   channels: [AnalogSignalChannelInput!]!
   description: String = null
   name: String = null
-  samplingRate: Float!
-  tStart: Float!
+  samplingRate: Frequency!
+  tStart: Duration!
   timeTrace: TraceLike!
   unit: String = null
 }
 
+input AnalogSignalOrder @oneOf {
+  id: Ordering
+}
+
 """The `Any` scalar any type"""
 scalar Any
-
-"""
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
-"""
-scalar AnyDefault
 
 type App {
   id: ID!
   identifier: String!
 }
 
-"""The `Arg` scalar type represents a an Argument in a Action assignment"""
-scalar Arg
-
-type ArgPort {
-  children: [ArgPort!]
-  choices: [Choice!]
-  default: AnyDefault
-  description: String
-  effects: [Effect!]
-  identifier: Identifier
-  key: String!
-  kind: PortKind!
-  label: String
-  nullable: Boolean!
-  requires: [Requires!]
-  validators: [Validator!]
-  widget: AssignWidget
-}
-
-"Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
-input ArgPortInput {
-  children: [ArgPortInput!] = null
-  choices: [ChoiceInput!] = null
-  default: AnyDefault = null
-  description: String = null
-  effects: [EffectInput!] = null
-  identifier: String = null
-  key: String!
-  kind: PortKind!
-  label: String = null
-  nullable: Boolean! = false
-  requires: [RequiresInput!] = null
-  validators: [ValidatorInput!] = null
-  widget: AssignWidgetInput = null
-}
-
 """
-A type representing an array-like store reference, which can be either a string ID or a more complex object.
+A type representing an array-like structure, which can be a list or any iterable.
 """
 scalar ArrayLike
-
-interface AssignWidget {
-  followValue: String
-  kind: AssignWidgetKind!
-}
-
-input AssignWidgetInput {
-  """
-  Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns
-  """
-  asParagraph: Boolean = null
-  choices: [ChoiceInput!] = null
-  dependencies: [String!] = []
-  dependency: String = null
-  fallback: AssignWidgetInput = null
-  filters: [ArgPortInput!] = null
-  hook: String = null
-  kind: AssignWidgetKind!
-  max: Float = null
-  min: Float = null
-  placeholder: String = null
-  query: SearchQuery = null
-  stateAccessors: [StateAccessorInput!] = null
-  statePath: String = null
-  step: Float = null
-  targetAction: String = null
-  targetDependency: String = null
-  targetPort: String = null
-  ward: String = null
-}
-
-"""The kind of assign widget."""
-enum AssignWidgetKind {
-  CHOICE
-  CUSTOM
-  PROXY
-  SEARCH
-  SLIDER
-  STATE_CHOICE
-  STRING
-}
 
 input AssociateInput {
   other: ID!
@@ -215,10 +148,16 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
+"""
+Represents a biophysics model, which consists of compartments, each with their own mechanisms and parameters.
+"""
 type Biophysics {
   compartments: [Compartment!]!
 }
 
+"""
+Input for a biophysics model, which consists of compartments, each with their own mechanisms and parameters.
+"""
 input BiophysicsInput {
   compartments: [CompartmentInput!]! = []
 }
@@ -231,13 +170,13 @@ type Block {
   description: String
 
   """The groups in this recording session"""
-  groups(filters: BlockGroupFilter, pagination: OffsetPaginationInput): [BlockGroup!]!
+  groups(filters: BlockGroupFilter, ordering: [BlockGroupOrder!]! = [], pagination: OffsetPaginationInput): [BlockGroup!]!
   id: ID!
   name: String!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """The segments in this recording session"""
-  segments(filters: BlockSegmentFilter, pagination: OffsetPaginationInput): [BlockSegment!]!
+  segments(filters: BlockSegmentFilter, ordering: [BlockSegmentOrder!]! = [], pagination: OffsetPaginationInput): [BlockSegment!]!
   trace: Trace!
 }
 
@@ -263,17 +202,17 @@ input BlockFilter {
 
 type BlockGroup {
   """The analog signals in this group"""
-  analogSignals(filters: AnalogSignalFilter, pagination: OffsetPaginationInput): [AnalogSignal!]!
+  analogSignals(filters: AnalogSignalFilter, ordering: [AnalogSignalOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignal!]!
   block: Block!
   description: String
   id: ID!
 
   """The irregularly sampled signals in this group"""
-  irregularlySampledSignals(filters: IrregularlySampledSignalFilter, pagination: OffsetPaginationInput): [IrregularlySampledSignal!]!
+  irregularlySampledSignals(filters: IrregularlySampledSignalFilter, ordering: [IrregularlySampledSignalOrder!]! = [], pagination: OffsetPaginationInput): [IrregularlySampledSignal!]!
   name: String!
 
   """The spike trains in this group"""
-  spikeTrains(filters: SpikeTrainFilter, pagination: OffsetPaginationInput): [SpikeTrain!]!
+  spikeTrains(filters: SpikeTrainFilter, ordering: [SpikeTrainOrder!]! = [], pagination: OffsetPaginationInput): [SpikeTrain!]!
 }
 
 input BlockGroupFilter {
@@ -288,32 +227,37 @@ input BlockGroupFilter {
   search: String
 }
 
-input BlockOrder {
+input BlockGroupOrder @oneOf {
+  id: Ordering
+}
+
+input BlockOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 type BlockSegment {
   """The analog signals in this group"""
-  analogSignals(filters: AnalogSignalFilter, pagination: OffsetPaginationInput): [AnalogSignal!]!
+  analogSignals(filters: AnalogSignalFilter, ordering: [AnalogSignalOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignal!]!
   block: Block!
 
   """Who created this segment"""
   creator: User
   description: String
-  endTime: Float!
+  endTime: Duration
 
   """The groups that this segment belongs to"""
-  groups(filters: BlockGroupFilter, pagination: OffsetPaginationInput): [BlockGroup!]!
+  groups(filters: BlockGroupFilter, ordering: [BlockGroupOrder!]! = [], pagination: OffsetPaginationInput): [BlockGroup!]!
   id: ID!
 
   """The irregularly sampled signals in this group"""
-  irregularlySampledSignals(filters: IrregularlySampledSignalFilter, pagination: OffsetPaginationInput): [IrregularlySampledSignal!]!
+  irregularlySampledSignals(filters: IrregularlySampledSignalFilter, ordering: [IrregularlySampledSignalOrder!]! = [], pagination: OffsetPaginationInput): [IrregularlySampledSignal!]!
   label: String!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """The spike trains in this group"""
-  spikeTrains(filters: SpikeTrainFilter, pagination: OffsetPaginationInput): [SpikeTrain!]!
-  startTime: Float!
+  spikeTrains(filters: SpikeTrainFilter, ordering: [SpikeTrainOrder!]! = [], pagination: OffsetPaginationInput): [SpikeTrain!]!
+  startTime: Duration
 }
 
 input BlockSegmentFilter {
@@ -334,6 +278,10 @@ input BlockSegmentInput {
   irregularlySampledSignals: [IrregularlySampledSignalInput!]! = []
   name: String = null
   spikeTrains: [SpikeTrainInput!]! = []
+}
+
+input BlockSegmentOrder @oneOf {
+  id: Ordering
 }
 
 type BlockStats {
@@ -364,15 +312,39 @@ enum BlockTimestampField {
   CREATED_AT
 }
 
+"""
+Represents a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.
+"""
 type Cell {
+  """
+  The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.
+  """
   biophysics: Biophysics!
+
+  """The unique identifier of the cell within the model."""
   id: String!
+
+  """
+  The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.
+  """
   topology: Topology!
 }
 
+"""
+Input for a cell model, which consists of a biophysics model and a topology. You can think of the biophysics model as the 'properties' of the cell, and the topology as the 'structure' of the cell.
+"""
 input CellInput {
+  """
+  The biophysics model of the cell, which defines the properties of the cell such as its compartments, mechanisms, and parameters.
+  """
   biophysics: BiophysicsInput!
+
+  """The unique identifier of the cell within the model."""
   id: String!
+
+  """
+  The topology of the cell, which defines the structure of the cell such as its morphology and connectivity.
+  """
   topology: TopologyInput!
 }
 
@@ -394,21 +366,6 @@ enum ChangeType {
   REMOVED
 }
 
-type Choice {
-  description: String
-  image: String
-  label: String!
-  value: String!
-}
-
-"\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    "
-input ChoiceInput {
-  description: String = null
-  image: String = null
-  label: String!
-  value: AnyDefault!
-}
-
 type Client {
   clientId: String!
   id: ID!
@@ -421,27 +378,63 @@ type Comparison {
   collection: ModelCollection!
 }
 
+"""Represents a compartment in a biophysics model."""
 type Compartment {
+  """The non-mechanistic (global) parameters applied to this compartment."""
   globalParams: [GlobalParamMap!]!
+
+  """The unique identifier of the compartment within the model."""
   id: String!
+
+  """The set of mechanisms active in this compartment."""
   mechanisms: [String!]!
+
+  """
+  The mechanism-specific parameters applied to the sections of this compartment.
+  """
   sectionParams: [SectionParamMap!]!
 }
 
+"""Input for a compartment in a biophysics model."""
 input CompartmentInput {
+  """The non-mechanistic (global) parameters applied to this compartment."""
   globalParams: [GlobalParamMapInput!]
+
+  """The unique identifier of the compartment within the model."""
   id: String!
+
+  """The set of mechanisms active in this compartment."""
   mechanisms: [String!]! = []
+
+  """
+  The mechanism-specific parameters applied to the sections of this compartment.
+  """
   sectionParams: [SectionParamMapInput!]
 }
 
+"""
+Represents a connection of a section to its parent section, defining the morphology tree.
+"""
 type Connection {
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
   location: Float!
+
+  """The ID of the parent section this section connects to."""
   parent: String!
 }
 
+"""
+Input for a connection of a section to its parent section, defining the morphology tree.
+"""
 input ConnectionInput {
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
   location: Float! = 1
+
+  """The ID of the parent section this section connects to."""
   parent: String!
 }
 
@@ -449,16 +442,28 @@ enum ConnectionKind {
   SYNAPSE
 }
 
+"""Represents a 3D coordinate (in space) of a point along a section."""
 type Coord {
-  x: Float!
-  y: Float!
-  z: Float!
+  """The x coordinate of the point."""
+  x: Length!
+
+  """The y coordinate of the point."""
+  y: Length!
+
+  """The z coordinate of the point."""
+  z: Length!
 }
 
+"""Input for a 3D coordinate (in space) of a point along a section."""
 input CoordInput {
-  x: Float!
-  y: Float!
-  z: Float!
+  """The x coordinate of the point."""
+  x: Length!
+
+  """The y coordinate of the point."""
+  y: Length!
+
+  """The z coordinate of the point."""
+  z: Length!
 }
 
 input CreateBlockInput {
@@ -494,17 +499,22 @@ input CreateModelCollectionInput {
   name: String!
 }
 
+input CreateModelWorkspaceInput {
+  description: String = null
+  name: String!
+}
+
 input CreateNeuronModelInput {
   config: ModelConfigInput!
   description: String = null
-  environment: ID
+  environment: ID = null
   name: String!
-  parent: ID
+  parent: ID = null
 }
 
 input CreateSimulationInput {
-  dt: Milliseconds = null
-  duration: Milliseconds!
+  dt: Duration = null
+  duration: Duration!
   model: ID!
   name: String!
   recordings: [RecordingInput!]!
@@ -513,13 +523,13 @@ input CreateSimulationInput {
 }
 
 type Dataset {
-  children(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
+  children(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   createdAt: DateTime!
   creator: User
   description: String
-  files(filters: FileFilter, pagination: OffsetPaginationInput): [File!]!
+  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
   id: ID!
-  images(filters: TraceFilter, order: TraceOrder, pagination: OffsetPaginationInput): [Trace!]!
+  images(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
   isDefault: Boolean!
   name: String!
   pinned: Boolean!
@@ -534,6 +544,11 @@ input DatasetFilter {
   OR: DatasetFilter
   id: ID
   name: StrFilterLookup
+}
+
+input DatasetOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 """Date with time (isoformat)"""
@@ -551,6 +566,15 @@ input DeleteFileInput {
   id: ID!
 }
 
+"""Input for deleting an object by its id"""
+input DeleteInput {
+  id: ID!
+}
+
+input DeleteMechanismInput {
+  id: ID!
+}
+
 input DeleteRoiInput {
   id: ID!
 }
@@ -564,39 +588,46 @@ input DesociateInput {
   selfs: [ID!]!
 }
 
-interface Effect {
-  dependencies: [String!]!
-  function: ValidatorFunction!
-  kind: EffectKind!
-}
+"""A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``)."""
+scalar Duration
 
-"\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
-input EffectInput {
-  dependencies: [String!] = []
-  fade: Boolean = true
-  function: ValidatorFunction!
-  hook: String = null
-  kind: EffectKind!
-  message: String = null
-  ward: String = null
-}
+"""An electric potential / voltage (``"-70 mV"``, ``"5 V"``)."""
+scalar ElectricPotential
 
-"""The kind of effect."""
-enum EffectKind {
-  CUSTOM
-  HIDE
-  MESSAGE
-}
+"""An electrical conductance (``"5 nS"``, ``"2 µS"``)."""
+scalar ElectricalConductance
 
+"""
+Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model.
+"""
 type Exp2Synapse implements NetSynapse {
+  """The ID of the cell this synapse is located on."""
   cell: String!
-  delay: Float!
-  e: Float!
+
+  """Delay before the synapse activates."""
+  delay: Duration
+
+  """Reversal potential."""
+  e: ElectricPotential!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: String!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float!
-  tau1: Float!
-  tau2: Float!
+
+  """Rise time constant."""
+  tau1: Duration!
+
+  """Decay time constant."""
+  tau2: Duration!
 }
 
 type Experiment {
@@ -604,8 +635,9 @@ type Experiment {
   description: String
   id: ID!
   name: String!
-  recordingViews(filters: ExperimentFilter, order: ExperimentOrder, pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
-  stimulusViews(filters: ExperimentFilter, order: ExperimentOrder, pagination: OffsetPaginationInput): [ExperimentStimulusView!]!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  recordingViews(filters: ExperimentRecordingViewFilter, ordering: [ExperimentRecordingViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
+  stimulusViews(filters: ExperimentStimulusViewFilter, ordering: [ExperimentStimulusViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentStimulusView!]!
   timeTrace: Trace!
 }
 
@@ -622,32 +654,63 @@ input ExperimentFilter {
   search: String
 }
 
-input ExperimentOrder {
+input ExperimentOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 type ExperimentRecordingView {
-  duration: Float
+  duration: Duration
   experiment: Experiment!
   id: ID!
   label: String
-  offset: Float
+  offset: Duration
   recording: Recording!
 }
 
+input ExperimentRecordingViewFilter {
+  AND: ExperimentRecordingViewFilter
+  DISTINCT: Boolean
+  NOT: ExperimentRecordingViewFilter
+  OR: ExperimentRecordingViewFilter
+  id: ID
+  ids: [ID!]
+  label: StrFilterLookup
+  search: String
+}
+
+input ExperimentRecordingViewOrder @oneOf {
+  id: Ordering
+}
+
 type ExperimentStimulusView {
-  duration: Float
+  duration: Duration
   experiment: Experiment!
   id: ID!
   label: String
-  offset: Float
+  offset: Duration
   stimulus: Stimulus!
+}
+
+input ExperimentStimulusViewFilter {
+  AND: ExperimentStimulusViewFilter
+  DISTINCT: Boolean
+  NOT: ExperimentStimulusViewFilter
+  OR: ExperimentStimulusViewFilter
+  id: ID
+  ids: [ID!]
+  label: StrFilterLookup
+  search: String
+}
+
+input ExperimentStimulusViewOrder @oneOf {
+  id: Ordering
 }
 
 type File {
   id: ID!
   name: String!
-  origins(filters: TraceFilter, order: TraceOrder, pagination: OffsetPaginationInput): [Trace!]!
+  origins(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
   store: BigFileStore!
 }
 
@@ -674,6 +737,11 @@ The `FileLike` scalar type represents a reference to a big file storage previous
 """
 scalar FileLike
 
+input FileOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+}
+
 input FinishBigFileUploadInput {
   storeId: String!
   valid: Boolean! = true
@@ -696,6 +764,9 @@ input FinishZarrUploadInput {
 
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar FiveDVector
+
+"""A quantity of frequency (``"50 Hz"``, ``"1 kHz"``)."""
+scalar Frequency
 
 input FromFileLike {
   dataset: ID = null
@@ -732,15 +803,57 @@ type GeneralMediaAccessGrant {
   store: String
 }
 
+"""Temporary S3 credentials for reading a parquet object."""
+type GeneralParquetAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""Temporary S3 credentials for reading a Zarr store."""
+type GeneralZarrAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""
+Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)
+"""
 type GlobalParamMap {
+  """Description of the parameter"""
   description: String
+
+  """The name of the parameter to set."""
   param: String!
+
+  """The value of the parameter"""
   value: Float!
 }
 
+"""
+Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)
+"""
 input GlobalParamMapInput {
+  """Description of the parameter"""
   description: String = null
+
+  """The name of the parameter to set."""
   param: String!
+
+  """The value of the parameter"""
   value: Float!
 }
 
@@ -760,14 +873,10 @@ enum HistoryKind {
   UPDATE
 }
 
-"""
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
-"""
-scalar Identifier
-
 type IrregularlySampledSignal implements Signal {
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   segment: BlockSegment!
   trace: Trace!
   unit: String
@@ -793,10 +902,17 @@ input IrregularlySampledSignalInput {
   unit: String = null
 }
 
+input IrregularlySampledSignalOrder @oneOf {
+  id: Ordering
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``)."""
+scalar Length
 
 type Mechanism {
   description: String
@@ -804,7 +920,7 @@ type Mechanism {
   name: String!
 
   """The parameter ports of the mechanism"""
-  parameters: [ArgPort!]!
+  parameters: [Parameter!]!
 }
 
 input MechanismFilter {
@@ -823,11 +939,12 @@ input MechanismFilter {
 input MechanismInput {
   description: String = null
   name: String!
-  parameters: [ArgPortInput!]!
+  parameters: [ParameterInput!]!
 }
 
 input MechanismOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 """Temporary S3 credentials for reading a media object."""
@@ -877,9 +994,6 @@ type MediaUploadGrant {
   uploadFormField: String!
 }
 
-"""The `Matrix` scalar type represents a matrix values as specified by"""
-scalar Milliseconds
-
 type ModEnvironment {
   description: String
   id: ID!
@@ -902,6 +1016,7 @@ input ModEnvironmentFilter {
 
 input ModEnvironmentOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 """A change made to a model."""
@@ -919,7 +1034,7 @@ type ModelChange {
 type ModelCollection {
   description: String
   id: ID!
-  models(filters: NeuronModelFilter, order: NeuronModelOrder, pagination: OffsetPaginationInput): [NeuronModel!]!
+  models(filters: NeuronModelFilter, ordering: [NeuronModelOrder!]! = [], pagination: OffsetPaginationInput): [NeuronModel!]!
   name: String!
 }
 
@@ -936,28 +1051,93 @@ input ModelCollectionFilter {
   search: String
 }
 
-type ModelConfig {
-  cells: [Cell!]!
-  celsius: Float!
-  label: String
-  netConnections: [NetConnection!]
-  netStimulators: [NetStimulator!]
-  netSynapses: [NetSynapse!]
-  vInit: Float!
+input ModelCollectionOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
+"""Represents the configuration for the model."""
+type ModelConfig {
+  """The list of cells in the model."""
+  cells: [Cell!]!
+
+  """An optional label for the model configuration."""
+  label: String
+
+  """The list of net connections in the model."""
+  netConnections: [NetConnection!]
+
+  """The list of net stimulators in the model."""
+  netStimulators: [NetStimulator!]
+
+  """The list of net synapses in the model."""
+  netSynapses: [NetSynapse!]
+
+  """Simulation bath temperature."""
+  temperature: Temperature!
+
+  """Initial membrane potential."""
+  vInit: ElectricPotential!
+}
+
+"""Input for the configuration of a model."""
 input ModelConfigInput {
+  """The list of cells in the model."""
   cells: [CellInput!]! = []
-  celsius: Float! = 36
-  environments: [String!]! = []
+
+  """An optional label for the model configuration."""
   label: String = null
+
+  """The list of net connections in the model."""
   netConnections: [NetConnectionInput!] = []
+
+  """The list of net stimulators in the model."""
   netStimulators: [NetStimulatorInput!] = []
+
+  """The list of net synapses in the model."""
   netSynapses: [NetSynapseInput!] = []
-  vInit: Float! = -67
+
+  """Simulation bath temperature."""
+  temperature: Temperature! = "309.15 K"
+
+  """Initial membrane potential."""
+  vInit: ElectricPotential! = "-67 mV"
+}
+
+type ModelWorkspace {
+  createdAt: DateTime!
+  creator: User
+  description: String
+  id: ID!
+  mappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
+  name: String!
+
+  """Whether the current user has pinned this workspace"""
+  pinned: Boolean!
+}
+
+input ModelWorkspaceFilter {
+  AND: ModelWorkspaceFilter
+  DISTINCT: Boolean
+  NOT: ModelWorkspaceFilter
+  OR: ModelWorkspaceFilter
+  createdAfter: DateTime
+  createdBefore: DateTime
+  id: ID
+  ids: [ID!]
+  name: StrFilterLookup
+  search: String
+}
+
+input ModelWorkspaceOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 type Mutation {
+  """Add neuron models to a workspace (optionally into a group)"""
+  addModelsToWorkspace(input: AddModelsToWorkspaceInput!): ModelWorkspace!
+
   """Create a new block"""
   createBlock(input: CreateBlockInput!): Block!
 
@@ -973,6 +1153,9 @@ type Mutation {
   """Create a new model collection"""
   createModelCollection(input: CreateModelCollectionInput!): ModelCollection!
 
+  """Create a new model workspace"""
+  createModelWorkspace(input: CreateModelWorkspaceInput!): ModelWorkspace!
+
   """Create a new neuron model"""
   createNeuronModel(input: CreateNeuronModelInput!): NeuronModel!
 
@@ -982,11 +1165,32 @@ type Mutation {
   """Create a new simulsation"""
   createSimulation(input: CreateSimulationInput!): Simulation!
 
+  """Delete an existing analog signal"""
+  deleteAnalogSignal(input: DeleteInput!): ID!
+
+  """Delete an existing analog signal channel"""
+  deleteAnalogSignalChannel(input: DeleteInput!): ID!
+
   """Delete an existing block"""
   deleteBlock(input: DeleteBlockInput!): ID!
 
+  """Delete an existing block group"""
+  deleteBlockGroup(input: DeleteInput!): ID!
+
+  """Delete an existing block segment"""
+  deleteBlockSegment(input: DeleteInput!): ID!
+
   """Delete an existing dataset"""
   deleteDataset(input: DeleteDatasetInput!): ID!
+
+  """Delete an existing experiment"""
+  deleteExperiment(input: DeleteInput!): ID!
+
+  """Delete an existing experiment recording view"""
+  deleteExperimentRecordingView(input: DeleteInput!): ID!
+
+  """Delete an existing experiment stimulus view"""
+  deleteExperimentStimulusView(input: DeleteInput!): ID!
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
@@ -994,8 +1198,50 @@ type Mutation {
   """Delete an existing image"""
   deleteImage(input: DeleteTraceInput!): ID!
 
+  """Delete an existing instrument"""
+  deleteInstrument(input: DeleteInput!): ID!
+
+  """Delete an existing irregularly sampled signal"""
+  deleteIrregularlySampledSignal(input: DeleteInput!): ID!
+
+  """Delete an existing mechanism"""
+  deleteMechanism(input: DeleteMechanismInput!): ID!
+
+  """Delete an existing mod environment"""
+  deleteModEnvironment(input: DeleteInput!): ID!
+
+  """Delete an existing model collection"""
+  deleteModelCollection(input: DeleteInput!): ID!
+
+  """Delete an existing model workspace"""
+  deleteModelWorkspace(input: DeleteInput!): ID!
+
+  """Delete an existing neuron model"""
+  deleteNeuronModel(input: DeleteInput!): ID!
+
+  """Delete an existing recording"""
+  deleteRecording(input: DeleteInput!): ID!
+
   """Delete an existing region of interest"""
   deleteRoi(input: DeleteRoiInput!): ID!
+
+  """Delete an existing simulation"""
+  deleteSimulation(input: DeleteInput!): ID!
+
+  """Delete an existing spike train"""
+  deleteSpikeTrain(input: DeleteInput!): ID!
+
+  """Delete an existing stimulus"""
+  deleteStimulus(input: DeleteInput!): ID!
+
+  """Delete an existing timeline view"""
+  deleteTimelineView(input: DeleteInput!): ID!
+
+  """Delete an existing view collection"""
+  deleteViewCollection(input: DeleteInput!): ID!
+
+  """Delete an existing workspace mapping"""
+  deleteWorkspaceMapping(input: DeleteInput!): ID!
 
   """Finalize a big file upload after the client has written the object"""
   finishBigfileUpload(input: FinishBigFileUploadInput!): BigFileStore!
@@ -1021,6 +1267,9 @@ type Mutation {
   """Pin an image for quick access"""
   pinImage(input: PinImageInput!): Trace!
 
+  """Pin or unpin a model workspace for the current user"""
+  pinModelWorkspace(input: PinModelWorkspaceInput!): ModelWorkspace!
+
   """Pin a region of interest for quick access"""
   pinRoi(input: PinROIInput!): ROI!
 
@@ -1042,6 +1291,9 @@ type Mutation {
   """Remove images from a dataset"""
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
 
+  """Remove neuron models from a workspace"""
+  removeModelsFromWorkspace(input: DesociateInput!): ModelWorkspace!
+
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
 
@@ -1052,6 +1304,16 @@ type Mutation {
   Request temporary S3 read credentials for media files in the organization
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Parquet files in the organization
+  """
+  requestGeneralParquetAccess(input: RequestGeneralParquetAccessInput!): GeneralParquetAccessGrant!
+
+  """
+  Request temporary S3 read credentials for Zarr stores in the organization
+  """
+  requestGeneralZarrAccess(input: RequestGeneralZarrAccessInput!): GeneralZarrAccessGrant!
 
   """Request temporary S3 read credentials for a media file"""
   requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
@@ -1080,57 +1342,145 @@ type Mutation {
   """Update an existing image's metadata"""
   updateImage(input: UpdateTraceInput!): Trace!
 
+  """Update an existing model workspace"""
+  updateModelWorkspace(input: UpdateModelWorkspaceInput!): ModelWorkspace!
+
   """Update an existing region of interest"""
   updateRoi(input: UpdateRoiInput!): ROI!
+
+  """Update a workspace mapping (e.g. change its group)"""
+  updateWorkspaceMapping(input: UpdateWorkspaceMappingInput!): WorkspaceMapping!
 }
 
+"""Base class for net connection parameters."""
 interface NetConnection {
-  delay: Float
+  """The delay for the connection."""
+  delay: Duration
+
+  """The unique identifier of the connection within the model."""
   id: ID!
-  threshold: Float
-  weight: Float
+
+  """The threshold for the connection."""
+  threshold: ElectricPotential
+
+  """The weight (conductance) of the connection."""
+  weight: ElectricalConductance
 }
 
+"""
+Input for a synaptic connection between two cells in the model. Each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
+"""
 input NetConnectionInput {
-  delay: Float = null
+  """The delay for the connection."""
+  delay: Duration = null
+
+  """The unique identifier of the connection within the model."""
   id: ID!
+
+  """The kind of connection to create."""
   kind: ConnectionKind! = SYNAPSE
+
+  """
+  The ID of the net stimulator that is the pre-synaptic cell in this connection.
+  """
   netStimulator: ID!
+
+  """
+  The ID of the synapse that is the post-synaptic cell in this connection.
+  """
   synapse: ID!
-  threshold: Float = null
-  weight: Float = null
+
+  """The threshold for the connection."""
+  threshold: ElectricPotential = null
+
+  """The weight (conductance) of the connection."""
+  weight: ElectricalConductance = null
 }
 
+"""
+Represents a net stimulator in the model. This will be used to specify the parameters of stimulators in the model.
+"""
 type NetStimulator {
+  """The unique identifier of the stimulator within the model."""
   id: ID!
-  interval: Float
+
+  """Interval between spikes."""
+  interval: Duration
+
+  """Number of spikes to emit."""
   number: Int!
-  start: Float!
+
+  """Start time of the first spike."""
+  start: Duration!
 }
 
+"""
+Input for a net stimulator in the model. This specifies the parameters of stimulators that drive synaptic connections.
+"""
 input NetStimulatorInput {
+  """The unique identifier of the stimulator within the model."""
   id: ID!
-  interval: Float = null
+
+  """Interval between spikes."""
+  interval: Duration = null
+
+  """Number of spikes to emit."""
   number: Int! = 1
-  start: Float! = 100
+
+  """Start time of the first spike."""
+  start: Duration! = "100 ms"
 }
 
+"""Base class for synaptic stimulus parameters."""
 interface NetSynapse {
+  """The ID of the cell this synapse is located on."""
   cell: String!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: String!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float!
 }
 
+"""
+Input for an exponential synapse, a synaptic stimulus with an exponential rise and decay. This specifies the parameters of synapses in the model.
+"""
 input NetSynapseInput {
+  """The ID of the cell this synapse is located on."""
   cell: ID!
-  e: Float!
+
+  """Reversal potential."""
+  e: ElectricPotential!
+
+  """The unique identifier of the synapse within the model."""
   id: ID!
+
+  """The kind of synapse model to use."""
   kind: SynapseKind! = EXP2SYN
+
+  """
+  The location on the cell where the synapse is located. This can be a section name, a segment number, or a more complex specification depending on the model.
+  """
   location: ID!
+
+  """
+  The position along the section where the synapse is located, specified as a value between 0 and 1. This is only relevant if the location is specified as a section name.
+  """
   position: Float! = 0.5
-  tau1: Float!
-  tau2: Float!
+
+  """Rise time constant."""
+  tau1: Duration!
+
+  """Decay time constant."""
+  tau2: Duration!
 }
 
 type NeuronModel {
@@ -1141,9 +1491,11 @@ type NeuronModel {
   description: String
   environment: ModEnvironment!
   id: ID!
-  modelCollections(filters: ModelCollectionFilter, pagination: OffsetPaginationInput): [ModelCollection!]
+  mappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
+  modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]
   name: String!
-  simulations(filters: SimulationFilter, order: SimulationOrder, pagination: OffsetPaginationInput): [Simulation!]!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  simulations(filters: SimulationFilter, ordering: [SimulationOrder!]! = [], pagination: OffsetPaginationInput): [Simulation!]!
 }
 
 input NeuronModelFilter {
@@ -1159,20 +1511,14 @@ input NeuronModelFilter {
   search: String
 }
 
-input NeuronModelOrder {
+input NeuronModelOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 input OffsetPaginationInput {
   limit: Int
   offset: Int! = 0
-}
-
-enum OptionKey {
-  DESCRIPTION
-  LABEL
-  LOGO
-  VALUE
 }
 
 enum Ordering {
@@ -1187,6 +1533,34 @@ enum Ordering {
 type Organization {
   id: ID!
   slug: String!
+}
+
+"""A parameter port of a mechanism"""
+type Parameter {
+  default: Any
+  description: String
+  key: String!
+  kind: ParameterKind!
+  label: String
+  nullable: Boolean!
+}
+
+"""A parameter port of a mechanism"""
+input ParameterInput {
+  default: Any = null
+  description: String = null
+  key: String!
+  kind: ParameterKind! = FLOAT
+  label: String = null
+  nullable: Boolean! = false
+}
+
+"""The kind of a mechanism parameter."""
+enum ParameterKind {
+  BOOL
+  FLOAT
+  INT
+  STRING
 }
 
 """Temporary S3 credentials for reading a parquet object."""
@@ -1246,26 +1620,14 @@ input PinImageInput {
   pin: Boolean!
 }
 
-input PinROIInput {
+input PinModelWorkspaceInput {
   id: ID!
   pin: Boolean!
 }
 
-"""The kind of port."""
-enum PortKind {
-  BOOL
-  DATE
-  DICT
-  ENUM
-  FLOAT
-  INT
-  INTERFACE
-  LIST
-  MEMORY_STRUCTURE
-  MODEL
-  STRING
-  STRUCTURE
-  UNION
+input PinROIInput {
+  id: ID!
+  pin: Boolean!
 }
 
 """A provenance event for a model."""
@@ -1275,11 +1637,6 @@ type ProvenanceEntry {
   """The date of the change."""
   date: DateTime!
 
-  """
-  The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None.
-  """
-  during: String
-
   """The effective changes made to the model."""
   effectiveChanges: [ModelChange!]!
 
@@ -1288,6 +1645,9 @@ type ProvenanceEntry {
 
   """The type of change that was made."""
   kind: HistoryKind!
+
+  """The task during which the change occurred, if any."""
+  task: Task
 
   """User who made the change."""
   user: User
@@ -1308,14 +1668,14 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): AnalogSignalChannel!
-  analogSignalChannels(filters: AnalogSignalChannelFilter, pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
-  analogSignals(filters: AnalogSignalFilter, pagination: OffsetPaginationInput): [AnalogSignal!]!
+  analogSignalChannels(filters: AnalogSignalChannelFilter, ordering: [AnalogSignalChannelOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignalChannel!]!
+  analogSignals(filters: AnalogSignalFilter, ordering: [AnalogSignalOrder!]! = [], pagination: OffsetPaginationInput): [AnalogSignal!]!
   block(
     """The unique identifier of an object"""
     id: ID!
   ): Block!
   blockStats(filters: BlockFilter = null): BlockStats!
-  blocks(filters: BlockFilter, order: BlockOrder, pagination: OffsetPaginationInput): [Block!]!
+  blocks(filters: BlockFilter, ordering: [BlockOrder!]! = [], pagination: OffsetPaginationInput): [Block!]!
 
   """Returns a list of cells in a model"""
   cells(
@@ -1329,17 +1689,17 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): Dataset!
-  datasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
+  datasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
   experiment(
     """The unique identifier of an object"""
     id: ID!
   ): Experiment!
-  experiments(filters: ExperimentFilter, order: ExperimentOrder, pagination: OffsetPaginationInput): [Experiment!]!
+  experiments(filters: ExperimentFilter, ordering: [ExperimentOrder!]! = [], pagination: OffsetPaginationInput): [Experiment!]!
   file(
     """The unique identifier of an object"""
     id: ID!
   ): File!
-  files(filters: FileFilter, pagination: OffsetPaginationInput): [File!]!
+  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
   mechanism(id: ID!): Mechanism!
   mechanisms(filters: MechanismFilter, ordering: [MechanismOrder!]! = [], pagination: OffsetPaginationInput): [Mechanism!]!
   modEnvironment(id: ID!): ModEnvironment!
@@ -1348,16 +1708,21 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): ModelCollection!
-  modelCollections(filters: ModelCollectionFilter, pagination: OffsetPaginationInput): [ModelCollection!]!
-  mydatasets(filters: DatasetFilter, pagination: OffsetPaginationInput): [Dataset!]!
-  myfiles(filters: FileFilter, pagination: OffsetPaginationInput): [File!]!
+  modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]!
+  modelWorkspace(
+    """The unique identifier of an object"""
+    id: ID!
+  ): ModelWorkspace!
+  modelWorkspaces(filters: ModelWorkspaceFilter, ordering: [ModelWorkspaceOrder!]! = [], pagination: OffsetPaginationInput): [ModelWorkspace!]!
+  mydatasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
+  myfiles(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
 
-  """Returns a single image by ID"""
+  """Returns a single neuron model by ID"""
   neuronModel(
     """The unique identifier of an object"""
     id: ID!
   ): NeuronModel!
-  neuronModels(filters: NeuronModelFilter, order: NeuronModelOrder, pagination: OffsetPaginationInput): [NeuronModel!]!
+  neuronModels(filters: NeuronModelFilter, ordering: [NeuronModelOrder!]! = [], pagination: OffsetPaginationInput): [NeuronModel!]!
   randomTrace: Trace!
 
   """Returns a list of images"""
@@ -1365,12 +1730,12 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): Recording!
-  recordings(filters: RecordingFilter, order: RecordingOrder, pagination: OffsetPaginationInput): [Recording!]!
+  recordings(filters: RecordingFilter, ordering: [RecordingOrder!]! = [], pagination: OffsetPaginationInput): [Recording!]!
   roi(
     """The unique identifier of an object"""
     id: ID!
   ): ROI!
-  rois(filters: ROIFilter, pagination: OffsetPaginationInput): [ROI!]!
+  rois(filters: ROIFilter, ordering: [ROIOrder!]! = [], pagination: OffsetPaginationInput): [ROI!]!
 
   """Returns a list of images"""
   sections(
@@ -1386,8 +1751,8 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): Simulation!
-  simulations(filters: SimulationFilter, order: SimulationOrder, pagination: OffsetPaginationInput): [Simulation!]!
-  stimuli(filters: StimulusFilter, order: StimulusOrder, pagination: OffsetPaginationInput): [Stimulus!]!
+  simulations(filters: SimulationFilter, ordering: [SimulationOrder!]! = [], pagination: OffsetPaginationInput): [Simulation!]!
+  stimuli(filters: StimulusFilter, ordering: [StimulusOrder!]! = [], pagination: OffsetPaginationInput): [Stimulus!]!
 
   """Returns a list of images"""
   stimulus(
@@ -1400,7 +1765,12 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): Trace!
-  traces(filters: TraceFilter, order: TraceOrder, pagination: OffsetPaginationInput): [Trace!]!
+  traces(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
+  workspaceMapping(
+    """The unique identifier of an object"""
+    id: ID!
+  ): WorkspaceMapping!
+  workspaceMappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
 }
 
 type ROI {
@@ -1430,6 +1800,11 @@ input ROIFilter {
   trace: ID = null
 }
 
+input ROIOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+}
+
 type Recording {
   cell: String!
   id: ID!
@@ -1455,10 +1830,10 @@ input RecordingFilter {
 }
 
 input RecordingInput {
-  cell: ID
+  cell: ID = null
   kind: RecordingKind!
-  location: ID
-  position: Float
+  location: ID = null
+  position: Float = null
   trace: ArrayLike!
 }
 
@@ -1470,14 +1845,14 @@ enum RecordingKind {
   VOLTAGE
 }
 
-input RecordingOrder {
-  createdAt: Ordering
+input RecordingOrder @oneOf {
+  id: Ordering
 }
 
 input RecordingViewInput {
-  duration: Float = null
+  duration: Duration = null
   label: String = null
-  offset: Float = null
+  offset: Duration = null
   recording: ID!
 }
 
@@ -1503,6 +1878,14 @@ input RequestGeneralMediaAccessInput {
   expiresIn: Int = null
 }
 
+input RequestGeneralParquetAccessInput {
+  expiresIn: Int = null
+}
+
+input RequestGeneralZarrAccessInput {
+  expiresIn: Int = null
+}
+
 input RequestMediaAccessInput {
   storeId: String!
 }
@@ -1520,7 +1903,6 @@ input RequestParquetAccessInput {
 input RequestParquetUploadInput {
   contentType: String = null
   host: String = null
-  originalFileName: String!
   port: Int = null
 }
 
@@ -1534,31 +1916,6 @@ input RequestZarrUploadInput {
   port: Int = null
   shape: [Int!] = null
   version: String = null
-}
-
-type Requires {
-  key: String!
-  operator: RequiresOperator!
-  value: Arg!
-}
-
-input RequiresInput {
-  key: String!
-  operator: RequiresOperator!
-  value: Arg!
-}
-
-"""The operator for matching descriptors."""
-enum RequiresOperator {
-  CONTAINS
-  EQUALS
-  EXISTS
-  GTE
-  IN
-  LTE
-  MATCHES
-  NOT_EQUALS
-  NOT_IN
 }
 
 input RevertInput {
@@ -1601,52 +1958,89 @@ enum RoiKindChoices {
 }
 
 """
-The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
+Represents a section of a cell's morphology, the basic structural unit of the topology.
 """
-scalar SearchQuery
-
 type Section {
+  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
   category: String!
+
+  """The connections of this section to its parent section(s)."""
   connections: [Connection!]!
+
+  """
+  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  """
   coords: [Coord!]
-  diam: Float!
+
+  """The diameter of the section."""
+  diam: Length!
+
+  """The unique identifier of the section within the cell."""
   id: String!
 
   """Length of the section. Required if coords is not provided."""
-  length: Float
+  length: Length
+
+  """The number of segments the section is discretized into."""
   nseg: Int!
 }
 
+"""
+Input for a section of a cell's morphology, the basic structural unit of the topology.
+"""
 input SectionInput {
-  category: String
+  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
+  category: String = null
+
+  """The connections of this section to its parent section(s)."""
   connections: [ConnectionInput!] = []
+
+  """
+  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  """
   coords: [CoordInput!] = null
-  diam: Float! = 1
+
+  """The diameter of the section."""
+  diam: Length! = "1 µm"
+
+  """The unique identifier of the section within the cell."""
   id: String!
 
   """Length of the section. Required if coords is not provided."""
-  length: Float = null
+  length: Length = null
+
+  """The number of segments the section is discretized into."""
   nseg: Int! = 1
 }
 
+"""
+Represents a section parameter mapping for a biophysics model. (this will be set on the mechanisms of the compartments of the model)
+"""
 type SectionParamMap {
   """Description of the parameter"""
   description: String
 
   """The governing mechanism"""
   mechanism: String!
+
+  """The name of the parameter to set."""
   param: String!
 
   """The value of the parameter"""
   value: Float!
 }
 
+"""
+Input for a section parameter mapping of a biophysics model. (this will be set on the mechanisms of the compartments of the model)
+"""
 input SectionParamMapInput {
   """Description of the parameter"""
-  description: String
+  description: String = null
 
   """The governing mechanism"""
   mechanism: String!
+
+  """The name of the parameter to set."""
   param: String!
 
   """The value of the parameter"""
@@ -1663,16 +2057,16 @@ type Simulation {
   createdAt: DateTime!
   creator: User
   description: String
-  dt: Float!
-  duration: Int!
+  dt: Duration!
+  duration: Duration!
   id: ID!
   kind: StimulusKind!
   model: NeuronModel!
   name: String!
-  recordingViews(filters: ExperimentFilter, order: ExperimentOrder, pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
-  recordings(filters: RecordingFilter, order: RecordingOrder, pagination: OffsetPaginationInput): [Recording!]!
-  stimuli(filters: StimulusFilter, order: StimulusOrder, pagination: OffsetPaginationInput): [Stimulus!]!
-  stimulusViews(filters: ExperimentFilter, order: ExperimentOrder, pagination: OffsetPaginationInput): [ExperimentStimulusView!]!
+  recordingViews(filters: ExperimentRecordingViewFilter, ordering: [ExperimentRecordingViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
+  recordings(filters: RecordingFilter, ordering: [RecordingOrder!]! = [], pagination: OffsetPaginationInput): [Recording!]!
+  stimuli(filters: StimulusFilter, ordering: [StimulusOrder!]! = [], pagination: OffsetPaginationInput): [Stimulus!]!
+  stimulusViews(filters: ExperimentStimulusViewFilter, ordering: [ExperimentStimulusViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentStimulusView!]!
   timeTrace: Trace!
 }
 
@@ -1689,13 +2083,15 @@ input SimulationFilter {
   search: String
 }
 
-input SimulationOrder {
+input SimulationOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 type SpikeTrain implements Signal {
   id: ID!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   segment: BlockSegment!
   trace: Trace!
 }
@@ -1714,17 +2110,16 @@ input SpikeTrainFilter {
 
 input SpikeTrainInput {
   description: String = null
-  leftSweep: Float = null
+  leftSweep: Duration = null
   name: String = null
-  tStart: Float!
-  tStop: Float!
+  tStart: Duration!
+  tStop: Duration!
   times: TraceLike!
   waveforms: TraceLike = null
 }
 
-input StateAccessorInput {
-  optionKey: OptionKey!
-  subPath: String = null
+input SpikeTrainOrder @oneOf {
+  id: Ordering
 }
 
 type Stimulus {
@@ -1752,10 +2147,10 @@ input StimulusFilter {
 }
 
 input StimulusInput {
-  cell: ID
+  cell: ID = null
   kind: StimulusKind!
-  location: ID
-  position: Float
+  location: ID = null
+  position: Float = null
   trace: ArrayLike!
 }
 
@@ -1765,14 +2160,14 @@ enum StimulusKind {
   VOLTAGE
 }
 
-input StimulusOrder {
-  createdAt: Ordering
+input StimulusOrder @oneOf {
+  id: Ordering
 }
 
 input StimulusViewInput {
-  duration: Float = null
+  duration: Duration = null
   label: String = null
-  offset: Float = null
+  offset: Duration = null
   stimulus: ID!
 }
 
@@ -1812,14 +2207,79 @@ enum SynapseKind {
   GABAA
 }
 
+"""
+Represents a synaptic connection between two cells in the model. This will be used to specify the connections between cells in the model, where each connection has a pre-synaptic cell (the net stimulator) and a post-synaptic cell (the synapse).
+"""
 type SynapticConnection implements NetConnection {
-  delay: Float
+  """The delay for the connection."""
+  delay: Duration
+
+  """The unique identifier of the connection within the model."""
   id: ID!
+
+  """
+  The ID of the net stimulator that is the pre-synaptic cell in this connection.
+  """
   netStimulator: ID!
+
+  """
+  The ID of the synapse that is the post-synaptic cell in this connection.
+  """
   synapse: ID!
-  threshold: Float
-  weight: Float
+
+  """The threshold for the connection."""
+  threshold: ElectricPotential
+
+  """The weight (conductance) of the connection."""
+  weight: ElectricalConductance
 }
+
+"""A verified provenance task under which changes were made."""
+type Task {
+  """The executing agent client id."""
+  agentClientId: String!
+
+  """The executing agent user sub."""
+  agentSub: String!
+
+  """The SHA-256 of the canonicalized args."""
+  argsHash: String!
+
+  """The args canonicalization algorithm/version."""
+  argsHashAlgorithm: String!
+
+  """The root human causer."""
+  assigner: User
+
+  """The raw root human causer sub."""
+  assignerSub: String!
+
+  """The immediate causer of this hop."""
+  callerSub: String!
+  createdAt: DateTime!
+  id: ID!
+
+  """The provenance issuer id."""
+  issuer: String!
+
+  """The organization the task ran in."""
+  organization: Organization!
+
+  """The immediate parent task id, if any."""
+  parentTaskId: String
+
+  """The root task id of the whole causal tree."""
+  rootTaskId: String!
+
+  """This task id."""
+  taskId: String!
+
+  """The unique single-use token id."""
+  tokenId: String!
+}
+
+"""A temperature (``"310 K"``, ``"37 degC"``)."""
+scalar Temperature
 
 type TimeBucket {
   avg: Float
@@ -1831,11 +2291,19 @@ type TimeBucket {
   ts: DateTime!
 }
 
+"""
+Represents the topology of a cell, which defines its structure as a set of connected sections.
+"""
 type Topology {
+  """The list of sections that make up the cell's morphology."""
   sections: [Section!]!
 }
 
+"""
+Input for the topology of a cell, which defines its structure as a set of connected sections.
+"""
 input TopologyInput {
+  """The list of sections that make up the cell's morphology."""
   sections: [SectionInput!]!
 }
 
@@ -1856,7 +2324,7 @@ type Trace {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """The rois of this image"""
-  rois(filters: ROIFilter, pagination: OffsetPaginationInput): [ROI!]!
+  rois(filters: ROIFilter, ordering: [ROIOrder!]! = [], pagination: OffsetPaginationInput): [ROI!]!
 
   """The store where the image data is stored."""
   store: ZarrStore!
@@ -1888,12 +2356,19 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar TraceLike
 
-input TraceOrder {
+input TraceOrder @oneOf {
   createdAt: Ordering
+  id: Ordering
 }
 
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar TwoDVector
+
+input UpdateModelWorkspaceInput {
+  description: String = null
+  id: ID!
+  name: String = null
+}
 
 input UpdateRoiInput {
   kind: RoiKind = null
@@ -1908,6 +2383,11 @@ input UpdateTraceInput {
   tags: [String!] = null
 }
 
+input UpdateWorkspaceMappingInput {
+  id: ID!
+  workspaceGroup: String!
+}
+
 type User {
   activeOrganization: Organization
   id: ID!
@@ -1915,22 +2395,26 @@ type User {
   sub: String!
 }
 
-type Validator {
-  dependencies: [String!]
-  errorMessage: String
-  function: ValidatorFunction!
-  label: String
+type WorkspaceMapping {
+  createdAt: DateTime!
+  id: ID!
+  model: NeuronModel!
+  workspace: ModelWorkspace!
+  workspaceGroup: String!
 }
 
-"\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
-scalar ValidatorFunction
+input WorkspaceMappingFilter {
+  AND: WorkspaceMappingFilter
+  DISTINCT: Boolean
+  NOT: WorkspaceMappingFilter
+  OR: WorkspaceMappingFilter
+  id: ID
+  ids: [ID!]
+}
 
-" \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n"
-input ValidatorInput {
-  dependencies: [String!] = []
-  errorMessage: String = null
-  function: ValidatorFunction!
-  label: String = null
+input WorkspaceMappingOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 """Temporary S3 credentials for reading a Zarr store."""

@@ -1,5 +1,5 @@
-mutation Acknowledge($assignation: ID!) {
-  ack(input: { assignation: $assignation }) {
-    ...PostmanAssignation
+mutation Acknowledge($task: ID!) {
+  ack(input: { task: $task }) {
+    ...PostmanTask
   }
 }

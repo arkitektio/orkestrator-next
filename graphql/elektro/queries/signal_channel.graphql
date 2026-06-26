@@ -7,8 +7,9 @@ query DetailAnalogSignalChannel($id: ID!) {
 query ListAnalogSignalChannel(
   $pagination: OffsetPaginationInput
   $filters: AnalogSignalChannelFilter
+  $ordering: [AnalogSignalChannelOrder!]
 ) {
-  analogSignalChannels(pagination: $pagination, filters: $filters) {
+  analogSignalChannels(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListAnalogSignalChannel
   }
 }

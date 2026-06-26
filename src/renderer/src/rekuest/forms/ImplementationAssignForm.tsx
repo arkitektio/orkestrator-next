@@ -10,7 +10,7 @@ import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
 import {
   ListDependencyFragment,
-  PostmanAssignationFragment,
+  PostmanTaskFragment,
   ResolvedDependencyInput,
   useAgentOptionsLazyQuery
 } from "../api/graphql";
@@ -22,7 +22,7 @@ import { DependencyDefinitionsProvider } from "../widgets/DependencyContext";
 
 export type ImplementationAssignFormProps = {
   id: string;
-  onAssign?: (assignation: PostmanAssignationFragment) => void;
+  onAssign?: (task: PostmanTaskFragment) => void;
   onError?: (error: any) => void;
   args?: any;
   hidden?: { [key: string]: any };
@@ -33,7 +33,7 @@ export type ImplementationAssignFormProps = {
 export const ImplementationAssignForm = (
   props: ImplementationAssignFormProps,
 ) => {
-  const { assign, latestAssignation, implementation, error } =
+  const { assign, latestTask, implementation, error } =
     useImplementationAction({
       id: props.id,
     });
@@ -44,7 +44,7 @@ export const ImplementationAssignForm = (
 
   const form = useImplementationForm({
     implementation: implementation,
-    overwrites: { ...latestAssignation?.args, ...props.args },
+    overwrites: { ...latestTask?.args, ...props.args },
     reValidateMode: "onChange",
   });
 
@@ -53,14 +53,14 @@ export const ImplementationAssignForm = (
     dependencies: Record<string, ResolvedDependencyInput>;
   }) => {
     try {
-      const assignation = await assign({
+      const task = await assign({
         implementation: props.id,
         args: data.args,
         dependencies: Object.values(data.dependencies),
         hooks: [],
       });
 
-      props.onAssign?.(assignation);
+      props.onAssign?.(task);
     } catch (e) {
       const message = (e as ApolloError).message;
       if (props.onError) {

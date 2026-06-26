@@ -6,21 +6,21 @@ import { SpaceGroupPlacement } from "../types";
 import * as THREE from "three";
 import { Card } from "@/components/ui/card";
 import { RekuestAgent } from "@/linkers";
-import { AssignationEventKind, PatchFragment, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
+import { TaskEventKind, PatchFragment, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { AsyncBoundary } from "@/components/boundaries/AsyncBoundary";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const getStatusBadge = (kind: AssignationEventKind | undefined | string) => {
+const getStatusBadge = (kind: TaskEventKind | undefined | string) => {
   switch (kind) {
-    case AssignationEventKind.Done:
+    case TaskEventKind.Completed:
       return { label: "Done", cls: "bg-emerald-500/20 text-emerald-400" };
-    case AssignationEventKind.Yield:
+    case TaskEventKind.Yield:
       return { label: "Yield", cls: "bg-violet-500/20 text-violet-400" };
-    case AssignationEventKind.Error:
+    case TaskEventKind.Failed:
       return { label: "Error", cls: "bg-rose-500/20 text-rose-400" };
-    case AssignationEventKind.Assign:
+    case TaskEventKind.Bound:
       return { label: "Running", cls: "bg-sky-500/20 text-sky-400" };
     default:
       return { label: String(kind ?? "—"), cls: "bg-muted text-muted-foreground" };
@@ -237,7 +237,6 @@ const AgentCheckoutPanel = ({
           {data?.agent?.states.map((state) =>{
 
             const value =  revData?.checkoutAgent.values[state.interface];
-            console.log("Rendering state:", state.definition.name, "with value:", value);
 
 
             return <div key={state.id} className="space-y-2 rounded-lg border p-4">

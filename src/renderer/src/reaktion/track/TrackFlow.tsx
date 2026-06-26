@@ -3,7 +3,7 @@ import {
   GraphInput,
   RunStatus,
 } from "@/reaktion/api/graphql";
-import { DetailAssignationFragment } from "@/rekuest/api/graphql";
+import { DetailTaskFragment } from "@/rekuest/api/graphql";
 import { useNodesState } from "@xyflow/react";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
@@ -36,11 +36,11 @@ const edgeTypes: EdgeTypes = {
 
 export type Props = {
   run: DetailRunFragment;
-  assignation?: DetailAssignationFragment;
+  task?: DetailTaskFragment;
   onSave?: (graph: GraphInput) => void;
 };
 
-export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
+export const TrackFlow: React.FC<Props> = ({ run, task, onSave }) => {
   console.log("THE FLOW", run);
 
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);

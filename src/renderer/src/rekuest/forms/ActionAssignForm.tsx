@@ -29,7 +29,7 @@ export const ActionAssignForm = (props: {
   args?: { [key: string]: any };
   hidden?: { [key: string]: any };
 }) => {
-  const { assign, latestAssignation, cancel, action } = useAction({
+  const { assign, latestTask, cancel, action } = useAction({
     id: props.id,
   });
 
@@ -42,7 +42,6 @@ export const ActionAssignForm = (props: {
 
   const onSubmit = async (data: any) => {
     console.log("Submitting");
-    console.log(data);
 
     const reference = uuidv4()
 

@@ -77,9 +77,6 @@ export const AgentHoverCard = ({ object }: { object: Object }) => {
             value={`${agent.latestHardwareRecord.cpuCount}× ${agent.latestHardwareRecord.cpuVendorName}`}
           />
         )}
-        {agent.extensions.length > 0 && (
-          <HoverRow label="Extensions" value={agent.extensions.join(", ")} />
-        )}
       </div>
 
       {agent.implementations.length > 0 && (

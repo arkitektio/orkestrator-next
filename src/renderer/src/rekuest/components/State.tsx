@@ -37,7 +37,6 @@ export const useRekuestState = ({
         },
         updateQuery: (prev, { subscriptionData }) => {
           if (!subscriptionData.data) return prev;
-          console.log("State update for", prev, subscriptionData.data);
           // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
           if (
             subscriptionData.data.stateUpdateEvents.id !== data.state.id

@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RekuestAgent } from "@/linkers";
 import {
-  AssignationEventKind,
-  AssignationStatus,
+  TaskEventKind,
+  TaskStatus,
   Ordering,
   useAgentQuery,
 } from "@/rekuest/api/graphql";
@@ -14,22 +14,22 @@ import { parseAsIsoDateTime, parseAsStringLiteral, useQueryState, parseAsArrayOf
 import Timestamp from "react-timestamp";
 import { X } from "lucide-react";
 
-const STATUS_OPTIONS: { label: string; value: AssignationStatus }[] = [
-  { label: "Done", value: AssignationStatus.Done },
-  { label: "Ongoing", value: AssignationStatus.Ongoing },
-  { label: "Assigning", value: AssignationStatus.Assigning },
-  { label: "Cancelled", value: AssignationStatus.Cancelled },
-  { label: "Critical", value: AssignationStatus.Critical },
+const STATUS_OPTIONS: { label: string; value: TaskStatus }[] = [
+  { label: "Done", value: TaskStatus.Done },
+  { label: "Ongoing", value: TaskStatus.Ongoing },
+  { label: "Assigning", value: TaskStatus.Assigning },
+  { label: "Cancelled", value: TaskStatus.Cancelled },
+  { label: "Critical", value: TaskStatus.Critical },
 ];
 
-const STATE_OPTIONS: { label: string; value: AssignationEventKind }[] = [
-  { label: "Queued", value: AssignationEventKind.Queued },
-  { label: "Assigned", value: AssignationEventKind.Assign },
-  { label: "Yielded", value: AssignationEventKind.Yield },
-  { label: "Done", value: AssignationEventKind.Done },
-  { label: "Error", value: AssignationEventKind.Error },
-  { label: "Cancelled", value: AssignationEventKind.Cancelled },
-  { label: "Critical", value: AssignationEventKind.Critical },
+const STATE_OPTIONS: { label: string; value: TaskEventKind }[] = [
+  { label: "Queued", value: TaskEventKind.Queued },
+  { label: "Assigned", value: TaskEventKind.Bound },
+  { label: "Yielded", value: TaskEventKind.Yield },
+  { label: "Done", value: TaskEventKind.Completed },
+  { label: "Error", value: TaskEventKind.Failed },
+  { label: "Cancelled", value: TaskEventKind.Cancelled },
+  { label: "Critical", value: TaskEventKind.Critical },
 ];
 
 export const AgentTasksPage = asDetailQueryRoute(
@@ -38,27 +38,27 @@ export const AgentTasksPage = asDetailQueryRoute(
     const [createdAfter, setCreatedAfter] = useQueryState("after", parseAsIsoDateTime);
     const [createdBefore, setCreatedBefore] = useQueryState("before", parseAsIsoDateTime);
 
-    const [statusFilter, setStatusFilter] = useQueryState<AssignationStatus[]>(
+    const [statusFilter, setStatusFilter] = useQueryState<TaskStatus[]>(
       "status",
       parseAsArrayOf(
-        parseAsStringLiteral(Object.values(AssignationStatus)),
+        parseAsStringLiteral(Object.values(TaskStatus)),
       ).withDefault([]),
     );
 
-    const [stateFilter, setStateFilter] = useQueryState<AssignationEventKind[]>(
+    const [stateFilter, setStateFilter] = useQueryState<TaskEventKind[]>(
       "state",
       parseAsArrayOf(
-        parseAsStringLiteral(Object.values(AssignationEventKind)),
+        parseAsStringLiteral(Object.values(TaskEventKind)),
       ).withDefault([]),
     );
 
-    const toggleStatus = (value: AssignationStatus) => {
+    const toggleStatus = (value: TaskStatus) => {
       setStatusFilter((prev) =>
         prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
       );
     };
 
-    const toggleState = (value: AssignationEventKind) => {
+    const toggleState = (value: TaskEventKind) => {
       setStateFilter((prev) =>
         prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
       );

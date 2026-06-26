@@ -55,7 +55,6 @@ export function keyInObject(
 }
 
 export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
-  console.log("nodes_to_flownodes", nodes);
 
   const nodes_ =
     nodes
@@ -110,8 +109,6 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
       .filter(notEmpty) || [];
 
 
-  console.log("flowedges", flowedges);
-
   return flowedges;
 };
 
@@ -142,7 +139,6 @@ export const flowNodeToInput = (
 
     return node_;
   } catch (e) {
-    console.log("Error converting node to input", node);
     console.error(e);
     throw e;
   }
@@ -361,8 +357,7 @@ export const streamToReactNode = (
 
 const rekuestNodeToActionDemand = (node: RekuestMapActionNodeFragment): ActionDemandInput => {
   return {
-    key: node.id,
-    hash: "aaaa"
+    hash: node.hash,
   }
 }
 
@@ -430,8 +425,6 @@ export const flowToDependencies = (flow: FlowFragment): AgentDependencyInput[] =
         } as AgentDependencyInput
 
         }) || [];
-
-  console.log("hashes", dependencies);
 
   return dependencies;
 };

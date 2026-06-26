@@ -4,8 +4,12 @@ query DetailStimulus($id: ID!) {
   }
 }
 
-query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter) {
-  stimuli(pagination: $pagination, filters: $filters) {
+query ListStimuli(
+  $pagination: OffsetPaginationInput
+  $filters: StimulusFilter
+  $ordering: [StimulusOrder!]
+) {
+  stimuli(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListStimulus
   }
 }

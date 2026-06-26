@@ -13,10 +13,10 @@ import { ListFileFragment, ListImageFragment } from "./mikro-next/api/graphql";
 
 
 
-export const RekuestAssignation = buildSmart(
-  "@rekuest/assignation",
-  "rekuest/assignations",
-  { name: "Assignation" },
+export const RekuestTask = buildSmart(
+  "@rekuest/task",
+  "rekuest/tasks",
+  { name: "Task" },
 );
 
 export const RekuestState = buildSmart(
@@ -81,12 +81,6 @@ export const FlussRun = buildSmart(
   "@fluss/run",
   "fluss/runs",
   { name: "Run" },
-);
-
-export const RekuestReservation = buildSmart(
-  "@rekuest/reservation",
-  "rekuest/reservations",
-  { name: "Reservation" },
 );
 
 export const RekuestProvision = buildSmart(
@@ -295,6 +289,12 @@ export const ElektroNeuronModel = buildSmart(
   "@elektro/neuronmodel",
   "elektro/neuronmodels",
   { name: "Neuron Model" },
+);
+
+export const ElektroModelWorkspace = buildSmart(
+  "@elektro/modelworkspace",
+  "elektro/modelworkspaces",
+  { name: "Model Workspace" },
 );
 
 export const KraphNode = buildSmart(

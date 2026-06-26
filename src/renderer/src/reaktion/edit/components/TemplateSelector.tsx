@@ -9,14 +9,14 @@ export const TemplateSelector = (props: {
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.hash,
+        actionHash: props.hash,
       },
     },
   });
 
   return (
     <>
-      {data?.templates?.map((template) => (
+      {data?.implementations?.map((template) => (
         <Button
           onClick={() => props.onClick(props.node, template.id)}
           className="px-2 py-1  rounded-full rounded"

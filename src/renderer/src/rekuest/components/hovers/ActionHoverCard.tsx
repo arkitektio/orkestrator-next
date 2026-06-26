@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { RekuestImplementation } from "@/linkers";
 import { Object } from "@/types";
 import { Zap } from "lucide-react";
-import { AssignationEventKind, useHoverActionQuery } from "../../api/graphql";
+import { TaskEventKind, useHoverActionQuery } from "../../api/graphql";
 
 export const ActionHoverCard = ({ object }: { object: Object }) => {
   const { openDialog } = useDialog();
@@ -33,13 +33,13 @@ export const ActionHoverCard = ({ object }: { object: Object }) => {
   }
 
   const action = data.action;
-  const done = action.assignations.filter(
-    (a) => a.isDone || a.latestEventKind === AssignationEventKind.Done,
+  const done = action.tasks.filter(
+    (a) => a.isDone || a.latestEventKind === TaskEventKind.Completed,
   ).length;
-  const failed = action.assignations.filter(
+  const failed = action.tasks.filter(
     (a) =>
-      a.latestEventKind === AssignationEventKind.Error ||
-      a.latestEventKind === AssignationEventKind.Critical,
+      a.latestEventKind === TaskEventKind.Failed ||
+      a.latestEventKind === TaskEventKind.Critical,
   ).length;
   const activeAgents = action.implementations.filter(
     (i) => i.agent.active,

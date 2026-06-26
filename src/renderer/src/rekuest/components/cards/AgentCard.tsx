@@ -26,11 +26,6 @@ const TheCard = ({ item }: Props) => {
               {" "}
               <h1 className="flex-wrap break-all">{item.app.identifier}</h1>
               <h2 className="text-sm text-muted-foreground">{item.release.version}</h2>
-              <span className="text-muted-foreground font-light">
-                {item.instanceId}
-              </span>
-
-
             </RekuestAgent.DetailLink>
           </CardTitle>
         </CardHeader>
@@ -38,7 +33,9 @@ const TheCard = ({ item }: Props) => {
         </CardFooter>
 
         <UserAvatar sub={item.user.sub} className="absolute bottom-2 right-2 w-8 h-8" />
-        <DeviceImprint deviceId={item.device.deviceId} className="absolute bottom-0  w-[80%] translate-y-1/2" />
+        {item.device && (
+          <DeviceImprint deviceId={item.device.deviceId} className="absolute bottom-0  w-[80%] translate-y-1/2" />
+        )}
       </Card>
     </RekuestAgent.Smart>
   );

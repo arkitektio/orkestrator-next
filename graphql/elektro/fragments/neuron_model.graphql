@@ -9,6 +9,7 @@ fragment Section on Section {
   diam
   length
   category
+  nseg
   coords {
     ...Coord
   }
@@ -28,10 +29,35 @@ fragment Compartment on Compartment {
   globalParams {
     param
     value
+    description
   }
   sectionParams {
+    mechanism
     param
     value
+    description
+  }
+}
+
+fragment ProvenanceEntry on ProvenanceEntry {
+  id
+  task {
+    id
+    taskId
+    assigner {
+      sub
+    }
+  }
+  kind
+  user {
+    sub
+  }
+  client {
+    clientId
+  }
+  date
+  effectiveChanges {
+    field
   }
 }
 
@@ -39,6 +65,9 @@ fragment DetailNeuronModel on NeuronModel {
   id
   name
   config {
+    temperature
+    vInit
+    label
     cells {
       id
       biophysics {
@@ -71,6 +100,9 @@ fragment DetailNeuronModel on NeuronModel {
   }
   environment {
     ...ModEnvironment
+  }
+  provenanceEntries {
+    ...ProvenanceEntry
   }
 }
 

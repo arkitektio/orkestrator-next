@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useArkitekt } from "@/lib/arkitekt/provider";
+import { useConnection } from "@/lib/arkitekt/provider";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import type { ServiceMap } from "@/lib/arkitekt/provider";
 import type { OnDone } from "@/providers/smart/extensions/types";
@@ -44,7 +44,7 @@ export const usePerformAction = (props: {
     options: LocalActionConfirmOptions;
     resolver: ((confirmed: boolean) => void) | null;
   } | null>(null);
-  const app = useArkitekt();
+  const connection = useConnection();
   const dialog = useDialog();
   const navigate = useNavigate();
   const modifierStateRef = useRef<ModifierState>({
@@ -120,7 +120,7 @@ export const usePerformAction = (props: {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: (app.connection?.serviceMap || {}) as ServiceMap,
+        services: (connection?.serviceMap || {}) as ServiceMap,
         dialog,
         navigate,
         modifiers: modifierStateRef.current,

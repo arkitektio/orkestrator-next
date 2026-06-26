@@ -283,11 +283,7 @@ export async function openZarrArray(
     const xarray_metadata = (await x.json()) as XArrayMetadata;
 
     const store = new S3Store(url, aws);
-    console.log(store);
     const grp = await openGroup(store, "", "r");
-    const rootAttrs = await grp.attrs.asObject();
-
-    console.log(grp, rootAttrs, xarray_metadata);
 
     const data = (await grp.getItem("data")) as ZarrArray;
 

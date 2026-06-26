@@ -1,14 +1,39 @@
 import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
+import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleSearch } from "@/components/ui/collapsible-search";
+import { useDebounce } from "@/hooks/use-debounce";
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import { BarChart3, Network, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowDownWideNarrow,
+  ArrowUpDown,
+  ArrowUpWideNarrow,
+  BarChart3,
+  Network,
+  TrendingUp,
+} from "lucide-react";
 import { BsLightning } from "react-icons/bs";
-import { useNavigate } from "react-router-dom";
+import {
+  parseAsIsoDateTime,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
 import { Ordering, useHomePageQuery } from "../api/graphql";
 import BlockList from "../components/lists/BlockList";
 import ExperimentList from "../components/lists/ExperimentList";
@@ -16,36 +41,145 @@ import NeuronModelList from "../components/lists/NeuronModelList";
 import SimulationList from "../components/lists/SimulationList";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
-
-export const TemporalFilterSelector = (props: { onChange: (args: { from: Date | undefined, to: Date | undefined }, key: string) => void }) => {
-  return (
-    <div className="flex flex-row items-center gap-2">
-      <DateTimeRangePicker onUpdate={({ range }) => props.onChange({ from: range.from, to: range.to }, "temporalFilter")} />
-    </div>
-  );
-}
-
-
+export interface IRepresentationScreenProps {}
 
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
-  const navigate = useNavigate();
+  // All dashboard filters live in the URL so the view is shareable/bookmarkable.
+  const [createdAfter, setCreatedAfter] = useQueryState("after", parseAsIsoDateTime);
 
-  const [temporalFilter, setTemporalFilter] = useState<{ createdBefore: Date | undefined, createdAfter: Date | undefined }>({ createdBefore: undefined, createdAfter: undefined });
+  const [createdBefore, setCreatedBefore] = useQueryState(
+    "before",
+    parseAsIsoDateTime,
+  );
 
-  const handleTemporalChange = (range: { from: Time, to: Date | undefined }, key: string) => {
-    setTemporalFilter({ createdAfter: range.from, createdBefore: range.to });
+  const [search, setSearch] = useQueryState(
+    "search",
+    parseAsString.withDefault(""),
+  );
+
+  // Elektro *Order inputs are @oneOf over createdAt/id (no name ordering).
+  const [sortField, setSortField] = useQueryState(
+    "sort",
+    parseAsStringLiteral(["createdAt", "id"] as const).withDefault("createdAt"),
+  );
+
+  const [sortDirection, setSortDirection] = useQueryState(
+    "dir",
+    parseAsStringLiteral(["ASC", "DESC"] as const).withDefault("DESC"),
+  );
+
+  const temporalFilter = {
+    createdAfter: createdAfter ?? undefined,
+    createdBefore: createdBefore ?? undefined,
   };
 
+  // Debounce the value that drives the queries so each keystroke doesn't fire a
+  // request; the input itself (`search`) stays immediate so typing feels snappy.
+  const searchTerm = useDebounce(search.trim(), 400);
+  const searchFilter = searchTerm ? { search: searchTerm } : {};
+
+  const direction = Ordering[sortDirection === "ASC" ? "Asc" : "Desc"];
+  // One ordering value, shared across lists — every elektro *Order input has the
+  // same { createdAt | id } shape, so this is assignable to each list's TOrdering.
+  const orderEntry =
+    sortField === "createdAt"
+      ? { createdAt: direction }
+      : { id: direction };
+  const listOrdering = [orderEntry];
+
+  const sortFieldLabels = { createdAt: "Date created", id: "ID" } as const;
+  // Defaults the dashboard ships with — a tag is shown when the user diverges.
+  const isCustomOrder = sortField !== "createdAt" || sortDirection !== "DESC";
+
+  const listFilters = { ...temporalFilter, ...searchFilter };
+
   return (
-    <PageLayout pageActions={<><TemporalFilterSelector onChange={handleTemporalChange} /></>} title="Elektro" sidebars={
-      <MultiSidebar map={{
-        Statistics: <HomePageStatisticsSidebar />,
-        Help: <HelpSidebar />
-      }} />
-    }>
-      {data?.blocks.length == 0 ? (
+    <PageLayout
+      title="Elektro"
+      pageActions={
+        <>
+          {/* Collapsible search drives the `search` filter on every list */}
+          <CollapsibleSearch
+            value={search}
+            onChange={(value) => setSearch(value || null)}
+            placeholder="Search blocks, simulations and models…"
+          />
+
+          {/* Ordering: field + direction in a dropdown, shared across lists.
+              A tag surfaces the active sort whenever it differs from default. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                Sort
+                {isCustomOrder && (
+                  <Badge variant="secondary" className="gap-1">
+                    {sortFieldLabels[sortField]}
+                    {sortDirection === "ASC" ? (
+                      <ArrowUpWideNarrow />
+                    ) : (
+                      <ArrowDownWideNarrow />
+                    )}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortField}
+                onValueChange={(value) =>
+                  setSortField(value as "createdAt" | "id")
+                }
+              >
+                <DropdownMenuRadioItem value="createdAt">
+                  Date created
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="id">ID</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Direction</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={sortDirection}
+                onValueChange={(value) =>
+                  setSortDirection(value as "ASC" | "DESC")
+                }
+              >
+                <DropdownMenuRadioItem value="DESC">
+                  Descending
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="ASC">
+                  Ascending
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Temporal range writes the `after`/`before` URL params */}
+          <DateTimeRangePicker
+            initialDateFrom={createdAfter ?? undefined}
+            initialDateTo={createdBefore ?? undefined}
+            onUpdate={({ range }) => {
+              setCreatedAfter(range.from || null);
+              setCreatedBefore(range.to || null);
+            }}
+          />
+        </>
+      }
+      sidebars={
+        <MultiSidebar
+          map={{
+            Statistics: <HomePageStatisticsSidebar />,
+            Help: <HelpSidebar />,
+          }}
+        />
+      }
+    >
+      <CommandMenu />
+
+      {data?.blocks.length == 0 && data?.models.length == 0 ? (
         // Empty State with Hero Design
-        <div className="min-h-full w-full  flex items-center justify-center rounded-lg">
+        <div className="min-h-full w-full flex items-center justify-center rounded-lg">
           <div className="max-w-4xl mx-auto text-center px-6 py-16">
             {/* Hero Section */}
             <div className="space-y-6">
@@ -62,9 +196,9 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               </h1>
 
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                Your powerful data visualization and knowledge graph platform.
-                Create your first graph to start exploring and organizing your
-                data relationships.
+                Your electrophysiology and modelling platform. Record blocks,
+                build neuron models, and run simulations — then explore it all
+                from here.
               </p>
             </div>
 
@@ -73,15 +207,15 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span>Visualize Relationships</span>
+                  <span>Visualize Recordings</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Network className="h-4 w-4" />
-                  <span>Build Connections</span>
+                  <span>Build Models</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span>Analyze Data</span>
+                  <span>Run Simulations</span>
                 </div>
               </div>
             </div>
@@ -91,23 +225,21 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
         // Dashboard View with Data
         <div className="space-y-8 p-3">
           {/* Welcome Header */}
-          <CardHeader>
+          <CardHeader className="px-0">
             <CardTitle className="text-3xl flex items-center gap-3">
-              <BsLightning className="h-8 w-8 text-blue-500" />
+              <BsLightning className="h-8 w-8 text-primary" />
               Your Elektro Data
             </CardTitle>
             <CardDescription className="text-lg">
-              Explore and manage your knowledge graphs with powerful
-              visualization tools
+              Your recently recorded and simulated data
             </CardDescription>
           </CardHeader>
 
-          <BlockList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <SimulationList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <NeuronModelList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-          <ExperimentList order={{ createdAt: Ordering.Desc }} filters={temporalFilter} />
-
-          <Separator />
+          <BlockList filters={listFilters} ordering={listOrdering} />
+          <SimulationList filters={listFilters} ordering={listOrdering} />
+          <NeuronModelList filters={listFilters} ordering={listOrdering} />
+          <Separator className="my-4" />
+          <ExperimentList filters={listFilters} ordering={listOrdering} />
         </div>
       )}
     </PageLayout>

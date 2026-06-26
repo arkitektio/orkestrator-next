@@ -58,14 +58,18 @@ const getAccessToken = (token: TokenResponse | string) => {
   throw new Error("No access token available for agent connection");
 };
 
+// Cap the retained error history so a long-lived connection that keeps hitting
+// websocket errors doesn't accumulate strings without bound.
+const MAX_AGENT_ERRORS = 50;
+
 export class OrkestratorAgent {
-  instanceId: string;
   context: AppContext;
   rekuestClient: ApolloClient<NormalizedCache>;
   ws: WebSocket | null = null;
   cancelControllers: Map<string, AbortController> = new Map();
   requestControllers: Set<AbortController> = new Set();
   electronListeners: Map<string, (type: string, data: unknown) => void> = new Map();
+  electronUnsubscribers: Array<() => void> = [];
   registry: Map<string, RegisteredAgentFunction> = new Map();
   implementations: ImplementationInput[] = [];
   reconnectTimer: NodeJS.Timeout | null = null;
@@ -85,10 +89,8 @@ export class OrkestratorAgent {
 
   constructor(
     context: AppContext,
-    instanceId: string,
     navigate: (path: string) => void
   ) {
-    this.instanceId = instanceId;
     this.context = context;
     this.navigate = navigate;
     this.rekuestClient = selectApolloClient(context, "rekuest");
@@ -105,10 +107,15 @@ export class OrkestratorAgent {
     this.token = getAccessToken(this.context.connection.token)
 
     if (window.api) {
-      window.api.onAgentYield((data) => this.notifyElectronListener(data.assignation, "yield", data));
-      window.api.onAgentDone((data) => this.notifyElectronListener(data.assignation, "done", data));
-      window.api.onAgentError((data) => this.notifyElectronListener(data.assignation, "error", data));
-      window.api.onAgentLog((data) => this.notifyElectronListener(data.assignation, "log", data));
+      // Capture the disposers so disconnect() can remove these IPC listeners —
+      // a new agent is built on every connection change, so without this each
+      // reconnect leaks four IPC callbacks closing over the dead agent.
+      this.electronUnsubscribers.push(
+        window.api.onAgentYield((data) => this.notifyElectronListener(data.task, "yield", data)),
+        window.api.onAgentDone((data) => this.notifyElectronListener(data.task, "done", data)),
+        window.api.onAgentError((data) => this.notifyElectronListener(data.task, "error", data)),
+        window.api.onAgentLog((data) => this.notifyElectronListener(data.task, "log", data)),
+      );
     }
 
     // Register global registry entries
@@ -212,7 +219,6 @@ export class OrkestratorAgent {
         await window.api.initAgent({
           token: this.token,
           url: this.context.connection!.endpoint.base_url,
-          instanceId: this.instanceId,
           agentUrl: this.agentUrl,
           services: this.getAvailableServices(),
         });
@@ -222,7 +228,7 @@ export class OrkestratorAgent {
         impls.forEach(impl => {
           if (!impl.interface) return;
           this.register(impl.interface, async (context) => {
-            this.electronListeners.set(context.message.assignation, (type, data) => {
+            this.electronListeners.set(context.message.task, (type, data) => {
               if (!data || typeof data !== "object") {
                 return;
               }
@@ -232,12 +238,12 @@ export class OrkestratorAgent {
               if (type === "error" && "error" in data) context.error(String(data.error));
             });
             try {
-              console.log("Executing electron agent assignation:", context.message);
+              console.log("Executing electron agent task:", context.message);
               await window.api.executeElectron(context.message);
             } catch (e) {
               context.error(String(e));
             } finally {
-              this.electronListeners.delete(context.message.assignation);
+              this.electronListeners.delete(context.message.task);
             }
           }, impl.definition);
         });
@@ -268,7 +274,7 @@ export class OrkestratorAgent {
     this.connected = false;
     this.lastCode = code;
     this.lastReason = reason;
-    this.errors = [...this.errors, reason];
+    this.errors = [...this.errors, reason].slice(-MAX_AGENT_ERRORS);
     this.notify();
   }
 
@@ -312,7 +318,6 @@ export class OrkestratorAgent {
         mutation: EnsureAgentDocument,
         variables: {
           input: {
-            instanceId: this.instanceId,
             name: "Orkestrator",
           },
         },
@@ -358,7 +363,6 @@ export class OrkestratorAgent {
         Register.parse({
           type: "REGISTER",
           token: this.token,
-          instance_id: this.instanceId,
         })
       );
     };
@@ -389,7 +393,7 @@ export class OrkestratorAgent {
     this.ws.onerror = (e) => {
       console.error("Agent error", e);
       this.clearStableConnectionTimer();
-      this.errors.push("Websocket error");
+      this.errors = [...this.errors, "Websocket error"].slice(-MAX_AGENT_ERRORS);
       this.connected = false;
       this.notify();
     };
@@ -400,6 +404,8 @@ export class OrkestratorAgent {
     this.clearReconnectTimer();
     this.clearStableConnectionTimer();
     this.abortAllControllers();
+    this.electronUnsubscribers.forEach((unsub) => unsub());
+    this.electronUnsubscribers = [];
     this.ws?.close();
     this.connected = false;
     this.notify();
@@ -420,22 +426,22 @@ export class OrkestratorAgent {
   }
 
   private async handleCancel(message: CancelMessage) {
-    const controller = this.cancelControllers.get(message.assignation);
+    const controller = this.cancelControllers.get(message.task);
     if (controller) {
       controller.abort();
-      this.cancelControllers.delete(message.assignation);
+      this.cancelControllers.delete(message.task);
       this.send(CancelledEvent.parse({
         type: "CANCELLED",
-        assignation: message.assignation,
+        task: message.task,
       }));
-      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.assignments = this.assignments.filter(a => a.task !== message.task);
       this.notify();
     }
     else {
       this.send(ErrorEvent.parse({
         type: "ERROR",
-        assignation: message.assignation,
-        error: `The assignation ${message.assignation} could not be cancelled because it was not found.`,
+        task: message.task,
+        error: `The task ${message.task} could not be cancelled because it was not found.`,
       }));
     }
 
@@ -460,14 +466,14 @@ export class OrkestratorAgent {
   }
 
   private async handleAssign(message: Assign) {
-    const { assignation, interface: interfaceName } = message;
+    const { task, interface: interfaceName } = message;
     const handler = this.registry.get(interfaceName);
 
     if (!handler) {
       this.send(
         ErrorEvent.parse({
           type: "ERROR",
-          assignation,
+          task,
           error: `No handler for interface ${interfaceName}`,
         })
       );
@@ -477,7 +483,7 @@ export class OrkestratorAgent {
     try {
 
       const newController = new AbortController();
-      this.cancelControllers.set(message.assignation, newController);
+      this.cancelControllers.set(message.task, newController);
       this.assignments.push(message);
       this.notify();
 
@@ -490,7 +496,7 @@ export class OrkestratorAgent {
           this.send(
             YieldEvent.parse({
               type: "YIELD",
-              assignation: message.assignation,
+              task: message.task,
               returns,
             })
           );
@@ -499,30 +505,30 @@ export class OrkestratorAgent {
           this.send(
             ErrorEvent.parse({
               type: "ERROR",
-              assignation: message.assignation,
+              task: message.task,
               error,
             })
           );
-          this.cancelControllers.delete(message.assignation);
-          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.cancelControllers.delete(message.task);
+          this.assignments = this.assignments.filter(a => a.task !== message.task);
           this.notify();
         },
         return: (returns) => {
           this.send(
             YieldEvent.parse({
               type: "YIELD",
-              assignation: message.assignation,
+              task: message.task,
               returns,
             })
           );
           this.send(
             DoneEvent.parse({
               type: "DONE",
-              assignation: message.assignation,
+              task: message.task,
             })
           );
-          this.cancelControllers.delete(message.assignation);
-          this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+          this.cancelControllers.delete(message.task);
+          this.assignments = this.assignments.filter(a => a.task !== message.task);
           this.notify();
         },
         controller: newController,
@@ -533,12 +539,12 @@ export class OrkestratorAgent {
       this.send(
         CriticalEvent.parse({
           type: "ERROR",
-          assignation: message.assignation,
+          task: message.task,
           error: errorMessage,
         })
       );
-      this.cancelControllers.delete(message.assignation);
-      this.assignments = this.assignments.filter(a => a.assignation !== message.assignation);
+      this.cancelControllers.delete(message.task);
+      this.assignments = this.assignments.filter(a => a.task !== message.task);
       this.notify();
     }
   }

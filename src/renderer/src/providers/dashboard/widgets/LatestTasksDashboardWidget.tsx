@@ -1,42 +1,41 @@
 import { useRegisterDashboardWidget } from "../hooks";
 import { ListChecks, Loader2 } from "lucide-react";
 import {
-  useListAssignationsQuery,
-  AssignationEventKind,
+  useListTasksQuery,
+  TaskEventKind,
   Ordering,
 } from "@/rekuest/api/graphql";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import Timestamp from "react-timestamp";
 import { Card } from "@/components/ui/card";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 
 const statusColor: Record<string, string> = {
-  [AssignationEventKind.Done]: "text-green-500",
-  [AssignationEventKind.Error]: "text-red-500",
-  [AssignationEventKind.Critical]: "text-red-500",
-  [AssignationEventKind.Cancelled]: "text-muted-foreground",
-  [AssignationEventKind.Assign]: "text-blue-500",
-  [AssignationEventKind.Progress]: "text-yellow-500",
-  [AssignationEventKind.Queued]: "text-muted-foreground",
+  [TaskEventKind.Completed]: "text-green-500",
+  [TaskEventKind.Failed]: "text-red-500",
+  [TaskEventKind.Critical]: "text-red-500",
+  [TaskEventKind.Cancelled]: "text-muted-foreground",
+  [TaskEventKind.Bound]: "text-blue-500",
+  [TaskEventKind.Progress]: "text-yellow-500",
+  [TaskEventKind.Queued]: "text-muted-foreground",
 };
 
 const statusLabel: Record<string, string> = {
-  [AssignationEventKind.Done]: "Done",
-  [AssignationEventKind.Error]: "Error",
-  [AssignationEventKind.Critical]: "Critical",
-  [AssignationEventKind.Cancelled]: "Cancelled",
-  [AssignationEventKind.Assign]: "Assigned",
-  [AssignationEventKind.Progress]: "Running",
-  [AssignationEventKind.Queued]: "Queued",
-  [AssignationEventKind.Bound]: "Bound",
-  [AssignationEventKind.Yield]: "Yield",
+  [TaskEventKind.Completed]: "Done",
+  [TaskEventKind.Failed]: "Error",
+  [TaskEventKind.Critical]: "Critical",
+  [TaskEventKind.Cancelled]: "Cancelled",
+  [TaskEventKind.Progress]: "Running",
+  [TaskEventKind.Queued]: "Queued",
+  [TaskEventKind.Bound]: "Bound",
+  [TaskEventKind.Yield]: "Yield",
 };
 
 const LatestTasksWidget = () => {
-  const { data, loading } = useListAssignationsQuery({
+  const { data, loading } = useListTasksQuery({
     variables: {
       pagination: { limit: 10 },
-      order: { createdAt: Ordering.Desc },
+      ordering: [{ createdAt: Ordering.Desc }],
     },
     fetchPolicy: "cache-and-network",
   });
@@ -52,8 +51,8 @@ const LatestTasksWidget = () => {
       ) : (
         <ResponsiveContainerGrid>
           {tasks.map((task) => (
-            <RekuestAssignation.Smart key={task.id} object={task}>
-              <RekuestAssignation.DetailLink
+            <RekuestTask.Smart key={task.id} object={task}>
+              <RekuestTask.DetailLink
                 object={task}
                 className={() =>
                   "block p-2 rounded-lgtransition-colors cursor-pointer"
@@ -74,8 +73,8 @@ const LatestTasksWidget = () => {
                   <Timestamp date={task.createdAt} relative />
                 </p>
                 </Card>
-              </RekuestAssignation.DetailLink>
-            </RekuestAssignation.Smart>
+              </RekuestTask.DetailLink>
+            </RekuestTask.Smart>
           ))}
         </ResponsiveContainerGrid>
       )}

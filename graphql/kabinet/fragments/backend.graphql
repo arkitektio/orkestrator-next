@@ -20,7 +20,6 @@ fragment Backend on Backend {
     clientId
   }
   clientId
-  instanceId
   name
   kind
   pods {

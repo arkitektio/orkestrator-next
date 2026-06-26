@@ -1,4 +1,4 @@
-import { AssignationEventKind, MediaStoreFragment, PostmanAssignationFragment } from "@/rekuest/api/graphql";
+import { TaskEventKind, MediaStoreFragment, PostmanTaskFragment } from "@/rekuest/api/graphql";
 
 
 
@@ -26,14 +26,14 @@ export type SpaceGroup = {
 // ── Timeline types ───────────────────────────────────────────────────
 
 export type TimelineEvent = {
-  kind: AssignationEventKind;
+  kind: TaskEventKind;
   message?: string | null;
   createdAt: string;
   position: number;
 };
 
 export type TimelineItem = {
-  assignation: PostmanAssignationFragment;
+  task: PostmanTaskFragment;
   start: number;
   end: number;
   startTime: number;

@@ -264,8 +264,6 @@ const calculateColumns = (
     });
   }
 
-  console.log(other_columns);
-
   calculated_columns = calculated_columns.concat(other_columns);
   return calculated_columns;
 };

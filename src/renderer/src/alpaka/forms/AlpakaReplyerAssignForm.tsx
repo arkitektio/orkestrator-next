@@ -142,7 +142,7 @@ export const AlpakaReplyerAssignForm = (props: {
         },
       };
 
-      // 5. Trigger the assignation
+      // 5. Trigger the task
       toast.info(`Assigning action ${action?.name}...`);
       await assign({
         action: props.actionId,

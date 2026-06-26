@@ -176,7 +176,6 @@ export const CreateShortcutDialog = (props: {
 
   const onSubmit = async (data: any) => {
     console.log("Submitting");
-    console.log(data);
 
     const { toolbox, name, allowQuick, bindNumber, ...rest } = data;
 

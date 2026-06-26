@@ -15,7 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestTask } from "@/linkers";
 import { FlowFragment, GraphInput } from "@/reaktion/api/graphql";
 import { DetailImplementationFragment } from "@/rekuest/api/graphql";
 import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
@@ -108,7 +108,7 @@ export const ShowFlow: React.FC<Props> = ({ flow, template }) => {
                 <ImplementationActionButton
                   id={template.id}
                   onAssign={(e) =>
-                    navigate(RekuestAssignation.linkBuilder(e.id))
+                    navigate(RekuestTask.linkBuilder(e.id))
                   }
                 >
                   <Button> Run </Button>

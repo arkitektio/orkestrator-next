@@ -17,7 +17,7 @@ export type Props = {
 
 const List = ({ filters, pagination, order, title }: Props) => {
   const { data, error, subscribeToMore, refetch } = useAgentsQuery({
-    variables: { filters, pagination, order: order },
+    variables: { filters, pagination, ordering: order ? [order] : undefined },
   });
 
   return (

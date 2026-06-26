@@ -15,7 +15,7 @@ const LatestImagesWidget = () => {
   const { data, loading } = useListImagesQuery({
     variables: {
       pagination: { limit: 8 },
-      order: { createdAt: Ordering.Desc },
+      ordering: [{ createdAt: Ordering.Desc }],
     },
     fetchPolicy: "cache-and-network",
   });

@@ -55,7 +55,7 @@ export const NavigationPane = () => {
   const { data } = useAgentsQuery({
     variables: {
       filters: { pinned: false },
-      order: { lastSeen: Ordering.Desc },
+      ordering: [{ lastSeen: Ordering.Desc }],
       pagination: { limit: 10 },
     },
   });
@@ -100,11 +100,18 @@ export const NavigationPane = () => {
             Actions
           </PaneLink>
           <PaneLink
-            to="/rekuest/assignations"
+            to="/rekuest/tasks"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Box className="h-4 w-4" />
             Tasks
+          </PaneLink>
+          <PaneLink
+            to="/rekuest/org-tasks"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Org Tasks
           </PaneLink>
           <PaneLink
             to="/rekuest/implementations"

@@ -1,26 +1,26 @@
 import { cn } from "@/lib/utils";
-import { RekuestAssignation } from "@/linkers";
-import { AssignationEventKind, ListAsssignationFragment } from "@/rekuest/api/graphql";
+import { RekuestTask } from "@/linkers";
+import { TaskEventKind, ListTaskFragment } from "@/rekuest/api/graphql";
 import { CheckCircle, Clock, XCircle, Loader } from "lucide-react";
 import Timestamp from "react-timestamp";
 
 interface Props {
-  item: ListAsssignationFragment;
+  item: ListTaskFragment;
 }
 
-const statusIcon = (kind: AssignationEventKind, isDone: boolean) => {
+const statusIcon = (kind: TaskEventKind, isDone: boolean) => {
   if (isDone) return <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />;
-  if (kind === AssignationEventKind.Error || kind === AssignationEventKind.Critical)
+  if (kind === TaskEventKind.Failed || kind === TaskEventKind.Critical)
     return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
-  if (kind === AssignationEventKind.Cancelled || kind === AssignationEventKind.Canceling)
+  if (kind === TaskEventKind.Cancelled || kind === TaskEventKind.Cancelling)
     return <XCircle className="h-4 w-4 shrink-0 text-muted-foreground" />;
   return <Loader className="h-4 w-4 shrink-0 text-muted-foreground animate-spin" />;
 };
 
 const AgentTaskCard = ({ item }: Props) => {
   return (
-    <RekuestAssignation.Smart object={item}>
-      <RekuestAssignation.DetailLink object={item}>
+    <RekuestTask.Smart object={item}>
+      <RekuestTask.DetailLink object={item}>
         <div
           className={cn(
             "group flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer",
@@ -35,8 +35,8 @@ const AgentTaskCard = ({ item }: Props) => {
             <Timestamp date={item.createdAt} relative />
           </span>
         </div>
-      </RekuestAssignation.DetailLink>
-    </RekuestAssignation.Smart>
+      </RekuestTask.DetailLink>
+    </RekuestTask.Smart>
   );
 };
 

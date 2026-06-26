@@ -6,8 +6,6 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "AssignWidget": [],
-    "Effect": [],
     "NetConnection": [
       "SynapticConnection"
     ],

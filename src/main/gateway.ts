@@ -54,21 +54,21 @@ export class AgentGateway {
         await this.initialize(args);
     });
 
-    this.ipc.handle("agent:execute", async (event, assignation) => {
-        console.log("Executing assignation", assignation);
-        await this.handleAssign(event.sender, assignation);
+    this.ipc.handle("agent:execute", async (event, task) => {
+        console.log("Executing task", task);
+        await this.handleAssign(event.sender, task);
     });
 
-    this.ipc.handle("agent:cancel", async (_, args: { assignationId: string }) => {
+    this.ipc.handle("agent:cancel", async (_, args: { taskId: string }) => {
 
-        const controller = this.cancelControllers.get(args.assignationId);
+        const controller = this.cancelControllers.get(args.taskId);
         if (controller) {
             controller.abort();
         }
     });
   }
 
-  public async initialize(context: { token: string, url: string, instanceId: string, agentUrl: string, services: AvailableService[] }) {
+  public async initialize(context: { token: string, url: string, agentUrl: string, services: AvailableService[] }) {
       this.token = context.token;
 
       const client = new GraphQLClient(context.url, {
@@ -100,50 +100,50 @@ export class AgentGateway {
       });
   }
 
-  public async handleAssign(sender: Electron.WebContents, assignation: Assign) {
+  public async handleAssign(sender: Electron.WebContents, task: Assign) {
     try {
-      const entry = electronRegistry.entries.find(e => e.name === assignation.interface);
+      const entry = electronRegistry.entries.find(e => e.name === task.interface);
       if (!entry) {
-          console.error("Function not found", assignation.interface);
-          sender.send("agent:error", { assignation: assignation.assignation, error: `Function not found: ${assignation.interface}` });
+          console.error("Function not found", task.interface);
+          sender.send("agent:error", { task: task.task, error: `Function not found: ${task.interface}` });
           return;
       }
 
       const controller = new AbortController();
-      this.cancelControllers.set(assignation.assignation, controller);
+      this.cancelControllers.set(task.task, controller);
 
       try {
           await entry.func({
-              message: assignation,
-              args: assignation.args,
+              message: task,
+              args: task.args,
               send: () => {
                   // Not implemented for now
               },
               client: this.services.get("rekuest")!,
               yield: (returns) => {
-                  sender.send("agent:yield", { assignation: assignation.assignation, returns });
+                  sender.send("agent:yield", { task: task.task, returns });
               },
               return: (returns) => {
-                  sender.send("agent:return", { assignation: assignation.assignation, returns });
+                  sender.send("agent:return", { task: task.task, returns });
               },
               error: (error) => {
-                  sender.send("agent:error", { assignation: assignation.assignation, error });
+                  sender.send("agent:error", { task: task.task, error });
               },
               log: (level, message) => {
-                  sender.send("agent:log", { assignation: assignation.assignation, level, message });
+                  sender.send("agent:log", { task: task.task, level, message });
               },
               signal: controller.signal,
           });
       } catch (e) {
           console.error("Error executing function", e);
-          sender.send("agent:error", { assignation: assignation.assignation, error: e instanceof Error ? e.message : String(e) });
+          sender.send("agent:error", { task: task.task, error: e instanceof Error ? e.message : String(e) });
       }
 
-      this.cancelControllers.delete(assignation.assignation);
+      this.cancelControllers.delete(task.task);
     }
     catch (e) {
       console.error("Error handling assign", e);
-      sender.send("agent:error", { assignation: assignation.assignation, error: e instanceof Error ? e.message : String(e) });
+      sender.send("agent:error", { task: task.task, error: e instanceof Error ? e.message : String(e) });
   }
 }
 

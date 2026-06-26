@@ -1,0 +1,246 @@
+fragment PostmanTask on Task {
+  id
+  latestEventKind
+  args
+  reference
+  isDone
+  events(ordering: {createdAt: DESC}) {
+    ...TaskEvent
+  }
+  ephemeral
+  action {
+    hash
+    id
+    name
+    ...Ports
+  }
+  dependencyMethod
+  dependency
+  dependencies
+  implementation {
+    id
+    interface
+    higherOrderFor {
+      id
+      action {
+        id
+        key
+        interfaces
+      }
+    }
+  }
+  createdAt
+  finishedAt
+}
+
+fragment MinimalTask on Task {
+  id
+  reference
+  latestEventKind
+  isDone
+  createdAt
+  implementation {
+    id
+    interface
+    agent {
+      name
+    }
+  }
+}
+
+fragment NoChildrenDetailTask on Task {
+  ...PostmanTask
+  parent {
+    id
+  }
+  finishedAt
+  implementation {
+    agent {
+      client {
+        clientId
+        device {
+          deviceId
+        }
+      }
+
+    name
+    }
+  }
+}
+
+fragment DetailTask on Task {
+  ...PostmanTask
+  children {
+    ...PostmanTask
+  }
+  parent {
+    id
+  }
+  finishedAt
+  implementation {
+    agent {
+      id
+      client {
+        clientId
+        device {
+          deviceId
+        }
+      }
+
+    name
+    placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
+        ...AgentPlacement
+    }
+    }
+    dependencies {
+      id
+      key
+      appFilter
+      versionFilter
+      autoResolvable
+      actionDemands {
+        key
+      }
+    }
+  }
+  resolvedDependencies {
+
+    key
+    values
+    mappedAgents {
+      agent {
+        id
+        name
+        placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {
+            ...AgentPlacement
+        }
+
+      }
+
+      mappedImplementations {
+        key
+        implementation {
+          id
+        }
+      }
+    }
+  }
+}
+
+fragment TaskEvent on TaskEvent {
+  id
+  kind
+  level
+  returns
+  task {
+    id
+    reference
+  }
+  progress
+  reference
+  createdAt
+  message
+  delegatedTo {
+    id
+    implementation {
+      id
+      interface
+      action {
+        name
+      }
+    }
+  }
+}
+# Non-traversable subscription delta types. Relations are scalar IDs; the client
+# hydrates the immutable graph (action/implementation/agent/children) once via
+# query (see `query Task`) and merges hot scalars + events into the normalized
+# cache. See TaskUpdater.tsx / ChildTaskUpdater.tsx.
+fragment TaskChange on TaskChange {
+  id
+  reference
+  isDone
+  latestEventKind
+  latestInstructKind
+  statusMessage
+  action
+  implementation
+  agent
+  root
+  parent
+  createdAt
+  updatedAt
+  finishedAt
+}
+
+fragment TaskEventChange on TaskEventChange {
+  id
+  task
+  kind
+  message
+  progress
+  returns
+  createdAt
+}
+
+fragment TaskChangeEvent on TaskChangeEvent {
+  create {
+    ...TaskChange
+  }
+  event {
+    ...TaskEventChange
+  }
+}
+fragment ChildTaskEvent on ChildTaskEvent {
+  create {
+    ...TaskChange
+  }
+  update {
+    ...TaskChange
+  }
+}
+
+fragment ListTask on Task {
+  id
+  reference
+  latestEventKind
+  isDone
+  finishedAt
+  createdAt
+  action {
+    id
+    name
+  }
+  implementation {
+    id
+    interface
+  }
+  createdAt
+}
+
+fragment HoverTask on Task {
+  id
+  reference
+  latestEventKind
+  isDone
+  createdAt
+  finishedAt
+  action {
+    id
+    name
+  }
+  implementation {
+    id
+    interface
+    agent {
+      id
+      name
+    }
+  }
+  events(pagination: { limit: 5 }) {
+    id
+    kind
+    progress
+    message
+    createdAt
+  }
+}

@@ -15,7 +15,8 @@ import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
-import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
+import { TaskUpdater } from "@/rekuest/components/functional/TaskUpdater";
+import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
 import React from "react";
@@ -101,16 +102,6 @@ import { LatestTasksDashboardWidget } from "@/providers/dashboard/widgets/Latest
 import { LatestImagesDashboardWidget } from "@/providers/dashboard/widgets/LatestImagesDashboardWidget";
 
 
-const AgentUpdater = React.lazy(() =>
-  import("@/rekuest/components/functional/AgentUpdater").then((module) => ({
-    default: module.AgentUpdater,
-  })),
-);
-
-const LazyProviderBoundary = ({ children }: { children: React.ReactNode }) => {
-  return <React.Suspense fallback={null}>{children}</React.Suspense>;
-};
-
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
@@ -134,10 +125,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <WardRegistrar />
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest fallback={<></>}>
-                                      <LazyProviderBoundary>
-                                        <AssignationUpdater />
-                                        <AgentUpdater />
-                                      </LazyProviderBoundary>
+                                      <TaskUpdater />
+                                      <AgentUpdater />
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />
                                     </Guard.Rekuest>

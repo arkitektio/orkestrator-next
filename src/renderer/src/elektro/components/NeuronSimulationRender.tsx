@@ -1,8 +1,10 @@
-import { Bounds, Html, OrbitControls, useCursor } from "@react-three/drei";
+import { Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
+import { FitCamera } from "../lib/fitCamera";
+import { toBase } from "../lib/quantities";
 import { RecordingMarker } from "../model_render/RecordingMarker";
 import { StimulusMarker } from "../model_render/StimulusMarker";
 import { interpolateCoords } from "../model_render/utils";
@@ -34,10 +36,20 @@ const CylinderWithTooltip = ({
   const [hovered, setHovered] = useState(false);
   const isSelected = selectedId === section.id;
 
-  const startVec = new THREE.Vector3(start.x, start.y, start.z);
-  const endVec = new THREE.Vector3(end.x, end.y, end.z);
+  // Coords are `Length` quantity strings ("1 µm"); normalise each to µm.
+  const startVec = new THREE.Vector3(
+    toBase(start.x, "length", 0),
+    toBase(start.y, "length", 0),
+    toBase(start.z, "length", 0),
+  );
+  const endVec = new THREE.Vector3(
+    toBase(end.x, "length", 0),
+    toBase(end.y, "length", 0),
+    toBase(end.z, "length", 0),
+  );
   const dir = new THREE.Vector3().subVectors(endVec, startVec);
   const length = dir.length();
+  const diamUm = toBase(section.diam, "length", 1);
   const position = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
   const orientation = new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0, 1, 0),
@@ -62,13 +74,13 @@ const CylinderWithTooltip = ({
           setSelectedId(section.id);
         }}
       >
-        <cylinderGeometry args={[section.diam * 2, section.diam * 2, length * 2, 8]} />
+        <cylinderGeometry args={[diamUm * 2, diamUm * 2, length * 2, 8]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
       {/* Visible geometry */}
       <mesh>
-        <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
+        <cylinderGeometry args={[diamUm / 2, diamUm / 2, length, 8]} />
         <meshStandardMaterial color={hovered ? "hotpink" : color} />
       </mesh>
 
@@ -128,6 +140,39 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Rotation center = centroid of every cell's root-node position; the enclosing
+  // radius (from all coords) keeps the whole model framed regardless of aspect.
+  const { points, target } = useMemo(() => {
+    const points: THREE.Vector3[] = [];
+    const rootNodes: THREE.Vector3[] = [];
+    cells.forEach(cell =>
+      cell.topology.sections.forEach(section => {
+        const isRoot = !section.connections || section.connections.length === 0;
+        if (section.coords && section.coords.length > 0) {
+          // Coords / length are `Length` quantity strings; normalise to µm.
+          section.coords.forEach(c => points.push(new THREE.Vector3(
+            toBase(c.x, "length", 0), toBase(c.y, "length", 0), toBase(c.z, "length", 0),
+          )));
+          if (isRoot) {
+            const c = section.coords[0];
+            rootNodes.push(new THREE.Vector3(
+              toBase(c.x, "length", 0), toBase(c.y, "length", 0), toBase(c.z, "length", 0),
+            ));
+          }
+        } else {
+          const half = toBase(section.length, "length", 10) / 2;
+          points.push(new THREE.Vector3(0, 0, -half), new THREE.Vector3(0, 0, half));
+          if (isRoot) rootNodes.push(new THREE.Vector3(0, 0, -half));
+        }
+      }),
+    );
+    const basis = rootNodes.length > 0 ? rootNodes : points;
+    const target = new THREE.Vector3();
+    basis.forEach(p => target.add(p));
+    if (basis.length > 0) target.multiplyScalar(1 / basis.length);
+    return { points, target };
+  }, [cells]);
+
   return (
     <Canvas
       camera={{ position: [0, 0, 200], fov: 50 }}
@@ -137,7 +182,9 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
       <directionalLight position={[20, 10, 10]} />
       <OrbitControls makeDefault />
 
-      <Bounds fit clip observe margin={1.2}>
+      <FitCamera points={points} target={target} />
+
+      <>
         {cells.map(cell =>
           <>
             {cell.topology.sections.flatMap((section, secIndex) => {
@@ -157,10 +204,11 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
                   />
                 ));
               } else {
-                const zStart = -(section.length || 10) / 2;
-                const zEnd = (section.length || 10) / 2;
-                const start: CoordFragment = { x: 0, y: 0, z: zStart };
-                const end: CoordFragment = { x: 0, y: 0, z: zEnd };
+                // Fallback geometry centred on the origin; lengths are in µm and
+                // CylinderWithTooltip re-parses coords, so emit them as µm strings.
+                const halfUm = toBase(section.length, "length", 10) / 2;
+                const start: CoordFragment = { x: "0 µm", y: "0 µm", z: `${-halfUm} µm` };
+                const end: CoordFragment = { x: "0 µm", y: "0 µm", z: `${halfUm} µm` };
 
                 return (
                   <CylinderWithTooltip
@@ -202,8 +250,7 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
             <StimulusMarker key={`rec-marker-${i}`} stimulus={stim} position={point} />
           );
         })}
-
-      </Bounds>
+      </>
     </Canvas>
   );
 };

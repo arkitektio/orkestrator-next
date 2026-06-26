@@ -25,18 +25,14 @@ export const RelateStructures = (props: {
   const { closeDialog } = useDialog();
 
   const [createStructure] = useCreateStructureMutation({
-    onCompleted: (data) => {
-      console.log("Structure created:", data);
-    },
+    onCompleted: () => {},
     onError: (error) => {
       console.error("Error creating structure:", error);
     },
   });
 
   const [createSRelation] = useCreateStructureRelationMutation({
-    onCompleted: (data) => {
-      console.log("Relation created:", data);
-    },
+    onCompleted: () => {},
     onError: (error) => {
       console.error("Error creating relation:", error);
     },

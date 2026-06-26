@@ -1,34 +1,75 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ElektroNeuronModel } from "@/linkers";
 import { toast } from "sonner";
-import { useCreateNeuronModelMutation, useDetailNeuronModelQuery } from "../api/graphql";
+import { useNavigate } from "react-router-dom";
+import {
+  useAddModelsToWorkspaceMutation,
+  useCreateNeuronModelMutation,
+  useDetailNeuronModelQuery,
+} from "../api/graphql";
 import { NeuronEditor } from "../components/NeuronEditor";
+import { useActiveWorkspaceStore } from "../lib/activeWorkspaceStore";
+import {
+  EditableModelConfig,
+  serializeModelConfig,
+  validateModelConfig,
+} from "../lib/modelSerialization";
 
 export const NeuronModelEditorPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
   ({ data }) => {
     const [createModel] = useCreateNeuronModelMutation();
+    const [addModelsToWorkspace] = useAddModelsToWorkspaceMutation();
+    const navigate = useNavigate();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleSave = async (config: any) => {
+    const handleSave = async (config: EditableModelConfig) => {
+      // Refuse to send a structurally broken model; surface the reason.
+      const validation = validateModelConfig(config);
+      if (!validation.ok) {
+        validation.errors.slice(0, 3).forEach(e => toast.error(e.message));
+        if (validation.errors.length > 3) {
+          toast.error(`…and ${validation.errors.length - 3} more validation error(s).`);
+        }
+        return;
+      }
+      // Non-blocking concerns (e.g. disconnected roots) — warn but proceed.
+      validation.warnings.slice(0, 3).forEach(w => toast.warning(w.message));
+
       try {
         const result = await createModel({
           variables: {
             input: {
               name: `${data.neuronModel.name} (Edited)`,
               description: `Edited version of ${data.neuronModel.name}`,
-              config: config
+              // Track lineage: the new model descends from the one we edited.
+              parent: data.neuronModel.id,
+              config: serializeModelConfig(config)
             }
           }
         });
+        const newId = result.data?.createNeuronModel?.id;
         toast.success("Model saved successfully!");
-        if (result.data?.createNeuronModel?.id) {
-          // Navigate to the new model
-          // We need to know the route. Assuming standard linker.
-          // ElektroNeuronModel.link(result.data.createNeuronModel.id)
-          // But linkers usually return a component or string.
-          // I'll just reload or stay here.
-          // Ideally navigate to the new model page.
+
+        // If a workspace is active, the freshly saved model joins it. Best-effort:
+        // a workspace error must never block saving the model itself.
+        const { activeWorkspaceId, setActiveModel } = useActiveWorkspaceStore.getState();
+        if (newId && activeWorkspaceId) {
+          try {
+            await addModelsToWorkspace({
+              variables: {
+                input: { workspace: activeWorkspaceId, models: [newId] },
+              },
+            });
+            setActiveModel(newId);
+          } catch (workspaceError) {
+            console.error(workspaceError);
+            toast.error("Saved, but could not add the model to the active workspace");
+          }
+        }
+
+        if (newId) {
+          // Open the freshly saved model.
+          navigate(ElektroNeuronModel.linkBuilder(newId));
         }
       } catch (e) {
         console.error(e);

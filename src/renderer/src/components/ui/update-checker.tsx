@@ -3,6 +3,15 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "./alert";
 import { Button } from "./button";
 import { Progress } from "./progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
+
+type UpdateChannel = "latest" | "next";
 
 interface UpdateStatus {
   isChecking: boolean;
@@ -22,6 +31,21 @@ export const UpdateChecker: React.FC = () => {
   });
 
   const [showAlert, setShowAlert] = useState(false);
+  const [channel, setChannel] = useState<UpdateChannel>("latest");
+  const [version, setVersion] = useState<string>("");
+  const [channelBusy, setChannelBusy] = useState(false);
+
+  // Load the current channel + app version on mount
+  useEffect(() => {
+    if (!window.updates?.getChannel) return;
+    window.updates
+      .getChannel()
+      .then((info) => {
+        setChannel(info.channel);
+        setVersion(info.version);
+      })
+      .catch(() => {});
+  }, []);
 
   // Set up event listeners for update events
   useEffect(() => {
@@ -120,6 +144,45 @@ export const UpdateChecker: React.FC = () => {
     }
   }, []);
 
+  const handleChannelChange = useCallback(async (value: UpdateChannel) => {
+    if (!window.updates?.setChannel) return;
+    const previous = channel;
+    setChannel(value);
+    setChannelBusy(true);
+    setUpdateStatus(prev => ({
+      ...prev,
+      isChecking: true,
+      error: undefined,
+      checkComplete: false,
+    }));
+    setShowAlert(false);
+    try {
+      const result = await window.updates.setChannel(value);
+      if (!result.success || result.error) {
+        setChannel(previous);
+        setUpdateStatus(prev => ({
+          ...prev,
+          error: result.error || "Failed to switch update channel",
+          isChecking: false,
+          checkComplete: true,
+        }));
+        setShowAlert(true);
+      }
+      // On success the update event listeners report the check result.
+    } catch (error) {
+      setChannel(previous);
+      setUpdateStatus(prev => ({
+        ...prev,
+        error: String(error),
+        isChecking: false,
+        checkComplete: true,
+      }));
+      setShowAlert(true);
+    } finally {
+      setChannelBusy(false);
+    }
+  }, [channel]);
+
   const dismissAlert = () => {
     setShowAlert(false);
   };
@@ -149,6 +212,37 @@ export const UpdateChecker: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Update channel</span>
+            {version && (
+              <span className="text-xs text-muted-foreground">
+                Current version: {version}
+              </span>
+            )}
+          </div>
+          <Select
+            value={channel}
+            onValueChange={(v) => handleChannelChange(v as UpdateChannel)}
+            disabled={channelBusy || !window.updates?.setChannel}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Stable</SelectItem>
+              <SelectItem value="next">Next</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {channel === "next" && (
+          <p className="text-xs text-muted-foreground">
+            Prereleases — may be unstable.
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center gap-4">
         <Button
           onClick={checkForUpdates}

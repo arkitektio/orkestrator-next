@@ -14,7 +14,7 @@ const List = ({ filters, order, pagination }: Props) => {
     variables: {
       filters: filters,
 
-      order: order,
+      ordering: order ? [order] : undefined,
       pagination: pagination,
     },
   });

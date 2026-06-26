@@ -1,9 +1,9 @@
 query Agents(
   $pagination: OffsetPaginationInput
   $filters: AgentFilter
-  $order: AgentOrder
+  $ordering: [AgentOrder!]
 ) {
-  agents(order: $order, pagination: $pagination, filters: $filters) {
+  agents(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListAgent
   }
 }
@@ -11,6 +11,14 @@ query Agents(
 query Agent($id: ID!) {
   agent(id: $id) {
     ...Agent
+  }
+}
+
+# Single-agent hydration for the non-traversable subscription `create` path:
+# fetches the list-shaped agent to populate the Agents list cache. See AgentUpdater.
+query HydrateAgent($id: ID!) {
+  agent(id: $id) {
+    ...ListAgent
   }
 }
 

@@ -24,6 +24,10 @@ import {
   KEYS,
   PathApi,
 } from 'platejs';
+
+const insertList = (editor: PlateEditor, type: string) => {
+  editor.tf.insertNodes(
+    editor.api.create.block({
       indent: 1,
       listStyleType: type
     }),

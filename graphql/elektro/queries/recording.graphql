@@ -4,8 +4,12 @@ query DetailRecording($id: ID!) {
   }
 }
 
-query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter) {
-  recordings(pagination: $pagination, filters: $filters) {
+query ListRecordings(
+  $pagination: OffsetPaginationInput
+  $filters: RecordingFilter
+  $ordering: [RecordingOrder!]
+) {
+  recordings(pagination: $pagination, filters: $filters, ordering: $ordering) {
     ...ListRecording
   }
 }

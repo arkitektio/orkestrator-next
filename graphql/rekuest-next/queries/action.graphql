@@ -4,18 +4,8 @@ query ConstantAction($id: ID!) {
   }
 }
 
-query AssignAction(
-  $reservation: ID
-  $implementation: ID
-  $id: ID
-  $hash: ActionHash
-) {
-  action(
-    reservation: $reservation
-    implementation: $implementation
-    id: $id
-    hash: $hash
-  ) {
+query AssignAction($implementation: ID, $id: ID, $hash: ActionHash) {
+  action(implementation: $implementation, id: $id, hash: $hash) {
     name
     id
     description
@@ -28,8 +18,8 @@ query AssignAction(
   }
 }
 
-query ReturnAction($assignation: ID!) {
-  action(assignation: $assignation) {
+query ReturnAction($task: ID!) {
+  action(task: $task) {
     name
     description
     ...Ports
@@ -46,9 +36,9 @@ query ActionByHash($hash: ActionHash!) {
 query AllActions(
   $pagination: OffsetPaginationInput
   $filters: ActionFilter
-  $order: ActionOrder
+  $ordering: [ActionOrder!]
 ) {
-  actions(order: $order, pagination: $pagination, filters: $filters) {
+  actions(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListAction
   }
 }
@@ -56,9 +46,9 @@ query AllActions(
 query AllPrimaryActions(
   $pagination: OffsetPaginationInput
   $filters: ActionFilter
-  $order: ActionOrder
+  $ordering: [ActionOrder!]
 ) {
-  actions(order: $order, pagination: $pagination, filters: $filters) {
+  actions(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...PrimaryAction
   }
 }
@@ -78,11 +68,11 @@ query DetailAction($id: ID!) {
 query PrimaryActions(
   $pagination: OffsetPaginationInput
   $identifier: String
-  $order: ActionOrder
+  $ordering: [ActionOrder!]
   $search: String
 ) {
   actions(
-    order: $order
+    ordering: $ordering
     pagination: $pagination
     filters: {
       demands: [
@@ -101,11 +91,11 @@ query PrimaryActions(
 query PrimaryReturnActions(
   $pagination: OffsetPaginationInput
   $identifier: String
-  $order: ActionOrder
+  $ordering: [ActionOrder!]
   $search: String
 ) {
   actions(
-    order: $order
+    ordering: $ordering
     pagination: $pagination
     filters: {
       demands: [

@@ -28,7 +28,7 @@ export const NavigationPane = (props: {}) => {
       pagination: {
         limit: 5,
       },
-      order : { createdAt: Ordering.Desc}
+      ordering: [{ createdAt: Ordering.Desc }],
     },
   });
 

@@ -163,6 +163,11 @@ const rowToRecord = (row: unknown): Record<string, unknown> => {
   >;
 };
 
+// Intentional app-lifetime singleton: the DuckDB instance and its Web Worker are
+// created once and reused for every table query (per-query connections are opened
+// and closed by callers). We deliberately do NOT terminate the worker on component
+// unmount — tables mount/unmount frequently and re-instantiating WASM each time is
+// expensive. The single worker persists for the life of the renderer process.
 const getDuckDb = async () => {
   if (!duckDbPromise) {
     duckDbPromise = (async () => {

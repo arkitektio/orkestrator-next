@@ -3,9 +3,8 @@ import { VerticalListRender } from "@/components/layout/VerticalListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
-import { KabinetPod, RekuestAgent, RekuestState } from "@/linkers";
+import { RekuestAgent, RekuestState } from "@/linkers";
 import {
   AgentFragment,
   useAgentQuery,
@@ -15,7 +14,7 @@ import {
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { Pin, PinOff, Server } from "lucide-react";
+import { Pin, PinOff } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import { AgentHeroScene } from "../components/AgentHeroScene";
@@ -64,7 +63,7 @@ export const BounceAgentButton = (props: { agent: AgentFragment }) => {
       onClick={() => {
         bounce({
           variables: {
-            input: { agent: props.agent.id, duration: 10 },
+            input: { agent: props.agent.id },
           },
         });
       }}
@@ -73,31 +72,6 @@ export const BounceAgentButton = (props: { agent: AgentFragment }) => {
     </Button>
   );
 };
-
-export const ManagedByCard = (props: { agent: AgentFragment }) => {
-  const { data } = useGetPodForAgentQuery({
-    variables: {
-      clientId: props.agent.registry.client.clientId,
-      instanceId: props.agent.instanceId,
-    },
-  });
-
-  if (!data?.podForAgent) {
-    return null;
-  }
-
-  return (
-    <KabinetPod.DetailLink object={data?.podForAgent}>
-      <Button variant="outline" size="sm">
-        <Server className="h-4 w-4 mr-2" />
-        {data?.podForAgent?.resource?.name} • {data?.podForAgent?.backend?.name}
-      </Button>
-    </KabinetPod.DetailLink>
-  );
-};
-
-
-
 
 
 
@@ -148,7 +122,7 @@ export const AgentPage = asDetailQueryRoute(
       });
     }, [subscribeToMore, data.agent.id]);
 
-    const recentTasks = data.agent.assignations.slice(0, 5);
+    const recentTasks = data.agent.tasks.slice(0, 5);
 
     return (
       <RekuestAgent.ModelPage
@@ -187,7 +161,6 @@ export const AgentPage = asDetailQueryRoute(
             <PinAgent agent={data.agent} />
             <BounceAgentButton agent={data.agent} />
             <CopyAgentPythonButton agent={data.agent} />
-            <ManagedByCard agent={data.agent} />
                         <RekuestAgent.DetailLink
                           object={data?.agent}
                           subroute="states"

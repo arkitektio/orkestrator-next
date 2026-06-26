@@ -4,8 +4,12 @@ query GetDataset($id: ID!) {
   }
 }
 
-query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput) {
-  datasets(filters: $filters, pagination: $pagination) {
+query GetDatasets(
+  $filters: DatasetFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [DatasetOrder!]
+) {
+  datasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListDataset
   }
 }

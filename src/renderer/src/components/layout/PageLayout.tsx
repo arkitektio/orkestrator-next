@@ -1,7 +1,7 @@
 import { useReport } from "@/hooks/use-report";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, PanelLeft, PanelRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
@@ -47,6 +47,10 @@ export const PageLayout = ({
   const reportBug = useReport();
 
   const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | undefined>(undefined);
+
+  // Clear the pending copy-reset timer on unmount to avoid a setState-after-unmount.
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
   const copyPathToClipboard = useCallback(() => {
 
@@ -58,7 +62,7 @@ export const PageLayout = ({
       navigator.clipboard.writeText(fullUrl)
         .then(() => {
           setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
+          copyTimer.current = window.setTimeout(() => setCopied(false), 1500);
         })
         .catch(() => {
           // Fallback to electron API if available
@@ -66,7 +70,7 @@ export const PageLayout = ({
           if (api?.copyToClipboard) {
             api.copyToClipboard(fullUrl);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            copyTimer.current = window.setTimeout(() => setCopied(false), 1500);
           }
         });
     } else {
@@ -75,7 +79,7 @@ export const PageLayout = ({
       if (api?.copyToClipboard) {
         api.copyToClipboard(fullUrl);
         setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
+        copyTimer.current = window.setTimeout(() => setCopied(false), 1500);
       } else {
         // Last resort: old-school execCommand
         try {
@@ -88,7 +92,7 @@ export const PageLayout = ({
           document.execCommand("copy");
           document.body.removeChild(textarea);
           setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
+          copyTimer.current = window.setTimeout(() => setCopied(false), 1500);
         } catch (e) {
           console.warn("Failed to copy to clipboard", e);
         }

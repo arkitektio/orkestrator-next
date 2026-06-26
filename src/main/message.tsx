@@ -53,7 +53,7 @@ export const Assign = Message.extend({
   extension: z.string(),
   reservation: z.string().optional().nullable(),
   dependencies: z.record(z.string(), z.string()).optional().nullable(),
-  assignation: z.string(),
+  task: z.string(),
   root: z.string().optional().nullable(),
   parent: z.string().optional().nullable(),
   reference: z.string().optional().nullable(),
@@ -68,7 +68,7 @@ export const Assign = Message.extend({
 
 export const Step = Message.extend({
   type: z.literal(ToAgentMessageType.enum.STEP),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const Heartbeat = Message.extend({
@@ -77,17 +77,17 @@ export const Heartbeat = Message.extend({
 
 export const Pause = Message.extend({
   type: z.literal(ToAgentMessageType.enum.PAUSE),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const Resume = Message.extend({
   type: z.literal(ToAgentMessageType.enum.RESUME),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const Cancel = Message.extend({
   type: z.literal(ToAgentMessageType.enum.CANCEL),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const Collect = Message.extend({
@@ -97,38 +97,37 @@ export const Collect = Message.extend({
 
 export const Interrupt = Message.extend({
   type: z.literal(ToAgentMessageType.enum.INTERRUPT),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const AssignInquiry = z.object({
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const Init = Message.extend({
   type: z.literal(ToAgentMessageType.enum.INIT),
-  instance_id: z.string(),
   agent: z.string(),
   inquiries: z.array(AssignInquiry).default([]),
 });
 
 export const CancelledEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.CANCELLED),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const InterruptedEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.INTERRUPTED),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const PausedEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.PAUSED),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const ResumedEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.RESUMED),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const SteppedEvent = Message.extend({
@@ -137,38 +136,38 @@ export const SteppedEvent = Message.extend({
 
 export const LogEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.LOG),
-  assignation: z.string(),
+  task: z.string(),
   message: z.string(),
   level: LogLevel.default("INFO"),
 });
 
 export const ProgressEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.PROGRESS),
-  assignation: z.string(),
+  task: z.string(),
   progress: z.number().optional().nullable(),
   message: z.string().optional().nullable(),
 });
 
 export const YieldEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.YIELD),
-  assignation: z.string(),
+  task: z.string(),
   returns: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 export const DoneEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.DONE),
-  assignation: z.string(),
+  task: z.string(),
 });
 
 export const ErrorEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.ERROR),
-  assignation: z.string(),
+  task: z.string(),
   error: z.string(),
 });
 
 export const CriticalEvent = Message.extend({
   type: z.literal(FromAgentMessageType.enum.CRITICAL),
-  assignation: z.string(),
+  task: z.string(),
   error: z.string(),
 });
 
@@ -178,7 +177,6 @@ export const HeartbeatEvent = Message.extend({
 
 export const Register = Message.extend({
   type: z.literal(FromAgentMessageType.enum.REGISTER),
-  instance_id: z.string(),
   token: z.string(),
 });
 

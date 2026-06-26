@@ -1,9 +1,9 @@
 query Clients(
   $pagination: OffsetPaginationInput
   $filters: ClientFilter
-  $order: ClientOrder
+  $ordering: [ClientOrder!]
 ) {
-  clients(order: $order, pagination: $pagination, filters: $filters) {
+  clients(ordering: $ordering, pagination: $pagination, filters: $filters) {
     ...ListClient
   }
 }

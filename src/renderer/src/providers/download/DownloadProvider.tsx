@@ -35,6 +35,25 @@ export interface DownloadProps {
 
 export type DownloadStore = ReturnType<typeof createDownloadStore>;
 
+// Bound the number of finished (completed/errored) downloads we keep around.
+// Unlike uploads these don't pin a File and completed entries expose useful
+// "open file" actions, so we keep the most recent ones rather than auto-evicting,
+// but still cap the list so it can't grow unbounded over a long session.
+const MAX_FINISHED_DOWNLOADS = 50;
+
+const trimFinishedDownloads = (downloads: DownloadTask[]): DownloadTask[] => {
+  const finished = downloads.filter(
+    (d) => d.status === "completed" || d.status === "error",
+  );
+  if (finished.length <= MAX_FINISHED_DOWNLOADS) {
+    return downloads;
+  }
+  const dropIds = new Set(
+    finished.slice(0, finished.length - MAX_FINISHED_DOWNLOADS).map((d) => d.id),
+  );
+  return downloads.filter((d) => !dropIds.has(d.id));
+};
+
 export const createDownloadStore = () =>
   createStore<DownloadProps>((set, get) => ({
     downloads: [],
@@ -96,8 +115,10 @@ export const createDownloadStore = () =>
         if (removeProgress) removeProgress();
 
         set((state) => ({
-          downloads: state.downloads.map((d) =>
-            d.id === id ? { ...d, status: "completed", progress: 100, savePath: typeof result === "string" ? result : undefined } : d
+          downloads: trimFinishedDownloads(
+            state.downloads.map((d) =>
+              d.id === id ? { ...d, status: "completed", progress: 100, savePath: typeof result === "string" ? result : undefined } : d
+            ),
           ),
         }));
         return result;
@@ -111,10 +132,12 @@ export const createDownloadStore = () =>
           throw err;
         } else {
           set((state) => ({
-            downloads: state.downloads.map((d) =>
-              d.id === id
-                ? { ...d, status: "error", error: err.message || "Unknown error" }
-                : d
+            downloads: trimFinishedDownloads(
+              state.downloads.map((d) =>
+                d.id === id
+                  ? { ...d, status: "error", error: err.message || "Unknown error" }
+                  : d
+              ),
             ),
           }));
           throw err;

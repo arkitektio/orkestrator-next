@@ -5,7 +5,7 @@ import { FancyInput } from "@/components/ui/fancy-input";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Home, LineChartIcon, Network } from "lucide-react";
+import { Home, LayoutDashboard, LineChartIcon, Network } from "lucide-react";
 import * as React from "react";
 import { RiCheckboxMultipleLine } from "react-icons/ri";
 import {
@@ -57,6 +57,13 @@ export const NavigationPane = (props: {}) => {
         >
           <CubeIcon className="h-4 w-4" />
           Model Collections
+        </PaneLink>
+        <PaneLink
+          to="/elektro/modelworkspaces"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          Workspaces
         </PaneLink>
       </SidePaneGroup>
 

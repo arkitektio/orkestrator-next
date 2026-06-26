@@ -228,7 +228,6 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   };
 
   const onConnect = (connection: Connection) => {
-    console.log("onConnect", connection);
     if (!reactFlowInstance) {
       return;
     }

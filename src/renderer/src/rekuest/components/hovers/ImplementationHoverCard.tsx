@@ -104,7 +104,6 @@ export const ImplementationHoverCard = ({ object }: { object: Object }) => {
             </span>
           }
         />
-        <HoverRow label="Extension" value={impl.extension} />
         <HoverRow label="App" value={action.app.identifier} />
       </div>
 

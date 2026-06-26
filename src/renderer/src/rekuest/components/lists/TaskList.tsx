@@ -1,19 +1,19 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestAssignation } from "@/linkers";
-import { AssignationFilter, AssignationOrder, OffsetPaginationInput, useListAssignationsQuery } from "@/rekuest/api/graphql";
+import { RekuestTask } from "@/linkers";
+import { TaskFilter, TaskOrder, OffsetPaginationInput, useListTasksQuery } from "@/rekuest/api/graphql";
 import TaskCard from "../cards/TaskCard";
 
 export type Props = {
-  filters?: AssignationFilter;
-  order?: AssignationOrder;
+  filters?: TaskFilter;
+  order?: TaskOrder;
   pagination?: OffsetPaginationInput;
 };
 
 const List = ({ filters, order, pagination }: Props) => {
-  const { data, error, refetch } = useListAssignationsQuery({
+  const { data, error, refetch } = useListTasksQuery({
     variables: {
       filter: filters,
-      order: order,
+      ordering: order ? [order] : undefined,
       pagination: pagination,
     },
   });
@@ -22,9 +22,9 @@ const List = ({ filters, order, pagination }: Props) => {
       <ListRender
         array={data?.tasks}
         title={
-          <RekuestAssignation.ListLink className="flex-0">
+          <RekuestTask.ListLink className="flex-0">
             Latest Tasks
-          </RekuestAssignation.ListLink>
+          </RekuestTask.ListLink>
         }
         refetch={refetch}
         error={error}

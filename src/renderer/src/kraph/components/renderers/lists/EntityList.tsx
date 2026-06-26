@@ -116,7 +116,6 @@ const EditableCell = ({
   const handleBlur = () => {
     setIsEditing(false);
     if (editingValue !== value) {
-      console.log("Updating value:", editingValue);
       setNodeProperty({
         variables: {
           input: {
@@ -771,6 +770,7 @@ export const EntityList = (props: {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const addFilter = () => {

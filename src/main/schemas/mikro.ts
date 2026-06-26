@@ -51,9 +51,14 @@ export type Scalars = {
   _Any: { input: any; output: any; }
 };
 
+/** A multi-dimensional array dataset with named dimensions. It can have multiple scales attached to it, which are represented as DataArrays */
 export type ADataset = {
   __typename?: 'ADataset';
-  /** Provenance entries for this camera */
+  /** The task this dataset was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
+  /** The multiscale data arrays belonging to this dataset */
   dataArrays: Array<DataArray>;
   description?: Maybe<Scalars['String']['output']>;
   dimDescriptors: Array<DimDescriptor>;
@@ -63,8 +68,10 @@ export type ADataset = {
 };
 
 
+/** A multi-dimensional array dataset with named dimensions. It can have multiple scales attached to it, which are represented as DataArrays */
 export type ADatasetDataArraysArgs = {
   filters?: InputMaybe<DataArrayFilter>;
+  ordering?: Array<DataArrayOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -73,20 +80,37 @@ export type ADatasetFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ADatasetFilter>;
   OR?: InputMaybe<ADatasetFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
-  dataset?: InputMaybe<DatasetFilter>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
-  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
-  scope?: InputMaybe<ScopeFilter>;
+  /** Filter by visibility scope */
+  scope?: InputMaybe<ScopeKind>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
-  store?: InputMaybe<ZarrStoreFilter>;
-  timepointViews?: InputMaybe<TimepointViewFilter>;
-  transformationViews?: InputMaybe<AffineTransformationViewFilter>;
 };
 
+export type ADatasetOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
+
+/** An accessor declares how the values of specific columns (keys) of a table should be interpreted, e.g. as pixel labels of a mask or as ids of images. */
 export type Accessor = {
   id: Scalars['ID']['output'];
   keys: Array<Scalars['String']['output']>;
@@ -100,6 +124,8 @@ export type AccessorFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<AccessorFilter>;
   OR?: InputMaybe<AccessorFilter>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   keys?: InputMaybe<Scalars['JSON']['input']>;
 };
 
@@ -108,6 +134,7 @@ export enum AccessorKind {
   Label = 'LABEL'
 }
 
+/** A view recording when and by whom an image region was acquired at the microscope. Use it to trace an image back to its acquisition session and operator. */
 export type AcquisitionView = View & {
   __typename?: 'AcquisitionView';
   /** The accessor */
@@ -133,11 +160,13 @@ export type AcquisitionView = View & {
 };
 
 
+/** A view recording when and by whom an image region was acquired at the microscope. Use it to trace an image back to its acquisition session and operator. */
 export type AcquisitionViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** A view placing an image region in physical space: a 4x4 affine matrix maps pixel coordinates onto a stage, encoding position and pixel size. */
 export type AffineTransformationView = View & {
   __typename?: 'AffineTransformationView';
   /** The accessor */
@@ -168,6 +197,7 @@ export type AffineTransformationView = View & {
 };
 
 
+/** A view placing an image region in physical space: a 4x4 affine matrix maps pixel coordinates onto a stage, encoding position and pixel size. */
 export type AffineTransformationViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -185,12 +215,22 @@ export type AffineTransformationViewFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<AffineTransformationViewFilter>;
   OR?: InputMaybe<AffineTransformationViewFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  pixelSize?: InputMaybe<FloatFilterLookup>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
   stage?: InputMaybe<StageFilter>;
 };
 
+/** Input for creating an affine transformation view on an existing image, referenced by ID */
 export type AffineTransformationViewInput = {
+  /** The 4x4 affine matrix mapping image coordinates to stage coordinates */
   affineMatrix: Scalars['FourByFourMatrix']['input'];
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -198,7 +238,9 @@ export type AffineTransformationViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The ID of the stage this transformation maps the image onto */
   stage?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -218,15 +260,23 @@ export type AffineTransformationViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for assigning object-level permissions to a user */
 export type AssignUserPermissionInput = {
+  /** The type identifier of the object, e.g. "@mikro/image" */
   identifier: Scalars['String']['input'];
+  /** The primary key of the object to assign permissions on */
   object: Scalars['ID']['input'];
+  /** The permissions to assign, e.g. ["view_image", "change_image"] */
   permissions: Array<Scalars['String']['input']>;
+  /** The primary key of the user to assign permissions to */
   user: Scalars['ID']['input'];
 };
 
+/** An input for associating a set of items with another item, e.g. putting images into a dataset */
 export type AssociateInput = {
+  /** The ID of the target item */
   other: Scalars['ID']['input'];
+  /** The IDs of the items to associate */
   selfs: Array<Scalars['ID']['input']>;
 };
 
@@ -322,7 +372,15 @@ export type BigFileUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+/** The blending mode used to combine multiple channels or layers into a composite image. */
 export enum Blending {
+  /** Additive blending, where the color values of overlapping layers are summed. */
+  Additive = 'ADDITIVE',
+  /** Multiplicative blending, where the color values of overlapping layers are multiplied. */
+  Multiplicative = 'MULTIPLICATIVE'
+}
+
+export enum BlendingChoices {
   Additive = 'ADDITIVE',
   Multiplicative = 'MULTIPLICATIVE'
 }
@@ -346,6 +404,7 @@ export type CcdElement = OpticalElement & {
   serialNumber?: Maybe<Scalars['String']['output']>;
 };
 
+/** A camera (detector) on a microscope, described by its sensor dimensions, pixel sizes and bit depth. Clients use it through optics views to record which detector acquired an image. */
 export type Camera = {
   __typename?: 'Camera';
   bitDepth?: Maybe<Scalars['Int']['output']>;
@@ -365,11 +424,13 @@ export type Camera = {
 };
 
 
+/** A camera (detector) on a microscope, described by its sensor dimensions, pixel sizes and bit depth. Clients use it through optics views to record which detector acquired an image. */
 export type CameraProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A camera (detector) on a microscope, described by its sensor dimensions, pixel sizes and bit depth. Clients use it through optics views to record which detector acquired an image. */
 export type CameraViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -380,25 +441,47 @@ export type CameraFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<CameraFilter>;
   OR?: InputMaybe<CameraFilter>;
+  bitDepth?: InputMaybe<IntFilterLookup>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manufacturer?: InputMaybe<StrFilterLookup>;
+  model?: InputMaybe<StrFilterLookup>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  serialNumber?: InputMaybe<StrFilterLookup>;
 };
 
+/** Input for creating or ensuring a camera */
 export type CameraInput = {
+  /** The bit depth of the camera sensor */
   bitDepth?: InputMaybe<Scalars['Int']['input']>;
+  /** The manufacturer of the camera */
   manufacturer?: InputMaybe<Scalars['String']['input']>;
+  /** The model of the camera */
   model?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the camera */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The physical pixel size in x direction (micrometers) */
   pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
+  /** The physical pixel size in y direction (micrometers) */
   pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
+  /** The sensor size in x direction (pixels) */
   sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
+  /** The sensor size in y direction (pixels) */
   sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
+  /** The unique serial number of the camera */
   serialNumber: Scalars['String']['input'];
 };
 
+/** Input for changing an existing dataset's name or parent */
 export type ChangeDatasetInput = {
+  /** The ID of the dataset to change */
   id: Scalars['ID']['input'];
+  /** The name of the dataset */
   name: Scalars['String']['input'];
+  /** The ID of the parent dataset to nest this dataset under */
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -427,12 +510,14 @@ export enum ChannelKind {
   Waveguide = 'WAVEGUIDE'
 }
 
+/** The channel truth: a human-readable label for a channel, pinned to a coordinate anchor */
 export type ChannelLabel = {
   __typename?: 'ChannelLabel';
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
 };
 
+/** A channel view describes an acquisition channel of an image, carrying its name and optical properties such as emission and excitation wavelengths. */
 export type ChannelView = View & {
   __typename?: 'ChannelView';
   /** The accessor */
@@ -463,11 +548,13 @@ export type ChannelView = View & {
 };
 
 
+/** A channel view describes an acquisition channel of an image, carrying its name and optical properties such as emission and excitation wavelengths. */
 export type ChannelViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** Input for creating a channel view on an existing image, referenced by ID */
 export type ChannelViewInput = {
   /** The acquisition mode of the channel */
   acquisitionMode?: InputMaybe<Scalars['String']['input']>;
@@ -524,6 +611,7 @@ export type ChildrenPaginationInput = {
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** An OAuth client (application) that can act against the API, e.g. the app a change was made through. */
 export type Client = {
   __typename?: 'Client';
   clientId: Scalars['String']['output'];
@@ -531,12 +619,63 @@ export type Client = {
   name: Scalars['String']['output'];
 };
 
+/** The color space format used to interpret color component values. */
 export enum ColorFormat {
+  /** Color expressed as hue, saturation and lightness components. */
   Hsl = 'HSL',
+  /** Color expressed as red, green and blue components. */
   Rgb = 'RGB'
 }
 
+/** The colormap used to map intensity values of a channel to display colors. */
 export enum ColorMap {
+  /** A colormap rendering all values as black. */
+  Black = 'BLACK',
+  /** A monochromatic colormap from black to pure blue. */
+  Blue = 'BLUE',
+  /** A monochromatic colormap from black to brown. */
+  Brown = 'BROWN',
+  /** A colormap of cool tones ranging from cyan to magenta. */
+  Cool = 'COOL',
+  /** A monochromatic colormap from black to cyan. */
+  Cyan = 'CYAN',
+  /** A monochromatic colormap from black to pure green. */
+  Green = 'GREEN',
+  /** A grayscale colormap from black to white. */
+  Grey = 'GREY',
+  /** The perceptually uniform inferno colormap, ranging from black through red to yellow. */
+  Inferno = 'INFERNO',
+  /** A grayscale colormap mapping intensity values directly to brightness. */
+  Intensity = 'INTENSITY',
+  /** A monochromatic colormap from black to magenta. */
+  Magenta = 'MAGENTA',
+  /** The perceptually uniform magma colormap, ranging from black through purple to light yellow. */
+  Magma = 'MAGMA',
+  /** A monochromatic colormap from black to orange. */
+  Orange = 'ORANGE',
+  /** A monochromatic colormap from black to pink. */
+  Pink = 'PINK',
+  /** The perceptually uniform plasma colormap, ranging from dark blue to yellow. */
+  Plasma = 'PLASMA',
+  /** A monochromatic colormap from black to purple. */
+  Purple = 'PURPLE',
+  /** A multi-hue rainbow colormap cycling through the visible spectrum. */
+  Rainbow = 'RAINBOW',
+  /** A monochromatic colormap from black to pure red. */
+  Red = 'RED',
+  /** A diverging colormap spanning the spectral colors from red to blue. */
+  Spectral = 'SPECTRAL',
+  /** The perceptually uniform viridis colormap, ranging from dark purple to yellow. */
+  Viridis = 'VIRIDIS',
+  /** A colormap of warm tones ranging from yellow to red. */
+  Warm = 'WARM',
+  /** A monochromatic colormap from black to white. */
+  White = 'WHITE',
+  /** A monochromatic colormap from black to yellow. */
+  Yellow = 'YELLOW'
+}
+
+export enum ColorMapChoices {
   Black = 'BLACK',
   Blue = 'BLUE',
   Brown = 'BROWN',
@@ -561,6 +700,7 @@ export enum ColorMap {
   Yellow = 'YELLOW'
 }
 
+/** A constraint on a named dimension of a data ROI, with optional min, max and step */
 export type Constraint = {
   __typename?: 'Constraint';
   dim: Scalars['String']['output'];
@@ -578,6 +718,7 @@ export enum ContinousScanDirection {
   SliceRowColumnSnake = 'SLICE_ROW_COLUMN_SNAKE'
 }
 
+/** A view marking an image region as acquired by a continuous scan, recording the direction the scan traversed the axes in. */
 export type ContinousScanView = View & {
   __typename?: 'ContinousScanView';
   /** The accessor */
@@ -601,6 +742,7 @@ export type ContinousScanView = View & {
 };
 
 
+/** A view marking an image region as acquired by a continuous scan, recording the direction the scan traversed the axes in. */
 export type ContinousScanViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -612,9 +754,19 @@ export type ContinousScanViewFilter = {
   NOT?: InputMaybe<ContinousScanViewFilter>;
   OR?: InputMaybe<ContinousScanViewFilter>;
   direction?: InputMaybe<ContinousScanDirection>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a continuous scan view on an existing image, referenced by ID */
 export type ContinousScanViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -622,7 +774,9 @@ export type ContinousScanViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The direction of the scan */
   direction: ScanDirection;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -642,6 +796,7 @@ export type ContinousScanViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata, value histograms, channel labels, light paths) to specific coordinates of a dataset */
 export type CoordinateAnchor = {
   __typename?: 'CoordinateAnchor';
   channelLabel?: Maybe<ChannelLabel>;
@@ -685,8 +840,11 @@ export type CreateDataRoiInput = {
   zDim?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a new dataset to organize images and files */
 export type CreateDatasetInput = {
+  /** The name of the dataset */
   name: Scalars['String']['input'];
+  /** The ID of the parent dataset to nest this dataset under */
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -712,13 +870,21 @@ export type CreateLensInput = {
   slices: Array<SliceInput>;
 };
 
+/** Input for creating an RGB render context for an image */
 export type CreateRgbContextInput = {
+  /** The channel the context renders */
   c?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the image this RGB context renders */
   image: Scalars['ID']['input'];
+  /** The name of the RGB context */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The timepoint the context renders */
   t?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of an uploaded media store to use as the thumbnail snapshot */
   thumbnail?: InputMaybe<Scalars['ID']['input']>;
+  /** The RGB views (channel rendering settings) to attach to the context */
   views?: InputMaybe<Array<PartialRgbViewInput>>;
+  /** The z plane the context renders */
   z?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -730,6 +896,7 @@ export type CreateSceneInput = {
   temporalUnit?: InputMaybe<TemporalUnit>;
 };
 
+/** A single scale of a dataset's multiscale pyramid: a zarr-backed array described by its shape, chunk shape, scale factors and pyramid level */
 export type DataArray = {
   __typename?: 'DataArray';
   chunkShape: Array<Scalars['Int']['output']>;
@@ -745,10 +912,19 @@ export type DataArrayFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DataArrayFilter>;
   OR?: InputMaybe<DataArrayFilter>;
+  /** Filter by the dataset this array belongs to */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   level?: InputMaybe<IntFilterLookup>;
 };
 
+export type DataArrayOrder =
+  { id: Ordering; level?: never; }
+  |  { id?: never; level: Ordering; };
+
+/** A region of interest in a data array, described by its vectors and per-dimension constraints */
 export type DataRoi = {
   __typename?: 'DataRoi';
   constraints: Array<Constraint>;
@@ -757,7 +933,7 @@ export type DataRoi = {
   id: Scalars['UUID']['output'];
   kind: RoiKind;
   name: Scalars['String']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this data ROI */
   provenanceEntries: Array<ProvenanceEntry>;
   vectors: Array<Array<Scalars['Float']['output']>>;
   xDim: Scalars['String']['output'];
@@ -766,6 +942,7 @@ export type DataRoi = {
 };
 
 
+/** A region of interest in a data array, described by its vectors and per-dimension constraints */
 export type DataRoiProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -775,16 +952,37 @@ export type DataRoiFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DataRoiFilter>;
   OR?: InputMaybe<DataRoiFilter>;
-  activeFor?: InputMaybe<Array<SliceInput>>;
-  dataset?: InputMaybe<IdFilterLookup>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the dataset this ROI belongs to */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<RoiKindChoices>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  xMax?: InputMaybe<IntFilterLookup>;
+  xMin?: InputMaybe<IntFilterLookup>;
+  yMax?: InputMaybe<IntFilterLookup>;
+  yMin?: InputMaybe<IntFilterLookup>;
+  zMax?: InputMaybe<IntFilterLookup>;
+  zMin?: InputMaybe<IntFilterLookup>;
 };
 
+export type DataRoiOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
+/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
 export type Dataset = {
   __typename?: 'Dataset';
   children: Array<Dataset>;
   createdAt: Scalars['DateTime']['output'];
+  /** The task this dataset was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   creator?: Maybe<User>;
   description?: Maybe<Scalars['String']['output']>;
   files: Array<File>;
@@ -794,32 +992,37 @@ export type Dataset = {
   name: Scalars['String']['output'];
   parent?: Maybe<Dataset>;
   pinned: Scalars['Boolean']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this dataset */
   provenanceEntries: Array<ProvenanceEntry>;
   tags: Array<Scalars['String']['output']>;
 };
 
 
+/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
 export type DatasetChildrenArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
 export type DatasetFilesArgs = {
   filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
 export type DatasetImagesArgs = {
   filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: Array<ImageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
 export type DatasetProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -834,20 +1037,50 @@ export type DatasetFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DatasetFilter>;
   OR?: InputMaybe<DatasetFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<StrFilterLookup>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isDefault?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the parent dataset (list the children of a dataset) */
+  parent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for datasets with (true) or without (false) a parent */
   parentless?: InputMaybe<Scalars['Boolean']['input']>;
-  scope?: InputMaybe<ScopeFilter>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by visibility scope */
+  scope?: InputMaybe<ScopeKind>;
+  /** Search by name (full-text search) */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by tag names */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type DatasetImageFile = Dataset | File | Image;
 
+export type DatasetOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
+
+/** Input for deleting a camera by ID */
 export type DeleteCameraInput = {
+  /** The ID of the camera to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -857,62 +1090,91 @@ export type DeleteDataRoiInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a dataset by ID */
 export type DeleteDatasetInput = {
+  /** The ID of the dataset to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an era by ID */
 export type DeleteEraInput = {
+  /** The ID of the era to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a file by ID */
 export type DeleteFileInput = {
+  /** The ID of the file to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an image by ID */
 export type DeleteImageInput = {
+  /** The ID of the image to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an instrument by ID */
 export type DeleteInstrumentInput = {
+  /** The ID of the instrument to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a mesh by ID */
 export type DeleteMeshInput = {
+  /** The ID of the mesh to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a multi-well plate by ID */
 export type DeleteMultiWellInput = {
+  /** The ID of the multi-well plate to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an objective by ID */
 export type DeleteObjectiveInput = {
+  /** The ID of the objective to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an RGB context by ID */
 export type DeleteRgbContextInput = {
+  /** The ID of the RGB context to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a ROI by ID */
 export type DeleteRoiInput = {
+  /** The ID of the ROI to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a snapshot by ID */
 export type DeleteSnaphotInput = {
+  /** The ID of the snapshot to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a stage by ID */
 export type DeleteStageInput = {
+  /** The ID of the stage to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a view collection by ID */
 export type DeleteViewCollectionInput = {
+  /** The ID of the view collection to delete */
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a view by ID */
 export type DeleteViewInput = {
+  /** The ID of the view to delete */
   id: Scalars['ID']['input'];
 };
 
+/** A derived view establishes a processing relationship between two images, guaranteeing that the derived image shares the same coordinate system as its origin image so the two can be trivially overlayed and compared (e.g. a segmentation over its source image). Cropped or projected images are not derived views, as they do not share the coordinate system. */
 export type DerivedView = View & {
   __typename?: 'DerivedView';
   /** The accessor */
@@ -937,11 +1199,13 @@ export type DerivedView = View & {
 };
 
 
+/** A derived view establishes a processing relationship between two images, guaranteeing that the derived image shares the same coordinate system as its origin image so the two can be trivially overlayed and compared (e.g. a segmentation over its source image). Cropped or projected images are not derived views, as they do not share the coordinate system. */
 export type DerivedViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** A generic key-value descriptor attached to an object. Clients use descriptors to read arbitrary structured metadata without a dedicated field. */
 export type Descriptor = {
   __typename?: 'Descriptor';
   description?: Maybe<Scalars['String']['output']>;
@@ -949,8 +1213,11 @@ export type Descriptor = {
   value: Scalars['Any']['output'];
 };
 
+/** An input for releasing a set of items from another item, e.g. removing images from a dataset */
 export type DesociateInput = {
+  /** The ID of the target item */
   other: Scalars['ID']['input'];
+  /** The IDs of the items to release */
   selfs: Array<Scalars['ID']['input']>;
 };
 
@@ -982,6 +1249,7 @@ export type DimAnchorInput = {
   value: Scalars['Int']['input'];
 };
 
+/** A descriptor for a single named dimension of a dataset, recording its key, size and kind */
 export type DimDescriptor = {
   __typename?: 'DimDescriptor';
   /** The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't' */
@@ -1025,6 +1293,7 @@ export type DjangoModelType = {
   pk: Scalars['ID']['output'];
 };
 
+/** The data type of a column in a DuckDB table, as used by tabular data stored alongside images. */
 export enum DuckDbDataType {
   /** Large integer for large numeric values */
   Bigint = 'BIGINT',
@@ -1104,22 +1373,29 @@ export enum ElementKind {
   Waveplate = 'WAVEPLATE'
 }
 
+/** An era is a time space corresponding to an epoch on a microscope during an experiment. Clients use eras to contextualize images in real-world time via timepoint views. */
 export type Era = {
   __typename?: 'Era';
   begin?: Maybe<Scalars['DateTime']['output']>;
+  /** The task this era was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this era */
   provenanceEntries: Array<ProvenanceEntry>;
   views: Array<TimepointView>;
 };
 
 
+/** An era is a time space corresponding to an epoch on a microscope during an experiment. Clients use eras to contextualize images in real-world time via timepoint views. */
 export type EraProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An era is a time space corresponding to an epoch on a microscope during an experiment. Clients use eras to contextualize images in real-world time via timepoint views. */
 export type EraViewsArgs = {
   filters?: InputMaybe<TimepointViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1130,14 +1406,47 @@ export type EraFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<EraFilter>;
   OR?: InputMaybe<EraFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
   begin?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  end?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the instrument this era belongs to */
+  instrument?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating an era, a time period to which timepoint views relate */
 export type EraInput = {
+  /** The datetime at which the era begins */
   begin?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The name of the era */
   name: Scalars['String']['input'];
 };
+
+export type EraOrder =
+  { begin: Ordering; createdAt?: never; id?: never; name?: never; }
+  |  { begin?: never; createdAt: Ordering; id?: never; name?: never; }
+  |  { begin?: never; createdAt?: never; id: Ordering; name?: never; }
+  |  { begin?: never; createdAt?: never; id?: never; name: Ordering; };
 
 /** Euler angles for 3D orientation */
 export type Euler = {
@@ -1154,6 +1463,7 @@ export type EulerInput = {
   rz?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** An experiment. Experiments are used to group datasets and images that belong to the same scientific investigation, carrying a name and a description. */
 export type Experiment = {
   __typename?: 'Experiment';
   createdAt: Scalars['DateTime']['output'];
@@ -1161,11 +1471,12 @@ export type Experiment = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this experiment */
   provenanceEntries: Array<ProvenanceEntry>;
 };
 
 
+/** An experiment. Experiments are used to group datasets and images that belong to the same scientific investigation, carrying a name and a description. */
 export type ExperimentProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1175,15 +1486,33 @@ export type ExperimentFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ExperimentFilter>;
   OR?: InputMaybe<ExperimentFilter>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  description?: InputMaybe<StrFilterLookup>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ExperimentOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
+
+/** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
 export type File = {
   __typename?: 'File';
   /** The content type of the file */
   contentType?: Maybe<Scalars['String']['output']>;
+  /** The task this file was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   /** The user who created this file */
   creator: User;
   id: Scalars['ID']['output'];
@@ -1191,7 +1520,7 @@ export type File = {
   /** The organization this file belongs to */
   organization: Organization;
   origins: Array<Image>;
-  /** Provenance entries for this camera */
+  /** Provenance entries for this file */
   provenanceEntries: Array<ProvenanceEntry>;
   /** The size of the file in bytes */
   size?: Maybe<Scalars['Float']['output']>;
@@ -1200,18 +1529,21 @@ export type File = {
 };
 
 
+/** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
 export type FileOriginsArgs = {
   filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: Array<ImageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
 export type FileProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
 export type FileViewsArgs = {
   filters?: InputMaybe<FileViewFilter>;
   ordering?: Array<FileViewOrder>;
@@ -1231,20 +1563,45 @@ export type FileFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FileFilter>;
   OR?: InputMaybe<FileFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  contentType?: InputMaybe<StrFilterLookup>;
+  /** Filter for items created after this datetime */
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by the dataset this file belongs to */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of dataset IDs */
+  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter for files that are not derived from another file */
+  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by visibility scope */
   scope?: InputMaybe<ScopeKind>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
+  size?: InputMaybe<IntFilterLookup>;
 };
 
-export type FileOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type FileOrder =
+  { createdAt: Ordering; id?: never; name?: never; size?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; size?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; size?: never; }
+  |  { createdAt?: never; id?: never; name?: never; size: Ordering; };
 
+/** A file view establishes a relationship between an image and a file: it records that this view of the image was originally part of the file (optionally a specific series within it) and links back to the source file. */
 export type FileView = View & {
   __typename?: 'FileView';
   /** The accessor */
@@ -1269,6 +1626,7 @@ export type FileView = View & {
 };
 
 
+/** A file view establishes a relationship between an image and a file: it records that this view of the image was originally part of the file (optionally a specific series within it) and links back to the source file. */
 export type FileViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -1279,9 +1637,22 @@ export type FileViewFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FileViewFilter>;
   OR?: InputMaybe<FileViewFilter>;
+  /** Filter by the file this view belongs to */
   file?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
+  seriesIdentifier?: InputMaybe<StrFilterLookup>;
 };
 
+/** Input for creating a file view on an existing image, referenced by ID */
 export type FileViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1289,8 +1660,11 @@ export type FileViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the file this view represents */
   file: Scalars['ID']['input'];
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The series identifier of the file */
   seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1311,7 +1685,7 @@ export type FileViewInput = {
 };
 
 export type FileViewOrder =
-  { createdAt: Ordering; };
+  { id: Ordering; };
 
 /** A filter */
 export type FilterElement = OpticalElement & {
@@ -1416,13 +1790,19 @@ export type FromArrayLikeInput = {
   transformationViews?: InputMaybe<Array<PartialAffineTransformationViewInput>>;
 };
 
+/** Input for creating a file record from an uploaded big-file store */
 export type FromFileLike = {
+  /** The ID of the dataset to put the file in (defaults to the current default dataset) */
   dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** The uploaded big-file store to create the file from */
   file: Scalars['FileLike']['input'];
+  /** The name of the file */
   fileName: Scalars['String']['input'];
+  /** The IDs of entities this file was derived from */
   origins?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
+/** Input for creating a table from an uploaded parquet store */
 export type FromParquetLike = {
   /** The parquet dataframe to create the table from */
   dataframe: Scalars['ParquetLike']['input'];
@@ -1452,7 +1832,7 @@ export type GeneralMediaAccessGrant = {
   store?: Maybe<Scalars['String']['output']>;
 };
 
-/** Temporary S3 credentials for reading a Zarr store. */
+/** Temporary S3 credentials for reading a parquet object. */
 export type GeneralParquetAccessGrant = {
   __typename?: 'GeneralParquetAccessGrant';
   accessKey: Scalars['String']['output'];
@@ -1489,6 +1869,7 @@ export enum Granularity {
   Year = 'YEAR'
 }
 
+/** A histogram view describes the distribution of pixel values in a subset of an image, providing bins, min/max bounds and the histogram counts. Useful for clients that want to display or auto-scale contrast. */
 export type HistogramView = View & {
   __typename?: 'HistogramView';
   /** The accessor */
@@ -1515,12 +1896,15 @@ export type HistogramView = View & {
 };
 
 
+/** A histogram view describes the distribution of pixel values in a subset of an image, providing bins, min/max bounds and the histogram counts. Useful for clients that want to display or auto-scale contrast. */
 export type HistogramViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** Input for creating a histogram view on an existing image, referenced by ID */
 export type HistogramViewInput = {
+  /** The bin indices of the histogram (x values) */
   bins: Array<Scalars['Float']['input']>;
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1528,9 +1912,13 @@ export type HistogramViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The histogram of the image (y values) */
   histogram: Array<Scalars['Float']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The maximum pixel value of the histogram */
   max: Scalars['Float']['input'];
+  /** The minimum pixel value of the histogram */
   min: Scalars['Float']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1557,26 +1945,7 @@ export enum HistoryKind {
   Update = 'UPDATE'
 }
 
-export type IdFilterLookup = {
-  contains?: InputMaybe<Scalars['ID']['input']>;
-  endsWith?: InputMaybe<Scalars['ID']['input']>;
-  exact?: InputMaybe<Scalars['ID']['input']>;
-  gt?: InputMaybe<Scalars['ID']['input']>;
-  gte?: InputMaybe<Scalars['ID']['input']>;
-  iContains?: InputMaybe<Scalars['ID']['input']>;
-  iEndsWith?: InputMaybe<Scalars['ID']['input']>;
-  iExact?: InputMaybe<Scalars['ID']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['ID']['input']>;
-  inList?: InputMaybe<Array<Scalars['ID']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['ID']['input']>;
-  lte?: InputMaybe<Scalars['ID']['input']>;
-  range?: InputMaybe<Array<Scalars['ID']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['ID']['input']>;
-};
-
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type Image = {
   __typename?: 'Image';
   /** The affine transformation views describing position and scale */
@@ -1587,6 +1956,10 @@ export type Image = {
   channels: Array<ChannelInfo>;
   /** When this image was created */
   createdAt: Scalars['DateTime']['output'];
+  /** The task this image was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   /** Who created this image */
   creator?: Maybe<User>;
   /** The dataset this image belongs to */
@@ -1624,7 +1997,7 @@ export type Image = {
   pinned: Scalars['Boolean']['output'];
   /** The channels of this image */
   planes: Array<PlaneInfo>;
-  /** Provenance entries for this camera */
+  /** Provenance entries for this image */
   provenanceEntries: Array<ProvenanceEntry>;
   /** Reference views describing relationships to other views */
   referenceViews: Array<ReferenceView>;
@@ -1651,18 +2024,21 @@ export type Image = {
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageDerivedInstanceMaskViewsArgs = {
   filters?: InputMaybe<InstanceMaskViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageFileViewsArgs = {
   filters?: InputMaybe<FileViewFilter>;
   ordering?: Array<FileViewOrder>;
@@ -1670,80 +2046,96 @@ export type ImageFileViewsArgs = {
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageInstanceMaskViewsArgs = {
   filters?: InputMaybe<InstanceMaskViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageLightpathViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageMaskViewsArgs = {
   filters?: InputMaybe<MaskViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageOpticsViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageReferenceViewsArgs = {
   filters?: InputMaybe<ReferenceViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageRendersArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<RenderKind>>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageRgbContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
+  ordering?: Array<RgbContextOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageSnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
+  ordering?: Array<SnapshotOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageTimepointViewsArgs = {
   filters?: InputMaybe<TimepointViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageVideosArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to. */
 export type ImageViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** An image accessor declares that the values of its table columns are ids of associated images, allowing clients to resolve table rows to images. */
 export type ImageAccessor = Accessor & {
   __typename?: 'ImageAccessor';
   id: Scalars['ID']['output'];
@@ -1770,23 +2162,59 @@ export type ImageFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ImageFilter>;
   OR?: InputMaybe<ImageFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
   dataset?: InputMaybe<DatasetFilter>;
+  /** Filter by a list of dataset IDs */
+  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
+  description?: InputMaybe<StrFilterLookup>;
+  /** Filter for images converted from this file (through their file views) */
+  file?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for images that have (or have no) ROIs */
+  hasRois?: InputMaybe<Scalars['Boolean']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<ImageKind>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter for images that are not derived from another image */
   notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
-  scope?: InputMaybe<ScopeFilter>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by visibility scope */
+  scope?: InputMaybe<ScopeKind>;
+  /** Search by name (full-text search) */
   search?: InputMaybe<Scalars['String']['input']>;
   store?: InputMaybe<ZarrStoreFilter>;
+  /** Filter by tag names */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
   timepointViews?: InputMaybe<TimepointViewFilter>;
   transformationViews?: InputMaybe<AffineTransformationViewFilter>;
 };
 
-export type ImageOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export enum ImageKind {
+  Mask = 'MASK',
+  Rgb = 'RGB',
+  Unknown = 'UNKNOWN',
+  Voxel = 'VOXEL'
+}
+
+export type ImageOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
 
 export type ImageStats = {
   __typename?: 'ImageStats';
@@ -1843,6 +2271,7 @@ export enum ImageTimestampField {
   CreatedAt = 'CREATED_AT'
 }
 
+/** A view marking an image region as an instance segmentation mask, where each pixel value identifies an individual object instance. It points to the reference view it was computed from and can carry a per-instance label table. */
 export type InstanceMaskView = View & {
   __typename?: 'InstanceMaskView';
   /** The accessor */
@@ -1868,6 +2297,7 @@ export type InstanceMaskView = View & {
 };
 
 
+/** A view marking an image region as an instance segmentation mask, where each pixel value identifies an individual object instance. It points to the reference view it was computed from and can carry a per-instance label table. */
 export type InstanceMaskViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -1879,11 +2309,20 @@ export type InstanceMaskViewFilter = {
   NOT?: InputMaybe<InstanceMaskViewFilter>;
   OR?: InputMaybe<InstanceMaskViewFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the reference view this mask refers to */
+  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  /** Search by the name of the image this view belongs to */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating an instance mask view on an existing image, referenced by ID */
 export type InstanceMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1891,8 +2330,11 @@ export type InstanceMaskViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The instance labels of the mask and their corresponding colors */
   labels?: InputMaybe<Scalars['LabelsLike']['input']>;
+  /** The ID of the view that is masked by this instance mask */
   referenceView?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -1912,6 +2354,7 @@ export type InstanceMaskViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** One labelled instance of an instance mask: the row of the mask's label table describing a single segmented object. */
 export type InstanceMaskViewLabel = {
   __typename?: 'InstanceMaskViewLabel';
   id: Scalars['String']['output'];
@@ -1919,6 +2362,7 @@ export type InstanceMaskViewLabel = {
   values: Scalars['Any']['output'];
 };
 
+/** A microscope or other instrument, identified by its manufacturer, model and serial number. Clients use it through optics views to record which instrument acquired an image. */
 export type Instrument = {
   __typename?: 'Instrument';
   id: Scalars['ID']['output'];
@@ -1931,6 +2375,7 @@ export type Instrument = {
 };
 
 
+/** A microscope or other instrument, identified by its manufacturer, model and serial number. Clients use it through optics views to record which instrument acquired an image. */
 export type InstrumentViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1942,15 +2387,31 @@ export type InstrumentFilter = {
   NOT?: InputMaybe<InstrumentFilter>;
   OR?: InputMaybe<InstrumentFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manufacturer?: InputMaybe<StrFilterLookup>;
+  model?: InputMaybe<StrFilterLookup>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  serialNumber?: InputMaybe<StrFilterLookup>;
 };
 
+/** Input for creating or ensuring a microscope instrument */
 export type InstrumentInput = {
+  /** The manufacturer of the instrument */
   manufacturer?: InputMaybe<Scalars['String']['input']>;
+  /** The model of the instrument */
   model?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the instrument */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The unique serial number of the instrument */
   serialNumber: Scalars['String']['input'];
 };
+
+export type InstrumentOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type IntFilterLookup = {
   contains?: InputMaybe<Scalars['Int']['input']>;
@@ -1972,6 +2433,7 @@ export type IntFilterLookup = {
   startsWith?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A label accessor declares that the values of its table columns are pixel values of an associated mask view, allowing clients to join table rows to mask labels. */
 export type LabelAccessor = Accessor & {
   __typename?: 'LabelAccessor';
   id: Scalars['ID']['output'];
@@ -1987,6 +2449,7 @@ export type LabelInput = {
   label: Scalars['String']['input'];
 };
 
+/** A label view gives a label to a specific image channel, e.g. mapping an antibody to the channel it stains, so the labeling agent can be easily identified. Labels can also be used for other purposes, such as marking a channel as poor quality. */
 export type LabelView = View & {
   __typename?: 'LabelView';
   /** The accessor */
@@ -2010,11 +2473,13 @@ export type LabelView = View & {
 };
 
 
+/** A label view gives a label to a specific image channel, e.g. mapping an antibody to the channel it stains, so the labeling agent can be easily identified. Labels can also be used for other purposes, such as marking a channel as poor quality. */
 export type LabelViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** Input for creating a label view on an existing image, referenced by ID */
 export type LabelViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2022,7 +2487,9 @@ export type LabelViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The label of the entity class annotated by this view */
   label: Scalars['String']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2086,6 +2553,7 @@ export type LaserElement = OpticalElement & {
   serialNumber?: Maybe<Scalars['String']['output']>;
 };
 
+/** The placement of a lens in a scene, including rendering settings such as colormap, contrast limits and an affine transformation matrix */
 export type Layer = {
   __typename?: 'Layer';
   affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
@@ -2109,11 +2577,22 @@ export type LayerFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<LayerFilter>;
   OR?: InputMaybe<LayerFilter>;
-  description?: InputMaybe<StrFilterLookup>;
+  blending?: InputMaybe<BlendingChoices>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the lens this layer renders */
+  lens?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the scene this layer is placed in */
+  scene?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<PlacementStatus>;
+  validity?: InputMaybe<PlacementValidity>;
 };
 
+export type LayerOrder =
+  { id: Ordering; };
+
+/** A Lens is a way of looking at a dataset: a dimensional selection (slices) over a dataset that defines a view of its data */
 export type Lens = {
   __typename?: 'Lens';
   activeAnchors: Array<CoordinateAnchor>;
@@ -2150,9 +2629,15 @@ export type LensFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<LensFilter>;
   OR?: InputMaybe<LensFilter>;
+  /** Filter by the dataset this lens looks at */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
+
+export type LensOrder =
+  { id: Ordering; };
 
 /** Directed edge connecting two ports */
 export type LightEdge = {
@@ -2181,6 +2666,7 @@ export type LightEdgeInput = {
   targetPortId: Scalars['ID']['input'];
 };
 
+/** The light path truth: the optical light path graph pinned to a coordinate anchor */
 export type LightPath = {
   __typename?: 'LightPath';
   graph: LightpathGraph;
@@ -2220,6 +2706,7 @@ export type LightpathGraphInput = {
   elements: Array<OpticalElementInput>;
 };
 
+/** A view attaching the optical path (light sources, filters, detectors and their connections) that light travelled through when this image region was acquired. */
 export type LightpathView = View & {
   __typename?: 'LightpathView';
   /** The accessor */
@@ -2244,11 +2731,13 @@ export type LightpathView = View & {
 };
 
 
+/** A view attaching the optical path (light sources, filters, detectors and their connections) that light travelled through when this image region was acquired. */
 export type LightpathViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** A view marking an image region as a semantic segmentation mask, where pixel values are class labels. It points to the reference view it was computed from and can carry a label table. */
 export type MaskView = View & {
   __typename?: 'MaskView';
   /** The accessor */
@@ -2273,6 +2762,7 @@ export type MaskView = View & {
 };
 
 
+/** A view marking an image region as a semantic segmentation mask, where pixel values are class labels. It points to the reference view it was computed from and can carry a label table. */
 export type MaskViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -2284,11 +2774,20 @@ export type MaskViewFilter = {
   NOT?: InputMaybe<MaskViewFilter>;
   OR?: InputMaybe<MaskViewFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the reference view this mask refers to */
+  referenceView?: InputMaybe<Scalars['ID']['input']>;
+  /** Search by the name of the image this view belongs to */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a mask view on an existing image, referenced by ID */
 export type MaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2296,8 +2795,11 @@ export type MaskViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The labels of the mask and their corresponding colors */
   labels?: InputMaybe<Scalars['LabelsLike']['input']>;
+  /** The ID of the view that is masked by this mask */
   referenceView?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2317,6 +2819,7 @@ export type MaskViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Display information for one pixel value of a mask: the label it represents and the color it is rendered with. */
 export type MaskedPixelInfo = {
   __typename?: 'MaskedPixelInfo';
   color: Scalars['String']['output'];
@@ -2382,6 +2885,7 @@ export type MediaUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+/** A user's membership in an organization, carrying the roles they hold there. */
 export type Membership = {
   __typename?: 'Membership';
   datasets: Array<Dataset>;
@@ -2393,11 +2897,14 @@ export type Membership = {
 };
 
 
+/** A user's membership in an organization, carrying the roles they hold there. */
 export type MembershipDatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** A 3D mesh belonging to a dataset, with its geometry kept in a big file store. Clients use it to download or visualize surface reconstructions derived from image data. */
 export type Mesh = {
   __typename?: 'Mesh';
   id: Scalars['ID']['output'];
@@ -2410,15 +2917,36 @@ export type MeshFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<MeshFilter>;
   OR?: InputMaybe<MeshFilter>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the dataset this mesh belongs to */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of dataset IDs */
+  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a 3D mesh from an uploaded mesh file */
 export type MeshInput = {
+  /** The uploaded mesh file store to create the mesh from */
   mesh: Scalars['MeshLike']['input'];
+  /** The name of the mesh */
   name: Scalars['String']['input'];
 };
+
+export type MeshOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
 
 /** Schema for unstructured metadata attached to a file. */
 export type MetaSchema = {
@@ -2458,17 +2986,20 @@ export type ModelChange = {
   oldValue?: Maybe<Scalars['String']['output']>;
 };
 
+/** A multi-well plate with a grid of rows and columns used during acquisition. Clients use it to locate images within specific wells via well position views. */
 export type MultiWellPlate = {
   __typename?: 'MultiWellPlate';
   columns?: Maybe<Scalars['Int']['output']>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
+  organization: DjangoModelType;
   rows?: Maybe<Scalars['Int']['output']>;
   views: Array<WellPositionView>;
 };
 
 
+/** A multi-well plate with a grid of rows and columns used during acquisition. Clients use it to locate images within specific wells via well position views. */
 export type MultiWellPlateViewsArgs = {
   filters?: InputMaybe<WellPositionViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2479,16 +3010,32 @@ export type MultiWellPlateFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<MultiWellPlateFilter>;
   OR?: InputMaybe<MultiWellPlateFilter>;
+  columns?: InputMaybe<IntFilterLookup>;
+  description?: InputMaybe<StrFilterLookup>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  rows?: InputMaybe<IntFilterLookup>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating or ensuring a multi-well plate */
 export type MultiWellPlateInput = {
+  /** The number of columns in the plate */
   columns?: InputMaybe<Scalars['Int']['input']>;
+  /** The name of the multi-well plate */
   name: Scalars['String']['input'];
+  /** The number of rows in the plate */
   rows?: InputMaybe<Scalars['Int']['input']>;
 };
+
+export type MultiWellPlateOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -2639,7 +3186,7 @@ export type Mutation = {
   /** Pin an instrument for quick access */
   pinInstrument: Instrument;
   /** Pin a mesh for quick access */
-  pinMesh: Snapshot;
+  pinMesh: Mesh;
   /** Pin a multi-well plate for quick access */
   pinMultiWellPlate: MultiWellPlate;
   /** Pin an objective for quick access */
@@ -3073,7 +3620,7 @@ export type MutationPinInstrumentArgs = {
 
 
 export type MutationPinMeshArgs = {
-  input: DeleteMeshInput;
+  input: PinMeshInput;
 };
 
 
@@ -3237,6 +3784,7 @@ export type MutationUpdateRoiArgs = {
   input: UpdateRoiInput;
 };
 
+/** A microscope objective, described by its magnification, numerical aperture and immersion medium. Clients use it through optics views to record which objective an image was acquired with. */
 export type Objective = {
   __typename?: 'Objective';
   id: Scalars['ID']['output'];
@@ -3250,6 +3798,7 @@ export type Objective = {
 };
 
 
+/** A microscope objective, described by its magnification, numerical aperture and immersion medium. Clients use it through optics views to record which objective an image was acquired with. */
 export type ObjectiveViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3303,7 +3852,15 @@ export type ObjectiveFilter = {
   NOT?: InputMaybe<ObjectiveFilter>;
   OR?: InputMaybe<ObjectiveFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  immersion?: InputMaybe<StrFilterLookup>;
+  magnification?: InputMaybe<FloatFilterLookup>;
+  na?: InputMaybe<FloatFilterLookup>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  serialNumber?: InputMaybe<StrFilterLookup>;
 };
 
 export enum ObjectiveImmersion {
@@ -3316,13 +3873,24 @@ export enum ObjectiveImmersion {
   WaterDipping = 'WATER_DIPPING'
 }
 
+/** Input for creating or ensuring a microscope objective */
 export type ObjectiveInput = {
+  /** The immersion medium of the objective (e.g. oil, water, air) */
   immersion?: InputMaybe<Scalars['String']['input']>;
+  /** The magnification of the objective */
   magnification?: InputMaybe<Scalars['Float']['input']>;
+  /** The numerical aperture of the objective */
   na?: InputMaybe<Scalars['Float']['input']>;
+  /** The name of the objective */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The unique serial number of the objective */
   serialNumber: Scalars['String']['input'];
 };
+
+export type ObjectiveOrder =
+  { id: Ordering; magnification?: never; name?: never; }
+  |  { id?: never; magnification: Ordering; name?: never; }
+  |  { id?: never; magnification?: never; name: Ordering; };
 
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3390,6 +3958,7 @@ export type OpticalElementInput = {
   workingDistanceMm?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** A view describing the optics used to acquire an image region: the instrument, objective and camera. Use it to inspect or compare acquisition hardware settings. */
 export type OpticsView = View & {
   __typename?: 'OpticsView';
   /** The accessor */
@@ -3415,6 +3984,7 @@ export type OpticsView = View & {
 };
 
 
+/** A view describing the optics used to acquire an image region: the instrument, objective and camera. Use it to inspect or compare acquisition hardware settings. */
 export type OpticsViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -3426,21 +3996,35 @@ export type OpticsViewFilter = {
   NOT?: InputMaybe<OpticsViewFilter>;
   OR?: InputMaybe<OpticsViewFilter>;
   camera?: InputMaybe<CameraFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   instrument?: InputMaybe<InstrumentFilter>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
   objective?: InputMaybe<ObjectiveFilter>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating an optics view on an existing image, referenced by ID */
 export type OpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum c (channel) coordinate of the view */
   cMin?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the camera used to acquire the image */
   camera?: InputMaybe<Scalars['ID']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The ID of the instrument used to acquire the image */
   instrument?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the objective used to acquire the image */
   objective?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3460,6 +4044,7 @@ export type OpticsViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** The hardware truth: the recorded microscope (Optikit) state pinned to a coordinate anchor */
 export type OptikitState = {
   __typename?: 'OptikitState';
   chunkShape: Array<Scalars['Int']['output']>;
@@ -3478,6 +4063,7 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+/** An organization (tenant). Every object in mikro is scoped to exactly one organization, and queries only ever see the current organization's data. */
 export type Organization = {
   __typename?: 'Organization';
   id: Scalars['ID']['output'];
@@ -3577,7 +4163,9 @@ export type ParquetUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+/** Input for creating an acquisition view (when and by whom the image was acquired) as part of creating an image; the image is taken from the surrounding input */
 export type PartialAcquisitionViewInput = {
+  /** The time the image was acquired */
   acquiredAt?: InputMaybe<Scalars['DateTime']['input']>;
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3585,7 +4173,9 @@ export type PartialAcquisitionViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** A cleartext description of the image acquisition */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the user that acquired the image */
   operator?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3605,7 +4195,9 @@ export type PartialAcquisitionViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating an affine transformation view (mapping the image onto a stage) as part of creating an image; the image is taken from the surrounding input */
 export type PartialAffineTransformationViewInput = {
+  /** The 4x4 affine matrix mapping image coordinates to stage coordinates */
   affineMatrix: Scalars['FourByFourMatrix']['input'];
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3613,6 +4205,7 @@ export type PartialAffineTransformationViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the stage this transformation maps the image onto */
   stage?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3632,6 +4225,7 @@ export type PartialAffineTransformationViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a channel view (channel metadata such as name and wavelengths) as part of creating an image; the image is taken from the surrounding input */
 export type PartialChannelViewInput = {
   /** The acquisition mode of the channel */
   acquisitionMode?: InputMaybe<Scalars['String']['input']>;
@@ -3665,6 +4259,7 @@ export type PartialChannelViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a derived view (recording the image this image was derived from) as part of creating an image; the image is taken from the surrounding input */
 export type PartialDerivedViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3672,6 +4267,7 @@ export type PartialDerivedViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this image was derived from */
   originImage: Scalars['ID']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3691,6 +4287,7 @@ export type PartialDerivedViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a file view (linking the image region to the originating file) as part of creating an image; the image is taken from the surrounding input */
 export type PartialFileViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3698,7 +4295,9 @@ export type PartialFileViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the file this view represents */
   file: Scalars['ID']['input'];
+  /** The series identifier of the file */
   seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3718,13 +4317,19 @@ export type PartialFileViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for an image accessor on a table, linking columns to an image (without the table reference) */
 export type PartialImageAccessorInput = {
+  /** The ID of the image the accessor values refer to */
   image: Scalars['ID']['input'];
+  /** The column keys of the table this accessor refers to */
   keys: Array<Scalars['String']['input']>;
+  /** The maximum row index this accessor applies to */
   maxIndex?: InputMaybe<Scalars['Int']['input']>;
+  /** The minimum row index this accessor applies to */
   minIndex?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating an instance mask view (an instance mask of another image) as part of creating an image; the image is taken from the surrounding input */
 export type PartialInstanceMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3732,7 +4337,9 @@ export type PartialInstanceMaskViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The instance labels of the mask and their corresponding colors */
   labels?: InputMaybe<Scalars['LabelsLike']['input']>;
+  /** The ID of the view that is masked by this instance mask */
   referenceView?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3752,13 +4359,19 @@ export type PartialInstanceMaskViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for a label accessor on a table, linking columns to a pixel view (without the table reference) */
 export type PartialLabelAccessorInput = {
+  /** The column keys of the table this accessor refers to */
   keys: Array<Scalars['String']['input']>;
+  /** The maximum row index this accessor applies to */
   maxIndex?: InputMaybe<Scalars['Int']['input']>;
+  /** The minimum row index this accessor applies to */
   minIndex?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the pixel view the label values refer to */
   pixelView: Scalars['ID']['input'];
 };
 
+/** Input for creating a lightpath view (the optical path of the instrument) as part of creating an image; the image is taken from the surrounding input */
 export type PartialLightpathViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3766,6 +4379,7 @@ export type PartialLightpathViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The lightpath graph of the instrument */
   graph: LightpathGraphInput;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3785,6 +4399,7 @@ export type PartialLightpathViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a mask view (a label mask of another image) as part of creating an image; the image is taken from the surrounding input */
 export type PartialMaskViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3792,7 +4407,9 @@ export type PartialMaskViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The labels of the mask and their corresponding colors */
   labels?: InputMaybe<Scalars['LabelsLike']['input']>;
+  /** The ID of the view that is masked by this mask */
   referenceView?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3812,15 +4429,19 @@ export type PartialMaskViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating an optics view (instrument, objective and camera used) as part of creating an image; the image is taken from the surrounding input */
 export type PartialOpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum c (channel) coordinate of the view */
   cMin?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the camera used to acquire the image */
   camera?: InputMaybe<Scalars['ID']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the instrument used to acquire the image */
   instrument?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the objective used to acquire the image */
   objective?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3840,8 +4461,11 @@ export type PartialOpticsViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating an RGB render view (how a channel is rendered in an RGB context) as part of creating an image; the image is taken from the surrounding input */
 export type PartialRgbViewInput = {
+  /** Whether the view is active */
   active?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The base color of the channel as RGBA values (if using a mapped scaler) */
   baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3849,12 +4473,19 @@ export type PartialRgbViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The color map applied to the channel */
   colorMap?: InputMaybe<ColorMap>;
+  /** The ID of the RGB render context this view belongs to */
   context?: InputMaybe<Scalars['ID']['input']>;
+  /** The maximum contrast limit of the channel */
   contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
+  /** The minimum contrast limit of the channel */
   contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
+  /** The gamma correction applied to the channel */
   gamma?: InputMaybe<Scalars['Float']['input']>;
+  /** Whether to rescale the channel data to the contrast limits */
   rescale?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The scale factor applied to the channel when rendering */
   scale?: InputMaybe<Scalars['Float']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3874,6 +4505,7 @@ export type PartialRgbViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a ROI view (marking the image as a cutout of a parent image's ROI) as part of creating an image; the image is taken from the surrounding input */
 export type PartialRoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3881,6 +4513,7 @@ export type PartialRoiViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the ROI of the parent image this view is a cutout of */
   roi: Scalars['ID']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3900,6 +4533,7 @@ export type PartialRoiViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a reference view (marking the region as a reference for other views) as part of creating an image; the image is taken from the surrounding input */
 export type PartialReferenceViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3925,6 +4559,7 @@ export type PartialReferenceViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a scale view (the scale factors relative to a parent view) as part of creating an image; the image is taken from the surrounding input */
 export type PartialScaleViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3932,11 +4567,17 @@ export type PartialScaleViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the parent view this scale view is derived from */
   parent?: InputMaybe<Scalars['ID']['input']>;
+  /** The scale in c direction */
   scaleC?: InputMaybe<Scalars['Float']['input']>;
+  /** The scale in t direction */
   scaleT?: InputMaybe<Scalars['Float']['input']>;
+  /** The scale in x direction */
   scaleX?: InputMaybe<Scalars['Float']['input']>;
+  /** The scale in y direction */
   scaleY?: InputMaybe<Scalars['Float']['input']>;
+  /** The scale in z direction */
   scaleZ?: InputMaybe<Scalars['Float']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3956,6 +4597,7 @@ export type PartialScaleViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for creating a timepoint view (placing the region in time relative to an era) as part of creating an image; the image is taken from the surrounding input */
 export type PartialTimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3963,8 +4605,11 @@ export type PartialTimepointViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the era this timepoint belongs to */
   era?: InputMaybe<Scalars['ID']['input']>;
+  /** The index of the timepoint since the start of the era */
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
+  /** The time in ms since the start of the era */
   msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -3990,58 +4635,99 @@ export type PermissionOption = {
   value: Scalars['ID']['output'];
 };
 
+/** Input for pinning or unpinning a camera for quick access */
 export type PinCameraInput = {
+  /** The ID of the camera to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a dataset for quick access */
 export type PinDatasetInput = {
+  /** The ID of the dataset to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning an era for quick access */
 export type PinEraInput = {
+  /** The ID of the era to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning an image for quick access */
 export type PinImageInput = {
+  /** The ID of the image to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning an instrument for quick access */
 export type PinInstrumentInput = {
+  /** The ID of the instrument to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a mesh for quick access */
+export type PinMeshInput = {
+  /** The ID of the mesh to pin or unpin */
+  id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
+  pin: Scalars['Boolean']['input'];
+};
+
+/** Input for pinning or unpinning an objective for quick access */
 export type PinObjectiveInput = {
+  /** The ID of the objective to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a ROI for quick access */
 export type PinRoiInput = {
+  /** The ID of the ROI to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a snapshot for quick access */
 export type PinSnapshotInput = {
+  /** The ID of the snapshot to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a stage for quick access */
 export type PinStageInput = {
+  /** The ID of the stage to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a view collection for quick access */
 export type PinViewCollectionInput = {
+  /** The ID of the view collection to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
+/** Input for pinning or unpinning a view for quick access */
 export type PinViewInput = {
+  /** The ID of the view to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
@@ -4063,8 +4749,11 @@ export type PinholeElement = OpticalElement & {
   serialNumber?: Maybe<Scalars['String']['output']>;
 };
 
+/** Input for pinning or unpinning a multi-well plate for quick access */
 export type PintMultiWellPlateInput = {
+  /** The ID of the multi-well plate to pin or unpin */
   id: Scalars['ID']['input'];
+  /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
@@ -4073,6 +4762,13 @@ export enum PlacementStatus {
   Archived = 'ARCHIVED',
   Deleted = 'DELETED',
   Inactive = 'INACTIVE'
+}
+
+export enum PlacementValidity {
+  Inferred = 'INFERRED',
+  Manual = 'MANUAL',
+  Unknown = 'UNKNOWN',
+  Validated = 'VALIDATED'
 }
 
 /** A channel descriptor */
@@ -4105,14 +4801,14 @@ export type ProvenanceEntry = {
   client?: Maybe<Client>;
   /** The date of the change. */
   date: Scalars['DateTime']['output'];
-  /** The assignation ID during which the change occurred. If it was happening outside of an assignation, it will be None. */
-  during?: Maybe<Scalars['String']['output']>;
   /** The effective changes made to the model. */
   effectiveChanges: Array<ModelChange>;
   /** The ID of the history entry. */
   id: Scalars['ID']['output'];
   /** The type of change that was made. */
   kind: HistoryKind;
+  /** The task during which the change occurred, if any. */
+  task?: Maybe<Task>;
   /** User who made the change. */
   user?: Maybe<User>;
 };
@@ -4130,91 +4826,169 @@ export type Query = {
   __typename?: 'Query';
   _entities: Array<Maybe<_Entity>>;
   _service: _Service;
+  /** List acquisition views (recording when and by whom images were acquired) */
   acquisitionViews: Array<AcquisitionView>;
   /** Get all active views for a specific image */
   activeViews: Array<View>;
+  /** Get a single array dataset by ID */
   adataset: ADataset;
+  /** List array datasets (N-dimensional arrays with named dimensions and anchored metadata) */
   adatasets: Array<ADataset>;
+  /** List affine transformation views (placing images in physical stage space) */
   affineTransformationViews: Array<AffineTransformationView>;
   /** Get available permissions for a specific identifier */
   availablePermissions: Array<PermissionOption>;
+  /** Get a single camera by ID */
   camera: Camera;
+  /** List channel views (describing the channels of images) */
   channelViews: Array<ChannelView>;
+  /** Get the channel infos of a specific image */
   channelsFor: Array<ChannelInfo>;
+  /** List the child datasets of a dataset */
   children: Array<DatasetImageFile>;
+  /** List continuous scan views (recording scan directions) */
   continousScanViews: Array<ContinousScanView>;
+  /** Get a single data array by ID */
   dataArray: DataArray;
+  /** List data arrays (the multiscale zarr arrays backing array datasets) */
   dataArrays: Array<DataArray>;
+  /** Get a single data ROI by ID */
   dataRoi: DataRoi;
+  /** List data ROIs (regions of interest on array datasets) */
   dataRois: Array<DataRoi>;
+  /** Get a single dataset by ID */
   dataset: Dataset;
+  /** List datasets (folder-like collections of images, files and tables) */
   datasets: Array<Dataset>;
+  /** Get generic key-value descriptors for an object identified by identifier and ID */
   describe: Array<Descriptor>;
+  /** List eras (named time epochs on a microscope that timepoint views anchor to) */
   eras: Array<Era>;
+  /** Get a single experiment by ID */
   experiment: Experiment;
+  /** List experiments */
   experiments: Array<Experiment>;
+  /** Get a single file by ID */
   file: File;
+  /** Get a single file view by ID */
   fileView: FileView;
+  /** List file views (linking images to the raw files they were converted from) */
   fileViews: Array<FileView>;
+  /** List files (raw microscopy files such as .czi or .ome.tiff) */
   files: Array<File>;
   /** Returns a single image by ID */
   image: Image;
+  /** List image accessors (columns of tables that reference images) */
   imageAccessors: Array<ImageAccessor>;
+  /** List images in the current organization, filterable and orderable */
   images: Array<Image>;
   /** Get statistics about images */
   imagesStats: ImageStats;
+  /** Get one labelled instance of an instance mask by its compound ID (maskId-rowId) */
   instanceMaskViewLabel: InstanceMaskViewLabel;
+  /** Get a single instrument by ID */
   instrument: Instrument;
+  /** List microscopes/instruments */
   instruments: Array<Instrument>;
+  /** List label accessors (columns of tables that reference mask labels) */
   labelAccessors: Array<LabelAccessor>;
+  /** List label views (mapping image channels to labels) */
   labelViews: Array<LabelView>;
+  /** Get a single layer by ID */
   layer: Layer;
+  /** List layers (placements of a lens inside a scene) */
   layers: Array<Layer>;
+  /** Get a single lens by ID */
   lens: Lens;
+  /** List lenses (parameterized ways of looking at an array dataset) */
   lenses: Array<Lens>;
-  /** Returns a single image by ID */
+  /** Get a single lightpath view by ID */
   lightpathView: LightpathView;
+  /** Get display information (label and color) for one pixel value of a mask */
   maskedPixelInfo: MaskedPixelInfo;
+  /** List the memberships of the current organization (excluding bots) */
   members: Array<Membership>;
+  /** Get a single 3D mesh by ID */
   mesh: Mesh;
+  /** List 3D meshes */
   meshes: Array<Mesh>;
+  /** Get a single multi well plate by ID */
   multiWellPlate: MultiWellPlate;
+  /** List multi well plates */
   multiWellPlates: Array<MultiWellPlate>;
+  /** List datasets created by the current user */
   mydatasets: Array<Dataset>;
+  /** List eras created by the current user */
   myeras: Array<Era>;
+  /** List files created by the current user */
   myfiles: Array<File>;
+  /** List images created by the current user */
   myimages: Array<Image>;
+  /** List objectives created by the current user */
   myobjectives: Array<Objective>;
+  /** List snapshots created by the current user */
   mysnapshots: Array<Snapshot>;
+  /** List tables created by the current user */
   mytables: Array<Table>;
+  /** Get a single objective by ID */
   objective: Objective;
+  /** List microscope objectives */
   objectives: Array<Objective>;
   /** Get permissions for a specific object */
   permissions: Array<UserObjectPermission>;
+  /** Get a random image of the current organization */
   randomImage: Image;
+  /** Get a single render tree by ID */
   renderTree: RenderTree;
+  /** List render trees (saved client-side render configurations) */
   renderTrees: Array<RenderTree>;
+  /** Get a single RGB render view by ID */
   rgbView: RgbView;
+  /** List RGB render views (per-channel display settings) */
   rgbViews: Array<RgbView>;
+  /** Get a single RGB render context by ID */
   rgbcontext: RgbContext;
+  /** List RGB render contexts (groups of RGB views composing a displayable image) */
   rgbcontexts: Array<RgbContext>;
+  /** Get a single region of interest by ID */
   roi: Roi;
+  /** List regions of interest drawn on images */
   rois: Array<Roi>;
+  /** List the rows of a table */
   rows: Array<Scalars['MetricMap']['output']>;
+  /** List scale views (the levels of multiscale image pyramids) */
   scaleViews: Array<ScaleView>;
+  /** Get a single scene by ID */
   scene: Scene;
+  /** List scenes (compositions of layers over array datasets) */
   scenes: Array<Scene>;
+  /** Get a single snapshot by ID */
   snapshot: Snapshot;
+  /** List snapshots (pre-rendered thumbnail images of images) */
   snapshots: Array<Snapshot>;
+  /** Get a single stage by ID */
   stage: Stage;
+  /** List stages (the 3D physical spaces images are positioned in) */
   stages: Array<Stage>;
+  /** Get a single table by ID */
   table: Table;
+  /** Get a single table cell by its compound ID (tableId-rowId-columnId) */
   tableCell: TableCell;
+  /** List the cells of a table, row-major over the table's parquet data */
   tableCells: Array<TableCell>;
+  /** Get a single table row by its compound ID (tableId-rowId) */
   tableRow: TableRow;
+  /** List the rows of a table, paginated over the table's parquet data */
   tableRows: Array<TableRow>;
+  /** List tables (tabular data backed by parquet stores) */
   tables: Array<Table>;
+  /** Get a single Rekuest task by ID */
+  task: Task;
+  /** List the Rekuest tasks under which objects were created or changed */
+  tasks: Array<Task>;
+  /** List timepoint views (anchoring image regions in real time) */
   timepointViews: Array<TimepointView>;
+  /** List well position views (mapping images to multi well plate wells) */
   wellPositionViews: Array<WellPositionView>;
 };
 
@@ -4239,6 +5013,7 @@ export type QueryAdatasetArgs = {
 
 export type QueryAdatasetsArgs = {
   filters?: InputMaybe<ADatasetFilter>;
+  ordering?: Array<ADatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4288,6 +5063,7 @@ export type QueryDataArrayArgs = {
 
 export type QueryDataArraysArgs = {
   filters?: InputMaybe<DataArrayFilter>;
+  ordering?: Array<DataArrayOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4299,6 +5075,7 @@ export type QueryDataRoiArgs = {
 
 export type QueryDataRoisArgs = {
   filters?: InputMaybe<DataRoiFilter>;
+  ordering?: Array<DataRoiOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4310,6 +5087,7 @@ export type QueryDatasetArgs = {
 
 export type QueryDatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4322,6 +5100,7 @@ export type QueryDescribeArgs = {
 
 export type QueryErasArgs = {
   filters?: InputMaybe<EraFilter>;
+  ordering?: Array<EraOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4333,6 +5112,7 @@ export type QueryExperimentArgs = {
 
 export type QueryExperimentsArgs = {
   filters?: InputMaybe<ExperimentFilter>;
+  ordering?: Array<ExperimentOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4356,7 +5136,7 @@ export type QueryFileViewsArgs = {
 
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4368,7 +5148,7 @@ export type QueryImageArgs = {
 
 export type QueryImagesArgs = {
   filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: Array<ImageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4388,6 +5168,13 @@ export type QueryInstrumentArgs = {
 };
 
 
+export type QueryInstrumentsArgs = {
+  filters?: InputMaybe<InstrumentFilter>;
+  ordering?: Array<InstrumentOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryLayerArgs = {
   id: Scalars['ID']['input'];
 };
@@ -4395,6 +5182,7 @@ export type QueryLayerArgs = {
 
 export type QueryLayersArgs = {
   filters?: InputMaybe<LayerFilter>;
+  ordering?: Array<LayerOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4406,6 +5194,7 @@ export type QueryLensArgs = {
 
 export type QueryLensesArgs = {
   filters?: InputMaybe<LensFilter>;
+  ordering?: Array<LensOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4427,6 +5216,7 @@ export type QueryMeshArgs = {
 
 export type QueryMeshesArgs = {
   filters?: InputMaybe<MeshFilter>;
+  ordering?: Array<MeshOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4438,50 +5228,69 @@ export type QueryMultiWellPlateArgs = {
 
 export type QueryMultiWellPlatesArgs = {
   filters?: InputMaybe<MultiWellPlateFilter>;
+  ordering?: Array<MultiWellPlateOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMydatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
+  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMyerasArgs = {
   filters?: InputMaybe<EraFilter>;
+  ordering?: Array<EraOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMyfilesArgs = {
   filters?: InputMaybe<FileFilter>;
-  order?: InputMaybe<FileOrder>;
+  ordering?: Array<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMyimagesArgs = {
   filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: Array<ImageOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMyobjectivesArgs = {
+  filters?: InputMaybe<ObjectiveFilter>;
+  ordering?: Array<ObjectiveOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMysnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
+  ordering?: Array<SnapshotOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryMytablesArgs = {
   filters?: InputMaybe<TableFilter>;
+  ordering?: Array<TableOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryObjectiveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryObjectivesArgs = {
+  filters?: InputMaybe<ObjectiveFilter>;
+  ordering?: Array<ObjectiveOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -4498,7 +5307,7 @@ export type QueryRenderTreeArgs = {
 
 export type QueryRenderTreesArgs = {
   filters?: InputMaybe<RenderTreeFilter>;
-  order?: InputMaybe<RenderTreeOrder>;
+  ordering?: Array<RenderTreeOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4521,6 +5330,7 @@ export type QueryRgbcontextArgs = {
 
 export type QueryRgbcontextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
+  ordering?: Array<RgbContextOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4532,7 +5342,7 @@ export type QueryRoiArgs = {
 
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
-  order?: InputMaybe<RoiOrder>;
+  ordering?: Array<RoiOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4563,6 +5373,7 @@ export type QuerySnapshotArgs = {
 
 export type QuerySnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
+  ordering?: Array<SnapshotOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4574,6 +5385,7 @@ export type QueryStageArgs = {
 
 export type QueryStagesArgs = {
   filters?: InputMaybe<StageFilter>;
+  ordering?: Array<StageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4589,8 +5401,9 @@ export type QueryTableCellArgs = {
 
 
 export type QueryTableCellsArgs = {
-  filters: TableCellFilter;
-  pagination: OffsetPaginationInput;
+  filters?: InputMaybe<TableCellFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  table: Scalars['ID']['input'];
 };
 
 
@@ -4600,13 +5413,27 @@ export type QueryTableRowArgs = {
 
 
 export type QueryTableRowsArgs = {
-  filters: TableRowFilter;
-  pagination: OffsetPaginationInput;
+  filters?: InputMaybe<TableRowFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  table: Scalars['ID']['input'];
 };
 
 
 export type QueryTablesArgs = {
   filters?: InputMaybe<TableFilter>;
+  ordering?: Array<TableOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4622,6 +5449,7 @@ export type QueryWellPositionViewsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** An RGB context is a collection of RGB views that together describe how an image should be rendered in RGB, e.g. grouping the views that represent each channel with its color map and contrast settings. */
 export type RgbContext = {
   __typename?: 'RGBContext';
   blending: Blending;
@@ -4637,8 +5465,10 @@ export type RgbContext = {
 };
 
 
+/** An RGB context is a collection of RGB views that together describe how an image should be rendered in RGB, e.g. grouping the views that represent each channel with its color map and contrast settings. */
 export type RgbContextSnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
+  ordering?: Array<SnapshotOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4647,11 +5477,24 @@ export type RgbContextFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<RgbContextFilter>;
   OR?: InputMaybe<RgbContextFilter>;
+  blending?: InputMaybe<BlendingChoices>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this context renders */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type RgbContextOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
+/** An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings. */
 export type RgbView = View & {
   __typename?: 'RGBView';
   /** The accessor */
@@ -4683,23 +5526,28 @@ export type RgbView = View & {
 };
 
 
+/** An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings. */
 export type RgbViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
 
+/** An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings. */
 export type RgbViewContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
+  ordering?: Array<RgbContextOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings. */
 export type RgbViewFullColourArgs = {
   format?: InputMaybe<ColorFormat>;
 };
 
 
+/** An RGB view describes how a subset of an image (typically a channel) is rendered in RGB within an RGB context, carrying color map, gamma and contrast limit settings. */
 export type RgbViewNameArgs = {
   long?: Scalars['Boolean']['input'];
 };
@@ -4709,13 +5557,27 @@ export type RgbViewFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<RgbViewFilter>;
   OR?: InputMaybe<RgbViewFilter>;
+  active?: InputMaybe<Scalars['Boolean']['input']>;
+  colorMap?: InputMaybe<ColorMapChoices>;
+  /** Filter by the RGB contexts this view belongs to */
+  contexts?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by the name of the image this view belongs to */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating an RGB render view on an existing image, referenced by ID */
 export type RgbViewInput = {
+  /** Whether the view is active */
   active?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The base color of the channel as RGBA values (if using a mapped scaler) */
   baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4723,13 +5585,21 @@ export type RgbViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The color map applied to the channel */
   colorMap?: InputMaybe<ColorMap>;
+  /** The ID of the RGB render context this view belongs to */
   context: Scalars['ID']['input'];
+  /** The maximum contrast limit of the channel */
   contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
+  /** The minimum contrast limit of the channel */
   contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
+  /** The gamma correction applied to the channel */
   gamma?: InputMaybe<Scalars['Float']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** Whether to rescale the channel data to the contrast limits */
   rescale?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The scale factor applied to the channel when rendering */
   scale?: InputMaybe<Scalars['Float']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4749,21 +5619,27 @@ export type RgbViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A region of interest drawn on an image, defined by a list of 5D vectors (c, t, z, y, x) and a kind (rectangle, path, point, ...). Use ROIs to mark and share structures of interest. */
 export type Roi = {
   __typename?: 'ROI';
   createdAt: Scalars['DateTime']['output'];
+  /** The task this ROI was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   creator?: Maybe<User>;
   id: Scalars['ID']['output'];
   image: Image;
   kind: RoiKind;
   name: Scalars['String']['output'];
   pinned: Scalars['Boolean']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this ROI */
   provenanceEntries: Array<ProvenanceEntry>;
   vectors: Array<Scalars['FiveDVector']['output']>;
 };
 
 
+/** A region of interest drawn on an image, defined by a list of 5D vectors (c, t, z, y, x) and a kind (rectangle, path, point, ...). Use ROIs to mark and share structures of interest. */
 export type RoiProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -4773,17 +5649,50 @@ export type RoiFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<RoiFilter>;
   OR?: InputMaybe<RoiFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by the group this ROI belongs to */
+  group?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this ROI was drawn on */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this ROI was drawn on */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   kind?: InputMaybe<RoiKindChoices>;
+  label?: InputMaybe<StrFilterLookup>;
+  maxT?: InputMaybe<IntFilterLookup>;
+  maxX?: InputMaybe<IntFilterLookup>;
+  maxY?: InputMaybe<IntFilterLookup>;
+  maxZ?: InputMaybe<IntFilterLookup>;
+  minT?: InputMaybe<IntFilterLookup>;
+  minX?: InputMaybe<IntFilterLookup>;
+  minY?: InputMaybe<IntFilterLookup>;
+  minZ?: InputMaybe<IntFilterLookup>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by the name of the image this ROI was drawn on */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type RoiOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type RoiOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
+/** A ROI view establishes a relationship between an image region and a region of interest, e.g. recording that this image was cropped from the area described by the ROI on another image. */
 export type RoiView = View & {
   __typename?: 'ROIView';
   /** The accessor */
@@ -4807,11 +5716,13 @@ export type RoiView = View & {
 };
 
 
+/** A ROI view establishes a relationship between an image region and a region of interest, e.g. recording that this image was cropped from the area described by the ROI on another image. */
 export type RoiViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** Input for creating a ROI view on an existing image, referenced by ID */
 export type RoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4819,7 +5730,9 @@ export type RoiViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The ID of the ROI of the parent image this view is a cutout of */
   roi: Scalars['ID']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4839,6 +5752,7 @@ export type RoiViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A view marking an image region as the reference that other views (e.g. mask views) point back to, for example the raw channel a segmentation mask was computed from. */
 export type ReferenceView = View & {
   __typename?: 'ReferenceView';
   /** The accessor */
@@ -4861,6 +5775,7 @@ export type ReferenceView = View & {
 };
 
 
+/** A view marking an image region as the reference that other views (e.g. mask views) point back to, for example the raw channel a segmentation mask was computed from. */
 export type ReferenceViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -4872,11 +5787,18 @@ export type ReferenceViewFilter = {
   NOT?: InputMaybe<ReferenceViewFilter>;
   OR?: InputMaybe<ReferenceViewFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by the name of the image this view belongs to */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a reference view on an existing image, referenced by ID */
 export type ReferenceViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4884,6 +5806,7 @@ export type ReferenceViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -4905,6 +5828,10 @@ export type ReferenceViewInput = {
 
 export type Render = {
   createdAt: Scalars['DateTime']['output'];
+  /** The task this render was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   creator?: Maybe<User>;
 };
 
@@ -4920,6 +5847,7 @@ export enum RenderNodeKind {
   Spit = 'SPIT'
 }
 
+/** A render tree is a tree structure that describes the rendering of multiple images together, by linking several RGB contexts into one composite visualization. */
 export type RenderTree = {
   __typename?: 'RenderTree';
   id: Scalars['ID']['output'];
@@ -4928,8 +5856,10 @@ export type RenderTree = {
 };
 
 
+/** A render tree is a tree structure that describes the rendering of multiple images together, by linking several RGB contexts into one composite visualization. */
 export type RenderTreeLinkedContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
+  ordering?: Array<RgbContextOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4939,6 +5869,11 @@ export type RenderTreeFilter = {
   NOT?: InputMaybe<RenderTreeFilter>;
   OR?: InputMaybe<RenderTreeFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RenderTreeInput = {
@@ -4946,9 +5881,9 @@ export type RenderTreeInput = {
   tree: TreeInput;
 };
 
-export type RenderTreeOrder = {
-  createdAt?: InputMaybe<Ordering>;
-};
+export type RenderTreeOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type RequestBigFileAccessInput = {
   storeId: Scalars['String']['input'];
@@ -5006,8 +5941,11 @@ export type RequestZarrUploadInput = {
   version?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for reverting a dataset to a previous history revision */
 export type RevertInput = {
+  /** The ID of the provenance history entry to revert the dataset to */
   historyId: Scalars['ID']['input'];
+  /** The ID of the dataset to revert */
   id: Scalars['ID']['input'];
 };
 
@@ -5018,6 +5956,7 @@ export type RoiEvent = {
   update?: Maybe<Roi>;
 };
 
+/** Input for creating a region of interest (ROI) on an image */
 export type RoiInput = {
   /** The image this ROI belongs to */
   image: Scalars['ID']['input'];
@@ -5027,21 +5966,37 @@ export type RoiInput = {
   vectors: Array<Scalars['FiveDVector']['input']>;
 };
 
+/** The geometric kind of a region of interest (ROI), defining how its vectors are interpreted. */
 export enum RoiKind {
+  /** A three-dimensional cuboid spanning the spatial axes (XYZ). */
   Cube = 'CUBE',
+  /** An elliptical region in the XY plane. */
   Ellipsis = 'ELLIPSIS',
+  /** A single frame of the image, e.g. one timepoint. */
   Frame = 'FRAME',
+  /** A four-dimensional region spanning space and time (XYZT). */
   Hypercube = 'HYPERCUBE',
+  /** A straight line between two points. */
   Line = 'LINE',
+  /** An open path defined by a sequence of connected points. */
   Path = 'PATH',
+  /** A single point. */
   Point = 'POINT',
+  /** A closed polygon defined by a sequence of vertices. */
   Polygon = 'POLYGON',
+  /** An axis-aligned rectangle in the XY plane. */
   Rectangle = 'RECTANGLE',
+  /** A single slice of the image, e.g. one Z plane. */
   Slice = 'SLICE',
+  /** A cuboid extended along the channel axis (XYZC). */
   SpectralCube = 'SPECTRAL_CUBE',
+  /** A five-dimensional region spanning space, time and channels (XYZTC). */
   SpectralHypercube = 'SPECTRAL_HYPERCUBE',
+  /** A rectangle extended along the channel axis (XYC). */
   SpectralRectangle = 'SPECTRAL_RECTANGLE',
+  /** A cuboid extended along the time axis (XYZT). */
   TemporalCube = 'TEMPORAL_CUBE',
+  /** A rectangle extended along the time axis (XYT). */
   TemporalRectangle = 'TEMPORAL_RECTANGLE'
 }
 
@@ -5094,6 +6049,7 @@ export type ScaleInput = {
   scaleMethod?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A view linking an image to a downscaled version of another image. Scale views form the levels of a multiscale pyramid: the parent is the full-resolution image and the scale factors give the downsampling per dimension. */
 export type ScaleView = View & {
   __typename?: 'ScaleView';
   /** The accessor */
@@ -5122,24 +6078,33 @@ export type ScaleView = View & {
 };
 
 
+/** A view linking an image to a downscaled version of another image. Scale views form the levels of a multiscale pyramid: the parent is the full-resolution image and the scale factors give the downsampling per dimension. */
 export type ScaleViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** The axis traversal order of a continuous scan, i.e. the order in which rows, columns and slices are acquired. */
 export enum ScanDirection {
+  /** Scan columns first, then rows, then slices (Column -> Row -> Slice). */
   ColumnRowSlice = 'COLUMN_ROW_SLICE',
+  /** Scan columns, then rows, then slices, reversing direction on alternate lines (Column -> Row -> Slice, snake). */
   ColumnRowSliceSnake = 'COLUMN_ROW_SLICE_SNAKE',
+  /** Scan rows first, then columns, then slices (Row -> Column -> Slice). */
   RowColumnSlice = 'ROW_COLUMN_SLICE',
+  /** Scan rows, then columns, then slices, reversing direction on alternate lines (Row -> Column -> Slice, snake). */
   RowColumnSliceSnake = 'ROW_COLUMN_SLICE_SNAKE',
+  /** Scan slices first, then rows, then columns (Slice -> Row -> Column). */
   SliceRowColumn = 'SLICE_ROW_COLUMN',
+  /** Scan slices, then rows, then columns, reversing direction on alternate lines (Slice -> Row -> Column, snake). */
   SliceRowColumnSnake = 'SLICE_ROW_COLUMN_SNAKE'
 }
 
+/** The absolute coordinate universe in which layers are placed, with defined spatial and temporal base units */
 export type Scene = {
   __typename?: 'Scene';
   id: Scalars['ID']['output'];
-  /** Provenance entries for this camera */
+  /** The layers placed in this scene */
   layers: Array<Layer>;
   name: Scalars['String']['output'];
   spatialUnit: SpatialUnit;
@@ -5147,8 +6112,10 @@ export type Scene = {
 };
 
 
+/** The absolute coordinate universe in which layers are placed, with defined spatial and temporal base units */
 export type SceneLayersArgs = {
   filters?: InputMaybe<LayerFilter>;
+  ordering?: Array<LayerOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -5157,10 +6124,16 @@ export type SceneFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<SceneFilter>;
   OR?: InputMaybe<SceneFilter>;
-  description?: InputMaybe<StrFilterLookup>;
+  blending?: InputMaybe<BlendingChoices>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the parent scene */
+  parent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for scenes with (true) or without (false) a parent */
+  parentless?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5168,17 +6141,15 @@ export type SceneOrder =
   { id: Ordering; name?: never; }
   |  { id?: never; name: Ordering; };
 
-export type ScopeFilter = {
-  me?: InputMaybe<Scalars['Boolean']['input']>;
-  org?: InputMaybe<Scalars['Boolean']['input']>;
-  public?: InputMaybe<Scalars['Boolean']['input']>;
-  shared?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
+/** The visibility scope of an object, determining which users can see it. */
 export enum ScopeKind {
+  /** The object is visible only to its creator. */
   Me = 'ME',
+  /** The object is visible to everyone in the organization. */
   Org = 'ORG',
+  /** The object is visible to everyone. */
   Public = 'PUBLIC',
+  /** The object is visible only to users it was explicitly shared with. */
   Shared = 'SHARED'
 }
 
@@ -5190,6 +6161,7 @@ export type Selector = {
   z?: InputMaybe<DimSelector>;
 };
 
+/** A slice along a named dimension, with optional start, stop and step */
 export type Slice = {
   __typename?: 'Slice';
   /** The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't' */
@@ -5210,9 +6182,14 @@ export type SliceInput = {
   stop?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A snapshot is a pre-rendered thumbnail image of an image. Clients use snapshots to display previews without loading the full underlying data. */
 export type Snapshot = Render & {
   __typename?: 'Snapshot';
   createdAt: Scalars['DateTime']['output'];
+  /** The task this render was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   creator?: Maybe<User>;
   id: Scalars['ID']['output'];
   majorColor?: Maybe<Array<Scalars['Float']['output']>>;
@@ -5225,21 +6202,60 @@ export type SnapshotFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<SnapshotFilter>;
   OR?: InputMaybe<SnapshotFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the RGB context this snapshot was rendered with */
+  context?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this snapshot renders */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this snapshot renders (fetch thumbnails for a set of images) */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Search by name (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a snapshot (pre-rendered thumbnail) of an image from an uploaded media file */
 export type SnapshotInput = {
+  /** The uploaded media file store containing the rendered snapshot */
   file: Scalars['ImageFileLike']['input'];
+  /** The ID of the image this snapshot belongs to */
   image: Scalars['ID']['input'];
+  /** The name of the snapshot */
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type SnapshotOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
+
+/** The physical unit used to express spatial dimensions, e.g. of pixel sizes or stage positions. */
 export enum SpatialUnit {
+  /** Angstroms (1e-10 meters), the typical scale of atomic and molecular structures. */
   Angstroms = 'ANGSTROMS',
+  /** Micrometers (1e-6 meters), the typical scale of cells in light microscopy. */
   Micrometers = 'MICROMETERS',
+  /** Nanometers (1e-9 meters), the typical scale of subcellular structures. */
   Nanometers = 'NANOMETERS',
+  /** Raw pixel units without a calibrated physical size. */
   Pixels = 'PIXELS',
+  /** The spatial unit is not known or not specified. */
   Unknown = 'UNKNOWN'
 }
 
@@ -5256,24 +6272,31 @@ export type SpectrumInput = {
   minNm: Scalars['Float']['input'];
 };
 
+/** A stage is a 3D space corresponding to the physical space on a microscope during an experiment. Clients use stages to contextualize images according to their real-world physical location via affine transformation views. */
 export type Stage = {
   __typename?: 'Stage';
   affineViews: Array<AffineTransformationView>;
+  /** The task this stage was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   pinned: Scalars['Boolean']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this stage */
   provenanceEntries: Array<ProvenanceEntry>;
 };
 
 
+/** A stage is a 3D space corresponding to the physical space on a microscope during an experiment. Clients use stages to contextualize images according to their real-world physical location via affine transformation views. */
 export type StageAffineViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A stage is a 3D space corresponding to the physical space on a microscope during an experiment. Clients use stages to contextualize images according to their real-world physical location via affine transformation views. */
 export type StageProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -5283,17 +6306,45 @@ export type StageFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<StageFilter>;
   OR?: InputMaybe<StageFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the instrument this stage belongs to */
+  instrument?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a stage, a physical coordinate system for positioning images */
 export type StageInput = {
+  /** The ID of the instrument this stage belongs to */
   instrument?: InputMaybe<Scalars['ID']['input']>;
+  /** The name of the stage */
   name: Scalars['String']['input'];
 };
+
+export type StageOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
 
 export type StrFilterLookup = {
   contains?: InputMaybe<Scalars['String']['input']>;
@@ -5347,36 +6398,47 @@ export type SubscriptionRoisArgs = {
   image: Scalars['ID']['input'];
 };
 
+/** A table of tabular data, stored as a Parquet file. Tables are typically derived from images (e.g. measurements or localisations) and can be queried column- and row-wise through the API. */
 export type Table = {
   __typename?: 'Table';
   accessors: Array<Accessor>;
+  /** The column descriptors of the table's parquet data */
   columns: Array<TableColumn>;
+  /** The task this table was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   origins: Array<Image>;
+  /** All rows of the table's parquet data */
   rows: Array<Scalars['MetricMap']['output']>;
   store: ParquetStore;
 };
 
 
+/** A table of tabular data, stored as a Parquet file. Tables are typically derived from images (e.g. measurements or localisations) and can be queried column- and row-wise through the API. */
 export type TableAccessorsArgs = {
   filters?: InputMaybe<AccessorFilter>;
   types?: InputMaybe<Array<AccessorKind>>;
 };
 
 
+/** A table of tabular data, stored as a Parquet file. Tables are typically derived from images (e.g. measurements or localisations) and can be queried column- and row-wise through the API. */
 export type TableOriginsArgs = {
   filters?: InputMaybe<ImageFilter>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: Array<ImageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** A cell of a table */
 export type TableCell = {
   __typename?: 'TableCell';
+  /** The column this cell belongs to */
   column: TableColumn;
   columnId: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
+  /** The name of the column this cell belongs to */
   name: Scalars['String']['output'];
   rowId: Scalars['Int']['output'];
   table: Table;
@@ -5411,24 +6473,55 @@ export type TableFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TableFilter>;
   OR?: InputMaybe<TableFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by the dataset this table belongs to */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of dataset IDs */
+  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter for tables that are not derived from another table */
+  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Search by name (full-text search) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type TableOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
 
 export type TablePaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
-/** A cell of a table */
+/** A row of a table */
 export type TableRow = {
   __typename?: 'TableRow';
+  /** The column descriptors of the table */
   columns: Array<TableColumn>;
   id: Scalars['ID']['output'];
+  /** The display name of this row */
   name: Scalars['String']['output'];
   rowId: Scalars['Int']['output'];
   table: Table;
+  /** The values of this row, one per column */
   values: Array<Scalars['Any']['output']>;
 };
 
@@ -5437,13 +6530,82 @@ export type TableRowFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A validated Rekuest task under which objects were created or changed. */
+export type Task = {
+  __typename?: 'Task';
+  /** The executing agent OAuth client id */
+  agentClientId: Scalars['String']['output'];
+  /** The executing agent user sub */
+  agentSub: Scalars['String']['output'];
+  /** The SHA-256 of the canonicalized args */
+  argsHash: Scalars['String']['output'];
+  /** The args canonicalization algorithm/version */
+  argsHashAlgorithm: Scalars['String']['output'];
+  /** The root human causer that assigned the task */
+  assigner?: Maybe<User>;
+  /** The raw root human causer sub claim */
+  assignerSub: Scalars['String']['output'];
+  /** The immediate causer of this hop */
+  callerSub: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** The provenance issuer id */
+  issuer: Scalars['String']['output'];
+  /** The organization the task ran in */
+  organization: Organization;
+  /** The immediate parent task id, if any */
+  parentTaskId?: Maybe<Scalars['String']['output']>;
+  /** The root task id of the whole causal tree */
+  rootTaskId: Scalars['String']['output'];
+  /** The rekuest task id */
+  taskId: Scalars['String']['output'];
+  /** The unique single-use token id */
+  tokenId: Scalars['String']['output'];
+};
+
+export type TaskFilter = {
+  AND?: InputMaybe<TaskFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TaskFilter>;
+  OR?: InputMaybe<TaskFilter>;
+  agentClientId?: InputMaybe<StrFilterLookup>;
+  /** Filter by the assigner's subject ID */
+  assigner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the assigner's database user ID */
+  assignerId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  issuer?: InputMaybe<StrFilterLookup>;
+  parentTaskId?: InputMaybe<StrFilterLookup>;
+  rootTaskId?: InputMaybe<StrFilterLookup>;
+  /** Search by task id or executing agent client id (case-insensitive substring) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  taskId?: InputMaybe<StrFilterLookup>;
+};
+
+export type TaskOrder =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
+
+/** The physical unit used to express temporal dimensions, e.g. of time-lapse intervals. */
 export enum TemporalUnit {
+  /** Days (86400 seconds). */
   Days = 'DAYS',
+  /** Hours (3600 seconds). */
   Hours = 'HOURS',
+  /** Milliseconds (1e-3 seconds). */
   Milliseconds = 'MILLISECONDS',
+  /** Minutes (60 seconds). */
   Minutes = 'MINUTES',
+  /** Nanoseconds (1e-9 seconds). */
   Nanoseconds = 'NANOSECONDS',
+  /** Seconds, the SI base unit of time. */
   Seconds = 'SECONDS',
+  /** The temporal unit is not known or not specified. */
   Unknown = 'UNKNOWN'
 }
 
@@ -5458,6 +6620,7 @@ export type TimeBucket = {
   ts: Scalars['DateTime']['output'];
 };
 
+/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start. */
 export type TimepointView = View & {
   __typename?: 'TimepointView';
   /** The accessor */
@@ -5483,6 +6646,7 @@ export type TimepointView = View & {
 };
 
 
+/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start. */
 export type TimepointViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -5494,11 +6658,21 @@ export type TimepointViewFilter = {
   NOT?: InputMaybe<TimepointViewFilter>;
   OR?: InputMaybe<TimepointViewFilter>;
   era?: InputMaybe<EraFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
   msSinceStart?: InputMaybe<Scalars['Float']['input']>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a timepoint view on an existing image, referenced by ID */
 export type TimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5506,9 +6680,13 @@ export type TimepointViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the era this timepoint belongs to */
   era?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The index of the timepoint since the start of the era */
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
+  /** The time in ms since the start of the era */
   msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5550,16 +6728,25 @@ export type UnstructuredMeta = {
   schema?: Maybe<MetaSchema>;
 };
 
+/** Input for attaching free-form JSON metadata to a file */
 export type UnstructuredMetaInput = {
+  /** The ID of the file to attach the metadata to */
   file: Scalars['ID']['input'];
+  /** The free-form JSON metadata to attach */
   meta: Scalars['Any']['input'];
+  /** The name of the metadata entry */
   name: Scalars['String']['input'];
+  /** The ID of the schema describing the metadata structure */
   schema?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** Input for updating an image's name or tags */
 export type UpdateImageInput = {
+  /** The ID of the image to update */
   id: Scalars['ID']['input'];
+  /** The new name of the image */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Tags to add to the image */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
@@ -5580,18 +6767,29 @@ export type UpdateLayerInput = {
   zDim?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for updating an existing RGB render context */
 export type UpdateRgbContextInput = {
+  /** The channel the context renders */
   c?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the RGB context to update */
   id: Scalars['ID']['input'];
+  /** The new name of the RGB context */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** The timepoint the context renders */
   t?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of an uploaded media store to use as the thumbnail snapshot */
   thumbnail?: InputMaybe<Scalars['ID']['input']>;
+  /** The RGB views (channel rendering settings) to replace the context's views with */
   views?: InputMaybe<Array<PartialRgbViewInput>>;
+  /** The z plane the context renders */
   z?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for updating an existing RGB view, referenced by ID */
 export type UpdateRgbViewInput = {
+  /** Whether the view is active */
   active?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The base color of the channel as RGBA values (if using a mapped scaler) */
   baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5599,14 +6797,21 @@ export type UpdateRgbViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The color map applied to the channel */
   colorMap?: InputMaybe<ColorMap>;
+  /** The ID of the RGB render context this view belongs to */
   context?: InputMaybe<Scalars['ID']['input']>;
+  /** The maximum contrast limit of the channel */
   contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
+  /** The minimum contrast limit of the channel */
   contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
+  /** The gamma correction applied to the channel */
   gamma?: InputMaybe<Scalars['Float']['input']>;
   /** The ID of the RGB view to update */
   id: Scalars['ID']['input'];
+  /** Whether to rescale the channel data to the contrast limits */
   rescale?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The scale factor applied to the channel when rendering */
   scale?: InputMaybe<Scalars['Float']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5626,12 +6831,17 @@ export type UpdateRgbViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Input for updating an existing region of interest (ROI) */
 export type UpdateRoiInput = {
+  /** The new type/kind of ROI */
   kind?: InputMaybe<RoiKind>;
+  /** The ID of the ROI to update */
   roi: Scalars['ID']['input'];
+  /** The new vector coordinates defining the ROI */
   vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>;
 };
 
+/** A user account. The sub is the stable subject identifier from the identity provider; creator and assigner fields across the API reference this type. */
 export type User = {
   __typename?: 'User';
   activeOrganization?: Maybe<Organization>;
@@ -5640,12 +6850,14 @@ export type User = {
   sub: Scalars['String']['output'];
 };
 
+/** A permission a specific user holds on a specific object. Clients use it to inspect and manage per-object access control. */
 export type UserObjectPermission = {
   __typename?: 'UserObjectPermission';
   permission: Scalars['String']['output'];
   user: User;
 };
 
+/** The distribution of pixel values pinned to a coordinate anchor, including histogram bins, min/max and percentile limits */
 export type ValueHistogram = {
   __typename?: 'ValueHistogram';
   bins: Array<Scalars['Float']['output']>;
@@ -5688,15 +6900,21 @@ export type Vec3Input = {
   z?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** A video is a rendered video of an image, accompanied by a thumbnail. Clients use videos to play back multidimensional image data without loading the raw arrays. */
 export type Video = Render & {
   __typename?: 'Video';
   createdAt: Scalars['DateTime']['output'];
+  /** The task this render was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
   creator?: Maybe<User>;
   id: Scalars['ID']['output'];
   store: MediaStore;
   thumbnail: MediaStore;
 };
 
+/** A view is a subset of an image, delimited by its coordinates (c, t, z, x, y) within the 5D array. Views attach metadata (channels, labels, transformations, timepoints, ...) to that subregion of the image. */
 export type View = {
   /** The accessor */
   accessor: Array<Scalars['String']['output']>;
@@ -5717,11 +6935,13 @@ export type View = {
 };
 
 
+/** A view is a subset of an image, delimited by its coordinates (c, t, z, x, y) within the 5D array. Views attach metadata (channels, labels, transformations, timepoints, ...) to that subregion of the image. */
 export type ViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** A collection of views. View collections provide overarching views on your data that are not bound to a specific image, e.g. all middle-z views of all images with a certain tag. They are a pure metadata construct and do not map to an ordering of binary data. */
 export type ViewCollection = {
   __typename?: 'ViewCollection';
   affineTransformationViews: Array<AffineTransformationView>;
@@ -5729,23 +6949,27 @@ export type ViewCollection = {
   id: Scalars['ID']['output'];
   labelViews: Array<LabelView>;
   name: Scalars['String']['output'];
-  /** Provenance entries for this camera */
+  /** Provenance entries for this view collection */
   provenanceEntries: Array<ProvenanceEntry>;
   views: Array<View>;
 };
 
 
+/** A collection of views. View collections provide overarching views on your data that are not bound to a specific image, e.g. all middle-z views of all images with a certain tag. They are a pure metadata construct and do not map to an ordering of binary data. */
 export type ViewCollectionAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
+/** A collection of views. View collections provide overarching views on your data that are not bound to a specific image, e.g. all middle-z views of all images with a certain tag. They are a pure metadata construct and do not map to an ordering of binary data. */
 export type ViewCollectionProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Input for creating a view collection to group views */
 export type ViewCollectionInput = {
+  /** The name of the view collection */
   name: Scalars['String']['input'];
 };
 
@@ -5754,12 +6978,18 @@ export type ViewFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ViewFilter>;
   OR?: InputMaybe<ViewFilter>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum ViewKind {
+  Acquisition = 'ACQUISITION',
   AffineTransformation = 'AFFINE_TRANSFORMATION',
   Channel = 'CHANNEL',
+  ContinousScan = 'CONTINOUS_SCAN',
+  Derived = 'DERIVED',
+  File = 'FILE',
   Histogram = 'HISTOGRAM',
   InstanceMaskView = 'INSTANCE_MASK_VIEW',
   Label = 'LABEL',
@@ -5768,9 +6998,13 @@ export enum ViewKind {
   Optics = 'OPTICS',
   Reference = 'REFERENCE',
   Rgb = 'RGB',
-  Timepoint = 'TIMEPOINT'
+  Roi = 'ROI',
+  Scale = 'SCALE',
+  Timepoint = 'TIMEPOINT',
+  WellPosition = 'WELL_POSITION'
 }
 
+/** A view mapping an image region to a well (row/column) of a multi well plate, so plate-based acquisitions can be traced back to their well. */
 export type WellPositionView = View & {
   __typename?: 'WellPositionView';
   /** The accessor */
@@ -5796,6 +7030,7 @@ export type WellPositionView = View & {
 };
 
 
+/** A view mapping an image region to a well (row/column) of a multi well plate, so plate-based acquisitions can be traced back to their well. */
 export type WellPositionViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -5807,11 +7042,21 @@ export type WellPositionViewFilter = {
   NOT?: InputMaybe<WellPositionViewFilter>;
   OR?: InputMaybe<WellPositionViewFilter>;
   column?: InputMaybe<Scalars['Int']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the image this view belongs to */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of images this view belongs to */
+  images?: InputMaybe<Array<Scalars['ID']['input']>>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
   row?: InputMaybe<Scalars['Int']['input']>;
+  /** Search by the name of the image this view belongs to */
+  search?: InputMaybe<Scalars['String']['input']>;
   well?: InputMaybe<MultiWellPlateFilter>;
 };
 
+/** Input for creating a well position view on an existing image, referenced by ID */
 export type WellPositionViewInput = {
   /** The maximum c (channel) coordinate of the view */
   cMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5819,13 +7064,17 @@ export type WellPositionViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** The column of the well */
   column?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
+  /** The row of the well */
   row?: InputMaybe<Scalars['Int']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum t coordinate of the view */
   tMin?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the multi-well plate this view belongs to */
   well?: InputMaybe<Scalars['ID']['input']>;
   /** The maximum x coordinate of the view */
   xMax?: InputMaybe<Scalars['Int']['input']>;
@@ -5909,7 +7158,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | Task | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -5954,17 +7203,17 @@ export type DataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, k
 
 export type ListDataRoiFragment = { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } };
 
-export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
+export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
+export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } };
 
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
 
 export type RgbImageFragment = { __typename?: 'Image', name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
 
@@ -6050,7 +7299,7 @@ export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: st
 
 export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
 
-export type ProvenanceEntryFragment = { __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> };
+export type ProvenanceEntryFragment = { __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> };
 
 export type RgbContextFragment = { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> } };
 
@@ -6058,7 +7307,7 @@ export type ListRgbContextFragment = { __typename?: 'RGBContext', id: string, na
 
 export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } };
 
-export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
+export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
 export type SceneFragment = { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> } }> };
 
@@ -6316,7 +7565,7 @@ export type PinDatasetMutationVariables = Exact<{
 }>;
 
 
-export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type PutDatasetsInDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6324,7 +7573,7 @@ export type PutDatasetsInDatasetMutationVariables = Exact<{
 }>;
 
 
-export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6332,7 +7581,7 @@ export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
 }>;
 
 
-export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type PutImagesInDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6340,7 +7589,7 @@ export type PutImagesInDatasetMutationVariables = Exact<{
 }>;
 
 
-export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ReleaseImagesFromDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6348,7 +7597,7 @@ export type ReleaseImagesFromDatasetMutationVariables = Exact<{
 }>;
 
 
-export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type PutFilesInDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6356,7 +7605,7 @@ export type PutFilesInDatasetMutationVariables = Exact<{
 }>;
 
 
-export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ReleaseFilesFromDatasetMutationVariables = Exact<{
   selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -6364,7 +7613,7 @@ export type ReleaseFilesFromDatasetMutationVariables = Exact<{
 }>;
 
 
-export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type RevertDatasetMutationVariables = Exact<{
   dataset: Scalars['ID']['input'];
@@ -6398,7 +7647,7 @@ export type From_File_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type DeleteFileMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6413,14 +7662,14 @@ export type PinImageMutationVariables = Exact<{
 }>;
 
 
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type UpdateImageMutationVariables = Exact<{
   input: UpdateImageInput;
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type DeleteImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6515,14 +7764,14 @@ export type PinRoiMutationVariables = Exact<{
 }>;
 
 
-export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type CreateRoiMutationVariables = Exact<{
   input: RoiInput;
 }>;
 
 
-export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type DeleteRoiMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6693,11 +7942,12 @@ export type GetDatasetQueryVariables = Exact<{
 }>;
 
 
-export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type GetDatasetsQueryVariables = Exact<{
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<DatasetOrder> | DatasetOrder>;
 }>;
 
 
@@ -6709,12 +7959,12 @@ export type GetFileQueryVariables = Exact<{
 }>;
 
 
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<FileOrder>;
+  ordering?: InputMaybe<Array<FileOrder> | FileOrder>;
 }>;
 
 
@@ -6765,12 +8015,12 @@ export type GetImageQueryVariables = Exact<{
 }>;
 
 
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: InputMaybe<Array<ImageOrder> | ImageOrder>;
 }>;
 
 
@@ -6779,7 +8029,7 @@ export type GetImagesQuery = { __typename?: 'Query', images: Array<{ __typename?
 export type ListImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<ImageOrder>;
+  ordering?: InputMaybe<Array<ImageOrder> | ImageOrder>;
 }>;
 
 
@@ -6908,12 +8158,12 @@ export type GetRoiQueryVariables = Exact<{
 }>;
 
 
-export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type GetRoIsQueryVariables = Exact<{
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-  order?: InputMaybe<RoiOrder>;
+  ordering?: InputMaybe<Array<RoiOrder> | RoiOrder>;
 }>;
 
 
@@ -7199,7 +8449,10 @@ export const ListDataRoiFragmentDoc = gql`
 export const ProvenanceEntryFragmentDoc = gql`
     fragment ProvenanceEntry on ProvenanceEntry {
   id
-  during
+  task {
+    id
+    taskId
+  }
   kind
   user {
     sub
@@ -8655,8 +9908,8 @@ export const GetDatasetDocument = gql`
 }
     ${DatasetFragmentDoc}`;
 export const GetDatasetsDocument = gql`
-    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput) {
-  datasets(filters: $filters, pagination: $pagination) {
+    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput, $ordering: [DatasetOrder!]) {
+  datasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListDataset
   }
 }
@@ -8669,8 +9922,8 @@ export const GetFileDocument = gql`
 }
     ${FileFragmentDoc}`;
 export const GetFilesDocument = gql`
-    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $order: FileOrder) {
-  files(filters: $filters, pagination: $pagination, order: $order) {
+    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $ordering: [FileOrder!]) {
+  files(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListFile
   }
 }
@@ -8699,10 +9952,10 @@ export const ImagesDocument = gql`
     `;
 export const HomePageDocument = gql`
     query HomePage {
-  images: images(pagination: {limit: 1}, order: {createdAt: DESC}) {
+  images: images(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
     ...ListImage
   }
-  files: files(pagination: {limit: 1}, order: {createdAt: DESC}) {
+  files: files(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
     ...ListFile
   }
 }
@@ -8713,14 +9966,14 @@ export const PeerHomePageDocument = gql`
   images: images(
     pagination: {limit: 1}
     filters: {owner: $id}
-    order: {createdAt: DESC}
+    ordering: [{createdAt: DESC}]
   ) {
     ...ListImage
   }
   files: files(
     pagination: {limit: 1}
     filters: {owner: $id}
-    order: {createdAt: DESC}
+    ordering: [{createdAt: DESC}]
   ) {
     ...ListFile
   }
@@ -8755,15 +10008,15 @@ export const GetImageDocument = gql`
 }
     ${ImageFragmentDoc}`;
 export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
+    query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $ordering: [ImageOrder!]) {
+  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListImage
   }
 }
     ${ListImageFragmentDoc}`;
 export const ListImagesDocument = gql`
-    query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
+    query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $ordering: [ImageOrder!]) {
+  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListImage
   }
 }
@@ -8910,8 +10163,8 @@ export const GetRoiDocument = gql`
 }
     ${RoiFragmentDoc}`;
 export const GetRoIsDocument = gql`
-    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $order: ROIOrder) {
-  rois(filters: $filters, pagination: $pagination, order: $order) {
+    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $ordering: [ROIOrder!]) {
+  rois(filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListROI
   }
 }

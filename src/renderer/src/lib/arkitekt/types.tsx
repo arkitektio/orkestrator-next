@@ -23,6 +23,12 @@ export type Service<T = unknown> = {
   alias?: Alias;
   client: T;
   clearCache?: () => Promise<void>;
+  /**
+   * Tear down the underlying client and any long-lived connections (Apollo
+   * client + graphql-ws socket). Called when this service is superseded in the
+   * service map or on disconnect, so discarded clients/sockets are not orphaned.
+   */
+  dispose?: () => void;
   type?: string;
   ward?: Ward;
 };

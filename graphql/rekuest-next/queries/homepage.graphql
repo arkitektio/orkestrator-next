@@ -3,7 +3,7 @@ query HomePageStats{
     count
   }
 
-  assignationStats {
+  taskStats {
     count
   }
 }

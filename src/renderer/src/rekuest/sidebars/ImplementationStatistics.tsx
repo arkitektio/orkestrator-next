@@ -10,12 +10,12 @@ export const ImplementationStatsSidebar = (props: { implementation: string }) =>
   });
 
   // Calculate additional metrics from available data
-  const totalAssignations = data?.assignationStats?.count || 0;
+  const totalTasks = data?.taskStats?.count || 0;
 
   const statsCards = [
     {
-      title: "Total Assignations",
-      value: loading ? "..." : totalAssignations,
+      title: "Total Tasks",
+      value: loading ? "..." : totalTasks,
       description: "Total number of task assigned to this implementation",
       icon: Images,
       color: "text-blue-500",
@@ -41,7 +41,7 @@ export const ImplementationStatsSidebar = (props: { implementation: string }) =>
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Rekuest Overview</h2>
         <p className="text-sm text-muted-foreground">
-          Overview of actions and assignations in your Rekuest instance.
+          Overview of actions and tasks in your Rekuest instance.
         </p>
       </div>
       {statsCards.map((card) => (

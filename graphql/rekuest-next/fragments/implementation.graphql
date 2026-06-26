@@ -1,15 +1,30 @@
 fragment DetailImplementation on Implementation {
   id
+  name
   interface
+  pinned
+  needsToken
+  provenanceAudience
+  params
+  higherOrderConfig
   action {
     ...DetailAction
   }
-  extension
-  params
   agent {
     id
     name
     active
+    connected
+    blocked
+    kind
+    lastSeen
+    hash
+    app {
+      identifier
+    }
+    client {
+      id
+    }
   }
 
   dependencies {
@@ -19,17 +34,43 @@ fragment DetailImplementation on Implementation {
     dependencyKey
     stateKey
     valueKey
+    label
     description
   }
   manipulates {
     id
     interface
+    definition {
+      name
+    }
   }
 
+  resolutions {
+    id
+    name
+    resolvedAt
+  }
 
+  higherOrderFor {
+    id
+    interface
+    name
+  }
 
-  myLatestAssignation {
-    ...PostmanAssignation
+  lowerOrderImplementations {
+    id
+    interface
+    name
+  }
+
+  tests {
+    id
+    interface
+    name
+  }
+
+  myLatestTask {
+    ...PostmanTask
   }
 }
 
@@ -51,14 +92,13 @@ fragment ListImplementation on Implementation {
 fragment MinimalImplementation on Implementation {
   id
   interface
-  extension
   agent {
     name
   }
 }
 
 query ImplementationStats($id: ID!) {
-  assignationStats(filters: { implementation: $id }) {
+  taskStats(filters: { implementation: $id }) {
     count
   }
 }
@@ -66,7 +106,6 @@ query ImplementationStats($id: ID!) {
 fragment HoverImplementation on Implementation {
   id
   interface
-  extension
   pinned
   action {
     id

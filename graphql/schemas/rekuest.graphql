@@ -1,7 +1,7 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
 input AckInput {
-  assignation: ID!
+  task: ID!
 }
 
 """Represents an executable action in the system."""
@@ -11,9 +11,6 @@ type Action {
 
   """Input arguments (ports) for the action."""
   args: [ArgPort!]!
-
-  """Assignations created for this action."""
-  assignations(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
 
   """Collections to which this action belongs."""
   collections: [Collection!]!
@@ -40,7 +37,7 @@ type Action {
   isDev: Boolean!
 
   """Actions for which this is a test."""
-  isTestFor(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+  isTestFor(filters: ActionFilter, ordering: [ActionOrder!]! = [], pagination: OffsetPaginationInput): [Action!]!
 
   """Key of the action, used for grouping and identification."""
   key: String!
@@ -48,8 +45,8 @@ type Action {
   """The kind or category of the action."""
   kind: ActionKind!
 
-  """Get the latest completed assignation for this action."""
-  latestAssignation: Assignation
+  """Get the latest completed task for this action."""
+  latestTask: Task
 
   """
   An optional icon identifier to represent this Action in the UI (e.g. 'fa-solid fa-dog')
@@ -69,16 +66,13 @@ type Action {
   portGroups: [PortGroup!]!
 
   """Protocols associated with the action."""
-  protocols(filters: ProtocolFilter, order: ProtocolOrder, pagination: OffsetPaginationInput): [Protocol!]!
-
-  """Reservations related to this action."""
-  reservations(filters: ReservationFilter, pagination: OffsetPaginationInput): [Reservation!]
+  protocols(filters: ProtocolFilter, ordering: [ProtocolOrder!]! = [], pagination: OffsetPaginationInput): [Protocol!]!
 
   """Output values (ports) returned by the action."""
   returns: [ReturnPort!]!
 
-  """Retrieve assignations where this action has run."""
-  runs: [Assignation!]
+  """Retrieve tasks where this action has run."""
+  runs: [Task!]
 
   """Scope of the action, e.g., user or system."""
   scope: ActionScope!
@@ -86,11 +80,14 @@ type Action {
   """Indicates whether the action maintains state."""
   stateful: Boolean!
 
+  """Tasks created for this action."""
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [Task!]!
+
   """Test cases for this action."""
   testCases(filters: TestCaseFilter, pagination: OffsetPaginationInput): [TestCase!]
 
   """List of tests associated with the action."""
-  tests(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+  tests(filters: ActionFilter, ordering: [ActionOrder!]! = [], pagination: OffsetPaginationInput): [Action!]!
 
   """Version string of the action."""
   version: String!
@@ -109,25 +106,81 @@ type ActionArgument {
 
 """A JSON-serializable argument entry for a multi-agent action trigger."""
 input ActionArgumentInput {
+  """
+  Defines a nested agent call if this argument should trigger an agent interaction.
+  """
   agentCall: AgentCallInput = null
+
+  """The argument property name."""
   key: String = null
+
+  """
+  Defines a nested utility call if this argument should trigger a system utility interaction.
+  """
   utilCall: UtilCallInput = null
+
+  """
+  Defines a list of key-value pairs if this argument should be a dictionary.
+  """
   valueDict: [ActionArgumentInput!] = null
+
+  """Defines a list of values if this argument should be an array."""
   valueList: [ActionArgumentInput!] = null
+
+  """Static literal value if not dynamically bound."""
   valueLiteral: JSONSerializable = null
+
+  """
+  JSON Pointer referencing the shared Blok state to inject into this argument slot dynamically.
+  """
   valuePath: String = null
 }
 
 """Input model for action demand."""
 type ActionDemand {
+  """
+  The demands for the action args and returns. This is used to identify the demand in the system.
+  """
   argMatches: [PortMatch!]
+
+  """
+  The description of the action. This can described the action and its purpose.
+  """
   description: String
+
+  """
+  Require that the action has a specific number of args. This is used to identify the demand in the system.
+  """
   forceArgLength: Int
+
+  """
+  Require that the action has a specific number of returns. This is used to identify the demand in the system.
+  """
   forceReturnLength: Int
+
+  """
+  The hash of the action. This is used to identify the action in the system.
+  """
   hash: ActionHash
+
+  """
+  The key of the action demand. This is used to identify the action in the system.
+  """
   key: String!
+
+  """
+  The name of the action. This is used to identify the action in the system.
+  """
   name: String
+
+  """
+  The protocols that the action has to implement. This is used to identify the demand in the system.
+  """
   protocols: [ID!]
+
+  """
+  The demands for the action args and returns. This is used to identify the demand in the system.
+  """
   returnMatches: [PortMatch!]
 }
 
@@ -137,11 +190,6 @@ input ActionDemandInput {
   The demands for the action args and returns. This is used to identify the demand in the system.
   """
   argMatches: [PortMatchInput!] = null
-
-  """
-  The description of the action. This can described the action and its purpose.
-  """
-  description: String = null
 
   """
   Require that the action has a specific number of args. This is used to identify the demand in the system.
@@ -159,19 +207,9 @@ input ActionDemandInput {
   hash: ActionHash = null
 
   """
-  The key of the action. This is used to identify the action in the system.
-  """
-  key: String!
-
-  """
   The name of the action. This is used to identify the action in the system.
   """
   name: String = null
-
-  """
-  The protocols that the action has to implement. This is used to identify the demand in the system.
-  """
-  protocols: [ID!] = null
 
   """
   The demands for the action args and returns. This is used to identify the demand in the system.
@@ -184,22 +222,66 @@ A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
 input ActionDependencyInput {
+  """
+  The key of the state this dependency corresponds to. (i.e frame:acquireimage)
+  """
   actionKey: String = null
+
+  """Allow inactive nodes, defaults to true"""
   allowInactive: Boolean = true
+
+  """
+  Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)
+  """
   app: String = null
+
+  """
+  The demands for the action args, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system.
+  """
   argMatches: [PortMatchInput!] = null
+
+  """
+  The description of the action. This can describe the action and its purpose.
+  """
   description: String = null
+
+  """
+  Require that the action has a specific number of args. When loosing the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the args. This is used to identify the demand in the system.
+  """
   forceArgLength: Int = null
+
+  """
+  Require that the action has a specific number of returns. This is used to identify the demand in the system.
+  """
   forceReturnLength: Int = null
+
+  """
+  The key of the action. This is used to identify the dependency in the system.
+  """
   key: String!
 
   """
   The name of the action. This is used to identify the action in the system.
   """
   name: String = null
+
+  """
+  Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable
+  """
   optional: Boolean! = false
+
+  """
+  The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together.
+  """
   protocols: [ID!] = null
+
+  """
+  The demands for the action returns, this can be additionaly specified so that when we loosen the matching criteria for an action in a resolver, we can still make sure to match the right action based on the demands for the returns. This is used to identify the demand in the system.
+  """
   returnMatches: [PortMatchInput!] = null
+
+  """The version of the action this dependency corresponds to."""
+  version: String = null
 }
 
 """Numeric/aggregatable fields of Action"""
@@ -220,6 +302,7 @@ input ActionFilter {
   inCollection: String
   kind: ActionKind
   name: StrFilterLookup
+  objectDemands: [ObjectDemandInput!]
   protocols: [String!]
   search: String
   stateful: Boolean
@@ -238,7 +321,7 @@ enum ActionKind {
   GENERATOR
 }
 
-input ActionOrder {
+input ActionOrder @oneOf {
   definedAt: Ordering
   usedAt: Ordering
 }
@@ -291,20 +374,17 @@ type Agent {
   """The app this agent belongs to."""
   app: App!
 
-  """Assignations executed by this agent."""
-  assignations(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
-
   """Get the count of implementations available on this agent."""
   blocked: Boolean!
+
+  """The client (app instance) this agent runs as."""
+  client: Client!
 
   """Is the agent currently connected."""
   connected: Boolean!
 
-  """Device associated with the agent."""
-  device: Device!
-
-  """List of installed agent extensions."""
-  extensions: [String!]!
+  """Device associated with the agent, via its client (if any)."""
+  device: Device
 
   """Filesystem shelves available on the agent."""
   fileSystemShelves(filters: FilesystemShelveFilter, pagination: OffsetPaginationInput): [FilesystemShelve!]!
@@ -330,9 +410,6 @@ type Agent {
   """Implementations the agent can run."""
   implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
-  """Unique instance identifier on the agent."""
-  instanceId: InstanceId!
-
   """Kind of the agent."""
   kind: AgentKind!
 
@@ -348,23 +425,26 @@ type Agent {
   """Agent name."""
   name: String!
 
+  """The organization this agent belongs to."""
+  organization: Organization!
+
   """Check if this agent is pinned by the current user."""
   pinned: Boolean!
 
   """Placements associated with this agent."""
   placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
 
-  """Registry entry this agent belongs to."""
-  registry: Registry!
-
   """The release this agent belongs to."""
   release: Release!
 
   """Sessions associated with this agent."""
-  sessions(filters: SessionFilter, order: SessionOrder, pagination: OffsetPaginationInput): [Session!]!
+  sessions(filters: SessionFilter, ordering: [SessionOrder!]! = [], pagination: OffsetPaginationInput): [Session!]!
 
   """Current and historical states associated with the agent."""
   states: [State!]!
+
+  """Tasks executed by this agent."""
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [Task!]!
 
   """User associated with the agent."""
   user: User!
@@ -383,15 +463,40 @@ type AgentCall {
 Defines a callback that routes user interactions directly to an Arkitekt Agent via Rekuest.
 """
 input AgentCallInput {
+  """Key-value arguments map compiled for the target agent call."""
   arguments: [ActionArgumentInput!] = null
+
+  """
+  The abstract agent dependency key declared in the Blok manifest (e.g., 'stage_dep').
+  """
   dependency: String!
+
+  """
+  The target function name registered on that specific agent's worker thread loop.
+  """
   operation: String!
 }
 
+"""Slim, non-traversable snapshot of an agent for change feeds."""
+type AgentChange {
+  app: ID!
+  blocked: Boolean!
+  client: ID!
+  connected: Boolean!
+  id: ID!
+  kind: AgentKind!
+  lastSeen: DateTime
+  latestEvent: AgentEventKind!
+  name: String!
+  organization: ID!
+  release: ID!
+  user: ID!
+}
+
 type AgentChangeEvent {
-  create: Agent
+  create: AgentChange
   delete: ID
-  update: Agent
+  update: AgentChange
 }
 
 """
@@ -399,12 +504,42 @@ A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
 input AgentDependencyInput {
+  """
+  The action demands of the agent. This is used to identify the demand in the system.
+  """
   actionDemands: [ActionDependencyInput!] = null
+
+  """
+  Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)
+  """
   app: String = null
+
+  """The policy used to pick which instance of the agent to assign to."""
+  assignPolicy: AssignPolicy! = BALANCED
+
+  """
+  Whether this dependency is auto resolvable or not. If so we will try to automatically resolve it based on the demands specified in the dependency and the capabilities of the available agents in the system. This is used to identify the demand in the system. Attention if any of the dependencies of this agent dependency is not auto resolvable, this dependency will also not be auto resolvable
+  """
   autoResolvable: Boolean! = false
+
+  """
+  A description of the dependency, why it is needed and what it is used for. This can be used to provide more context to users when assigning dependencies.
+  """
   description: String = null
+
+  """
+  The key of this dependency, when assigning you can reference this key to specify which agent_dependency you are assigning to.
+  """
   key: String!
+
+  """
+  The maximum amount of viable instances for the agent. This is used to identify the demand in the system.
+  """
   maxViableInstances: Int = null
+
+  """
+  The minimum amount of viable instances for the agent. This is used to identify the demand in the system.
+  """
   minViableInstances: Int = null
 
   """
@@ -416,10 +551,30 @@ input AgentDependencyInput {
   The name of the agent. This is used to identify the agent in the system.
   """
   name: String = null
+
+  """
+  Whether the dependency is optional or not. If the dependency is optional, users can choose to not provide it
+  """
   optional: Boolean! = false
+
+  """
+  The prefered amount of instances for the agent. This is used to identify the demand in the system.
+  """
   preferedInstances: Int = null
+
+  """
+  The state demands of the agent. This is used to identify the demand in the system.
+  """
   stateDemands: [StateDependencyInput!] = null
+
+  """The version of the app this dependency corresponds to."""
   version: String = null
+}
+
+"""The event kind of the agentevent"""
+enum AgentEventKind {
+  CONNECT
+  DISCONNECT
 }
 
 """A way to filter agents"""
@@ -442,9 +597,6 @@ input AgentFilter {
   deviceId: ID
   distinct: Boolean
 
-  """Filter by extensions of the agents"""
-  extensions: [String!]
-
   """Filter by implementations of the agents"""
   hasImplementations: [String!]
 
@@ -454,14 +606,8 @@ input AgentFilter {
   """Filter by IDs of the agents"""
   ids: [ID!]
 
-  """Filter by instance ID of the agent"""
-  instanceId: String
-
   """Filter by pinned agents"""
   pinned: Boolean
-
-  """Filter by scope"""
-  scope: ScopeFilter
 
   """Filter by name of the agents"""
   search: String
@@ -477,9 +623,19 @@ input AgentFilter {
 
 input AgentInput {
   """
-  The instance ID of the agent. This is used to identify the agent in the system.
+  For a WEBHOOK agent: the URL the backend POSTs messages (Assign, Cancel, Caller* events) to.
   """
-  instanceId: InstanceId!
+  hookUrl: String = null
+
+  """
+  For a WEBHOOK agent: the shared secret used to HMAC-sign messages in both directions (outbound delivery and POST intake).
+  """
+  hookUrlSecret: String = null
+
+  """
+  The transport kind of the agent: WEBSOCKET (default) or WEBHOOK (a HookAgent the backend POSTs to).
+  """
+  kind: AgentKind = null
 
   """
   The name of the agent. This is used to identify the agent in the system.
@@ -503,7 +659,7 @@ type AgentMapping {
   mappedImplementations: [ImplementationMapping!]!
 }
 
-input AgentOrder {
+input AgentOrder @oneOf {
   lastSeen: Ordering
 }
 
@@ -570,18 +726,53 @@ type ArgPort {
 
 "Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
 input ArgPortInput {
+  """The child ports (used for list, dict, union and model ports)."""
   children: [ArgPortInput!] = null
+
+  """The options for the port. This is used for dropdowns and text inputs"""
   choices: [ChoiceInput!] = null
+
+  """The default value for the port."""
   default: AnyDefault = null
+
+  """
+  The description of the port. This is the text that is displayed in the UI when the user hovers over the port
+  """
   description: String = null
+
+  """The effects of the port"""
   effects: [EffectInput!] = null
+
+  """
+  The identifier of a structure port. This is used to uniquely identify a specific type of structure.
+  """
   identifier: String = null
+
+  """The key of the port"""
   key: String!
+
+  """
+  The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model
+  """
   kind: PortKind!
+
+  """The label of the port. This is the text that is displayed in the UI"""
   label: String = null
+
+  """
+  Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null
+  """
   nullable: Boolean! = false
+
+  """
+  The descriptors for the port. Descriptors are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port descriptors
+  """
   requires: [RequiresInput!] = null
+
+  """The validators for the port"""
   validators: [ValidatorInput!] = null
+
+  """The assign widget to use for this port."""
   widget: AssignWidgetInput = null
 }
 
@@ -590,36 +781,88 @@ scalar Args
 
 """The input for assigning args to a action."""
 input AssignInput {
+  """The action ID to assign to"""
   action: ID = null
-  actionHash: ActionHash = null
-  agent: ID = null
-  args: Args!
-  cached: Boolean!
-  capture: Boolean!
-  dependencies: [ResolvedDependencyInput!] = null
-  dependency: String = null
-  ephemeral: Boolean!
-  hooks: [HookInput!] = null
-  implementation: ID = null
-  instanceId: InstanceId!
-  interface: String = null
-  isHook: Boolean = null
-  log: Boolean!
-  method: String = null
-  parent: ID = null
 
   """
-  The policy for the assignation. This defines how the assignation should be handled.
+  The hash of the action. This is used to identify the action in the system.
   """
+  actionHash: ActionHash = null
+
+  """The agent ID to assign to when directly assingint to a implementation"""
+  agent: ID = null
+
+  """The args of the task. Its a dictionary of ports and values"""
+  args: Args!
+
+  """Whether the task should be cached"""
+  cached: Boolean!
+
+  """Whether to capture the task."""
+  capture: Boolean!
+
+  """
+  The dependencies of the task. This maps dependency keys to implementation IDs.
+  """
+  dependencies: [ResolvedDependencyInput!] = null
+
+  """
+  The dependency key.method to assign when running inside a resolved task
+  """
+  dependency: String = null
+
+  """Whether the task is ephemeral"""
+  ephemeral: Boolean!
+
+  """
+  The hooks of the task. This is used to identify the task in the system.
+  """
+  hooks: [HookInput!] = null
+
+  """
+  The implementation ID to assign to when directly assingint to a implementation
+  """
+  implementation: ID = null
+
+  """
+  The interface of the implementation. Only ussable if you also set agent
+  """
+  interface: String = null
+
+  """Whether the task is a hook"""
+  isHook: Boolean = null
+
+  """Whether the task should be logged"""
+  log: Boolean!
+
+  """The method key to assign when running inside a resolved task"""
+  method: String = null
+
+  """
+  The parent ID of the task. This is used to identify the task in the system.
+  """
+  parent: ID = null
+
+  """The policy for the task. This defines how the task should be handled."""
   policy: AssignPolicy = null
+
+  """
+  The reference of the task. This is used to identify the task in the system.
+  """
   reference: String = null
-  reservation: ID = null
+
+  """
+  The resolution ID to assign to when assining to a implementation with dependencies
+  """
   resolution: ID = null
+
+  """Whether the task should step. Ie. go to the next breakpoint"""
   step: Boolean = null
 }
 
 enum AssignPolicy {
   AUTOMATIC
+  BALANCED
   FASTEST_RESPONSE
   LEAST_BUSY
   ROUND_ROBIN
@@ -635,23 +878,103 @@ input AssignWidgetInput {
   Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns
   """
   asParagraph: Boolean = null
+
+  """
+  The choices to display in the dropdown. This is used for dropdowns and text inputs
+  """
   choices: [ChoiceInput!] = null
+
+  """
+  The dependencies of the assign widget, which will be passed to the search or the hook widget. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """
+  The dependency that we are going to use to fullfill the state choices. If none is provided its the own state that will be queried
+  """
   dependency: String = null
+
+  """
+  The fallback assign widget to use if the current one fails. This is used for custom assign widgets
+  """
   fallback: AssignWidgetInput = null
+
+  """
+  The filters to apply to a search widget. This is used for custom assign widgets
+  """
   filters: [ArgPortInput!] = null
+
+  """
+  The key of another port whose value this widget should follow and mirror.
+  """
+  followValue: String = null
+
+  """
+  The hook to run when the input is changed. This is used for custom assign widgets
+  """
   hook: String = null
+
+  """
+  The kind of the assign widget. Can be either dropdown, text, slider, checkbox, radio or custom
+  """
   kind: AssignWidgetKind!
+
+  """
+  The maximum value of the slider (if a slider). This is used for sliders and text inputs
+  """
   max: Float = null
+
+  """
+  The minimum value of the slider (if a slider). This is used for sliders and text inputs
+  """
   min: Float = null
+
+  """
+  The placeholder of the input. This is used for text inputs and dropdowns
+  """
   placeholder: String = null
+
+  """
+  The query to run when searching for choices. This is used for dropdowns and text inputs
+  """
   query: SearchQuery = null
+
+  """
+  State accessors are used to specify how to access the state values that we are going to use to fullfill the state choices. This is used when the state value that we want to use is not the same as the one of the port, e.g. when we want to use a specific key of a state object, or when we want to use a dynamic key based on the other arguments. The option_key field is used to specify which part of the state accessor we want to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)
+  """
   stateAccessors: [StateAccessorInput!] = null
+
+  """
+  The key of a state whose value provides the choices for this widget (state-driven choices).
+  """
+  stateChoices: String = null
+
+  """
+  The path to the state value that we are going to use to fullfill the state choices. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]
+  """
   statePath: String = null
+
+  """
+  The step value of the slider (if a slider). This is used for sliders and text inputs
+  """
   step: Float = null
+
+  """
+  The action that we are going to target with a proxy widget. This is used for proxy widgets
+  """
   targetAction: String = null
+
+  """
+  The dependency that we are going to target with a proxy widget. This is used for proxy widgets
+  """
   targetDependency: String = null
+
+  """
+  The port that we are going to target with a proxy widget. This is used for proxy widgets
+  """
   targetPort: String = null
+
+  """The ward that is responsible for handling querying the choices"""
   ward: String = null
 }
 
@@ -666,273 +989,16 @@ enum AssignWidgetKind {
   STRING
 }
 
-"""Tracks the assignment of an implementation to a specific task."""
-type Assignation {
-  """List of resources or entities this assignation acted upon."""
-  actedOn: [String!]!
-
-  """Action assigned."""
-  action: Action!
-
-  """Agent responsible for this assignation."""
-  agent: Agent
-
-  """Get a specific argument by key."""
-  arg(key: String!): Args
-
-  """Arguments used in the assignation."""
-  args: AnyDefault!
-
-  """
-  Indicates if the assignation is being captured for logging or debugging.
-  """
-  capture: Boolean!
-
-  """Child assignations spawned from this one."""
-  children(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
-
-  """Creation timestamp."""
-  createdAt: DateTime!
-
-  """The used dependencies for this assignemnet"""
-  dependencies: AnyDefault!
-
-  """The dependency thats linked to the parents execution if applicable."""
-  dependency: String
-
-  """
-  The method of the dependency that caused this assignation, if applicable.
-  """
-  dependencyMethod: String
-
-  """Indicates if the assignation should be deleted after completion."""
-  ephemeral: Boolean!
-
-  """The events"""
-  events(filters: AssignationEventFilter, order: AssignationEventOrder, pagination: OffsetPaginationInput): [AssignationEvent!]!
-
-  """Timestamp when the assignation was finished."""
-  finishedAt: DateTime
-
-  """Unique ID of the assignation."""
-  id: ID!
-
-  """Implementation assigned to execute."""
-  implementation: Implementation!
-
-  """List of recent instructions for this assignation."""
-  instructs: [AssignationInstruct!]!
-
-  """Indicates if the assignation is completed."""
-  isDone: Boolean!
-
-  """Type of the latest event."""
-  latestEventKind: AssignationEventKind!
-
-  """Last instruction type."""
-  latestInstructKind: AssignationInstructKind!
-
-  """Parent assignation that triggered this one."""
-  parent: Assignation
-
-  """Optional external reference for tracking."""
-  reference: String
-
-  """Reservation that caused this assignation."""
-  reservation: Reservation
-
-  """Resolution used to resolve dependencies for this assignation."""
-  resolution: Resolution
-
-  """Get a specific dependency by key."""
-  resolvedDependencies: [ResolvedAgentDependency!]!
-
-  """Root assignation in the creation chain."""
-  root: Assignation
-
-  """Current status message."""
-  statusMessage: String
-
-  """Last update timestamp."""
-  updatedAt: DateTime!
-
-  """Waiter responsible for this assignation."""
-  waiter: Waiter!
-}
-
-type AssignationChangeEvent {
-  create: Assignation
-  event: AssignationEvent
-}
-
-"""An event that occurred during an assignation."""
-type AssignationEvent {
-  """Associated assignation."""
-  assignation: Assignation!
-
-  """Time when event was created."""
-  createdAt: DateTime!
-
-  """If this event was delegated, the assignation it was delegated to."""
-  delegatedTo: Assignation
-
-  """Unique ID of the event."""
-  id: ID!
-
-  """Kind of assignation event."""
-  kind: AssignationEventKind!
-
-  """Default log level."""
-  level: LogLevel!
-
-  """Optional message associated with the event."""
-  message: String
-
-  """Name of the event."""
-  name: String!
-
-  """Progress percentage."""
-  progress: Int
-
-  """Reference string for the event."""
-  reference: String!
-
-  """Optional return values."""
-  returns: AnyDefault
-}
-
-"""A way to filter assignation events"""
-input AssignationEventFilter {
-  AND: AssignationEventFilter
-  DISTINCT: Boolean
-  NOT: AssignationEventFilter
-  OR: AssignationEventFilter
-  kind: [AssignationEventKind!]
-}
-
-"""The event kind of the assignationevent"""
-enum AssignationEventKind {
-  ASSIGN
-  BOUND
-  CANCELING
-  CANCELLED
-  CRITICAL
-  DELEGATE
-  DISCONNECTED
-  DONE
-  ERROR
-  INTERUPTED
-  INTERUPTING
-  LOG
-  PROGRESS
-  QUEUED
-  YIELD
-}
-
-input AssignationEventOrder {
-  createdAt: Ordering
-}
-
-"""Numeric/aggregatable fields of Assignation"""
-enum AssignationField {
-  CREATED_AT
-}
-
-input AssignationFilter {
-  AND: AssignationFilter
-  DISTINCT: Boolean
-  NOT: AssignationFilter
-  OR: AssignationFilter
-  actedOn: [String!]
-  agent: ID
-  clientId: ID
-  createdAfter: DateTime
-  createdBefore: DateTime
-  ids: [ID!]
-  implementation: ID
-  instanceId: InstanceId
-  reservation: ReservationFilter
-  state: [AssignationEventKind!]
-  status: [AssignationStatus!]
-}
-
-"""An instruct event for a specific assignation."""
-type AssignationInstruct {
-  """Assignation the instruction relates to."""
-  assignation: Assignation!
-
-  """Time when instruction was issued."""
-  createdAt: DateTime!
-
-  """Unique ID of the instruct event."""
-  id: ID!
-
-  """Type of instruction."""
-  kind: AssignationInstructKind!
-}
-
-"""The event kind of the assignationevent"""
-enum AssignationInstructKind {
-  ASSIGN
-  CANCEL
-  COLLECT
-  INTERRUPT
-  PAUSE
-  RESUME
-  STEP
-}
-
-input AssignationOrder {
-  createdAt: Ordering
-  finishedAt: Ordering
-  startedAt: Ordering
-  status: Ordering
-}
-
-type AssignationStats {
-  """Average"""
-  avg(field: AssignationField!): Float
-
-  """Total number of items in the selection"""
-  count: Int!
-
-  """Number of distinct values for the field"""
-  distinctCount(field: AssignationField!): Int!
-
-  """Maximum"""
-  max(field: AssignationField!): Float
-
-  """Minimum"""
-  min(field: AssignationField!): Float
-
-  """Time-bucketed stats over a datetime field."""
-  series(by: Granularity!, field: AssignationField!, timestampField: AssignationTimestampField!): [TimeBucket!]!
-
-  """Sum"""
-  sum(field: AssignationField!): Float
-}
-
-"""The event kind of the assignationevent"""
-enum AssignationStatus {
-  ASSIGNING
-  CANCELLED
-  CRITICAL
-  DONE
-  ONGOING
-}
-
-"""Datetime fields of Assignation for bucketing"""
-enum AssignationTimestampField {
-  CREATED_AT
-}
-
 input AutoResolveInput {
   action: ID!
 }
 
 """The input for bouncing an agent."""
 input BlockInput {
+  """The agent ID to bounce."""
   agent: ID!
+
+  """The reason for kicking the agent."""
   reason: String = null
 }
 
@@ -1036,30 +1102,61 @@ input BlokDependencyFilter {
 
 """Which locks does the agent provide in general"""
 input BlokImplementationInput {
+  """
+  The optional catalog name if this Blok should be registered inside a specific namespace in your Electron app's UI component registry.
+  """
   catalog: String = null
+
+  """The UI component tree blueprint for this Blok."""
   components: [ComponentNodeInput!]!
+
+  """
+  An optional JSON-serializable object providing demo state values for this Blok's internal reactive data model, useful for testing and development purposes.
+  """
   demoState: JSONSerializable = null
 
   """The dependencies required by this Blok."""
   dependencies: [AgentDependencyInput!]! = []
+
+  """
+  A human-readable description about this Blok's purpose and functionality.
+  """
   description: String = null
+
+  """The key of this Blok implementation."""
   key: String!
 }
 
 """The input for bouncing an agent."""
 input BounceInput {
+  """The agent ID to bounce."""
   agent: ID!
-  duration: Int = null
 }
 
-"""The input for canceling an assignation."""
+"""The (client, user, organization) identity that requests work."""
+type Caller {
+  """The associated client."""
+  client: Client!
+
+  """Unique identifier for the caller."""
+  id: ID!
+
+  """The organization this caller belongs to."""
+  organization: Organization!
+
+  """The associated user."""
+  user: User!
+}
+
+"""The input for canceling a task."""
 input CancelInput {
-  assignation: ID!
+  """The task ID to cancel"""
+  task: ID!
 }
 
-type ChildAssignationEvent {
-  create: Assignation
-  update: Assignation
+type ChildTaskEvent {
+  create: TaskChange
+  update: TaskChange
 }
 
 type Choice {
@@ -1077,9 +1174,22 @@ type ChoiceAssignWidget implements AssignWidget {
 
 "\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    "
 input ChoiceInput {
+  """
+  The description of the choice. This is the text that is displayed in the UI when the user hovers over the choice
+  """
   description: String = null
+
+  """
+  The image of the choice. This is the image that is displayed in the UI (must be a URL)
+  """
   image: String = null
+
+  """The label of the choice. This is the text that is displayed in the UI"""
   label: String!
+
+  """
+  The value of the choice. This is the value that is returned when the choice is selected
+  """
   value: AnyDefault!
 }
 
@@ -1119,19 +1229,20 @@ input ClientFilter {
 }
 
 """A way to order apps"""
-input ClientOrder {
+input ClientOrder @oneOf {
   definedAt: Ordering
 }
 
 """The input for collecting a shelved item in a drawer."""
 input CollectInput {
+  """The drawer ID to collect"""
   drawers: [ID!]!
 }
 
 """A grouping of actions."""
 type Collection {
   """Actions included in this collection."""
-  actions(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+  actions(filters: ActionFilter, ordering: [ActionOrder!]! = [], pagination: OffsetPaginationInput): [Action!]!
 
   """Collection ID."""
   id: ID!
@@ -1154,9 +1265,24 @@ type ComponentNode {
 An abstract structural visual element inside a Blok blueprint manifest.
 """
 input ComponentNodeInput {
+  """
+  Flat adjacency pointer list mapping out IDs nested inside this specific component layer.
+  """
   children: [ComponentNodeInput!] = null
+
+  """
+  The type indicator token matching your Electron app's registered catalog specs (e.g. 'Slider').
+  """
   component: String!
+
+  """
+  Unique structural string identifying this node instance inside the flat workspace layout tree.
+  """
   id: String!
+
+  """
+  The collection of static values, state pointers, or action endpoints assigned to this component.
+  """
   props: [ComponentPropInput!] = null
 }
 
@@ -1172,27 +1298,64 @@ type ComponentProp {
 
 """A single key-value prop configuration for a component layout node."""
 input ComponentPropInput {
+  """
+  Defines an imperative interactive network action callback loop if this prop should trigger an agent interaction.
+  """
   agentCall: AgentCallInput = null
+
+  """
+  If set, this prop declares a new 'value' in the Blok state that can be referenced by other props or actions. The value of this field should be the name of the declared value (e.g., 'selected_user').
+  """
   declaresValue: String = null
+
+  """A reactive state data-binding rule."""
   dynamicValue: DynamicValueInput = null
+
+  """The prop key name matching the target UI catalog constraint."""
   key: String!
+
+  """
+  A raw scalar or JSON-stringified literal configuration parameter (e.g. '40x' or True).
+  """
   staticValue: JSONSerializable = null
+
+  """
+  Defines an imperative interactive network action callback loop if this prop should trigger a system utility interaction.
+  """
   utilCall: UtilCallInput = null
 }
 
 """The input for creating a blok."""
 input CreateBlokInput {
+  """The universal id"""
   catalog: String = null
+
+  """
+  The schema of the blok. This can be used to validate the blok input and output.
+  """
   components: [ComponentNodeInput!] = null
+
+  """
+  The initial state of the blok. This is used to set the initial state of the blok when it is materialized.
+  """
   demoState: Args = null
+
+  """
+  The dependencies of the blok. This is used to identify the blok in the system.
+  """
   dependencies: [AgentDependencyInput!] = null
+
+  """
+  The description of the blok. This can described the blok and its purpose.
+  """
   description: String = null
+
+  """The name of the Blok, used for identification in the system."""
   name: String!
-  uri: String
 }
 
 """
-Input for reserving an action. This is used to reserve an action for a waiter instance, optionally specifying the action or implementation to reserve, along with additional metadata for the reservation.
+Input for creating a dashboard, optionally specifying its name, the bloks to include, and the owning organization.
 """
 input CreateDashboardInput {
   """The list of blok IDs to include in the dashboard."""
@@ -1205,34 +1368,42 @@ input CreateDashboardInput {
   organization: String = null
 }
 
-"""The input for creating a implementation in another agents extension."""
-input CreateForeignImplementationInput {
-  """
-  The agent ID to create the implementation in. This is used to identify the agent in the system.
-  """
-  agent: ID!
-  extension: String!
-  implementation: ImplementationInput!
-}
-
 """The input for creating a implementation."""
 input CreateImplementationInput {
-  extension: String!
+  """
+  The implementation to create. This is used to identify the implementation in the system.
+  """
   implementation: ImplementationInput!
-  instanceId: InstanceId!
 }
 
 """The input for creating a placement."""
 input CreatePlacementInput {
+  """
+  The affine matrix for the placement. This is used to identify the placement in the system.
+  """
   affineMatrix: [[Float!]!] = null
+
+  """
+  The agent ID for the placement. This is used to identify the agent in the system.
+  """
   agent: ID = null
 
   """
-  A specific blok that should be used to visualize the state of the placement
+  A specific blok that should be used to visualize the state of the placement.
   """
   materializedBlok: ID = null
+
+  """
+  The 3D model ID for the placement. This is used to identify the 3D model in the system.
+  """
   model: ID = null
+
+  """
+  The role of the placement. This is used to identify the placement in the system.
+  """
   role: String = null
+
+  """The ID of the space to create the placement in."""
   space: String!
 }
 
@@ -1242,31 +1413,74 @@ input CreateResolutionInput {
   The implementation ID of the resolution. This is used to identify the resolution in the system.
   """
   implementation: ID!
+
+  """
+  The key of the resolution. This is used to identify the resolution in the system.
+  """
   key: String!
+
+  """
+  The name of the resolution. This is used to identify the resolution in the system.
+  """
   name: String!
+
+  """
+  The resolved dependencies of the resolution. This is used to identify the resolution in the system.
+  """
   resolvedDependencies: [ResolvedDependencyInput!] = null
 }
 
 """The input for creating a shortcut."""
 input CreateShortcutInput {
+  """The action ID to create a shortcut for"""
   action: ID!
+
+  """
+  Whether to allow quick shortcuts. Quick shorts are shortcuts that can be autorun without scpeific assignment
+  """
   allowQuick: Boolean! = false
+
+  """
+  The arguments to pre-pass to the shortcut. This is used to identify the shortcut in the system.
+  """
   args: Args!
+
+  """
+  The bind number of the shortcut. This is used to identify the shortcut in the system.
+  """
   bindNumber: Int = null
+
+  """
+  The description of the shortcut.This can described the shortcut and its purpose.
+  """
   description: String = null
-  implementation: ID = null
+
+  """
+  The name of the shortcut. This is used to identify the shortcut in the system.
+  """
   name: String!
 
   """
   The toolbox ID to create the shortcut in. If not provided, the shortcut will be created in the default toolbox.
   """
   toolbox: ID = null
+
+  """
+  Whether when running the short the returns should be used further. Allows to create mini pipelines
+  """
   useReturns: Boolean! = false
 }
 
 """The input for creating a space."""
 input CreateSpaceInput {
+  """
+  The name of the space. This is used to identify the space in the system.
+  """
   name: String!
+
+  """
+  The placements to create in the space. This is used to identify the placements in the system.
+  """
   placements: [PlacementInput!] = null
 }
 
@@ -1287,16 +1501,26 @@ input CreateTestResultInput {
 
 """The input for creating a 3D model."""
 input CreateThreeDModelInput {
-  dependency: AgentDependencyInput = null
+  """A description of the 3D model."""
   description: String = null
+
+  """The media store file for the 3D model."""
   media: MediaLike!
+
+  """The name of the 3D model."""
   name: String!
-  transferFunction: String = null
 }
 
 """The input for creating a toolbox."""
 input CreateToolboxInput {
+  """
+  The description of the toolbox. This can described the toolbox and its purpose.
+  """
   description: String
+
+  """
+  The name of the toolbox. This is used to identify the toolbox in the system.
+  """
   name: String!
 }
 
@@ -1354,7 +1578,7 @@ input DashboardPlacementFilter {
   space: ID
 }
 
-input DashboardPlacementOrder {
+input DashboardPlacementOrder @oneOf {
   createdAt: Ordering
   role: Ordering
 }
@@ -1462,6 +1686,9 @@ input DeleteDashboardInput {
 
 """The input for deleting a implementation."""
 input DeleteImplementationInput {
+  """
+  The implementation ID to delete. This is used to identify the implementation in the system.
+  """
   implementation: ID!
 }
 
@@ -1475,26 +1702,33 @@ input DeleteMaterializedBlokInput {
 
 """The input for deleting a placement."""
 input DeletePlacementInput {
+  """The ID of the placement to delete."""
   id: ID!
 }
 
 """The input for deleting a resolution."""
 input DeleteResolutionInput {
+  """The ID of the resolution to delete."""
   id: ID!
 }
 
 """The input for deleting a shortcut."""
 input DeleteShortcutInput {
+  """
+  The shortcut ID to delete. This is used to identify the shortcut in the system.
+  """
   id: ID!
 }
 
 """The input for deleting a space."""
 input DeleteSpaceInput {
+  """The ID of the space to delete."""
   id: ID!
 }
 
 """The input for deleting a 3D model."""
 input DeleteThreeDModelInput {
+  """The ID of the 3D model to delete."""
   id: ID!
 }
 
@@ -1563,6 +1797,17 @@ input DependencyFilter {
   ids: [ID!]
 }
 
+"""
+A single runtime descriptor key/value pair carried by a candidate object.
+"""
+input DescriptorInput {
+  """The descriptor key, e.g. 'axes'."""
+  key: String!
+
+  """The descriptor value. Any JSON-serializable value."""
+  value: Arg!
+}
+
 """Represents a device assigned to users within an organization."""
 type Device {
   """The device identifier."""
@@ -1584,6 +1829,9 @@ type DynamicValue {
 A bound state pointer referencing a variable inside a Blok state instance.
 """
 input DynamicValueInput {
+  """
+  JSON Pointer to a variable inside the Blok's isolated data model (e.g., '/microscope/exposure').
+  """
   path: String = null
 }
 
@@ -1593,14 +1841,41 @@ interface Effect {
   kind: EffectKind!
 }
 
+"""
+The effect class of an implementation — declared by the implementation, never the caller. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world (no UPSERT), so an ambiguous failure is terminal and must not be retried.
+"""
+enum EffectClass {
+  NONE
+  PHYSICAL
+}
+
 "\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    "
 input EffectInput {
+  """
+  The dependencies of the effect. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """
+  Whether to fade out the port when the effect is applied (if it is a hide effect)
+  """
   fade: Boolean = true
+
+  """The function to run to determine if the effect should be applied"""
   function: ValidatorFunction!
+
+  """The hook to run when the effect is applied (if it is a custom effect)"""
   hook: String = null
+
+  """The kind of the effect. Can be either message, hide or custom"""
   kind: EffectKind!
+
+  """
+  The message to display when the effect is applied (if it is a message effect)
+  """
   message: String = null
+
+  """The ward to run when the effect is applied (if it is a custom effect)"""
   ward: String = null
 }
 
@@ -1711,10 +1986,13 @@ type HideEffect implements Effect {
 }
 
 """
-A hook is a function that is called when a action has reached a specific lifecycle point. Hooks are jsut actions that take an assignation as input and return a value.
+A hook is a function that is called when a action has reached a specific lifecycle point. Hooks are jsut actions that take a task as input and return a value.
 """
 input HookInput {
+  """The hash of the hook. This is used to identify the hook in the system."""
   hash: ActionHash!
+
+  """The kind of the hook. This is used to identify the hook in the system."""
   kind: HookKind!
 }
 
@@ -1732,13 +2010,34 @@ scalar Identifier
 Implement an agent with the given implementations, states and locks. This will create the agent if it doesn't exist and update it if it does exist.
 """
 input ImplementAgentInput {
+  """
+  The blocks of the agent. This is used to specify the initial blocks of the agent
+  """
   bloks: [BlokImplementationInput!] = null
-  extensions: [String!] = null
+
+  """
+  A unique hash of the agent definition. An agent can use this hash to check if its definition has changed and if it needs to update its implementations and states. This is used to optimize the update process by only updating the implementations and states that have changed.
+  """
   hash: String = null
+
+  """
+  The implementations of the agent. This is used to specify the initial implementations of the agent
+  """
   implementations: [ImplementationInput!] = null
-  instanceId: InstanceId!
+
+  """
+  The locks of the agent. This is used to specify which resources the agent needs to run
+  """
   locks: [LockImplementationInput!] = null
+
+  """
+  The name of the agent. This is used to identify the agent in the system.
+  """
   name: String = null
+
+  """
+  The states of the agent. This is used to specify the initial states of the agent
+  """
   states: [StateImplementationInput!] = null
 }
 
@@ -1753,8 +2052,15 @@ type Implementation {
   """Dependencies required by this action."""
   dependencies(filters: DependencyFilter, pagination: OffsetPaginationInput): [Dependency!]!
 
-  """Extension or module name."""
-  extension: String!
+  """
+  Projection config (bound params, arg/dependency/return maps) when this is a higher-order implementation.
+  """
+  higherOrderConfig: AnyDefault!
+
+  """
+  If this is a higher-order (wrapper) implementation, the lower implementation it wraps.
+  """
+  higherOrderFor: Implementation
 
   """Unique ID of the implementation."""
   id: ID!
@@ -1762,20 +2068,33 @@ type Implementation {
   """Interface string representing the implementation entrypoint."""
   interface: String!
 
+  """The higher-order implementations that wrap this implementation."""
+  lowerOrderImplementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
+
   """States that this implementation manipulates."""
   manipulates: [State!]!
 
-  """Get the latest completed assignation created by the current user."""
-  myLatestAssignation: Assignation
+  """Get the latest completed task created by the current user."""
+  myLatestTask: Task
 
   """Constructed name for display, combining interface and agent name."""
   name: String!
+
+  """
+  Whether a signed provenance token is minted when this implementation is assigned.
+  """
+  needsToken: Boolean!
 
   """Arbitrary parameters for the implementation."""
   params: AnyDefault!
 
   """Check if this implementation is pinned by the current user."""
   pinned: Boolean!
+
+  """
+  Declared audience for the provenance token's `aud`, or null to derive it at dispatch.
+  """
+  provenanceAudience: [String!]
 
   """The resolved dependencies"""
   resolutions(filters: ResolutionFilter, pagination: OffsetPaginationInput): [Resolution!]!
@@ -1806,11 +2125,9 @@ input ImplementationAgentFilter {
   NOT: ImplementationAgentFilter
   OR: ImplementationAgentFilter
   clientId: String
-  extensions: [String!]
   hasImplementations: [String!]
   hasStates: [String!]
   ids: [ID!]
-  instanceId: String
 }
 
 input ImplementationFilter {
@@ -1823,7 +2140,6 @@ input ImplementationFilter {
   actionHash: ActionHash
   active: Boolean
   agent: ImplementationAgentFilter
-  extension: String
   ids: [ID!]
   interface: StrFilterLookup
   parameters: [ParamPair!]
@@ -1835,20 +2151,70 @@ input ImplementationFilter {
 A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params.
 """
 input ImplementationInput {
+  """
+  The definition of the implementation. This is used to uniquely identify the implementation
+  """
   definition: DefinitionInput!
+
+  """The agent dependencies required by this implementation."""
   dependencies: [AgentDependencyInput!]! = []
+
+  """
+  Whether the implementation is dynamic or not. If the implementation is dynamic, it can be used to create a dynamic action. If the implementation is not dynamic, it cannot be used to create a dynamic action
+  """
   dynamic: Boolean! = false
-  extension: String = null
+
+  """
+  The effect class of this implementation. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world and an ambiguous failure is terminal (never retried). Declared by the implementation here — never by the caller.
+  """
+  effect: EffectClass! = NONE
+
+  """The instance id of the agent this implementation is bound to."""
+  instanceId: String = null
+
+  """
+  The interface of the implementation. This is used to group implementations together in the UI
+  """
   interface: String
+
+  """
+  The locks of the implementation. This is used to specify which resources the implementation needs to run
+  """
   locks: [String!] = null
+
+  """
+  The logo of the implementation. This is used to display the logo in the UI either it should be 'custom:svg-paths' or a lucide icon name like 'lucide:activity' urls are not supported at the moment
+  """
   logo: String = null
+
+  """
+  The states that the implementation manipulates. This is used to identify which states are manipulated by the implementation, and can be use to enhance state safety in the system
+  """
   manipulates: [String!] = null
 
   """
-  The optimistics of the definition. This is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state
+  Whether Rekuest should mint a signed provenance token when this implementation is assigned. Default true (provenance-by-default); set false for trivial/internal tasks that never produce external provenance.
+  """
+  needsToken: Boolean! = true
+
+  """
+  The optimistics of the definition. This is used to optimistically set state values when the action is assigned, to provide a better user experience.
   """
   optimistics: [OptimisticInput!] = null
+
+  """
+  The params of the implementation. This is used to pass parameters to the implementation
+  """
   params: AnyDefault = null
+
+  """
+  The downstream service(s) the provenance token should be scoped to (the token's `aud`). If omitted, Rekuest derives the audience from the structures the assignment acts on.
+  """
+  provenanceAudience: [String!] = null
+
+  """
+  The tracks of the definition. This is used to track values over time during the runtime of an action. This is the state of a dependency
+  """
   tracks: [TrackInput!] = null
 }
 
@@ -1915,9 +2281,6 @@ input InputStructureUsageFilter {
   structure: ID
 }
 
-"""The `InstanceID` scalar type represents a unique instance identifier"""
-scalar InstanceId
-
 """If this structure is the default in its package."""
 type Interface {
   description: String
@@ -1944,9 +2307,10 @@ input InterfaceFilter {
   search: String
 }
 
-"""The input for interrupting an assignation."""
+"""The input for interrupting a task."""
 input InterruptInput {
-  assignation: ID!
+  """The task ID to interrupt"""
+  task: ID!
 }
 
 """
@@ -1976,19 +2340,28 @@ scalar JSONSerializable
 
 """The input for bouncing an agent."""
 input KickInput {
+  """The agent ID to bounce."""
   agent: ID!
+
+  """The reason for kicking the agent."""
   reason: String = null
 }
 
 """Which locks does the agent provide in general"""
 input LockDefinitionInput {
+  """Describe the lock a bit"""
   description: String = null
+
+  """The key of the lock. This is used to uniquely identify the lock"""
   key: String!
 }
 
 """Which locks does the agent provide in general"""
 input LockImplementationInput {
+  """The lock definition this implementation fulfills."""
   definition: LockDefinitionInput!
+
+  """The key of the lock implementation."""
   key: String!
 }
 
@@ -2002,28 +2375,34 @@ enum LogLevel {
 
 """The input for logging state patches."""
 input LogPatchesInput {
-  instanceId: String!
+  """
+  The list of patches applied to the state. This is used to log the changes made to the state.
+  """
   patches: [PatchInput!]!
 }
 
 """The input for logging state snapshots."""
 input LogSnapshotInput {
-  instanceId: String!
-  value: AnyDefault!
-}
+  """The interface of the state to snapshot."""
+  interface: String!
 
-"""The input for mapping an action to an implementation in a agent."""
-input MappedActionInput {
-  dependencies: [ResolvedDependencyInput!] = null
-  implementation: ID!
-  key: String!
+  """
+  The value of the state snapshot (index by state_keys). This is used to log the current state of the system.
+  """
+  value: AnyDefault!
 }
 
 """The input for mapping actions to implementations in a agent."""
 input MappedAgentInput {
+  """
+  The agent ID to map the actions to. This is used to identify the agent in the system.
+  """
   agent: ID!
+
+  """
+  The key of the agent to map. This is used to identify the agent in the system.
+  """
   key: String!
-  mappedActions: [MappedActionInput!]!
 }
 
 """The input for creating a blok."""
@@ -2077,7 +2456,7 @@ input MaterializedBlokFilter {
   search: String
 }
 
-input MaterializedBlokOrder {
+input MaterializedBlokOrder @oneOf {
   createdAt: Ordering
 }
 
@@ -2187,7 +2566,7 @@ input MemoryShelveFilter {
   ids: [ID!]
 }
 
-input MemoryShelveOrder {
+input MemoryShelveOrder @oneOf {
   name: Ordering
 }
 
@@ -2200,11 +2579,11 @@ type MessageEffect implements Effect {
 
 """Root mutation type for executing write operations on the API."""
 type Mutation {
-  """Acknowledge an assignation."""
-  ack(input: AckInput!): Assignation!
+  """Acknowledge a task."""
+  ack(input: AckInput!): Task!
 
   """Assign a task to an agent."""
-  assign(input: AssignInput!): Assignation!
+  assign(input: AssignInput!): Task!
 
   """Automatically resolve dependencies for an implementation."""
   autoResolve(input: AutoResolveInput!): Resolution!
@@ -2215,13 +2594,13 @@ type Mutation {
   """Bounce an agent so it reconnects."""
   bounce(input: BounceInput!): Agent!
 
-  """Cancel an active assignation."""
-  cancel(input: CancelInput!): Assignation!
+  """Cancel an active task."""
+  cancel(input: CancelInput!): Task!
 
   """Delete unreferenced actions from the system."""
   cleanupActions(actionIds: [ID!] = null): Int!
 
-  """Collect results from an assignation."""
+  """Collect results from a task."""
   collect(input: CollectInput!): [String!]!
 
   """Create a user interface panel."""
@@ -2229,9 +2608,6 @@ type Mutation {
 
   """Create a dashboard layout."""
   createDashboard(input: CreateDashboardInput!): Dashboard!
-
-  """Register an external implementation."""
-  createForeignImplementation(input: CreateForeignImplementationInput!): Implementation!
 
   """Create a new implementation entry."""
   createImplementation(input: CreateImplementationInput!): Implementation!
@@ -2301,8 +2677,8 @@ type Mutation {
   """
   implementAgent(input: ImplementAgentInput!): Agent!
 
-  """Interrupt the execution of an assignation."""
-  interrupt(input: InterruptInput!): Assignation!
+  """Interrupt the execution of a task."""
+  interrupt(input: InterruptInput!): Task!
 
   """Kick an agent to force disconnect. It will fail and not reconnect."""
   kick(input: KickInput!): Agent!
@@ -2316,8 +2692,8 @@ type Mutation {
   """Materialize a UI blok into a concrete instance on a dashboard."""
   materializeBlok(input: MaterializeBlokInput!): MaterializedBlok!
 
-  """Pause an ongoing assignation."""
-  pause(input: PauseInput!): Assignation!
+  """Pause an ongoing task."""
+  pause(input: PauseInput!): Task!
 
   """Pin an agent to the user."""
   pinAgent(input: PinInput!): Agent!
@@ -2325,7 +2701,7 @@ type Mutation {
   """Pin an implementation to the user."""
   pinImplementation(input: PinInput!): Implementation!
 
-  """Reinitialize the assignation or agent."""
+  """Reinitialize the task or agent."""
   reinit(input: ReInitInput!): String!
 
   """Request temporary S3 read credentials for a media file"""
@@ -2334,23 +2710,19 @@ type Mutation {
   """Upload media and return a URL for access"""
   requestMediaUpload(input: RequestMediaUploadInput!): MediaUploadGrant!
 
-  """Reserve an implementation for future use."""
-  reserve(input: ReserveInput!): Reservation!
+  """Resume a paused task."""
+  resume(input: ResumeInput!): Task!
 
-  """Resume a paused assignation."""
-  resume(input: ResumeInput!): Assignation!
+  """
+  Mark an implementation as a higher-order wrapper of a lower implementation, with a projection config.
+  """
+  setHigherOrder(input: SetHigherOrderInput!): Implementation!
 
   """Shelve data into a memory drawer."""
   shelveInMemoryDrawer(input: ShelveInMemoryDrawerInput!): MemoryDrawer!
 
-  """Advance an assignation one step."""
-  step(input: StepInput!): Assignation!
-
   """Unblock a previously blocked agent."""
   unblock(input: UnblockInput!): Agent!
-
-  """Release a reserved implementation."""
-  unreserve(input: UnreserveInput!): String!
 
   """Unshelve data from a memory drawer."""
   unshelveMemoryDrawer(input: UnshelveMemoryDrawerInput!): ID!
@@ -2384,6 +2756,52 @@ type Mutation {
   updateThreedModel(input: UpdateThreeDModelInput!): ThreeDModel!
 }
 
+"""
+A demand expressed as concrete runtime objects to find actions that accept them.
+"""
+input ObjectDemandInput {
+  """Require that the action has a specific number of ports."""
+  forceLength: Int = null
+
+  """Require that the action has a specific number of non-nullable ports."""
+  forceNonNullableLength: Int = null
+
+  """Require that the action has a specific number of structure ports."""
+  forceStructureLength: Int = null
+
+  """The kind of the demand. You can ask for args or returns."""
+  kind: DemandKind!
+
+  """The object matches of the demand."""
+  matches: [ObjectMatchInput!] = null
+}
+
+"A match against a concrete runtime object.\n\n    Mirrors the structural targeting of ``PortMatchInput`` (at / key / kind / identifier /\n    nullable / children) but additionally carries the object's runtime ``descriptors``. The\n    descriptors are evaluated against a port's compiled ``requires`` micro-constraint, so this\n    finds actions a concrete object can actually be passed to (not just structurally compatible).\n    "
+input ObjectMatchInput {
+  """The index of the port to match."""
+  at: Int = null
+
+  """The matches for the children of the port to match."""
+  children: [ObjectMatchInput!] = null
+
+  """
+  The runtime descriptors of the candidate object, matched against the port's compiled requires.
+  """
+  descriptors: [DescriptorInput!] = null
+
+  """The identifier of the port to match."""
+  identifier: String = null
+
+  """The key of the port to match."""
+  key: String = null
+
+  """The kind of the port to match."""
+  kind: PortKind = null
+
+  """Whether the port is nullable."""
+  nullable: Boolean = null
+}
+
 input OffsetPaginationInput {
   limit: Int
   offset: Int! = 0
@@ -2391,8 +2809,17 @@ input OffsetPaginationInput {
 
 " An optimistic is used to optimistically set state values when the action is assigned. This is used to provide a better user experience by optimistically setting state values when the action is assigned, instead of waiting for the action to be executed and the state to be updated. This will only ever happen on the frontend.\n\n"
 input OptimisticInput {
+  """
+  The accessor to get the value to optimistically set. This is used when the value to optimistically set is not the same as the value of the port
+  """
   accessor: String = null
+
+  """
+  The path to the state.value to optimistically set the value, always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]
+  """
   path: String!
+
+  """The state to optimistically set when the action is assigned"""
   state: String!
 }
 
@@ -2462,7 +2889,6 @@ input ParamPair {
 }
 
 type Patch {
-  assignation: Assignation
   currentRevision: Int!
   futureRevision: Int!
   globalCurrentRevision: Int!
@@ -2474,32 +2900,76 @@ type Patch {
   path: String!
   sessionId: String!
   state: State!
+  task: Task
   timestamp: DateTime!
   value: Args!
 }
 
 """The input for updating a state using JSON Patch operations."""
 input PatchInput {
+  """
+  An optional correlation ID to associate with the patch operation. This can be used for tracking and debugging purposes across distributed systems.
+  """
   correlationId: String = null
+
+  """
+  The current revision number of the state. This is used for optimistic concurrency control to ensure that the patch is applied to the correct version of the state.
+  """
   currentRev: Int!
+
+  """
+  The future revision number of the state after the patch is applied. This is used for optimistic concurrency control to ensure that the patch is applied to the correct version of the state.
+  """
   futureRev: Int!
+
+  """
+  The global revision number of the state. This is used for conflict detection in distributed systems where multiple clients may be applying patches concurrently.
+  """
   globalCurrentRev: Int
+
+  """
+  The global future revision number of the state after the patch is applied. This is used for conflict detection in distributed systems where multiple clients may be applying patches concurrently.
+  """
   globalFutureRev: Int
+
+  """
+  The JSON Patch operation to perform. This can be add, remove, replace, move, copy, or test.
+  """
   op: String!
+
+  """
+  The JSON Pointer path to the target value to apply the patch operation on.
+  """
   path: String!
+
+  """
+  The session ID of the client applying the patch. This is used for tracking and auditing purposes.
+  """
   sessionId: String!
+
+  """
+  The name of the state to apply the patch to. This is used to identify the state in the system.
+  """
   stateName: String!
+
+  """
+  The value to be used in the patch operation. This is required for add, replace, and test operations, and should be null for remove, move, and copy operations.
+  """
   value: AnyDefault!
 }
 
-"""The input for pausing an assignation."""
+"""The input for pausing a task."""
 input PauseInput {
-  assignation: ID!
+  """The task ID to pause"""
+  task: ID!
 }
 
 """The input for pinning an model."""
 input PinInput {
+  """The unique identifier of the item to pin."""
   id: ID!
+
+  """Boolean flag indicating whether to pin or unpin."""
   pin: Boolean!
 }
 
@@ -2539,14 +3009,29 @@ input PlacementFilter {
 
 """The input for creating or updating a placement."""
 input PlacementInput {
+  """
+  The affine matrix for the placement. This is used to identify the placement in the system.
+  """
   affineMatrix: [[Float!]!] = null
+
+  """
+  The agent ID for the placement. This is used to identify the agent in the system.
+  """
   agent: ID = null
 
   """
-  A specific blok that should be used to visualize the state of the placement
+  A specific blok that should be used to visualize the state of the placement.
   """
   blok: ID = null
+
+  """
+  The 3D model ID for the placement. This is used to identify the 3D model in the system.
+  """
   model: ID = null
+
+  """
+  The role of the placement. This is used to identify the placement in the system.
+  """
   role: String = null
 }
 
@@ -2633,17 +3118,23 @@ A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
 input PortMatchInput {
+  """The index of the port to match."""
   at: Int = null
-  children: [PortMatchInput!] = null
-  identifier: String = null
-  key: String = null
-  kind: PortKind = null
-  nullable: Boolean = null
 
-  """
-  The object of the port to match. This is used for adanved pattern matching based on the exact object descriptors of the object. i.e { x: 1, y: 2} 
-  """
-  object: Arg = null
+  """The matches for the children of the port to match."""
+  children: [PortMatchInput!] = null
+
+  """The identifier of the port to match."""
+  identifier: String = null
+
+  """The key of the port to match."""
+  key: String = null
+
+  """The kind of the port to match."""
+  kind: PortKind = null
+
+  """Whether the port is nullable."""
+  nullable: Boolean = null
 }
 
 """The `Args` scalar type represents a Dictionary of arguments"""
@@ -2652,7 +3143,7 @@ scalar Props
 """A set of related actions forming a protocol."""
 type Protocol {
   """Associated actions."""
-  actions(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+  actions(filters: ActionFilter, ordering: [ActionOrder!]! = [], pagination: OffsetPaginationInput): [Action!]!
 
   """Protocol ID."""
   id: ID!
@@ -2671,7 +3162,7 @@ input ProtocolFilter {
   search: String
 }
 
-input ProtocolOrder {
+input ProtocolOrder @oneOf {
   name: Ordering
 }
 
@@ -2682,8 +3173,15 @@ type Provides {
 }
 
 input ProvidesInput {
+  """
+  The key of the provision. This is used to uniquely identify the provision
+  """
   key: String!
+
+  """The operator for the provision"""
   operator: ProvidesOperator!
+
+  """The value of the provision. This can be any JSON serializable value"""
   value: Arg!
 }
 
@@ -2713,30 +3211,19 @@ type Query {
   _service: _Service!
 
   """Fetch a specific action."""
-  action(agent: ID = null, assignation: ID = null, hash: ActionHash = null, id: ID = null, implementation: ID = null, interface: String = null, matching: ActionDependencyInput = null, reservation: ID = null): Action!
+  action(agent: ID = null, hash: ActionHash = null, id: ID = null, implementation: ID = null, interface: String = null, matching: ActionDependencyInput = null, task: ID = null): Action!
 
   """Statistics about actions and their implementations."""
   actionStats(filters: ActionFilter = null): ActionStats!
 
   """List of all available actions."""
-  actions(filters: ActionFilter, order: ActionOrder, pagination: OffsetPaginationInput): [Action!]!
+  actions(filters: ActionFilter, ordering: [ActionOrder!]! = [], pagination: OffsetPaginationInput): [Action!]!
 
-  """
-  Fetch a specific agent by ID or by app, version, device_id and instance_id.
-  """
-  agent(app: String = null, deviceId: String = null, id: ID = null, instanceId: String = null, version: String = null): Agent!
+  """Fetch a specific agent by ID or by app, version and device_id."""
+  agent(app: String = null, deviceId: String = null, id: ID = null, version: String = null): Agent!
 
   """Retrieve all compute agents."""
-  agents(filters: AgentFilter, order: AgentOrder, pagination: OffsetPaginationInput): [Agent!]!
-
-  """Fetch assignation by ID."""
-  assignation(id: ID!): Assignation!
-
-  """Statistics about assignations and their states."""
-  assignationStats(filters: AssignationFilter = null): AssignationStats!
-
-  """Fetch assignations."""
-  assignations(instanceId: InstanceId = null): [Assignation!]!
+  agents(filters: AgentFilter, ordering: [AgentOrder!]! = [], pagination: OffsetPaginationInput): [Agent!]!
 
   """Get a blok by ID."""
   blok(id: ID!): Blok!
@@ -2751,7 +3238,7 @@ type Query {
   checkoutAgent(agent: ID!, backwardPatchCount: Int! = 0, forwardPatchCount: Int! = 0, globalRevision: Int = null, sessionId: ID = null, timestamp: DateTime = null): AgentWithValues!
 
   """List all registered clients."""
-  clients(filters: ClientFilter, order: ClientOrder, pagination: OffsetPaginationInput): [Client!]!
+  clients(filters: ClientFilter, ordering: [ClientOrder!]! = [], pagination: OffsetPaginationInput): [Client!]!
 
   """Get dashboard by ID."""
   dashboard(id: ID!): Dashboard!
@@ -2763,7 +3250,7 @@ type Query {
   dependency(id: ID!): Dependency!
 
   """Fetch a specific event."""
-  event(id: ID = null): [AssignationEvent!]!
+  event(id: ID = null): [TaskEvent!]!
 
   """Get forward events after revision."""
   forwardEventsAfterRev(count: Int! = 100, globalRevision: Int!, sessionId: String = null, stateId: ID = null): [Patch!]!
@@ -2778,7 +3265,7 @@ type Query {
   implementation(id: ID!): Implementation!
 
   """Find implementation at given interface."""
-  implementationAt(actionHash: String = null, agent: ID!, demand: ActionDemandInput = null, extension: String = null, interface: String = null): Implementation!
+  implementationAt(actionHash: String = null, agent: ID!, demand: ActionDemandInput = null, interface: String = null): Implementation!
 
   """All registered implementations."""
   implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
@@ -2805,13 +3292,13 @@ type Query {
   memoryShelve(id: ID!): MemoryShelve!
 
   """All memory shelves."""
-  memoryShelves(filters: MemoryShelveFilter, order: MemoryShelveOrder, pagination: OffsetPaginationInput): [MemoryShelve!]!
+  memoryShelves(filters: MemoryShelveFilter, ordering: [MemoryShelveOrder!]! = [], pagination: OffsetPaginationInput): [MemoryShelve!]!
 
   """Find your implementation at a specific interface."""
-  myImplementationAt(actionId: ID = null, instanceId: String!, interface: String = null): Implementation!
+  myImplementationAt(actionId: ID = null, interface: String = null): Implementation!
 
-  """Reservations made by the current user."""
-  myreservations(instanceId: InstanceId = null): [Reservation!]!
+  """Fetch the root tasks this client created (caller-scoped)."""
+  myTasks: [Task!]!
 
   """Get patch events between global revisions."""
   patchEventsBetweenGlobalRevs(fromGlobalRevision: Int!, sessionId: String = null, stateIds: [ID!] = null, toGlobalRevision: Int!): [Patch!]!
@@ -2823,13 +3310,7 @@ type Query {
   placements(filters: PlacementFilter, ordering: [PlacementOrder!]! = [], pagination: OffsetPaginationInput): [Placement!]!
 
   """Retrieve protocols grouping actions."""
-  protocols(filters: ProtocolFilter, order: ProtocolOrder, pagination: OffsetPaginationInput): [Protocol!]!
-
-  """Retrieve reservation by ID."""
-  reservation(id: ID!): Reservation!
-
-  """List of all reservations."""
-  reservations(instanceId: InstanceId = null): [Reservation!]!
+  protocols(filters: ProtocolFilter, ordering: [ProtocolOrder!]! = [], pagination: OffsetPaginationInput): [Protocol!]!
 
   """Fetch a client by ID."""
   resolution(id: ID!): Resolution!
@@ -2847,13 +3328,13 @@ type Query {
   sessionBoundaries(sessionId: ID!, stateId: ID = null): SessionBoundary
 
   """List all sessions."""
-  sessions(filters: SessionFilter, order: SessionOrder, pagination: OffsetPaginationInput): [Session!]!
+  sessions(filters: SessionFilter, ordering: [SessionOrder!]! = [], pagination: OffsetPaginationInput): [Session!]!
 
   """Retrieve shortcut by ID."""
   shortcut(id: ID!): Shortcut!
 
   """List of shortcuts."""
-  shortcuts(filters: ShortcutFilter, order: ShortcutOrder, pagination: OffsetPaginationInput): [Shortcut!]!
+  shortcuts(filters: ShortcutFilter, ordering: [ShortcutOrder!]! = [], pagination: OffsetPaginationInput): [Shortcut!]!
 
   """Get snapshots around revision."""
   snapshotsAroundRev(after: Int! = 1, before: Int! = 1, revision: Int!, sessionId: String = null, stateId: ID = null): [Snapshot!]!
@@ -2862,7 +3343,7 @@ type Query {
   space(id: ID!): Space!
 
   """List all spaces."""
-  spaces(filters: SpaceFilter, order: SpaceOrder, pagination: OffsetPaginationInput): [Space!]!
+  spaces(filters: SpaceFilter, ordering: [SpaceOrder!]! = [], pagination: OffsetPaginationInput): [Space!]!
 
   """Get a specific state by ID."""
   state(id: ID!): State!
@@ -2897,11 +3378,17 @@ type Query {
   """All registered structures."""
   structures(filters: StructureFilter, pagination: OffsetPaginationInput): [Structure!]!
 
+  """Fetch task by ID."""
+  task(id: ID!): Task!
+
   """Get task boundaries."""
   taskBoundaries(correlationId: String!, stateId: ID = null): TaskBoundary
 
+  """Statistics about tasks and their states."""
+  taskStats(filters: TaskFilter = null): TaskStats!
+
   """All tasks."""
-  tasks(filters: AssignationFilter, order: AssignationOrder, pagination: OffsetPaginationInput): [Assignation!]!
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [Task!]!
 
   """Retrieve test case by ID."""
   testCase(id: ID!): TestCase!
@@ -2919,35 +3406,17 @@ type Query {
   threedModel(id: ID!): ThreeDModel!
 
   """List all 3D models."""
-  threedModels(filters: ThreeDModelFilter, order: ThreeDModelOrder, pagination: OffsetPaginationInput): [ThreeDModel!]!
+  threedModels(filters: ThreeDModelFilter, ordering: [ThreeDModelOrder!]! = [], pagination: OffsetPaginationInput): [ThreeDModel!]!
 
   """Get toolbox by ID."""
   toolbox(id: ID!): Toolbox!
 
   """List of toolboxes containing shortcuts."""
-  toolboxes(filters: ToolboxFilter, order: ToolboxOrder, pagination: OffsetPaginationInput): [Toolbox!]!
+  toolboxes(filters: ToolboxFilter, ordering: [ToolboxOrder!]! = [], pagination: OffsetPaginationInput): [Toolbox!]!
 }
 
 input ReInitInput {
   agent: ID = null
-}
-
-"""Links a user and a client for registry tracking."""
-type Registry {
-  """Agents registered under this registry."""
-  agents(filters: AgentFilter, order: AgentOrder, pagination: OffsetPaginationInput): [Agent!]!
-
-  """The associated client."""
-  client: Client!
-
-  """Unique identifier for the registry."""
-  id: ID!
-
-  """The organization this registry belongs to."""
-  organization: Organization!
-
-  """The associated user."""
-  user: User!
 }
 
 """Profile information for a user."""
@@ -2979,8 +3448,15 @@ type Requires {
 }
 
 input RequiresInput {
+  """
+  The key of the requirement. This is used to uniquely identify the requirement
+  """
   key: String!
+
+  """The operator for the requirement"""
   operator: RequiresOperator!
+
+  """The value of the requirement. This can be any JSON serializable value"""
   value: Arg!
 }
 
@@ -2995,89 +3471,6 @@ enum RequiresOperator {
   MATCHES
   NOT_EQUALS
   NOT_IN
-}
-
-"""Reservation for planned assignment of implementations."""
-type Reservation {
-  """Action this reservation is for."""
-  action: Action!
-
-  """Dependency that triggered the reservation."""
-  causingDependency: Dependency
-
-  """Did the reservation succeed."""
-  happy: Boolean!
-
-  """ID of the reservation."""
-  id: ID!
-
-  """Chosen implementation."""
-  implementation: Implementation
-
-  """Available implementations for the reservation."""
-  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
-
-  """Name of the reservation."""
-  name: String!
-
-  """Reference string for identification."""
-  reference: String!
-
-  """Reservation strategy applied."""
-  strategy: ReservationStrategy!
-
-  """Optional title."""
-  title: String
-
-  """Last update timestamp."""
-  updatedAt: DateTime!
-
-  """Is the reservation currently viable."""
-  viable: Boolean!
-
-  """Waiter associated with the reservation."""
-  waiter: Waiter!
-}
-
-"""A way to filter reservations"""
-input ReservationFilter {
-  AND: ReservationFilter
-  DISTINCT: Boolean
-  NOT: ReservationFilter
-  OR: ReservationFilter
-  ids: [ID!]
-  status: [ReservationStatus!]
-  waiter: WaiterFilter
-}
-
-enum ReservationStatus {
-  ACTIVE
-  ENDED
-  HAPPY
-  INACTIVE
-  UNCONNECTED
-  UNHAPPY
-}
-
-"""The pattern of assignment of the reservation"""
-enum ReservationStrategy {
-  DIRECT
-  LEAST_BUSY
-  LEAST_LOAD
-  LEAST_TIME
-  RANDOM
-  ROUND_ROBIN
-}
-
-"""The input for reserving a action."""
-input ReserveInput {
-  action: ID = null
-  assignationId: ID = null
-  hash: ActionHash = null
-  implementation: ID = null
-  instanceId: InstanceId! = "default"
-  reference: String = "8d6db758-7935-4269-aaf8-add51e4a48fc"
-  title: String = null
 }
 
 """Represents a resolution for a blok."""
@@ -3157,14 +3550,29 @@ input ResolvedDependencyFilter {
 
 """The input for mapping dependencies to implementations in a agent."""
 input ResolvedDependencyInput {
+  """
+  Whether this dependency should be automatically resolved by the system. If true, the system will attempt to find a agent that can resolve this dependency and assign it to the action when the action is assigned. This is used to enable automatic resolution of dependencies without requiring the user to specify a specific agent for the dependency.
+  """
   autoResolve: Boolean! = false
+
+  """
+  The key of the dependency to map. This is used to identify the dependency in the system.
+  """
   key: String!
+
+  """
+  The list of mapped agents to map to implementations in agents. This is used to identify the mapped agents in the system.
+  """
   mappedAgents: [MappedAgentInput!]!
 }
 
-"""The input for resuming an assignation."""
+"""The input for resuming a task."""
 input ResumeInput {
-  assignation: ID!
+  """Resume only until the next breakpoint instead of running on freely."""
+  step: Boolean! = false
+
+  """The task ID to resume"""
+  task: ID!
 }
 
 type ReturnPort {
@@ -3184,18 +3592,53 @@ type ReturnPort {
 
 "Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    "
 input ReturnPortInput {
+  """The child ports (used for list, dict, union and model ports)."""
   children: [ReturnPortInput!] = null
+
+  """The options for the port. This is used for dropdowns and text inputs"""
   choices: [ChoiceInput!] = null
+
+  """The default value for the port."""
   default: AnyDefault = null
+
+  """
+  The description of the port. This is the text that is displayed in the UI when the user hovers over the port
+  """
   description: String = null
+
+  """The effects of the port"""
   effects: [EffectInput!] = null
+
+  """
+  The identifier of a structure port. This is used to uniquely identify a specific type of structure.
+  """
   identifier: String = null
+
+  """The key of the port"""
   key: String!
+
+  """
+  The kind of the port. This is the type of the port. Can be either int, string, structure, list, bool, dict, float, date, union or model
+  """
   kind: PortKind!
+
+  """The label of the port. This is the text that is displayed in the UI"""
   label: String = null
+
+  """
+  Whether the port is nullable or not. If the port is nullable, it can be set to null. If the port is not nullable, it cannot be set to null
+  """
   nullable: Boolean! = false
+
+  """
+  The provisions for the port. Provisions are key-value pairs that can be used to add additional metadata to a port. When using rekuest's action search, you can filter actions based on their port provisions
+  """
   provides: [ProvidesInput!] = null
+
+  """The validators for the port"""
   validators: [ValidatorInput!] = null
+
+  """The return widget to use for this port."""
   widget: ReturnWidgetInput = null
 }
 
@@ -3205,14 +3648,37 @@ interface ReturnWidget {
 
 "A Return Widget is a UI element that is used to display the value of a port.\n\n    Return Widgets get displayed both if we show the return values of an assignment,\n    but also when we inspect the given arguments of a previous run task. Their primary\n    usecase is to adequately display the value of a port, in a user readable way.\n\n    Return Widgets are often overwriten by the underlying UI framework (e.g. Orkestrator)\n    to provide a better user experience. For example, a return widget that displays a\n    date could be overwriten to display a calendar widget.\n\n    Return Widgets provide more a way to customize this overwriten behavior.\n\n    "
 input ReturnWidgetInput {
+  """
+  The choices to display in the dropdown. This is used for dropdowns and text inputs
+  """
   choices: [ChoiceInput!] = null
+
+  """The hook to run (if it is a custom return widget)."""
   hook: String = null
+
+  """
+  The kind of the return widget. Can be either dropdown, text, slider, checkbox, radio or custom
+  """
   kind: ReturnWidgetKind!
+
+  """The maximum value to display (if a slider)."""
   max: Int = null
+
+  """The minimum value to display (if a slider)."""
   min: Int = null
+
+  """The placeholder text of the return widget."""
   placeholder: String = null
+
+  """
+  The query to run when searching for choices. This is used for dropdowns and text inputs
+  """
   query: SearchQuery = null
+
+  """The step value to display (if a slider)."""
   step: Int = null
+
+  """The ward responsible for handling the return widget."""
   ward: String = null
 }
 
@@ -3225,31 +3691,10 @@ enum ReturnWidgetKind {
 
 """The input for creating a action demand."""
 input SchemaDemandInput {
-  """The hash of the state."""
-  hash: ActionHash = null
-
-  """
-  The key of the action. This is used to identify the action in the system.
-  """
-  key: String!
-
   """
   The demands for the action args and returns. This is used to identify the demand in the system.
   """
   matches: [PortMatchInput!] = null
-
-  """
-  The protocols that the action has to implement. This is used to identify the demand in the system.
-  """
-  protocols: [ID!] = null
-}
-
-"""A way to filter by scope"""
-input ScopeFilter {
-  me: Boolean = null
-  org: Boolean = null
-  public: Boolean = null
-  shared: Boolean = null
 }
 
 type SearchAssignWidget implements AssignWidget {
@@ -3300,9 +3745,25 @@ input SessionFilter {
   ids: [ID!]
 }
 
-input SessionOrder {
+input SessionOrder @oneOf {
   endedAt: Ordering
   startedAt: Ordering
+}
+
+"""
+Mark an existing implementation as a higher-order wrapper of a lower implementation.
+"""
+input SetHigherOrderInput {
+  """
+  Projection config: bound params + arg/dependency/return maps (see Implementation.higher_order_config).
+  """
+  config: AnyDefault = null
+
+  """The wrapper implementation to mark as higher-order."""
+  implementation: ID!
+
+  """The lower implementation it wraps."""
+  lowerImplementation: ID!
 }
 
 input ShelveInMemoryDrawerInput {
@@ -3315,11 +3776,6 @@ input ShelveInMemoryDrawerInput {
   The identifier of the drawer. This is used to identify the drawer in the system.
   """
   identifier: Identifier!
-
-  """
-  The instance ID of the agent. This is used to identify the agent in the system.
-  """
-  instanceId: InstanceId!
 
   """
   The label of the drawer. This is used to identify the drawer in the system.
@@ -3365,7 +3821,7 @@ type Shortcut {
   savedArgs: AnyDefault!
 
   """Toolboxes that contain this shortcut."""
-  toolboxes(filters: ToolboxFilter, order: ToolboxOrder, pagination: OffsetPaginationInput): [Toolbox!]!
+  toolboxes(filters: ToolboxFilter, ordering: [ToolboxOrder!]! = [], pagination: OffsetPaginationInput): [Toolbox!]!
 
   """If true, shortcut uses return values."""
   useReturns: Boolean!
@@ -3382,7 +3838,7 @@ input ShortcutFilter {
   toolbox: ID
 }
 
-input ShortcutOrder {
+input ShortcutOrder @oneOf {
   name: Ordering
 }
 
@@ -3429,7 +3885,7 @@ input SpaceFilter {
   search: String
 }
 
-input SpaceOrder {
+input SpaceOrder @oneOf {
   createdAt: Ordering
   name: Ordering
   updatedAt: Ordering
@@ -3459,7 +3915,14 @@ type StateAccessor {
 }
 
 input StateAccessorInput {
+  """
+  The part of the state accessor to use as the value for the assign widget (e.g. the key, the description, the logo, etc.)
+  """
   optionKey: OptionKey!
+
+  """
+  The sub path to access a specific part of the state value. Always traverse from top to bottom level. i.e state.x for state.x and state.x.y for state.x.y. You can also use an arrow function to specify a dynamic path based on the other arguments, e.g. (args) => state[args.foo]
+  """
   subPath: String = null
 }
 
@@ -3482,15 +3945,35 @@ type StateDefinition {
 A state schema is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params.
 """
 input StateDefinitionInput {
+  """
+  The name of the state schema. This is used to uniquely identify the state schema
+  """
   name: String!
+
+  """
+  The ports of the state schema. This is used to define the structure of the state
+  """
   ports: [ReturnPortInput!]!
 }
 
 """The input for creating a action demand."""
 type StateDemand {
+  """The hash of the state."""
   hash: ActionHash
+
+  """
+  The key of the action demand. This is used to identify the action in the system.
+  """
   key: String!
+
+  """
+  The demands for the action args and returns. This is used to identify the demand in the system.
+  """
   matches: [PortMatch!]
+
+  """
+  The protocols that the action has to implement. This is used to identify the demand in the system.
+  """
   protocols: [ID!]
 }
 
@@ -3499,30 +3982,63 @@ A dependency for a implementation. By defining dependencies, you can
     create a dependency graph for your implementations and actions
 """
 input StateDependencyInput {
+  """Allow inactive nodes, defaults to true"""
   allowInactive: Boolean = true
+
+  """
+  Which app this dependency corresponds to (i.e. do you want to use a stardist agent for that or imagej agents needs to be a world unique classsifier (reverse domain notation) that identifies the type of agent you want to use, and then we can have multiple agents of the same type running in the system, e.g. startdist could be the app for all agents that correpsond to a startdist instance)
+  """
   app: String = null
+
+  """
+  The description of the state. This can describe the state and its purpose.
+  """
   description: String = null
+
+  """
+  The key of the state. This is used to identify the dependency in the system.
+  """
   key: String!
 
   """
-  The name of the state. This is used to identify the action in the system.
+  The name of the state. This is used to identify the state in the system.
   """
   name: String = null
+
+  """
+  Whether the dependency is optional or not. If the dependency is optional, the agent doesn't have to provide it to be potentially callable
+  """
   optional: Boolean! = false
+
+  """
+  The demands for the state ports, this can be additionaly specified so that when we loosen the matching criteria for a state in a resolver, we can still make sure to match the right state based on the demands for the ports. This is used to identify the demand in the system.
+  """
   portMatches: [PortMatchInput!] = null
 
   """
-  The protocols that the action is implementing or relying on. This is used to identify the demand in the system, and can be used to match actions that are implementing the same protocol together.
+  The protocols that the state is implementing or relying on. This is used to identify the demand in the system, and can be used to match states that are implementing the same protocol together.
   """
   protocols: [ID!] = null
+
+  """The key of the state this dependency corresponds to. (i.e frame:count)"""
   stateKey: String = null
+
+  """The version of the state this dependency corresponds to."""
+  version: String = null
 }
 
 """
 A state implementation is a blueprint for a state. It is composed of a definition, a list of dependencies, and a list of params.
 """
 input StateImplementationInput {
+  """
+  The schema of the state implementation. This is used to define the structure of the state
+  """
   definition: StateDefinitionInput!
+
+  """
+  The key of the state implementation. This is used to uniquely identify the state implementation
+  """
   interface: String!
 }
 
@@ -3567,13 +4083,6 @@ type StateValue {
 
   """The state value"""
   value: JSON!
-}
-
-"""
-The input for stepping an assignation. Stepping is used to go from one breakpoint to another.
-"""
-input StepInput {
-  assignation: ID!
 }
 
 input StrFilterLookup {
@@ -3665,14 +4174,8 @@ type Subscription {
   """Subscribe to updates on agent connections and statuses."""
   agents: AgentChangeEvent!
 
-  """Subscribe to events related to assignations."""
-  assignationEvents(instanceId: InstanceId!): AssignationEvent!
-
-  """Subscribe to updates on assignations."""
-  assignations(instanceId: InstanceId!): AssignationChangeEvent!
-
-  """Subscribe to child assignation events."""
-  childAssignations(id: ID!): ChildAssignationEvent!
+  """Subscribe to all descendant task changes of a task."""
+  childTasks(id: ID!): ChildTaskEvent!
 
   """Subscribe to changes in implementations."""
   implementationChange(implementation: ID!): Implementation!
@@ -3683,14 +4186,17 @@ type Subscription {
   """Subscribe to latest patches for specific agents or states."""
   latestPatches(agent: ID = null, state: ID = null): Patch!
 
+  """Subscribe to root tasks created by this client (caller-scoped)."""
+  mytasks: TaskChangeEvent!
+
   """Subscribe to notifications when new actions are created."""
   newActions(cage: ID!): Action!
 
-  """Subscribe to updates on reservations."""
-  reservations(instanceId: InstanceId!): Reservation!
-
   """Subscribe to updates of state values and patches."""
   stateUpdateEvents(stateId: ID!): State!
+
+  """Subscribe to root task changes across the whole organization."""
+  tasks: TaskChangeEvent!
 
   """Watch an agent: yields snapshots for all states then streams patches."""
   watchAgent(agentId: ID!): AgentSnapshotEventStatePatchEvent!
@@ -3699,12 +4205,292 @@ type Subscription {
   watchState(agentId: ID = null, interface: String = null, stateId: ID = null): StateSnapshotEventStatePatchEvent!
 }
 
+"""Tracks the assignment of an implementation to a specific task."""
+type Task {
+  """List of resources or entities this task acted upon."""
+  actedOn: [String!]!
+
+  """Action assigned."""
+  action: Action!
+
+  """Agent responsible for this task."""
+  agent: Agent
+
+  """Get a specific argument by key."""
+  arg(key: String!): Args
+
+  """Arguments used in the task."""
+  args: AnyDefault!
+
+  """Caller that created this task."""
+  caller: Caller
+
+  """Indicates if the task is being captured for logging or debugging."""
+  capture: Boolean!
+
+  """Child tasks spawned from this one."""
+  children(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [Task!]!
+
+  """Creation timestamp."""
+  createdAt: DateTime!
+
+  """The used dependencies for this assignemnet"""
+  dependencies: AnyDefault!
+
+  """The dependency thats linked to the parents execution if applicable."""
+  dependency: String
+
+  """The method of the dependency that caused this task, if applicable."""
+  dependencyMethod: String
+
+  """Indicates if the task should be deleted after completion."""
+  ephemeral: Boolean!
+
+  """The events"""
+  events(filters: TaskEventFilter, ordering: [TaskEventOrder!]! = [], pagination: OffsetPaginationInput): [TaskEvent!]!
+
+  """Timestamp when the task was finished."""
+  finishedAt: DateTime
+
+  """Unique ID of the task."""
+  id: ID!
+
+  """Implementation assigned to execute."""
+  implementation: Implementation!
+
+  """List of recent instructions for this task."""
+  instructs: [TaskInstruct!]!
+
+  """Indicates if the task is completed."""
+  isDone: Boolean!
+
+  """Type of the latest event."""
+  latestEventKind: TaskEventKind!
+
+  """Last instruction type."""
+  latestInstructKind: TaskInstructKind!
+
+  """Parent task that triggered this one."""
+  parent: Task
+
+  """Optional external reference for tracking."""
+  reference: String
+
+  """Resolution used to resolve dependencies for this task."""
+  resolution: Resolution
+
+  """Get a specific dependency by key."""
+  resolvedDependencies: [ResolvedAgentDependency!]!
+
+  """Root task in the creation chain."""
+  root: Task
+
+  """Last update timestamp."""
+  updatedAt: DateTime!
+}
+
 type TaskBoundary {
   correlationId: String!
   endGlobalRevision: Int
   endTime: DateTime
   startGlobalRevision: Int
   startTime: DateTime
+}
+
+"""Slim, non-traversable snapshot of a task for change feeds."""
+type TaskChange {
+  action: ID!
+  agent: ID
+  createdAt: DateTime!
+  finishedAt: DateTime
+  id: ID!
+  implementation: ID
+  isDone: Boolean!
+  latestEventKind: TaskEventKind!
+  latestInstructKind: TaskInstructKind!
+  parent: ID
+  reference: String
+  root: ID
+  statusMessage: String
+  updatedAt: DateTime!
+}
+
+type TaskChangeEvent {
+  create: TaskChange
+  event: TaskEventChange
+}
+
+"""An event that occurred during a task."""
+type TaskEvent {
+  """Time when event was created."""
+  createdAt: DateTime!
+
+  """If this event was delegated, the task it was delegated to."""
+  delegatedTo: Task
+
+  """Unique ID of the event."""
+  id: ID!
+
+  """Kind of task event."""
+  kind: TaskEventKind!
+
+  """Default log level."""
+  level: LogLevel!
+
+  """Optional message associated with the event."""
+  message: String
+
+  """Name of the event."""
+  name: String!
+
+  """Progress percentage."""
+  progress: Int
+
+  """Reference string for the event."""
+  reference: String!
+
+  """Optional return values."""
+  returns: AnyDefault
+
+  """Associated task."""
+  task: Task!
+}
+
+"""Slim, non-traversable task event for change feeds."""
+type TaskEventChange {
+  createdAt: DateTime!
+  id: ID!
+  kind: TaskEventKind!
+  message: String
+  progress: Int
+  returns: AnyDefault
+  task: ID!
+}
+
+"""A way to filter task events"""
+input TaskEventFilter {
+  AND: TaskEventFilter
+  DISTINCT: Boolean
+  NOT: TaskEventFilter
+  OR: TaskEventFilter
+  kind: [TaskEventKind!]
+}
+
+"""The event kind of the taskevent"""
+enum TaskEventKind {
+  BOUND
+  CANCELLED
+  CANCELLING
+  COMPLETED
+  CRITICAL
+  DELEGATE
+  DISCONNECTED
+  FAILED
+  INTERRUPTED
+  INTERRUPTING
+  LOG
+  PAUSED
+  PAUSING
+  PROGRESS
+  QUEUED
+  RESUMED
+  RESUMING
+  STARTED
+  YIELD
+}
+
+input TaskEventOrder @oneOf {
+  createdAt: Ordering
+}
+
+"""Numeric/aggregatable fields of Task"""
+enum TaskField {
+  CREATED_AT
+}
+
+input TaskFilter {
+  AND: TaskFilter
+  DISTINCT: Boolean
+  NOT: TaskFilter
+  OR: TaskFilter
+  actedOn: [String!]
+  agent: ID
+  clientId: ID
+  createdAfter: DateTime
+  createdBefore: DateTime
+  ids: [ID!]
+  implementation: ID
+  state: [TaskEventKind!]
+  status: [TaskStatus!]
+}
+
+"""An instruct event for a specific task."""
+type TaskInstruct {
+  """Time when instruction was issued."""
+  createdAt: DateTime!
+
+  """Unique ID of the instruct event."""
+  id: ID!
+
+  """Type of instruction."""
+  kind: TaskInstructKind!
+
+  """Task the instruction relates to."""
+  task: Task!
+}
+
+"""The event kind of the taskevent"""
+enum TaskInstructKind {
+  ASSIGN
+  CANCEL
+  COLLECT
+  INTERRUPT
+  PAUSE
+  RESUME
+}
+
+input TaskOrder @oneOf {
+  createdAt: Ordering
+  finishedAt: Ordering
+  startedAt: Ordering
+  status: Ordering
+}
+
+type TaskStats {
+  """Average"""
+  avg(field: TaskField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Number of distinct values for the field"""
+  distinctCount(field: TaskField!): Int!
+
+  """Maximum"""
+  max(field: TaskField!): Float
+
+  """Minimum"""
+  min(field: TaskField!): Float
+
+  """Time-bucketed stats over a datetime field."""
+  series(by: Granularity!, field: TaskField!, timestampField: TaskTimestampField!): [TimeBucket!]!
+
+  """Sum"""
+  sum(field: TaskField!): Float
+}
+
+"""The event kind of the taskevent"""
+enum TaskStatus {
+  ASSIGNING
+  CANCELLED
+  CRITICAL
+  DONE
+  ONGOING
+}
+
+"""Datetime fields of Task for bucketing"""
+enum TaskTimestampField {
+  CREATED_AT
 }
 
 """Defines a test case comparing expected behavior for actions."""
@@ -3801,7 +4587,7 @@ input ThreeDModelFilter {
   search: String
 }
 
-input ThreeDModelOrder {
+input ThreeDModelOrder @oneOf {
   createdAt: Ordering
   name: Ordering
   updatedAt: Ordering
@@ -3829,7 +4615,7 @@ type Toolbox {
   name: String!
 
   """List of shortcuts in this toolbox."""
-  shortcuts(filters: ShortcutFilter, order: ShortcutOrder, pagination: OffsetPaginationInput): [Shortcut!]!
+  shortcuts(filters: ShortcutFilter, ordering: [ShortcutOrder!]! = [], pagination: OffsetPaginationInput): [Shortcut!]!
 }
 
 input ToolboxFilter {
@@ -3842,7 +4628,7 @@ input ToolboxFilter {
   search: String
 }
 
-input ToolboxOrder {
+input ToolboxOrder @oneOf {
   name: Ordering
 }
 
@@ -3862,11 +4648,22 @@ type Track {
 A value that is being tracked over time during the runtime of an action. This is the state of a dependency
 """
 input TrackInput {
+  """The key of the dependency whose state is being tracked."""
   dependencyKey: String = null
+
+  """An optional description for the track."""
   description: String = null
+
+  """An optional human-readable label for the track."""
   label: String = null
+
+  """The key of the state to track."""
   stateKey: String!
+
+  """The key of the value within the state to track."""
   valueKey: String!
+
+  """The windows (aggregations) computed over the tracked value."""
   windows: [WindowInput!] = null
 }
 
@@ -3878,27 +4675,21 @@ type UICatalog {
 
 """The input for bouncing an agent."""
 input UnblockInput {
+  """The agent ID to unblock."""
   agent: ID!
-  reason: String = null
-}
-
-input UnreserveInput {
-  reservation: ID!
 }
 
 input UnshelveMemoryDrawerInput {
   """The resource ID of the drawer."""
   id: String!
-
-  """
-  The instance ID of the agent. This is used to identify the agent in the system.
-  """
-  instanceId: InstanceId!
 }
 
 """The input for updating an agent."""
 input UpdateAgentInput {
+  """The ID of the agent to update."""
   id: ID!
+
+  """The new name for the agent."""
   name: String = null
 }
 
@@ -3951,37 +4742,67 @@ input UpdateMaterializedBlokInput {
 
 """The input for updating a placement."""
 input UpdatePlacementInput {
+  """
+  The affine matrix for the placement. This is used to identify the placement in the system.
+  """
   affineMatrix: [[Float!]!] = null
-  agent: ID = null
+
+  """The ID of the placement to update."""
   id: ID!
 
   """
-  A specific blok that should be used to visualize the state of the placement
+  The 3D model ID for the placement. This is used to identify the 3D model in the system.
   """
-  materializedBlok: ID = null
   model: ID = null
+
+  """
+  The role of the placement. This is used to identify the placement in the system.
+  """
   role: String = null
 }
 
 """The input for creating a resolution."""
 input UpdateResolutionInput {
+  """
+  The ID of the resolution. This is used to identify the resolution in the system.
+  """
   id: ID!
+
+  """
+  The name of the resolution. This is used to identify the resolution in the system.
+  """
   name: String!
+
+  """
+  The resolved dependencies of the resolution. All other fields will be replaced.
+  """
   resolvedDependencies: [ResolvedDependencyInput!] = null
 }
 
 """The input for updating a space."""
 input UpdateSpaceInput {
+  """The new description of the space."""
   description: String = null
+
+  """The ID of the space to update."""
   id: ID!
+
+  """The new name of the space."""
   name: String = null
 }
 
 """The input for updating a 3D model."""
 input UpdateThreeDModelInput {
+  """The new description of the 3D model."""
   description: String = null
+
+  """The ID of the 3D model to update."""
   id: ID!
+
+  """The new media store file ID for the 3D model."""
   media: ID = null
+
+  """The new name of the 3D model."""
   name: String = null
 }
 
@@ -4002,7 +4823,10 @@ type UtilCall {
 
 """Defines a utility call that can be invoked within the system."""
 input UtilCallInput {
+  """Key-value arguments map compiled for the target utility call."""
   arguments: [ActionArgumentInput!] = null
+
+  """The utility function name to invoke."""
   operation: String!
 }
 
@@ -4016,34 +4840,21 @@ type Validator {
 "\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}."
 scalar ValidatorFunction
 
-" \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n"
+"\nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports.\n\n"
 input ValidatorInput {
+  """
+  The dependencies of the function. Use the .. syntax to traverse the tree of ports. For example, if you have a port with the key 'foo' and you want to reference a port with the key 'bar' that is a child of 'foo', you would use 'foo..bar'
+  """
   dependencies: [String!] = []
+
+  """The error message to display when the validation fails"""
   errorMessage: String = null
+
+  """The function to run when validating the port"""
   function: ValidatorFunction!
+
+  """An optional human-readable label for the validator."""
   label: String = null
-}
-
-"""Entity that waits for the completion of assignations."""
-type Waiter {
-  """Unique ID of the waiter."""
-  id: ID!
-
-  """Instance ID associated with the waiter."""
-  instanceId: InstanceId!
-
-  """Registry the waiter belongs to."""
-  registry: Registry!
-}
-
-"""A way to filter waiters"""
-input WaiterFilter {
-  AND: WaiterFilter
-  DISTINCT: Boolean
-  NOT: WaiterFilter
-  OR: WaiterFilter
-  ids: [ID!]
-  instanceId: InstanceId!
 }
 
 """A window that is calculated"""
@@ -4054,7 +4865,10 @@ type Window {
 
 """A window that is calculated"""
 input WindowInput {
+  """An optional human-readable label for the window."""
   label: String = null
+
+  """The window function to apply over the tracked value."""
   windowFunction: String!
 }
 

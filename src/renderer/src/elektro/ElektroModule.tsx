@@ -10,6 +10,8 @@ import ExperimentsPage from "./pages/ExperimentsPage";
 import HomePage from "./pages/HomePage";
 import ModelCollectionPage from "./pages/ModelCollectionPage";
 import ModelCollectionsPage from "./pages/ModelCollectionsPage";
+import ModelWorkspacePage from "./pages/ModelWorkspacePage";
+import ModelWorkspacesPage from "./pages/ModelWorkspacesPage";
 import NeuronModelEditorPage from "./pages/NeuronModelEditorPage";
 import NeuronModelPage from "./pages/NeuronModelPage";
 import NeuronModelsPage from "./pages/NeuronModelsPage";
@@ -22,12 +24,14 @@ import TracesPage from "./pages/TracesPage";
 import StandardPane from "./panes/StandardPane";
 import { MechanismPage } from "./pages/MechanismPage";
 import { EnvironmentPage } from "./pages/EnvironmentPage";
+import { ElektroZarrStoreProvider } from "./components/store/ElektroZarrStoreProvider";
 interface Props { }
 
 export const ElektroModule: React.FC<Props> = (props) => {
   return (
     <Guard.Elektro fallback={<>Loading</>}>
-      <ModuleLayout pane={<StandardPane />}>
+      <ElektroZarrStoreProvider>
+        <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="traces/:id" element={<TracePage />} />
           <Route path="simulations/:id" element={<SimulationPage />} />
@@ -47,6 +51,11 @@ export const ElektroModule: React.FC<Props> = (props) => {
             path="modelcollections/:id"
             element={<ModelCollectionPage />}
           />
+          <Route
+            path="modelworkspaces/:id"
+            element={<ModelWorkspacePage />}
+          />
+          <Route path="modelworkspaces" element={<ModelWorkspacesPage />} />
           <Route path="traces" element={<TracesPage />} />
           <Route path="simulations" element={<SimulationsPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
@@ -56,7 +65,8 @@ export const ElektroModule: React.FC<Props> = (props) => {
           <Route path="modelcollections" element={<ModelCollectionsPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
-      </ModuleLayout>
+        </ModuleLayout>
+      </ElektroZarrStoreProvider>
     </Guard.Elektro>
   );
 };

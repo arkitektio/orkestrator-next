@@ -2,8 +2,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { FlowFragment } from '@/reaktion/api/graphql'
 import { Graph } from '@/reaktion/base/Graph'
-import { DeployInterfaceButton } from '@/reaktion/edit/components/buttons/DeployButton'
-import { RunButton } from '@/reaktion/edit/components/buttons/RunButton'
 import { useEditFlowStoreApi } from '@/reaktion/edit/context'
 import { checkFlowIsEqual, createInitialState } from '@/reaktion/edit/store'
 import { EdgeTypes, NodeTypes } from '@/reaktion/types'
@@ -26,7 +24,6 @@ type Props = {
 
 export const EditFlowCanvas: React.FC<Props> = ({
   reactFlowWrapperRef,
-  flow,
   save,
   nodeTypes,
   edgeTypes
@@ -76,7 +73,6 @@ export const EditFlowCanvas: React.FC<Props> = ({
               <Button onClick={save} size="lg">
                 Save
               </Button>
-              <DeployInterfaceButton flow={flow} />
             </Card>
           )}
         </AnimatePresence>

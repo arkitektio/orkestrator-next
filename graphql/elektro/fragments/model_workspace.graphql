@@ -1,0 +1,23 @@
+fragment ListModelWorkspace on ModelWorkspace {
+  id
+  name
+  pinned
+}
+
+fragment WorkspaceMapping on WorkspaceMapping {
+  id
+  workspaceGroup
+  model {
+    ...ListNeuronModel
+  }
+}
+
+fragment DetailModelWorkspace on ModelWorkspace {
+  id
+  name
+  description
+  pinned
+  mappings {
+    ...WorkspaceMapping
+  }
+}

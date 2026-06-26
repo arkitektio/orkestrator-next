@@ -38,6 +38,11 @@ const staticColormaps: Partial<Record<ColorMap, THREE.Texture>> = {
   [ColorMap.Viridis]: viridisColormap,
 };
 
+// Bounded LRU: keyed by colormap×baseColor. Without a cap this grows once per
+// distinct base color the user picks and never frees the GPU textures. The cap is
+// generous (well above any realistic on-screen set), so the least-recently-used
+// entry we dispose on eviction is not one currently bound to a visible mesh.
+const COLORMAP_CACHE_LIMIT = 256;
 const continuousColormapCache = new Map<string, THREE.Texture>();
 
 const getContinuousColormapTexture = (
@@ -47,6 +52,9 @@ const getContinuousColormapTexture = (
   const cacheKey = `${colormap}:${resolveBaseColorRgb(baseColor).join(",")}`;
   const cached = continuousColormapCache.get(cacheKey);
   if (cached) {
+    // Refresh recency (move to most-recently-used).
+    continuousColormapCache.delete(cacheKey);
+    continuousColormapCache.set(cacheKey, cached);
     return cached;
   }
 
@@ -55,6 +63,15 @@ const getContinuousColormapTexture = (
       sampleColorMapRgb(colormap, i / 255, baseColor),
     ),
   );
+
+  if (continuousColormapCache.size >= COLORMAP_CACHE_LIMIT) {
+    const oldestKey = continuousColormapCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      const evicted = continuousColormapCache.get(oldestKey);
+      continuousColormapCache.delete(oldestKey);
+      evicted?.dispose();
+    }
+  }
 
   continuousColormapCache.set(cacheKey, texture);
   return texture;

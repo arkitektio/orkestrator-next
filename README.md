@@ -25,15 +25,7 @@ We provide a both an AppImage and a deb package for Linux. The AppImage should w
 
 ### MacOS
 
-Because the application is not signed (because it freaking costs money and is a pain in the ...) you need to "dequarantine" the application
-before you will be able to open it. After installation you can do this by running the following command in your terminal (search "terminal" in spotlight):
-
-```bash
-xattr -c /Applications/orkestrator-next.app # or wherever you installed it
-```
-
-This will remove the quarantine attribute from the application and you should be able to open it.
-We are sorry for the inconvenience. Soon we will go the signing route, but for now this is the only way.
+Just install the application by dragging it to your Applications folder. The applicatin is signed, so you should not have any issues with Gatekeeper. If you do, you can follow the instructions [here](https://support.apple.com/en-us/HT202491) to allow the application to run.
 
 ### Windows
 
@@ -50,7 +42,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Build around arkitekt-ts (instead of custom graphql clients)
 - [x] Move Basic UI to Shadcn/UI
 - [x] Move to Vite
-- [x] Move to React 18
+- [x] Move to React 19
 - [x] Move to Electron (Allows us to finally use SSL on the network)
 - [x] New Workflow Engine (Fluss)
 - [x] Integrate Kabinet App Store
@@ -80,13 +72,10 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Establish new Workflow UI + Engine (typesafe, wizard, ...) (looks nice)
 - [x] Move to Fluss Next
 - [x] More tightly integrate Schedulers in UI
-- [ ] Allow Resource Management in UI ( provisional UI for resource management)
 
 ### Rekuest
 
 - [x] Move to Rekuest Next
-- [ ] Build UI for scheduled tasks, and task management
-- [ ] Hookify Rekuest (useNode, useTemplate, ...)
 
 ### Kabinet
 
@@ -99,7 +88,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Establish Kraph as the de facto "Knowledge Graph" for Arkitekt Services
 - [x] Create Knowledge Widgets
 - [ ] Allow simple creation of new Graphs
-- [ ] 
+- [ ]
 
 
 ### Omero-Ark

@@ -1,3 +1,33 @@
+# [1.65.0](https://github.com/arkitektio/orkestrator-next/compare/v1.64.5...v1.65.0) (2026-06-26)
+
+
+### Bug Fixes
+
+* arkitekt store subscription ([c1bb645](https://github.com/arkitektio/orkestrator-next/commit/c1bb645d38043351f84f07c038f94ca6163fc4c5))
+* delete action ([4709eab](https://github.com/arkitektio/orkestrator-next/commit/4709eabec7ba375c06079cb6eb2022a2b3e62e6f))
+* homepage for elektro ([3850b0e](https://github.com/arkitektio/orkestrator-next/commit/3850b0e9f1ad9f4c63b3a3502ca2baa73d779869))
+* model workspace ([9c053e4](https://github.com/arkitektio/orkestrator-next/commit/9c053e45a0db561bf79776b57ba6ba0f5207bce2))
+* more little ui fixes ([68734be](https://github.com/arkitektio/orkestrator-next/commit/68734be501491444a9a22726cb2471442c971946))
+* mytask and agent udpater ([e3b4892](https://github.com/arkitektio/orkestrator-next/commit/e3b4892f76d9b3d0129c5108052ebb895c53dfd4))
+* new little things ([6130281](https://github.com/arkitektio/orkestrator-next/commit/613028155c12f50d89494b616a346fa1601ceb39))
+* new stuff ([92e7490](https://github.com/arkitektio/orkestrator-next/commit/92e7490d4e9a8c8e2121aee5f4f1aa8dc66ba640))
+* new temperatur ([4adc2d6](https://github.com/arkitektio/orkestrator-next/commit/4adc2d6668cdc8deebcb1a96216205c5dedc9397))
+* quantity field ([5636eee](https://github.com/arkitektio/orkestrator-next/commit/5636eee2832ed784048fe52622af9a45148112de))
+* removal of "extensions" ([586a043](https://github.com/arkitektio/orkestrator-next/commit/586a04323608b5ec9c176a5bf9bc630d08e5682a))
+* remove of logs ([7e5e157](https://github.com/arkitektio/orkestrator-next/commit/7e5e1574ab7a3b7901bc0347fd1d7b0453816a3d))
+* stuff ([92f1077](https://github.com/arkitektio/orkestrator-next/commit/92f1077c6df3f96c4e1659b41d46f75b1a16b52f))
+* stuff here ([7c8ecfd](https://github.com/arkitektio/orkestrator-next/commit/7c8ecfd69497cf308a4f90b89cf5b4a9da855751))
+* tasks ([8449dc0](https://github.com/arkitektio/orkestrator-next/commit/8449dc06d72d289279f8e4d20387321ce933a72b))
+* try to create a prerelease ([2d38408](https://github.com/arkitektio/orkestrator-next/commit/2d384089d816f074f123f857f6bc6c62f7b23475))
+* update elektro schema ([e857212](https://github.com/arkitektio/orkestrator-next/commit/e857212365c9ccb887ca80fe4c43c2977b3e7d29))
+* update to react 19 ([68a38c9](https://github.com/arkitektio/orkestrator-next/commit/68a38c9d2f5bbae8033c2513ae74d6b16744faf7))
+* with provenance entry ([0721040](https://github.com/arkitektio/orkestrator-next/commit/0721040a2723955ee497e5506b75e6c3a99876da))
+
+
+### Features
+
+* with neuron render ([5ce5453](https://github.com/arkitektio/orkestrator-next/commit/5ce54537aec5730b0e2473d7efc0333e61bc22d0))
+
 ## [1.64.5](https://github.com/arkitektio/orkestrator-next/compare/v1.64.4...v1.64.5) (2026-06-12)
 
 

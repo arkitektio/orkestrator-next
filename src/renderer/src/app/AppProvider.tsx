@@ -16,6 +16,7 @@ import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
 import { TaskUpdater } from "@/rekuest/components/functional/TaskUpdater";
+import { TaskNotificationStack } from "@/rekuest/components/global/TaskNotificationStack";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { NuqsAdapter } from "nuqs/adapters/react-router"; // <--- Specific adapter
@@ -126,6 +127,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest fallback={<></>}>
                                       <TaskUpdater />
+                                      <TaskNotificationStack />
                                       <AgentUpdater />
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />

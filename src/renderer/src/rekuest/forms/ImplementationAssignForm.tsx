@@ -2,6 +2,8 @@ import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { useDialog } from "@/app/dialog";
+import { useRef } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
@@ -48,10 +50,17 @@ export const ImplementationAssignForm = (
     reValidateMode: "onChange",
   });
 
+  const { closeDialog } = useDialog();
+
+  // Holding Ctrl/⌘ while submitting keeps the dialog open (assign repeatedly).
+  const keepOpenRef = useRef(false);
+
   const onSubmit = async (data: {
     args: Record<string, unknown>;
     dependencies: Record<string, ResolvedDependencyInput>;
   }) => {
+    const keepOpen = keepOpenRef.current;
+    keepOpenRef.current = false;
     try {
       const task = await assign({
         implementation: props.id,
@@ -61,6 +70,9 @@ export const ImplementationAssignForm = (
       });
 
       props.onAssign?.(task);
+      if (!keepOpen) {
+        closeDialog();
+      }
     } catch (e) {
       const message = (e as ApolloError).message;
       if (props.onError) {
@@ -88,7 +100,15 @@ export const ImplementationAssignForm = (
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col w-full h-full mx-auto p-6  @container">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        onKeyDownCapture={(e) => {
+          if (e.key === "Enter") {
+            keepOpenRef.current = e.ctrlKey || e.metaKey;
+          }
+        }}
+        className="flex flex-col w-full h-full mx-auto p-6  @container"
+      >
         <div className="flex flex-col sm:justify-between mb-2 h-full min-h-0">
 
 
@@ -122,6 +142,9 @@ export const ImplementationAssignForm = (
             <Button
               type="submit"
               disabled={form.formState.isSubmitting}
+              onClick={(e) => {
+                keepOpenRef.current = e.ctrlKey || e.metaKey;
+              }}
               className="flex-initial gap-2"
             >
               {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

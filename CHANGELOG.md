@@ -1,3 +1,10 @@
+# [1.65.0-rc.3](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.2...v1.65.0-rc.3) (2026-06-30)
+
+
+### Features
+
+* update to new yarn ([a55dea1](https://github.com/arkitektio/orkestrator-next/commit/a55dea14f47958f01eff88ae5f86da85424d2c40))
+
 # [1.65.0-rc.2](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.1...v1.65.0-rc.2) (2026-06-29)
 
 

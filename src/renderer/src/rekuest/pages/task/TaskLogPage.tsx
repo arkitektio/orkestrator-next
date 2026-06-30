@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { buildAssignInput } from "@/rekuest/assign";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import {
   Timeline,
@@ -182,11 +183,11 @@ export const useReassign = ({
   const navigate = useNavigate();
 
   const reassign = async () => {
-    const x = await assign({
+    const x = await assign(buildAssignInput({
       args: task.args,
       implementation: task?.implementation.id || "",
       hooks: [],
-    });
+    }));
 
     navigate(RekuestTask.linkBuilder(x.id));
   };

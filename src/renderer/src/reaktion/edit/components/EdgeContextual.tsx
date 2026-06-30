@@ -16,13 +16,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipButton } from "@/components/ui/tooltip-button";
-import {
-  FlussPortFragment,
-  GraphNodeKind,
-  ReactiveImplementation,
-} from "@/reaktion/api/graphql";
+import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
-import { nodeIdBuilder } from "@/reaktion/utils";
+import { reactiveFlowNode } from "@/reaktion/utils";
 import {
   ConstantActionDocument,
   ConstantActionQuery,
@@ -38,6 +34,7 @@ import {
   DropContextualParams,
   EdgeContextualParams,
   ReactiveNodeSuggestions,
+  StreamPort,
 } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
@@ -131,7 +128,7 @@ export const allandone = <T extends any>(
   );
 };
 
-function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
+function isMatch(item1: StreamPort, item2: StreamPort): boolean {
   return (
     item1.kind === item2.kind &&
     (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier)
@@ -139,8 +136,8 @@ function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
 }
 
 function findMappings(
-  list1: FlussPortFragment[],
-  list2: FlussPortFragment[],
+  list1: StreamPort[],
+  list2: StreamPort[],
   index1 = 0,
   currentMapping: Map<number, number> = new Map(),
   allMappings: Map<number, number>[] = [],
@@ -165,8 +162,8 @@ function findMappings(
 }
 
 function generateAllMappings(
-  list1: FlussPortFragment[],
-  list2: FlussPortFragment[],
+  list1: StreamPort[],
+  list2: StreamPort[],
 ): { [key: number]: number }[] {
   const allMappings: Map<number, number>[] = [];
   if (list1.length !== list2.length) return [];
@@ -177,8 +174,8 @@ function generateAllMappings(
 //
 
 const edgeReactiveNodes = (
-  leftPorts: FlussPortFragment[],
-  rightPorts: FlussPortFragment[],
+  leftPorts: StreamPort[],
+  rightPorts: StreamPort[],
   search: string = "",
 ): ReactiveNodeSuggestions[] => {
   const suggestions: ReactiveNodeSuggestions[] = [];
@@ -191,26 +188,21 @@ const edgeReactiveNodes = (
     allandone(leftPorts, rightPorts, (port) => port.kind === PortKind.Float)
   ) {
     suggestions.push({
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: { x: 0, y: 0 },
-      data: {
-        globalsMap: {},
+      node: reactiveFlowNode({
         title: "Round",
         description: "Round an Float to an Int",
-        kind: GraphNodeKind.Reactive,
         ins: [leftPorts],
-        constantsMap: {},
         outs: [
-          rightPorts.map((p, index) => ({
+          rightPorts.map((p) => ({
             ...p,
             key: "Rounded" + p.key,
             kind: PortKind.Int,
           })),
         ],
-        constants: [],
         implementation: ReactiveImplementation.ToList,
-      },
+      }),
+      title: "Round",
+      description: "Round an Float to an Int",
     });
   }
 
@@ -225,30 +217,20 @@ const edgeReactiveNodes = (
 
     if (isInt) {
       suggestions.push({
-        node: {
-          id: nodeIdBuilder(),
-          type: "ReactiveNode",
-          position: { x: 0, y: 0 },
-          data: {
-            globalsMap: {},
-            title: "Add",
-            description: "Add an Int",
-            kind: GraphNodeKind.Reactive,
-            ins: [leftPorts],
-            constantsMap: {
-              value: parseInt(search),
-            },
-            outs: [
-              rightPorts.map((p, index) => ({
-                ...p,
-                key: "Added" + p.key,
-                kind: PortKind.Int,
-              })),
-            ],
-            constants: [],
-            implementation: ReactiveImplementation.Add,
-          },
-        },
+        node: reactiveFlowNode({
+          title: "Add",
+          description: "Add an Int",
+          ins: [leftPorts],
+          constantsMap: { value: parseInt(search) },
+          outs: [
+            rightPorts.map((p) => ({
+              ...p,
+              key: "Added" + p.key,
+              kind: PortKind.Int,
+            })),
+          ],
+          implementation: ReactiveImplementation.Add,
+        }),
         title: `Add ${search} (Int)`,
         description: "Add an Number",
       });
@@ -257,22 +239,13 @@ const edgeReactiveNodes = (
 
   if (rightPorts.length == 0) {
     suggestions.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Omit",
-          description: "Discard the stream an just send an event",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [[]],
-          constants: [],
-          implementation: ReactiveImplementation.Omit,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Omit",
+        description: "Discard the stream an just send an event",
+        ins: [leftPorts],
+        outs: [[]],
+        implementation: ReactiveImplementation.Omit,
+      }),
       title: "Omit",
       description: "Discard the stream an just send an event",
     });
@@ -280,24 +253,14 @@ const edgeReactiveNodes = (
 
   for (const mapping of generateAllMappings(leftPorts, rightPorts)) {
     suggestions.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Reorder",
-          description: "Reorder the stream",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {
-            map: mapping,
-          },
-          outs: [rightPorts],
-          constants: [],
-          implementation: ReactiveImplementation.Reorder,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Reorder",
+        description: "Reorder the stream",
+        ins: [leftPorts],
+        constantsMap: { map: mapping },
+        outs: [rightPorts],
+        implementation: ReactiveImplementation.Reorder,
+      }),
       title: "Reorder",
       description: "Reorder the stream",
     });
@@ -443,9 +406,7 @@ const EdgeReactiveNodes = (props: {
 };
 
 export const EdgeContextual = (props: { params: EdgeContextualParams }) => {
-  const { addEdgeContextualNode, removeEdge } = useEditRiver();
-
-  const { client } = useRekuest();
+  const { removeEdge } = useEditRiver();
 
   const [search, setSearch] = useState(undefined);
 
@@ -497,7 +458,7 @@ export const EdgeContextual = (props: { params: EdgeContextualParams }) => {
 
 export const TargetDropContextual = (props: {
   params: DropContextualParams;
-  ports: FlussPortFragment[];
+  ports: StreamPort[];
 }) => {
   return (
     <Card

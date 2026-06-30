@@ -1,3 +1,4 @@
+import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -44,11 +45,11 @@ export const AssignButton = (props: {
       return;
     }
     console.log(
-      await assign({
+      await assign(buildAssignInput({
         args: {
           release: { object: props.release, __identifier: KabinetRelease.identifier},
         },
-      }),
+      })),
     );
   };
 

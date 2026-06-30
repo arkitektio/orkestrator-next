@@ -44,6 +44,9 @@ export type AgentSubFlowNodeData = DataEnhancer<AgentSubFlowNodeFragment>;
 
 
 export type GeneralPort = FlussArgPortFragment | FlussReturnPortFragment | FlussArgChildPortFragment | FlussReturnChildPortFragment
+// A top-level port in a node stream (ins/outs) — always an arg or return port,
+// never a child port, so it always carries label/description/effects.
+export type StreamPort = FlussArgPortFragment | FlussReturnPortFragment;
 export type ArgPort = FlussArgPortFragment;
 export type ReturnPort = FlussReturnPortFragment;
 export const PortKind = FlussPortKind
@@ -141,14 +144,14 @@ export type Connector<
   params: Connection;
   sourceNode: FlowNode<X>;
   targetNode: FlowNode<Y>;
-  sourcePort: FlussPortFragment[];
-  targetPort: FlussPortFragment[];
+  sourcePort: GeneralPort[];
+  targetPort: GeneralPort[];
   sourceTypes: string[];
   targetTypes: string[];
   nodes: FlowNode[];
   edges: FlowEdge[];
-  args: (FlussPortFragment | null)[];
-  returns: (FlussPortFragment | null)[];
+  args: (GeneralPort | null)[];
+  returns: (GeneralPort | null)[];
 }) => ConnectionUpdate;
 
 export enum RiverMode {
@@ -233,7 +236,7 @@ export type NodeContextualParams = {
 };
 
 export type ReactiveNodeSuggestions = {
-  node: FlowNode;
+  node: FlowNode<ReactiveNodeFragment>;
   title: string;
   description: string;
 };

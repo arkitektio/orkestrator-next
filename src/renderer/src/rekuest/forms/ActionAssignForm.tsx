@@ -1,4 +1,5 @@
 import { useDialog } from "@/app/dialog";
+import { buildAssignInput } from "@/rekuest/assign";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,13 +48,13 @@ export const ActionAssignForm = (props: {
 
 
 
-    await assign({
+    await assign(buildAssignInput({
       action: props.id,
       args: data,
       reference: reference,
       hooks: [],
       ephemeral: false
-    });
+    }));
     dialog.closeDialog();
   };
 

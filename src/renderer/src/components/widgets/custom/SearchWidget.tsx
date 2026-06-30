@@ -23,10 +23,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { gql } from "@apollo/client";
 import type { OperationDefinitionNode } from "graphql";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, ChevronsUpDown, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -294,46 +299,55 @@ export const SearchWidget = (
               shouldFilter={false}
               className="overflow-visible bg-transparent"
             >
-              <div className="group r2">
-                <div className="w-full relative h-10">
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="group flex h-10 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 text-left text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {field.value != undefined && field.value != null ? (
+                      <ButtonLabel search={search} value={field.value} />
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                        Search…
+                      </span>
+                    )}
+                    {field.value != undefined && field.value != null ? (
+                      <X
+                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setInputValue("");
+                          form.setValue(pathToName(props.path), undefined, {
+                            shouldValidate: false,
+                          });
+                          field.onChange(undefined);
+                        }}
+                      />
+                    ) : (
+                      <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                >
                   <CommandInput
                     onKeyDown={handleKeyDown}
-                    placeholder={field.value != undefined && field.value != null ? "" : "Search..."}
+                    placeholder="Search a different model…"
                     onValueChange={(e) => {
                       setInputValue(e);
                       query(e);
                     }}
                     value={inputValue}
-                    onBlur={() => setOpen(false)}
-                    onFocus={() => setOpen(true)}
                   />
-                  {field.value != undefined && field.value != null && (
-                    <button
-                      type="button"
-                      title="Clear selection and search again"
-                      className="group/chosen absolute inset-x-1 top-1 z-10 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-input bg-muted px-2.5 text-xs/relaxed transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => {
-                        setInputValue("");
-                        form.setValue(pathToName(props.path), undefined, {
-                          shouldValidate: false,
-                        });
-                        setOpen(true);
-                        field.onChange(undefined);
-                        inputRef.current?.focus();
-                      }}
-                    >
-                      <ButtonLabel search={search} value={field.value} />
-                      <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover/chosen:text-foreground" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="relative mt-2">
-                {open && (
-                  <CommandList slot="list" className="w-full t-10 max-h-none overflow-visible">
+                  <CommandList slot="list" className="w-full max-h-none overflow-visible">
                     <div
                       ref={listRef}
-                      className="absolute top-0 z-10 w-full max-h-72 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+                      className="max-h-72 overflow-y-auto rounded-md outline-none"
                     >
                       <CommandEmpty>No options found.</CommandEmpty>
                       {error && (
@@ -390,8 +404,8 @@ export const SearchWidget = (
                       )}
                     </div>
                   </CommandList>
-                )}
-              </div>
+                </PopoverContent>
+              </Popover>
             </Command>
             {props.port.description && <FormDescription>{props.port.description}</FormDescription>}
             <FormMessage />

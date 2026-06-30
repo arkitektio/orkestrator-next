@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { buildAssignInput } from "@/rekuest/assign";
 import { ListRender } from "@/components/layout/ListRender";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
@@ -36,11 +37,11 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   });
 
   const onSubmit = (data: any) => {
-    assign({
+    assign(buildAssignInput({
       action: action.id,
       args: data,
       hooks: [],
-    }).then(
+    })).then(
       (v) => { },
       (error) => { },
     );

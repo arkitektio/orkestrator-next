@@ -13,6 +13,13 @@ import {
 export type ArgPort = ArgPortFragment;
 export type ReturnPort = ReturnPortFragment;
 
+// A port whose widget can be resolved by the registry — either an input (ArgPort)
+// or an output (ReturnPort).
+export type MappablePort = ArgPort | ReturnPort;
+
+// Back-compat alias: forms/dialogs that edit input values operate on ArgPorts.
+export type Port = ArgPort;
+
 export interface InputWidgetProps<
   W extends AssignWidgetFragment = AssignWidgetFragment,
 > {
@@ -51,12 +58,13 @@ export interface ReturnWidgetProps<
   widget?: W | null;
   value?: V;
   options?: PortOptions;
+  revision?: string | number | null;
 }
 
 export type EffectWidgetProps = {
   children: React.ReactNode;
   effect: PortEffectFragment;
-  port: ReturnPort;
+  port: MappablePort;
 };
 
 export type Effect = PortEffectFragment;
@@ -69,8 +77,10 @@ export type RunQueryFunc<T extends {[key: string]: unknown}> = (options: {
 }) => Promise<T>;
 
 export type PortOptions = {
-  disable: boolean;
-  bound: string | null;
+  disable?: boolean;
+  bound?: string | null;
+  minimal?: boolean;
+  labels?: boolean;
 };
 
 export interface Ward {
@@ -88,9 +98,11 @@ export type LabellablePort = {
   key: string;
   label?: string | null;
   kind: PortKind;
-  identifier?: string;
+  identifier?: string | null;
   nullable?: boolean;
-  children?: (LabellablePort | null)[] | null;
+  // Loosely typed: the deepest port-fragment children omit some fields (e.g. key),
+  // so this stays structural to accept both arg/return fragments at any depth.
+  children?: readonly any[] | null;
   choices?: ArgPort["choices"];
 };
 

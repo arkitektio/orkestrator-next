@@ -37,7 +37,7 @@ const ModelReturnWidget: React.FC<ReturnWidgetProps> = ({
                 key={index}
                 value={value[port.key]}
                 port={port}
-                widget={port.returnWidget}
+                widget={port.widget}
                 options={{ disable: false }}
               />
             </CardContent>

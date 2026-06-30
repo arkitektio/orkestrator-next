@@ -57,7 +57,7 @@ export const portToName = (port: LabellablePort): string => {
  * registry's reverse lookup (descriptive names are given in linkers.tsx).
  */
 export const identifierToName = (
-  identifier: string | undefined,
+  identifier: string | null | undefined,
   fallback: string,
 ): string => {
   return identifier ? smartRegistry.getDisplayName(identifier) : fallback;
@@ -204,9 +204,7 @@ export const portToZod = (port: LabellablePort): any => {
   }
   if (port.nullable) {
     if (!baseType) throw new Error(`Base type for ${port} is not defined`);
-    baseType = z.nullable(baseType, {
-      message: `Please provide a value for "${portName}"`,
-    });
+    baseType = z.nullable(baseType);
   }
 
   return baseType;

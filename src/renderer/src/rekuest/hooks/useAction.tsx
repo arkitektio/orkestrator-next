@@ -1,3 +1,4 @@
+import { buildAssignInput } from "@/rekuest/assign";
 import { useCallback } from "react";
 import {
   AssignInput,
@@ -76,11 +77,11 @@ export const useAction = <T extends any>(
     if (!latestTask) {
       throw Error("No latest task");
     }
-    return assign({
+    return assign(buildAssignInput({
       args: latestTask.args,
       action: latestTask?.action.id,
       hooks: [],
-    });
+    }));
   }, [assign]);
 
   const cancel = useCallback(async () => {

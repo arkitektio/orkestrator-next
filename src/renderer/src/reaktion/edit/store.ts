@@ -1,7 +1,6 @@
 import {
   FlowFragment,
   GlobalArgFragment,
-  GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import {
@@ -28,6 +27,7 @@ import {
   handleToStream,
   nodeIdBuilder,
   nodes_to_flownodes,
+  reactiveFlowNode,
 } from "@/reaktion/utils";
 import { PortKind } from "@/rekuest/api/graphql";
 import {
@@ -1175,23 +1175,14 @@ export const createEditFlowStore = (initialState: ValidationResult) =>
 
               const position = state.reactFlowInstance.screenToFlowPosition(clientPoint);
 
-              const zipNode = {
-                id: nodeIdBuilder(),
-                type: "ReactiveNode",
+              const zipNode = reactiveFlowNode({
+                title: "Zip",
+                description: "Zips together two streams into one stream.",
+                ins: zipNodeInstream,
+                outs: [[...stagingOutstream, ...oldOutstream]],
+                implementation: ReactiveImplementation.Zip,
                 position,
-                data: {
-                  globalsMap: {},
-                  title: "Zip",
-                  description: "Zips together two streams into one stream.",
-                  kind: GraphNodeKind.Reactive,
-                  ins: zipNodeInstream,
-                  constantsMap: {},
-                  outs: [[...stagingOutstream, ...oldOutstream]],
-                  constants: [],
-                  voids: [],
-                  implementation: ReactiveImplementation.Zip,
-                },
-              } as FlowNode;
+              });
 
               const stagedState = {
                 ...state,

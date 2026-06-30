@@ -11,7 +11,10 @@ import { FlowNode } from "../../../types";
 
 export const BoundNodesBox = (props: { nodes: FlowNode[] }) => {
   const hashes = useMemo(
-    () => props.nodes.filter((n) => n.data.hash).map((n) => n.data.hash),
+    () =>
+      props.nodes
+        .map((n) => (n.data as { hash?: string }).hash)
+        .filter((h): h is string => Boolean(h)),
     [props.nodes],
   );
 

@@ -125,7 +125,7 @@ const ArgsContainer = ({
                           key={index}
                           port={port}
                           bound={bound}
-                          widget={port.assignWidget}
+                          widget={port.widget}
                           options={options}
                           path={[...path, port.key]}
                         />

@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,12 +67,12 @@ export const DoForm = ({ id }: { id: string }) => {
    }) => {
      console.log("Submitting");
      try {
-       const task = await assign({
+       const task = await assign(buildAssignInput({
          implementation: id,
          args: data.args,
          dependencies: Object.values(data.dependencies),
          hooks: [],
-       });
+       }));
 
      } catch (e) {
        const message = (e as ApolloError).message;

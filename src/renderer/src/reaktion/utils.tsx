@@ -1,23 +1,39 @@
 import {
+  ArgPortInput,
+  AssignWidgetInput,
+  EffectInput,
   FlowFragment,
+  FlussArgChildPortFragment,
+  FlussArgPortFragment,
+  FlussAssignWidgetFragment,
+  FlussPortEffectFragment,
+  FlussReturnChildPortFragment,
+  FlussReturnPortFragment,
+  FlussReturnWidgetFragment,
   GlobalArgInput,
   GraphNodeFragment,
   GraphNodeKind,
   PortKind,
+  ReactiveImplementation,
   ReactiveNodeFragment,
   ReactiveTemplateFragment,
   RekuestMapActionNodeFragment,
+  ReturnPortInput,
+  ReturnWidgetInput,
   StreamItemInput,
+  AssignWidgetKind,
+  ReturnWidgetKind,
+  EffectKind,
 } from "@/reaktion/api/graphql";
+import { XYPosition } from "@xyflow/react";
 import {
   ActionDemandInput,
   ActionKind,
+  ArgPortInput as RekuestArgPortInput,
   DefinitionInput,
   AgentDependencyInput,
-  ArgPortFragment,
-  ArgChildPortFragment,
+  ReturnPortInput as RekuestReturnPortInput,
 } from "@/rekuest/api/graphql";
-import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -26,11 +42,13 @@ import {
   EdgeInput,
   FlowEdge,
   FlowNode,
+  FlowNodeData,
   GeneralPort,
   GlobalFragment,
   GlobalInput,
   NodeInput,
   StreamItemFragment,
+  StreamPort,
 } from "./types";
 
 
@@ -53,6 +71,183 @@ export function keyInObject(
 } {
   return obj && key in obj;
 }
+
+// --- Fluss port -> input converters -------------------------------------------
+// Ports were split into ArgPort (inputs) and ReturnPort (outputs). The flow graph
+// uses the fluss fragments, so the flow owns its own fluss-typed converters rather
+// than feeding fluss fragments into rekuest's (the widget sub-unions differ and the
+// kind enums are nominally distinct between the two generated modules).
+
+const flussAssignWidgetKindMap: Record<
+  NonNullable<FlussAssignWidgetFragment["__typename"]>,
+  AssignWidgetKind
+> = {
+  ChoiceAssignWidget: AssignWidgetKind.Choice,
+  CustomAssignWidget: AssignWidgetKind.Custom,
+  ProxyWidget: AssignWidgetKind.Proxy,
+  SearchAssignWidget: AssignWidgetKind.Search,
+  SliderAssignWidget: AssignWidgetKind.Slider,
+  StateChoiceAssignWidget: AssignWidgetKind.StateChoice,
+  StringAssignWidget: AssignWidgetKind.String,
+};
+
+const flussReturnWidgetKindMap: Record<
+  NonNullable<FlussReturnWidgetFragment["__typename"]>,
+  ReturnWidgetKind
+> = {
+  ChoiceReturnWidget: ReturnWidgetKind.Choice,
+  CustomReturnWidget: ReturnWidgetKind.Custom,
+};
+
+const flussEffectKindMap: Record<
+  NonNullable<FlussPortEffectFragment["__typename"]>,
+  EffectKind
+> = {
+  CustomEffect: EffectKind.Custom,
+  HideEffect: EffectKind.Hide,
+  MessageEffect: EffectKind.Message,
+};
+
+const flussAssignWidgetToInput = (
+  widget: FlussAssignWidgetFragment,
+): AssignWidgetInput => {
+  const { __typename, ...rest } = widget;
+  const input: AssignWidgetInput = {
+    ...rest,
+    kind: flussAssignWidgetKindMap[__typename],
+  };
+  if (input.choices)
+    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined }));
+  return input;
+};
+
+const flussReturnWidgetToInput = (
+  widget: FlussReturnWidgetFragment,
+): ReturnWidgetInput => {
+  const { __typename, ...rest } = widget;
+  const input: ReturnWidgetInput = {
+    ...rest,
+    kind: flussReturnWidgetKindMap[__typename],
+  };
+  if (input.choices)
+    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined }));
+  return input;
+};
+
+const flussPortEffectToInput = (
+  effect: FlussPortEffectFragment,
+): EffectInput => {
+  const { __typename, ...rest } = effect;
+  // The fluss effect fragment doesn't select `function` (required on EffectInput);
+  // preserve the rest of the effect and let the backend supply/ignore it.
+  return { ...rest, kind: flussEffectKindMap[__typename] } as EffectInput;
+};
+
+export const flussArgChildToInput = (
+  port: FlussArgChildPortFragment,
+): ArgPortInput => {
+  const { __typename, children, widget, ...rest } = port;
+  return {
+    ...rest,
+    children: children?.map((c) =>
+      flussArgChildToInput(c as FlussArgChildPortFragment),
+    ),
+    widget: widget ? flussAssignWidgetToInput(widget) : undefined,
+  };
+};
+
+export const flussArgPortToInput = (
+  port: FlussArgPortFragment,
+): ArgPortInput => {
+  const { __typename, children, widget, effects, choices, validators, requires, ...rest } =
+    port;
+  return {
+    ...rest,
+    effects: effects?.map(flussPortEffectToInput),
+    children: children?.map(flussArgChildToInput),
+    widget: widget ? flussAssignWidgetToInput(widget) : undefined,
+    choices: choices?.map(({ __typename, ...c }) => c),
+    validators: validators?.map(({ __typename, ...v }) => v),
+    requires: requires?.map(({ __typename, ...r }) => r),
+  };
+};
+
+export const flussReturnChildToInput = (
+  port: FlussReturnChildPortFragment,
+): ReturnPortInput => {
+  const { __typename, children, widget, ...rest } = port;
+  return {
+    ...rest,
+    children: children?.map((c) =>
+      flussReturnChildToInput(c as FlussReturnChildPortFragment),
+    ),
+    widget: widget ? flussReturnWidgetToInput(widget) : undefined,
+  };
+};
+
+export const flussReturnPortToInput = (
+  port: FlussReturnPortFragment,
+): ReturnPortInput => {
+  const { __typename, children, widget, effects, choices, provides, ...rest } =
+    port;
+  return {
+    ...rest,
+    effects: effects?.map(flussPortEffectToInput),
+    children: children?.map(flussReturnChildToInput),
+    widget: widget ? flussReturnWidgetToInput(widget) : undefined,
+    choices: choices?.map(({ __typename, ...c }) => c),
+    provides: provides?.map(({ __typename, ...p }) => p),
+  };
+};
+
+// For building a rekuest action DefinitionInput from a flow's IO nodes: the flow's
+// ArgNode emits its values as node *outs* (ReturnPort) which are semantically the
+// action's input args, and the ReturnNode consumes via node *ins* (ArgPort) which
+// are the action's returns. Only the structural signature matters here, so widgets/
+// validators are dropped. fluss inputs are structurally identical to rekuest inputs.
+
+type AnyFlussChild = FlussArgChildPortFragment | FlussReturnChildPortFragment;
+type AnyFlussPort = FlussArgPortFragment | FlussReturnPortFragment;
+
+const flowChildToArgSignature = (c: AnyFlussChild): ArgPortInput => ({
+  key: c.key,
+  kind: c.kind,
+  identifier: c.identifier,
+  nullable: c.nullable,
+  children: c.children?.map((cc) => flowChildToArgSignature(cc as AnyFlussChild)),
+});
+
+const flowChildToReturnSignature = (c: AnyFlussChild): ReturnPortInput => ({
+  key: c.key,
+  kind: c.kind,
+  identifier: c.identifier,
+  nullable: c.nullable,
+  children: c.children?.map((cc) => flowChildToReturnSignature(cc as AnyFlussChild)),
+});
+
+const flowPortToArgSignature = (port: AnyFlussPort): ArgPortInput => ({
+  key: port.key,
+  label: port.label,
+  nullable: port.nullable,
+  description: port.description,
+  kind: port.kind,
+  identifier: port.identifier,
+  default: port.default,
+  choices: port.choices?.map(({ __typename, ...c }) => c),
+  children: port.children?.map((c) => flowChildToArgSignature(c as AnyFlussChild)),
+});
+
+const flowPortToReturnSignature = (port: AnyFlussPort): ReturnPortInput => ({
+  key: port.key,
+  label: port.label,
+  nullable: port.nullable,
+  description: port.description,
+  kind: port.kind,
+  identifier: port.identifier,
+  default: port.default,
+  choices: port.choices?.map(({ __typename, ...c }) => c),
+  children: port.children?.map((c) => flowChildToReturnSignature(c as AnyFlussChild)),
+});
 
 export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
 
@@ -117,7 +312,6 @@ export const flowNodeToInput = (
 ): NodeInput => {
   const {
     id,
-    type,
     position,
     parentId,
     data: { outs, constants, ins, voids, ...rest },
@@ -127,10 +321,10 @@ export const flowNodeToInput = (
 
 
     const node_: NodeInput = {
-      ins: ins && ins.map((s) => s.map(convertPortToInput)),
-      outs: outs && outs.map((s) => s.map(convertPortToInput)),
-      constants: constants && constants.map(convertPortToInput),
-      voids: voids && voids.map(convertPortToInput),
+      ins: ins && ins.map((s) => s.map(flussArgPortToInput)),
+      outs: outs && outs.map((s) => s.map(flussReturnPortToInput)),
+      constants: constants && constants.map(flussArgPortToInput),
+      voids: voids && voids.map(flussArgPortToInput),
       id,
       position: { x: position.x, y: position.y },
       parentNode: parentId ? parentId : undefined,
@@ -146,7 +340,7 @@ export const flowNodeToInput = (
 
 export const globalToInput = (node: GlobalFragment): GlobalArgInput => {
   const { __typename, port, ...rest } = node;
-  return { ...rest, port: convertPortToInput(port) };
+  return { ...rest, port: flussArgPortToInput(port) };
 };
 
 export const streamItemToInput = (
@@ -159,7 +353,7 @@ export const streamItemToInput = (
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
   const { id, source, sourceHandle, target, targetHandle, data } = edge;
   if (!data) throw new Error("No data set");
-  const { stream, ...cleaned } = data;
+  const { stream } = data;
   if (!sourceHandle || !targetHandle) throw new Error("No handle specified");
   const edge_: EdgeInput = {
     id: id,
@@ -216,10 +410,42 @@ export const reactiveTemplateToFlowNode = (
   return node_;
 };
 
+// Builds a reactive transform/suggestion node. Reactive nodes route a stream from
+// their ins (typed ArgPort) to their outs (typed ReturnPort), but the flow lets any
+// port connect to any, so the incoming streams are arg/return-agnostic. The single
+// cast here bridges that nominal gap for all the reactive-node builders.
+export const reactiveFlowNode = (args: {
+  title: string;
+  description: string;
+  implementation: ReactiveImplementation;
+  ins: StreamPort[][];
+  outs: StreamPort[][];
+  constants?: FlussArgPortFragment[];
+  constantsMap?: { [key: string]: any };
+  position?: XYPosition;
+  id?: string;
+}): FlowNode<ReactiveNodeFragment> => ({
+  id: args.id || nodeIdBuilder(),
+  type: "ReactiveNode",
+  position: args.position || { x: 0, y: 0 },
+  data: {
+    globalsMap: {},
+    constantsMap: args.constantsMap || {},
+    title: args.title,
+    description: args.description,
+    kind: GraphNodeKind.Reactive,
+    ins: args.ins,
+    outs: args.outs,
+    voids: [],
+    constants: args.constants || [],
+    implementation: args.implementation,
+  } as unknown as FlowNodeData<ReactiveNodeFragment>,
+});
+
 export const listPortToSingle = (
-  port: ArgPortFragment,
+  port: FlussArgPortFragment,
   key: string,
-): ArgPortFragment => {
+): FlussArgPortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
   const listChild = port.children?.at(0);
   if (!listChild) throw new Error("Port has no children");
@@ -229,11 +455,11 @@ export const listPortToSingle = (
     ...rest,
     key: key,
     __typename: "ArgPort",
-    children: children as ArgChildPortFragment[] | undefined,
+    children: children as FlussArgChildPortFragment[] | undefined,
   };
 };
 
-export const singleToList = (port: ArgPortFragment): ArgPortFragment => {
+export const singleToList = (port: FlussArgPortFragment): FlussArgPortFragment => {
 
   return {
     nullable: false,
@@ -301,7 +527,7 @@ export const portToReadble = (
   if (port.kind == PortKind.Union) {
     if (!port.children) throw new Error("Union has no variants");
     answer += port.children
-      .map((p) => portToReadble(p as ArgChildPortFragment, withLocalDisclaimer))
+      .map((p) => portToReadble(p as GeneralPort, withLocalDisclaimer))
       .join(" | ");
   }
 
@@ -368,20 +594,23 @@ const rekuestNodeToActionDemand = (node: RekuestMapActionNodeFragment): ActionDe
 
 
 export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
-  const args =
+  // The ArgNode emits its values as node outs (ReturnPort) — these are the
+  // action's input args. The ReturnNode consumes via node ins (ArgPort) — these
+  // are the action's returns. fluss inputs are structurally identical to rekuest's.
+  const args: RekuestArgPortInput[] =
     flow.graph?.nodes
       ?.find((arg) => arg.__typename == "ArgNode")
       ?.outs.at(0)
-      ?.map((p) => convertPortToInput(p)) || [];
+      ?.map(flowPortToArgSignature) || [];
 
-  const kwargs =
-    flow.graph.globals?.map((arg) => convertPortToInput(arg.port)) || [];
+  const kwargs: RekuestArgPortInput[] =
+    flow.graph.globals?.map((arg) => flussArgPortToInput(arg.port)) || [];
 
-  const returns =
+  const returns: RekuestReturnPortInput[] =
     flow.graph?.nodes
       ?.find((arg) => arg.__typename == "ReturnNode")
       ?.ins.at(0)
-      ?.map((p) => convertPortToInput(p)) || [];
+      ?.map(flowPortToReturnSignature) || [];
 
 
 

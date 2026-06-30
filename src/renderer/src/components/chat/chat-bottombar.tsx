@@ -16,7 +16,7 @@ import {
   PlusCircle,
   Send,
   SmilePlus,
-  ThumbsUp,
+  Type,
   Underline,
 } from "lucide-react";
 import { Plate, PlateContent, usePlateEditor } from "platejs/react";
@@ -31,6 +31,7 @@ interface ChatBottombarProps {
   stagedStructures: { identifier: string; object: string }[];
   onRemoveStructure: (index: number) => void;
   prefillText?: string;
+  replyerControl?: React.ReactNode;
 }
 
 type ComposerTextNode = {
@@ -46,6 +47,7 @@ export default function ChatBottombar({
   stagedStructures,
   onRemoveStructure,
   prefillText,
+  replyerControl,
 }: ChatBottombarProps) {
   const [hasContent, setHasContent] = useState(false);
 
@@ -97,10 +99,6 @@ export default function ChatBottombar({
     }
   };
 
-  const handleThumbsUp = () => {
-    sendMessage("👍");
-  };
-
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -109,7 +107,7 @@ export default function ChatBottombar({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full mb-4">
       <div className="flex w-full items-end">
 
       <AnimatePresence initial={false}>
@@ -159,72 +157,89 @@ export default function ChatBottombar({
                 placeholder="Write a message..."
                 onKeyDown={handleKeyPress}
               />
-              <div className="flex items-center gap-1 border-t bg-muted/20 px-2 py-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: "bold" })}
-                  className="h-8 w-8 p-0"
-                >
-                  <Bold className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: "italic" })}
-                  className="h-8 w-8 p-0"
-                >
-                  <Italic className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: "underline" })}
-                  className="h-8 w-8 p-0"
-                >
-                  <Underline className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: "code" })}
-                  className="h-8 w-8 p-0"
-                >
-                  <Code className="h-3 w-3" />
-                </Button>
+              <div className="flex flex-wrap items-center gap-1 border-t bg-muted/20 px-2 py-2 @container">
+                {replyerControl && (
+                  <>
+                    {replyerControl}
+                    <div className="mx-1 h-5 w-px bg-border/60" />
+                  </>
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground @xs:visible invisible"
+                      title="Formatting"
+                    >
+                      <Type className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    side="top"
+                    className="flex w-auto items-center gap-1 p-1 flex-row"
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => editor.tf.toggle.mark({ key: "bold" })}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Bold className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => editor.tf.toggle.mark({ key: "italic" })}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Italic className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => editor.tf.toggle.mark({ key: "underline" })}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Underline className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => editor.tf.toggle.mark({ key: "code" })}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Code className="h-3 w-3" />
+                    </Button>
+                    <EmojiPicker
+                      onChange={(value) => {
+                        editor.insertText(value);
+                        editor.tf.focus();
+                      }}
+                    >
+                      <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <SmilePlus className="h-4 w-4" />
+                      </Button>
+                    </EmojiPicker>
+                  </PopoverContent>
+                </Popover>
                 <div className="flex-1" />
-                <EmojiPicker
-                  onChange={(value) => {
-                    editor.insertText(value);
-                    editor.tf.focus();
-                  }}
-                >
-                  <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <SmilePlus className="h-4 w-4" />
-                  </Button>
-                </EmojiPicker>
                 <Button
                   size="sm"
                   type="button"
-                  variant={hasContent ? "default" : "ghost"}
-                  onClick={hasContent ? handleSend : handleThumbsUp}
-                  className="min-w-[88px] rounded-xl"
+                  variant="default"
+                  disabled={!hasContent}
+                  onClick={handleSend}
+                  className=" rounded-xl"
                 >
-                  {hasContent ? (
-                    <>
-                      <Send className="mr-1.5 h-4 w-4" />
-                      Send
-                    </>
-                  ) : (
-                    <>
-                      <ThumbsUp className="mr-1.5 h-4 w-4" />
-                      React
-                    </>
-                  )}
+                  <Send className="mr-1.5 h-4 w-4" />
+                  Send
                 </Button>
               </div>
             </div>

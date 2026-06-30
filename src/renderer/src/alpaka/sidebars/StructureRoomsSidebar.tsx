@@ -1,10 +1,11 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Empty,
   EmptyContent,
@@ -212,27 +213,33 @@ export const StructureRoomsSidebar = ({
     );
   }
 
+  const rooms = data?.rooms ?? [];
+  const hasMultipleRooms = rooms.length > 1;
+
   return (
-    <Accordion
-      type="single"
-      collapsible
-      value={resolvedActiveRoomId}
-      onValueChange={setActiveRoomId}
-      className="flex h-full min-h-0 flex-col overflow-hidden p-2"
-    >
-      {data?.rooms.map((room) => (
-        <AccordionItem
-          key={room.id}
-          value={room.id}
-          className="flex min-h-0 flex-col border-0 data-[state=open]:flex-1"
-        >
-          <AccordionTrigger className="shrink-0 truncate text-sm">{room.title}</AccordionTrigger>
-          <AccordionContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
-            {resolvedActiveRoomId === room.id && <StructureRoomView roomId={room.id} />}
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      {hasMultipleRooms && (
+        <div className="shrink-0 border-b p-2">
+          <Select value={resolvedActiveRoomId} onValueChange={setActiveRoomId}>
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="Select a room" />
+            </SelectTrigger>
+            <SelectContent>
+              {rooms.map((room) => (
+                <SelectItem key={room.id} value={room.id}>
+                  {room.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {resolvedActiveRoomId && (
+          <StructureRoomView key={resolvedActiveRoomId} roomId={resolvedActiveRoomId} />
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { buildAssignInput } from "@/rekuest/assign";
 import {
   AssignInput,
   PostmanTaskFragment,
@@ -37,12 +38,12 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     }
 
     try {
-      await assign({
+      await assign(buildAssignInput({
         action: action.id,
         args: {
           [the_key]: props.object,
         },
-      });
+      }));
     } catch (e) {
       toast.error(e.message);
     }
@@ -67,12 +68,12 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     }
 
     try {
-      await assign({
+      await assign(buildAssignInput({
         action: action.id,
         args: {
           [the_key]: props.object,
         },
-      });
+      }));
     } catch (e) {
       toast.error(e.message);
     }

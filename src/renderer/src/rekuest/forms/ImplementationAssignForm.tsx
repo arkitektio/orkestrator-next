@@ -1,3 +1,4 @@
+import { buildAssignInput } from "@/rekuest/assign";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -62,12 +63,12 @@ export const ImplementationAssignForm = (
     const keepOpen = keepOpenRef.current;
     keepOpenRef.current = false;
     try {
-      const task = await assign({
+      const task = await assign(buildAssignInput({
         implementation: props.id,
         args: data.args,
         dependencies: Object.values(data.dependencies),
         hooks: [],
-      });
+      }));
 
       props.onAssign?.(task);
       if (!keepOpen) {

@@ -27,6 +27,7 @@ import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   listPortToSingle,
   nodeIdBuilder,
+  reactiveFlowNode,
   streamToReadable,
 } from "@/reaktion/utils";
 import {
@@ -42,7 +43,12 @@ import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { DropContextualParams, FlowNode } from "../../types";
+import {
+  DropContextualParams,
+  FlowNode,
+  ReactiveNodeSuggestions,
+  StreamPort,
+} from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
 
@@ -123,14 +129,8 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
-export type ReactiveNodeSuggestions = {
-  node: FlowNode;
-  title: string;
-  description: string;
-};
-
 const reactiveNodes = (
-  ports: FlussArgPortFragment[],
+  ports: StreamPort[],
   params: DropContextualParams,
 ): ReactiveNodeSuggestions[] => {
   const nodes: ReactiveNodeSuggestions[] = [];
@@ -141,25 +141,17 @@ const reactiveNodes = (
 
   if (ports.every((port) => port.kind === PortKind.List)) {
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Chunk",
-          description: "Transforms a stream into an item of chunks",
-          kind: GraphNodeKind.Reactive,
-          ins: [ports],
-          constantsMap: {},
-          outs: [
-            ports.map((p, index) => listPortToSingle(p, "Chunked" + p.key)),
-          ],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.Chunk,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Chunk",
+        description: "Transforms a stream into an item of chunks",
+        ins: [ports],
+        outs: [
+          ports.map((p) =>
+            listPortToSingle(p as FlussArgPortFragment, "Chunked" + p.key),
+          ),
+        ],
+        implementation: ReactiveImplementation.Chunk,
+      }),
       title: "Chunk",
       description: "Transforms a stream into an item of chunks",
     });
@@ -167,26 +159,16 @@ const reactiveNodes = (
 
   if (ports && ports.length > 1) {
     for (let i = 0; i < ports.length; i++) {
+      const selected = ports.at(i);
       nodes.push({
-        node: {
-          id: nodeIdBuilder(),
-          type: "ReactiveNode",
-          position: { x: 0, y: 0 },
-          data: {
-            globalsMap: {},
-            title: `Only`,
-            description: "Transforms a stream into an item of chunks",
-            kind: GraphNodeKind.Reactive,
-            ins: [ports],
-            constants: [],
-            constantsMap: {
-              index: i,
-            },
-            outs: [[ports.at(i)]],
-            voids: [],
-            implementation: ReactiveImplementation.Select,
-          },
-        },
+        node: reactiveFlowNode({
+          title: `Only`,
+          description: "Transforms a stream into an item of chunks",
+          ins: [ports],
+          constantsMap: { index: i },
+          outs: [selected ? [selected] : []],
+          implementation: ReactiveImplementation.Select,
+        }),
         title: `Only ${ports.at(i)?.key}`,
         description: "Transforms a stream into an item of chunks",
       });
@@ -194,27 +176,17 @@ const reactiveNodes = (
   }
 
   nodes.push({
-    node: {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: { x: 0, y: 0 },
-      data: {
-        globalsMap: {},
-        title: `Zip`,
-        description: "Transforms a stream into an item of chunks",
-        kind: GraphNodeKind.Reactive,
-        ins:
-          params.relativePosition == "topleft" ||
-            params.relativePosition == "topright"
-            ? [[], ports]
-            : [ports, []],
-        outs: [ports],
-        constants: [],
-        constantsMap: {},
-        voids: [],
-        implementation: ReactiveImplementation.Zip,
-      },
-    },
+    node: reactiveFlowNode({
+      title: `Zip`,
+      description: "Transforms a stream into an item of chunks",
+      ins:
+        params.relativePosition == "topleft" ||
+        params.relativePosition == "topright"
+          ? [[], ports]
+          : [ports, []],
+      outs: [ports],
+      implementation: ReactiveImplementation.Zip,
+    }),
     title: `Zip with ...`,
     description: "Transforms a stream into an item of chunks",
   });

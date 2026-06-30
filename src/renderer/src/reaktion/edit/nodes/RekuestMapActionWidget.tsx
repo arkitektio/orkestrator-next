@@ -19,10 +19,8 @@ import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
-import {
-  ArgPortFragment,
-  useImplementationQuery,
-} from "@/rekuest/api/graphql";
+import { FlussArgPortFragment } from "@/reaktion/api/graphql";
+import { useImplementationQuery } from "@/rekuest/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useEditNodeErrors, useEditRiver } from "../context";
@@ -62,7 +60,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     moveStreamToConstants(id, stream_index, onposition);
   };
 
-  const onToArg = (port: ArgPortFragment) => {
+  const onToArg = (port: FlussArgPortFragment) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;
@@ -70,7 +68,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
     moveConstantToStream(id, index, 0);
   };
 
-  const onToGlobal = (port: ArgPortFragment, key?: string | undefined) => {
+  const onToGlobal = (port: FlussArgPortFragment, key?: string | undefined) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;
@@ -123,7 +121,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
                     <SheetTitle>These are advanced settings</SheetTitle>
                     <SheetDescription>
                       <div className="w-full @container">
-                        {ins.at(0) && ins.at(0).length > 0 && (
+                        {(ins.at(0)?.length ?? 0) > 0 && (
                           <>
                             <div className="text-xs text-muted-foreground inline ">
                               Args
@@ -161,7 +159,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
         </CardDescription>
         {expanded && (
           <div className="w-full @container">
-            {ins.at(0) && ins.at(0).length > 0 && (
+            {(ins.at(0)?.length ?? 0) > 0 && (
               <>
                 <div className="text-xs text-muted-foreground inline ">
                   Args

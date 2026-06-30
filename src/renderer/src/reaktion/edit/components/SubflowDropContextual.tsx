@@ -17,9 +17,9 @@ import {
   DetailImplementationFragment,
   useImplementationsQuery
 } from '@/rekuest/api/graphql'
-import { FlussPortFragment } from '@/reaktion/api/graphql'
+import { StreamPort } from '@/reaktion/types'
 
-const toPortMatches = (ports: FlussPortFragment[] | undefined) => {
+const toPortMatches = (ports: StreamPort[] | undefined) => {
   return (
     ports?.map((port, index) => ({
       at: index,
@@ -118,8 +118,11 @@ export const SubflowDropContextual = (props: {
               y: 0
             })
 
-            flownode.data.binds = {
-              ...flownode.data.binds,
+            const flowdata = flownode.data as {
+              binds?: { templates: string[] }
+            }
+            flowdata.binds = {
+              ...flowdata.binds,
               templates: [impl.id]
             }
 

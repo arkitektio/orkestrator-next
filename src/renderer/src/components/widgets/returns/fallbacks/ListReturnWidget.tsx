@@ -45,7 +45,7 @@ const ListReturnWidget: React.FC<ReturnWidgetProps> = ({
                 key={index}
                 value={va}
                 port={childPort}
-                widget={childPort.returnWidget}
+                widget={childPort.widget}
                 options={{ disable: false }}
               />
             </CardContent>

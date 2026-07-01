@@ -1,0 +1,16 @@
+mutation from_file_like(
+  $file: FileLike!
+  $name: String!
+  $origins: [ID!]
+  $dataset: ID
+) {
+  fromFileLike(
+    input: { file: $file, name: $name, origins: $origins, dataset: $dataset }
+  ) {
+    ...File
+  }
+}
+
+mutation DeleteFile($id: ID!) {
+  deleteFile(input: { id: $id })
+}

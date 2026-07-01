@@ -17,6 +17,10 @@
       "IrregularlySampledSignal",
       "SpikeTrain"
     ],
+    "View": [
+      "FileView",
+      "TimelineView"
+    ],
     "_Entity": [
       "App",
       "BigFileStore",

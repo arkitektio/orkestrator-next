@@ -5,8 +5,12 @@ import { Route, Routes } from "react-router";
 import AnalogSignalChannelPage from "./pages/AnalogSignalChannelPage";
 import AnalogSignalPage from "./pages/AnalogSignalPage";
 import BlockPage from "./pages/BlockPage";
+import DatasetPage from "./pages/DatasetPage";
+import DatasetsPage from "./pages/DatasetsPage";
 import ExperimentPage from "./pages/ExperimentPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
+import FilePage from "./pages/FilePage";
+import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ModelCollectionPage from "./pages/ModelCollectionPage";
 import ModelCollectionsPage from "./pages/ModelCollectionsPage";
@@ -34,6 +38,10 @@ export const ElektroModule: React.FC<Props> = (props) => {
         <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="traces/:id" element={<TracePage />} />
+          <Route path="files/:id" element={<FilePage />} />
+          <Route path="files" element={<FilesPage />} />
+          <Route path="datasets/:id" element={<DatasetPage />} />
+          <Route path="datasets" element={<DatasetsPage />} />
           <Route path="simulations/:id" element={<SimulationPage />} />
           <Route path="experiments/:id" element={<ExperimentPage />} />
           <Route path="blocks/:id" element={<BlockPage />} />

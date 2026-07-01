@@ -297,6 +297,18 @@ export const ElektroModelWorkspace = buildSmart(
   { name: "Model Workspace" },
 );
 
+export const ElektroFile = buildSmart(
+  "@elektro/file",
+  "elektro/files",
+  { name: "File (Elektro)" },
+);
+
+export const ElektroDataset = buildSmart(
+  "@elektro/dataset",
+  "elektro/datasets",
+  { name: "Dataset (Elektro)" },
+);
+
 export const KraphNode = buildSmart(
   "@kraph/node",
   "kraph/nodes",

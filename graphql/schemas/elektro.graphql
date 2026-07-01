@@ -485,6 +485,19 @@ input CreateExperimentInput {
   timeTrace: ID = null
 }
 
+input CreateFileViewInput {
+  aMax: Int = null
+  aMin: Int = null
+  cMax: Int = null
+  cMin: Int = null
+  file: ID!
+  isGlobal: Boolean! = false
+  seriesIdentifier: String = null
+  tMax: Int = null
+  tMin: Int = null
+  trace: ID!
+}
+
 """Input for creating a mod environment"""
 input CreateModEnvironmentInput {
   description: String = null
@@ -529,12 +542,15 @@ type Dataset {
   description: String
   files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
   id: ID!
-  images(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
   isDefault: Boolean!
   name: String!
+
+  """The parent dataset of this dataset"""
+  parent: Dataset
   pinned: Boolean!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   tags: [String!]!
+  traces(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
 }
 
 input DatasetFilter {
@@ -544,6 +560,8 @@ input DatasetFilter {
   OR: DatasetFilter
   id: ID
   name: StrFilterLookup
+  parent: ID = null
+  parentless: Boolean = null
 }
 
 input DatasetOrder @oneOf {
@@ -708,10 +726,22 @@ input ExperimentStimulusViewOrder @oneOf {
 }
 
 type File {
+  """The content type of the file"""
+  contentType: String
+
+  """Who created this file"""
+  creator: User
   id: ID!
   name: String!
   origins(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The size of the file in bytes"""
+  size: Float
   store: BigFileStore!
+
+  """The file views of this file"""
+  views: [FileView!]!
 }
 
 type FileEvent {
@@ -726,10 +756,13 @@ input FileFilter {
   DISTINCT: Boolean
   NOT: FileFilter
   OR: FileFilter
+  contentType: StrFilterLookup
+  dataset: DatasetFilter = null
   id: ID
   ids: [ID!]
   name: StrFilterLookup
   search: String
+  size: IntFilterLookup
 }
 
 """
@@ -740,6 +773,28 @@ scalar FileLike
 input FileOrder @oneOf {
   createdAt: Ordering
   id: Ordering
+  size: Ordering
+}
+
+type FileView implements View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  file: File!
+  id: ID!
+  image: Trace!
+  isGlobal: Boolean!
+  seriesIdentifier: String
+  tMax: Int
+  tMin: Int
+  trace: Trace!
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
 }
 
 input FinishBigFileUploadInput {
@@ -871,6 +926,26 @@ enum HistoryKind {
   CREATE
   DELETE
   UPDATE
+}
+
+input IntFilterLookup {
+  contains: Int
+  endsWith: Int
+  exact: Int
+  gt: Int
+  gte: Int
+  iContains: Int
+  iEndsWith: Int
+  iExact: Int
+  iRegex: String
+  iStartsWith: Int
+  inList: [Int!]
+  isNull: Boolean
+  lt: Int
+  lte: Int
+  range: [Int!]
+  regex: String
+  startsWith: Int
 }
 
 type IrregularlySampledSignal implements Signal {
@@ -1147,6 +1222,9 @@ type Mutation {
   """Create a new experiment"""
   createExperiment(input: CreateExperimentInput!): Experiment!
 
+  """Create a file view linking a file to a trace"""
+  createFileView(input: CreateFileViewInput!): FileView!
+
   """Create a mechanism from a mod file"""
   createModEnvironment(input: CreateModEnvironmentInput!): ModEnvironment!
 
@@ -1194,6 +1272,9 @@ type Mutation {
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
+
+  """Delete an existing file view"""
+  deleteFileView(input: DeleteInput!): ID!
 
   """Delete an existing image"""
   deleteImage(input: DeleteTraceInput!): ID!
@@ -2291,6 +2372,26 @@ type TimeBucket {
   ts: DateTime!
 }
 
+type TimelineView implements View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  id: ID!
+  image: Trace!
+  isGlobal: Boolean!
+  label: String!
+  tMax: Int
+  tMin: Int
+  trace: Trace!
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
+}
+
 """
 Represents the topology of a cell, which defines its structure as a set of connected sections.
 """
@@ -2393,6 +2494,23 @@ type User {
   id: ID!
   preferredUsername: String!
   sub: String!
+}
+
+interface View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  image: Trace!
+  isGlobal: Boolean!
+  tMax: Int
+  tMin: Int
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
 }
 
 type WorkspaceMapping {

@@ -314,7 +314,16 @@ export const portToDefaults = (
   ports: PortablePort[],
   overwrites: { [key: string]: any },
 ): { [key: string]: any } => {
-  return setData(overwrites, ports);
+  const merged = ports.reduce(
+    (acc, port) => {
+      // overwrite wins when provided; otherwise fall back to the port default.
+      // ?? keeps explicit falsy overwrites/defaults (0, "", false) intact.
+      acc[port.key] = overwrites[port.key] ?? port.default;
+      return acc;
+    },
+    {} as { [key: string]: any },
+  );
+  return setData(merged, ports);
 };
 
 export const recursiveExtract = (data: any, port: PortablePort): any => {
@@ -375,7 +384,7 @@ export const submittedDataToRekuestFormat = (
 };
 
 export const recursiveSet = (data: any, port: PortablePort): any => {
-  if (!data) return null;
+  if (data === undefined || data === null) return null;
   if (!port) throw new Error("Port is not defined");
 
   if (port.kind == PortKind.List) {

@@ -1,3 +1,10 @@
+# [1.66.0-rc.2](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.1...v1.66.0-rc.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* download and upload ([2df03da](https://github.com/arkitektio/orkestrator-next/commit/2df03dacd6dd7540ebbadaa11ae191e8b471a946))
+
 # [1.66.0-rc.1](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0...v1.66.0-rc.1) (2026-07-01)
 
 

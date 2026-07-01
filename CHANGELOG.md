@@ -1,3 +1,10 @@
+# [1.65.0-rc.4](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.3...v1.65.0-rc.4) (2026-07-01)
+
+
+### Bug Fixes
+
+* with defaults ([86fdf7e](https://github.com/arkitektio/orkestrator-next/commit/86fdf7e22a5c8d3db958f5a77ddf818aafee6569))
+
 # [1.65.0-rc.3](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.2...v1.65.0-rc.3) (2026-06-30)
 
 

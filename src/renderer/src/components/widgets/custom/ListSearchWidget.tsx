@@ -25,8 +25,13 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, ChevronsUpDown, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -37,8 +42,10 @@ export type Option = {
 
 export const ListButtonLabel = (props: {
   search: SearchFunction;
-  value: { __value: string }[] | undefined;
-  setValue: (vars: { __value: string }[]) => void;
+  value: { __value: { object: string; __identifier: string } }[] | undefined;
+  setValue: (
+    vars: { __value: { object: string; __identifier: string } }[],
+  ) => void;
   placeholder?: string;
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
@@ -51,7 +58,7 @@ export const ListButtonLabel = (props: {
       return;
     }
     props
-      .search({ values: props.value.map(x => x.__value) })
+      .search({ values: props.value.map((x) => x.__value.object) })
       .then((res) => {
         setOptions(res.filter(notEmpty));
         setError(null);
@@ -62,7 +69,9 @@ export const ListButtonLabel = (props: {
   }, [props.value, props.search]);
 
   const remove = (value: string) => {
-    props.setValue(props.value?.filter((v) => v.__value !== value) || []);
+    props.setValue(
+      props.value?.filter((v) => v.__value.object !== value) || [],
+    );
   };
 
   return (
@@ -125,6 +134,10 @@ export const ListSearchWidget = (
   );
 
   const name = pathToName(props.path)
+
+  // The list port wraps a child structure port; the identifier needed for the
+  // canonical { object, __identifier } structure value lives on that child.
+  const childIdentifier = props.port.children?.at(0)?.identifier ?? "";
 
   const { values, met } = useWidgetDependencies({
     widget: props.widget,
@@ -263,7 +276,7 @@ export const ListSearchWidget = (
   }
 
   return (
-    <FormField<{ [name: string]: { __value: string }[] }>
+    <FormField<{ [name: string]: { __value: { object: string; __identifier: string } }[] }>
       control={form.control}
       name={name}
       render={({ field }) => (
@@ -274,42 +287,50 @@ export const ListSearchWidget = (
               shouldFilter={false}
               className="overflow-visible bg-transparent"
             >
-              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <div className="w-full relative flex flex-row flex-wrap w-full">
-                  {field.value && (
+              <Popover open={open} onOpenChange={setOpen}>
+                <div className="rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                  {field.value && field.value.length > 0 && (
                     <ListButtonLabel
                       search={search}
                       value={field.value}
                       setValue={(value) => {
                         form.setValue(name, value, { shouldValidate: true });
                         setInputValue("");
-                        inputRef.current?.focus();
-                        setOpen(true);
                       }}
                     />
                   )}
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="group flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground inline">
+                        {field.value && field.value.length > 0
+                          ? "Add or remove…"
+                          : "Search…"}
+                      </span>
+                      <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                </div>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] p-1"
+                >
                   <CommandInput
                     onKeyDown={handleKeyDown}
-                    placeholder={"Search..."}
+                    placeholder="Search…"
                     onValueChange={(e) => {
                       setInputValue(e);
                       onValueChange(e);
                     }}
                     value={inputValue}
-                    onBlur={() => setOpen(false)}
-                    onFocus={() => {
-                      setOpen(true);
-                    }}
-                    className="flex-grow"
                   />
-                </div>
-              </div>
-              <div className="relative mt-2">
-                {open && (
                   <CommandList slot="list" className="w-full max-h-none overflow-visible">
                     <div
                       ref={listRef}
-                      className="absolute top-0 z-10 w-full max-h-72 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+                      className="max-h-72 overflow-y-auto rounded-md outline-none"
                     >
                       <CommandEmpty>No Options found</CommandEmpty>
                       {error && (
@@ -332,13 +353,13 @@ export const ListSearchWidget = (
                                   field.value &&
                                   Array.isArray(field.value) &&
                                   field.value.find(
-                                    (val) => val.__value === option.value,
+                                    (val) => val.__value?.object === option.value,
                                   )
                                 ) {
                                   form.setValue(
                                     name,
                                     field.value.filter(
-                                      (val) => val.__value !== option.value,
+                                      (val) => val.__value?.object !== option.value,
                                     ),
                                     {
                                       shouldValidate: true,
@@ -353,10 +374,15 @@ export const ListSearchWidget = (
                                         Array.isArray(field.value)
                                         ? field.value
                                         : []),
-                                      { __value: option.value },
+                                      {
+                                        __value: {
+                                          object: option.value,
+                                          __identifier: childIdentifier,
+                                        },
+                                      },
                                     ],
                                     {
-                                      shouldValidate: false,
+                                      shouldValidate: true,
                                     },
                                   );
                                   setInputValue("");
@@ -370,7 +396,7 @@ export const ListSearchWidget = (
                                   field.value &&
                                     Array.isArray(field.value) &&
                                     field.value.find(
-                                      (val) => val.__value === option.value,
+                                      (val) => val.__value?.object === option.value,
                                     )
                                     ? "opacity-100"
                                     : "opacity-0",
@@ -390,8 +416,8 @@ export const ListSearchWidget = (
                       )}
                     </div>
                   </CommandList>
-                )}
-              </div>
+                </PopoverContent>
+              </Popover>
             </Command>
             <FormDescription>{props.port.description}</FormDescription>
             <FormMessage />

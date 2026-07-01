@@ -28,18 +28,19 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import { useUpdateNodeInternals } from "@xyflow/react";
 import React from "react";
-import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
+import { ReactiveNodeFragment } from "@/reaktion/api/graphql";
+import { FlowNodeData, ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { useEditRiver } from "../context";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
 };
 
 export type ContextMenuProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
 };
 
@@ -177,8 +178,8 @@ export const Reorder = ({ data }: ShapeProps) => {
                       {Object.keys(data.constantsMap.map).map((key) => (
                         <div className="text-xs">
                           {" "}
-                          {data.ins.at(0).at(key)?.kind} to{" "}
-                          {data.outs.at(0).at(data.constantsMap.map[key])?.kind}
+                          {data.ins.at(0)?.at(Number(key))?.kind} to{" "}
+                          {data.outs.at(0)?.at(data.constantsMap.map[key])?.kind}
                         </div>
                       ))}
                     </>
@@ -285,7 +286,9 @@ export const ChangeZipImplementation = ({ data, id }: ContextMenuProps) => {
   const updateNodeInternal = useUpdateNodeInternals();
 
   const changeImplementation = (implementation: ReactiveImplementation) => {
-    updateData({ implementation: implementation }, id);
+    // `implementation` only exists on reactive nodes; updateData is typed for the
+    // base node shape.
+    updateData({ implementation } as Partial<ReactiveNodeData>, id);
     updateNodeInternal(id);
   };
 

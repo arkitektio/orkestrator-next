@@ -25,17 +25,18 @@ import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
-import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
+import { ReactiveNodeFragment } from "@/reaktion/api/graphql";
+import { FlowNodeData, ReactiveNodeProps } from "../../types";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
 };
 
 export type ContextMenuProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
 };
 
@@ -283,6 +284,7 @@ const contextMenuMap: {
   [ReactiveImplementation.Suffix]: DefaultContext,
   [ReactiveImplementation.Select]: DefaultContext,
   [ReactiveImplementation.Just]: DefaultContext,
+  [ReactiveImplementation.Reorder]: DefaultContext,
 };
 
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {

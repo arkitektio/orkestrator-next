@@ -1,15 +1,7 @@
 import { useRekuest } from "@/app/Arkitekt";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import {
-  useTask,
-  useLiveTask,
-} from "@/rekuest/hooks/useTasks";
 import { WrappedReturnsContainer } from "@/rekuest/widgets/tailwind";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { X } from "lucide-react";
 import { useEffect } from "react";
-import { toast } from "sonner";
 import type { ApolloClient } from "@apollo/client";
 import {
   PostmanTaskFragment,
@@ -38,7 +30,7 @@ import {
   takeBufferedEvents,
   taskEventChangeToEvent,
 } from "../../lib/taskTracker";
-import { TaskStatusLine } from "../task/TaskStatusLine";
+import { notify as notifyTask } from "../../lib/taskNotifications";
 
 export { registeredCallbacks } from "../../lib/taskTracker";
 
@@ -85,109 +77,6 @@ export const borderColorForAss = (ass: any) => {
   }
 
   return "border-muted-foreground/10";
-};
-
-// Tracks dismissed task ids so their toast isn't re-shown. Bounded with
-// FIFO eviction so it doesn't grow unbounded over a long session (one entry would
-// otherwise leak per dismissed toast forever).
-const MAX_DISMISSED_TOASTS = 200;
-const dismissedToasts = new Set<string>();
-
-const rememberDismissed = (id: string) => {
-  if (dismissedToasts.size >= MAX_DISMISSED_TOASTS) {
-    const oldest = dismissedToasts.values().next().value;
-    if (oldest !== undefined) dismissedToasts.delete(oldest);
-  }
-  dismissedToasts.add(id);
-};
-
-const dismissTaskToast = (id: string) => {
-  rememberDismissed(id);
-  toast.dismiss(id);
-};
-
-const showTaskToast = (id: string) => {
-  if (dismissedToasts.has(id)) {
-    return;
-  }
-  toast.custom(() => <TaskToast id={id} />, {
-    id,
-    duration: Infinity, // Dismissal is driven by TaskToast
-    dismissible: true,
-    onDismiss: () => rememberDismissed(id),
-  });
-};
-
-export const TaskToast = (props: { id: string }) => {
-  const task = useTask({ task: props.id });
-  const live = useLiveTask({ task: props.id });
-
-  // Success and cancellation auto-dismiss after a short delay; errors persist
-  // until closed via the X button.
-  useEffect(() => {
-    if (live.done || live.cancelled) {
-      const timer = setTimeout(() => {
-        dismissTaskToast(props.id);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [live.done, live.cancelled, props.id]);
-
-  // Sonner measures a toast's height only when the toast itself is updated
-  // (its jsx/title props change). Our content re-renders in place as events
-  // arrive, so the recorded height goes stale — and hovering, which applies
-  // `height: var(--initial-height)`, would visibly resize the toast. Re-issue
-  // the toast whenever the rendered layout changes shape to force a
-  // re-measure.
-  const layoutKey = [
-    live.progress != null,
-    live.message,
-    live.error,
-    live.yield != null,
-    live.latestEventKind,
-  ].join("|");
-
-  useEffect(() => {
-    showTaskToast(props.id);
-  }, [layoutKey, props.id]);
-
-  if (!task) {
-    return null;
-  }
-
-  return (
-    <div
-      className={cn(
-        "relative w-[var(--width)] flex flex-col gap-2 rounded-md border bg-background p-3 shadow-lg",
-        borderColorForAss(live),
-      )}
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-1 top-1 h-6 w-6 text-muted-foreground hover:text-foreground"
-        onClick={() => dismissTaskToast(props.id)}
-        aria-label="Dismiss notification"
-      >
-        <X className="h-4 w-4" />
-      </Button>
-      <div className="pr-7">
-        <TaskStatusLine task={task} showCancel showLink />
-      </div>
-
-      {live.error && (
-        <div className="w-full rounded bg-red-500/10 p-2 text-xs text-red-500">
-          {live.error}
-        </div>
-      )}
-
-      {live.yield && live.actionId && (
-        <DynamicYieldDisplay values={live.yield} actionId={live.actionId} />
-      )}
-    </div>
-  );
 };
 
 type RekuestClient = ApolloClient<unknown>;
@@ -277,9 +166,11 @@ const hydrateAndInsert = async (
 export const TaskUpdater = () => {
   const client = useRekuest();
 
-  // Seed the global "my tasks" list on first mount (and refetch on reload) so
-  // currently-active tasks are present even before any list view renders. The
-  // subscription below keeps the cache live afterwards.
+  // The single network query for the global "my tasks" list: TaskUpdater is
+  // mounted exactly once at the app root, so this fires once on startup (and on
+  // a full reload) to seed the list before any view renders. The subscription
+  // below keeps the cache live afterwards, and every consumer reads from cache
+  // (`useTasks` is cache-first) so they never re-query and clobber it.
   useMyTasksQuery({ fetchPolicy: "cache-and-network" });
 
   useEffect(() => {
@@ -336,10 +227,11 @@ export const TaskUpdater = () => {
               create.reference &&
               registeredCallbacks.has(create.reference)
             ) {
-              // Already tracked locally by a component, skip the global toast.
+              // Already tracked locally by a component, skip the global
+              // notification.
               return;
             }
-            showTaskToast(create.id);
+            notifyTask(create.id);
           });
         }
       });

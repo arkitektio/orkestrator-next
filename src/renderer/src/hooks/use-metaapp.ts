@@ -10,6 +10,7 @@ import {
   WatchStateEventsSubscription,
   WatchStateEventsSubscriptionVariables
 } from '@/rekuest/api/graphql'
+import { buildAssignInput } from '@/rekuest/assign'
 import { useAssign } from '@/rekuest/hooks/useAssign'
 import { useFilteredTasks } from '@/rekuest/hooks/useTasks'
 import React, { useEffect } from 'react'
@@ -397,19 +398,19 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
       if (options?.debounce) {
         return debounce(
           () =>
-            assign({
+            assign(buildAssignInput({
               implementation: actionId,
               args: args,
               ephemeral: options?.track ? false : true
-            }),
+            })),
           options.debounce
         )
       } else {
-        return assign({
+        return assign(buildAssignInput({
           implementation: actionId,
           args: args,
           ephemeral: options?.track ? false : true
-        })
+        }))
       }
     }
 

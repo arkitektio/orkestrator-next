@@ -6,6 +6,7 @@ import {
   useAssignMutation,
   useCancelMutation,
 } from "@/rekuest/api/graphql";
+import { buildAssignInput } from "@/rekuest/assign";
 import { useCallback, useState } from "react";
 
 export type ActionAssignVariables = AssignInput;
@@ -72,11 +73,11 @@ export const useAction = <T extends any>(
     if (!latestTask) {
       throw Error("No latest task");
     }
-    return assign({
+    return assign(buildAssignInput({
       args: latestTask.args,
       implementation: latestTask?.implementation?.id,
       hooks: [],
-    });
+    }));
   }, [assign]);
 
   const cancel = useCallback(async () => {

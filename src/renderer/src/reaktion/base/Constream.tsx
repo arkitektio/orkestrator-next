@@ -3,11 +3,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PortFragment } from "@/rekuest/api/graphql";
+import { FlussArgPortFragment } from "@/reaktion/api/graphql";
 import { Constants } from "./Constants";
 
 export const Constream: React.FC<{
-  constants: PortFragment[];
+  constants: FlussArgPortFragment[];
   constantsMap: { [key: string]: any };
   onClick?: (onposition: number) => void;
   open?: boolean | undefined;

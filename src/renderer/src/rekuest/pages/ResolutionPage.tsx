@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { buildAssignInput } from "@/rekuest/assign";
 import { RekuestResolution, RekuestToolbox } from "@/linkers";
 import {
   TaskEventKind,
@@ -29,12 +30,12 @@ export const DoForm = ({ id, resolution }: { id: string, resolution: string }) =
 
 
   const onSubmit = (data: any) => {
-    assign({
+    assign(buildAssignInput({
       implementation: id,
       args: data,
       resolution: resolution,
       hooks: [],
-    }).then(
+    })).then(
       () => {},
       (error) => {
         toast.error(error.message);

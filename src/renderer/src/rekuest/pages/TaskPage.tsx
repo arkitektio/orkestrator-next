@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { buildAssignInput } from "@/rekuest/assign";
 
 import {
   Images
@@ -234,13 +235,13 @@ export const useReassign = ({
   const navigate = useNavigate();
 
   const reassign = async (options?: { capture: boolean }) => {
-    const x = await assign({
+    const x = await assign(buildAssignInput({
       args: task.args,
       implementation: task?.implementation.id || "",
       dependencies: task.dependencies,
       hooks: [],
       capture: options?.capture || false,
-    });
+    }));
 
     navigate(RekuestTask.linkBuilder(x.id));
   };

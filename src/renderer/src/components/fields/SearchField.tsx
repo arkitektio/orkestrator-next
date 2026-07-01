@@ -15,6 +15,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -148,43 +153,52 @@ export const SearchField = ({
               shouldFilter={false}
               className="overflow-visible bg-transparent"
             >
-              <div className="group  text-sm rounded ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <div className="w-full relative h-10">
-                  <CommandInput
-                    onKeyDown={handleKeyDown}
-                    placeholder={commandPlaceholder}
-                    onValueChange={(e) => {
-                      setInputValue(e);
-                      query(e);
-                    }}
-                    value={inputValue}
-                    onBlur={() => setOpen(false)}
-                    onFocus={() => setOpen(true)}
-                  />
-                  {field.value != undefined && field.value != null && (
-                    <div
-                      className={cn(
-                        "z-8 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 truncate",
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverAnchor asChild>
+                  <div className="group  text-sm rounded ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <div className="w-full relative h-10">
+                      <CommandInput
+                        onKeyDown={handleKeyDown}
+                        placeholder={commandPlaceholder}
+                        onValueChange={(e) => {
+                          setInputValue(e);
+                          query(e);
+                        }}
+                        value={inputValue}
+                        onBlur={() => setOpen(false)}
+                        onFocus={() => setOpen(true)}
+                      />
+                      {field.value != undefined && field.value != null && (
+                        <div
+                          className={cn(
+                            "z-8 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 truncate",
+                          )}
+                          onClick={() => {
+                            setInputValue("");
+                            form.setValue(name, undefined, {
+                              shouldValidate: false,
+                            });
+                            setOpen(true);
+                            field.onChange(undefined);
+                            inputRef.current?.focus();
+                          }}
+                        >
+                          <ButtonLabel search={search} value={field.value} />
+                        </div>
                       )}
-                      onClick={() => {
-                        setInputValue("");
-                        form.setValue(name, undefined, {
-                          shouldValidate: false,
-                        });
-                        setOpen(true);
-                        field.onChange(undefined);
-                        inputRef.current?.focus();
-                      }}
-                    >
-                      <ButtonLabel search={search} value={field.value} />
                     </div>
-                  )}
-                </div>
-              </div>
-              <div className="relative mt-2">
-                {open && (
-                  <CommandList slot="list" className="w-full t-10">
-                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in ">
+                  </div>
+                </PopoverAnchor>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  onInteractOutside={(e) => e.preventDefault()}
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                >
+                  <CommandList slot="list" className="w-full max-h-72 overflow-y-auto">
+                    <div className="outline-none">
                       <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
                       {error && (
                         <CommandGroup heading="Error">
@@ -238,8 +252,8 @@ export const SearchField = ({
                       )}
                     </div>
                   </CommandList>
-                )}
-              </div>
+                </PopoverContent>
+              </Popover>
             </Command>
             {description && <FormDescription className="max-h-32 overflow-y-scroll">{description}</FormDescription>}
             <FormMessage />

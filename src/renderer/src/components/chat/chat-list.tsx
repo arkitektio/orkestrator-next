@@ -27,6 +27,7 @@ interface ChatListProps {
   onDismissTask?: (reference: string) => void;
   onCancelTask?: (id: string, reference: string) => void;
   onRereply?: (messageId: string) => void;
+  replyerControl?: React.ReactNode;
 }
 
 const getInitials = (value: string | undefined, fallback: string) => {
@@ -51,6 +52,7 @@ export function ChatList({
   onDismissTask,
   onCancelTask,
   onRereply,
+  replyerControl,
 }: ChatListProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { data: meData } = useMeQuery();
@@ -310,6 +312,7 @@ export function ChatList({
           stagedStructures={stagedStructures}
           onRemoveStructure={onRemoveStructure}
           prefillText={prefillText}
+          replyerControl={replyerControl}
         />
       </div>
     </div>

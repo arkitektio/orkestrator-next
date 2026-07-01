@@ -68,6 +68,13 @@ function maybeInstallReactDevTools() {
     .catch((err) => console.log("Failed to install React DevTools", err));
 }
 
+// NOTE: Apollo Client DevTools (the browser extension) cannot render its panel
+// in Electron — the inspector crashes initializing the renderer for the
+// extension's `devtools_page` (`renderer_init: object null is not iterable`),
+// an Electron bug that also affects other devtools-panel extensions (Angular,
+// Audion). The client is instead exposed via `window.__APOLLO_CLIENT__` in dev
+// (see `devtools.enabled` in graphQlServiceBuidler.tsx) for console inspection.
+
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
 

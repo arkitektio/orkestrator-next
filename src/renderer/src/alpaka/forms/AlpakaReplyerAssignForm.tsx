@@ -1,4 +1,5 @@
 import { useDialog } from "@/app/dialog";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -144,10 +145,10 @@ export const AlpakaReplyerAssignForm = (props: {
 
       // 5. Trigger the task
       toast.info(`Assigning action ${action?.name}...`);
-      await assign({
+      await assign(buildAssignInput({
         action: props.actionId,
         args: assignArgs,
-      });
+      }));
       toast.success("Action assigned successfully");
 
       props.onDone?.({ kind: "local" });

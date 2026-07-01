@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { PortEffectFragment, PortFragment } from "../api/graphql";
-import { WidgetRegistryType } from "./types";
+import { PortEffectFragment } from "../api/graphql";
+import { MappablePort, WidgetRegistryType } from "./types";
 
 export const EffectWrapper = ({
   effects,
@@ -11,7 +11,7 @@ export const EffectWrapper = ({
   registry: WidgetRegistryType;
   effects: (PortEffectFragment | null | undefined)[];
   children: ReactNode;
-  port: PortFragment;
+  port: MappablePort;
 }) => {
   const [effect, ...resteffect] = effects;
 

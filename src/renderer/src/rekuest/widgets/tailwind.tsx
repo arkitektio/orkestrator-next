@@ -1,5 +1,5 @@
 import { cn, notEmpty } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { AssignWidgetFragment } from "../api/graphql";
 import { EffectWrapper } from "./EffectWrapper";
 import { ArgPort, ReturnPort, PortGroup , PortOptions, WidgetRegistryType } from "./types";
 
@@ -150,43 +150,13 @@ export const WrappedReturnsContainer = ({
   );
 };
 
-export type FilledGroup = PortGroup & {
-  ports: ArgPort[];
-};
-
 export const ArgsContainer = ({
   ports,
-  groups,
   options,
   path,
   hidden,
   registry,
 }: ArgsContainerProps) => {
-  const [filledGroups, setFilledGroups] = useState<FilledGroup[]>([]);
-
-  useEffect(() => {
-    const argGroups: FilledGroup[] = [
-      { key: "default", hidden: false, ports: [] },
-    ].concat(groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []);
-    const defaultGroup = argGroups.find((g) => g.key === "default");
-    for (const port of ports) {
-      if (!port) continue;
-      if (!port?.groups) {
-        argGroups.find((g) => g.key === "default")?.ports.push(port);
-      } else {
-        for (const group of port.groups) {
-          const renderGroup = argGroups.find((g) => g.key === group);
-          if (renderGroup) {
-            renderGroup.ports.push(port);
-          } else if (defaultGroup) {
-            defaultGroup.ports.push(port);
-          }
-        }
-      }
-    }
-    setFilledGroups(filledGroups);
-  }, [ports]);
-
   const len = ports.length;
 
   const lg_size = len < 2 ? len : 2;
@@ -224,7 +194,7 @@ export const ArgsContainer = ({
                   path={path}
                   key={index}
                   port={port}
-                  widget={port.widget}
+                  widget={port.widget as AssignWidgetFragment}
                   options={options}
                 />
               </EffectWrapper>

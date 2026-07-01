@@ -18,7 +18,7 @@ export const UnknownInputWidget: React.FC<InputWidgetProps> = ({ port }) => {
     <div className="flex items-center gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
       <AlertCircle className="h-3.5 w-3.5 shrink-0" />
       No widget registered for {port.kind}
-      {port?.assignWidget?.__typename ? ` (${port.assignWidget.__typename})` : ""}
+      {port?.widget?.__typename ? ` (${port.widget.__typename})` : ""}
     </div>
   );
 };
@@ -28,7 +28,7 @@ export const UnknownReturnWidget: React.FC<ReturnWidgetProps> = ({ port }) => {
     <div className="flex items-center gap-1.5 rounded border border-destructive/50 bg-destructive/10 px-2 py-1 text-xs text-destructive">
       <AlertCircle className="h-3 w-3 shrink-0" />
       No return widget for {port.kind}
-      {port?.returnWidget?.__typename ? ` (${port.returnWidget.__typename})` : ""}
+      {port?.widget?.__typename ? ` (${port.widget.__typename})` : ""}
     </div>
   );
 };

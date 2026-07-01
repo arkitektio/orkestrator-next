@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { KABINET_REFRESH_POD_HASH } from "@/constants";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
+import { buildAssignInput } from "@/rekuest/assign";
 import { useImplementationsQuery } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { useCallback } from "react";
@@ -22,11 +23,11 @@ export const AssignButton = (props: {
 
   const doassign = async () => {
     console.log(
-      await assign({
+      await assign(buildAssignInput({
         args: {
           pod: props.pod,
         },
-      }),
+      })),
       props.refetch(),
     );
   };

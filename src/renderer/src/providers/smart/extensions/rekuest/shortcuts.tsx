@@ -1,4 +1,5 @@
 import { useDialog } from "@/app/dialog";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Badge } from "@/components/ui/badge";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
@@ -188,14 +189,14 @@ export const ShortcutButton = (
       const untrack = trackTask(reference, doStuff);
 
       try {
-        await assign({
+        await assign(buildAssignInput({
           action: shortcut.action.id,
           args: {
             ...keys,
             ...shortcut.savedArgs,
           },
           reference,
-        });
+        }));
         setDoing(true);
         setError(null);
       } catch (error) {

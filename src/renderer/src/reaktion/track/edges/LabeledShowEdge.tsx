@@ -51,7 +51,7 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
       <BaseEdge
         id={id}
         style={{
-          ...style,
+          ...(style || {}),
           strokeWidth: 1,
         }}
         path={edgePath}

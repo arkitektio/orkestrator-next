@@ -17,15 +17,12 @@ import {
 } from "@/components/ui/tooltip";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
-  FlussArgChildPortFragment,
   FlussArgPortFragment,
-  FlussReturnChildPortFragment,
   FlussReturnPortFragment,
-  GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
-import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
+import { reactiveFlowNode, streamToReadable } from "@/reaktion/utils";
 import {
   ActionScope,
   AllActionsQueryVariables,
@@ -43,7 +40,9 @@ import { useForm } from "react-hook-form";
 import {
   ConnectContextualParams,
   DropContextualParams,
+  GeneralPort,
   ReactiveNodeSuggestions,
+  StreamPort,
 } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
@@ -59,12 +58,11 @@ export const argToReturn = (arg: FlussArgPortFragment): FlussReturnPortFragment 
   nullable: arg.nullable,
   description: arg.description,
   children: arg.children?.map((child) => ({
-    __typename: "ReturnChildPort",
+    __typename: "ReturnPort",
     key: child.key,
     kind: child.kind,
     identifier: child.identifier,
     nullable: child.nullable,
-    description: child.description,
   })),
 });
 
@@ -76,7 +74,7 @@ export const returnToArg = (arg: FlussReturnPortFragment): FlussArgPortFragment 
   nullable: arg.nullable,
   description: arg.description,
   children: arg.children?.map((child) => ({
-    __typename: "ArgChildPort",
+    __typename: "ArgPort",
     key: child.key,
     kind: child.kind,
     identifier: child.identifier,
@@ -178,7 +176,7 @@ export const allandone = <A extends any, B extends any>(
   );
 };
 
-function isMatch(item1: FlussArgPortFragment, item2: FlussReturnPortFragment): boolean {
+function isMatch(item1: StreamPort, item2: StreamPort): boolean {
   return (
     item1.kind === item2.kind &&
     (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier)
@@ -186,8 +184,8 @@ function isMatch(item1: FlussArgPortFragment, item2: FlussReturnPortFragment): b
 }
 
 function findMappings(
-  list1: FlussArgPortFragment[],
-  list2: FlussReturnPortFragment[],
+  list1: StreamPort[],
+  list2: StreamPort[],
   index1 = 0,
   currentMapping: Map<number, number> = new Map(),
   allMappings: Map<number, number>[] = [],
@@ -212,8 +210,8 @@ function findMappings(
 }
 
 function generateAllMappings(
-  list1: FlussArgPortFragment[],
-  list2: FlussReturnPortFragment[],
+  list1: StreamPort[],
+  list2: StreamPort[],
 ): { [key: number]: number }[] {
   const allMappings: Map<number, number>[] = [];
   if (list1.length !== list2.length) return [];
@@ -261,8 +259,8 @@ const bufferOptions = [
 
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
-  item1: FlussArgPortFragment | FlussArgChildPortFragment | undefined,
-  item2: FlussReturnPortFragment | FlussReturnChildPortFragment | undefined,
+  item1: GeneralPort | undefined,
+  item2: GeneralPort | undefined,
 ) => {
   if (!item1 || !item2) {
     return false;
@@ -279,8 +277,8 @@ const isStructuralMatch = (
 };
 
 const connectReactiveNodes = (
-  leftPorts: FlussArgPortFragment[],
-  rightPorts: FlussReturnPortFragment[],
+  leftPorts: StreamPort[],
+  rightPorts: StreamPort[],
   search: string | undefined,
 ): ReactiveNodeSuggestions[] => {
   const nodes: ReactiveNodeSuggestions[] = [];
@@ -291,23 +289,13 @@ const connectReactiveNodes = (
 
   if (leftPorts.length == 0 && rightPorts.length >= 1) {
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Gate",
-          description: "Gate the signal",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [rightPorts],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.Gate,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Gate",
+        description: "Gate the signal",
+        ins: [leftPorts],
+        outs: [rightPorts],
+        implementation: ReactiveImplementation.Gate,
+      }),
       title: "Gate",
       description:
         "Gates the stream (only lets it through if the gate is open)",
@@ -322,23 +310,13 @@ const connectReactiveNodes = (
     if (intersection.length > 0) {
       combineOptions.map((option) => {
         nodes.push({
-          node: {
-            id: nodeIdBuilder(),
-            type: "ReactiveNode",
-            position: { x: 0, y: 0 },
-            data: {
-              globalsMap: {},
-              title: option.title,
-              description: option.description,
-              kind: GraphNodeKind.Reactive,
-              ins: [leftPorts],
-              constantsMap: {},
-              outs: [rightPorts],
-              voids: [],
-              constants: [],
-              implementation: option.implementation,
-            },
-          },
+          node: reactiveFlowNode({
+            title: option.title,
+            description: option.description,
+            ins: [leftPorts],
+            outs: [rightPorts],
+            implementation: option.implementation,
+          }),
           title: option.title,
           description: option.description,
         });
@@ -353,23 +331,13 @@ const connectReactiveNodes = (
   ) {
     // Is chunk transferable
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Chunk",
-          description: "Chunk the stream",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [rightPorts],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.Chunk,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Chunk",
+        description: "Chunk the stream",
+        ins: [leftPorts],
+        outs: [rightPorts],
+        implementation: ReactiveImplementation.Chunk,
+      }),
       title: "Chunk",
       description: "Chunk the stream",
     });
@@ -383,23 +351,14 @@ const connectReactiveNodes = (
     // Is chunk transferable
     bufferOptions.map((option) => {
       nodes.push({
-        node: {
-          id: nodeIdBuilder(),
-          type: "ReactiveNode",
-          position: { x: 0, y: 0 },
-          data: {
-            globalsMap: {},
-            title: option.title,
-            description: option.description,
-            kind: GraphNodeKind.Reactive,
-            ins: [leftPorts],
-            constantsMap: option.constantsMap,
-            outs: [rightPorts],
-            voids: [],
-            constants: [],
-            implementation: option.implementation,
-          },
-        },
+        node: reactiveFlowNode({
+          title: option.title,
+          description: option.description,
+          ins: [leftPorts],
+          constantsMap: option.constantsMap,
+          outs: [rightPorts],
+          implementation: option.implementation,
+        }),
         title: option.title,
         description: option.description,
       });
@@ -410,53 +369,33 @@ const connectReactiveNodes = (
     allandone(leftPorts, rightPorts, (port) => port.kind === PortKind.Float)
   ) {
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Round",
-          description: "Round an Float to an Int",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [
-            rightPorts.map((p, index) => ({
-              ...p,
-              key: "Rounded" + p.key,
-              kind: PortKind.Int,
-            })),
-          ],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.ToList,
-        },
+      node: reactiveFlowNode({
         title: "Round",
         description: "Round an Float to an Int",
-      },
+        ins: [leftPorts],
+        outs: [
+          rightPorts.map((p) => ({
+            ...p,
+            key: "Rounded" + p.key,
+            kind: PortKind.Int,
+          })),
+        ],
+        implementation: ReactiveImplementation.ToList,
+      }),
+      title: "Round",
+      description: "Round an Float to an Int",
     });
   }
 
   if (rightPorts.length == 0) {
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Omit",
-          description: "Discard the stream an just send an event",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [[]],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.Omit,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Omit",
+        description: "Discard the stream an just send an event",
+        ins: [leftPorts],
+        outs: [[]],
+        implementation: ReactiveImplementation.Omit,
+      }),
       title: "Omit",
       description: "Discard the stream an just send an event",
     });
@@ -465,23 +404,13 @@ const connectReactiveNodes = (
   if (leftPorts.length > rightPorts.length && rightPorts.length == 1) {
     for (const i in leftPorts) {
       nodes.push({
-        node: {
-          id: nodeIdBuilder(),
-          type: "ReactiveNode",
-          position: { x: 0, y: 0 },
-          data: {
-            globalsMap: {},
-            title: "Select " + leftPorts[i].key,
-            description: "Select an item of the stream",
-            kind: GraphNodeKind.Reactive,
-            ins: [leftPorts],
-            constantsMap: {},
-            outs: [[leftPorts[i]]],
-            voids: [],
-            constants: [],
-            implementation: ReactiveImplementation.Select,
-          },
-        },
+        node: reactiveFlowNode({
+          title: "Select " + leftPorts[i].key,
+          description: "Select an item of the stream",
+          ins: [leftPorts],
+          outs: [[leftPorts[i]]],
+          implementation: ReactiveImplementation.Select,
+        }),
         title: "Select " + leftPorts[i].key,
         description: "Select an item of the stream",
       });
@@ -490,23 +419,14 @@ const connectReactiveNodes = (
 
   for (const mapping of generateAllMappings(leftPorts, rightPorts)) {
     nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Reorder",
-          description: "Reorder the stream",
-          kind: GraphNodeKind.Reactive,
-          ins: [leftPorts],
-          constantsMap: {},
-          outs: [rightPorts],
-          voids: [],
-          constants: [],
-          implementation: ReactiveImplementation.Reorder,
-        },
-      },
+      node: reactiveFlowNode({
+        title: "Reorder",
+        description: "Reorder the stream",
+        ins: [leftPorts],
+        constantsMap: { map: mapping },
+        outs: [rightPorts],
+        implementation: ReactiveImplementation.Reorder,
+      }),
       title: "Reorder",
       description: "Reorder the stream",
     });
@@ -527,8 +447,8 @@ export const useConnectReactiveNodes = (leftPorts, rightPorts, search) => {
 const ConnectReactiveNodes = (props: {
   search: string | undefined;
   params: ConnectContextualParams;
-  leftPorts: FlussPortFragment[];
-  rightPorts: FlussPortFragment[];
+  leftPorts: StreamPort[];
+  rightPorts: StreamPort[];
 }) => {
   const nodes = useConnectReactiveNodes(
     props.leftPorts,
@@ -558,8 +478,8 @@ const ConnectReactiveNodes = (props: {
 };
 
 const buildVariabels = (
-  leftPorts: FlussPortFragment[],
-  rightPorts: FlussPortFragment[],
+  leftPorts: StreamPort[],
+  rightPorts: StreamPort[],
   search: string | undefined,
 ): AllActionsQueryVariables => ({
   filters: {
@@ -605,10 +525,10 @@ const buildVariabels = (
 const ConnectArkitektNodes = (props: {
   search: string | undefined;
   params: ConnectContextualParams;
-  leftPorts: FlussArgPortFragment[];
-  rightPorts: FlussReturnPortFragment[];
+  leftPorts: StreamPort[];
+  rightPorts: StreamPort[];
 }) => {
-  const { data, refetch, variables, error } = useAllActionsQuery({
+  const { data, refetch, error } = useAllActionsQuery({
     variables: buildVariabels(props.leftPorts, props.rightPorts, props.search),
     fetchPolicy: "network-only",
   });
@@ -630,8 +550,8 @@ const ConnectArkitektNodes = (props: {
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            const flownode = rekuestActionToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -650,12 +570,14 @@ const ConnectArkitektNodes = (props: {
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            const flownode = rekuestActionToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            const flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
-            flownode.data.binds = { templates: [template] };
+            (flownode.data as { binds?: { templates: string[] } }).binds = {
+              templates: [template],
+            };
             console.log("Trying to add", flownode, props.params);
             addConnectContextualNode(flownode, props.params);
           }
@@ -767,7 +689,7 @@ export const ConnectContextual = (props: {
 
 export const TargetDropContextual = (props: {
   params: DropContextualParams;
-  ports: FlussPortFragment[];
+  ports: StreamPort[];
 }) => {
   return (
     <Card

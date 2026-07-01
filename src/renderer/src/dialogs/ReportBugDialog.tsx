@@ -127,7 +127,7 @@ export const describeArgs = async (
   await Promise.all(
     task.action.args.map(async (arg) => {
       if (arg.kind === PortKind.Structure) {
-        const assignWidget = arg.assignWidget;
+        const assignWidget = arg.widget;
 
         if (assignWidget?.__typename === "SearchAssignWidget") {
           const ward = registry.getWard(assignWidget.ward);

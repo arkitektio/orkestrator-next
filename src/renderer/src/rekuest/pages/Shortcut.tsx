@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -30,11 +31,11 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
 
   const onSubmit = (data: any) => {
     console.log("Submiftting");
-    assign({
+    assign(buildAssignInput({
       action: shortcut.action.id,
       args: { ...data, ...shortcut.savedArgs },
       hooks: [],
-    }).then(
+    })).then(
       (v) => {
         console.log("Result", v);
       },

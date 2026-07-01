@@ -20,7 +20,7 @@ import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
-import { PortFragment } from "@/rekuest/api/graphql";
+import { FlussArgPortFragment } from "@/reaktion/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { RekuestFilterNodeProps } from "../../types";
@@ -47,7 +47,7 @@ export const RekuestFilterActionWidget: React.FC<RekuestFilterNodeProps> = ({
     moveOutStreamToVoid(id, onposition, 0);
   };
 
-  const onToArg = (port: PortFragment) => {
+  const onToArg = (port: FlussArgPortFragment) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;
@@ -56,7 +56,7 @@ export const RekuestFilterActionWidget: React.FC<RekuestFilterNodeProps> = ({
     moveVoidtoOutstream(id, index, 0);
   };
 
-  const onToGlobal = (port: PortFragment, key?: string | undefined) => {
+  const onToGlobal = (port: FlussArgPortFragment, key?: string | undefined) => {
     const index = constants.findIndex((i) => i.key == port.key);
     if (index == -1) {
       return;

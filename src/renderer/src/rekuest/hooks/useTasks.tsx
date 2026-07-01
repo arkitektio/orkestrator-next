@@ -7,11 +7,14 @@ import {
 } from "../api/graphql";
 
 export const useTasks = () => {
-  // Seed the global "my tasks" list from the caller-scoped myTasks query.
-  // cache-and-network refetches on every mount so currently-active tasks
-  // reappear immediately after a reload; the WatchMyTasks subscription
-  // (TaskUpdater) keeps it live thereafter.
-  const queryResult = useMyTasksQuery({ fetchPolicy: "cache-and-network" });
+  // Read the global "my tasks" list from cache. `cache-first` means consumers do
+  // NOT refire a network request on every mount — that storm of refetches would
+  // overwrite the cache (dropping tasks that just ended, since the server's
+  // myTasks no longer returns them). The list is seeded once by TaskUpdater and
+  // kept live thereafter by the WatchMyTasks subscription + local cache writes.
+  // Callers that genuinely need fresh server data can call the returned
+  // `refetch()` explicitly.
+  const queryResult = useMyTasksQuery({ fetchPolicy: "cache-first" });
 
   return queryResult;
 };

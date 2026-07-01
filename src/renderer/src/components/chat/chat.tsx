@@ -3,8 +3,17 @@ import {
   useSendMessageMutation,
 } from "@/alpaka/api/graphql";
 import { Guard, useRekuest } from "@/app/Arkitekt";
+import { buildAssignInput } from "@/rekuest/assign";
 import { useSmartDrop } from "@/providers/smart/hooks";
-import { Download, MessageSquareText, PackagePlus } from "lucide-react";
+import {
+  Ban,
+  Bot,
+  Check,
+  ChevronDown,
+  Download,
+  MessageSquareText,
+  PackagePlus,
+} from "lucide-react";
 import { Card } from "../ui/card";
 import { ChatList } from "./chat-list";
 import { useState, useMemo, useEffect } from "react";
@@ -14,13 +23,7 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
 import { submittedDataToRekuestFormat } from "@/rekuest/widgets/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -28,11 +31,11 @@ import {
 } from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   useAllActionsQuery,
@@ -106,14 +109,10 @@ const InstallReplyerDefinitionButton = (props: {
   );
 };
 
-const InstallReplyerPopover = (props: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+const InstallReplyerSection = (props: {
+  search: string;
   onInstalled?: () => void;
 }) => {
-  const { open, onOpenChange } = props;
-  const [search, setSearch] = useState("");
-
   const { data: enginesData } = useAllActionsQuery({
     variables: {
       filters: {
@@ -149,57 +148,201 @@ const InstallReplyerPopover = (props: {
             matches: [{ kind: PortKind.Structure, identifier: "@alpaka/message" }],
           },
         ],
-        search: search !== "" ? search : undefined,
+        search: props.search !== "" ? props.search : undefined,
       },
     },
     fetchPolicy: "cache-and-network",
-    skip: !open,
   });
 
   const engines = enginesData?.actions ?? [];
   const definitions = definitionsData?.definitions ?? [];
 
+  if (engines.length === 0) {
+    return (
+      <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+        No install engine available
+      </div>
+    );
+  }
+
+  if (definitions.length === 0) {
+    return (
+      <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+        No installable replyers found
+      </div>
+    );
+  }
+
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex h-8 items-center gap-1.5 rounded-lg border border-border/60 bg-background/50 px-2.5 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground transition-colors"
-        >
-          <PackagePlus className="h-3.5 w-3.5" />
-          Install Replyer
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="end">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search replyers..."
-            value={search}
-            onValueChange={setSearch}
+    <CommandGroup heading="Install Replyer">
+      {definitions.map((definition) =>
+        engines.map((engine) => (
+          <InstallReplyerDefinitionButton
+            key={`${definition.id}-${engine.id}`}
+            definition={definition}
+            action={engine as InstallAction}
+            onInstalled={props.onInstalled}
           />
-          <CommandList>
-            {engines.length === 0 ? (
-              <CommandEmpty>No install engine available</CommandEmpty>
-            ) : definitions.length === 0 ? (
-              <CommandEmpty>No installable replyers found</CommandEmpty>
-            ) : (
-              <CommandGroup heading="Installable Replyers">
-                {definitions.map((definition) =>
-                  engines.map((engine) => (
-                    <InstallReplyerDefinitionButton
-                      key={`${definition.id}-${engine.id}`}
-                      definition={definition}
-                      action={engine as InstallAction}
-                      onInstalled={() => onOpenChange(false)}
-                    />
-                  ))
-                )}
+        ))
+      )}
+    </CommandGroup>
+  );
+};
+
+type ReplyerAction = { id: string; name: string };
+
+const ReplyerControl = (props: {
+  actions: ReplyerAction[];
+  selectedActionId: string;
+  onSelect: (id: string) => void;
+  action: any;
+  form: any;
+  registry: any;
+  hiddenArgs: Record<string, boolean>;
+  hasPriorTask: boolean;
+}) => {
+  const {
+    actions,
+    selectedActionId,
+    onSelect,
+    action,
+    form,
+    registry,
+    hiddenArgs,
+    hasPriorTask,
+  } = props;
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [argsOpen, setArgsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selected = actions.find((a) => a.id === selectedActionId);
+  const filtered = search
+    ? actions.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+    : actions;
+
+  const visibleArgs = useMemo(
+    () => ((action?.args ?? []) as any[]).filter((arg) => !hiddenArgs[arg.key]),
+    [action, hiddenArgs]
+  );
+  const hasArgs = selectedActionId !== "none" && action && visibleArgs.length > 0;
+
+  // Pop the args out automatically the first time a replyer with required args
+  // is selected and there's no prior task to reuse.
+  useEffect(() => {
+    if (hasArgs && !hasPriorTask) {
+      setArgsOpen(true);
+    }
+  }, [hasArgs, hasPriorTask, action?.id]);
+
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <Popover
+        open={pickerOpen}
+        onOpenChange={(open) => {
+          setPickerOpen(open);
+          if (!open) setSearch("");
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 min-w-0 gap-1.5 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Bot className="h-4 w-4 shrink-0" />
+            <span className="max-w-[120px] truncate">
+              {selected ? selected.name : "No replyer"}
+            </span>
+            <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-0" align="start" side="top">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search replyers..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandGroup heading="Replyers">
+                <CommandItem
+                  value="none"
+                  onSelect={() => {
+                    onSelect("none");
+                    setPickerOpen(false);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Ban className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate text-sm">No replyer</span>
+                  {selectedActionId === "none" && (
+                    <Check className="h-4 w-4 shrink-0" />
+                  )}
+                </CommandItem>
+                {filtered.map((act) => (
+                  <CommandItem
+                    key={act.id}
+                    value={act.id}
+                    onSelect={() => {
+                      onSelect(act.id);
+                      setPickerOpen(false);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquareText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate text-sm">{act.name}</span>
+                    {selectedActionId === act.id && (
+                      <Check className="h-4 w-4 shrink-0" />
+                    )}
+                  </CommandItem>
+                ))}
               </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              <Guard.Kabinet unavailable={<></>}>
+                <CommandSeparator />
+                <InstallReplyerSection
+                  search={search}
+                  onInstalled={() => setPickerOpen(false)}
+                />
+              </Guard.Kabinet>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {hasArgs && (
+        <Popover open={argsOpen} onOpenChange={setArgsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <PackagePlus className="h-3.5 w-3.5 shrink-0" />
+              Args
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start" side="top">
+            <div className="mb-2 text-xs font-medium text-muted-foreground">
+              {selected?.name ?? "Replyer"} arguments
+            </div>
+            <Form {...form}>
+              <div className="flex flex-col gap-2">
+                <ArgsContainer
+                  registry={registry}
+                  groups={action?.portGroups || []}
+                  ports={action?.args || []}
+                  hidden={hiddenArgs}
+                  path={[]}
+                />
+              </div>
+            </Form>
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
   );
 };
 
@@ -226,7 +369,6 @@ export function Chat({ isMobile, room }: ChatProps) {
 
   const [selectedActionId, setSelectedActionId] = useState<string>("none");
   const [hasAutoselected, setHasAutoselected] = useState(false);
-  const [installReplyerOpen, setInstallReplyerOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [stagedStructures, setStagedStructures] = useState<{ identifier: string; object: string }[]>([]);
   const [prefillText, setPrefillText] = useState("");
@@ -402,11 +544,11 @@ export function Chat({ isMobile, room }: ChatProps) {
       ]);
 
       try {
-        const task = await assign({
+        const task = await assign(buildAssignInput({
           action: selectedActionId,
           args: assignArgs,
           reference,
-        });
+        }));
 
         setActiveTasks((prev) =>
           prev.map((ass) =>
@@ -529,11 +671,11 @@ export function Chat({ isMobile, room }: ChatProps) {
         ]);
 
         try {
-          const task = await assign({
+          const task = await assign(buildAssignInput({
             action: selectedActionId,
             args: assignArgs,
             reference,
-          });
+          }));
 
           setActiveTasks((prev) =>
             prev.map((ass) =>
@@ -584,92 +726,6 @@ export function Chat({ isMobile, room }: ChatProps) {
           </div>
         </div>
       )}
-      <div className="border-b px-4 py-3 backdrop-blur ">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted/60 text-muted-foreground shadow-sm">
-              <MessageSquareText className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{room.title}</div>
-              <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                {room.description || "Ask questions, attach structures, and keep the context in one room."}
-              </div>
-            </div>
-          </div>
- 
-          <div className="flex flex-wrap items-center gap-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Replyer:</span>
-              {actionsData?.actions && actionsData.actions.length > 0 ? (
-                <>
-                  <Select
-                    value={selectedActionId}
-                    onValueChange={(val) => {
-                      if (val === "__install__") {
-                        setInstallReplyerOpen(true);
-                      } else {
-                        setSelectedActionId(val);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[180px] text-xs rounded-lg border-border/60 bg-background/50 hover:bg-muted/20">
-                      <SelectValue placeholder="No Replyer" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="none">No Replyer</SelectItem>
-                      {actionsData.actions.map((act) => (
-                        <SelectItem key={act.id} value={act.id}>
-                          {act.name}
-                        </SelectItem>
-                      ))}
-                      <Guard.Kabinet unavailable={<></>}>
-                        <SelectItem value="__install__" className="text-muted-foreground">
-                          <span className="flex items-center gap-1.5">
-                            <PackagePlus className="h-3.5 w-3.5" />
-                            Install Replyer
-                          </span>
-                        </SelectItem>
-                      </Guard.Kabinet>
-                    </SelectContent>
-                  </Select>
-                  <Guard.Kabinet unavailable={<></>}>
-                    <InstallReplyerPopover
-                      open={installReplyerOpen}
-                      onOpenChange={setInstallReplyerOpen}
-                    />
-                  </Guard.Kabinet>
-                </>
-              ) : (
-                <Guard.Kabinet unavailable={<></>}>
-                  <InstallReplyerPopover
-                    open={installReplyerOpen}
-                    onOpenChange={setInstallReplyerOpen}
-                  />
-                </Guard.Kabinet>
-              )}
-            </div>
-
-            {selectedActionId !== "none" && action && (
-              <Form {...form}>
-                <div className="flex items-center gap-2 border-l border-border/50 pl-3">
-                  <ArgsContainer
-                    registry={registry}
-                    groups={action?.portGroups || []}
-                    ports={action?.args || []}
-                    hidden={hiddenArgs}
-                    path={[]}
-                  />
-                </div>
-              </Form>
-            )}
-
-            <div className="hidden rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground sm:block">
-              {room.messages.length} {room.messages.length === 1 ? "message" : "messages"}
-            </div>
-          </div>
-        </div>
-      </div>
       <ChatList
         messages={[...room.messages].sort(
           (a, b) =>
@@ -687,6 +743,18 @@ export function Chat({ isMobile, room }: ChatProps) {
         onDismissTask={dismissTask}
         onCancelTask={handleCancelTask}
         onRereply={selectedActionId !== "none" ? handleRereply : undefined}
+        replyerControl={
+          <ReplyerControl
+            actions={actionsData?.actions ?? []}
+            selectedActionId={selectedActionId}
+            onSelect={setSelectedActionId}
+            action={action}
+            form={form}
+            registry={registry}
+            hiddenArgs={hiddenArgs}
+            hasPriorTask={!!latestTask}
+          />
+        }
       />
     </div>
   );

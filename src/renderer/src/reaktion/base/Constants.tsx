@@ -1,190 +1,131 @@
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Form } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
-import { PortFragment } from "@/rekuest/api/graphql";
+import { FlussArgPortFragment } from "@/reaktion/api/graphql";
+import { AssignWidgetFragment } from "@/rekuest/api/graphql";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
+import { ArgPort as RekuestArgPort } from "@/rekuest/widgets/types";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
 import { submittedDataToRekuestFormat } from "@/rekuest/widgets/utils";
 
-import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
-export type FilledGroup = PortGroup & {
-  ports: Port[];
-};
+// The flow stores constants as fluss ArgPorts; the rekuest widget system renders
+// rekuest ArgPorts. The two are structurally compatible for rendering (kind,
+// children, choices, widget), so we bridge with a cast at the rekuest boundary.
+const asRekuestPort = (port: FlussArgPortFragment): RekuestArgPort =>
+  port as unknown as RekuestArgPort;
 
-export const portHash = (port: Port[]) => {
+export const portHash = (port: FlussArgPortFragment[]) => {
   return port
     .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
     .join("-");
 };
 
-export const NanaContainer = () => {
-  return (
-    <div className="grid @lg:grid-cols-2 @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4 @3xl:grid-cols-5 @5xl:grid-cols-6 gap-5">
-      {" "}
-    </div>
-  );
-};
-
 export const ArgsContainer = ({
   ports,
-  groups,
   options,
   bound,
   onToArg,
   onToGlobal,
   registry,
   path,
-}: ArgsContainerProps & {
-  onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+}: {
+  ports: FlussArgPortFragment[];
+  options?: import("@/rekuest/widgets/types").PortOptions;
+  bound?: string;
+  path: string[];
+  registry: import("@/rekuest/widgets/types").WidgetRegistryType;
+  onToArg?: (port: FlussArgPortFragment) => void;
+  onToGlobal?: (port: FlussArgPortFragment, key?: string | undefined) => void;
 }) => {
-  const hash = portHash(ports.filter(notEmpty));
-
-  if (!groups || groups.length === 0) {
-    groups = [
-      {
-        key: "default",
-        ports: [ports.filter(notEmpty).map((p) => p.key)],
-        hidden: false,
-      },
-    ];
-  }
-
-  const filledGroups = useMemo(() => {
-    const argGroups: FilledGroup[] = [
-      { key: "default", ports: [], hidden: false },
-    ].concat(groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []);
-    const defaultGroup = argGroups.find((g) => g.key === "default");
-    for (const port of ports) {
-      if (!port) continue;
-      if (!port?.groups) {
-        argGroups.find((g) => g.key === "default")?.ports.push(port);
-      } else {
-        for (const group of port.groups) {
-          const renderGroup = argGroups.find((g) => g.key === group);
-          if (renderGroup) {
-            renderGroup.ports.push(port);
-          } else if (defaultGroup) {
-            defaultGroup.ports.push(port);
-          }
-        }
-      }
-    }
-    return argGroups;
-  }, [ports, hash]);
-
-  const len = filledGroups.length;
-
-  const lg_size = len < 2 ? len : 2;
-  const xl_size = len < 3 ? len : 3;
-  const xxl_size = len < 4 ? len : 4;
-  const xxxl_size = len < 5 ? len : 5;
-  const xxxxl_size = len < 6 ? len : 6;
-
   return (
-    <div
-      className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-1 `}
-    >
-      {filledGroups.map((group, index) => {
-        return (
-          <Collapsible defaultOpen={!group.hidden} key={index}>
-            {group.key != "default" && (
-              <CollapsibleTrigger>{group.key}</CollapsibleTrigger>
-            )}
-            <CollapsibleContent
-              className={`grid  @2xl:grid-cols-2   @5xl:grid-cols-2 gap-1 `}
-            >
-              {group.ports.map((port, index) => {
-                const Widget = registry.getInputWidgetForPort(port);
+    <div className="grid @2xl:grid-cols-2 @5xl:grid-cols-2 gap-1">
+      {ports.filter(notEmpty).map((port, index) => {
+        const Widget = registry.getInputWidgetForPort(asRekuestPort(port));
 
-                return (
-                  <EffectWrapper
-                    key={index}
-                    effects={port.effects || []}
-                    port={port}
-                    registry={registry}
+        return (
+          <EffectWrapper
+            key={index}
+            effects={asRekuestPort(port).effects || []}
+            port={asRekuestPort(port)}
+            registry={registry}
+          >
+            <div className="flex flex-row gap-2 justify-between w-full min-w-[200px]">
+              <div className="flex-grow ">
+                <Widget
+                  key={index}
+                  port={asRekuestPort(port)}
+                  widget={port.widget as unknown as AssignWidgetFragment}
+                  options={options}
+                  path={path.concat(port.key)}
+                  bound={bound}
+                />
+              </div>
+              <div className="my-auto flex-col flex">
+                {onToArg && (
+                  <Button
+                    variant="ghost"
+                    className="py-1 px-1"
+                    onClick={() => onToArg(port)}
                   >
-                    <div className="flex flex-row gap-2 justify-between w-full min-w-[200px]">
-                      <div className="flex-grow ">
-                        <Widget
-                          key={index}
-                          port={port}
-                          widget={port.assignWidget}
-                          options={options}
-                          path={path.concat(port.key)}
-                          bound={bound}
-                        />
-                      </div>
-                      <div className="my-auto flex-col flex">
-                        {onToArg && (
-                          <Button
-                            variant="ghost"
-                            className="py-1 px-1"
-                            onClick={() => onToArg(port)}
-                          >
-                            <ChevronUpIcon />
-                          </Button>
-                        )}
-                        {onToGlobal && (
-                          <Button
-                            variant="ghost"
-                            className="py-1 px-1"
-                            onClick={() => onToGlobal(port, undefined)}
-                          >
-                            <DoubleArrowUpIcon />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </EffectWrapper>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
+                    <ChevronUpIcon />
+                  </Button>
+                )}
+                {onToGlobal && (
+                  <Button
+                    variant="ghost"
+                    className="py-1 px-1"
+                    onClick={() => onToGlobal(port, undefined)}
+                  >
+                    <DoubleArrowUpIcon />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </EffectWrapper>
         );
-        <NanaContainer />;
       })}
     </div>
   );
 };
 
 export const Constants = (props: {
-  ports: PortFragment[];
-  path: string[];
+  ports: FlussArgPortFragment[];
+  path?: string[];
   bound?: string | undefined;
-  onSubmit: (data: any) => void;
+  onSubmit?: (data: any) => void;
+  onClick?: (onposition: number) => void;
   overwrites: { [key: string]: any };
-  onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+  onToArg?: (port: FlussArgPortFragment) => void;
+  onToGlobal?: (port: FlussArgPortFragment, key?: string | undefined) => void;
 }) => {
   const form = usePortForm({
-    ports: props.ports,
+    ports: props.ports as unknown as RekuestArgPort[],
     overwrites: props.overwrites,
   });
 
   const {
     formState,
     formState: { isValidating },
-    watch,
   } = form;
 
-  const data = watch();
+  const data = form.watch();
 
   const onSubmit = (data: any) => {
-    props.onSubmit(data);
+    props.onSubmit?.(data);
   };
 
   useEffect(() => {
     if (formState.isValid && !isValidating) {
-      if (props.onSubmit) {
-        props.onSubmit(submittedDataToRekuestFormat(data, props.ports));
-      }
+      props.onSubmit?.(
+        submittedDataToRekuestFormat(
+          data,
+          props.ports as unknown as RekuestArgPort[],
+        ),
+      );
     }
   }, [formState, data, isValidating]);
 
@@ -202,7 +143,7 @@ export const Constants = (props: {
             ports={props.ports}
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
-            path={props.path}
+            path={props.path || []}
             bound={props.bound}
           />
         </form>
@@ -212,14 +153,14 @@ export const Constants = (props: {
 };
 
 export const TestConstants = (props: {
-  ports: PortFragment[];
+  ports: FlussArgPortFragment[];
   overwrites: { [key: string]: any };
-  onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+  onToArg?: (port: FlussArgPortFragment) => void;
+  onToGlobal?: (port: FlussArgPortFragment, key?: string | undefined) => void;
   onSubmit?: (data: any) => void;
 }) => {
   const form = usePortForm({
-    ports: props.ports,
+    ports: props.ports as unknown as RekuestArgPort[],
     overwrites: props.overwrites,
   });
 
@@ -230,10 +171,7 @@ export const TestConstants = (props: {
   }
 
   const {
-    formState,
-    formState: { isValidating, isValid, errors },
-
-    watch,
+    formState: { isValid, errors },
   } = form;
 
   const { registry } = useWidgetRegistry();

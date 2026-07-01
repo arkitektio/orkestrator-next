@@ -6,11 +6,12 @@ import {
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import { Connection, XYPosition } from "@xyflow/react";
-import { ArgPort, FlowEdge, FlowNode, FlowNodeData, ReturnPort, StreamItemFragment } from "../types";
+import { ArgPort, FlowEdge, FlowNode, FlowNodeData, GeneralPort, ReturnPort, StreamPort } from "../types";
 import {
   handleToStream,
   listPortToSingle,
   nodeIdBuilder,
+  reactiveFlowNode,
   singleToList,
   streamToReadable,
 } from "../utils";
@@ -43,7 +44,7 @@ export const changeZip = (
     const newIns = withNewStream(data.ins, event.index, event.stream);
     const reducedStream = reduceStream(newIns);
     const newOuts = [reducedStream];
-    const newData = { ...data, ins: newIns, outs: newOuts };
+    const newData = { ...data, ins: newIns, outs: newOuts } as FlowNodeData;
     return {
       data: newData,
       changes: [{ type: "source", index: 0, stream: reducedStream }],
@@ -56,7 +57,7 @@ export const changeZip = (
     const newOutstream = withNewStream(data.outs, event.index, event.stream);
     if (newOutstream.length != 2) return {}; // No change needed
     const newInstream = [newOutstream[0], newOutstream[1]];
-    const newData = { ...data, ins: newInstream, outs: newOutstream };
+    const newData = { ...data, ins: newInstream, outs: newOutstream } as FlowNodeData;
     return {
       data: newData,
       changes: [
@@ -112,7 +113,7 @@ export const onlyValid = (
   }
 };
 
-export const streamContainsNonLocal = (stream: StreamItemFragment[]): boolean => {
+export const streamContainsNonLocal = (stream: GeneralPort[]): boolean => {
   for (const port of stream) {
     if (port.kind == PortKind.MemoryStructure) return true;
   }
@@ -129,7 +130,7 @@ export const argIsValid = (
       data: {
         ...data,
         outs: withNewStream(data.outs, event.index, event.stream),
-      },
+      } as FlowNodeData,
     }; // No change needed
   } else {
     throw new Error(
@@ -151,7 +152,7 @@ export const returnIsValid = (
       data: {
         ...data,
         ins: withNewStream(data.ins, event.index, event.stream),
-      },
+      } as FlowNodeData,
     }; // No change needed
   } else {
     throw new Error(
@@ -170,7 +171,10 @@ export const propagateChange = (
 
   try {
     if (data.kind == GraphNodeKind.Reactive) {
-      if (data.implementation == ReactiveImplementation.Zip)
+      if (
+        (data as { implementation?: ReactiveImplementation }).implementation ==
+        ReactiveImplementation.Zip
+      )
         return changeZip(data, event);
     }
     if (data.kind == GraphNodeKind.Args) return argIsValid(data, event);
@@ -217,7 +221,7 @@ export type TargetTransitionOptions = {
   runningCount: number;
   nodeID: string;
   edgeID: string;
-  stream: ArgPort[];
+  stream: StreamPort[];
   type: "source";
   index: number;
   allowTransforms: boolean;
@@ -229,7 +233,7 @@ export type SourceTransitionOptions = {
   runningCount: number;
   nodeID: string;
   edgeID: string;
-  stream: ReturnPort[];
+  stream: StreamPort[];
   type: "target";
   index: number;
   allowTransforms: boolean;
@@ -243,105 +247,63 @@ export type TransitionOptions = TargetTransitionOptions | SourceTransitionOption
 
 export const getTransform = (
   transform: Transform,
-  instream: TargetStream,
+  instream: StreamPort[],
   position: XYPosition,
 ): FlowNode => {
   if (transform == "to_list") {
-    return {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: position,
-      data: {
-        globalsMap: {},
-        title: "To List",
-        description: "Transforms a stream into a list",
-        kind: GraphNodeKind.Reactive,
-        ins: [instream],
-        constantsMap: {},
-        outs: [instream.map((p, index) => singleToList(p))],
-        constants: [],
-        implementation: ReactiveImplementation.ToList,
-      },
-    };
+    return reactiveFlowNode({
+      title: "To List",
+      description: "Transforms a stream into a list",
+      ins: [instream],
+      outs: [instream.map((p) => singleToList(p as ArgPort))],
+      implementation: ReactiveImplementation.ToList,
+      position,
+    });
   }
 
   if (transform == "round_float") {
-    return {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: position,
-      data: {
-        globalsMap: {},
-        title: "Round",
-        description: "Round a flout to the nearest int",
-        kind: GraphNodeKind.Reactive,
-        ins: [instream],
-        constantsMap: {},
-        outs: [instream.map((p, index) => ({ ...p, kind: PortKind.Int }))],
-        constants: [],
-        implementation: ReactiveImplementation.ToList,
-      },
-    };
+    return reactiveFlowNode({
+      title: "Round",
+      description: "Round a flout to the nearest int",
+      ins: [instream],
+      outs: [instream.map((p) => ({ ...p, kind: PortKind.Int }))],
+      implementation: ReactiveImplementation.ToList,
+      position,
+    });
   }
 
   if (transform == "to_float") {
-    return {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: position,
-      data: {
-        globalsMap: {},
-        title: "Convert to Float",
-        description: "Round a int to a float",
-        kind: GraphNodeKind.Reactive,
-        ins: [instream],
-        constantsMap: {},
-        outs: [instream.map((p, index) => ({ ...p, kind: PortKind.Float }))],
-        constants: [],
-        implementation: ReactiveImplementation.ToList,
-      },
-    };
+    return reactiveFlowNode({
+      title: "Convert to Float",
+      description: "Round a int to a float",
+      ins: [instream],
+      outs: [instream.map((p) => ({ ...p, kind: PortKind.Float }))],
+      implementation: ReactiveImplementation.ToList,
+      position,
+    });
   }
 
   if (transform == "from_list") {
-    return {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: position,
-      data: {
-        globalsMap: {},
-        title: "Chunk",
-        description: "Transforms a stream into an item of chunks",
-        kind: GraphNodeKind.Reactive,
-        ins: [instream],
-        constantsMap: {},
-        outs: [
-          instream.map((p, index) => listPortToSingle(p, "Chunked" + p.key)),
-        ],
-        constants: [],
-        implementation: ReactiveImplementation.ToList,
-      },
-    };
+    return reactiveFlowNode({
+      title: "Chunk",
+      description: "Transforms a stream into an item of chunks",
+      ins: [instream],
+      outs: [instream.map((p) => listPortToSingle(p as ArgPort, "Chunked" + p.key))],
+      implementation: ReactiveImplementation.ToList,
+      position,
+    });
   }
 
   if (transform == "ensure") {
-    return {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: position,
-      data: {
-        globalsMap: {},
-        title: "Ensure",
-        description:
-          "Ensures that the stream has no null items (will raise an error if it is)",
-        kind: GraphNodeKind.Reactive,
-        ins: [instream],
-        constantsMap: {},
-        outs: [instream.map((p) => ({ ...p, nullable: false }))],
-        constants: [],
-        implementation: ReactiveImplementation.Ensure,
-      },
-    };
+    return reactiveFlowNode({
+      title: "Ensure",
+      description:
+        "Ensures that the stream has no null items (will raise an error if it is)",
+      ins: [instream],
+      outs: [instream.map((p) => ({ ...p, nullable: false }))],
+      implementation: ReactiveImplementation.Ensure,
+      position,
+    });
   }
 
   throw new Error("Unknown transform");
@@ -370,7 +332,7 @@ export const createVanillaTransformEdge = (
       sourceHandle: "return_" + sourceStream,
       target: target,
       targetHandle: "arg_" + targetStream,
-    },
+    } as FlowEdge["data"],
   };
 };
 
@@ -763,7 +725,7 @@ export const integrate = (
       sourceHandle: sourceHandle,
       target: targetNodeID,
       targetHandle: targetHandle,
-    },
+    } as FlowEdge["data"],
   };
 
   const initialState: ValidationResult = {

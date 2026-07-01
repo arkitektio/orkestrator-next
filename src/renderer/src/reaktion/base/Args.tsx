@@ -4,9 +4,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PortFragment } from "@/rekuest/api/graphql";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import { PortKind } from "../api/graphql";
+import { StreamPort } from "@/reaktion/types";
 
 export const Args = ({
   instream,
@@ -14,8 +14,8 @@ export const Args = ({
   id,
 }: {
   id: number;
-  instream: PortFragment[];
-  constream: PortFragment[];
+  instream: StreamPort[];
+  constream: StreamPort[];
   onClick?: (instream: number, onposition: number) => void;
 }) => {
   return (

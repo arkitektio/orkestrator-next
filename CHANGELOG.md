@@ -1,3 +1,37 @@
+# [1.66.0-rc.1](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0...v1.66.0-rc.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* some more ([dd51ab9](https://github.com/arkitektio/orkestrator-next/commit/dd51ab9a6cb563e2e2a69974ee4194ed98a7fb2c))
+* with defaults ([86fdf7e](https://github.com/arkitektio/orkestrator-next/commit/86fdf7e22a5c8d3db958f5a77ddf818aafee6569))
+
+
+### Features
+
+* update to new yarn ([a55dea1](https://github.com/arkitektio/orkestrator-next/commit/a55dea14f47958f01eff88ae5f86da85424d2c40))
+
+# [1.65.0-rc.4](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.3...v1.65.0-rc.4) (2026-07-01)
+
+
+### Bug Fixes
+
+* with defaults ([86fdf7e](https://github.com/arkitektio/orkestrator-next/commit/86fdf7e22a5c8d3db958f5a77ddf818aafee6569))
+
+# [1.65.0-rc.3](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.2...v1.65.0-rc.3) (2026-06-30)
+
+
+### Features
+
+* update to new yarn ([a55dea1](https://github.com/arkitektio/orkestrator-next/commit/a55dea14f47958f01eff88ae5f86da85424d2c40))
+
+# [1.65.0-rc.2](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0-rc.1...v1.65.0-rc.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* some more ([dd51ab9](https://github.com/arkitektio/orkestrator-next/commit/dd51ab9a6cb563e2e2a69974ee4194ed98a7fb2c))
+
 # [1.65.0](https://github.com/arkitektio/orkestrator-next/compare/v1.64.5...v1.65.0) (2026-06-26)
 
 

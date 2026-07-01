@@ -1,4 +1,5 @@
 import { useDialog } from "@/app/dialog";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -70,12 +71,12 @@ export const EnhanceButton = (props: EnhanceButtonProps) => {
 
     try {
       setLoading(true);
-      await assign({
+      await assign(buildAssignInput({
         action: action.id,
         args: {
           [key]: props.object
         }
-      })
+      }))
       toast.success("Enhancement started");
     } catch (e) {
       console.error(e);

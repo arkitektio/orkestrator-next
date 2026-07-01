@@ -1,9 +1,10 @@
-import { HideEffectFragment, PortFragment } from "@/rekuest/api/graphql";
+import { HideEffectFragment } from "@/rekuest/api/graphql";
+import { MappablePort } from "@/rekuest/widgets/types";
 import React, { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import ShadowRealm from "shadowrealm-api";
 
-export const useEffectOn = (effect: HideEffectFragment, port: PortFragment) => {
+export const useEffectOn = (effect: HideEffectFragment, port: MappablePort) => {
   const values = useFormContext();
 
   const [effectOn, setEffectOn] = React.useState(false);
@@ -51,7 +52,7 @@ export const HideEffect = ({
   children,
 }: {
   effect: HideEffectFragment;
-  port: PortFragment;
+  port: MappablePort;
   children?: React.ReactNode;
 }) => {
   const values = useFormContext();

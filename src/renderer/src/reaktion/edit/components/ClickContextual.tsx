@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
-import { nodeIdBuilder } from "@/reaktion/utils";
+import { nodeIdBuilder, reactiveFlowNode } from "@/reaktion/utils";
 import {
   ConstantActionDocument,
   ConstantActionQuery,
@@ -114,7 +114,7 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
   // TODO - Add more nodes here
 
   const filtered_nodes = nodes.filter((node) =>
-    node.data.title.toLowerCase().includes(search.toLowerCase()),
+    node.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   if (search.length === 0) {
@@ -125,68 +125,48 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
 
   if (isInt) {
     filtered_nodes.push({
-      node: {
-        id: nodeIdBuilder(),
-        type: "ReactiveNode",
-        position: { x: 0, y: 0 },
-        data: {
-          globalsMap: {},
-          title: "Just",
-          description: "Just an Int",
-          kind: GraphNodeKind.Reactive,
-          ins: [[]],
-          constantsMap: {
-            value: parseInt(search),
-          },
-          outs: [
-            [
-              {
-                description: "Just an Int",
-                key: "the_int",
-                kind: PortKind.Int,
-                nullable: false,
-                __typename: "ReturnPort",
-              },
-            ],
+      node: reactiveFlowNode({
+        title: "Just",
+        description: "Just an Int",
+        ins: [[]],
+        constantsMap: { value: parseInt(search) },
+        outs: [
+          [
+            {
+              description: "Just an Int",
+              key: "the_int",
+              kind: PortKind.Int,
+              nullable: false,
+              __typename: "ReturnPort",
+            },
           ],
-          constants: [],
-          implementation: ReactiveImplementation.Just,
-        },
-      },
+        ],
+        implementation: ReactiveImplementation.Just,
+      }),
       title: `Just ${search} (Int)`,
       description: "Just an Int",
     });
   }
 
   filtered_nodes.push({
-    node: {
-      id: nodeIdBuilder(),
-      type: "ReactiveNode",
-      position: { x: 0, y: 0 },
-      data: {
-        globalsMap: {},
-        title: "Just",
-        description: "Just a String",
-        kind: GraphNodeKind.Reactive,
-        ins: [[]],
-        constantsMap: {
-          value: search,
-        },
-        outs: [
-          [
-            {
-              __typename: "ReturnPort",
-              nullable: false,
-              description: "Just a String",
-              key: "string",
-              kind: PortKind.String,
-            },
-          ],
+    node: reactiveFlowNode({
+      title: "Just",
+      description: "Just a String",
+      ins: [[]],
+      constantsMap: { value: search },
+      outs: [
+        [
+          {
+            __typename: "ReturnPort",
+            nullable: false,
+            description: "Just a String",
+            key: "string",
+            kind: PortKind.String,
+          },
         ],
-        constants: [],
-        implementation: ReactiveImplementation.Just,
-      },
-    },
+      ],
+      implementation: ReactiveImplementation.Just,
+    }),
     title: `Just ${search} (String)`,
     description: "Create the string Hallo on Invocation",
   });

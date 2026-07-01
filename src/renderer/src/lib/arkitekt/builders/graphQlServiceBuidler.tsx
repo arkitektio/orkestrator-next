@@ -61,6 +61,7 @@ export const createGraphQLServiceBuilder =
       const client = new ApolloClient({
         link: splitLink,
         cache: new InMemoryCache({ possibleTypes }),
+        devtools: { enabled: import.meta.env.DEV },
       });
 
       const ward = buildGraphQlWard(client, { describe: builderOptions?.describe });

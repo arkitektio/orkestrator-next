@@ -295,6 +295,49 @@ describe("submittedDataToRekuestFormat / setData / portToDefaults", () => {
       tags: [{ __value: "x" }],
     });
   });
+
+  it("portToDefaults prefills scalar ports from their default when no overwrite", () => {
+    const defaultedPorts = [
+      p({ kind: PortKind.String, key: "name", default: "Ada" }),
+      p({ kind: PortKind.Int, key: "age", default: 42 }),
+    ];
+    expect(portToDefaults(defaultedPorts, {})).toEqual({
+      name: "Ada",
+      age: 42,
+    });
+  });
+
+  it("portToDefaults lets an overwrite win over the port default", () => {
+    const defaultedPorts = [p({ kind: PortKind.String, key: "name", default: "Ada" })];
+    expect(portToDefaults(defaultedPorts, { name: "Grace" })).toEqual({
+      name: "Grace",
+    });
+  });
+
+  it("portToDefaults preserves falsy defaults (0, false)", () => {
+    const defaultedPorts = [
+      p({ kind: PortKind.Int, key: "count", default: 0 }),
+      p({ kind: PortKind.Bool, key: "flag", default: false }),
+    ];
+    expect(portToDefaults(defaultedPorts, {})).toEqual({
+      count: 0,
+      flag: false,
+    });
+  });
+
+  it("portToDefaults hydrates a list default into rows", () => {
+    const defaultedPorts = [
+      p({
+        kind: PortKind.List,
+        key: "tags",
+        children: [{ kind: PortKind.String, key: "c" }],
+        default: ["x", "y"],
+      }),
+    ];
+    expect(portToDefaults(defaultedPorts, {})).toEqual({
+      tags: [{ __value: "x" }, { __value: "y" }],
+    });
+  });
 });
 
 describe("argDictToArgs", () => {

@@ -12,7 +12,8 @@ type PythonPort = {
   identifier?: string | null;
   key?: string | null;
   kind: PortKind;
-  nullable: boolean;
+  // Deeply-nested child port fragments don't always select `nullable`.
+  nullable?: boolean | null;
 };
 
 type ModelDefinition = {

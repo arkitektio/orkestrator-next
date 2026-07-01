@@ -1,5 +1,5 @@
-import { FlussPortFragment as PortFragment, GlobalArgFragment } from "@/reaktion/api/graphql";
-import { FlowEdge, FlowNode, FlowNodeData, NodeData } from "../types";
+import { GlobalArgFragment } from "@/reaktion/api/graphql";
+import { FlowEdge, FlowNode, FlowNodeData, NodeData, StreamPort } from "../types";
 
 export type Compare = {
   sourceStreamIndex: number;
@@ -43,7 +43,7 @@ export type Transform =
   | "to_float";
 
 export type ChangeEvent = {
-  stream: PortFragment[];
+  stream: StreamPort[];
   type: PortType;
   index: number;
 };

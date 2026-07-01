@@ -93,7 +93,7 @@ export const StateDisplay = ({
               key={index}
               value={data?.state?.value[port.key]}
               port={port}
-              widget={port.returnWidget}
+              widget={port.widget}
             />
           </div>
         );
@@ -145,7 +145,7 @@ export const StateCheckoutDisplay = ({
                   key={index}
                   value={value?.[port.key]}
                   port={port}
-                  widget={port.returnWidget}
+                  widget={port.widget}
                 />
               </div>
             );

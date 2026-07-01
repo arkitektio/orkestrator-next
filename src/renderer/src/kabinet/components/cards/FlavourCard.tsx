@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { buildAssignInput } from "@/rekuest/assign";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -40,11 +41,11 @@ export const AssignButton = (props: {
     }
 
     console.log(
-      await assign({
+      await assign(buildAssignInput({
         args: {
           [argKey]: { object: props.release , __identifier: KabinetFlavour.identifier },
         },
-      }),
+      })),
     );
   };
 

@@ -1,3 +1,10 @@
+# [1.66.0-rc.7](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.6...v1.66.0-rc.7) (2026-07-02)
+
+
+### Bug Fixes
+
+* renderer ([ecd3a3b](https://github.com/arkitektio/orkestrator-next/commit/ecd3a3b572fb2b189b102958af51a6c51ff13e0c))
+
 # [1.66.0-rc.6](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.5...v1.66.0-rc.6) (2026-07-02)
 
 

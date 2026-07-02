@@ -4,7 +4,7 @@ import {
   PortInput,
   PortKind,
   PostmanTaskFragment,
-  SchemaDemandInput,
+  StateDemandInput,
   useGetStateQuery,
   WatchStateEventsDocument,
   WatchStateEventsSubscription,
@@ -29,7 +29,7 @@ export const port = {
 
 export type StateDefinition<T extends { [key: string]: any }> = {
   ports: T
-  demand: SchemaDemandInput
+  demand: StateDemandInput
 }
 
 // Function to extract schema definition as JSON
@@ -116,7 +116,7 @@ export type StatePort = { zodType: zod.ZodTypeAny } & Omit<PortInput, 'key'>
 
 export const statePortsToDemand = <T extends Record<string, StatePort>>(
   ports: T
-): SchemaDemandInput => {
+): StateDemandInput => {
   const matches = Object.entries(ports).map(([key, value]) => {
     return {
       key: key,

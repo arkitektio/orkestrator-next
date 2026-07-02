@@ -4,7 +4,7 @@ query GetState($id: ID!) {
   }
 }
 
-query GetStateFor($agent: ID!, $stateHash: String, $demand: SchemaDemandInput) {
+query GetStateFor($agent: ID!, $stateHash: String, $demand: StateDemandInput) {
   stateFor(agent: $agent, stateHash: $stateHash, demand: $demand) {
     ...State
   }

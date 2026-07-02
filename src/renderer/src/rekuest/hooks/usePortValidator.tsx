@@ -66,6 +66,14 @@ export const usePortValidate = <
         );
       }
 
+      if (port.kind === PortKind.Quantity) {
+        validators.push((v) =>
+          v == undefined || typeof v === "string"
+            ? undefined
+            : `${port.key} must be a quantity`,
+        );
+      }
+
       if (port.validators) {
         const builtValidators = buildValidators(port.validators);
         validators.push(...builtValidators);

@@ -1,6 +1,6 @@
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { RekuestOutputInterfaceUsage } from "@/linkers";
+import { RekuestAction } from "@/linkers";
 
 import { ListOutputInterfaceUsageFragment } from "@/rekuest/api/graphql";
 
@@ -9,24 +9,26 @@ interface Props {
 
 }
 
+// A PortUsage is no longer an identifiable entity (it has no id), so we link to
+// the action that uses the interface instead.
 const TheCard = ({ item }: Props) => {
   return (
-    <RekuestOutputInterfaceUsage.Smart object={item}>
+    <RekuestAction.Smart object={item.action}>
       <Card className={cn("aspect-square flex flex-col")}>
         <CardHeader className="flex-grow">
           <CardTitle>
-            <RekuestOutputInterfaceUsage.DetailLink object={item}>
+            <RekuestAction.DetailLink object={item.action}>
               {" "}
               <h1>{item.portKey}</h1>
               <span className="text-muted-foreground font-light">
                 {item.action.name}
               </span>
-            </RekuestOutputInterfaceUsage.DetailLink>
+            </RekuestAction.DetailLink>
           </CardTitle>
         </CardHeader>
         <CardFooter></CardFooter>
       </Card>
-    </RekuestOutputInterfaceUsage.Smart>
+    </RekuestAction.Smart>
   );
 };
 

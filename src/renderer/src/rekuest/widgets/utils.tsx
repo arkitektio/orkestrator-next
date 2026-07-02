@@ -18,6 +18,7 @@ export const isScalarPort = (port: { kind: PortKind }): boolean => {
     port.kind == PortKind.String ||
     port.kind == PortKind.Date ||
     port.kind == PortKind.Structure ||
+    port.kind == PortKind.Quantity ||
     port.kind == PortKind.List
   );
 };
@@ -85,6 +86,7 @@ export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.Float) return "Float";
   if (port.kind == PortKind.Int) return "Int";
   if (port.kind == PortKind.String) return "String";
+  if (port.kind == PortKind.Quantity) return "Quantity";
   if (port.kind == PortKind.Date) return "Date";
   if (port.kind == PortKind.Model) {
     return identifierToName(port.identifier, "Unknown Model");
@@ -110,6 +112,12 @@ export const portToZod = (port: LabellablePort): any => {
   switch (port?.kind) {
     case PortKind.String:
       baseType = z.string({ message: `"${portName}" requires a text value` });
+      break;
+    case PortKind.Quantity:
+      // A quantity is stored as a magnitude+unit wire string, e.g. "100 ms".
+      baseType = z
+        .string({ message: `"${portName}" requires a quantity value` })
+        .min(1, { message: `"${portName}" requires a quantity value` });
       break;
     case PortKind.Enum:
       baseType = z.enum(

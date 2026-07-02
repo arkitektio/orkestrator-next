@@ -21,7 +21,10 @@ import { FieldProps } from "./types";
  */
 export const QuantityField = (
   props: FieldProps &
-    Pick<QuantityInputProps, "dimension" | "placeholder">,
+    Pick<
+      QuantityInputProps,
+      "dimension" | "units" | "defaultUnit" | "placeholder"
+    >,
 ) => {
   const form = useFormContext();
   return (
@@ -37,6 +40,8 @@ export const QuantityField = (
           <FormControl>
             <QuantityInput
               dimension={props.dimension}
+              units={props.units}
+              defaultUnit={props.defaultUnit}
               placeholder={props.placeholder}
               value={field.value ?? ""}
               onChange={field.onChange}

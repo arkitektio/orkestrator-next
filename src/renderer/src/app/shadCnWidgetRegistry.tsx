@@ -13,6 +13,7 @@ import { IntWidget } from "@/components/widgets/fallbacks/IntWidget";
 import { ListWidget } from "@/components/widgets/fallbacks/ListWidget";
 import { MemoryStructureWidget } from "@/components/widgets/fallbacks/MemoryStructureWidget";
 import { ModelWidget } from "@/components/widgets/fallbacks/ModelWidget";
+import { QuantityWidget } from "@/components/widgets/fallbacks/QuantityWidget";
 import { StringWidget } from "@/components/widgets/fallbacks/StringWidget";
 import { StructureWidget } from "@/components/widgets/fallbacks/StructureWidget";
 import { UnionWidget } from "@/components/widgets/fallbacks/UnionWidget";
@@ -25,6 +26,7 @@ import { IntReturnWidget } from "@/components/widgets/returns/fallbacks/IntRetur
 import { ListReturnWidget } from "@/components/widgets/returns/fallbacks/ListReturnWidget";
 import { MemoryStructureReturnWidget } from "@/components/widgets/returns/fallbacks/MemoryStructureReturnWidget";
 import { ModelReturnWidget } from "@/components/widgets/returns/fallbacks/ModelReturnWidget";
+import { QuantityReturnWidget } from "@/components/widgets/returns/fallbacks/QuantityReturnWidget";
 import { StringReturnWidget } from "@/components/widgets/returns/fallbacks/StringReturnWidget";
 import { UnionReturnWidget } from "@/components/widgets/returns/fallbacks/UnionReturnWidget";
 import { PortKind } from "@/rekuest/api/graphql";
@@ -86,6 +88,7 @@ const union = registry.registerInputWidgetFallback(PortKind.Union, UnionWidget);
 const dict = registry.registerInputWidgetFallback(PortKind.Dict, DictWidget);
 const model = registry.registerInputWidgetFallback(PortKind.Model, ModelWidget);
 const float = registry.registerInputWidgetFallback(PortKind.Float, FloatWidget);
+registry.registerInputWidgetFallback(PortKind.Quantity, QuantityWidget);
 const string = registry.registerInputWidgetFallback(
   PortKind.String,
   StringWidget,
@@ -124,6 +127,7 @@ const floatReturn = registry.registerReturnWidgetFallback(
   PortKind.Float,
   FloatReturnWidget,
 );
+registry.registerReturnWidgetFallback(PortKind.Quantity, QuantityReturnWidget);
 const stringReturn = registry.registerReturnWidgetFallback(
   PortKind.String,
   StringReturnWidget,

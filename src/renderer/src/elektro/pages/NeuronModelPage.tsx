@@ -2,6 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Card } from "@/components/ui/card";
 import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
+import { ExportModelButton } from "../forms/ExportModelForm";
 import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
@@ -25,6 +26,7 @@ export const NeuronModelPage = asDetailQueryRoute(
         pageActions={
           <div className="flex flex-row gap-2">
             <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>
+            <ExportModelButton object={data.neuronModel} />
             <ElektroNeuronModel.ObjectButton object={data.neuronModel} />
           </div>
         }

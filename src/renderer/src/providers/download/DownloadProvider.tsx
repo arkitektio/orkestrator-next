@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useEffect } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import { createStore, useStore } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { X, CheckCircle2, AlertCircle, Loader2, ChevronUp, ChevronDown, FolderOpen, ExternalLink } from "lucide-react";

@@ -16,6 +16,7 @@ import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
 import { TaskUpdater } from "@/rekuest/components/functional/TaskUpdater";
+import { TaskHookRunner } from "@/lib/taskhooks/TaskHookRunner";
 import { TaskNotificationStack } from "@/rekuest/components/global/TaskNotificationStack";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
@@ -122,7 +123,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             <SmartProvider>
                               <DialogProvider>
                                 <SelectionProvider>
-                                  <AgentProvider disabled={true}>
+                                  <AgentProvider disabled={false}>
                                     <WardRegistrar />
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest fallback={<></>}>
@@ -131,6 +132,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       <AgentUpdater />
                                       <RekuestDashboardWidgets />
                                       <LatestTasksDashboardWidget />
+                                      <TaskHookRunner />
                                     </Guard.Rekuest>
                                     <Toaster />
                                     <Guard.Mikro fallback={<></>}>

@@ -8,6 +8,7 @@ import {
   RequestBigfileAccessMutation,
   RequestBigfileAccessMutationVariables,
 } from "@/elektro/api/graphql";
+import type { ApolloClient } from "@apollo/client";
 import { useCallback } from "react";
 
 export type DownloadOptions = {
@@ -60,6 +61,58 @@ const downloadFromStore = async (
   });
 };
 
+/**
+ * Non-React big-file download: request an access grant, stream the file via the
+ * Electron IPC bridge, then finalize. Shared by the `useElektroBigFileDownload`
+ * hook and the agent-side `download` implementation (which has no React
+ * context, only the elektro Apollo client + datalayer endpoint).
+ */
+export const downloadElektroBigFile = async (
+  client: ApolloClient<unknown>,
+  datalayerEndpoint: string,
+  storeId: string,
+  fileName?: string,
+  options?: DownloadOptions,
+): Promise<string> => {
+  const data = await client.mutate<
+    RequestBigfileAccessMutation,
+    RequestBigfileAccessMutationVariables
+  >({
+    mutation: RequestBigfileAccessDocument,
+    variables: {
+      input: { storeId },
+    },
+  });
+
+  if (!data.data?.requestBigfileAccess) {
+    throw Error(`Failed to get download grant: ${JSON.stringify(data)}`);
+  }
+
+  const z = data.data.requestBigfileAccess;
+
+  const targetFileName = fileName || storeId; // Fallback to storeId if no name
+  const resultPath = await downloadFromStore(
+    targetFileName,
+    datalayerEndpoint,
+    z,
+    options,
+  );
+
+  await client.mutate<
+    FinishBigfileUploadMutation,
+    FinishBigfileUploadMutationVariables
+  >({
+    mutation: FinishBigfileUploadDocument,
+    variables: {
+      input: {
+        storeId,
+      },
+    },
+  });
+
+  return resultPath;
+};
+
 export const useElektroBigFileDownload = () => {
   const client = useElektro();
   const datalayerEndpoint = useDatalayerEndpoint();
@@ -74,47 +127,13 @@ export const useElektroBigFileDownload = () => {
         throw Error("No datalayer endpoint configured");
       }
 
-      const data = await client.mutate<
-        RequestBigfileAccessMutation,
-        RequestBigfileAccessMutationVariables
-      >({
-        mutation: RequestBigfileAccessDocument,
-        variables: {
-          input: { storeId },
-        },
-      });
-
-      if (!data.data?.requestBigfileAccess) {
-        throw Error(`Failed to get download grant: ${JSON.stringify(data)}`);
-      }
-
-      const z = data.data.requestBigfileAccess;
-
-      console.log("Got download grant", z);
-
-      const targetFileName = fileName || storeId; // Fallback to storeId if no name
-      const resultPath = await downloadFromStore(
-        targetFileName,
+      return downloadElektroBigFile(
+        client,
         datalayerEndpoint,
-        z,
+        storeId,
+        fileName,
         options,
       );
-
-      console.log("Finished download to", resultPath);
-
-      await client.mutate<
-        FinishBigfileUploadMutation,
-        FinishBigfileUploadMutationVariables
-      >({
-        mutation: FinishBigfileUploadDocument,
-        variables: {
-          input: {
-            storeId,
-          },
-        },
-      });
-
-      return resultPath;
     },
     [client, datalayerEndpoint],
   );

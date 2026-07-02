@@ -4,21 +4,27 @@ import type { AppContext } from "@/lib/arkitekt/provider";
 import type { AvailableService } from "@/lib/arkitekt/types";
 import { TokenResponse } from "@/lib/arkitekt/fakts/tokenSchema";
 import { selectAlias, selectApolloClient } from "@/lib/arkitekt/utils";
-import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementationInput} from "@/rekuest/api/graphql";
+import { DefinitionInput, EnsureAgentDocument, EnsureAgentMutation, EnsureAgentMutationVariables, ImplementAgentDocument, ImplementAgentMutation, ImplementAgentMutationVariables, ImplementationInput} from "@/rekuest/api/graphql";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
+  AgentMode,
   Assign,
   CancelledEvent,
   CancelMessage,
+  CompletedEvent,
   CriticalEvent,
-  DoneEvent,
-  ErrorEvent,
+  EventAck,
+  FailedEvent,
   FromAgentMessage,
+  Init,
+  ProgressEvent,
   Register,
+  StartedEvent,
   ToAgentMessage,
   YieldEvent,
 } from "./message";
 import { globalRegistry } from "./registry";
+import { expandArgs, shrinkReturns, SerPort } from "./serialization";
 import { AgentFunction, AssignContext, InferDefinition } from "./types";
 
 export type AgentState = {
@@ -31,9 +37,9 @@ export type AgentState = {
 
 export type AgentListener = (state: AgentState) => void;
 
-type RegisteredAgentContext = Omit<
-  AssignContext<Record<string, unknown>, Record<string, unknown>>,
-  "args"
+type RegisteredAgentContext = AssignContext<
+  Record<string, unknown>,
+  Record<string, unknown>
 >;
 
 type RegisteredAgentFunction = (context: RegisteredAgentContext) => void | Promise<void>;
@@ -71,7 +77,12 @@ export class OrkestratorAgent {
   electronListeners: Map<string, (type: string, data: unknown) => void> = new Map();
   electronUnsubscribers: Array<() => void> = [];
   registry: Map<string, RegisteredAgentFunction> = new Map();
+  // Interface → published definition, used to (de)serialize a task's args/returns.
+  definitions: Map<string, DefinitionInput> = new Map();
   implementations: ImplementationInput[] = [];
+  // Electron implementations are inspected once; announce() runs on every connect
+  // (incl. reconnects) so guard against re-inspecting/re-registering them.
+  private electronRegistered = false;
   reconnectTimer: NodeJS.Timeout | null = null;
   stableConnectionTimer: NodeJS.Timeout | null = null;
   shouldReconnect = true;
@@ -79,6 +90,16 @@ export class OrkestratorAgent {
   token: string
   agentUrl: string;
   navigate: (path: string) => void;
+
+  // Per-process identity: a stable session_id across transient reconnects tells
+  // the backend the process survived (reclaim in-flight work). A fresh
+  // OrkestratorAgent (app reload) mints a new one → fail-and-cascade.
+  sessionId: string = crypto.randomUUID();
+  // Monotonic per-connection stream sequence for at-least-once event dedup.
+  private nextSeq = 0;
+  // Terminal reports retained until the backend EVENT_ACKs them; resent on
+  // reconnect (persist-then-ack). Keyed by the report's event id.
+  private unackedEvents: Map<string, FromAgentMessage> = new Map();
 
   assignments: Assign[] = [];
   errors: string[] = [];
@@ -124,6 +145,23 @@ export class OrkestratorAgent {
     });
   }
 
+  /**
+   * Update the live app context (and thus token) in place, WITHOUT reconnecting.
+   * Called by AgentProvider on token refresh so a future reconnect uses the
+   * current token while the existing socket stays up. The endpoint is stable, so
+   * the Apollo client / agent URL do not change.
+   */
+  public setContext(context: AppContext) {
+    this.context = context;
+    try {
+      if (context.connection) {
+        this.token = getAccessToken(context.connection.token);
+      }
+    } catch {
+      // Keep the previous token if the refreshed context has none yet.
+    }
+  }
+
   public subscribe(listener: AgentListener) {
     this.listeners.push(listener);
     listener(this.getState());
@@ -153,6 +191,13 @@ export class OrkestratorAgent {
     definition: D,
   ) {
     this.registry.set(name, func as RegisteredAgentFunction);
+    this.definitions.set(name, definition);
+    // Idempotent per interface: an interface is unique per agent, so re-registering
+    // (e.g. on every reconnect via registerElectron) must replace, not append —
+    // otherwise `implementations` accumulates duplicates.
+    this.implementations = this.implementations.filter(
+      (impl) => impl.interface !== name,
+    );
     this.implementations.push({
       interface: name,
       definition: definition,
@@ -214,8 +259,10 @@ export class OrkestratorAgent {
   }
 
   async registerElectron() {
+    if (this.electronRegistered) return;
     try {
       if (window.api) {
+        this.electronRegistered = true;
         await window.api.initAgent({
           token: this.token,
           url: this.context.connection!.endpoint.base_url,
@@ -308,12 +355,19 @@ export class OrkestratorAgent {
     }, RECONNECT_DELAY_MS);
   }
 
+  /**
+   * Publish this agent and its implementations to the backend over GraphQL
+   * BEFORE opening the websocket (mirrors rekuest_next: `ensure_agent` then
+   * `implement_agent`). `ensureAgent` upserts the agent identity and returns the
+   * server-side definition hash; when it differs from ours we (re)publish the
+   * full implementation set with `implementAgent`.
+   */
   public async announce() {
     if (!this.rekuestClient) throw new Error("Rekuest client not found");
 
     await this.registerElectron();
 
-    const result = await this.runAbortableRequest((controller) =>
+    const ensured = await this.runAbortableRequest((controller) =>
       this.rekuestClient.mutate<EnsureAgentMutation, EnsureAgentMutationVariables>({
         mutation: EnsureAgentDocument,
         variables: {
@@ -329,9 +383,69 @@ export class OrkestratorAgent {
       }),
     );
 
-   // Reimplmemnt with new api
+    const implementations = this.normalizedImplementations();
+    const localHash = this.computeImplementationsHash(implementations);
+    const serverHash = ensured.data?.ensureAgent?.hash;
 
+    // Nothing registered → nothing to publish (still a valid caller/observer).
+    if (implementations.length === 0 || serverHash === localHash) {
+      return;
+    }
 
+    await this.runAbortableRequest((controller) =>
+      this.rekuestClient.mutate<ImplementAgentMutation, ImplementAgentMutationVariables>({
+        mutation: ImplementAgentDocument,
+        variables: {
+          input: {
+            name: "Orkestrator",
+            implementations,
+            states: [],
+            locks: [],
+            bloks: [],
+            hash: localHash,
+          },
+        },
+        context: {
+          fetchOptions: {
+            signal: controller.signal,
+          },
+        },
+      }),
+    );
+  }
+
+  /**
+   * Ensure every implementation's definition carries the fields the backend
+   * requires (`key`, `name`, `version`). Definitions sourced from the Electron
+   * agent (`inspectElectronAgent`) may omit them, which the `implementAgent`
+   * mutation rejects — fall back to the interface name and a default version.
+   */
+  private normalizedImplementations(): ImplementationInput[] {
+    return this.implementations.map((impl) => {
+      const key = impl.interface ?? impl.definition.name;
+      return {
+        ...impl,
+        definition: {
+          ...impl.definition,
+          key: impl.definition.key || key || "implementation",
+          name: impl.definition.name || key || "Implementation",
+          version: impl.definition.version || "0.1.0",
+        },
+      };
+    });
+  }
+
+  /** Stable FNV-1a hash of the registered implementations (change detection). */
+  private computeImplementationsHash(
+    implementations: ImplementationInput[] = this.implementations,
+  ): string {
+    const serialized = JSON.stringify(implementations);
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < serialized.length; i++) {
+      hash ^= serialized.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(16);
   }
 
   public connect() {
@@ -340,6 +454,16 @@ export class OrkestratorAgent {
 
     this.clearReconnectTimer();
     this.clearStableConnectionTimer();
+
+    // Use the freshest token for this (re)connect's REGISTER, in case the
+    // context was refreshed in place while the socket was down.
+    try {
+      if (this.context.connection) {
+        this.token = getAccessToken(this.context.connection.token);
+      }
+    } catch {
+      // Keep the existing token.
+    }
 
     this.announce();
 
@@ -363,6 +487,11 @@ export class OrkestratorAgent {
         Register.parse({
           type: "REGISTER",
           token: this.token,
+          mode: AgentMode.enum.EXECUTOR,
+          session_id: this.sessionId,
+          // Don't displace another live Orkestrator connection (avoids two
+          // windows kicking each other into a reconnect loop).
+          force: false,
         })
       );
     };
@@ -370,8 +499,11 @@ export class OrkestratorAgent {
     this.ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data as string);
-        const message = ToAgentMessage.parse(data);
-        await this.handleMessage(message);
+        // Tolerate message types we don't handle (e.g. caller-bound *_EVENT
+        // mirrors): ignore them rather than throwing on the whole stream.
+        const parsed = ToAgentMessage.safeParse(data);
+        if (!parsed.success) return;
+        await this.handleMessage(parsed.data);
       } catch (e) {
         console.error("Error handling message", e);
       }
@@ -417,6 +549,19 @@ export class OrkestratorAgent {
     }
   }
 
+  /**
+   * Send an agent→backend report, stamping a monotonic `seq`. Terminal reports
+   * (completed/failed/critical/cancelled/interrupted) are retained until the
+   * backend EVENT_ACKs their id and resent on reconnect (persist-then-ack).
+   */
+  private report(message: FromAgentMessage, terminal: boolean) {
+    const stamped = { ...message, seq: this.nextSeq++ } as FromAgentMessage;
+    if (terminal && stamped.id) {
+      this.unackedEvents.set(stamped.id, stamped);
+    }
+    this.send(stamped);
+  }
+
   private async handleHeartbeat(_: ToAgentMessage) {
     this.send(
       FromAgentMessage.parse({
@@ -430,27 +575,73 @@ export class OrkestratorAgent {
     if (controller) {
       controller.abort();
       this.cancelControllers.delete(message.task);
-      this.send(CancelledEvent.parse({
+      this.report(CancelledEvent.parse({
         type: "CANCELLED",
         task: message.task,
-      }));
+      }), true);
       this.assignments = this.assignments.filter(a => a.task !== message.task);
       this.notify();
     }
     else {
-      this.send(ErrorEvent.parse({
-        type: "ERROR",
+      this.report(CriticalEvent.parse({
+        type: "CRITICAL",
         task: message.task,
         error: `The task ${message.task} could not be cancelled because it was not found.`,
-      }));
+      }), true);
     }
 
+  }
+
+  /**
+   * Backend acknowledgement of our Register. On a transient reconnect it carries
+   * inquiries about tasks the backend still thinks we own: report those we still
+   * run as in-progress, the rest as critically lost (a fresh process — new
+   * session_id — owns none). Then resend any un-acked terminal reports.
+   */
+  private handleInit(message: Init) {
+    for (const inquiry of message.inquiries) {
+      if (this.cancelControllers.has(inquiry.task)) {
+        this.report(ProgressEvent.parse({
+          type: "PROGRESS",
+          task: inquiry.task,
+          progress: 0,
+          message: "Actor is still running",
+        }), false);
+      } else {
+        this.report(CriticalEvent.parse({
+          type: "CRITICAL",
+          task: inquiry.task,
+          error: "After a disconnect this task was no longer managed by the agent.",
+        }), true);
+      }
+    }
+
+    for (const event of this.unackedEvents.values()) {
+      this.send(event);
+    }
   }
 
   private async handleMessage(message: ToAgentMessage) {
     switch (message.type) {
       case "INIT":
-
+        this.handleInit(message);
+        break;
+      case "EVENT_ACK":
+        this.unackedEvents.delete((message as EventAck).event);
+        break;
+      case "BOUNCE":
+        // Soft restart: drop the socket and let the reconnect logic re-open it.
+        this.ws?.close();
+        break;
+      case "KICK":
+        this.shouldReconnect = false;
+        this.ws?.close();
+        break;
+      case "PROTOCOL_ERROR":
+        this.setConnectionFailure(`Protocol error: ${message.error}`);
+        break;
+      case "ASSIGN_RESPONSE":
+        // Only relevant when acting as a caller over the socket; ignore.
         break;
       case "ASSIGN":
         await this.handleAssign(message);
@@ -459,10 +650,16 @@ export class OrkestratorAgent {
         await this.handleCancel(message);
         break;
       case "HEARTBEAT":
-        // Handle heartbeat if needed, usually just reply
         await this.handleHeartbeat(message);
         break;
     }
+  }
+
+  /** Forget a task once it reaches a terminal state (done/failed/cancelled). */
+  private finishTask(task: string) {
+    this.cancelControllers.delete(task);
+    this.assignments = this.assignments.filter((a) => a.task !== task);
+    this.notify();
   }
 
   private async handleAssign(message: Assign) {
@@ -470,82 +667,77 @@ export class OrkestratorAgent {
     const handler = this.registry.get(interfaceName);
 
     if (!handler) {
-      this.send(
-        ErrorEvent.parse({
-          type: "ERROR",
+      this.report(
+        CriticalEvent.parse({
+          type: "CRITICAL",
           task,
           error: `No handler for interface ${interfaceName}`,
-        })
+        }),
+        true,
       );
       return;
     }
 
+    const newController = new AbortController();
+    this.cancelControllers.set(task, newController);
+    this.assignments.push(message);
+    this.notify();
+
+    this.report(StartedEvent.parse({ type: "STARTED", task }), false);
+
+    // Serialize against the published definition: incoming structure args arrive
+    // shrunk as `{ __identifier, object }` and must be expanded; the handler's
+    // returns are shrunk back to wire form before being reported.
+    const definition = this.definitions.get(interfaceName);
+    const argPorts = (definition?.args ?? []) as SerPort[];
+    const returnPorts = (definition?.returns ?? []) as SerPort[];
+    const expandedArgs = expandArgs(message.args, argPorts);
+
     try {
-
-      const newController = new AbortController();
-      this.cancelControllers.set(message.task, newController);
-      this.assignments.push(message);
-      this.notify();
-
-
-      handler({
+      await handler({
         message,
+        args: expandedArgs,
         send: (msg) => this.send(msg),
         app: this.context,
         yield: (returns) => {
-          this.send(
+          this.report(
             YieldEvent.parse({
               type: "YIELD",
-              task: message.task,
-              returns,
-            })
+              task,
+              returns: shrinkReturns(returns, returnPorts),
+            }),
+            false,
           );
         },
         error: (error) => {
-          this.send(
-            ErrorEvent.parse({
-              type: "ERROR",
-              task: message.task,
-              error,
-            })
+          this.report(
+            FailedEvent.parse({ type: "FAILED", task, error }),
+            true,
           );
-          this.cancelControllers.delete(message.task);
-          this.assignments = this.assignments.filter(a => a.task !== message.task);
-          this.notify();
+          this.finishTask(task);
         },
         return: (returns) => {
-          this.send(
+          this.report(
             YieldEvent.parse({
               type: "YIELD",
-              task: message.task,
-              returns,
-            })
+              task,
+              returns: shrinkReturns(returns, returnPorts),
+            }),
+            false,
           );
-          this.send(
-            DoneEvent.parse({
-              type: "DONE",
-              task: message.task,
-            })
-          );
-          this.cancelControllers.delete(message.task);
-          this.assignments = this.assignments.filter(a => a.task !== message.task);
-          this.notify();
+          this.report(CompletedEvent.parse({ type: "COMPLETED", task }), true);
+          this.finishTask(task);
         },
         controller: newController,
         navigate: this.navigate,
       });
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);
-      this.send(
-        CriticalEvent.parse({
-          type: "ERROR",
-          task: message.task,
-          error: errorMessage,
-        })
+      this.report(
+        CriticalEvent.parse({ type: "CRITICAL", task, error: errorMessage }),
+        true,
       );
-      this.cancelControllers.delete(message.task);
-      this.assignments = this.assignments.filter(a => a.task !== message.task);
-      this.notify();
+      this.finishTask(task);
     }
   }
 }

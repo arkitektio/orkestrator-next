@@ -12,7 +12,7 @@ import {
 import { useActiveWorkspaceStore } from '@/elektro/lib/activeWorkspaceStore'
 import { ElektroModelWorkspace } from '@/linkers'
 import { ApolloClient, NormalizedCache } from '@apollo/client'
-import { LayoutDashboard } from 'lucide-react'
+import { Download, LayoutDashboard } from 'lucide-react'
 import { Action } from '../localactions/LocalActionProvider'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 
@@ -75,8 +75,35 @@ const createWorkspaceFromModel: Action = {
   },
 }
 
+/**
+ * Open the exporter dialog for a neuron model: pick a rekuest exporter action
+ * (neuronmodel in, file out), run it, and let the task-hook runner auto-download
+ * the resulting file when the (potentially long-running) task finishes.
+ */
+const exportNeuronModel: Action = {
+  title: 'Export Model',
+  description: 'Run an exporter on this neuron model and download the result',
+  icon: Download,
+  collections: ['io'],
+  conditions: [
+    { type: 'identifier', identifier: '@elektro/neuronmodel' },
+    { type: 'nopartner' },
+  ],
+  execute: async ({ state, dialog }) => {
+    const model = state.left[0]?.object
+    if (!model) {
+      throw new Error('No neuron model provided for Export action')
+    }
+    dialog.openDialog('exportelektromodel', {
+      modelId: model.id,
+      modelName: typeof model.name === 'string' ? model.name : undefined,
+    })
+  },
+}
+
 export const ELEKTRO_ACTIONS: Record<string, Action> = {
   createElektroWorkspaceFromModel: createWorkspaceFromModel,
+  exportElektroNeuronModel: exportNeuronModel,
   deleteElektroBlock: buildDeleteAction({
     title: 'Delete Block',
     identifier: '@elektro/block',

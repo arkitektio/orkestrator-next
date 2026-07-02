@@ -33,6 +33,7 @@ import { UpdateStageForm } from "@/mikro-next/forms/UpdateStageForm";
 import { CreateDatasetForm as CreateOmeroDatasetForm } from "@/omero-ark/forms/CreateDatasetForm";
 import { CreateProjectForm } from "@/omero-ark/forms/CreateProjectForm";
 import { CreateWorkspaceForm } from "@/reaktion/components/forms/CreateWorkspaceForm";
+import { ExportModelForm } from "@/elektro/forms/ExportModelForm";
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
@@ -61,6 +62,8 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   editentitycategory: UpdateEntityCategoryForm,
   usemodelfor: UseModelForDialog,
   createorganization: CreateOrganizationForm,
+  // elektro
+  exportelektromodel: ExportModelForm,
   // kraph
   creategraph: CreateGraphForm,
   createnaturaleventcategory: CreateNaturalEventCategoryForm,

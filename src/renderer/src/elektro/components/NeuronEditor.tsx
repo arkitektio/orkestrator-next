@@ -38,9 +38,9 @@ const getColorFromIndex = (index: number) => {
 };
 
 const getParentInfo = (section: SectionFragment) => {
-  if (!section.connections || section.connections.length === 0) return null;
-  const conn = section.connections[0];
-  return { id: conn.parent, location: conn.location ?? 1 };
+  if (!section.parent) return null;
+  const conn = section.parent;
+  return { id: conn.parent, location: conn.parentLocation ?? 1 };
 };
 
 const getPerpendicularVector = (vec: THREE.Vector3) => {
@@ -174,7 +174,7 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
       });
     };
 
-    const roots = sections.filter(s => !s.connections || s.connections.length === 0);
+    const roots = sections.filter(s => !s.parent);
     const entryPoints = roots.length > 0 ? roots : [sections[0]];
 
     entryPoints.forEach(root => processSection(root.id, null, 0));
@@ -345,10 +345,11 @@ export const NeuronEditor = ({
     const newSection: SectionFragment = {
       id: newId,
       diam: "1 µm",
+      nseg: 10,
       length: "10 µm",
       category: "dendrite", // Default
       coords: [],
-      connections: [{ parent: parentId, location: location }]
+      parent: { parent: parentId, parentLocation: location, childEnd: 0 }
     };
 
     setCells(prev => prev.map(cell => {

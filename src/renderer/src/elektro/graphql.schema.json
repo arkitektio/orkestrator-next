@@ -4036,6 +4036,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "color",
+            "description": "An optional RGBA color (list of 4 values) used to render this compartment in the UI.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "RGBAColor",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "globalParams",
             "description": "The non-mechanistic (global) parameters applied to this compartment.",
             "args": [],
@@ -4137,6 +4149,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "color",
+            "description": "An optional RGBA color (list of 4 values) used to render this compartment in the UI.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "RGBAColor",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "globalParams",
             "description": "The non-mechanistic (global) parameters applied to this compartment.",
             "type": {
@@ -4152,7 +4176,7 @@
                 }
               }
             },
-            "defaultValue": null,
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4212,7 +4236,7 @@
                 }
               }
             },
-            "defaultValue": null,
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -4224,12 +4248,12 @@
       {
         "kind": "OBJECT",
         "name": "Connection",
-        "description": "Represents a connection of a section to its parent section, defining the morphology tree.",
+        "description": "Represents a connection of a section to its (single) parent section, defining the morphology tree.",
         "isOneOf": null,
         "fields": [
           {
-            "name": "location",
-            "description": "The position along the parent section where this section attaches, between 0 and 1.",
+            "name": "childEnd",
+            "description": "Which end of this section attaches to the parent: 0 (default) or 1.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4252,6 +4276,22 @@
               "name": null,
               "ofType": {
                 "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parentLocation",
+            "description": "The position along the parent section where this section attaches, between 0 and 1.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Float",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4268,13 +4308,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ConnectionInput",
-        "description": "Input for a connection of a section to its parent section, defining the morphology tree.",
+        "description": "Input for a connection of a section to its (single) parent section, defining the morphology tree.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "location",
-            "description": "The position along the parent section where this section attaches, between 0 and 1.",
+            "name": "childEnd",
+            "description": "Which end of this section attaches to the parent: 0 (default) or 1.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -4284,7 +4324,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "1",
+            "defaultValue": "0",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4301,6 +4341,22 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parentLocation",
+            "description": "The position along the parent section where this section attaches, between 0 and 1.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Float",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "1",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -4333,6 +4389,18 @@
         "description": "Represents a 3D coordinate (in space) of a point along a section.",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "diam",
+            "description": "The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Length",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "x",
             "description": "The x coordinate of the point.",
@@ -4394,6 +4462,18 @@
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "diam",
+            "description": "The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Length",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "x",
             "description": "The x coordinate of the point.",
@@ -5655,12 +5735,56 @@
             "deprecationReason": null
           },
           {
+            "name": "createdAfter",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "createdBefore",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "ID",
               "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -5699,6 +5823,18 @@
               "ofType": null
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -6000,6 +6136,188 @@
         ],
         "interfaces": null,
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Distribution",
+        "description": "Represents how a section parameter is distributed along a section (NEURON range variable).",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "distalValue",
+            "description": "The value at the most distal segment (required for 'linear').",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "expression",
+            "description": "An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of spatial distribution.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DistributionKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "proximalValue",
+            "description": "The value at path distance 0 (required for 'linear').",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": "The uniform value applied to every segment (required for 'uniform').",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DistributionInput",
+        "description": "Input for how a section parameter is distributed along a section (NEURON range variable). Supply the fields matching the chosen kind: 'uniform' -> value; 'linear' -> proximal_value & distal_value; 'expression' -> expression.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "distalValue",
+            "description": "The value at the most distal segment (required for 'linear').",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "expression",
+            "description": "An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of spatial distribution.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DistributionKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "defaultValue": "UNIFORM",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "proximalValue",
+            "description": "The value at path distance 0 (required for 'linear').",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": "The uniform value applied to every segment (required for 'uniform').",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "DistributionKind",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "EXPRESSION",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "LINEAR",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "UNIFORM",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "possibleTypes": null
       },
       {
@@ -18650,6 +18968,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "RGBAColor",
+        "description": "The Color scalar type represents a color as a list of 4 values RGBA",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "ROI",
         "description": null,
@@ -20029,6 +20358,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Resistivity",
+        "description": "An axial resistivity (NEURON ``Ra``; ``\"35.4 ohm*cm\"``, ``\"100 ohm*cm\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "RevertInput",
         "description": null,
@@ -20280,13 +20620,25 @@
         "fields": [
           {
             "name": "category",
-            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend').",
+            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "cm",
+            "description": "Specific membrane capacitance (NEURON cm).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "SpecificCapacitance",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -20295,32 +20647,8 @@
             "deprecationReason": null
           },
           {
-            "name": "connections",
-            "description": "The connections of this section to its parent section(s).",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "Connection",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "coords",
-            "description": "The 3D coordinates describing the section's geometry. Required if length is not provided.",
+            "description": "The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -20339,8 +20667,20 @@
             "deprecationReason": null
           },
           {
+            "name": "dLambda",
+            "description": "If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "diam",
-            "description": "The diameter of the section.",
+            "description": "The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20372,7 +20712,7 @@
           },
           {
             "name": "length",
-            "description": "Length of the section. Required if coords is not provided.",
+            "description": "Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20384,13 +20724,41 @@
           },
           {
             "name": "nseg",
-            "description": "The number of segments the section is discretized into.",
+            "description": "The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parent",
+            "description": "The connection to this section's parent section. None for the root section of the cell.",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Connection",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ra",
+            "description": "Axial resistivity (NEURON Ra).",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Resistivity",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -20413,7 +20781,7 @@
         "inputFields": [
           {
             "name": "category",
-            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend').",
+            "description": "An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -20424,28 +20792,24 @@
             "deprecationReason": null
           },
           {
-            "name": "connections",
-            "description": "The connections of this section to its parent section(s).",
+            "name": "cm",
+            "description": "Specific membrane capacitance (NEURON cm).",
             "type": {
-              "kind": "LIST",
+              "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "ConnectionInput",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
+                "name": "SpecificCapacitance",
+                "kind": "SCALAR",
+                "ofType": null
               }
             },
-            "defaultValue": "[]",
+            "defaultValue": "\"1 µF / cm ** 2\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "coords",
-            "description": "The 3D coordinates describing the section's geometry. Required if length is not provided.",
+            "description": "The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -20464,8 +20828,20 @@
             "deprecationReason": null
           },
           {
+            "name": "dLambda",
+            "description": "If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "diam",
-            "description": "The diameter of the section.",
+            "description": "The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -20497,7 +20873,7 @@
           },
           {
             "name": "length",
-            "description": "Length of the section. Required if coords is not provided.",
+            "description": "Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied.",
             "type": {
               "kind": "SCALAR",
               "name": "Length",
@@ -20509,7 +20885,7 @@
           },
           {
             "name": "nseg",
-            "description": "The number of segments the section is discretized into.",
+            "description": "The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -20520,6 +20896,34 @@
               }
             },
             "defaultValue": "1",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parent",
+            "description": "The connection to this section's parent section. None for the root section of the cell.",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ConnectionInput",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ra",
+            "description": "Axial resistivity (NEURON Ra).",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Resistivity",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "\"35.4 cm * Ω\"",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -20542,6 +20946,22 @@
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "distribution",
+            "description": "How the parameter is distributed along the section (uniform by default).",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Distribution",
+                "kind": "OBJECT",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -20571,22 +20991,6 @@
               "name": null,
               "ofType": {
                 "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "value",
-            "description": "The value of the parameter",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -20620,6 +21024,22 @@
             "deprecationReason": null
           },
           {
+            "name": "distribution",
+            "description": "How the parameter is distributed along the section (uniform by default).",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DistributionInput",
+                "kind": "INPUT_OBJECT",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "mechanism",
             "description": "The governing mechanism",
             "type": {
@@ -20643,22 +21063,6 @@
               "name": null,
               "ofType": {
                 "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "value",
-            "description": "The value of the parameter",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -21360,6 +21764,17 @@
             "deprecationReason": null
           }
         ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "SpecificCapacitance",
+        "description": "A specific membrane capacitance (NEURON ``cm``; ``\"1 uF/cm^2\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
         "interfaces": null,
         "enumValues": null,
         "possibleTypes": null

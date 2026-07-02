@@ -28,9 +28,9 @@ const getColorFromIndex = (index: number) => {
 };
 
 const getParentInfo = (section: SectionFragment) => {
-  if (!section.connections || section.connections.length === 0) return null;
-  const conn = section.connections[0];
-  return { id: conn.parent, location: conn.location ?? 1 };
+  if (!section.parent)  return null;
+  const conn = section.parent
+  return { id: conn.parent, location: conn.parentLocation ?? 1 };
 };
 
 const getPerpendicularVector = (vec: THREE.Vector3) => {
@@ -181,13 +181,13 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
       });
     };
 
-    const roots = rawSections.filter(s => !s.connections || s.connections.length === 0);
+    const roots = rawSections.filter(s => !s.parent);
     const entryPoints = roots.length > 0 ? roots : [rawSections[0]];
 
     entryPoints.forEach(root => processSection(root.id, null, 0));
 
     return segments;
-  }, [model.id]);
+  }, [model.id, model.config.cells]);
 };
 
 // --- Visual Components ---
@@ -358,7 +358,7 @@ const NeuronPanelCard = ({
                     <ParamRow
                       key={`${p.mechanism}-${p.param}-${i}`}
                       label={`${p.mechanism}.${p.param}`}
-                      value={String(p.value)}
+                      value={String(p.distribution.value)}
                     />
                   ))}
                 </div>

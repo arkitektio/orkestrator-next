@@ -130,13 +130,13 @@ configureSmartBuilder({
   useProgress: (identifier, object) => {
     return useAssignProgress({
       identifier,
-      object,
+      object: object.id,
     });
   },
   useLive: (identifier, object) => {
     return useLiveTask({
       identifier,
-      object,
+      object: object.id,
     });
   },
 });

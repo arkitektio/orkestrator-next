@@ -23,7 +23,6 @@ export const ListPageLayout = ({
   children,
   identifier,
   variant,
-  actions,
   pageActions,
 }: ListPageLayoutProps) => {
   return (
@@ -31,7 +30,7 @@ export const ListPageLayout = ({
       <PageLayout
         title={title}
         sidebars={sidebars || <MultiSidebar map={{ Help: <HelpSidebar /> }} />}
-        actions={actions}
+
         variant={variant}
         pageActions={pageActions}
       >

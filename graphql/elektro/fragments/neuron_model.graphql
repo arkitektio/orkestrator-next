@@ -13,14 +13,15 @@ fragment Section on Section {
   coords {
     ...Coord
   }
-  connections {
+  parent {
     ...Connection
   }
 }
 
 fragment Connection on Connection {
   parent
-  location
+  parentLocation
+  childEnd
 }
 
 fragment Compartment on Compartment {
@@ -34,7 +35,9 @@ fragment Compartment on Compartment {
   sectionParams {
     mechanism
     param
-    value
+    distribution {
+      value
+    }
     description
   }
 }

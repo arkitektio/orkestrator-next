@@ -55,7 +55,7 @@ fragment Agent on Agent {
   active
   connected
   lastSeen
-  tasks(pagination: { limit: 5 }) {
+  tasks(pagination: { limit: 5 }, ordering: { createdAt: DESC }) {
     ...ListTask
   }
   placements(pagination: { limit: 1 }, ordering: { createdAt: DESC }) {

@@ -100,7 +100,7 @@ const TaskNotificationPill = ({
       onClick={onClick}
       aria-label="Show tasks"
       className={cn(
-        "flex max-w-[18rem] items-center gap-2 rounded-full border bg-background/95 px-3 py-1.5 shadow-lg backdrop-blur transition-colors hover:bg-accent",
+        "flex max-w-[18rem] items-center gap-2 rounded-full border bg-background/95 px-4 py-2 shadow-2xl shadow-black/25 ring-1 ring-black/5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-accent hover:shadow-2xl dark:shadow-black/50 dark:ring-white/10",
         borderColorForAss(live),
       )}
     >

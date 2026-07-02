@@ -23,3 +23,15 @@ export type ElectricalConductance = string;
 
 /** A frequency, e.g. "50 Hz", "2 kHz". */
 export type Frequency = string;
+
+/** An ion concentration, e.g. "10 mM", "140 mM" (NEURON nai/nao/…). */
+export type Concentration = string;
+
+/** An axial resistivity, e.g. "35.4 Ω·cm" (NEURON Ra). */
+export type Resistivity = string;
+
+/** A specific membrane capacitance, e.g. "1 µF/cm²" (NEURON cm). */
+export type SpecificCapacitance = string;
+
+/** A thermodynamic temperature, e.g. "309.15 K" (NEURON celsius bath temp). */
+export type Temperature = string;

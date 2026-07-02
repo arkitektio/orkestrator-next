@@ -677,6 +677,11 @@ type AgentSnapshotEvent {
 
 union AgentSnapshotEventStatePatchEvent = AgentSnapshotEvent | StatePatchEvent
 
+type AgentTaskUpdate {
+  create: Task
+  update: Task
+}
+
 type AgentWithValues {
   """The ID of the agent this state belongs to"""
   agentId: ID!
@@ -4065,6 +4070,9 @@ input StructurePackageFilter {
 
 """Root subscription type for real-time event streams from the system."""
 type Subscription {
+  """Subscribe to task create/update for a specific agent."""
+  agentTasks(agent: ID!): AgentTaskUpdate!
+
   """Subscribe to updates on agent connections and statuses."""
   agents: AgentChangeEvent!
 

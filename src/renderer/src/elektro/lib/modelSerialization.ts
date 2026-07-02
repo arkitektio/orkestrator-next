@@ -4,7 +4,8 @@ import {
   ConnectionInput,
   CoordInput,
   DetailNeuronModelFragment,
-  GlobalParamMapInput,
+  IonInput,
+  MechanismGlobalParamInput,
   ModelConfigInput,
   SectionInput,
   SectionParamMapInput,
@@ -19,10 +20,26 @@ export type EditableConfig = DetailNeuronModelFragment["config"];
 export type EditableCells = EditableConfig["cells"];
 export type EditableCell = EditableCells[number];
 export type EditableSection = EditableCell["topology"]["sections"][number];
+export type EditableCompartment = EditableCell["biophysics"]["compartments"][number];
+export type EditableIon = EditableCompartment["ions"][number];
+export type EditableMechanismGlobal = EditableConfig["mechanismGlobals"][number];
 
-/** What `NeuronEditor.onSave` hands back: the (possibly edited) config. */
+/**
+ * What `NeuronEditor.onSave` hands back: the (possibly edited) config. `cells`
+ * is always present; the model-wide scalars/lists are carried through the editor
+ * state so an edited model round-trips faithfully.
+ */
 export type EditableModelConfig = Pick<EditableConfig, "cells"> &
-  Partial<Pick<EditableConfig, "celsius" | "vInit" | "label">>;
+  Partial<EditableModelWide>;
+
+/**
+ * The model-wide (non-`cells`) portion of the config the editor keeps as state:
+ * scalars + the model-level ion / mechanism-global lists.
+ */
+export type EditableModelWide = Pick<
+  EditableConfig,
+  "temperature" | "vInit" | "label" | "ra" | "cm" | "ions" | "mechanismGlobals"
+>;
 
 // --- Serialization -------------------------------------------------------
 
@@ -32,9 +49,12 @@ const serializeCoord = (c: { x: string; y: string; z: string }): CoordInput => (
   z: c.z,
 });
 
-const serializeConnection = (c: { parent: string; location: number }): ConnectionInput => ({
+const serializeConnection = (
+  c: NonNullable<EditableSection["parent"]>,
+): ConnectionInput => ({
   parent: c.parent,
-  location: c.location,
+  parentLocation: c.parentLocation,
+  childEnd: c.childEnd,
 });
 
 const serializeSection = (section: EditableSection): SectionInput => {
@@ -42,33 +62,52 @@ const serializeSection = (section: EditableSection): SectionInput => {
     id: section.id,
     diam: section.diam,
     category: section.category,
-    connections: (section.connections ?? []).map(serializeConnection),
+    ...(section.parent ? { parent: serializeConnection(section.parent) } : {}),
   };
   // `length` is required by the server unless explicit coords are supplied.
   if (section.length != null) input.length = section.length;
+  if (section.nseg != null) input.nseg = section.nseg;
+  if (section.ra != null) input.ra = section.ra;
+  if (section.cm != null) input.cm = section.cm;
+  if (section.dLambda != null) input.dLambda = section.dLambda;
   if (section.coords && section.coords.length > 0) {
     input.coords = section.coords.map(serializeCoord);
   }
   return input;
 };
 
-const serializeCompartment = (
-  compartment: EditableCell["biophysics"]["compartments"][number],
-): CompartmentInput => ({
+const serializeIon = (ion: EditableIon): IonInput => ({
+  ion: ion.ion,
+  style: ion.style,
+  ...(ion.reversalPotential != null ? { reversalPotential: ion.reversalPotential } : {}),
+  ...(ion.internalConcentration != null
+    ? { internalConcentration: ion.internalConcentration }
+    : {}),
+  ...(ion.externalConcentration != null
+    ? { externalConcentration: ion.externalConcentration }
+    : {}),
+});
+
+const serializeMechanismGlobal = (
+  p: EditableMechanismGlobal,
+): MechanismGlobalParamInput => ({
+  mechanism: p.mechanism,
+  param: p.param,
+  value: p.value,
+  ...(p.description != null ? { description: p.description } : {}),
+});
+
+const serializeCompartment = (compartment: EditableCompartment): CompartmentInput => ({
   id: compartment.id,
   mechanisms: [...compartment.mechanisms],
-  globalParams: compartment.globalParams.map(
-    (p): GlobalParamMapInput => ({
-      param: p.param,
-      value: p.value,
-      ...(p.description != null ? { description: p.description } : {}),
-    }),
-  ),
+  ions: compartment.ions.map(serializeIon),
   sectionParams: compartment.sectionParams.map(
     (p): SectionParamMapInput => ({
       mechanism: p.mechanism,
       param: p.param,
-      value: p.value,
+      // The fragment reads only the uniform `value`; the server defaults the
+      // distribution `kind` to UNIFORM when omitted.
+      distribution: { value: p.distribution.value },
       ...(p.description != null ? { description: p.description } : {}),
     }),
   ),
@@ -93,9 +132,15 @@ export const serializeModelConfig = (config: EditableModelConfig): ModelConfigIn
   const input: ModelConfigInput = {
     cells: config.cells.map(serializeCell),
   };
-  if (config.celsius != null) input.celsius = config.celsius;
+  if (config.temperature != null) input.temperature = config.temperature;
   if (config.vInit != null) input.vInit = config.vInit;
   if (config.label != null) input.label = config.label;
+  if (config.ra != null) input.ra = config.ra;
+  if (config.cm != null) input.cm = config.cm;
+  if (config.ions != null) input.ions = config.ions.map(serializeIon);
+  if (config.mechanismGlobals != null) {
+    input.mechanismGlobals = config.mechanismGlobals.map(serializeMechanismGlobal);
+  }
   return input;
 };
 
@@ -115,8 +160,7 @@ export interface ValidationResult {
   warnings: ValidationIssue[];
 }
 
-const isRoot = (section: EditableSection) =>
-  !section.connections || section.connections.length === 0;
+const isRoot = (section: EditableSection) => !section.parent;
 
 const validateCell = (cell: EditableCell): ValidationIssue[] => {
   const issues: ValidationIssue[] = [];
@@ -167,16 +211,10 @@ const validateCell = (cell: EditableCell): ValidationIssue[] => {
       );
     }
 
-    const conns = s.connections ?? [];
-    if (conns.length > 1) {
-      push(
-        "warning",
-        "MULTI_PARENT",
-        `Section "${s.id}" has ${conns.length} connections; only the first is rendered/simulated.`,
-        s.id,
-      );
-    }
-    for (const c of conns) {
+    // A section has at most one parent connection under the singular `parent`
+    // shape, so multi-parent is no longer representable.
+    const c = s.parent;
+    if (c) {
       if (c.parent === s.id) {
         push("error", "SELF_PARENT", `Section "${s.id}" is connected to itself.`, s.id);
       } else if (!byId.has(c.parent)) {
@@ -187,11 +225,11 @@ const validateCell = (cell: EditableCell): ValidationIssue[] => {
           s.id,
         );
       }
-      if (c.location < 0 || c.location > 1) {
+      if (c.parentLocation < 0 || c.parentLocation > 1) {
         push(
           "error",
           "BAD_LOCATION",
-          `Section "${s.id}" has connection location ${c.location} outside [0, 1].`,
+          `Section "${s.id}" has connection location ${c.parentLocation} outside [0, 1].`,
           s.id,
         );
       }
@@ -215,7 +253,7 @@ const validateCell = (cell: EditableCell): ValidationIssue[] => {
   const childrenOf = new Map<string, EditableSection[]>();
   for (const s of sections) {
     if (isRoot(s)) continue;
-    const parent = s.connections![0].parent;
+    const parent = s.parent!.parent;
     if (!byId.has(parent) || parent === s.id) continue; // already reported above
     if (!childrenOf.has(parent)) childrenOf.set(parent, []);
     childrenOf.get(parent)!.push(s);
@@ -233,7 +271,7 @@ const validateCell = (cell: EditableCell): ValidationIssue[] => {
   for (const s of sections) {
     if (reachable.has(s.id)) continue;
     // Orphan / self-parent already reported; flag the rest as cycle members.
-    const parent = s.connections?.[0]?.parent;
+    const parent = s.parent?.parent;
     if (parent && byId.has(parent) && parent !== s.id) {
       push(
         "error",

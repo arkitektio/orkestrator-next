@@ -25,6 +25,10 @@ generates:
         ElectricPotential: "@/elektro/api/scalars#ElectricPotential"
         ElectricalConductance: "@/elektro/api/scalars#ElectricalConductance"
         Frequency: "@/elektro/api/scalars#Frequency"
+        Concentration: "@/elektro/api/scalars#Concentration"
+        Resistivity: "@/elektro/api/scalars#Resistivity"
+        SpecificCapacitance: "@/elektro/api/scalars#SpecificCapacitance"
+        Temperature: "@/elektro/api/scalars#Temperature"
 
   src/renderer/src/elektro/graphql.schema.json:
     plugins:

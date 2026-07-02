@@ -103,18 +103,18 @@ const CylinderWithTooltip = ({
             {params ? (
               <>
                 <div style={{ marginTop: 4 }}>
-                  <strong>Global Params:</strong>
+                  <strong>Ions:</strong>
                   <ul style={{ paddingLeft: 16 }}>
-                    {params.globalParams.map(({ param, value }) => (
-                      <li key={param}>{param}: {value}</li>
+                    {params.ions.map(({ ion, style }) => (
+                      <li key={ion}>{ion}: {style}</li>
                     ))}
                   </ul>
                 </div>
                 <div style={{ marginTop: 4 }}>
                   <strong>Section Params:</strong>
                   <ul style={{ paddingLeft: 16 }}>
-                    {params.sectionParams.map(({ param, value }) => (
-                      <li key={param}>{param}: {value}</li>
+                    {params.sectionParams.map(({ mechanism, param, distribution }) => (
+                      <li key={`${mechanism}.${param}`}>{mechanism}.{param}: {distribution.value}</li>
                     ))}
                   </ul>
                 </div>
@@ -147,7 +147,7 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
     const rootNodes: THREE.Vector3[] = [];
     cells.forEach(cell =>
       cell.topology.sections.forEach(section => {
-        const isRoot = !section.connections || section.connections.length === 0;
+        const isRoot = !section.parent;
         if (section.coords && section.coords.length > 0) {
           // Coords / length are `Length` quantity strings; normalise to µm.
           section.coords.forEach(c => points.push(new THREE.Vector3(

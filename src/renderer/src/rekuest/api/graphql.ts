@@ -648,6 +648,12 @@ export type AgentSnapshotEvent = {
 
 export type AgentSnapshotEventStatePatchEvent = AgentSnapshotEvent | StatePatchEvent;
 
+export type AgentTaskUpdate = {
+  __typename?: 'AgentTaskUpdate';
+  create?: Maybe<Task>;
+  update?: Maybe<Task>;
+};
+
 export type AgentWithValues = {
   __typename?: 'AgentWithValues';
   /** The ID of the agent this state belongs to */
@@ -4102,6 +4108,8 @@ export type StructurePackageFilter = {
 /** Root subscription type for real-time event streams from the system. */
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Subscribe to task create/update for a specific agent. */
+  agentTasks: AgentTaskUpdate;
   /** Subscribe to updates on agent connections and statuses. */
   agents: AgentChangeEvent;
   /** Subscribe to all descendant task changes of a task. */
@@ -4124,6 +4132,12 @@ export type Subscription = {
   watchAgent: AgentSnapshotEventStatePatchEvent;
   /** Watch a state: yields the current snapshot then streams patches. */
   watchState: StateSnapshotEventStatePatchEvent;
+};
+
+
+/** Root subscription type for real-time event streams from the system. */
+export type SubscriptionAgentTasksArgs = {
+  agent: Scalars['ID']['input'];
 };
 
 
@@ -5934,6 +5948,13 @@ export type WatchChildTasksSubscriptionVariables = Exact<{
 
 export type WatchChildTasksSubscription = { __typename?: 'Subscription', childTasks: { __typename?: 'ChildTaskEvent', create?: { __typename?: 'TaskChange', id: string, reference?: string | null, isDone: boolean, latestEventKind: TaskEventKind, latestInstructKind: TaskInstructKind, statusMessage?: string | null, action: string, implementation?: string | null, agent?: string | null, root?: string | null, parent?: string | null, createdAt: any, updatedAt: any, finishedAt?: any | null } | null, update?: { __typename?: 'TaskChange', id: string, reference?: string | null, isDone: boolean, latestEventKind: TaskEventKind, latestInstructKind: TaskInstructKind, statusMessage?: string | null, action: string, implementation?: string | null, agent?: string | null, root?: string | null, parent?: string | null, createdAt: any, updatedAt: any, finishedAt?: any | null } | null } };
 
+export type WatchAgentTasksSubscriptionVariables = Exact<{
+  agent: Scalars['ID']['input'];
+}>;
+
+
+export type WatchAgentTasksSubscription = { __typename?: 'Subscription', agentTasks: { __typename?: 'AgentTaskUpdate', create?: { __typename?: 'Task', id: string, reference?: string | null, latestEventKind: TaskEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string } } | null, update?: { __typename?: 'Task', id: string, reference?: string | null, latestEventKind: TaskEventKind, isDone: boolean, finishedAt?: any | null, createdAt: any, action: { __typename?: 'Action', id: string, name: string }, implementation: { __typename?: 'Implementation', id: string, interface: string } } | null } };
+
 export type WatchImplementationSubscriptionVariables = Exact<{
   implementation: Scalars['ID']['input'];
 }>;
@@ -6527,7 +6548,7 @@ export const AgentFragmentDoc = gql`
   active
   connected
   lastSeen
-  tasks(pagination: {limit: 5}) {
+  tasks(pagination: {limit: 5}, ordering: {createdAt: DESC}) {
     ...ListTask
   }
   placements(pagination: {limit: 1}, ordering: {createdAt: DESC}) {
@@ -11814,6 +11835,41 @@ export function useWatchChildTasksSubscription(baseOptions: ApolloReactHooks.Sub
       }
 export type WatchChildTasksSubscriptionHookResult = ReturnType<typeof useWatchChildTasksSubscription>;
 export type WatchChildTasksSubscriptionResult = Apollo.SubscriptionResult<WatchChildTasksSubscription>;
+export const WatchAgentTasksDocument = gql`
+    subscription WatchAgentTasks($agent: ID!) {
+  agentTasks(agent: $agent) {
+    create {
+      ...ListTask
+    }
+    update {
+      ...ListTask
+    }
+  }
+}
+    ${ListTaskFragmentDoc}`;
+
+/**
+ * __useWatchAgentTasksSubscription__
+ *
+ * To run a query within a React component, call `useWatchAgentTasksSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useWatchAgentTasksSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWatchAgentTasksSubscription({
+ *   variables: {
+ *      agent: // value for 'agent'
+ *   },
+ * });
+ */
+export function useWatchAgentTasksSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAgentTasksSubscription, WatchAgentTasksSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useSubscription<WatchAgentTasksSubscription, WatchAgentTasksSubscriptionVariables>(WatchAgentTasksDocument, options);
+      }
+export type WatchAgentTasksSubscriptionHookResult = ReturnType<typeof useWatchAgentTasksSubscription>;
+export type WatchAgentTasksSubscriptionResult = Apollo.SubscriptionResult<WatchAgentTasksSubscription>;
 export const WatchImplementationDocument = gql`
     subscription WatchImplementation($implementation: ID!) {
   implementationChange(implementation: $implementation) {

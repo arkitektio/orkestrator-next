@@ -363,6 +363,18 @@ const NeuronPanelCard = ({
                   ))}
                 </div>
               )}
+
+              {compartment.ions.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {compartment.ions.map((ion) => (
+                    <ParamRow
+                      key={ion.ion}
+                      label={`${ion.ion} (${ion.style})`}
+                      value={ion.reversalPotential ?? "—"}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

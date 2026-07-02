@@ -4048,8 +4048,24 @@
             "deprecationReason": null
           },
           {
-            "name": "globalParams",
-            "description": "The non-mechanistic (global) parameters applied to this compartment.",
+            "name": "id",
+            "description": "The unique identifier of the compartment within the model.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ions",
+            "description": "Ion species settings (reversal potentials and concentrations) applied to this compartment.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4061,27 +4077,11 @@
                   "name": null,
                   "kind": "NON_NULL",
                   "ofType": {
-                    "name": "GlobalParamMap",
+                    "name": "Ion",
                     "kind": "OBJECT",
                     "ofType": null
                   }
                 }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "id",
-            "description": "The unique identifier of the compartment within the model.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
               }
             },
             "isDeprecated": false,
@@ -4161,26 +4161,6 @@
             "deprecationReason": null
           },
           {
-            "name": "globalParams",
-            "description": "The non-mechanistic (global) parameters applied to this compartment.",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "GlobalParamMapInput",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "[]",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "id",
             "description": "The unique identifier of the compartment within the model.",
             "type": {
@@ -4193,6 +4173,26 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ions",
+            "description": "Ion species settings (reversal potentials and concentrations) applied to this compartment.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "IonInput",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4241,6 +4241,17 @@
             "deprecationReason": null
           }
         ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Concentration",
+        "description": "A molar concentration (``\"5 nM\"``, ``\"2 µM\"``, ``\"1 mM\"``).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
         "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
@@ -8987,118 +8998,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "OBJECT",
-        "name": "GlobalParamMap",
-        "description": "Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)",
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "description",
-            "description": "Description of the parameter",
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "param",
-            "description": "The name of the parameter to set.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "value",
-            "description": "The value of the parameter",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "GlobalParamMapInput",
-        "description": "Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)",
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "description",
-            "description": "Description of the parameter",
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "param",
-            "description": "The name of the parameter to set.",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "value",
-            "description": "The value of the parameter",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Float",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "ENUM",
         "name": "Granularity",
         "description": null,
@@ -9428,6 +9327,196 @@
         ],
         "interfaces": null,
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Ion",
+        "description": "Represents an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "externalConcentration",
+            "description": "The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Concentration",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "internalConcentration",
+            "description": "The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Concentration",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ion",
+            "description": "The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "reversalPotential",
+            "description": "The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "ElectricPotential",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "style",
+            "description": "How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "IonStyle",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "IonInput",
+        "description": "Input for an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "externalConcentration",
+            "description": "The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Concentration",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "internalConcentration",
+            "description": "The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Concentration",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ion",
+            "description": "The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "reversalPotential",
+            "description": "The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ElectricPotential",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "style",
+            "description": "How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "IonStyle",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "defaultValue": "FIXED_REVERSAL",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "IonStyle",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "ACCUMULATED",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "FIXED_REVERSAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NERNST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "possibleTypes": null
       },
       {
@@ -10013,6 +10102,150 @@
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "MechanismGlobalParam",
+        "description": "Represents a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "description",
+            "description": "Description of the parameter",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mechanism",
+            "description": "The mechanism that owns this GLOBAL parameter (e.g. 'hh').",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "param",
+            "description": "The name of the GLOBAL parameter to set (e.g. 'q10').",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": "The value of the parameter",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Float",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "MechanismGlobalParamInput",
+        "description": "Input for a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "description",
+            "description": "Description of the parameter",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mechanism",
+            "description": "The mechanism that owns this GLOBAL parameter (e.g. 'hh').",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "param",
+            "description": "The name of the GLOBAL parameter to set (e.g. 'q10').",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": "The value of the parameter",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Float",
+                "kind": "SCALAR",
+                "ofType": null
+              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -11390,6 +11623,42 @@
             "deprecationReason": null
           },
           {
+            "name": "cm",
+            "description": "Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "SpecificCapacitance",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ions",
+            "description": "Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Ion",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "An optional label for the model configuration.",
             "args": [],
@@ -11397,6 +11666,30 @@
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mechanismGlobals",
+            "description": "GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "MechanismGlobalParam",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -11457,6 +11750,18 @@
                   "ofType": null
                 }
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ra",
+            "description": "Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Resistivity",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -11531,6 +11836,38 @@
             "deprecationReason": null
           },
           {
+            "name": "cm",
+            "description": "Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².",
+            "type": {
+              "kind": "SCALAR",
+              "name": "SpecificCapacitance",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ions",
+            "description": "Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "IonInput",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "An optional label for the model configuration.",
             "type": {
@@ -11539,6 +11876,26 @@
               "ofType": null
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mechanismGlobals",
+            "description": "GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "MechanismGlobalParamInput",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -11599,6 +11956,18 @@
               }
             },
             "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ra",
+            "description": "Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Resistivity",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -20632,16 +21001,12 @@
           },
           {
             "name": "cm",
-            "description": "Specific membrane capacitance (NEURON cm).",
+            "description": "Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "SpecificCapacitance",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "SpecificCapacitance",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -20752,16 +21117,12 @@
           },
           {
             "name": "ra",
-            "description": "Axial resistivity (NEURON Ra).",
+            "description": "Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Resistivity",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Resistivity",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -20793,17 +21154,13 @@
           },
           {
             "name": "cm",
-            "description": "Specific membrane capacitance (NEURON cm).",
+            "description": "Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².",
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "SpecificCapacitance",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "SpecificCapacitance",
+              "ofType": null
             },
-            "defaultValue": "\"1 µF / cm ** 2\"",
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -20913,17 +21270,13 @@
           },
           {
             "name": "ra",
-            "description": "Axial resistivity (NEURON Ra).",
+            "description": "Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.",
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Resistivity",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Resistivity",
+              "ofType": null
             },
-            "defaultValue": "\"35.4 cm * Ω\"",
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }

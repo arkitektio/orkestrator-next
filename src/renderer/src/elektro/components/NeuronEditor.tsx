@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Check, Copy, GitBranch, HelpCircle, Pencil, Save, Trash2, X } from "lucide-react";
@@ -15,8 +16,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { useDialog } from "@/app/dialog";
 import { DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
-import { EditableModelConfig } from "../lib/modelSerialization";
+import {
+  EditableCompartment,
+  EditableModelConfig,
+  EditableModelWide,
+} from "../lib/modelSerialization";
 import { toBase } from "../lib/quantities";
+import { CompartmentEditor } from "./editor/CompartmentEditor";
+import { ModelConfigPanel } from "./editor/ModelConfigPanel";
 import { QuantityInput } from "./QuantityInput";
 
 // --- Types & Helpers ---
@@ -312,6 +319,20 @@ export const NeuronEditor = ({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
+  // Model-wide config lives in its own state (the editor mutates only `cells`
+  // for topology/biophysics; these scalars + lists round-trip via the Model tab).
+  const [modelWide, setModelWide] = useState<EditableModelWide>(() => ({
+    temperature: initialModel.config.temperature,
+    vInit: initialModel.config.vInit,
+    label: initialModel.config.label,
+    ra: initialModel.config.ra,
+    cm: initialModel.config.cm,
+    ions: initialModel.config.ions ?? [],
+    mechanismGlobals: initialModel.config.mechanismGlobals ?? [],
+  }));
+  const patchModelWide = (update: Partial<EditableModelWide>) =>
+    setModelWide(prev => ({ ...prev, ...update }));
+
   // We need a way to update a specific section in the deep structure
   // Or we just flatten them into a list and reconstruct?
   // The layout hook expects a flat list of sections.
@@ -335,6 +356,21 @@ export const NeuronEditor = ({
         topology: {
           ...cell.topology,
           sections: cell.topology.sections.map(s => s.id === id ? { ...s, ...update } : s)
+        }
+      };
+    }));
+  };
+
+  const updateCompartment = (compartmentId: string, update: Partial<EditableCompartment>) => {
+    setCells(prev => prev.map(cell => {
+      if (cell.id !== activeCellId) return cell;
+      return {
+        ...cell,
+        biophysics: {
+          ...cell.biophysics,
+          compartments: cell.biophysics.compartments.map(c =>
+            c.id === compartmentId ? { ...c, ...update } : c
+          )
         }
       };
     }));
@@ -384,7 +420,7 @@ export const NeuronEditor = ({
       ...original,
       id: newId,
       coords: original.coords ? original.coords.map(c => ({ ...c })) : [],
-      connections: original.connections.map(c => ({ ...c })),
+      parent: original.parent ? { ...original.parent } : null,
     };
 
     setCells(prev => prev.map(cell => {
@@ -411,13 +447,8 @@ export const NeuronEditor = ({
           sections: cell.topology.sections.map(s => {
             if (s.id === oldId) return { ...s, id: newId };
             // Re-point any child that referenced the old id as its parent.
-            if (s.connections?.some(c => c.parent === oldId)) {
-              return {
-                ...s,
-                connections: s.connections.map(c =>
-                  c.parent === oldId ? { ...c, parent: newId } : c
-                )
-              };
+            if (s.parent?.parent === oldId) {
+              return { ...s, parent: { ...s.parent, parent: newId } };
             }
             return s;
           })
@@ -450,7 +481,7 @@ export const NeuronEditor = ({
     const sectionToDelete = sections.find(s => s.id === id);
     if (!sectionToDelete) return;
 
-    const parentConnection = sectionToDelete.connections?.[0];
+    const parentConnection = sectionToDelete.parent;
 
     setCells(prev => prev.map(cell => {
       if (cell.id !== activeCellId) return cell;
@@ -458,24 +489,21 @@ export const NeuronEditor = ({
       const newSections = cell.topology.sections
         .filter(s => s.id !== id)
         .map(s => {
-          const conn = s.connections?.[0];
-          if (conn?.parent === id) {
+          if (s.parent?.parent === id) {
             // This is a child of the deleted section
             if (parentConnection) {
               // Glue to grandparent
               return {
                 ...s,
-                connections: [{
+                parent: {
                   parent: parentConnection.parent,
-                  location: parentConnection.location
-                }]
+                  parentLocation: parentConnection.parentLocation,
+                  childEnd: parentConnection.childEnd,
+                }
               };
             } else {
               // Becomes a root
-              return {
-                ...s,
-                connections: []
-              };
+              return { ...s, parent: null };
             }
           }
           return s;
@@ -504,7 +532,7 @@ export const NeuronEditor = ({
     let current = sections.find(s => s.id === newParentId);
     let isCycle = false;
     while (current) {
-      const parentId = current.connections?.[0]?.parent;
+      const parentId = current.parent?.parent;
       if (!parentId) break;
       if (parentId === childId) {
         isCycle = true;
@@ -519,7 +547,7 @@ export const NeuronEditor = ({
     }
 
     updateSection(childId, {
-      connections: [{ parent: newParentId, location: 1 }]
+      parent: { parent: newParentId, parentLocation: 1, childEnd: 0 }
     });
     setRebranchingId(null);
     toast.success("Section rebranched");
@@ -576,19 +604,21 @@ export const NeuronEditor = ({
 
             <Button
               className="w-full"
-              onClick={() => onSave({
-                cells,
-                celsius: initialModel.config.celsius,
-                vInit: initialModel.config.vInit,
-                label: initialModel.config.label,
-              })}
+              onClick={() => onSave({ cells, ...modelWide })}
             >
               <Save className="w-4 h-4 mr-2" />
               Save as new model
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+          <Tabs defaultValue="topology" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="grid grid-cols-3 flex-none">
+              <TabsTrigger value="topology">Topology</TabsTrigger>
+              <TabsTrigger value="biophysics">Biophysics</TabsTrigger>
+              <TabsTrigger value="model">Model</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="topology" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
             {sections.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-8 px-2">
                 No sections yet. Add one in the 3D view to start building.
@@ -702,7 +732,7 @@ export const NeuronEditor = ({
                       {(() => {
                         const parentInfo = getParentInfo(section);
                         if (!parentInfo) return null;
-                        const conn = section.connections![0];
+                        const conn = section.parent!;
                         // Absolute distance of the connection point from the parent's
                         // start, in µm — location is a 0–1 fraction of the parent length.
                         const parentLength = toBase(
@@ -725,7 +755,7 @@ export const NeuronEditor = ({
                                   if (isNaN(val)) return;
                                   const clamped = Math.max(0, Math.min(1, val));
                                   updateSection(section.id, {
-                                    connections: [{ ...conn, parent: parentInfo.id, location: clamped }]
+                                    parent: { ...conn, parent: parentInfo.id, parentLocation: clamped }
                                   });
                                 }}
                               />
@@ -742,7 +772,7 @@ export const NeuronEditor = ({
                                   min={0} max={1} step={0.01}
                                   onValueChange={([val]) =>
                                     updateSection(section.id, {
-                                      connections: [{ ...conn, parent: parentInfo.id, location: val }]
+                                      parent: { ...conn, parent: parentInfo.id, parentLocation: val }
                                     })
                                   }
                                 />
@@ -806,7 +836,41 @@ export const NeuronEditor = ({
               })}
             </Accordion>
             )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="biophysics" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
+              {compartments.length === 0 ? (
+                <div className="text-xs text-muted-foreground text-center py-8 px-2">
+                  No compartments defined for this cell.
+                </div>
+              ) : (
+                <Accordion type="single" collapsible>
+                  {compartments.map(compartment => (
+                    <AccordionItem key={compartment.id} value={compartment.id}>
+                      <AccordionTrigger className="text-sm py-2 hover:no-underline">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono truncate">{compartment.id}</span>
+                          <span className="text-muted-foreground text-xs truncate">
+                            ({compartment.mechanisms.length} mech, {compartment.ions.length} ion{compartment.ions.length === 1 ? "" : "s"})
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <CompartmentEditor
+                          compartment={compartment}
+                          onChange={(update) => updateCompartment(compartment.id, update)}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
+            </TabsContent>
+
+            <TabsContent value="model" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
+              <ModelConfigPanel value={modelWide} patch={patchModelWide} />
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
 

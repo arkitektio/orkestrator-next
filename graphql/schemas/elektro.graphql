@@ -385,11 +385,13 @@ type Compartment {
   """
   color: RGBAColor
 
-  """The non-mechanistic (global) parameters applied to this compartment."""
-  globalParams: [GlobalParamMap!]!
-
   """The unique identifier of the compartment within the model."""
   id: String!
+
+  """
+  Ion species settings (reversal potentials and concentrations) applied to this compartment.
+  """
+  ions: [Ion!]!
 
   """The set of mechanisms active in this compartment."""
   mechanisms: [String!]!
@@ -407,11 +409,13 @@ input CompartmentInput {
   """
   color: RGBAColor = null
 
-  """The non-mechanistic (global) parameters applied to this compartment."""
-  globalParams: [GlobalParamMapInput!] = []
-
   """The unique identifier of the compartment within the model."""
   id: String!
+
+  """
+  Ion species settings (reversal potentials and concentrations) applied to this compartment.
+  """
+  ions: [IonInput!] = []
 
   """The set of mechanisms active in this compartment."""
   mechanisms: [String!]! = []
@@ -421,6 +425,9 @@ input CompartmentInput {
   """
   sectionParams: [SectionParamMapInput!] = []
 }
+
+"""A molar concentration (``"5 nM"``, ``"2 µM"``, ``"1 mM"``)."""
+scalar Concentration
 
 """
 Represents a connection of a section to its (single) parent section, defining the morphology tree.
@@ -964,34 +971,6 @@ type GeneralZarrAccessGrant {
   store: String
 }
 
-"""
-Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)
-"""
-type GlobalParamMap {
-  """Description of the parameter"""
-  description: String
-
-  """The name of the parameter to set."""
-  param: String!
-
-  """The value of the parameter"""
-  value: Float!
-}
-
-"""
-Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)
-"""
-input GlobalParamMapInput {
-  """Description of the parameter"""
-  description: String = null
-
-  """The name of the parameter to set."""
-  param: String!
-
-  """The value of the parameter"""
-  value: Float!
-}
-
 enum Granularity {
   DAY
   HOUR
@@ -1026,6 +1005,72 @@ input IntFilterLookup {
   range: [Int!]
   regex: String
   startsWith: Int
+}
+
+"""
+Represents an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).
+"""
+type Ion {
+  """
+  The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).
+  """
+  externalConcentration: Concentration
+
+  """
+  The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).
+  """
+  internalConcentration: Concentration
+
+  """
+  The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.
+  """
+  ion: String!
+
+  """
+  The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.
+  """
+  reversalPotential: ElectricPotential
+
+  """
+  How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.
+  """
+  style: IonStyle!
+}
+
+"""
+Input for an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).
+"""
+input IonInput {
+  """
+  The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).
+  """
+  externalConcentration: Concentration = null
+
+  """
+  The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).
+  """
+  internalConcentration: Concentration = null
+
+  """
+  The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.
+  """
+  ion: String!
+
+  """
+  The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.
+  """
+  reversalPotential: ElectricPotential = null
+
+  """
+  How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.
+  """
+  style: IonStyle! = FIXED_REVERSAL
+}
+
+enum IonStyle {
+  ACCUMULATED
+  FIXED_REVERSAL
+  NERNST
 }
 
 type IrregularlySampledSignal implements Signal {
@@ -1088,6 +1133,40 @@ input MechanismFilter {
   ids: [ID!]
   name: StrFilterLookup
   search: String
+}
+
+"""
+Represents a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.
+"""
+type MechanismGlobalParam {
+  """Description of the parameter"""
+  description: String
+
+  """The mechanism that owns this GLOBAL parameter (e.g. 'hh')."""
+  mechanism: String!
+
+  """The name of the GLOBAL parameter to set (e.g. 'q10')."""
+  param: String!
+
+  """The value of the parameter"""
+  value: Float!
+}
+
+"""
+Input for a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.
+"""
+input MechanismGlobalParamInput {
+  """Description of the parameter"""
+  description: String = null
+
+  """The mechanism that owns this GLOBAL parameter (e.g. 'hh')."""
+  mechanism: String!
+
+  """The name of the GLOBAL parameter to set (e.g. 'q10')."""
+  param: String!
+
+  """The value of the parameter"""
+  value: Float!
 }
 
 """Input for creating a mechanism"""
@@ -1216,8 +1295,23 @@ type ModelConfig {
   """The list of cells in the model."""
   cells: [Cell!]!
 
+  """
+  Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance
+
+  """
+  Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.
+  """
+  ions: [Ion!]!
+
   """An optional label for the model configuration."""
   label: String
+
+  """
+  GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.
+  """
+  mechanismGlobals: [MechanismGlobalParam!]!
 
   """The list of net connections in the model."""
   netConnections: [NetConnection!]
@@ -1227,6 +1321,11 @@ type ModelConfig {
 
   """The list of net synapses in the model."""
   netSynapses: [NetSynapse!]
+
+  """
+  Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity
 
   """Simulation bath temperature."""
   temperature: Temperature!
@@ -1240,8 +1339,23 @@ input ModelConfigInput {
   """The list of cells in the model."""
   cells: [CellInput!]! = []
 
+  """
+  Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance = null
+
+  """
+  Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.
+  """
+  ions: [IonInput!] = []
+
   """An optional label for the model configuration."""
   label: String = null
+
+  """
+  GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.
+  """
+  mechanismGlobals: [MechanismGlobalParamInput!] = []
 
   """The list of net connections in the model."""
   netConnections: [NetConnectionInput!] = []
@@ -1251,6 +1365,11 @@ input ModelConfigInput {
 
   """The list of net synapses in the model."""
   netSynapses: [NetSynapseInput!] = []
+
+  """
+  Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity = null
 
   """Simulation bath temperature."""
   temperature: Temperature! = "309.15 K"
@@ -2135,8 +2254,10 @@ type Section {
   """
   category: String
 
-  """Specific membrane capacitance (NEURON cm)."""
-  cm: SpecificCapacitance!
+  """
+  Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance
 
   """
   The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.
@@ -2171,8 +2292,10 @@ type Section {
   """
   parent: Connection
 
-  """Axial resistivity (NEURON Ra)."""
-  ra: Resistivity!
+  """
+  Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity
 }
 
 """
@@ -2184,8 +2307,10 @@ input SectionInput {
   """
   category: String = null
 
-  """Specific membrane capacitance (NEURON cm)."""
-  cm: SpecificCapacitance! = "1 µF / cm ** 2"
+  """
+  Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance = null
 
   """
   The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.
@@ -2220,8 +2345,10 @@ input SectionInput {
   """
   parent: ConnectionInput = null
 
-  """Axial resistivity (NEURON Ra)."""
-  ra: Resistivity! = "35.4 cm * Ω"
+  """
+  Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity = null
 }
 
 """

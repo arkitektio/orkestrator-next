@@ -9,11 +9,10 @@ import * as THREE from "three";
 export interface FitSegment {
   start: THREE.Vector3;
   end: THREE.Vector3;
-  section: { connections?: { parent: string }[] | null };
+  section: { parent?: { parent: string } | null };
 }
 
-const isRootSection = (section: FitSegment["section"]) =>
-  !section.connections || section.connections.length === 0;
+const isRootSection = (section: FitSegment["section"]) => !section.parent;
 
 /**
  * Collect every geometry point (for the enclosing radius) and the centroid of

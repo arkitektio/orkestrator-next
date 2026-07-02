@@ -1,3 +1,10 @@
+# [1.66.0-rc.6](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.5...v1.66.0-rc.6) (2026-07-02)
+
+
+### Bug Fixes
+
+* better devices ([d0a4b5d](https://github.com/arkitektio/orkestrator-next/commit/d0a4b5dfc1be995f7c24068b922302f6554b5280))
+
 # [1.66.0-rc.5](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.4...v1.66.0-rc.5) (2026-07-02)
 
 

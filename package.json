@@ -1,6 +1,6 @@
 {
   "name": "orkestrator-next",
-  "version": "1.66.0-rc.5",
+  "version": "1.66.0-rc.6",
   "license": "MIT",
   "description": "The client application for the Arkitekt Framework",
   "main": "./out/main/index.js",

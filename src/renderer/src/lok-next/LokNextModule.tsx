@@ -5,8 +5,8 @@ import { Route, Routes } from "react-router";
 import AppPage from "./pages/AppPage";
 import AppsPage from "./pages/AppsPage";
 import ClientPage from "./pages/ClientPage";
-import ComputeNodePage from "./pages/ComputeNodePage";
-import ComputeNodesPage from "./pages/ComputeNodesPage";
+import DevicePage from "./pages/DevicePage";
+import DevicesPage from "./pages/DevicesPage";
 import HomePage from "./pages/HomePage";
 import InstancesPage from "./pages/InstancesPage";
 import LayerPage from "./pages/LayerPage";
@@ -36,8 +36,8 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="users" element={<UsersPage />} />
           <Route path="users/:id" element={<UserPage />} />
           <Route path="apps" element={<AppsPage />} />
-          <Route path="computenodes/:id" element={<ComputeNodePage />} />
-          <Route path="computenodes" element={<ComputeNodesPage />} />
+          <Route path="devices/:id" element={<DevicePage />} />
+          <Route path="devices" element={<DevicesPage />} />
           <Route path="apps/:id" element={<AppPage />} />
           <Route path="releases/:id" element={<ReleasePage />} />
           <Route path="clients/:id" element={<ClientPage />} />

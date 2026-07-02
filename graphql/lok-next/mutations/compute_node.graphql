@@ -1,5 +1,5 @@
-mutation UpdateComputeNode($input: UpdateComputeNodeInput!) {
-  updateComputeNode(input: $input) {
-    ...DetailComputeNode
+mutation UpdateDevice($input: UpdateDeviceInput!) {
+  updateDevice(input: $input) {
+    ...DetailDevice
   }
 }

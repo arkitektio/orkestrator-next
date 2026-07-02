@@ -271,7 +271,6 @@ export class OrkestratorAgent {
         });
 
         const impls = await window.api.inspectElectronAgent();
-        console.log("Electron agent implementations:", impls);
         impls.forEach(impl => {
           if (!impl.interface) return;
           this.register(impl.interface, async (context) => {
@@ -384,6 +383,8 @@ export class OrkestratorAgent {
     );
 
     const implementations = this.normalizedImplementations();
+
+    console.log("Electron agent implementations:", implementations);
     const localHash = this.computeImplementationsHash(implementations);
     const serverHash = ensured.data?.ensureAgent?.hash;
 
@@ -391,6 +392,7 @@ export class OrkestratorAgent {
     if (implementations.length === 0 || serverHash === localHash) {
       return;
     }
+
 
     await this.runAbortableRequest((controller) =>
       this.rekuestClient.mutate<ImplementAgentMutation, ImplementAgentMutationVariables>({

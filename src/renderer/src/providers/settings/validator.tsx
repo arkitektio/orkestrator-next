@@ -29,7 +29,7 @@ export const defaultSettings: Settings = {
   experimentalViv: false,
   experimentalCache: false,
   defaultZoomLevel: 0.8,
-  startAgent: true,
+  startAgent: false,
   showHoverCards: true,
   agentExpanded: false,
   brandHue: 267.256,

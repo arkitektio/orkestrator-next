@@ -739,10 +739,10 @@ export const LokClient = buildSmart(
   "lok/clients",
   { name: "Client" },
 );
-export const LokComputeNode = buildSmart(
-  "@lok/computenode",
-  "lok/computenodes",
-  { name: "Compute Node" },
+export const LokDevice = buildSmart(
+  "@lok/device",
+  "lok/devices",
+  { name: "Device " },
 );
 export const LokApp = buildSmart(
   "@lok/app",

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokClient, LokComputeNode, LokServiceInstance, RekuestTask } from "@/linkers";
+import { LokClient, LokDevice, LokServiceInstance, RekuestTask } from "@/linkers";
 import {
   TaskEventKind,
   PostmanTaskFragment,
@@ -53,7 +53,7 @@ const FailedTasks = ({ clientId }: { clientId: string }) => {
             key={index}
             className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
           >
-            <RekuestTask.DetailLink object={ex.id} className="flex flex-col gap-1">
+            <RekuestTask.DetailLink object={{id: ex.id}} className="flex flex-col gap-1">
               <div className="font-medium flex items-center gap-2">
                 {ex.action.name}
                 <Badge variant="destructive" className="text-[10px] h-5">
@@ -97,7 +97,7 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
 
   return (
     <LokClient.ModelPage
-      object={data.client.id}
+      object={data.client}
       pageActions={
         <>
           <Button
@@ -156,12 +156,12 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
                 <div className="flex items-center gap-2">
                   <Server className="h-4 w-4" />
                   {data.client.node ? (
-                    <LokComputeNode.DetailLink
-                      object={data.client.node.id}
+                    <LokDevice.DetailLink
+                      object={data.client.node}
                       className="hover:underline font-medium"
                     >
                       {data.client.node.name}
-                    </LokComputeNode.DetailLink>
+                    </LokDevice.DetailLink>
                   ) : (
                     "Unassigned"
                   )}
@@ -180,46 +180,6 @@ export default asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
 
         <Separator />
 
-        {/* Connected Services Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <LinkIcon className="h-4 w-4" />
-              Connected Services
-            </h3>
-            <span className="text-sm text-muted-foreground">
-              {data.client.mappings.length} services linked
-            </span>
-          </div>
-
-          {data.client.mappings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.client.mappings.map((mapping) => (
-                <div
-                  key={mapping.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      {mapping.key}
-                    </span>
-                    <LokServiceInstance.DetailLink
-                      object={mapping.instance.id}
-                      className="font-medium hover:underline flex items-center gap-2"
-                    >
-                      {mapping.instance.identifier}
-                    </LokServiceInstance.DetailLink>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">
-              No services connected to this client.
-            </div>
-          )}
-        </div>
 
         {/* Failed Tasks Section */}
         <FailedTasks clientId={data.client.oauth2Client.clientId} />

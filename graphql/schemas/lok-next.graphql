@@ -99,7 +99,7 @@ type Client {
   name: String!
 
   """The node this runs on"""
-  node: ComputeNode
+  node: Device
 
   """
   The real oauth2 client that is used to authenticate users with this client.
@@ -117,6 +117,11 @@ type Client {
   """The release that this client belongs to."""
   release: Release!
 
+  """
+  The operational role of the client. INTERFACE clients are human interfaces operated by a user in real time. AGENT clients are authorized once and then run unattended, receiving and processing tasks on the user's behalf.
+  """
+  role: ClientRole!
+
   """The user that manages this release."""
   tenant: User!
 
@@ -132,7 +137,7 @@ type Client {
 }
 
 """
-Client(id, composition, functional, name, release, oauth2_client, kind, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, logo, last_reported_at, manifest)
+Client(id, composition, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, manifest)
 """
 input ClientFilter {
   AND: ClientFilter
@@ -140,6 +145,9 @@ input ClientFilter {
   NOT: ClientFilter
   OR: ClientFilter
   ids: [ID!]
+
+  """Operational role: human INTERFACE vs autonomous task-receiving AGENT."""
+  role: ClientRole
   search: String
 }
 
@@ -147,6 +155,11 @@ enum ClientKind {
   DESKTOP
   DEVELOPMENT
   WEBSITE
+}
+
+enum ClientRole {
+  AGENT
+  INTERFACE
 }
 
 """
@@ -208,27 +221,6 @@ type Communication {
   channel: ID!
 }
 
-"""ComputeNode(id, node_id, name, organization)"""
-type ComputeNode {
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [Client!]!
-
-  """The device groups that belong to this compute node."""
-  deviceGroups(filters: DeviceGroupFilter, pagination: OffsetPaginationInput): [DeviceGroup!]!
-  id: ID!
-  name: String
-  nodeId: ID!
-}
-
-"""ComputeNode(id, node_id, name, organization)"""
-input ComputeNodeFilter {
-  AND: ComputeNodeFilter
-  DISTINCT: Boolean
-  NOT: ComputeNodeFilter
-  OR: ComputeNodeFilter
-  ids: [ID!]
-  search: String
-}
-
 type Context {
   """Are we acting in the active organization of the user?"""
   fitsActiveOrganization: Boolean!
@@ -269,7 +261,6 @@ input CreateInviteInput {
 input CreateOrganizationInput {
   description: String = null
   name: String!
-  setupKommunityPartners: Boolean! = true
 }
 
 input CreateProfileInput {
@@ -344,17 +335,39 @@ input DevelopmentClientInput {
   composition: ID = null
   layers: [String!] = ["web"]
   manifest: ManifestInput!
+  role: ClientRole = null
+}
+
+"""Device(id, node_id, name, organization)"""
+type Device {
+  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [Client!]!
+
+  """The device groups that belong to this device."""
+  deviceGroups(filters: DeviceGroupFilter, pagination: OffsetPaginationInput): [DeviceGroup!]!
+  id: ID!
+  name: String
+  nodeId: ID!
+}
+
+"""Device(id, node_id, name, organization)"""
+input DeviceFilter {
+  AND: DeviceFilter
+  DISTINCT: Boolean
+  NOT: DeviceFilter
+  OR: DeviceFilter
+  ids: [ID!]
+  search: String
 }
 
 """
 A DeviceGroup is a group of compute nodes that can be used to run clients. DeviceGroups can be used to group compute nodes by location, hardware type, or any other criteria.
 """
 type DeviceGroup {
-  """The compute nodes that belong to this device group."""
-  computeNodes(filters: ComputeNodeFilter, pagination: OffsetPaginationInput): [ComputeNode!]!
-
   """The description of the device group."""
   description: String
+
+  """The devices that belong to this device group."""
+  devices(filters: DeviceFilter, pagination: OffsetPaginationInput): [Device!]!
   id: ID!
 
   """The name of the device group."""
@@ -444,11 +457,13 @@ type InstanceAlias {
   """The instance that this alias belongs to."""
   instance: ServiceInstance!
 
-  """The name of the alias. This is a human readable name of the alias."""
+  """
+  The kind of alias. If relative, the alias is resolved against the layer's domain/port/path; if absolute, it is a full URL.
+  """
   kind: String!
 
-  """The layer that this alias belongs to."""
-  layer: Layer!
+  """The layer that this alias belongs to, if any."""
+  layer: Layer
 
   """
   The path of the alias, if its a ABSOLUTE alias (e.g. 'example.com/path'). If not set, the alias is relative to the layer's path.
@@ -459,6 +474,11 @@ type InstanceAlias {
   The port of the alias, if its a ABSOLUTE alias (e.g. 'example.com:8080'). If not set, the alias is relative to the layer's port.
   """
   port: Int
+
+  """
+  Is this alias publicly reachable? If true, the coordination server can also check the alias's health directly, enabling health checks from the kontrol interface.
+  """
+  public: Boolean!
 
   """
   Is this alias using SSL? If true, the alias will be accessed via https:// instead of http://. This is used to indicate that the alias is secure and should be accessed via SSL
@@ -628,7 +648,6 @@ type Mutation {
   createComment(input: CreateCommentInput!): Comment!
   createDevelopmentalClient(input: DevelopmentClientInput!): Client!
   createGroupProfile(input: CreateGroupProfileInput!): GroupProfile!
-  createInstanceAlias(input: CreateServiceInstanceInput!): InstanceAlias!
   createInvite(input: CreateInviteInput!): Invite!
   createOrganization(input: CreateOrganizationInput!): Organization!
   createProfile(input: CreateProfileInput!): Profile!
@@ -649,9 +668,8 @@ type Mutation {
   replyTo(input: ReplyToCommentInput!): Comment!
   requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
   resolveComment(input: ResolveCommentInput!): Comment!
-  updateComputeNode(input: UpdateComputeNodeInput!): ComputeNode!
+  updateDevice(input: UpdateDeviceInput!): Device!
   updateGroupProfile(input: UpdateGroupProfileInput!): GroupProfile!
-  updateInstanceAlias(input: UpdateServiceInstanceInput!): InstanceAlias!
   updateOrganization(input: UpdateOrganizationInput!): Organization!
   updateProfile(input: UpdateProfileInput!): Profile!
   updateServiceInstance(input: UpdateServiceInstanceInput!): ServiceInstance!
@@ -802,11 +820,11 @@ type Query {
   comment(id: ID!): Comment!
   comments: [Comment!]!
   commentsFor(identifier: Identifier!, object: ID!): [Comment!]!
-  computeNode(id: ID!): ComputeNode!
-  computeNodes(filters: ComputeNodeFilter, pagination: OffsetPaginationInput): [ComputeNode!]!
-  deviceByDeviceId(id: ID!): ComputeNode!
+  device(id: ID!): Device!
+  deviceByDeviceId(id: ID!): Device!
   deviceGroup(id: ID!): DeviceGroup!
   deviceGroups(filters: DeviceGroupFilter, pagination: OffsetPaginationInput): [DeviceGroup!]!
+  devices(filters: DeviceFilter, pagination: OffsetPaginationInput): [Device!]!
   group(id: ID!): Group!
   groups(filters: GroupFilter, pagination: OffsetPaginationInput): [Group!]!
   hallo: String!
@@ -1257,7 +1275,7 @@ The `Identifier` scalasr typsse represents a reference to a store previously cre
 """
 scalar UnsafeChild
 
-input UpdateComputeNodeInput {
+input UpdateDeviceInput {
   id: ID!
   name: String
 }

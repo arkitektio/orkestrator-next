@@ -1,15 +1,5 @@
-fragment DetailComputeNode on ComputeNode {
-  id
-  name
-  nodeId
-  clients {
-    ...ListClient
-  }
-  deviceGroups {
-    ...ListDeviceGroup
-  }
-}
-fragment DetailDevice on ComputeNode {
+
+fragment DetailDevice on Device {
   id
   name
   nodeId
@@ -18,7 +8,7 @@ fragment DetailDevice on ComputeNode {
   }
 }
 
-fragment ListComputeNode on ComputeNode {
+fragment ListDevice on Device {
   id
   name
   nodeId

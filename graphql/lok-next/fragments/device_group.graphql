@@ -1,8 +1,8 @@
 fragment DetailDeviceGroup on DeviceGroup {
   id
   name
-  computeNodes {
-    ...ListComputeNode
+  devices {
+    ...ListDevice
   }
 }
 

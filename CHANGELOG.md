@@ -1,3 +1,10 @@
+# [1.66.0-rc.5](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.4...v1.66.0-rc.5) (2026-07-02)
+
+
+### Bug Fixes
+
+* smaller neuron editor fixes ([ca4576b](https://github.com/arkitektio/orkestrator-next/commit/ca4576b3d26e6b4f87511dee8dc2c4a57cace075))
+
 # [1.66.0-rc.4](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.3...v1.66.0-rc.4) (2026-07-02)
 
 

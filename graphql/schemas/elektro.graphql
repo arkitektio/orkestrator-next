@@ -644,11 +644,22 @@ input DesociateInput {
 }
 
 """
+A physical dimension (``"[length]"``, ``"[current] / [length] ** 2"``, ``"dimensionless"``).
+
+A string scalar validating that the value is a parseable pint dimensionality and
+serializing it to a canonical, order-stable string (the quantity-compatibility
+key). A unit expression is accepted and reduced to its dimensionality.
+"""
+scalar Dimension
+
+"""
 Represents how a section parameter is distributed along a section (NEURON range variable).
 """
 type Distribution {
-  """The value at the most distal segment (required for 'linear')."""
-  distalValue: Float
+  """
+  The value at the most distal segment (required for 'linear'). A unit-bearing quantity.
+  """
+  distalValue: GenericQuantity
 
   """
   An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').
@@ -658,19 +669,25 @@ type Distribution {
   """The kind of spatial distribution."""
   kind: DistributionKind!
 
-  """The value at path distance 0 (required for 'linear')."""
-  proximalValue: Float
+  """
+  The value at path distance 0 (required for 'linear'). A unit-bearing quantity.
+  """
+  proximalValue: GenericQuantity
 
-  """The uniform value applied to every segment (required for 'uniform')."""
-  value: Float
+  """
+  The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.
+  """
+  value: GenericQuantity
 }
 
 """
 Input for how a section parameter is distributed along a section (NEURON range variable). Supply the fields matching the chosen kind: 'uniform' -> value; 'linear' -> proximal_value & distal_value; 'expression' -> expression.
 """
 input DistributionInput {
-  """The value at the most distal segment (required for 'linear')."""
-  distalValue: Float = null
+  """
+  The value at the most distal segment (required for 'linear'). A unit-bearing quantity.
+  """
+  distalValue: GenericQuantity = null
 
   """
   An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').
@@ -680,11 +697,15 @@ input DistributionInput {
   """The kind of spatial distribution."""
   kind: DistributionKind! = UNIFORM
 
-  """The value at path distance 0 (required for 'linear')."""
-  proximalValue: Float = null
+  """
+  The value at path distance 0 (required for 'linear'). A unit-bearing quantity.
+  """
+  proximalValue: GenericQuantity = null
 
-  """The uniform value applied to every segment (required for 'uniform')."""
-  value: Float = null
+  """
+  The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.
+  """
+  value: GenericQuantity = null
 }
 
 enum DistributionKind {
@@ -971,6 +992,17 @@ type GeneralZarrAccessGrant {
   store: String
 }
 
+"""
+A physical quantity of any dimension (``"0.12 S/cm2"``, ``"-54.3 mV"``, ``"2 mM"``).
+
+Unlike the dimension-locked scalars, this keeps whatever unit the value
+carries and does not normalize to a canonical integer — its dimension is
+whatever the value has. A bare number without a unit is rejected. On the wire
+it is a string; validating it against an expected dimension (e.g. a declared
+mechanism parameter) is the caller's job.
+"""
+scalar GenericQuantity
+
 enum Granularity {
   DAY
   HOUR
@@ -1148,8 +1180,10 @@ type MechanismGlobalParam {
   """The name of the GLOBAL parameter to set (e.g. 'q10')."""
   param: String!
 
-  """The value of the parameter"""
-  value: Float!
+  """
+  The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').
+  """
+  value: GenericQuantity!
 }
 
 """
@@ -1165,8 +1199,10 @@ input MechanismGlobalParamInput {
   """The name of the GLOBAL parameter to set (e.g. 'q10')."""
   param: String!
 
-  """The value of the parameter"""
-  value: Float!
+  """
+  The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').
+  """
+  value: GenericQuantity!
 }
 
 """Input for creating a mechanism"""
@@ -1819,20 +1855,26 @@ type Organization {
 type Parameter {
   default: Any
   description: String
+  dimension: Dimension
   key: String!
   kind: ParameterKind!
   label: String
   nullable: Boolean!
+  proposedUnits: [Unit!]
+  referenceUnit: Unit
 }
 
 """A parameter port of a mechanism"""
 input ParameterInput {
   default: Any = null
   description: String = null
+  dimension: Dimension = null
   key: String!
   kind: ParameterKind! = FLOAT
   label: String = null
   nullable: Boolean! = false
+  proposedUnits: [Unit!] = null
+  referenceUnit: Unit = null
 }
 
 """The kind of a mechanism parameter."""
@@ -2728,6 +2770,15 @@ input TraceOrder @oneOf {
 
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar TwoDVector
+
+"""
+A physical unit of measurement (``"mV"``, ``"S/cm2"``, ``"second"``).
+
+A string scalar validating that the value parses as a pint unit — a bad unit,
+a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
+spelling (``"cm2"``) is accepted and the given spelling is preserved.
+"""
+scalar Unit
 
 input UpdateModelWorkspaceInput {
   description: String = null

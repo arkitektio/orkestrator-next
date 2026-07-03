@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { EditableCompartment } from "../../lib/modelSerialization";
+import { QuantityInput } from "../QuantityInput";
+import { useMechanismParamMeta } from "./MechanismCatalog";
 
 type EditableSectionParam = EditableCompartment["sectionParams"][number];
 
@@ -9,13 +11,79 @@ const emptyParam = (): EditableSectionParam => ({
   mechanism: "",
   param: "",
   description: null,
-  distribution: { value: 0 },
+  // A unit-bearing `GenericQuantity` string (e.g. "0.12 S/cm2"); empty until entered.
+  distribution: { value: "" },
 });
+
+/**
+ * One `sectionParam` row. Split out so it can look up the parameter's declared
+ * units from the mechanism catalogue (a hook, so it can't live in a `.map`
+ * callback) and ground the value input accordingly.
+ */
+const SectionParamRow = ({
+  param,
+  onChange,
+  onRemove,
+}: {
+  param: EditableSectionParam;
+  onChange: (update: Partial<EditableSectionParam>) => void;
+  onRemove: () => void;
+}) => {
+  const meta = useMechanismParamMeta(param.mechanism, param.param);
+  return (
+    <div className="space-y-1.5 rounded border p-2">
+      <div className="flex items-center gap-1">
+        <Input
+          className="h-7 font-mono"
+          placeholder="mechanism"
+          value={param.mechanism}
+          onChange={(e) => onChange({ mechanism: e.target.value })}
+        />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 flex-none p-0 text-muted-foreground"
+          title="Remove parameter"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <Input
+          className="h-7 font-mono"
+          placeholder="param"
+          value={param.param}
+          onChange={(e) => onChange({ param: e.target.value })}
+        />
+        <QuantityInput
+          value={param.distribution.value}
+          onChange={(value) =>
+            onChange({ distribution: { ...param.distribution, value } })
+          }
+          units={meta?.proposedUnits ?? undefined}
+          defaultUnit={meta?.referenceUnit ?? undefined}
+        />
+      </div>
+      <Input
+        className="h-7"
+        placeholder="description (optional)"
+        value={param.description ?? ""}
+        onChange={(e) => onChange({ description: e.target.value || null })}
+      />
+    </div>
+  );
+};
 
 /**
  * Controlled editor for a compartment's `sectionParams` (mechanism-specific
  * parameters). Only the uniform `distribution.value` is edited here — LINEAR /
  * EXPRESSION distributions are not surfaced (the fragment reads only `value`).
+ *
+ * The value is a grounded `GenericQuantity`: its unit dropdown is seeded from the
+ * mechanism catalogue (the parameter's `proposedUnits` / `referenceUnit`) once
+ * `mechanism` + `param` match a known parameter; otherwise it falls back to
+ * free-form quantity entry.
  */
 export const SectionParamsEditor = ({
   value,
@@ -33,49 +101,12 @@ export const SectionParamsEditor = ({
         <p className="text-[11px] text-muted-foreground">No section parameters.</p>
       )}
       {value.map((p, i) => (
-        <div key={i} className="space-y-1.5 rounded border p-2">
-          <div className="flex items-center gap-1">
-            <Input
-              className="h-7 font-mono"
-              placeholder="mechanism"
-              value={p.mechanism}
-              onChange={(e) => patch(i, { mechanism: e.target.value })}
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 w-7 flex-none p-0 text-muted-foreground"
-              title="Remove parameter"
-              onClick={() => onChange(value.filter((_, j) => j !== i))}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <Input
-              className="h-7 font-mono"
-              placeholder="param"
-              value={p.param}
-              onChange={(e) => patch(i, { param: e.target.value })}
-            />
-            <Input
-              className="h-7"
-              type="number"
-              placeholder="value"
-              value={p.distribution.value ?? ""}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                patch(i, { distribution: { ...p.distribution, value: Number.isNaN(v) ? null : v } });
-              }}
-            />
-          </div>
-          <Input
-            className="h-7"
-            placeholder="description (optional)"
-            value={p.description ?? ""}
-            onChange={(e) => patch(i, { description: e.target.value || null })}
-          />
-        </div>
+        <SectionParamRow
+          key={i}
+          param={p}
+          onChange={(update) => patch(i, update)}
+          onRemove={() => onChange(value.filter((_, j) => j !== i))}
+        />
       ))}
       <Button
         size="sm"

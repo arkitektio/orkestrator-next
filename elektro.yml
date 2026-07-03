@@ -29,6 +29,13 @@ generates:
         Resistivity: "@/elektro/api/scalars#Resistivity"
         SpecificCapacitance: "@/elektro/api/scalars#SpecificCapacitance"
         Temperature: "@/elektro/api/scalars#Temperature"
+        # Dimension-free quantity metadata scalars: a value of any dimension
+        # (GenericQuantity, e.g. "0.12 S/cm2"), a unit symbol (Unit, "mV") and a
+        # pint dimensionality string (Dimension, "[length]"). Back the grounded
+        # mechanism-parameter system.
+        GenericQuantity: "@/elektro/api/scalars#GenericQuantity"
+        Unit: "@/elektro/api/scalars#Unit"
+        Dimension: "@/elektro/api/scalars#Dimension"
 
   src/renderer/src/elektro/graphql.schema.json:
     plugins:

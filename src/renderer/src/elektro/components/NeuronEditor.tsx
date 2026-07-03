@@ -23,6 +23,7 @@ import {
 } from "../lib/modelSerialization";
 import { toBase } from "../lib/quantities";
 import { CompartmentEditor } from "./editor/CompartmentEditor";
+import { MechanismCatalogProvider } from "./editor/MechanismCatalog";
 import { ModelConfigPanel } from "./editor/ModelConfigPanel";
 import { QuantityInput } from "./QuantityInput";
 
@@ -566,6 +567,7 @@ export const NeuronEditor = ({
   const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
 
   return (
+    <MechanismCatalogProvider>
     <div className="w-full h-full relative">
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 w-80 max-h-[calc(100vh-2rem)]">
         <Card className="p-4 flex flex-col gap-4 h-full bg-card/95 backdrop-blur-sm">
@@ -891,5 +893,6 @@ export const NeuronEditor = ({
         ))}
       </Canvas>
     </div>
+    </MechanismCatalogProvider>
   );
 };

@@ -6150,6 +6150,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Dimension",
+        "description": "A physical dimension (``\"[length]\"``, ``\"[current] / [length] ** 2\"``, ``\"dimensionless\"``).\n\nA string scalar validating that the value is a parseable pint dimensionality and\nserializing it to a canonical, order-stable string (the quantity-compatibility\nkey). A unit expression is accepted and reduced to its dimensionality.",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Distribution",
         "description": "Represents how a section parameter is distributed along a section (NEURON range variable).",
@@ -6157,11 +6168,11 @@
         "fields": [
           {
             "name": "distalValue",
-            "description": "The value at the most distal segment (required for 'linear').",
+            "description": "The value at the most distal segment (required for 'linear'). A unit-bearing quantity.",
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6197,11 +6208,11 @@
           },
           {
             "name": "proximalValue",
-            "description": "The value at path distance 0 (required for 'linear').",
+            "description": "The value at path distance 0 (required for 'linear'). A unit-bearing quantity.",
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6209,11 +6220,11 @@
           },
           {
             "name": "value",
-            "description": "The uniform value applied to every segment (required for 'uniform').",
+            "description": "The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.",
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "isDeprecated": false,
@@ -6234,10 +6245,10 @@
         "inputFields": [
           {
             "name": "distalValue",
-            "description": "The value at the most distal segment (required for 'linear').",
+            "description": "The value at the most distal segment (required for 'linear'). A unit-bearing quantity.",
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "defaultValue": "null",
@@ -6274,10 +6285,10 @@
           },
           {
             "name": "proximalValue",
-            "description": "The value at path distance 0 (required for 'linear').",
+            "description": "The value at path distance 0 (required for 'linear'). A unit-bearing quantity.",
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "defaultValue": "null",
@@ -6286,10 +6297,10 @@
           },
           {
             "name": "value",
-            "description": "The uniform value applied to every segment (required for 'uniform').",
+            "description": "The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.",
             "type": {
               "kind": "SCALAR",
-              "name": "Float",
+              "name": "GenericQuantity",
               "ofType": null
             },
             "defaultValue": "null",
@@ -8998,6 +9009,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "GenericQuantity",
+        "description": "A physical quantity of any dimension (``\"0.12 S/cm2\"``, ``\"-54.3 mV\"``, ``\"2 mM\"``).\n\nUnlike the dimension-locked scalars, this keeps whatever unit the value\ncarries and does not normalize to a canonical integer — its dimension is\nwhatever the value has. A bare number without a unit is rejected. On the wire\nit is a string; validating it against an expected dimension (e.g. a declared\nmechanism parameter) is the caller's job.",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "ENUM",
         "name": "Granularity",
         "description": null,
@@ -10164,13 +10186,13 @@
           },
           {
             "name": "value",
-            "description": "The value of the parameter",
+            "description": "The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "GenericQuantity",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -10237,12 +10259,12 @@
           },
           {
             "name": "value",
-            "description": "The value of the parameter",
+            "description": "The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').",
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Float",
+                "name": "GenericQuantity",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -16045,6 +16067,18 @@
             "deprecationReason": null
           },
           {
+            "name": "dimension",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Dimension",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "key",
             "description": null,
             "args": [],
@@ -16103,6 +16137,38 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "proposedUnits",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Unit",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "referenceUnit",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Unit",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -16135,6 +16201,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "dimension",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Dimension",
               "ofType": null
             },
             "defaultValue": "null",
@@ -16198,6 +16276,38 @@
               }
             },
             "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "proposedUnits",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Unit",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "referenceUnit",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Unit",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -24636,6 +24746,17 @@
         "kind": "SCALAR",
         "name": "TwoDVector",
         "description": "The `Vector` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Unit",
+        "description": "A physical unit of measurement (``\"mV\"``, ``\"S/cm2\"``, ``\"second\"``).\n\nA string scalar validating that the value parses as a pint unit — a bad unit,\na bare quantity (``\"5 mV\"``), or a dimension is rejected. Compact exponent\nspelling (``\"cm2\"``) is accepted and the given spelling is preserved.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,

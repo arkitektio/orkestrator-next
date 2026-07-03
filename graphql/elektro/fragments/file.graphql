@@ -1,0 +1,25 @@
+fragment File on File {
+  id
+  name
+  size
+  contentType
+  origins {
+    ...ListTrace
+  }
+  store {
+    ...BigFileStore
+  }
+  provenanceEntries {
+    ...ProvenanceEntry
+  }
+}
+
+fragment ListFile on File {
+  id
+  name
+  size
+  contentType
+  creator {
+    sub
+  }
+}

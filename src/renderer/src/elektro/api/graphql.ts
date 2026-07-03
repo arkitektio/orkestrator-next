@@ -1,8 +1,16 @@
+import { Concentration } from '@/elektro/api/scalars';
+import { Dimension } from '@/elektro/api/scalars';
 import { Duration } from '@/elektro/api/scalars';
 import { ElectricPotential } from '@/elektro/api/scalars';
 import { ElectricalConductance } from '@/elektro/api/scalars';
 import { Frequency } from '@/elektro/api/scalars';
+import { GenericQuantity } from '@/elektro/api/scalars';
 import { Length } from '@/elektro/api/scalars';
+import { RGBAColor } from '@/elektro/api/scalars';
+import { Resistivity } from '@/elektro/api/scalars';
+import { SpecificCapacitance } from '@/elektro/api/scalars';
+import { Temperature } from '@/elektro/api/scalars';
+import { Unit } from '@/elektro/api/scalars';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@/lib/elektro/funcs';
@@ -27,8 +35,18 @@ export type Scalars = {
   ArrayLike: { input: any; output: any; }
   /** A type representing a big file store reference, which can be either a string ID or a more complex object. */
   BigFileLike: { input: any; output: any; }
+  /** A molar concentration (``"5 nM"``, ``"2 µM"``, ``"1 mM"``). */
+  Concentration: { input: Concentration; output: Concentration; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /**
+   * A physical dimension (``"[length]"``, ``"[current] / [length] ** 2"``, ``"dimensionless"``).
+   *
+   * A string scalar validating that the value is a parseable pint dimensionality and
+   * serializing it to a canonical, order-stable string (the quantity-compatibility
+   * key). A unit expression is accepted and reduced to its dimensionality.
+   */
+  Dimension: { input: Dimension; output: Dimension; }
   /** A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``). */
   Duration: { input: Duration; output: Duration; }
   /** An electric potential / voltage (``"-70 mV"``, ``"5 V"``). */
@@ -41,16 +59,40 @@ export type Scalars = {
   FiveDVector: { input: any; output: any; }
   /** A quantity of frequency (``"50 Hz"``, ``"1 kHz"``). */
   Frequency: { input: Frequency; output: Frequency; }
+  /**
+   * A physical quantity of any dimension (``"0.12 S/cm2"``, ``"-54.3 mV"``, ``"2 mM"``).
+   *
+   * Unlike the dimension-locked scalars, this keeps whatever unit the value
+   * carries and does not normalize to a canonical integer — its dimension is
+   * whatever the value has. A bare number without a unit is rejected. On the wire
+   * it is a string; validating it against an expected dimension (e.g. a declared
+   * mechanism parameter) is the caller's job.
+   */
+  GenericQuantity: { input: GenericQuantity; output: GenericQuantity; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   /** A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``). */
   Length: { input: Length; output: Length; }
+  /** The Color scalar type represents a color as a list of 4 values RGBA */
+  RGBAColor: { input: RGBAColor; output: RGBAColor; }
+  /** An axial resistivity (NEURON ``Ra``; ``"35.4 ohm*cm"``, ``"100 ohm*cm"``). */
+  Resistivity: { input: Resistivity; output: Resistivity; }
+  /** A specific membrane capacitance (NEURON ``cm``; ``"1 uF/cm^2"``). */
+  SpecificCapacitance: { input: SpecificCapacitance; output: SpecificCapacitance; }
   /** A temperature (``"310 K"``, ``"37 degC"``). */
-  Temperature: { input: any; output: any; }
+  Temperature: { input: Temperature; output: Temperature; }
   /** The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer */
   TraceLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
   TwoDVector: { input: any; output: any; }
+  /**
+   * A physical unit of measurement (``"mV"``, ``"S/cm2"``, ``"second"``).
+   *
+   * A string scalar validating that the value parses as a pint unit — a bad unit,
+   * a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
+   * spelling (``"cm2"``) is accepted and the given spelling is preserved.
+   */
+  Unit: { input: Unit; output: Unit; }
   _Any: { input: any; output: any; }
 };
 
@@ -520,10 +562,12 @@ export type Comparison = {
 /** Represents a compartment in a biophysics model. */
 export type Compartment = {
   __typename?: 'Compartment';
-  /** The non-mechanistic (global) parameters applied to this compartment. */
-  globalParams: Array<GlobalParamMap>;
+  /** An optional RGBA color (list of 4 values) used to render this compartment in the UI. */
+  color?: Maybe<Scalars['RGBAColor']['output']>;
   /** The unique identifier of the compartment within the model. */
   id: Scalars['String']['output'];
+  /** Ion species settings (reversal potentials and concentrations) applied to this compartment. */
+  ions: Array<Ion>;
   /** The set of mechanisms active in this compartment. */
   mechanisms: Array<Scalars['String']['output']>;
   /** The mechanism-specific parameters applied to the sections of this compartment. */
@@ -532,31 +576,37 @@ export type Compartment = {
 
 /** Input for a compartment in a biophysics model. */
 export type CompartmentInput = {
-  /** The non-mechanistic (global) parameters applied to this compartment. */
-  globalParams?: InputMaybe<Array<GlobalParamMapInput>>;
+  /** An optional RGBA color (list of 4 values) used to render this compartment in the UI. */
+  color?: InputMaybe<Scalars['RGBAColor']['input']>;
   /** The unique identifier of the compartment within the model. */
   id: Scalars['String']['input'];
+  /** Ion species settings (reversal potentials and concentrations) applied to this compartment. */
+  ions?: InputMaybe<Array<IonInput>>;
   /** The set of mechanisms active in this compartment. */
   mechanisms?: Array<Scalars['String']['input']>;
   /** The mechanism-specific parameters applied to the sections of this compartment. */
   sectionParams?: InputMaybe<Array<SectionParamMapInput>>;
 };
 
-/** Represents a connection of a section to its parent section, defining the morphology tree. */
+/** Represents a connection of a section to its (single) parent section, defining the morphology tree. */
 export type Connection = {
   __typename?: 'Connection';
-  /** The position along the parent section where this section attaches, between 0 and 1. */
-  location: Scalars['Float']['output'];
+  /** Which end of this section attaches to the parent: 0 (default) or 1. */
+  childEnd: Scalars['Float']['output'];
   /** The ID of the parent section this section connects to. */
   parent: Scalars['String']['output'];
+  /** The position along the parent section where this section attaches, between 0 and 1. */
+  parentLocation: Scalars['Float']['output'];
 };
 
-/** Input for a connection of a section to its parent section, defining the morphology tree. */
+/** Input for a connection of a section to its (single) parent section, defining the morphology tree. */
 export type ConnectionInput = {
-  /** The position along the parent section where this section attaches, between 0 and 1. */
-  location?: Scalars['Float']['input'];
+  /** Which end of this section attaches to the parent: 0 (default) or 1. */
+  childEnd?: Scalars['Float']['input'];
   /** The ID of the parent section this section connects to. */
   parent: Scalars['String']['input'];
+  /** The position along the parent section where this section attaches, between 0 and 1. */
+  parentLocation?: Scalars['Float']['input'];
 };
 
 export enum ConnectionKind {
@@ -566,6 +616,8 @@ export enum ConnectionKind {
 /** Represents a 3D coordinate (in space) of a point along a section. */
 export type Coord = {
   __typename?: 'Coord';
+  /** The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted. */
+  diam?: Maybe<Scalars['Length']['output']>;
   /** The x coordinate of the point. */
   x: Scalars['Length']['output'];
   /** The y coordinate of the point. */
@@ -576,6 +628,8 @@ export type Coord = {
 
 /** Input for a 3D coordinate (in space) of a point along a section. */
 export type CoordInput = {
+  /** The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted. */
+  diam?: InputMaybe<Scalars['Length']['input']>;
   /** The x coordinate of the point. */
   x: Scalars['Length']['input'];
   /** The y coordinate of the point. */
@@ -601,6 +655,19 @@ export type CreateExperimentInput = {
   recordingViews: Array<RecordingViewInput>;
   stimulusViews: Array<StimulusViewInput>;
   timeTrace?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type CreateFileViewInput = {
+  aMax?: InputMaybe<Scalars['Int']['input']>;
+  aMin?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>;
+  file: Scalars['ID']['input'];
+  isGlobal?: Scalars['Boolean']['input'];
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>;
+  trace: Scalars['ID']['input'];
 };
 
 /** Input for creating a mod environment */
@@ -648,12 +715,14 @@ export type Dataset = {
   description?: Maybe<Scalars['String']['output']>;
   files: Array<File>;
   id: Scalars['ID']['output'];
-  images: Array<Trace>;
   isDefault: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** The parent dataset of this dataset */
+  parent?: Maybe<Dataset>;
   pinned: Scalars['Boolean']['output'];
   provenanceEntries: Array<ProvenanceEntry>;
   tags: Array<Scalars['String']['output']>;
+  traces: Array<Trace>;
 };
 
 
@@ -671,14 +740,14 @@ export type DatasetFilesArgs = {
 };
 
 
-export type DatasetImagesArgs = {
-  filters?: InputMaybe<TraceFilter>;
-  ordering?: Array<TraceOrder>;
+export type DatasetProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-export type DatasetProvenanceEntriesArgs = {
+export type DatasetTracesArgs = {
+  filters?: InputMaybe<TraceFilter>;
+  ordering?: Array<TraceOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -687,8 +756,14 @@ export type DatasetFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DatasetFilter>;
   OR?: InputMaybe<DatasetFilter>;
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  parent?: InputMaybe<Scalars['ID']['input']>;
+  parentless?: InputMaybe<Scalars['Boolean']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DatasetOrder =
@@ -728,6 +803,41 @@ export type DesociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
 };
+
+/** Represents how a section parameter is distributed along a section (NEURON range variable). */
+export type Distribution = {
+  __typename?: 'Distribution';
+  /** The value at the most distal segment (required for 'linear'). A unit-bearing quantity. */
+  distalValue?: Maybe<Scalars['GenericQuantity']['output']>;
+  /** An expression in `x` (normalized position) and `d` (path distance) (required for 'expression'). */
+  expression?: Maybe<Scalars['String']['output']>;
+  /** The kind of spatial distribution. */
+  kind: DistributionKind;
+  /** The value at path distance 0 (required for 'linear'). A unit-bearing quantity. */
+  proximalValue?: Maybe<Scalars['GenericQuantity']['output']>;
+  /** The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'. */
+  value?: Maybe<Scalars['GenericQuantity']['output']>;
+};
+
+/** Input for how a section parameter is distributed along a section (NEURON range variable). Supply the fields matching the chosen kind: 'uniform' -> value; 'linear' -> proximal_value & distal_value; 'expression' -> expression. */
+export type DistributionInput = {
+  /** The value at the most distal segment (required for 'linear'). A unit-bearing quantity. */
+  distalValue?: InputMaybe<Scalars['GenericQuantity']['input']>;
+  /** An expression in `x` (normalized position) and `d` (path distance) (required for 'expression'). */
+  expression?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of spatial distribution. */
+  kind?: DistributionKind;
+  /** The value at path distance 0 (required for 'linear'). A unit-bearing quantity. */
+  proximalValue?: InputMaybe<Scalars['GenericQuantity']['input']>;
+  /** The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'. */
+  value?: InputMaybe<Scalars['GenericQuantity']['input']>;
+};
+
+export enum DistributionKind {
+  Expression = 'EXPRESSION',
+  Linear = 'LINEAR',
+  Uniform = 'UNIFORM'
+}
 
 /** Represents an exponential synapse model, which is a type of synaptic stimulus that has an exponential rise and decay. This will be used to specify the parameters of synapses in the model. */
 export type Exp2Synapse = NetSynapse & {
@@ -848,16 +958,30 @@ export type ExperimentStimulusViewOrder =
 
 export type File = {
   __typename?: 'File';
+  /** The content type of the file */
+  contentType?: Maybe<Scalars['String']['output']>;
+  /** Who created this file */
+  creator?: Maybe<User>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   origins: Array<Trace>;
+  provenanceEntries: Array<ProvenanceEntry>;
+  /** The size of the file in bytes */
+  size?: Maybe<Scalars['Float']['output']>;
   store: BigFileStore;
+  /** The file views of this file */
+  views: Array<FileView>;
 };
 
 
 export type FileOriginsArgs = {
   filters?: InputMaybe<TraceFilter>;
   ordering?: Array<TraceOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type FileProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -874,15 +998,41 @@ export type FileFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FileFilter>;
   OR?: InputMaybe<FileFilter>;
+  contentType?: InputMaybe<StrFilterLookup>;
+  dataset?: InputMaybe<DatasetFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
+  size?: InputMaybe<IntFilterLookup>;
 };
 
 export type FileOrder =
-  { createdAt: Ordering; id?: never; }
-  |  { createdAt?: never; id: Ordering; };
+  { createdAt: Ordering; id?: never; size?: never; }
+  |  { createdAt?: never; id: Ordering; size?: never; }
+  |  { createdAt?: never; id?: never; size: Ordering; };
+
+export type FileView = View & {
+  __typename?: 'FileView';
+  /** The accessor */
+  accessor: Array<Scalars['String']['output']>;
+  cMax?: Maybe<Scalars['Int']['output']>;
+  cMin?: Maybe<Scalars['Int']['output']>;
+  file: File;
+  id: Scalars['ID']['output'];
+  image: Trace;
+  isGlobal: Scalars['Boolean']['output'];
+  seriesIdentifier?: Maybe<Scalars['String']['output']>;
+  tMax?: Maybe<Scalars['Int']['output']>;
+  tMin?: Maybe<Scalars['Int']['output']>;
+  trace: Trace;
+  xMax?: Maybe<Scalars['Int']['output']>;
+  xMin?: Maybe<Scalars['Int']['output']>;
+  yMax?: Maybe<Scalars['Int']['output']>;
+  yMin?: Maybe<Scalars['Int']['output']>;
+  zMax?: Maybe<Scalars['Int']['output']>;
+  zMin?: Maybe<Scalars['Int']['output']>;
+};
 
 export type FinishBigFileUploadInput = {
   storeId: Scalars['String']['input'];
@@ -965,27 +1115,6 @@ export type GeneralZarrAccessGrant = {
   store?: Maybe<Scalars['String']['output']>;
 };
 
-/** Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model) */
-export type GlobalParamMap = {
-  __typename?: 'GlobalParamMap';
-  /** Description of the parameter */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The name of the parameter to set. */
-  param: Scalars['String']['output'];
-  /** The value of the parameter */
-  value: Scalars['Float']['output'];
-};
-
-/** Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model) */
-export type GlobalParamMapInput = {
-  /** Description of the parameter */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The name of the parameter to set. */
-  param: Scalars['String']['input'];
-  /** The value of the parameter */
-  value: Scalars['Float']['input'];
-};
-
 export enum Granularity {
   Day = 'DAY',
   Hour = 'HOUR',
@@ -1000,6 +1129,61 @@ export enum HistoryKind {
   Create = 'CREATE',
   Delete = 'DELETE',
   Update = 'UPDATE'
+}
+
+export type IntFilterLookup = {
+  contains?: InputMaybe<Scalars['Int']['input']>;
+  endsWith?: InputMaybe<Scalars['Int']['input']>;
+  exact?: InputMaybe<Scalars['Int']['input']>;
+  gt?: InputMaybe<Scalars['Int']['input']>;
+  gte?: InputMaybe<Scalars['Int']['input']>;
+  iContains?: InputMaybe<Scalars['Int']['input']>;
+  iEndsWith?: InputMaybe<Scalars['Int']['input']>;
+  iExact?: InputMaybe<Scalars['Int']['input']>;
+  iRegex?: InputMaybe<Scalars['String']['input']>;
+  iStartsWith?: InputMaybe<Scalars['Int']['input']>;
+  inList?: InputMaybe<Array<Scalars['Int']['input']>>;
+  isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  lt?: InputMaybe<Scalars['Int']['input']>;
+  lte?: InputMaybe<Scalars['Int']['input']>;
+  range?: InputMaybe<Array<Scalars['Int']['input']>>;
+  regex?: InputMaybe<Scalars['String']['input']>;
+  startsWith?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** Represents an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao). */
+export type Ion = {
+  __typename?: 'Ion';
+  /** The extracellular concentration for this ion (NEURON <ion>o, e.g. nao). */
+  externalConcentration?: Maybe<Scalars['Concentration']['output']>;
+  /** The intracellular concentration for this ion (NEURON <ion>i, e.g. nai). */
+  internalConcentration?: Maybe<Scalars['Concentration']['output']>;
+  /** The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed. */
+  ion: Scalars['String']['output'];
+  /** The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default. */
+  reversalPotential?: Maybe<Scalars['ElectricPotential']['output']>;
+  /** How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism. */
+  style: IonStyle;
+};
+
+/** Input for an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao). */
+export type IonInput = {
+  /** The extracellular concentration for this ion (NEURON <ion>o, e.g. nao). */
+  externalConcentration?: InputMaybe<Scalars['Concentration']['input']>;
+  /** The intracellular concentration for this ion (NEURON <ion>i, e.g. nai). */
+  internalConcentration?: InputMaybe<Scalars['Concentration']['input']>;
+  /** The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed. */
+  ion: Scalars['String']['input'];
+  /** The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default. */
+  reversalPotential?: InputMaybe<Scalars['ElectricPotential']['input']>;
+  /** How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism. */
+  style?: IonStyle;
+};
+
+export enum IonStyle {
+  Accumulated = 'ACCUMULATED',
+  FixedReversal = 'FIXED_REVERSAL',
+  Nernst = 'NERNST'
 }
 
 export type IrregularlySampledSignal = Signal & {
@@ -1059,6 +1243,31 @@ export type MechanismFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Represents a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level. */
+export type MechanismGlobalParam = {
+  __typename?: 'MechanismGlobalParam';
+  /** Description of the parameter */
+  description?: Maybe<Scalars['String']['output']>;
+  /** The mechanism that owns this GLOBAL parameter (e.g. 'hh'). */
+  mechanism: Scalars['String']['output'];
+  /** The name of the GLOBAL parameter to set (e.g. 'q10'). */
+  param: Scalars['String']['output'];
+  /** The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV'). */
+  value: Scalars['GenericQuantity']['output'];
+};
+
+/** Input for a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level. */
+export type MechanismGlobalParamInput = {
+  /** Description of the parameter */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The mechanism that owns this GLOBAL parameter (e.g. 'hh'). */
+  mechanism: Scalars['String']['input'];
+  /** The name of the GLOBAL parameter to set (e.g. 'q10'). */
+  param: Scalars['String']['input'];
+  /** The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV'). */
+  value: Scalars['GenericQuantity']['input'];
 };
 
 /** Input for creating a mechanism */
@@ -1211,14 +1420,22 @@ export type ModelConfig = {
   __typename?: 'ModelConfig';
   /** The list of cells in the model. */
   cells: Array<Cell>;
+  /** Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm². */
+  cm?: Maybe<Scalars['SpecificCapacitance']['output']>;
+  /** Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name. */
+  ions: Array<Ion>;
   /** An optional label for the model configuration. */
   label?: Maybe<Scalars['String']['output']>;
+  /** GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism. */
+  mechanismGlobals: Array<MechanismGlobalParam>;
   /** The list of net connections in the model. */
   netConnections?: Maybe<Array<NetConnection>>;
   /** The list of net stimulators in the model. */
   netStimulators?: Maybe<Array<NetStimulator>>;
   /** The list of net synapses in the model. */
   netSynapses?: Maybe<Array<NetSynapse>>;
+  /** Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm. */
+  ra?: Maybe<Scalars['Resistivity']['output']>;
   /** Simulation bath temperature. */
   temperature: Scalars['Temperature']['output'];
   /** Initial membrane potential. */
@@ -1229,14 +1446,22 @@ export type ModelConfig = {
 export type ModelConfigInput = {
   /** The list of cells in the model. */
   cells?: Array<CellInput>;
+  /** Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm². */
+  cm?: InputMaybe<Scalars['SpecificCapacitance']['input']>;
+  /** Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name. */
+  ions?: InputMaybe<Array<IonInput>>;
   /** An optional label for the model configuration. */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism. */
+  mechanismGlobals?: InputMaybe<Array<MechanismGlobalParamInput>>;
   /** The list of net connections in the model. */
   netConnections?: InputMaybe<Array<NetConnectionInput>>;
   /** The list of net stimulators in the model. */
   netStimulators?: InputMaybe<Array<NetStimulatorInput>>;
   /** The list of net synapses in the model. */
   netSynapses?: InputMaybe<Array<NetSynapseInput>>;
+  /** Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm. */
+  ra?: InputMaybe<Scalars['Resistivity']['input']>;
   /** Simulation bath temperature. */
   temperature?: Scalars['Temperature']['input'];
   /** Initial membrane potential. */
@@ -1289,6 +1514,8 @@ export type Mutation = {
   createDataset: Dataset;
   /** Create a new experiment */
   createExperiment: Experiment;
+  /** Create a file view linking a file to a trace */
+  createFileView: FileView;
   /** Create a mechanism from a mod file */
   createModEnvironment: ModEnvironment;
   /** Create a new model collection */
@@ -1321,6 +1548,8 @@ export type Mutation = {
   deleteExperimentStimulusView: Scalars['ID']['output'];
   /** Delete an existing file */
   deleteFile: Scalars['ID']['output'];
+  /** Delete an existing file view */
+  deleteFileView: Scalars['ID']['output'];
   /** Delete an existing image */
   deleteImage: Scalars['ID']['output'];
   /** Delete an existing instrument */
@@ -1444,6 +1673,11 @@ export type MutationCreateExperimentArgs = {
 };
 
 
+export type MutationCreateFileViewArgs = {
+  input: CreateFileViewInput;
+};
+
+
 export type MutationCreateModEnvironmentArgs = {
   input: CreateModEnvironmentInput;
 };
@@ -1521,6 +1755,11 @@ export type MutationDeleteExperimentStimulusViewArgs = {
 
 export type MutationDeleteFileArgs = {
   input: DeleteFileInput;
+};
+
+
+export type MutationDeleteFileViewArgs = {
+  input: DeleteInput;
 };
 
 
@@ -1949,20 +2188,26 @@ export type Parameter = {
   __typename?: 'Parameter';
   default?: Maybe<Scalars['Any']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+  dimension?: Maybe<Scalars['Dimension']['output']>;
   key: Scalars['String']['output'];
   kind: ParameterKind;
   label?: Maybe<Scalars['String']['output']>;
   nullable: Scalars['Boolean']['output'];
+  proposedUnits?: Maybe<Array<Scalars['Unit']['output']>>;
+  referenceUnit?: Maybe<Scalars['Unit']['output']>;
 };
 
 /** A parameter port of a mechanism */
 export type ParameterInput = {
   default?: InputMaybe<Scalars['Any']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<Scalars['Dimension']['input']>;
   key: Scalars['String']['input'];
   kind?: ParameterKind;
   label?: InputMaybe<Scalars['String']['input']>;
   nullable?: Scalars['Boolean']['input'];
+  proposedUnits?: InputMaybe<Array<Scalars['Unit']['input']>>;
+  referenceUnit?: InputMaybe<Scalars['Unit']['input']>;
 };
 
 /** The kind of a mechanism parameter. */
@@ -2558,38 +2803,50 @@ export enum RoiKindChoices {
 /** Represents a section of a cell's morphology, the basic structural unit of the topology. */
 export type Section = {
   __typename?: 'Section';
-  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). */
-  category: Scalars['String']['output'];
-  /** The connections of this section to its parent section(s). */
-  connections: Array<Connection>;
-  /** The 3D coordinates describing the section's geometry. Required if length is not provided. */
+  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category. */
+  category?: Maybe<Scalars['String']['output']>;
+  /** Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm². */
+  cm?: Maybe<Scalars['SpecificCapacitance']['output']>;
+  /** The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable. */
   coords?: Maybe<Array<Coord>>;
-  /** The diameter of the section. */
+  /** If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg. */
+  dLambda?: Maybe<Scalars['Float']['output']>;
+  /** The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied. */
   diam: Scalars['Length']['output'];
   /** The unique identifier of the section within the cell. */
   id: Scalars['String']['output'];
-  /** Length of the section. Required if coords is not provided. */
+  /** Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied. */
   length?: Maybe<Scalars['Length']['output']>;
-  /** The number of segments the section is discretized into. */
+  /** The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node. */
   nseg: Scalars['Int']['output'];
+  /** The connection to this section's parent section. None for the root section of the cell. */
+  parent?: Maybe<Connection>;
+  /** Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm. */
+  ra?: Maybe<Scalars['Resistivity']['output']>;
 };
 
 /** Input for a section of a cell's morphology, the basic structural unit of the topology. */
 export type SectionInput = {
-  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). */
+  /** An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category. */
   category?: InputMaybe<Scalars['String']['input']>;
-  /** The connections of this section to its parent section(s). */
-  connections?: InputMaybe<Array<ConnectionInput>>;
-  /** The 3D coordinates describing the section's geometry. Required if length is not provided. */
+  /** Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm². */
+  cm?: InputMaybe<Scalars['SpecificCapacitance']['input']>;
+  /** The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable. */
   coords?: InputMaybe<Array<CoordInput>>;
-  /** The diameter of the section. */
+  /** If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg. */
+  dLambda?: InputMaybe<Scalars['Float']['input']>;
+  /** The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied. */
   diam?: Scalars['Length']['input'];
   /** The unique identifier of the section within the cell. */
   id: Scalars['String']['input'];
-  /** Length of the section. Required if coords is not provided. */
+  /** Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied. */
   length?: InputMaybe<Scalars['Length']['input']>;
-  /** The number of segments the section is discretized into. */
+  /** The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node. */
   nseg?: Scalars['Int']['input'];
+  /** The connection to this section's parent section. None for the root section of the cell. */
+  parent?: InputMaybe<ConnectionInput>;
+  /** Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm. */
+  ra?: InputMaybe<Scalars['Resistivity']['input']>;
 };
 
 /** Represents a section parameter mapping for a biophysics model. (this will be set on the mechanisms of the compartments of the model) */
@@ -2597,24 +2854,24 @@ export type SectionParamMap = {
   __typename?: 'SectionParamMap';
   /** Description of the parameter */
   description?: Maybe<Scalars['String']['output']>;
+  /** How the parameter is distributed along the section (uniform by default). */
+  distribution: Distribution;
   /** The governing mechanism */
   mechanism: Scalars['String']['output'];
   /** The name of the parameter to set. */
   param: Scalars['String']['output'];
-  /** The value of the parameter */
-  value: Scalars['Float']['output'];
 };
 
 /** Input for a section parameter mapping of a biophysics model. (this will be set on the mechanisms of the compartments of the model) */
 export type SectionParamMapInput = {
   /** Description of the parameter */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** How the parameter is distributed along the section (uniform by default). */
+  distribution: DistributionInput;
   /** The governing mechanism */
   mechanism: Scalars['String']['input'];
   /** The name of the parameter to set. */
   param: Scalars['String']['input'];
-  /** The value of the parameter */
-  value: Scalars['Float']['input'];
 };
 
 /** A signal recorded during a recording session */
@@ -2885,6 +3142,27 @@ export type TimeBucket = {
   ts: Scalars['DateTime']['output'];
 };
 
+export type TimelineView = View & {
+  __typename?: 'TimelineView';
+  /** The accessor */
+  accessor: Array<Scalars['String']['output']>;
+  cMax?: Maybe<Scalars['Int']['output']>;
+  cMin?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  image: Trace;
+  isGlobal: Scalars['Boolean']['output'];
+  label: Scalars['String']['output'];
+  tMax?: Maybe<Scalars['Int']['output']>;
+  tMin?: Maybe<Scalars['Int']['output']>;
+  trace: Trace;
+  xMax?: Maybe<Scalars['Int']['output']>;
+  xMin?: Maybe<Scalars['Int']['output']>;
+  yMax?: Maybe<Scalars['Int']['output']>;
+  yMin?: Maybe<Scalars['Int']['output']>;
+  zMax?: Maybe<Scalars['Int']['output']>;
+  zMin?: Maybe<Scalars['Int']['output']>;
+};
+
 /** Represents the topology of a cell, which defines its structure as a set of connected sections. */
 export type Topology = {
   __typename?: 'Topology';
@@ -2991,6 +3269,23 @@ export type User = {
   sub: Scalars['String']['output'];
 };
 
+export type View = {
+  /** The accessor */
+  accessor: Array<Scalars['String']['output']>;
+  cMax?: Maybe<Scalars['Int']['output']>;
+  cMin?: Maybe<Scalars['Int']['output']>;
+  image: Trace;
+  isGlobal: Scalars['Boolean']['output'];
+  tMax?: Maybe<Scalars['Int']['output']>;
+  tMin?: Maybe<Scalars['Int']['output']>;
+  xMax?: Maybe<Scalars['Int']['output']>;
+  xMin?: Maybe<Scalars['Int']['output']>;
+  yMax?: Maybe<Scalars['Int']['output']>;
+  yMin?: Maybe<Scalars['Int']['output']>;
+  zMax?: Maybe<Scalars['Int']['output']>;
+  zMin?: Maybe<Scalars['Int']['output']>;
+};
+
 export type WorkspaceMapping = {
   __typename?: 'WorkspaceMapping';
   createdAt: Scalars['DateTime']['output'];
@@ -3082,7 +3377,7 @@ export type _Service = {
 
 export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } };
 
-export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
@@ -3104,17 +3399,29 @@ export type BlockFragment = { __typename?: 'Block', id: string, name: string, de
 
 export type ListBlockFragment = { __typename?: 'Block', id: string, name: string };
 
-export type ModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> };
+export type BigFileAccessGrantFragment = { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string };
 
-export type ListModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> };
+export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
+
+export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
+
+export type ModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> };
+
+export type ListModEnvironmentFragment = { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> };
 
 export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, stimulusViews: Array<{ __typename?: 'ExperimentStimulusView', id: string, label?: string | null, stimulus: { __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } } }>, recordingViews: Array<{ __typename?: 'ExperimentRecordingView', id: string, label?: string | null, recording: { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } }> };
 
 export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string };
 
-export type MechanismFragment = { __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> };
+export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Trace', id: string, name: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> };
 
-export type ListMechanismFragment = { __typename?: 'Mechanism', id: string, name: string };
+export type ListFileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null };
+
+export type ParameterFragment = { __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null };
+
+export type MechanismFragment = { __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> };
+
+export type ListMechanismFragment = { __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> };
 
 export type ModelCollectionFragment = { __typename?: 'ModelCollection', id: string, name: string, models: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
 
@@ -3128,29 +3435,35 @@ export type DetailModelWorkspaceFragment = { __typename?: 'ModelWorkspace', id: 
 
 export type CoordFragment = { __typename?: 'Coord', x: Length, y: Length, z: Length };
 
-export type SectionFragment = { __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> };
+export type SectionFragment = { __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null };
 
-export type ConnectionFragment = { __typename?: 'Connection', parent: string, location: number };
+export type ConnectionFragment = { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number };
 
-export type CompartmentFragment = { __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> };
+export type IonFragment = { __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null };
+
+export type MechanismGlobalParamFragment = { __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null };
+
+export type CompartmentFragment = { __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> };
 
 export type ProvenanceEntryFragment = { __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> };
 
-export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> };
+export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> };
 
 export type ListNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string };
 
 export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } };
 
-export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListRecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
 
-export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
+export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null };
 
 export type ListSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } };
 
 export type ZarrStoreFragment = { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null };
+
+export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
 
 export type DetailTraceFragment = { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } };
 
@@ -3162,6 +3475,123 @@ export type DeleteBlockMutationVariables = Exact<{
 
 
 export type DeleteBlockMutation = { __typename?: 'Mutation', deleteBlock: string };
+
+export type FinishBigfileUploadMutationVariables = Exact<{
+  input: FinishBigFileUploadInput;
+}>;
+
+
+export type FinishBigfileUploadMutation = { __typename?: 'Mutation', finishBigfileUpload: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } };
+
+export type RequestBigfileAccessMutationVariables = Exact<{
+  input: RequestBigFileAccessInput;
+}>;
+
+
+export type RequestBigfileAccessMutation = { __typename?: 'Mutation', requestBigfileAccess: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } };
+
+export type CreateDatasetMutationVariables = Exact<{
+  input: CreateDatasetInput;
+}>;
+
+
+export type CreateDatasetMutation = { __typename?: 'Mutation', createDataset: { __typename?: 'Dataset', id: string, name: string } };
+
+export type UpdateDatasetMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+
+export type UpdateDatasetMutation = { __typename?: 'Mutation', updateDataset: { __typename?: 'Dataset', id: string, name: string } };
+
+export type PinDatasetMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  pin: Scalars['Boolean']['input'];
+}>;
+
+
+export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type PutDatasetsInDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type PutImagesInDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseImagesFromDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type PutFilesInDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseFilesFromDatasetMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type RevertDatasetMutationVariables = Exact<{
+  dataset: Scalars['ID']['input'];
+  history: Scalars['ID']['input'];
+}>;
+
+
+export type RevertDatasetMutation = { __typename?: 'Mutation', revertDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null } };
+
+export type DeleteDatasetMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteDatasetMutation = { __typename?: 'Mutation', deleteDataset: string };
+
+export type From_File_LikeMutationVariables = Exact<{
+  file: Scalars['FileLike']['input'];
+  name: Scalars['String']['input'];
+  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Trace', id: string, name: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> } };
+
+export type DeleteFileMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
 
 export type CreateModelWorkspaceMutationVariables = Exact<{
   input: CreateModelWorkspaceInput;
@@ -3230,12 +3660,28 @@ export type ListBlocksQueryVariables = Exact<{
 
 export type ListBlocksQuery = { __typename?: 'Query', blocks: Array<{ __typename?: 'Block', id: string, name: string }> };
 
+export type GetDatasetQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }>, traces: Array<{ __typename?: 'Trace', id: string, name: string }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type GetDatasetsQueryVariables = Exact<{
+  filters?: InputMaybe<DatasetFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<DatasetOrder> | DatasetOrder>;
+}>;
+
+
+export type GetDatasetsQuery = { __typename?: 'Query', datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
+
 export type DetailModEnvironmentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type DetailModEnvironmentQuery = { __typename?: 'Query', modEnvironment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> } };
+export type DetailModEnvironmentQuery = { __typename?: 'Query', modEnvironment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> } };
 
 export type ListModEnvironmentsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3244,7 +3690,7 @@ export type ListModEnvironmentsQueryVariables = Exact<{
 }>;
 
 
-export type ListModEnvironmentsQuery = { __typename?: 'Query', modEnvironments: Array<{ __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }> };
+export type ListModEnvironmentsQuery = { __typename?: 'Query', modEnvironments: Array<{ __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }> };
 
 export type DetailExperimentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3262,6 +3708,22 @@ export type ListExperimentsQueryVariables = Exact<{
 
 export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string }> };
 
+export type GetFileQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Trace', id: string, name: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> } };
+
+export type GetFilesQueryVariables = Exact<{
+  filters?: InputMaybe<FileFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<FileOrder> | FileOrder>;
+}>;
+
+
+export type GetFilesQuery = { __typename?: 'Query', files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator?: { __typename?: 'User', sub: string } | null }> };
+
 export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3277,7 +3739,7 @@ export type DetailMechanismQueryVariables = Exact<{
 }>;
 
 
-export type DetailMechanismQuery = { __typename?: 'Query', mechanism: { __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> } };
+export type DetailMechanismQuery = { __typename?: 'Query', mechanism: { __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> } };
 
 export type ListMechanismsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3286,7 +3748,7 @@ export type ListMechanismsQueryVariables = Exact<{
 }>;
 
 
-export type ListMechanismsQuery = { __typename?: 'Query', mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string }> };
+export type ListMechanismsQuery = { __typename?: 'Query', mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> };
 
 export type DetailModelCollectionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3325,7 +3787,7 @@ export type DetailNeuronModelQueryVariables = Exact<{
 }>;
 
 
-export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> } };
+export type DetailNeuronModelQuery = { __typename?: 'Query', neuronModel: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> } };
 
 export type ListNeuronModelsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3341,7 +3803,7 @@ export type DetailRecordingQueryVariables = Exact<{
 }>;
 
 
-export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListRecordingsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3397,7 +3859,7 @@ export type DetailSimulationQueryVariables = Exact<{
 }>;
 
 
-export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListSimulationsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3413,7 +3875,7 @@ export type DetailStimulusQueryVariables = Exact<{
 }>;
 
 
-export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: any, vInit: ElectricPotential, label?: string | null, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number, description?: string | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, value: number, description?: string | null }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category: string, nseg: number, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
+export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, description?: string | null, config: { __typename?: 'ModelConfig', temperature: Temperature, vInit: ElectricPotential, label?: string | null, ra?: Resistivity | null, cm?: SpecificCapacitance | null, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, mechanismGlobals: Array<{ __typename?: 'MechanismGlobalParam', mechanism: string, param: string, value: GenericQuantity, description?: string | null }>, cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, color?: RGBAColor | null, mechanisms: Array<string>, ions: Array<{ __typename?: 'Ion', ion: string, style: IonStyle, reversalPotential?: ElectricPotential | null, internalConcentration?: Concentration | null, externalConcentration?: Concentration | null }>, sectionParams: Array<{ __typename?: 'SectionParamMap', mechanism: string, param: string, description?: string | null, distribution: { __typename?: 'Distribution', value?: GenericQuantity | null } }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: Length, length?: Length | null, category?: string | null, nseg: number, ra?: Resistivity | null, cm?: SpecificCapacitance | null, dLambda?: number | null, coords?: Array<{ __typename?: 'Coord', x: Length, y: Length, z: Length }> | null, parent?: { __typename?: 'Connection', parent: string, parentLocation: number, childEnd: number } | null }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: Duration, dt: Duration, createdAt: any, model: { __typename?: 'NeuronModel', name: string } }>, environment: { __typename?: 'ModEnvironment', id: string, name: string, description?: string | null, mechanisms: Array<{ __typename?: 'Mechanism', id: string, name: string, description?: string | null, parameters: Array<{ __typename?: 'Parameter', key: string, label?: string | null, kind: ParameterKind, description?: string | null, default?: any | null, nullable: boolean, referenceUnit?: Unit | null, proposedUnits?: Array<Unit> | null, dimension?: Dimension | null }> }> }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string, assigner?: { __typename?: 'User', sub: string } | null } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string }> }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } } };
 
 export type ListStimuliQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3440,23 +3902,41 @@ export type TracesQueryVariables = Exact<{
 
 export type TracesQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
 
+export const IonFragmentDoc = gql`
+    fragment Ion on Ion {
+  ion
+  style
+  reversalPotential
+  internalConcentration
+  externalConcentration
+}
+    `;
+export const MechanismGlobalParamFragmentDoc = gql`
+    fragment MechanismGlobalParam on MechanismGlobalParam {
+  mechanism
+  param
+  value
+  description
+}
+    `;
 export const CompartmentFragmentDoc = gql`
     fragment Compartment on Compartment {
   id
+  color
   mechanisms
-  globalParams {
-    param
-    value
-    description
+  ions {
+    ...Ion
   }
   sectionParams {
     mechanism
     param
-    value
+    distribution {
+      value
+    }
     description
   }
 }
-    `;
+    ${IonFragmentDoc}`;
 export const CoordFragmentDoc = gql`
     fragment Coord on Coord {
   x
@@ -3467,7 +3947,8 @@ export const CoordFragmentDoc = gql`
 export const ConnectionFragmentDoc = gql`
     fragment Connection on Connection {
   parent
-  location
+  parentLocation
+  childEnd
 }
     `;
 export const SectionFragmentDoc = gql`
@@ -3477,10 +3958,13 @@ export const SectionFragmentDoc = gql`
   length
   category
   nseg
+  ra
+  cm
+  dLambda
   coords {
     ...Coord
   }
-  connections {
+  parent {
     ...Connection
   }
 }
@@ -3498,21 +3982,29 @@ export const ListSimulationFragmentDoc = gql`
   }
 }
     `;
+export const ParameterFragmentDoc = gql`
+    fragment Parameter on Parameter {
+  key
+  label
+  kind
+  description
+  default
+  nullable
+  referenceUnit
+  proposedUnits
+  dimension
+}
+    `;
 export const MechanismFragmentDoc = gql`
     fragment Mechanism on Mechanism {
   id
   name
   description
   parameters {
-    key
-    label
-    kind
-    description
-    default
-    nullable
+    ...Parameter
   }
 }
-    `;
+    ${ParameterFragmentDoc}`;
 export const ModEnvironmentFragmentDoc = gql`
     fragment ModEnvironment on ModEnvironment {
   id
@@ -3554,6 +4046,14 @@ export const DetailNeuronModelFragmentDoc = gql`
     temperature
     vInit
     label
+    ra
+    cm
+    ions {
+      ...Ion
+    }
+    mechanismGlobals {
+      ...MechanismGlobalParam
+    }
     cells {
       id
       biophysics {
@@ -3591,7 +4091,9 @@ export const DetailNeuronModelFragmentDoc = gql`
     ...ProvenanceEntry
   }
 }
-    ${CompartmentFragmentDoc}
+    ${IonFragmentDoc}
+${MechanismGlobalParamFragmentDoc}
+${CompartmentFragmentDoc}
 ${SectionFragmentDoc}
 ${ListSimulationFragmentDoc}
 ${ModEnvironmentFragmentDoc}
@@ -3793,6 +4295,71 @@ export const ListBlockFragmentDoc = gql`
   name
 }
     `;
+export const BigFileAccessGrantFragmentDoc = gql`
+    fragment BigFileAccessGrant on BigFileAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  path
+  key
+  bucket
+}
+    `;
+export const ListTraceFragmentDoc = gql`
+    fragment ListTrace on Trace {
+  id
+  name
+}
+    `;
+export const ListFileFragmentDoc = gql`
+    fragment ListFile on File {
+  id
+  name
+  size
+  contentType
+  creator {
+    sub
+  }
+}
+    `;
+export const ListDatasetFragmentDoc = gql`
+    fragment ListDataset on Dataset {
+  id
+  name
+  description
+  isDefault
+}
+    `;
+export const DatasetFragmentDoc = gql`
+    fragment Dataset on Dataset {
+  id
+  name
+  description
+  provenanceEntries {
+    ...ProvenanceEntry
+  }
+  traces {
+    ...ListTrace
+  }
+  files {
+    ...ListFile
+  }
+  children {
+    ...ListDataset
+  }
+  isDefault
+  pinned
+  createdAt
+  creator {
+    sub
+  }
+  tags
+}
+    ${ProvenanceEntryFragmentDoc}
+${ListTraceFragmentDoc}
+${ListFileFragmentDoc}
+${ListDatasetFragmentDoc}`;
 export const ListModEnvironmentFragmentDoc = gql`
     fragment ListModEnvironment on ModEnvironment {
   id
@@ -3840,12 +4407,43 @@ export const ListExperimentFragmentDoc = gql`
   name
 }
     `;
+export const BigFileStoreFragmentDoc = gql`
+    fragment BigFileStore on BigFileStore {
+  id
+  key
+  bucket
+  path
+  presignedUrl
+}
+    `;
+export const FileFragmentDoc = gql`
+    fragment File on File {
+  id
+  name
+  size
+  contentType
+  origins {
+    ...ListTrace
+  }
+  store {
+    ...BigFileStore
+  }
+  provenanceEntries {
+    ...ProvenanceEntry
+  }
+}
+    ${ListTraceFragmentDoc}
+${BigFileStoreFragmentDoc}
+${ProvenanceEntryFragmentDoc}`;
 export const ListMechanismFragmentDoc = gql`
     fragment ListMechanism on Mechanism {
   id
   name
+  parameters {
+    ...Parameter
+  }
 }
-    `;
+    ${ParameterFragmentDoc}`;
 export const ListNeuronModelFragmentDoc = gql`
     fragment ListNeuronModel on NeuronModel {
   id
@@ -3913,12 +4511,6 @@ export const ListRecordingFragmentDoc = gql`
   }
 }
     `;
-export const ListTraceFragmentDoc = gql`
-    fragment ListTrace on Trace {
-  id
-  name
-}
-    `;
 export const GeneralZarrAccessGrantFragmentDoc = gql`
     fragment GeneralZarrAccessGrant on GeneralZarrAccessGrant {
   accessKey
@@ -3960,6 +4552,515 @@ export function useDeleteBlockMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>;
 export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>;
 export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<DeleteBlockMutation, DeleteBlockMutationVariables>;
+export const FinishBigfileUploadDocument = gql`
+    mutation FinishBigfileUpload($input: FinishBigFileUploadInput!) {
+  finishBigfileUpload(input: $input) {
+    ...BigFileStore
+  }
+}
+    ${BigFileStoreFragmentDoc}`;
+export type FinishBigfileUploadMutationFn = Apollo.MutationFunction<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>;
+
+/**
+ * __useFinishBigfileUploadMutation__
+ *
+ * To run a mutation, you first call `useFinishBigfileUploadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useFinishBigfileUploadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [finishBigfileUploadMutation, { data, loading, error }] = useFinishBigfileUploadMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useFinishBigfileUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>(FinishBigfileUploadDocument, options);
+      }
+export type FinishBigfileUploadMutationHookResult = ReturnType<typeof useFinishBigfileUploadMutation>;
+export type FinishBigfileUploadMutationResult = Apollo.MutationResult<FinishBigfileUploadMutation>;
+export type FinishBigfileUploadMutationOptions = Apollo.BaseMutationOptions<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>;
+export const RequestBigfileAccessDocument = gql`
+    mutation RequestBigfileAccess($input: RequestBigFileAccessInput!) {
+  requestBigfileAccess(input: $input) {
+    ...BigFileAccessGrant
+  }
+}
+    ${BigFileAccessGrantFragmentDoc}`;
+export type RequestBigfileAccessMutationFn = Apollo.MutationFunction<RequestBigfileAccessMutation, RequestBigfileAccessMutationVariables>;
+
+/**
+ * __useRequestBigfileAccessMutation__
+ *
+ * To run a mutation, you first call `useRequestBigfileAccessMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestBigfileAccessMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestBigfileAccessMutation, { data, loading, error }] = useRequestBigfileAccessMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRequestBigfileAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestBigfileAccessMutation, RequestBigfileAccessMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestBigfileAccessMutation, RequestBigfileAccessMutationVariables>(RequestBigfileAccessDocument, options);
+      }
+export type RequestBigfileAccessMutationHookResult = ReturnType<typeof useRequestBigfileAccessMutation>;
+export type RequestBigfileAccessMutationResult = Apollo.MutationResult<RequestBigfileAccessMutation>;
+export type RequestBigfileAccessMutationOptions = Apollo.BaseMutationOptions<RequestBigfileAccessMutation, RequestBigfileAccessMutationVariables>;
+export const CreateDatasetDocument = gql`
+    mutation CreateDataset($input: CreateDatasetInput!) {
+  createDataset(input: $input) {
+    id
+    name
+  }
+}
+    `;
+export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutation, CreateDatasetMutationVariables>;
+
+/**
+ * __useCreateDatasetMutation__
+ *
+ * To run a mutation, you first call `useCreateDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createDatasetMutation, { data, loading, error }] = useCreateDatasetMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDatasetMutation, CreateDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
+      }
+export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>;
+export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>;
+export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<CreateDatasetMutation, CreateDatasetMutationVariables>;
+export const UpdateDatasetDocument = gql`
+    mutation UpdateDataset($id: ID!, $name: String!) {
+  updateDataset(input: {id: $id, name: $name}) {
+    id
+    name
+  }
+}
+    `;
+export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
+
+/**
+ * __useUpdateDatasetMutation__
+ *
+ * To run a mutation, you first call `useUpdateDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateDatasetMutation, { data, loading, error }] = useUpdateDatasetMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useUpdateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(UpdateDatasetDocument, options);
+      }
+export type UpdateDatasetMutationHookResult = ReturnType<typeof useUpdateDatasetMutation>;
+export type UpdateDatasetMutationResult = Apollo.MutationResult<UpdateDatasetMutation>;
+export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
+export const PinDatasetDocument = gql`
+    mutation PinDataset($id: ID!, $pin: Boolean!) {
+  pinDataset(input: {id: $id, pin: $pin}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, PinDatasetMutationVariables>;
+
+/**
+ * __usePinDatasetMutation__
+ *
+ * To run a mutation, you first call `usePinDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePinDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [pinDatasetMutation, { data, loading, error }] = usePinDatasetMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      pin: // value for 'pin'
+ *   },
+ * });
+ */
+export function usePinDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinDatasetMutation, PinDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(PinDatasetDocument, options);
+      }
+export type PinDatasetMutationHookResult = ReturnType<typeof usePinDatasetMutation>;
+export type PinDatasetMutationResult = Apollo.MutationResult<PinDatasetMutation>;
+export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<PinDatasetMutation, PinDatasetMutationVariables>;
+export const PutDatasetsInDatasetDocument = gql`
+    mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
+  putDatasetsInDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
+
+/**
+ * __usePutDatasetsInDatasetMutation__
+ *
+ * To run a mutation, you first call `usePutDatasetsInDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePutDatasetsInDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [putDatasetsInDatasetMutation, { data, loading, error }] = usePutDatasetsInDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function usePutDatasetsInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>(PutDatasetsInDatasetDocument, options);
+      }
+export type PutDatasetsInDatasetMutationHookResult = ReturnType<typeof usePutDatasetsInDatasetMutation>;
+export type PutDatasetsInDatasetMutationResult = Apollo.MutationResult<PutDatasetsInDatasetMutation>;
+export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
+export const ReleaseDatasetsFromDatasetDocument = gql`
+    mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
+  releaseDatasetsFromDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
+
+/**
+ * __useReleaseDatasetsFromDatasetMutation__
+ *
+ * To run a mutation, you first call `useReleaseDatasetsFromDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReleaseDatasetsFromDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [releaseDatasetsFromDatasetMutation, { data, loading, error }] = useReleaseDatasetsFromDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function useReleaseDatasetsFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>(ReleaseDatasetsFromDatasetDocument, options);
+      }
+export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<typeof useReleaseDatasetsFromDatasetMutation>;
+export type ReleaseDatasetsFromDatasetMutationResult = Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>;
+export type ReleaseDatasetsFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
+export const PutImagesInDatasetDocument = gql`
+    mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
+  putImagesInDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
+
+/**
+ * __usePutImagesInDatasetMutation__
+ *
+ * To run a mutation, you first call `usePutImagesInDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePutImagesInDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [putImagesInDatasetMutation, { data, loading, error }] = usePutImagesInDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function usePutImagesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>(PutImagesInDatasetDocument, options);
+      }
+export type PutImagesInDatasetMutationHookResult = ReturnType<typeof usePutImagesInDatasetMutation>;
+export type PutImagesInDatasetMutationResult = Apollo.MutationResult<PutImagesInDatasetMutation>;
+export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
+export const ReleaseImagesFromDatasetDocument = gql`
+    mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
+  releaseImagesFromDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
+
+/**
+ * __useReleaseImagesFromDatasetMutation__
+ *
+ * To run a mutation, you first call `useReleaseImagesFromDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReleaseImagesFromDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [releaseImagesFromDatasetMutation, { data, loading, error }] = useReleaseImagesFromDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function useReleaseImagesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>(ReleaseImagesFromDatasetDocument, options);
+      }
+export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<typeof useReleaseImagesFromDatasetMutation>;
+export type ReleaseImagesFromDatasetMutationResult = Apollo.MutationResult<ReleaseImagesFromDatasetMutation>;
+export type ReleaseImagesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
+export const PutFilesInDatasetDocument = gql`
+    mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
+  putFilesInDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
+
+/**
+ * __usePutFilesInDatasetMutation__
+ *
+ * To run a mutation, you first call `usePutFilesInDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePutFilesInDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [putFilesInDatasetMutation, { data, loading, error }] = usePutFilesInDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function usePutFilesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>(PutFilesInDatasetDocument, options);
+      }
+export type PutFilesInDatasetMutationHookResult = ReturnType<typeof usePutFilesInDatasetMutation>;
+export type PutFilesInDatasetMutationResult = Apollo.MutationResult<PutFilesInDatasetMutation>;
+export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
+export const ReleaseFilesFromDatasetDocument = gql`
+    mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
+  releaseFilesFromDataset(input: {selfs: $selfs, other: $other}) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
+
+/**
+ * __useReleaseFilesFromDatasetMutation__
+ *
+ * To run a mutation, you first call `useReleaseFilesFromDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReleaseFilesFromDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [releaseFilesFromDatasetMutation, { data, loading, error }] = useReleaseFilesFromDatasetMutation({
+ *   variables: {
+ *      selfs: // value for 'selfs'
+ *      other: // value for 'other'
+ *   },
+ * });
+ */
+export function useReleaseFilesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>(ReleaseFilesFromDatasetDocument, options);
+      }
+export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<typeof useReleaseFilesFromDatasetMutation>;
+export type ReleaseFilesFromDatasetMutationResult = Apollo.MutationResult<ReleaseFilesFromDatasetMutation>;
+export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
+export const RevertDatasetDocument = gql`
+    mutation RevertDataset($dataset: ID!, $history: ID!) {
+  revertDataset(input: {id: $dataset, historyId: $history}) {
+    id
+    name
+    description
+  }
+}
+    `;
+export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutation, RevertDatasetMutationVariables>;
+
+/**
+ * __useRevertDatasetMutation__
+ *
+ * To run a mutation, you first call `useRevertDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevertDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [revertDatasetMutation, { data, loading, error }] = useRevertDatasetMutation({
+ *   variables: {
+ *      dataset: // value for 'dataset'
+ *      history: // value for 'history'
+ *   },
+ * });
+ */
+export function useRevertDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RevertDatasetMutation, RevertDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(RevertDatasetDocument, options);
+      }
+export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>;
+export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>;
+export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<RevertDatasetMutation, RevertDatasetMutationVariables>;
+export const DeleteDatasetDocument = gql`
+    mutation DeleteDataset($id: ID!) {
+  deleteDataset(input: {id: $id})
+}
+    `;
+export type DeleteDatasetMutationFn = Apollo.MutationFunction<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
+
+/**
+ * __useDeleteDatasetMutation__
+ *
+ * To run a mutation, you first call `useDeleteDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDatasetMutation, { data, loading, error }] = useDeleteDatasetMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(DeleteDatasetDocument, options);
+      }
+export type DeleteDatasetMutationHookResult = ReturnType<typeof useDeleteDatasetMutation>;
+export type DeleteDatasetMutationResult = Apollo.MutationResult<DeleteDatasetMutation>;
+export type DeleteDatasetMutationOptions = Apollo.BaseMutationOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
+export const From_File_LikeDocument = gql`
+    mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
+  fromFileLike(
+    input: {file: $file, name: $name, origins: $origins, dataset: $dataset}
+  ) {
+    ...File
+  }
+}
+    ${FileFragmentDoc}`;
+export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMutation, From_File_LikeMutationVariables>;
+
+/**
+ * __useFrom_File_LikeMutation__
+ *
+ * To run a mutation, you first call `useFrom_File_LikeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useFrom_File_LikeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [fromFileLikeMutation, { data, loading, error }] = useFrom_File_LikeMutation({
+ *   variables: {
+ *      file: // value for 'file'
+ *      name: // value for 'name'
+ *      origins: // value for 'origins'
+ *      dataset: // value for 'dataset'
+ *   },
+ * });
+ */
+export function useFrom_File_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_File_LikeMutation, From_File_LikeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(From_File_LikeDocument, options);
+      }
+export type From_File_LikeMutationHookResult = ReturnType<typeof useFrom_File_LikeMutation>;
+export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeMutation>;
+export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<From_File_LikeMutation, From_File_LikeMutationVariables>;
+export const DeleteFileDocument = gql`
+    mutation DeleteFile($id: ID!) {
+  deleteFile(input: {id: $id})
+}
+    `;
+export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, DeleteFileMutationVariables>;
+
+/**
+ * __useDeleteFileMutation__
+ *
+ * To run a mutation, you first call `useDeleteFileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteFileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteFileMutation, { data, loading, error }] = useDeleteFileMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteFileMutation, DeleteFileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(DeleteFileDocument, options);
+      }
+export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
+export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
+export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
 export const CreateModelWorkspaceDocument = gql`
     mutation CreateModelWorkspace($input: CreateModelWorkspaceInput!) {
   createModelWorkspace(input: $input) {
@@ -4265,6 +5366,78 @@ export function useListBlocksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type ListBlocksQueryHookResult = ReturnType<typeof useListBlocksQuery>;
 export type ListBlocksLazyQueryHookResult = ReturnType<typeof useListBlocksLazyQuery>;
 export type ListBlocksQueryResult = Apollo.QueryResult<ListBlocksQuery, ListBlocksQueryVariables>;
+export const GetDatasetDocument = gql`
+    query GetDataset($id: ID!) {
+  dataset(id: $id) {
+    ...Dataset
+  }
+}
+    ${DatasetFragmentDoc}`;
+
+/**
+ * __useGetDatasetQuery__
+ *
+ * To run a query within a React component, call `useGetDatasetQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDatasetQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDatasetQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetDatasetQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
+      }
+export function useGetDatasetLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
+        }
+export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>;
+export type GetDatasetLazyQueryHookResult = ReturnType<typeof useGetDatasetLazyQuery>;
+export type GetDatasetQueryResult = Apollo.QueryResult<GetDatasetQuery, GetDatasetQueryVariables>;
+export const GetDatasetsDocument = gql`
+    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput, $ordering: [DatasetOrder!]) {
+  datasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListDataset
+  }
+}
+    ${ListDatasetFragmentDoc}`;
+
+/**
+ * __useGetDatasetsQuery__
+ *
+ * To run a query within a React component, call `useGetDatasetsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDatasetsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDatasetsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useGetDatasetsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
+      }
+export function useGetDatasetsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
+        }
+export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
+export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>;
+export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>;
 export const DetailModEnvironmentDocument = gql`
     query DetailModEnvironment($id: ID!) {
   modEnvironment(id: $id) {
@@ -4409,6 +5582,78 @@ export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
+export const GetFileDocument = gql`
+    query GetFile($id: ID!) {
+  file(id: $id) {
+    ...File
+  }
+}
+    ${FileFragmentDoc}`;
+
+/**
+ * __useGetFileQuery__
+ *
+ * To run a query within a React component, call `useGetFileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFileQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetFileQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+      }
+export function useGetFileLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+        }
+export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
+export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
+export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
+export const GetFilesDocument = gql`
+    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput, $ordering: [FileOrder!]) {
+  files(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListFile
+  }
+}
+    ${ListFileFragmentDoc}`;
+
+/**
+ * __useGetFilesQuery__
+ *
+ * To run a query within a React component, call `useGetFilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFilesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      ordering: // value for 'ordering'
+ *   },
+ * });
+ */
+export function useGetFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
+      }
+export function useGetFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
+        }
+export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
+export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>;
+export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>;
 export const HomePageDocument = gql`
     query HomePage {
   blocks: blocks(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {

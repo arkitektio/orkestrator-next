@@ -380,11 +380,18 @@ type Comparison {
 
 """Represents a compartment in a biophysics model."""
 type Compartment {
-  """The non-mechanistic (global) parameters applied to this compartment."""
-  globalParams: [GlobalParamMap!]!
+  """
+  An optional RGBA color (list of 4 values) used to render this compartment in the UI.
+  """
+  color: RGBAColor
 
   """The unique identifier of the compartment within the model."""
   id: String!
+
+  """
+  Ion species settings (reversal potentials and concentrations) applied to this compartment.
+  """
+  ions: [Ion!]!
 
   """The set of mechanisms active in this compartment."""
   mechanisms: [String!]!
@@ -397,11 +404,18 @@ type Compartment {
 
 """Input for a compartment in a biophysics model."""
 input CompartmentInput {
-  """The non-mechanistic (global) parameters applied to this compartment."""
-  globalParams: [GlobalParamMapInput!]
+  """
+  An optional RGBA color (list of 4 values) used to render this compartment in the UI.
+  """
+  color: RGBAColor = null
 
   """The unique identifier of the compartment within the model."""
   id: String!
+
+  """
+  Ion species settings (reversal potentials and concentrations) applied to this compartment.
+  """
+  ions: [IonInput!] = []
 
   """The set of mechanisms active in this compartment."""
   mechanisms: [String!]! = []
@@ -409,33 +423,42 @@ input CompartmentInput {
   """
   The mechanism-specific parameters applied to the sections of this compartment.
   """
-  sectionParams: [SectionParamMapInput!]
+  sectionParams: [SectionParamMapInput!] = []
 }
 
+"""A molar concentration (``"5 nM"``, ``"2 µM"``, ``"1 mM"``)."""
+scalar Concentration
+
 """
-Represents a connection of a section to its parent section, defining the morphology tree.
+Represents a connection of a section to its (single) parent section, defining the morphology tree.
 """
 type Connection {
-  """
-  The position along the parent section where this section attaches, between 0 and 1.
-  """
-  location: Float!
+  """Which end of this section attaches to the parent: 0 (default) or 1."""
+  childEnd: Float!
 
   """The ID of the parent section this section connects to."""
   parent: String!
+
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
+  parentLocation: Float!
 }
 
 """
-Input for a connection of a section to its parent section, defining the morphology tree.
+Input for a connection of a section to its (single) parent section, defining the morphology tree.
 """
 input ConnectionInput {
-  """
-  The position along the parent section where this section attaches, between 0 and 1.
-  """
-  location: Float! = 1
+  """Which end of this section attaches to the parent: 0 (default) or 1."""
+  childEnd: Float! = 0
 
   """The ID of the parent section this section connects to."""
   parent: String!
+
+  """
+  The position along the parent section where this section attaches, between 0 and 1.
+  """
+  parentLocation: Float! = 1
 }
 
 enum ConnectionKind {
@@ -444,6 +467,11 @@ enum ConnectionKind {
 
 """Represents a 3D coordinate (in space) of a point along a section."""
 type Coord {
+  """
+  The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted.
+  """
+  diam: Length
+
   """The x coordinate of the point."""
   x: Length!
 
@@ -456,6 +484,11 @@ type Coord {
 
 """Input for a 3D coordinate (in space) of a point along a section."""
 input CoordInput {
+  """
+  The diameter of the section at this point (NEURON pt3d). Falls back to the section diameter when omitted.
+  """
+  diam: Length = null
+
   """The x coordinate of the point."""
   x: Length!
 
@@ -483,6 +516,19 @@ input CreateExperimentInput {
   recordingViews: [RecordingViewInput!]!
   stimulusViews: [StimulusViewInput!]!
   timeTrace: ID = null
+}
+
+input CreateFileViewInput {
+  aMax: Int = null
+  aMin: Int = null
+  cMax: Int = null
+  cMin: Int = null
+  file: ID!
+  isGlobal: Boolean! = false
+  seriesIdentifier: String = null
+  tMax: Int = null
+  tMin: Int = null
+  trace: ID!
 }
 
 """Input for creating a mod environment"""
@@ -529,12 +575,15 @@ type Dataset {
   description: String
   files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
   id: ID!
-  images(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
   isDefault: Boolean!
   name: String!
+
+  """The parent dataset of this dataset"""
+  parent: Dataset
   pinned: Boolean!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   tags: [String!]!
+  traces(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
 }
 
 input DatasetFilter {
@@ -542,8 +591,14 @@ input DatasetFilter {
   DISTINCT: Boolean
   NOT: DatasetFilter
   OR: DatasetFilter
+  createdAfter: DateTime
+  createdBefore: DateTime
   id: ID
+  ids: [ID!]
   name: StrFilterLookup
+  parent: ID = null
+  parentless: Boolean = null
+  search: String
 }
 
 input DatasetOrder @oneOf {
@@ -586,6 +641,77 @@ input DeleteTraceInput {
 input DesociateInput {
   other: ID!
   selfs: [ID!]!
+}
+
+"""
+A physical dimension (``"[length]"``, ``"[current] / [length] ** 2"``, ``"dimensionless"``).
+
+A string scalar validating that the value is a parseable pint dimensionality and
+serializing it to a canonical, order-stable string (the quantity-compatibility
+key). A unit expression is accepted and reduced to its dimensionality.
+"""
+scalar Dimension
+
+"""
+Represents how a section parameter is distributed along a section (NEURON range variable).
+"""
+type Distribution {
+  """
+  The value at the most distal segment (required for 'linear'). A unit-bearing quantity.
+  """
+  distalValue: GenericQuantity
+
+  """
+  An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').
+  """
+  expression: String
+
+  """The kind of spatial distribution."""
+  kind: DistributionKind!
+
+  """
+  The value at path distance 0 (required for 'linear'). A unit-bearing quantity.
+  """
+  proximalValue: GenericQuantity
+
+  """
+  The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.
+  """
+  value: GenericQuantity
+}
+
+"""
+Input for how a section parameter is distributed along a section (NEURON range variable). Supply the fields matching the chosen kind: 'uniform' -> value; 'linear' -> proximal_value & distal_value; 'expression' -> expression.
+"""
+input DistributionInput {
+  """
+  The value at the most distal segment (required for 'linear'). A unit-bearing quantity.
+  """
+  distalValue: GenericQuantity = null
+
+  """
+  An expression in `x` (normalized position) and `d` (path distance) (required for 'expression').
+  """
+  expression: String = null
+
+  """The kind of spatial distribution."""
+  kind: DistributionKind! = UNIFORM
+
+  """
+  The value at path distance 0 (required for 'linear'). A unit-bearing quantity.
+  """
+  proximalValue: GenericQuantity = null
+
+  """
+  The uniform value applied to every segment (required for 'uniform'). A unit-bearing quantity, e.g. '0.12 S/cm2'.
+  """
+  value: GenericQuantity = null
+}
+
+enum DistributionKind {
+  EXPRESSION
+  LINEAR
+  UNIFORM
 }
 
 """A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``)."""
@@ -708,10 +834,22 @@ input ExperimentStimulusViewOrder @oneOf {
 }
 
 type File {
+  """The content type of the file"""
+  contentType: String
+
+  """Who created this file"""
+  creator: User
   id: ID!
   name: String!
   origins(filters: TraceFilter, ordering: [TraceOrder!]! = [], pagination: OffsetPaginationInput): [Trace!]!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The size of the file in bytes"""
+  size: Float
   store: BigFileStore!
+
+  """The file views of this file"""
+  views: [FileView!]!
 }
 
 type FileEvent {
@@ -726,10 +864,13 @@ input FileFilter {
   DISTINCT: Boolean
   NOT: FileFilter
   OR: FileFilter
+  contentType: StrFilterLookup
+  dataset: DatasetFilter = null
   id: ID
   ids: [ID!]
   name: StrFilterLookup
   search: String
+  size: IntFilterLookup
 }
 
 """
@@ -740,6 +881,28 @@ scalar FileLike
 input FileOrder @oneOf {
   createdAt: Ordering
   id: Ordering
+  size: Ordering
+}
+
+type FileView implements View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  file: File!
+  id: ID!
+  image: Trace!
+  isGlobal: Boolean!
+  seriesIdentifier: String
+  tMax: Int
+  tMin: Int
+  trace: Trace!
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
 }
 
 input FinishBigFileUploadInput {
@@ -830,32 +993,15 @@ type GeneralZarrAccessGrant {
 }
 
 """
-Represents a global parameter mapping for a biophysics model. (this will be set on non-mechanistic parameters  (i.e PAS ) of the model)
+A physical quantity of any dimension (``"0.12 S/cm2"``, ``"-54.3 mV"``, ``"2 mM"``).
+
+Unlike the dimension-locked scalars, this keeps whatever unit the value
+carries and does not normalize to a canonical integer — its dimension is
+whatever the value has. A bare number without a unit is rejected. On the wire
+it is a string; validating it against an expected dimension (e.g. a declared
+mechanism parameter) is the caller's job.
 """
-type GlobalParamMap {
-  """Description of the parameter"""
-  description: String
-
-  """The name of the parameter to set."""
-  param: String!
-
-  """The value of the parameter"""
-  value: Float!
-}
-
-"""
-Input for a global parameter mapping of a biophysics model. (this will be set on non-mechanistic parameters (i.e PAS) of the model)
-"""
-input GlobalParamMapInput {
-  """Description of the parameter"""
-  description: String = null
-
-  """The name of the parameter to set."""
-  param: String!
-
-  """The value of the parameter"""
-  value: Float!
-}
+scalar GenericQuantity
 
 enum Granularity {
   DAY
@@ -871,6 +1017,92 @@ enum HistoryKind {
   CREATE
   DELETE
   UPDATE
+}
+
+input IntFilterLookup {
+  contains: Int
+  endsWith: Int
+  exact: Int
+  gt: Int
+  gte: Int
+  iContains: Int
+  iEndsWith: Int
+  iExact: Int
+  iRegex: String
+  iStartsWith: Int
+  inList: [Int!]
+  isNull: Boolean
+  lt: Int
+  lte: Int
+  range: [Int!]
+  regex: String
+  startsWith: Int
+}
+
+"""
+Represents an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).
+"""
+type Ion {
+  """
+  The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).
+  """
+  externalConcentration: Concentration
+
+  """
+  The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).
+  """
+  internalConcentration: Concentration
+
+  """
+  The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.
+  """
+  ion: String!
+
+  """
+  The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.
+  """
+  reversalPotential: ElectricPotential
+
+  """
+  How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.
+  """
+  style: IonStyle!
+}
+
+"""
+Input for an ion species' intrinsic properties on a compartment (NEURON per-section ion settings, e.g. ena/nai/nao).
+"""
+input IonInput {
+  """
+  The extracellular concentration for this ion (NEURON <ion>o, e.g. nao).
+  """
+  externalConcentration: Concentration = null
+
+  """
+  The intracellular concentration for this ion (NEURON <ion>i, e.g. nai).
+  """
+  internalConcentration: Concentration = null
+
+  """
+  The ion species name as NEURON knows it (e.g. 'na', 'k', 'ca'). Custom ions declared by mechanisms are allowed.
+  """
+  ion: String!
+
+  """
+  The reversal potential for this ion (NEURON e<ion>, e.g. ena). Unset leaves NEURON's default.
+  """
+  reversalPotential: ElectricPotential = null
+
+  """
+  How the reversal potential and concentrations are treated (NEURON ion_style): a fixed reversal parameter, computed from fixed concentrations via Nernst, or with concentrations as states advanced by an accumulation mechanism.
+  """
+  style: IonStyle! = FIXED_REVERSAL
+}
+
+enum IonStyle {
+  ACCUMULATED
+  FIXED_REVERSAL
+  NERNST
 }
 
 type IrregularlySampledSignal implements Signal {
@@ -933,6 +1165,44 @@ input MechanismFilter {
   ids: [ID!]
   name: StrFilterLookup
   search: String
+}
+
+"""
+Represents a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.
+"""
+type MechanismGlobalParam {
+  """Description of the parameter"""
+  description: String
+
+  """The mechanism that owns this GLOBAL parameter (e.g. 'hh')."""
+  mechanism: String!
+
+  """The name of the GLOBAL parameter to set (e.g. 'q10')."""
+  param: String!
+
+  """
+  The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').
+  """
+  value: GenericQuantity!
+}
+
+"""
+Input for a GLOBAL mechanism parameter (NEURON GLOBAL variable, e.g. q10_hh) — shared across every instance of the mechanism, set once at the model level.
+"""
+input MechanismGlobalParamInput {
+  """Description of the parameter"""
+  description: String = null
+
+  """The mechanism that owns this GLOBAL parameter (e.g. 'hh')."""
+  mechanism: String!
+
+  """The name of the GLOBAL parameter to set (e.g. 'q10')."""
+  param: String!
+
+  """
+  The value of the parameter, as a unit-bearing quantity (e.g. '2 dimensionless', '10 mV').
+  """
+  value: GenericQuantity!
 }
 
 """Input for creating a mechanism"""
@@ -1061,8 +1331,23 @@ type ModelConfig {
   """The list of cells in the model."""
   cells: [Cell!]!
 
+  """
+  Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance
+
+  """
+  Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.
+  """
+  ions: [Ion!]!
+
   """An optional label for the model configuration."""
   label: String
+
+  """
+  GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.
+  """
+  mechanismGlobals: [MechanismGlobalParam!]!
 
   """The list of net connections in the model."""
   netConnections: [NetConnection!]
@@ -1072,6 +1357,11 @@ type ModelConfig {
 
   """The list of net synapses in the model."""
   netSynapses: [NetSynapse!]
+
+  """
+  Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity
 
   """Simulation bath temperature."""
   temperature: Temperature!
@@ -1085,8 +1375,23 @@ input ModelConfigInput {
   """The list of cells in the model."""
   cells: [CellInput!]! = []
 
+  """
+  Model-wide default specific membrane capacitance (NEURON cm). A section's own cm overrides this; unset falls back to NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance = null
+
+  """
+  Model-wide default ion settings (reversal potentials / concentrations). A compartment's own ions override these by ion name.
+  """
+  ions: [IonInput!] = []
+
   """An optional label for the model configuration."""
   label: String = null
+
+  """
+  GLOBAL mechanism parameters (NEURON GLOBAL variables, e.g. q10_hh), shared across every instance of the mechanism.
+  """
+  mechanismGlobals: [MechanismGlobalParamInput!] = []
 
   """The list of net connections in the model."""
   netConnections: [NetConnectionInput!] = []
@@ -1096,6 +1401,11 @@ input ModelConfigInput {
 
   """The list of net synapses in the model."""
   netSynapses: [NetSynapseInput!] = []
+
+  """
+  Model-wide default axial resistivity (NEURON Ra). A section's own ra overrides this; unset falls back to NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity = null
 
   """Simulation bath temperature."""
   temperature: Temperature! = "309.15 K"
@@ -1147,6 +1457,9 @@ type Mutation {
   """Create a new experiment"""
   createExperiment(input: CreateExperimentInput!): Experiment!
 
+  """Create a file view linking a file to a trace"""
+  createFileView(input: CreateFileViewInput!): FileView!
+
   """Create a mechanism from a mod file"""
   createModEnvironment(input: CreateModEnvironmentInput!): ModEnvironment!
 
@@ -1194,6 +1507,9 @@ type Mutation {
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
+
+  """Delete an existing file view"""
+  deleteFileView(input: DeleteInput!): ID!
 
   """Delete an existing image"""
   deleteImage(input: DeleteTraceInput!): ID!
@@ -1539,20 +1855,26 @@ type Organization {
 type Parameter {
   default: Any
   description: String
+  dimension: Dimension
   key: String!
   kind: ParameterKind!
   label: String
   nullable: Boolean!
+  proposedUnits: [Unit!]
+  referenceUnit: Unit
 }
 
 """A parameter port of a mechanism"""
 input ParameterInput {
   default: Any = null
   description: String = null
+  dimension: Dimension = null
   key: String!
   kind: ParameterKind! = FLOAT
   label: String = null
   nullable: Boolean! = false
+  proposedUnits: [Unit!] = null
+  referenceUnit: Unit = null
 }
 
 """The kind of a mechanism parameter."""
@@ -1773,6 +2095,9 @@ type Query {
   workspaceMappings(filters: WorkspaceMappingFilter, ordering: [WorkspaceMappingOrder!]! = [], pagination: OffsetPaginationInput): [WorkspaceMapping!]!
 }
 
+"""The Color scalar type represents a color as a list of 4 values RGBA"""
+scalar RGBAColor
+
 type ROI {
   createdAt: DateTime!
   creator: User
@@ -1918,6 +2243,11 @@ input RequestZarrUploadInput {
   version: String = null
 }
 
+"""
+An axial resistivity (NEURON ``Ra``; ``"35.4 ohm*cm"``, ``"100 ohm*cm"``).
+"""
+scalar Resistivity
+
 input RevertInput {
   historyId: ID!
   id: ID!
@@ -1961,56 +2291,106 @@ enum RoiKindChoices {
 Represents a section of a cell's morphology, the basic structural unit of the topology.
 """
 type Section {
-  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
-  category: String!
-
-  """The connections of this section to its parent section(s)."""
-  connections: [Connection!]!
+  """
+  An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category.
+  """
+  category: String
 
   """
-  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance
+
+  """
+  The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.
   """
   coords: [Coord!]
 
-  """The diameter of the section."""
+  """
+  If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg.
+  """
+  dLambda: Float
+
+  """
+  The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied.
+  """
   diam: Length!
 
   """The unique identifier of the section within the cell."""
   id: String!
 
-  """Length of the section. Required if coords is not provided."""
+  """
+  Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied.
+  """
   length: Length
 
-  """The number of segments the section is discretized into."""
+  """
+  The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node.
+  """
   nseg: Int!
+
+  """
+  The connection to this section's parent section. None for the root section of the cell.
+  """
+  parent: Connection
+
+  """
+  Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity
 }
 
 """
 Input for a section of a cell's morphology, the basic structural unit of the topology.
 """
 input SectionInput {
-  """An optional category for the section (e.g. 'soma', 'axon', 'dend')."""
+  """
+  An optional category for the section (e.g. 'soma', 'axon', 'dend'). Biophysics compartments are matched to sections by this category.
+  """
   category: String = null
 
-  """The connections of this section to its parent section(s)."""
-  connections: [ConnectionInput!] = []
+  """
+  Specific membrane capacitance (NEURON cm). Unset inherits the model-wide default, then NEURON's built-in 1 µF/cm².
+  """
+  cm: SpecificCapacitance = null
 
   """
-  The 3D coordinates describing the section's geometry. Required if length is not provided.
+  The 3D coordinates (NEURON pt3d) describing the section's geometry. Required if length is not provided; when supplied they take precedence over length/diam. At least two points are needed to define a cable.
   """
   coords: [CoordInput!] = null
 
-  """The diameter of the section."""
+  """
+  If set, nseg is computed from NEURON's d_lambda rule (target fraction of the AC length constant at 100 Hz per segment; 0.1 is typical) and overrides the fixed nseg.
+  """
+  dLambda: Float = null
+
+  """
+  The diameter of the section (stylized geometry). Overridden by per-point coord diameters when coords are supplied.
+  """
   diam: Length! = "1 µm"
 
   """The unique identifier of the section within the cell."""
   id: String!
 
-  """Length of the section. Required if coords is not provided."""
+  """
+  Length of the section (stylized geometry). Required if coords is not provided; ignored when coords are supplied.
+  """
   length: Length = null
 
-  """The number of segments the section is discretized into."""
+  """
+  The number of segments the section is discretized into (used when d_lambda is not set). NEURON convention prefers an odd count so the section has a true midpoint node.
+  """
   nseg: Int! = 1
+
+  """
+  The connection to this section's parent section. None for the root section of the cell.
+  """
+  parent: ConnectionInput = null
+
+  """
+  Axial resistivity (NEURON Ra). Unset inherits the model-wide default, then NEURON's built-in 35.4 Ω·cm.
+  """
+  ra: Resistivity = null
 }
 
 """
@@ -2020,14 +2400,16 @@ type SectionParamMap {
   """Description of the parameter"""
   description: String
 
+  """
+  How the parameter is distributed along the section (uniform by default).
+  """
+  distribution: Distribution!
+
   """The governing mechanism"""
   mechanism: String!
 
   """The name of the parameter to set."""
   param: String!
-
-  """The value of the parameter"""
-  value: Float!
 }
 
 """
@@ -2037,14 +2419,16 @@ input SectionParamMapInput {
   """Description of the parameter"""
   description: String = null
 
+  """
+  How the parameter is distributed along the section (uniform by default).
+  """
+  distribution: DistributionInput!
+
   """The governing mechanism"""
   mechanism: String!
 
   """The name of the parameter to set."""
   param: String!
-
-  """The value of the parameter"""
-  value: Float!
 }
 
 """A signal recorded during a recording session"""
@@ -2087,6 +2471,9 @@ input SimulationOrder @oneOf {
   createdAt: Ordering
   id: Ordering
 }
+
+"""A specific membrane capacitance (NEURON ``cm``; ``"1 uF/cm^2"``)."""
+scalar SpecificCapacitance
 
 type SpikeTrain implements Signal {
   id: ID!
@@ -2291,6 +2678,26 @@ type TimeBucket {
   ts: DateTime!
 }
 
+type TimelineView implements View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  id: ID!
+  image: Trace!
+  isGlobal: Boolean!
+  label: String!
+  tMax: Int
+  tMin: Int
+  trace: Trace!
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
+}
+
 """
 Represents the topology of a cell, which defines its structure as a set of connected sections.
 """
@@ -2364,6 +2771,15 @@ input TraceOrder @oneOf {
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar TwoDVector
 
+"""
+A physical unit of measurement (``"mV"``, ``"S/cm2"``, ``"second"``).
+
+A string scalar validating that the value parses as a pint unit — a bad unit,
+a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
+spelling (``"cm2"``) is accepted and the given spelling is preserved.
+"""
+scalar Unit
+
 input UpdateModelWorkspaceInput {
   description: String = null
   id: ID!
@@ -2393,6 +2809,23 @@ type User {
   id: ID!
   preferredUsername: String!
   sub: String!
+}
+
+interface View {
+  """The accessor"""
+  accessor: [String!]!
+  cMax: Int
+  cMin: Int
+  image: Trace!
+  isGlobal: Boolean!
+  tMax: Int
+  tMin: Int
+  xMax: Int
+  xMin: Int
+  yMax: Int
+  yMin: Int
+  zMax: Int
+  zMin: Int
 }
 
 type WorkspaceMapping {

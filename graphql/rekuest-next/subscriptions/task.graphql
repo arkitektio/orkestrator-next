@@ -19,3 +19,16 @@ subscription WatchChildTasks($parentId: ID!) {
     ...ChildTaskEvent
   }
 }
+
+# Live create/update of tasks for ONE agent. Used by the agent detail page to keep
+# its "latest tasks" section current.
+subscription WatchAgentTasks($agent: ID!) {
+  agentTasks(agent: $agent) {
+    create {
+      ...ListTask
+    }
+    update {
+      ...ListTask
+    }
+  }
+}

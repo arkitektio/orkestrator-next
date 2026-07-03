@@ -78,6 +78,9 @@ fragment ArgChildPortNested on ArgPort {
   kind
   key
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     kind
     identifier
@@ -102,6 +105,9 @@ fragment ArgChildPort on ArgPort {
   kind
   key
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     ...ArgChildPortNested
   }
@@ -122,6 +128,9 @@ fragment ReturnChildPortNested on ReturnPort {
   kind
   key
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     kind
     identifier
@@ -147,6 +156,9 @@ fragment ReturnChildPort on ReturnPort {
   kind
   key
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     ...ReturnChildPortNested
   }
@@ -229,6 +241,9 @@ fragment ArgPort on ArgPort {
   }
   kind
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     ...ArgChildPort
   }
@@ -258,6 +273,9 @@ fragment ReturnPort on ReturnPort {
   }
   kind
   identifier
+  referenceUnit
+  proposedUnits
+  dimension
   children {
     ...ReturnChildPort
   }

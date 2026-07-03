@@ -5,6 +5,7 @@ import { EffectComposer, Vignette } from '@react-three/postprocessing';
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { rgbaToCss } from "../lib/color";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
 import { useNeuronPanelStore } from "../lib/neuronPanelStore";
 import { toBase } from "../lib/quantities";
@@ -28,9 +29,9 @@ const getColorFromIndex = (index: number) => {
 };
 
 const getParentInfo = (section: SectionFragment) => {
-  if (!section.connections || section.connections.length === 0) return null;
-  const conn = section.connections[0];
-  return { id: conn.parent, location: conn.location ?? 1 };
+  if (!section.parent)  return null;
+  const conn = section.parent
+  return { id: conn.parent, location: conn.parentLocation ?? 1 };
 };
 
 const getPerpendicularVector = (vec: THREE.Vector3) => {
@@ -99,6 +100,17 @@ const calculateBranchDirection = (
 const useNeuronLayout = (model: DetailNeuronModelFragment) => {
   return useMemo(() => {
     const rawSections = model.config.cells.flatMap((cell) => cell.topology.sections);
+
+    // A section is tinted by its compartment's color (matched on `category` →
+    // compartment `id`) when one is set; otherwise it falls back to the
+    // depth-based hue below.
+    const compartmentColor = new Map<string, string>();
+    model.config.cells.forEach((cell) =>
+      cell.biophysics.compartments.forEach((c) => {
+        const css = rgbaToCss(c.color);
+        if (css) compartmentColor.set(c.id, css);
+      }),
+    );
 
     const sectionMap = new Map<string, SectionFragment>();
     const childrenMap = new Map<string, SectionFragment[]>();
@@ -171,7 +183,7 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
         start,
         end,
         direction,
-        color: getColorFromIndex(depth)
+        color: compartmentColor.get(section.category ?? "") ?? getColorFromIndex(depth)
       });
 
       geometryMap.set(section.id, { start, end, direction });
@@ -181,13 +193,13 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
       });
     };
 
-    const roots = rawSections.filter(s => !s.connections || s.connections.length === 0);
+    const roots = rawSections.filter(s => !s.parent);
     const entryPoints = roots.length > 0 ? roots : [rawSections[0]];
 
     entryPoints.forEach(root => processSection(root.id, null, 0));
 
     return segments;
-  }, [model.id]);
+  }, [model.id, model.config.cells]);
 };
 
 // --- Visual Components ---
@@ -358,7 +370,19 @@ const NeuronPanelCard = ({
                     <ParamRow
                       key={`${p.mechanism}-${p.param}-${i}`}
                       label={`${p.mechanism}.${p.param}`}
-                      value={String(p.value)}
+                      value={String(p.distribution.value)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {compartment.ions.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {compartment.ions.map((ion) => (
+                    <ParamRow
+                      key={ion.ion}
+                      label={`${ion.ion} (${ion.style})`}
+                      value={ion.reversalPotential ?? "—"}
                     />
                   ))}
                 </div>

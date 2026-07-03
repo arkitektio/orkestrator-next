@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useAppsQuery, useListComputeNodeQuery, useUsersQuery } from "@/lok-next/api/graphql";
+import { useAppsQuery, useListDevicesQuery, useUsersQuery } from "@/lok-next/api/graphql";
 import ActionList from "@/rekuest/components/lists/ActionList";
 import AgentList from "@/rekuest/components/lists/AgentList";
 import TaskList from "@/rekuest/components/lists/TaskList";
@@ -104,7 +104,7 @@ const AppFilterButton = (props: { onSelect: (value: string | undefined) => void 
 
 const DeviceFilterButton = (props: { onSelect: (value: string | undefined) => void }) => {
 
-  const { data } = useListComputeNodeQuery();
+  const { data } = useListDevicesQuery();
 
   return <DropdownMenu>
     <DropdownMenuTrigger >
@@ -123,7 +123,7 @@ const DeviceFilterButton = (props: { onSelect: (value: string | undefined) => vo
       >
         All Devices
       </DropdownMenuItem>
-      {data?.computeNodes.map((option) => (
+      {data?.devices.map((option) => (
         <DropdownMenuItem
           key={option.nodeId}
           onSelect={() => {

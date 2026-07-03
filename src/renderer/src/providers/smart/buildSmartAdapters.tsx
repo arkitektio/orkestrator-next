@@ -23,7 +23,6 @@ export type SmartListPageProps<T extends Object = Object> = {
   title?: React.ReactNode;
   help?: React.ReactNode;
   sidebars?: React.ReactNode;
-  actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: unknown;
   callback?: (object: T) => void;

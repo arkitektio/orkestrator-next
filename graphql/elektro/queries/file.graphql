@@ -1,0 +1,15 @@
+query GetFile($id: ID!) {
+  file(id: $id) {
+    ...File
+  }
+}
+
+query GetFiles(
+  $filters: FileFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [FileOrder!]
+) {
+  files(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListFile
+  }
+}

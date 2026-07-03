@@ -4,20 +4,16 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import {
-  DetailComputeNodeFragment,
-  UpdateComputeNodeMutationVariables,
-  useUpdateComputeNodeMutation,
-} from "../api/graphql";
+import { DetailDeviceFragment, UpdateDeviceMutationVariables, useUpdateDeviceMutation } from "../api/graphql";
 
 export const UpdateComputeNodeForm = (props: {
-  computeNode: Partial<DetailComputeNodeFragment>;
+  computeNode: Partial<DetailDeviceFragment>;
 }) => {
-  const [updateComputeNode] = useUpdateComputeNodeMutation();
+  const [updateComputeNode] = useUpdateDeviceMutation();
 
   const update = useGraphQlFormDialog(updateComputeNode);
 
-  const form = useForm<UpdateComputeNodeMutationVariables["input"]>({
+  const form = useForm<UpdateDeviceMutationVariables["input"]>({
     defaultValues: {
       id: props.computeNode.id,
       name: props.computeNode.name ?? "",

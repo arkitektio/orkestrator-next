@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokComputeNode } from "@/linkers";
-import { ListComputeNodeFragment } from "../../api/graphql";
+import { LokDevice } from "@/linkers";
+import { ListDeviceFragment } from "../../api/graphql";
 
 interface Props {
-  item: ListComputeNodeFragment;
+  item: ListDeviceFragment;
 
 }
 
@@ -12,14 +12,14 @@ const TheCard = ({ item }: Props) => {
   const resolve = useResolve();
 
   return (
-    <LokComputeNode.Smart object={item} >
+    <LokDevice.Smart object={item} >
       <Card className="p-3">
-        <LokComputeNode.DetailLink object={item} className="">
+        <LokDevice.DetailLink object={item} className="">
           {item.name || item.nodeId}
           <br />
-        </LokComputeNode.DetailLink>
+        </LokDevice.DetailLink>
       </Card>
-    </LokComputeNode.Smart>
+    </LokDevice.Smart>
   );
 };
 

@@ -1,14 +1,14 @@
-query ListComputeNode(
+query ListDevices(
   $pagination: OffsetPaginationInput
-  $filters: ComputeNodeFilter
+  $filters: DeviceFilter
 ) {
-  computeNodes(pagination: $pagination, filters: $filters) {
-    ...ListComputeNode
+  devices(pagination: $pagination, filters: $filters) {
+    ...ListDevice
   }
 }
 
 query GetDevice($id: ID!) {
-  device: computeNode(id: $id) {
+  device(id: $id) {
     ...DetailDevice
   }
 }

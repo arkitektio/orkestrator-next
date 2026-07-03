@@ -10,31 +10,51 @@ fragment Section on Section {
   length
   category
   nseg
+  ra
+  cm
+  dLambda
   coords {
     ...Coord
   }
-  connections {
+  parent {
     ...Connection
   }
 }
 
 fragment Connection on Connection {
   parent
-  location
+  parentLocation
+  childEnd
+}
+
+fragment Ion on Ion {
+  ion
+  style
+  reversalPotential
+  internalConcentration
+  externalConcentration
+}
+
+fragment MechanismGlobalParam on MechanismGlobalParam {
+  mechanism
+  param
+  value
+  description
 }
 
 fragment Compartment on Compartment {
   id
+  color
   mechanisms
-  globalParams {
-    param
-    value
-    description
+  ions {
+    ...Ion
   }
   sectionParams {
     mechanism
     param
-    value
+    distribution {
+      value
+    }
     description
   }
 }
@@ -68,6 +88,14 @@ fragment DetailNeuronModel on NeuronModel {
     temperature
     vInit
     label
+    ra
+    cm
+    ions {
+      ...Ion
+    }
+    mechanismGlobals {
+      ...MechanismGlobalParam
+    }
     cells {
       id
       biophysics {

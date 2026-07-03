@@ -45,8 +45,8 @@ export const NeuronModelHoverCard = ({ object }: { object: Object }) => {
       )}
 
       <div className="flex flex-col gap-1">
-        <HoverRow label="Temperature" value={`${config.celsius} °C`} />
-        <HoverRow label="V init" value={`${config.vInit} mV`} />
+        <HoverRow label="Temperature" value={config.temperature} />
+        <HoverRow label="V init" value={config.vInit} />
         <HoverRow label="Cells" value={config.cells.length} />
         <HoverRow label="Simulations" value={model.simulations.length} />
         <HoverRow label="Environment" value={model.environment.name} />

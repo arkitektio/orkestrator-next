@@ -98,7 +98,7 @@ fragment DetailTask on Task {
       appFilter
       versionFilter
       autoResolvable
-      actionDemands {
+      actionDependencies {
         key
       }
     }

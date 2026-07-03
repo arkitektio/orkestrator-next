@@ -16,6 +16,7 @@ const portKindLabel: Record<PortKind, string> = {
   [PortKind.String]: "str",
   [PortKind.Int]: "int",
   [PortKind.Float]: "float",
+  [PortKind.Quantity]: "quantity",
   [PortKind.Bool]: "bool",
   [PortKind.Structure]: "structure",
   [PortKind.List]: "list",

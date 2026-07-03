@@ -13,6 +13,9 @@ import {
   WatchImplementationsDocument,
   WatchImplementationsSubscription,
   WatchImplementationsSubscriptionVariables,
+  WatchAgentTasksDocument,
+  WatchAgentTasksSubscription,
+  WatchAgentTasksSubscriptionVariables,
 } from "@/rekuest/api/graphql";
 import { Pin, PinOff } from "lucide-react";
 import { useEffect } from "react";
@@ -114,6 +117,41 @@ export const AgentPage = asDetailQueryRoute(
               agent: {
                 ...prev.agent,
                 implementations: prev.agent.implementations.filter((x) => x.id != remove),
+              },
+            };
+          }
+          return prev;
+        },
+      });
+    }, [subscribeToMore, data.agent.id]);
+
+    useEffect(() => {
+      return subscribeToMore<
+        WatchAgentTasksSubscription,
+        WatchAgentTasksSubscriptionVariables
+      >({
+        document: WatchAgentTasksDocument,
+        variables: { agent: data.agent.id },
+        updateQuery: (prev, { subscriptionData }) => {
+          const change = subscriptionData.data?.agentTasks;
+          if (!change) return prev;
+          const { create, update } = change;
+          if (create) {
+            if (prev.agent.tasks.some((task) => task.id === create.id)) return prev;
+            return {
+              agent: {
+                ...prev.agent,
+                tasks: [create, ...prev.agent.tasks],
+              },
+            };
+          }
+          if (update) {
+            return {
+              agent: {
+                ...prev.agent,
+                tasks: prev.agent.tasks.map((task) =>
+                  task.id === update.id ? update : task,
+                ),
               },
             };
           }

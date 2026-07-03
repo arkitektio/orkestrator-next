@@ -1,0 +1,36 @@
+import { Explainer } from "@/components/explainer/Explainer";
+import { Button } from "@/components/ui/button";
+import { ElektroFile } from "@/linkers";
+import { UploadIcon } from "lucide-react";
+import React from "react";
+import FileList from "../components/lists/FileList";
+
+export type IRepresentationScreenProps = {};
+
+const Page: React.FC<IRepresentationScreenProps> = () => {
+  return (
+    <ElektroFile.ListPage
+      title="Files"
+      pageActions={
+        <>
+          <ElektroFile.NewButton>
+            <Button variant="outline" size="sm">
+              <UploadIcon className="h-4 w-4 mr-2" />
+              Upload
+            </Button>
+          </ElektroFile.NewButton>
+        </>
+      }
+    >
+      <div className="p-3">
+        <Explainer
+          title="Files"
+          description="Files are the raw big-file blobs you upload. They can be the origin of one or more traces."
+        />
+        <FileList />
+      </div>
+    </ElektroFile.ListPage>
+  );
+};
+
+export default Page;

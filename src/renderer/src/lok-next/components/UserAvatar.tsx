@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokComputeNode, LokUser } from "@/linkers";
+import { LokDevice, LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useGetDeviceByDeviceIdQuery, useGetDeviceQuery, useUserQuery } from "../api/graphql";
 import { cn } from "@/lib/utils";
@@ -39,11 +39,11 @@ export const DeviceImprint = (props: { deviceId: string, className?: string }) =
 
 
   return (
-    <LokComputeNode.DetailLink object={data?.deviceByDeviceId}>
+    <LokDevice.DetailLink object={data?.deviceByDeviceId}>
       <Badge className={cn("text-xs font-mono mx-3  truncate elipsis flex flex-wrap items-left align-left group-hover:opacity-100 opacity-0 transition-opacity", !data?.deviceByDeviceId && "animate-pulse ", props.className)}>
         {data?.deviceByDeviceId?.name || "Unknown"}
       </Badge>
-    </LokComputeNode.DetailLink>
+    </LokDevice.DetailLink>
   );
 };
 

@@ -40,8 +40,11 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data, r
               Used in Actions
             </h2>
             <div className="mb-6 grid md:grid-cols-7 gap-2 md:items-center">
-              {data.structure.outputUsages.map((type) => (
-                <OutputStructureUsageCard key={type.id} item={type} />
+              {data.structure.outputUsages.map((type, index) => (
+                <OutputStructureUsageCard
+                  key={`${type.action.id}-${type.keyPath}-${index}`}
+                  item={type}
+                />
               ))}
             </div>
           </>
@@ -54,8 +57,11 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data, r
               Used as Input in Actions
             </h2>
             <div className="mb-6 grid md:grid-cols-7 gap-2 md:items-center">
-              {data.structure.inputUsages.map((type) => (
-                <InputStructureUsageCard key={type.id} item={type} />
+              {data.structure.inputUsages.map((type, index) => (
+                <InputStructureUsageCard
+                  key={`${type.action.id}-${type.keyPath}-${index}`}
+                  item={type}
+                />
               ))}
             </div>
           </>

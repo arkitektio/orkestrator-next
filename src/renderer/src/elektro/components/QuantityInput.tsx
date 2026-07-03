@@ -24,8 +24,21 @@ export interface QuantityInputProps {
   value: string | null | undefined;
   /** Called with the re-serialized wire string on every magnitude/unit change. */
   onChange: (next: string) => void;
-  /** Physical dimension — drives the unit dropdown and the default unit. */
-  dimension: Dimension;
+  /**
+   * Elektro path: a fixed physical `Dimension` supplies the unit dropdown and the
+   * default unit from the curated `DIMENSIONS` table.
+   */
+  dimension?: Dimension;
+  /**
+   * Rekuest path: an ad-hoc list of unit symbols (a QUANTITY port's
+   * `proposedUnits`) supplies the dropdown when no `dimension` is given.
+   */
+  units?: string[];
+  /**
+   * Default / reference unit used when the wire value carries none (a QUANTITY
+   * port's `referenceUnit`). Falls back to the first of `units`.
+   */
+  defaultUnit?: string;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -36,24 +49,40 @@ export interface QuantityInputProps {
  * selector. Parses the incoming wire string ("100 ms") into a magnitude (100)
  * and unit ("ms") for display, and re-serializes to the wire format whenever
  * either part changes. Controlled — owns no value state itself.
+ *
+ * Units come from either a fixed `dimension` (elektro's curated table) or an
+ * ad-hoc `units` list (a rekuest QUANTITY port's `proposedUnits`).
  */
 export const QuantityInput = ({
   value,
   onChange,
   dimension,
+  units: unitList,
+  defaultUnit,
   placeholder,
   className,
   disabled,
 }: QuantityInputProps) => {
-  const def = DIMENSIONS[dimension];
-  const { magnitude, unit } = parseQuantity(value, dimension);
+  // Resolve the unit set + default unit from whichever source was given.
+  const { symbols, baseUnit } = useMemo(() => {
+    if (dimension) {
+      const def = DIMENSIONS[dimension];
+      return { symbols: def.units.map((u) => u.symbol), baseUnit: def.base };
+    }
+    const list = unitList ?? [];
+    return { symbols: list, baseUnit: defaultUnit ?? list[0] ?? "" };
+  }, [dimension, unitList, defaultUnit]);
+
+  const parsed = parseQuantity(value);
+  const magnitude = parsed.magnitude;
+  const unit = parsed.unit || baseUnit;
 
   // Preserve an unexpected server unit by surfacing it as an extra option rather
   // than silently snapping it to a preset.
   const units = useMemo(() => {
-    if (def.units.some((u) => u.symbol === unit)) return def.units;
-    return [...def.units, { symbol: unit, toBase: NaN }];
-  }, [def.units, unit]);
+    if (!unit || symbols.includes(unit)) return symbols;
+    return [...symbols, unit];
+  }, [symbols, unit]);
 
   const emit = (nextMagnitude: number | null, nextUnit: string) => {
     if (nextMagnitude == null) {
@@ -95,8 +124,8 @@ export const QuantityInput = ({
           </SelectTrigger>
           <SelectContent>
             {units.map((u) => (
-              <SelectItem key={u.symbol} value={u.symbol}>
-                {u.symbol}
+              <SelectItem key={u} value={u}>
+                {u}
               </SelectItem>
             ))}
           </SelectContent>

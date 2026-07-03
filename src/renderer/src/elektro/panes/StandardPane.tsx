@@ -5,7 +5,14 @@ import { FancyInput } from "@/components/ui/fancy-input";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Home, LayoutDashboard, LineChartIcon, Network } from "lucide-react";
+import {
+  FileIcon,
+  FolderIcon,
+  Home,
+  LayoutDashboard,
+  LineChartIcon,
+  Network,
+} from "lucide-react";
 import * as React from "react";
 import { RiCheckboxMultipleLine } from "react-icons/ri";
 import {
@@ -74,6 +81,23 @@ export const NavigationPane = (props: {}) => {
         >
           <Network className="h-4 w-4" />
           Blocks
+        </PaneLink>
+      </SidePaneGroup>
+
+      <SidePaneGroup title="Data">
+        <PaneLink
+          to="/elektro/datasets"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <FolderIcon className="h-4 w-4" />
+          Datasets
+        </PaneLink>
+        <PaneLink
+          to="/elektro/files"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <FileIcon className="h-4 w-4" />
+          Files
         </PaneLink>
       </SidePaneGroup>
     </Tree>

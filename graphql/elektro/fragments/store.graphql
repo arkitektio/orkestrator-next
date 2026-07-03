@@ -6,3 +6,11 @@ fragment ZarrStore on ZarrStore {
   shape
   dtype
 }
+
+fragment BigFileStore on BigFileStore {
+  id
+  key
+  bucket
+  path
+  presignedUrl
+}

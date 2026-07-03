@@ -1,22 +1,20 @@
 import { Arkitekt, Guard } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { LokComputeNode } from "@/linkers";
+import { LokDevice } from "@/linkers";
+import AgentList from "@/rekuest/components/lists/AgentList";
 import { Pencil } from "lucide-react";
 import { useGetDeviceQuery } from "../api/graphql";
-import ClientCard from "../components/cards/ClientCard";
 import { UpdateComputeNodeForm } from "../forms/UpdateComputeNodeForm";
-import AgentList from "@/rekuest/components/lists/AgentList";
 
 export const ComputeNodePage = asDetailQueryRoute(useGetDeviceQuery, ({ data }) => {
 
   const manifest = Arkitekt.useConnectedManifest()
 
   return (
-    <LokComputeNode.ModelPage
+    <LokDevice.ModelPage
       object={data.device }
-      actions={<LokComputeNode.Actions object={data?.device} />}
+      actions={<LokDevice.Actions object={data?.device} />}
       title={data?.device?.name || "Untitled Compute Node"}
       pageActions={
         <FormSheet
@@ -59,7 +57,7 @@ export const ComputeNodePage = asDetailQueryRoute(useGetDeviceQuery, ({ data }) 
 
 
 
-    </LokComputeNode.ModelPage>
+    </LokDevice.ModelPage>
   );
 });
 

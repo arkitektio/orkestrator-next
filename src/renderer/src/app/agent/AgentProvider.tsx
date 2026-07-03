@@ -59,9 +59,22 @@ export const AgentProvider: React.FC<{
   const agentRef = useRef<OrkestratorAgent | null>(null);
   const [agent, setAgent] = useState<OrkestratorAgent | null>(null);
 
+  // Keep `navigate` and the live `arkitekt` context in refs so they never appear
+  // in the effect deps below — otherwise every navigation (react-router returns a
+  // fresh `navigate`) and every token refresh (a new `connection` object) would
+  // tear down and reconnect the agent.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const arkitektRef = useRef(arkitekt);
+  arkitektRef.current = arkitekt;
+
+  // A stable identity for "the connection we're bound to": the endpoint. Token
+  // refresh keeps the same endpoint, so it does not churn the agent.
+  const connectionKey = connection?.endpoint?.base_url ?? null;
+
   useEffect(() => {
     try {
-      if (disabled || !connection || !settings.startAgent) {
+      if (disabled || !connectionKey || !settings.startAgent) {
         if (agentRef.current) {
           agentRef.current.disconnect();
           agentRef.current = null;
@@ -71,7 +84,9 @@ export const AgentProvider: React.FC<{
         return;
       }
 
-      const newAgent = new OrkestratorAgent(arkitekt, navigate);
+      const newAgent = new OrkestratorAgent(arkitektRef.current, (path) =>
+        navigateRef.current(path),
+      );
       agentRef.current = newAgent;
       setAgent(newAgent);
 
@@ -99,7 +114,12 @@ export const AgentProvider: React.FC<{
       console.error("AgentProvider: Failed to start agent", e);
       return undefined;
     }
-  }, [connection, disabled, navigate, settings.startAgent]);
+  }, [connectionKey, disabled, settings.startAgent]);
+
+  // Push token/context refreshes into the live agent WITHOUT reconnecting.
+  useEffect(() => {
+    agentRef.current?.setContext(arkitekt);
+  }, [arkitekt, connection]);
 
   const contextValue = useMemo(
     () => ({

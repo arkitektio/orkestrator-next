@@ -1,6 +1,8 @@
-fragment ListOutputStructureUsage on OutputStructureUsage {
-  id
+fragment ListPortUsage on PortUsage {
   portKey
+  index
+  keyPath
+  modifiers
   action {
     id
     name
@@ -8,34 +10,20 @@ fragment ListOutputStructureUsage on OutputStructureUsage {
   }
 }
 
-fragment ListInputStructureUsage on InputStructureUsage {
-  id
-  portKey
-  action {
-    id
-    name
-    description
-  }
+fragment ListOutputStructureUsage on PortUsage {
+  ...ListPortUsage
 }
 
-fragment ListInputInterfaceUsage on InputInterfaceUsage {
-  id
-  portKey
-  action {
-    id
-    name
-    description
-  }
+fragment ListInputStructureUsage on PortUsage {
+  ...ListPortUsage
 }
 
-fragment ListOutputInterfaceUsage on OutputInterfaceUsage {
-  id
-  portKey
-  action {
-    id
-    name
-    description
-  }
+fragment ListInputInterfaceUsage on PortUsage {
+  ...ListPortUsage
+}
+
+fragment ListOutputInterfaceUsage on PortUsage {
+  ...ListPortUsage
 }
 
 fragment Structure on Structure {

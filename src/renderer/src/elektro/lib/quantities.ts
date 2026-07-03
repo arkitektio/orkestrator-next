@@ -12,7 +12,11 @@ export type Dimension =
   | "length"
   | "voltage"
   | "conductance"
-  | "frequency";
+  | "frequency"
+  | "concentration"
+  | "resistivity"
+  | "capacitance"
+  | "temperature";
 
 export interface UnitDef {
   /** The symbol stored on the wire and shown in the selector, e.g. "ms". */
@@ -78,6 +82,42 @@ export const DIMENSIONS: Record<Dimension, DimensionDef> = {
       { symbol: "MHz", toBase: 1e6 },
     ],
   },
+  // NEURON ion concentrations (nai/nao/…).
+  concentration: {
+    base: "mM",
+    units: [
+      { symbol: "nM", toBase: 1e-6 },
+      { symbol: "µM", toBase: 1e-3 },
+      { symbol: "mM", toBase: 1 },
+      { symbol: "M", toBase: 1e3 },
+    ],
+  },
+  // NEURON Ra (axial resistivity). 1 Ω·m = 100 Ω·cm.
+  resistivity: {
+    base: "Ω·cm",
+    units: [
+      { symbol: "Ω·cm", toBase: 1 },
+      { symbol: "Ω·m", toBase: 100 },
+      { symbol: "kΩ·cm", toBase: 1e3 },
+    ],
+  },
+  // NEURON cm (specific membrane capacitance). 1 F/m² = 100 µF/cm².
+  capacitance: {
+    base: "µF/cm²",
+    units: [
+      { symbol: "µF/cm²", toBase: 1 },
+      { symbol: "F/m²", toBase: 100 },
+    ],
+  },
+  // Bath temperature. Kelvin-only: °C↔K is affine (K = °C + 273.15), which the
+  // multiplicative `toBase` model cannot express, so we never offer °C on the wire
+  // (the backend emits/defaults to Kelvin, e.g. "309.15 K").
+  temperature: {
+    base: "K",
+    units: [
+      { symbol: "K", toBase: 1 },
+    ],
+  },
 };
 
 /** Maps a GraphQL scalar name to the dimension it represents. */
@@ -87,6 +127,10 @@ export const SCALAR_DIMENSION = {
   ElectricPotential: "voltage",
   ElectricalConductance: "conductance",
   Frequency: "frequency",
+  Concentration: "concentration",
+  Resistivity: "resistivity",
+  SpecificCapacitance: "capacitance",
+  Temperature: "temperature",
 } as const satisfies Record<string, Dimension>;
 
 export type QuantityScalar = keyof typeof SCALAR_DIMENSION;

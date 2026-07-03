@@ -1,3 +1,10 @@
+# [1.66.0-rc.9](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.8...v1.66.0-rc.9) (2026-07-03)
+
+
+### Bug Fixes
+
+* update color ([dd00410](https://github.com/arkitektio/orkestrator-next/commit/dd00410d25502ecce1a62dce02c39063c380fd3e))
+
 # [1.66.0-rc.8](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.7...v1.66.0-rc.8) (2026-07-03)
 
 

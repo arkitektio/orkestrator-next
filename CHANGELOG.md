@@ -1,3 +1,17 @@
+## [1.66.1-rc.1](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0...v1.66.1-rc.1) (2026-07-03)
+
+
+### Bug Fixes
+
+* better devices ([d0a4b5d](https://github.com/arkitektio/orkestrator-next/commit/d0a4b5dfc1be995f7c24068b922302f6554b5280))
+* download and upload ([2df03da](https://github.com/arkitektio/orkestrator-next/commit/2df03dacd6dd7540ebbadaa11ae191e8b471a946))
+* renderer ([ecd3a3b](https://github.com/arkitektio/orkestrator-next/commit/ecd3a3b572fb2b189b102958af51a6c51ff13e0c))
+* smaller neuron editor fixes ([ca4576b](https://github.com/arkitektio/orkestrator-next/commit/ca4576b3d26e6b4f87511dee8dc2c4a57cace075))
+* udpate elektro ([cb8f07b](https://github.com/arkitektio/orkestrator-next/commit/cb8f07be98cc953828de43175fad8d15adf596b6))
+* update color ([dd00410](https://github.com/arkitektio/orkestrator-next/commit/dd00410d25502ecce1a62dce02c39063c380fd3e))
+* update to latest next ([e7a39aa](https://github.com/arkitektio/orkestrator-next/commit/e7a39aa9010b5fc63db9e2608fdfc8b779d04693))
+* with dialog ([44c5864](https://github.com/arkitektio/orkestrator-next/commit/44c586411b91fa4084c31d33ceefa1d2d0d9591c))
+
 # [1.66.0](https://github.com/arkitektio/orkestrator-next/compare/v1.65.0...v1.66.0) (2026-07-01)
 
 

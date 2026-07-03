@@ -1,3 +1,10 @@
+# [1.66.0-rc.8](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.7...v1.66.0-rc.8) (2026-07-03)
+
+
+### Bug Fixes
+
+* udpate elektro ([cb8f07b](https://github.com/arkitektio/orkestrator-next/commit/cb8f07be98cc953828de43175fad8d15adf596b6))
+
 # [1.66.0-rc.7](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0-rc.6...v1.66.0-rc.7) (2026-07-02)
 
 

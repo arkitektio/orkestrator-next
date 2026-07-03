@@ -99,6 +99,7 @@ const serializeMechanismGlobal = (
 
 const serializeCompartment = (compartment: EditableCompartment): CompartmentInput => ({
   id: compartment.id,
+  ...(compartment.color != null ? { color: [...compartment.color] } : {}),
   mechanisms: [...compartment.mechanisms],
   ions: compartment.ions.map(serializeIon),
   sectionParams: compartment.sectionParams.map(

@@ -5,6 +5,7 @@ import { EffectComposer, Vignette } from '@react-three/postprocessing';
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { rgbaToCss } from "../lib/color";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
 import { useNeuronPanelStore } from "../lib/neuronPanelStore";
 import { toBase } from "../lib/quantities";
@@ -100,6 +101,17 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
   return useMemo(() => {
     const rawSections = model.config.cells.flatMap((cell) => cell.topology.sections);
 
+    // A section is tinted by its compartment's color (matched on `category` →
+    // compartment `id`) when one is set; otherwise it falls back to the
+    // depth-based hue below.
+    const compartmentColor = new Map<string, string>();
+    model.config.cells.forEach((cell) =>
+      cell.biophysics.compartments.forEach((c) => {
+        const css = rgbaToCss(c.color);
+        if (css) compartmentColor.set(c.id, css);
+      }),
+    );
+
     const sectionMap = new Map<string, SectionFragment>();
     const childrenMap = new Map<string, SectionFragment[]>();
 
@@ -171,7 +183,7 @@ const useNeuronLayout = (model: DetailNeuronModelFragment) => {
         start,
         end,
         direction,
-        color: getColorFromIndex(depth)
+        color: compartmentColor.get(section.category ?? "") ?? getColorFromIndex(depth)
       });
 
       geometryMap.set(section.id, { start, end, direction });

@@ -36,6 +36,8 @@ generates:
         GenericQuantity: "@/elektro/api/scalars#GenericQuantity"
         Unit: "@/elektro/api/scalars#Unit"
         Dimension: "@/elektro/api/scalars#Dimension"
+        # An RGBA color as a 4-value list [r,g,b,a] (rendering tint, e.g. per compartment).
+        RGBAColor: "@/elektro/api/scalars#RGBAColor"
 
   src/renderer/src/elektro/graphql.schema.json:
     plugins:

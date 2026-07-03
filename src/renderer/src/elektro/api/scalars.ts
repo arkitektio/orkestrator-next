@@ -61,3 +61,10 @@ export type Unit = string;
  * a curated unit table; this one is the backend's raw pint dimensionality.
  */
 export type Dimension = string;
+
+/**
+ * An RGBA color as a 4-element list `[r, g, b, a]` — `r`/`g`/`b` in 0–255, `a` in
+ * 0–1 (react-colorful's native ranges). Used e.g. to tint a biophysics
+ * compartment. Convert to/from CSS + picker objects via `../lib/color.ts`.
+ */
+export type RGBAColor = number[];

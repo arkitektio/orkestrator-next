@@ -44,6 +44,7 @@ fragment MechanismGlobalParam on MechanismGlobalParam {
 
 fragment Compartment on Compartment {
   id
+  color
   mechanisms
   ions {
     ...Ion

@@ -21,6 +21,7 @@ import {
   EditableModelConfig,
   EditableModelWide,
 } from "../lib/modelSerialization";
+import { rgbaToCss } from "../lib/color";
 import { toBase } from "../lib/quantities";
 import { CompartmentEditor } from "./editor/CompartmentEditor";
 import { MechanismCatalogProvider } from "./editor/MechanismCatalog";
@@ -98,7 +99,10 @@ const calculateBranchDirection = (
 
 // --- Layout Hook ---
 
-const useNeuronLayout = (sections: SectionFragment[]) => {
+const useNeuronLayout = (
+  sections: SectionFragment[],
+  categoryColor?: Map<string, string>,
+) => {
   return useMemo(() => {
     const sectionMap = new Map<string, SectionFragment>();
     const childrenMap = new Map<string, SectionFragment[]>();
@@ -171,7 +175,9 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
         start,
         end,
         direction,
-        color: getColorFromIndex(depth),
+        // Tint by the section's compartment color (matched on `category`) when
+        // set; otherwise fall back to the depth-based hue.
+        color: categoryColor?.get(section.category ?? "") ?? getColorFromIndex(depth),
         depth
       });
 
@@ -188,7 +194,7 @@ const useNeuronLayout = (sections: SectionFragment[]) => {
     entryPoints.forEach(root => processSection(root.id, null, 0));
 
     return segments;
-  }, [sections]);
+  }, [sections, categoryColor]);
 };
 
 
@@ -562,7 +568,18 @@ export const NeuronEditor = ({
     }
   };
 
-  const segments = useNeuronLayout(sections);
+  // Compartment id → CSS color, so the live 3D view (and the section swatches)
+  // reflect compartment colors as they're edited.
+  const categoryColor = useMemo(() => {
+    const map = new Map<string, string>();
+    compartments.forEach((c) => {
+      const css = rgbaToCss(c.color);
+      if (css) map.set(c.id, css);
+    });
+    return map;
+  }, [compartments]);
+
+  const segments = useNeuronLayout(sections, categoryColor);
   const colorMap = useMemo(() => new Map(segments.map(s => [s.id, s.color])), [segments]);
   const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
 

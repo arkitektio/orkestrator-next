@@ -15,7 +15,9 @@ export function createVolumeTextureBuffer(dtype: string, elementCount: number): 
   if (dtype.includes("u1") || dtype.includes("i1") || dtype.includes("8")) {
     return {
       data: new Uint8Array(elementCount),
-      dataScale: 1.0,
+      // R8 samples are hardware-normalized to [0,1]; scale back to data space
+      // so the shader's minValue/maxValue (0..255) normalization holds.
+      dataScale: 255.0,
       type: THREE.UnsignedByteType,
       internalFormat: "R8",
     };
@@ -24,7 +26,8 @@ export function createVolumeTextureBuffer(dtype: string, elementCount: number): 
   if (dtype.includes("u2") || dtype.includes("i2") || dtype.includes("16")) {
     return {
       data: new Uint16Array(elementCount),
-      dataScale: 1.0,
+      // Normalized 16-bit sample -> raw 0..65535 data space.
+      dataScale: 65535.0,
       type: THREE.UnsignedShortType,
       internalFormat: null, // Let WebGL default to native hardware normalization
     };

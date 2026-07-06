@@ -211,7 +211,13 @@ function roundTiming(ms: number): number {
   return Number(ms.toFixed(2))
 }
 
+/**
+ * Per-chunk timing logs are opt-in: they fire twice per chunk and are a
+ * measurable cost when hundreds of chunks stream in. Enable at runtime with
+ * `globalThis.__ZARR_TIMING__ = true`.
+ */
 function logChunkTiming(label: string, timings: Record<string, unknown>): void {
+  if ((globalThis as { __ZARR_TIMING__?: boolean }).__ZARR_TIMING__ !== true) return
   console.log(label, timings)
 }
 

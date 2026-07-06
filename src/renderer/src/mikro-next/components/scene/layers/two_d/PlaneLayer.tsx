@@ -10,6 +10,12 @@ import { calculateChunkGrid } from '../../zarr/utils';
 import { buildAffineMatrix } from '../../core/worldTransform';
 import { hasValidSpatialAxes, resolveAxisIndices } from '../../core/dims';
 import { AxisSelection, resolveSpatialSelection, resolveVoxelIndex } from '../../core/selection';
+import {
+  PREFETCH_MARGIN,
+  chooseLodForScale,
+  expandVoxelRange,
+  viewRangeToLevelSlice,
+} from '../../core/viewportPlanning';
 
 import { ChunkPlane } from './ChunkPlane';
 import { useModeStore } from '../../store/modeStore';
@@ -62,6 +68,10 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   const lodBias = useViewerStore((state) => state.lodBias);
   const cullRadius = useViewerStore((state) => state.cullRadius);
   const setLodDebugInfo = useViewerStore((s) => s.setLodDebugInfo);
+  // Visible voxel rect + screen scale for this layer, reported by
+  // VisibilityManager ~150ms after the camera settles. Drives which chunks
+  // are generated (viewport rect) and which LOD is targeted (scale).
+  const viewRange = useViewerStore((s) => s.layerViewRanges[layerId]);
   const viewerStoreApi = useViewerStoreApi();
 
   // Safely grab the specific layer
@@ -112,10 +122,16 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     const { dims } = zarrCache.current;
     const lod = lodOverride ?? activeLod;
 
+    // Target level plus the coarsest level as a cheap full-coverage backdrop
+    // (a handful of chunks) while target chunks stream in.
     const numLevels = zarrCache.current.levels.length;
-    const levelsToRender = [lod];
-    if (lod + 1 < numLevels) levelsToRender.push(lod + 1);
-    if (lod + 2 < numLevels) levelsToRender.push(lod + 2);
+    const coarsestLod = numLevels - 1;
+    const levelsToRender = lod === coarsestLod ? [lod] : [lod, coarsestLod];
+
+    // Prefetch-expanded visible voxel rect (base resolution); null until
+    // VisibilityManager has reported for this layer.
+    const expandedX = viewRange ? expandVoxelRange(viewRange.xRange, PREFETCH_MARGIN) : null;
+    const expandedY = viewRange ? expandVoxelRange(viewRange.yRange, PREFETCH_MARGIN) : null;
 
     const sliceMap = layer.lens.slices.reduce((acc, slice) => {
       acc[slice.dim] = slice;
@@ -154,6 +170,20 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
         const maxVoxelZ = arr.shape[zPos] - 1;
         selection[zPos] = Math.max(0, Math.min(maxVoxelZ, downscaledZ));
+      }
+
+      // Narrow the target level's x/y selection to the visible rect so
+      // off-screen chunks are never generated (and thus never fetched). The
+      // backdrop level keeps the full extent for coverage while panning.
+      const isTargetLevel = levelIdx === lod;
+      if (isTargetLevel && expandedX && expandedY && xPos !== -1 && yPos !== -1) {
+        const levelScaleX = level.scaleFactors?.[xPos] ?? 1;
+        const levelScaleY = level.scaleFactors?.[yPos] ?? 1;
+        const xView = viewRangeToLevelSlice(expandedX, levelScaleX, arr.shape[xPos], sliceMap[layer.xDim ?? ""]);
+        const yView = viewRangeToLevelSlice(expandedY, levelScaleY, arr.shape[yPos], sliceMap[layer.yDim ?? ""]);
+        if (!xView || !yView) return; // layer not visible at all
+        selection[xPos] = { start: xView.start, stop: xView.stop, step: sliceMap[layer.xDim ?? ""]?.step ?? 1 } as Slice;
+        selection[yPos] = { start: yView.start, stop: yView.stop, step: sliceMap[layer.yDim ?? ""]?.step ?? 1 } as Slice;
       }
 
       const [minVal, maxVal] = mapDTypeToMinMax(arr.dtype);
@@ -209,18 +239,31 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       allGeneratedChunks = [...allGeneratedChunks, ...levelChunks];
     });
 
-    // Final Distance check logic for Frustum Culling
-    const culledChunks = allGeneratedChunks
-      .filter(({ worldX, worldY, chunkRadius }) => {
-        if (cullRadius <= 0) return true; // Culling disabled
+    // The viewport rect already limits the target level exactly; the radial
+    // distance cull is only the fallback for the frames before
+    // VisibilityManager has reported a view range.
+    const viewLimited = Boolean(expandedX && expandedY);
+    const visibleChunks = viewLimited
+      ? allGeneratedChunks
+      : allGeneratedChunks.filter(({ worldX, worldY, chunkRadius }) => {
+          if (cullRadius <= 0) return true; // Culling disabled
 
-        const effectiveRadius = cullRadius / lastZoomRef.current;
-        const dist = Math.sqrt(Math.pow(worldX - lastCameraRef.current.x, 2) + Math.pow(worldY - lastCameraRef.current.y, 2));
+          const effectiveRadius = cullRadius / lastZoomRef.current;
+          const dist = Math.sqrt(Math.pow(worldX - lastCameraRef.current.x, 2) + Math.pow(worldY - lastCameraRef.current.y, 2));
 
-        // Add the chunk's radius to allow it to stay visible if its edge is still in view
-        return dist <= (effectiveRadius * 1.5) + chunkRadius;
-      })
-      .map(c => c.data);
+          // Add the chunk's radius to allow it to stay visible if its edge is still in view
+          return dist <= (effectiveRadius * 1.5) + chunkRadius;
+        });
+
+    // Mount (= worker-enqueue) order: backdrop level first, then target-level
+    // chunks center-out, so the middle of the viewport fills in first. The
+    // pool already serves the coarser backdrop level at higher priority.
+    const distToCamera = (c: { worldX: number; worldY: number }) =>
+      Math.pow(c.worldX - lastCameraRef.current.x, 2) + Math.pow(c.worldY - lastCameraRef.current.y, 2);
+    const culledChunks = [
+      ...visibleChunks.filter((c) => c.data.level !== lod),
+      ...visibleChunks.filter((c) => c.data.level === lod).sort((a, b) => distToCamera(a) - distToCamera(b)),
+    ].map((c) => c.data);
 
     setChunks(prev => {
       const pKeys = prev?.map(c => c.chunkKey).join(',') || '';
@@ -228,12 +271,11 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       // Only trigger a React update if the exact list of chunks has changed
       return pKeys === nKeys ? prev : culledChunks;
     });
-  }, [layer, currentZ, activeLod, cullRadius, cameraPanTick, chunkLayoutSignature]);
+  }, [layer, currentZ, activeLod, cullRadius, cameraPanTick, chunkLayoutSignature, viewRange]);
 
   // --- Effect: Initialize Zarr with AbortController ---
   useEffect(() => {
     if (!layer) return;
-    console.log(`Initializing Zarr for layer ${layer.id}...`);
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -309,7 +351,10 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
           zoomScale = 1 / Math.max(0.001, distance);
       }
 
-      const effectiveRadius = cullRadius / zoomScale;
+      // With culling disabled (cullRadius <= 0) panning never changes the
+      // chunk set, so only zoom changes should tick — an effectiveRadius of 0
+      // would otherwise trigger a state update on every frame of movement.
+      const effectiveRadius = cullRadius > 0 ? cullRadius / zoomScale : Infinity;
 
       // Threshold update: Only trigger state changes if camera moves significantly
       if (Math.abs(camera.position.x - lastCameraRef.current.x) > (effectiveRadius * 0.1) ||
@@ -328,11 +373,21 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     if (numLevels <= 1) return;
 
     let targetLod = numLevels - 1;
+    const range = viewerStoreApi.getState().layerViewRanges[layerId];
     if ('fixedLOD' in layer && typeof layer.fixedLOD === 'number' && layer.fixedLOD >= 0 && layer.fixedLOD < numLevels) {
       targetLod = layer.fixedLOD;
+    } else if (range) {
+      // Screen-driven LOD: finest level whose voxels still cover >= 1 screen
+      // pixel (scaled by lodBias). Handles arbitrarily deep pyramids.
+      const { xPos } = resolveAxisIndices(zarrCache.current.dims, layer);
+      const baseXSize = zarrCache.current.levels[0].arr.shape[xPos] ?? 1;
+      const factors = zarrCache.current.levels.map((lvl, i) =>
+        lvl.scaleFactors?.[xPos] ?? (xPos !== -1 && lvl.arr.shape[xPos] > 0 ? baseXSize / lvl.arr.shape[xPos] : 2 ** i),
+      );
+      targetLod = chooseLodForScale(range.scale, factors, lodBias);
     } else {
-      let zoomScale = lastZoomRef.current;
-      zoomScale = zoomScale * lodBias;
+      // Fallback zoom ladder until VisibilityManager reports a view range.
+      const zoomScale = lastZoomRef.current * lodBias;
 
       if (zoomScale > 2.0) {
           targetLod = 0;
@@ -347,13 +402,11 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
     if (targetLod !== activeLod) {
       setActiveLod(targetLod);
       if (setLodDebugInfo) {
-        const levelsToRender = [targetLod];
-        if (targetLod + 1 < numLevels) levelsToRender.push(targetLod + 1);
-        if (targetLod + 2 < numLevels) levelsToRender.push(targetLod + 2);
+        const renderedLevels = targetLod === numLevels - 1 ? [targetLod] : [targetLod, numLevels - 1];
         setLodDebugInfo(layerId, {
           currentLOD: targetLod,
           targetResolution: zarrCache.current.levels[targetLod].scale?.[0] || 0,
-          renderedLevels: levelsToRender
+          renderedLevels
         });
       }
     }

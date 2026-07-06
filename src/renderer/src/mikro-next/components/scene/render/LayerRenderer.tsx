@@ -11,7 +11,17 @@ const MAX_DISPLAYABLE = 10;
  */
 export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
   const sceneLayers = useSceneStore((s) => s.sceneLayers);
-  const displayed = useMemo(() => sceneLayers.slice(0, MAX_DISPLAYABLE), [sceneLayers]);
+  const imageLayers = useSceneStore((s) => s.layers);
+  const displayed = useMemo(() => {
+    // Filter hidden image layers out BEFORE slicing so they don't consume
+    // display slots (visibility lives on the normalized image LayerState).
+    const hiddenImageIds = new Set(
+      imageLayers.filter((layer) => layer.visible === false).map((layer) => layer.id),
+    );
+    return sceneLayers
+      .filter((layer) => !hiddenImageIds.has(layer.id))
+      .slice(0, MAX_DISPLAYABLE);
+  }, [sceneLayers, imageLayers]);
 
   return (
     <group>

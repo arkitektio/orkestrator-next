@@ -47,25 +47,21 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
     return layer
   });
 
-  const tStart = useViewerStore((s) => s.tStart);
-  const tEnd = useViewerStore((s) => s.tEnd);
-
   // Report rendering state to store automatically
   const setChunkStatus = useViewerStore((s) => s.setChunkStatus);
   useEffect(() => {
-    // Only report when mounting
     setChunkStatus(chunk.chunkKey, {
       layerId: chunk.frame_id,
       chunkKey: chunk.chunkKey,
       level: chunk.level || 0,
       status: texture ? 'rendered' : 'loading'
     });
-
-    return () => {
-      // Unmount
-      setChunkStatus(chunk.chunkKey, null);
-    };
   }, [chunk.chunkKey, chunk.frame_id, chunk.level, texture, setChunkStatus]);
+
+  // Deregister only on unmount (a texture arriving must not clear the entry).
+  useEffect(() => {
+    return () => setChunkStatus(chunk.chunkKey, null);
+  }, [chunk.chunkKey, setChunkStatus]);
 
 
   const [xIdx, yIdx, zIdx] = chunk.dimensionOrder;
@@ -87,12 +83,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
     [xIdx, yIdx, zIdx],
   );
 
-  const isVisible = useMemo(() => {
-    return true;
-  }, [chunk, tStart, tEnd]);
-
   useEffect(() => {
-    if (!isVisible && !texture) return;
     if (texture) return;
 
     const abortController = new AbortController();
@@ -143,17 +134,19 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
         tex.needsUpdate = true;
         const textureCreateMs = performance.now() - textureCreateStartedAt;
 
-        console.log('[chunk plane timing]', {
-          chunkKey: chunk.chunkKey,
-          chunkCoords: [...chunk.chunkCoords],
-          openArrayMs: Number(openMs.toFixed(2)),
-          getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
-          textureConfigMs: Number(textureConfigMs.toFixed(2)),
-          textureCreateMs: Number(textureCreateMs.toFixed(2)),
-          totalMs: Number((performance.now() - chunkLoadStartedAt).toFixed(2)),
-          dataType: chunkData.data?.constructor?.name ?? typeof chunkData.data,
-          shape: [...rawShape],
-        });
+        if (isDebug) {
+          console.log('[chunk plane timing]', {
+            chunkKey: chunk.chunkKey,
+            chunkCoords: [...chunk.chunkCoords],
+            openArrayMs: Number(openMs.toFixed(2)),
+            getChunkWorkerMs: Number(chunkReadMs.toFixed(2)),
+            textureConfigMs: Number(textureConfigMs.toFixed(2)),
+            textureCreateMs: Number(textureCreateMs.toFixed(2)),
+            totalMs: Number((performance.now() - chunkLoadStartedAt).toFixed(2)),
+            dataType: chunkData.data?.constructor?.name ?? typeof chunkData.data,
+            shape: [...rawShape],
+          });
+        }
 
         setDataScale(dataScale);
         setTexture(tex);
@@ -170,7 +163,11 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
     return () => {
       abortController.abort();
     };
-  }, [chunk, getArray]);
+    // Key on chunkKey, not the chunk object: updateChunks rebuilds chunk
+    // objects on every pan tick and identity-keyed deps would abort and
+    // restart every in-flight load. Same key ⇒ same coords/store/level.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chunk.chunkKey, getArray]);
 
   useEffect(() => {
     return () => {
@@ -306,8 +303,6 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
   const yPos = -(getChunkCoord(yIdx) * baseGridY + heightScaled / 2 - totalY / 2);
   const zPos = getChunkCoord(zIdx) * baseGridZ + zSizeScaled / 2 - totalZ / 2;
 
-
-  if (!isVisible) return null;
 
   if (!texture) {
     return (

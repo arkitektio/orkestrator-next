@@ -13,6 +13,7 @@ import { useSelectionStore } from '../../store/selectionStore';
 import { useModeStore } from '../../store/modeStore';
 import { LayerState } from '../../store/sceneStore';
 import { useViewerStore, useViewerStoreApi } from '../../store/viewerStore';
+import { useViewStoreApi } from '../../store/viewStore';
 import { BasicIndexer } from '../../stores/indexer';
 import { mapDTypeToMinMax } from '../../stores/utils';
 import { getColorMapTexture } from '../../zarr/colormaps';
@@ -43,6 +44,59 @@ type VolumeTextureState = {
   volumeSize: [number, number, number];
   spatialSelections: [AxisSelection, AxisSelection, AxisSelection];
 };
+
+// Grace period after which the visibility gate opens anyway when the
+// visibility system never came up (no camera matrix synced).
+const VISIBILITY_GATE_FALLBACK_MS = 1500;
+
+/**
+ * Resolve once the layer is frustum-visible per VisibilityManager, so
+ * off-screen volumes don't download their chunks. Fails open: if no camera
+ * matrix has ever been synced (visibility system inactive), resolve after a
+ * grace period instead of blocking the volume forever.
+ */
+const waitForLayerVisible = (
+  viewerStore: {
+    getState: () => { visibleLayers: string[] };
+    subscribe: (listener: (state: { visibleLayers: string[] }) => void) => () => void;
+  },
+  viewStore: { getState: () => { viewProjectionMatrix: unknown | null } },
+  layerId: string,
+  signal: AbortSignal,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    if (viewerStore.getState().visibleLayers.includes(layerId)) return resolve();
+
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    const cleanup = () => {
+      unsubscribe();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      signal.removeEventListener('abort', onAbort);
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    const unsubscribe = viewerStore.subscribe((state) => {
+      if (state.visibleLayers.includes(layerId)) {
+        cleanup();
+        resolve();
+      }
+    });
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    fallbackTimer = setTimeout(() => {
+      fallbackTimer = null;
+      if (viewStore.getState().viewProjectionMatrix === null) {
+        // Camera sync never ran — visibility will never be reported.
+        cleanup();
+        resolve();
+      }
+      // Otherwise the system is live and the layer is genuinely off-screen;
+      // keep waiting on the subscription.
+    }, VISIBILITY_GATE_FALLBACK_MS);
+  });
 
 const InvertedHullOutline = ({ children, color = '#10b981', thickness = 1.03, enabled = true }: { children: React.ReactNode; color?: string; thickness?: number; enabled?: boolean; }) => {
   const groupRef = useRef<THREE.Group>(null);
@@ -79,8 +133,14 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
   const volumeMeshRef = useRef<VolumeRenderMesh | null>(null);
   const skipSelectionClickRef = useRef(false);
 
-  const { getArrayForStoreId, probeThreshold, debug: isDebug } = useViewerStore();
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
+  const probeThreshold = useViewerStore((s) => s.probeThreshold);
+  const isDebug = useViewerStore((s) => s.debug);
+  const register = useViewerStore((s) => s.register);
+  const unregister = useViewerStore((s) => s.unregister);
   const viewerStoreApi = useViewerStoreApi();
+  const viewStoreApi = useViewStoreApi();
+  const groupRef = useRef<THREE.Group>(null!);
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layer.id);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const interactionMode = useModeStore((s) => s.interactionMode);
@@ -93,6 +153,40 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
   const colorMapTexture = useMemo(() => getColorMapTexture(layer.colormap, layer.color), [layer.colormap, layer.color]);
   const affineMatrix = useMemo(() => buildAffineMatrix(layer), [layer]);
+
+  // Structural inputs of the volume texture. Render-only fields (clim,
+  // colormap, projection, …) are pushed as uniforms by VolumeTextureMesh's
+  // store subscription and must NOT retrigger the load effect below —
+  // otherwise every slider tick disposes the texture and refetches all chunks.
+  const volumeSourceSignature = useMemo(
+    () =>
+      JSON.stringify({
+        dims: layer.lens.dataset.dims,
+        storeIds: layer.lens.dataset.dataArrays.map((dataArray) => dataArray.store.id),
+        scaleFactors: layer.lens.dataset.dataArrays.map((dataArray) => dataArray.scaleFactors ?? null),
+        xDim: layer.xDim,
+        yDim: layer.yDim,
+        zDim: layer.zDim,
+        slices: layer.lens.slices.map((slice) => ({
+          dim: slice.dim,
+          start: slice.start ?? null,
+          stop: slice.stop ?? null,
+          step: slice.step ?? null,
+        })),
+      }),
+    [layer],
+  );
+  const layerRef = useRef(layer);
+  layerRef.current = layer;
+
+  // Register as a trackable once the mesh exists so VisibilityManager
+  // frustum-tests this volume (feeds the load gate below and fitToLayer).
+  useEffect(() => {
+    if (!volumeTexture) return;
+    const refProxy = { kind: 'layer' as const, id: layer.id, ref: groupRef };
+    register(refProxy);
+    return () => unregister(refProxy);
+  }, [layer.id, register, unregister, volumeTexture]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -111,6 +205,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
     };
 
     const initializeVolume = async () => {
+      const layer = layerRef.current;
       const dataArray = layer.lens.dataset.dataArrays[resolvedVolumeLod];
       if (!dataArray) return setVolumeTexture(null);
 
@@ -183,6 +278,11 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
       triggerTextureUpload(texture);
 
+      // Defer the (potentially large) chunk download until the volume is
+      // actually on screen. The mesh above renders immediately (empty).
+      await waitForLayerVisible(viewerStoreApi, viewStoreApi, layer.id, abortController.signal);
+      if (!isMounted || abortController.signal.aborted) return;
+
       const chunkLoaders = prioritizeChunkLoaders(Array.from(indexer), pos as [number, number, number], spatialSelections as any, arr.chunks);
       const concurrency = Math.max(4, Math.min(8, Math.floor((navigator.hardwareConcurrency || 8) / 2)));
 
@@ -207,7 +307,9 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       abortController.abort();
       setVolumeTexture(prev => { prev?.texture.dispose(); return null; });
     };
-  }, [getArrayForStoreId, invalidate, layer, resolvedVolumeLod]);
+    // volumeSourceSignature stands in for the structural parts of `layer`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getArrayForStoreId, invalidate, volumeSourceSignature, resolvedVolumeLod]);
 
   const probeCoordinateFromRay = (ray: THREE.Ray): [number, number, number] | null => {
     if (!volumeTexture || !volumeMeshRef.current) return null;
@@ -260,6 +362,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
 
   return (
     <group
+      ref={groupRef}
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onPointerMove={(e) => {

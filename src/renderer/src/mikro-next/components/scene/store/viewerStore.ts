@@ -128,18 +128,15 @@ function createViewerStoreInternal(
     }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
-    register: (ref) => set((state) => {
-      state.trackables.add(ref);
-      return state;
-    }),
+    register: (ref) => set((state) => ({
+      trackables: new Set(state.trackables).add(ref),
+    })),
     unregister: (ref) => set((state) => {
-      state.trackables.delete(ref);
-      return state;
+      const trackables = new Set(state.trackables);
+      trackables.delete(ref);
+      return { trackables };
     }),
-    setVisible: (visibleSet) => set((state) => {
-      state.visibleLayers = Array.from(visibleSet.keys());
-      return state;
-    }),
+    setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
     setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
     setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
     addSavedProbe: (coordinate) => set((state) => {

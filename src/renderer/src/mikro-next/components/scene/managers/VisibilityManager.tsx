@@ -79,12 +79,21 @@ export function VisibilityManager() {
                 const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0
                 const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0
 
+                // The layer-local frame is centered at the origin with +y up
+                // (see ChunkPlane positioning: coord*size + size/2 - total/2,
+                // y negated). Shift by half the extent — and flip y, which
+                // swaps min/max — to get voxel indices.
+                const voxelXMin = voxelBox.min.x + xMax / 2
+                const voxelXMax = voxelBox.max.x + xMax / 2
+                const voxelYMin = yMax / 2 - voxelBox.max.y
+                const voxelYMax = yMax / 2 - voxelBox.min.y
+
                 let zRange: [number, number] | null = null
                 if (layer.zDim) {
                   const zMax = zIdx >= 0 ? layer.lens.shape[zIdx] : 0
                   zRange = [
-                    Math.max(0, Math.floor(voxelBox.min.z)),
-                    Math.min(zMax, Math.ceil(voxelBox.max.z)),
+                    Math.max(0, Math.floor(voxelBox.min.z + zMax / 2)),
+                    Math.min(zMax, Math.ceil(voxelBox.max.z + zMax / 2)),
                   ]
                 }
 
@@ -104,12 +113,12 @@ export function VisibilityManager() {
 
                 nextRanges[ref.id] = {
                   xRange: [
-                    Math.max(0, Math.floor(voxelBox.min.x)),
-                    Math.min(xMax, Math.ceil(voxelBox.max.x)),
+                    Math.max(0, Math.floor(voxelXMin)),
+                    Math.min(xMax, Math.ceil(voxelXMax)),
                   ],
                   yRange: [
-                    Math.max(0, Math.floor(voxelBox.min.y)),
-                    Math.min(yMax, Math.ceil(voxelBox.max.y)),
+                    Math.max(0, Math.floor(voxelYMin)),
+                    Math.min(yMax, Math.ceil(voxelYMax)),
                   ],
                   zRange,
                   scale,
@@ -121,7 +130,6 @@ export function VisibilityManager() {
       }
     })
 
-    console.log("Visible layers:", Array.from(nextVisible))
     setVisible(nextVisible)
     setLayerViewRanges(nextRanges)
   }, [projScreenMatrix, viewportSize, trackables, layers, frustum, box, setVisible, setLayerViewRanges])

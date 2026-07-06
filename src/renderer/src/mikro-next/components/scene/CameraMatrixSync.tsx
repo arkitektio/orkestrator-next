@@ -63,7 +63,6 @@ export const CameraMatrixSync = ({
 
     timeoutRef.current = setTimeout(() => {
       updateCameraData(snapshot, currentSize);
-      console.log("Camera stopped. Syncing matrix to store.");
     }, debounceMs);
   });
 

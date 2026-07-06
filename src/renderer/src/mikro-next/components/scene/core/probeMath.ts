@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { computeAxisMemoryOrder } from "./dimRemap";
 import type { AxisSelection } from "./selection";
 
 /**
@@ -126,12 +127,13 @@ export function marchVolumeTexture({
 
   if (!textureData || width <= 0 || height <= 0 || depth <= 0) return null;
 
-  const sorted = [...dimensionOrder].sort((a, b) => a - b);
-  const axisOrder = {
-    depthAxis: sorted[sorted.length - 3] ?? 0,
-    heightAxis: sorted[sorted.length - 2] ?? 0,
-    widthAxis: sorted[sorted.length - 1] ?? 0,
-  };
+  // Mirror of the GLSL `dimRemap` (see buildDimRemapMatrix): texture x samples
+  // the box component whose memory axis is the fastest-varying one, i.e. the
+  // *position* of fastestIdx within dimensionOrder — not its value.
+  const { fastestIdx, middleIdx, slowestIdx } = computeAxisMemoryOrder(dimensionOrder);
+  const widthComponent = dimensionOrder.indexOf(fastestIdx);
+  const heightComponent = dimensionOrder.indexOf(middleIdx);
+  const depthComponent = dimensionOrder.indexOf(slowestIdx);
 
   const VOLUME_PROBE_STEPS = 32;
   const delta = Math.sqrt(3) / VOLUME_PROBE_STEPS;
@@ -146,9 +148,9 @@ export function marchVolumeTexture({
     if (uvw.x >= 0 && uvw.x <= 1 && uvw.y >= 0 && uvw.y <= 1 && uvw.z >= 0 && uvw.z <= 1) {
       const components = [uvw.x, uvw.y, uvw.z];
       const texCoord = new THREE.Vector3(
-        components[axisOrder.widthAxis] ?? 0,
-        components[axisOrder.heightAxis] ?? 0,
-        components[axisOrder.depthAxis] ?? 0,
+        components[widthComponent] ?? 0,
+        components[heightComponent] ?? 0,
+        components[depthComponent] ?? 0,
       );
 
       const texX = Math.min(width - 1, Math.max(0, Math.floor(texCoord.x * width)));

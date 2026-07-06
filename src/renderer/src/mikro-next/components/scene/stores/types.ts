@@ -16,4 +16,12 @@ export type ChunkData = {
   chunkKey: string;
   min_value: number;
   max_value: number;
+  /**
+   * Present when the plan pins a single index along an axis (the 2D z-slice).
+   * `levelIndex` is the selected voxel index in level coordinates; ChunkPlane
+   * extracts that slab from the fetched chunk before creating the texture —
+   * without this, chunks spanning multiple z slices always display their
+   * first slab.
+   */
+  zSelection?: { axisPosition: number; levelIndex: number };
 }

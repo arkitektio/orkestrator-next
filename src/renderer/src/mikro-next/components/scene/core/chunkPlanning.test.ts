@@ -54,6 +54,7 @@ const plan = (
     prevPlan: LayerChunkPlan | null;
     layer: LayerState;
     lodBias: number;
+    maxPlanBytes: number;
   }> = {},
 ) =>
   planLayerChunks({
@@ -64,6 +65,7 @@ const plan = (
     currentZ: 0,
     renderedChunkKeys: overrides.renderedChunkKeys ?? new Set(),
     prevPlan: overrides.prevPlan ?? null,
+    maxPlanBytes: overrides.maxPlanBytes,
   });
 
 const keysByRole = (p: LayerChunkPlan, role: "target" | "cover") =>
@@ -165,5 +167,161 @@ describe("planLayerChunks", () => {
   it("respects fixedLOD over the scale-derived choice", () => {
     const p = plan({ layer: makeLayer({ fixedLOD: 1 }) });
     expect(p.targetLod).toBe(1);
+  });
+});
+
+describe("planLayerChunks substitution (finer chunks beat coarse fetches)", () => {
+  const ALL_RENDERED = new Set(ALL_TARGET_KEYS);
+  const ZOOMED_OUT: LayerViewRange = { ...FULL_VIEW, scale: 0.1 }; // → target LOD 1
+
+  // One 256² float32 chunk ≈ 262 KB at either level of the fixture.
+  const CHUNK_BYTES = 256 * 256 * 4;
+
+  const zoomOutFromRenderedFine = (maxPlanBytes?: number) => {
+    const finePlan = plan({ renderedChunkKeys: ALL_RENDERED }); // LOD 0, 4 rendered targets
+    return plan({
+      viewRange: ZOOMED_OUT,
+      prevPlan: finePlan,
+      renderedChunkKeys: ALL_RENDERED,
+      maxPlanBytes,
+    });
+  };
+
+  it("keeps rendered fine chunks instead of fetching the coarse target", () => {
+    const p = zoomOutFromRenderedFine();
+    expect(p.targetLod).toBe(1);
+    expect(keysByRole(p, "substitute").sort()).toEqual(ALL_TARGET_KEYS);
+    expect(keysByRole(p, "target")).toEqual([]); // nothing left to fetch
+    expect(keysByRole(p, "cover")).toEqual([]);
+  });
+
+  it("falls back to fetching the coarse target when the byte budget is exceeded", () => {
+    // Keeping 4 fine chunks (~1 MB) instead of 1 coarse (~262 KB) busts 500 KB.
+    const p = zoomOutFromRenderedFine(500_000);
+    expect(keysByRole(p, "substitute")).toEqual([]);
+    expect(keysByRole(p, "target")).toEqual(["1-0/0/0"]);
+    // The fine chunks still bridge the gap as ordinary covers.
+    expect(keysByRole(p, "cover").sort()).toEqual(ALL_TARGET_KEYS);
+    expect(4 * CHUNK_BYTES).toBeGreaterThan(500_000);
+  });
+
+  it("requires full tiling — a partially rendered area is not substituted", () => {
+    const threeRendered = new Set(ALL_TARGET_KEYS.slice(0, 3));
+    const finePlan = plan({ renderedChunkKeys: threeRendered });
+    const p = plan({ viewRange: ZOOMED_OUT, prevPlan: finePlan, renderedChunkKeys: threeRendered });
+
+    expect(keysByRole(p, "substitute")).toEqual([]);
+    expect(keysByRole(p, "target")).toEqual(["1-0/0/0"]);
+    expect(keysByRole(p, "cover").sort()).toEqual(ALL_TARGET_KEYS.slice(0, 3));
+  });
+
+  it("is a fixed point across replans", () => {
+    const substitutedPlan = zoomOutFromRenderedFine();
+    const replanned = plan({
+      viewRange: ZOOMED_OUT,
+      prevPlan: substitutedPlan,
+      renderedChunkKeys: ALL_RENDERED,
+    });
+    expect(sameChunkPlan(substitutedPlan, replanned)).toBe(true);
+  });
+
+  it("makes zooming back in free — substitutes become plain targets", () => {
+    const substitutedPlan = zoomOutFromRenderedFine();
+    const zoomedIn = plan({ prevPlan: substitutedPlan, renderedChunkKeys: ALL_RENDERED });
+
+    expect(zoomedIn.targetLod).toBe(0);
+    expect(keysByRole(zoomedIn, "target").sort()).toEqual(ALL_TARGET_KEYS);
+    expect(keysByRole(zoomedIn, "substitute")).toEqual([]);
+    expect(keysByRole(zoomedIn, "cover")).toEqual([]);
+  });
+
+  it("never substitutes across a z change (different slice signature)", () => {
+    const zLayer = {
+      ...makeLayer(),
+      zDim: "z",
+      lens: { slices: [], dataset: { dims: ["z", "y", "x"], dataArrays: [] } },
+    } as unknown as LayerState;
+    const zLevels: PlanLevel[] = [
+      { shape: [10, 512, 512], chunks: [1, 256, 256], dtype: "float32", store: fakeStore },
+      { shape: [10, 256, 256], chunks: [1, 256, 256], dtype: "float32", store: fakeStore, scaleFactors: [1, 2, 2] },
+    ];
+    const planZ = (currentZ: number, viewRange: LayerViewRange, prevPlan: LayerChunkPlan | null, rendered: ReadonlySet<string>) =>
+      planLayerChunks({
+        layer: zLayer, levels: zLevels, viewRange, lodBias: 1, currentZ,
+        renderedChunkKeys: rendered, prevPlan,
+      });
+
+    const fineAtZ0 = planZ(0, FULL_VIEW, null, new Set());
+    const renderedZ0 = new Set(fineAtZ0.chunks.map((c) => c.chunkKey));
+
+    const zoomedOutAtZ1 = planZ(1, ZOOMED_OUT, planZ(0, FULL_VIEW, null, renderedZ0), renderedZ0);
+    expect(keysByRole(zoomedOutAtZ1, "substitute")).toEqual([]);
+    expect(keysByRole(zoomedOutAtZ1, "target")).toEqual(["1-1/0/0/z1"]);
+  });
+});
+
+describe("planLayerChunks z slicing", () => {
+  const zLayer = {
+    id: "z-layer",
+    affineMatrix: null,
+    xDim: "x",
+    yDim: "y",
+    zDim: "z",
+    intensityDim: null,
+    colormap: null,
+    color: null,
+    fixedLOD: null,
+    lens: { slices: [], dataset: { dims: ["z", "y", "x"], dataArrays: [] } },
+  } as unknown as LayerState;
+
+  const zLevels = (chunkZ: number): PlanLevel[] => [
+    { shape: [10, 256, 256], chunks: [chunkZ, 256, 256], dtype: "float32", store: fakeStore },
+  ];
+
+  const planAtZ = (currentZ: number, chunkZ: number) =>
+    planLayerChunks({
+      layer: zLayer,
+      levels: zLevels(chunkZ),
+      viewRange: undefined,
+      lodBias: 1,
+      currentZ,
+      renderedChunkKeys: new Set(),
+      prevPlan: null,
+    });
+
+  it("changes chunk identity with z even when one chunk spans all slices", () => {
+    // Regression: with chunks [10, 256, 256] the chunk COORDS are identical
+    // for every z, so without the z suffix the plan (and thus the displayed
+    // texture) never changed when the slider moved.
+    const keysAt = (z: number) => planAtZ(z, 10).chunks.map((c) => c.chunkKey);
+    expect(keysAt(0)).toEqual(["0-0/0/0/z0"]);
+    expect(keysAt(3)).toEqual(["0-0/0/0/z3"]);
+  });
+
+  it("encodes z in both coords and key for z-chunked-at-1 data", () => {
+    expect(planAtZ(3, 1).chunks.map((c) => c.chunkKey)).toEqual(["0-3/0/0/z3"]);
+  });
+
+  it("attaches the slab selection for ChunkPlane", () => {
+    const chunk = planAtZ(3, 10).chunks[0];
+    expect(chunk.zSelection).toEqual({ axisPosition: 0, levelIndex: 3 });
+  });
+
+  it("keeps z-less layers' keys unchanged", () => {
+    const p = plan({ viewRange: undefined });
+    expect(p.chunks.map((c) => c.chunkKey)).toEqual(["1-0/0/0"]);
+    expect(p.chunks[0].zSelection).toBeUndefined();
+  });
+
+  it("plans nothing when the scene z is outside this layer's stack", () => {
+    // The slider spans the union of all layers; a 10-slice stack must
+    // disappear (not clamp to its last slice) when z sits beyond it.
+    expect(planAtZ(50, 10).chunks).toEqual([]);
+    expect(planAtZ(-5, 1).chunks).toEqual([]);
+  });
+
+  it("tolerates half a voxel at the stack edges", () => {
+    expect(planAtZ(9.4, 10).chunks.map((c) => c.chunkKey)).toEqual(["0-0/0/0/z9"]);
+    expect(planAtZ(9.6, 10).chunks).toEqual([]);
   });
 });

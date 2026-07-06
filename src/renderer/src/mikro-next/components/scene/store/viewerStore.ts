@@ -112,7 +112,7 @@ function createViewerStoreInternal(
     probedCoordinate: null,
     savedProbes: [],
     probeThreshold: 0.01,
-    lodBias: 0.2,
+    lodBias: 1,
     setLodBias: (bias) => set({ lodBias: bias }),
     renderedChunks: {},
     setChunkStatus: (chunkId, info) => set((state) => {

@@ -3,7 +3,7 @@ import type { Slice } from "zarrita";
 import type { DataType } from "zarrita";
 
 import type { ChunkData } from "../stores/types";
-import { mapDTypeToMinMax } from "../stores/utils";
+import { mapDTypeToMinMax, mapDTypeToTextureBytes } from "../stores/utils";
 import type { ZarrStore } from "../zarr/zarr_stores/type";
 import { calculateChunkGrid } from "../zarr/utils";
 import { buildAffineMatrix } from "./worldTransform";
@@ -29,7 +29,7 @@ import {
  * spirit of tile-pyramid viewers).
  */
 
-export type PlannedChunk = ChunkData & { role: "target" | "cover" };
+export type PlannedChunk = ChunkData & { role: "target" | "cover" | "substitute" };
 
 export type LayerChunkPlan = {
   targetLod: number;
@@ -54,6 +54,12 @@ export type PlanLayerChunksInput = {
   currentZ: number | undefined;
   renderedChunkKeys: ReadonlySet<string>;
   prevPlan: LayerChunkPlan | null;
+  /**
+   * Byte ceiling for the plan's resident textures. Bounds the substitution
+   * rule (keeping already-rendered finer chunks instead of fetching coarser
+   * targets) so a zoomed-out viewport can't pin unbounded fine textures.
+   */
+  maxPlanBytes?: number;
 };
 
 /** Base-scaled voxel rect of a chunk (or viewport area). */
@@ -109,6 +115,7 @@ export function planLayerChunks({
   currentZ,
   renderedChunkKeys,
   prevPlan,
+  maxPlanBytes = Number.POSITIVE_INFINITY,
 }: PlanLayerChunksInput): LayerChunkPlan {
   const dims = layer.lens.dataset.dims;
   const { xPos, yPos, zPos, intensityPos } = resolveAxisIndices(dims, layer);
@@ -145,8 +152,26 @@ export function planLayerChunks({
   // --- Selection builder (slices + z pick + optional viewport narrowing) ---
   const layerAffineInverse = buildAffineMatrix(layer).invert();
 
+  /**
+   * Level-voxel z index selected by the slider; null when the layer has no z
+   * axis, "out-of-range" when the (scene-wide) slider position falls outside
+   * THIS layer's stack — in that case the layer renders nothing rather than
+   * clamping to its first/last slice.
+   */
+  const resolveLevelZ = (levelIndex: number): number | null | "out-of-range" => {
+    if (zPos === -1 || currentZ === undefined) return null;
+    const level = levels[levelIndex];
+    const localZ = new THREE.Vector3(0, 0, currentZ).applyMatrix4(layerAffineInverse).z;
+    const scaleZ = level.scaleFactors?.[zPos] ?? 1;
+    const maxVoxelZ = (level.shape[zPos] ?? 1) - 1;
+    const zIndex = Math.round(localZ / scaleZ); // half-voxel tolerance at the edges
+    if (zIndex < 0 || zIndex > maxVoxelZ) return "out-of-range";
+    return zIndex;
+  };
+
   const buildSelection = (
     levelIndex: number,
+    levelZ: number | null,
     viewRect: { x: [number, number]; y: [number, number] } | null,
   ): (null | number | Slice)[] | null => {
     const level = levels[levelIndex];
@@ -157,11 +182,8 @@ export function planLayerChunks({
         : null;
     });
 
-    if (zPos !== -1 && currentZ !== undefined) {
-      const localZ = new THREE.Vector3(0, 0, currentZ).applyMatrix4(layerAffineInverse).z;
-      const scaleZ = level.scaleFactors?.[zPos] ?? 1;
-      const maxVoxelZ = (level.shape[zPos] ?? 1) - 1;
-      selection[zPos] = Math.max(0, Math.min(maxVoxelZ, Math.round(localZ / scaleZ)));
+    if (levelZ !== null) {
+      selection[zPos] = levelZ;
     }
 
     if (viewRect) {
@@ -179,6 +201,7 @@ export function planLayerChunks({
 
   const makeChunk = (
     levelIndex: number,
+    levelZ: number | null,
     chunk_coords: number[],
     mapping: ChunkData["indexer"],
     role: PlannedChunk["role"],
@@ -190,7 +213,10 @@ export function planLayerChunks({
       dimensionOrder: [xPos, yPos, intensityPos],
       store: level.store,
       chunkCoords: chunk_coords,
-      chunkKey: `${levelIndex}-${chunk_coords.join("/")}`,
+      // The z index is part of the identity: when a chunk spans multiple z
+      // slices, moving the slider must remount/re-upload even though the
+      // chunk coordinates are unchanged.
+      chunkKey: `${levelIndex}-${chunk_coords.join("/")}${levelZ !== null ? `/z${levelZ}` : ""}`,
       indexer: mapping,
       chunk_shape: [...level.chunks],
       arrayShape: [...level.shape],
@@ -198,6 +224,8 @@ export function planLayerChunks({
       max_value: maxValue,
       level: levelIndex,
       scaleFactors: level.scaleFactors ? [...level.scaleFactors] : undefined,
+      // ChunkPlane extracts this slab from the fetched chunk before upload.
+      zSelection: levelZ !== null ? { axisPosition: zPos, levelIndex: levelZ } : undefined,
       role,
     };
   };
@@ -208,14 +236,16 @@ export function planLayerChunks({
     role: PlannedChunk["role"],
   ): PlannedChunk[] => {
     const level = levels[levelIndex];
-    const selection = buildSelection(levelIndex, viewRect);
+    const levelZ = resolveLevelZ(levelIndex);
+    if (levelZ === "out-of-range") return [];
+    const selection = buildSelection(levelIndex, levelZ, viewRect);
     if (!selection) return [];
     return calculateChunkGrid(selection, [...level.shape], [...level.chunks]).map(
-      ({ chunk_coords, mapping }) => makeChunk(levelIndex, chunk_coords, mapping, role),
+      ({ chunk_coords, mapping }) => makeChunk(levelIndex, levelZ, chunk_coords, mapping, role),
     );
   };
 
-  // --- Rule 1: target set --------------------------------------------------
+  // --- Rule 1: target set, center-out --------------------------------------
   const viewRect = viewRange
     ? {
         x: expandVoxelRange(viewRange.xRange, PREFETCH_MARGIN),
@@ -223,7 +253,95 @@ export function planLayerChunks({
       }
     : null;
 
-  const targets = enumerateChunks(targetLod, viewRect, "target");
+  const center = viewRect
+    ? { x: (viewRect.x[0] + viewRect.x[1]) / 2, y: (viewRect.y[0] + viewRect.y[1]) / 2 }
+    : { x: ((levels[0].shape[xPos] ?? 0)) / 2, y: ((levels[0].shape[yPos] ?? 0)) / 2 };
+
+  const distanceToCenter = (chunk: PlannedChunk): number => {
+    const rect = chunkRect(chunk);
+    const cx = (rect.x0 + rect.x1) / 2;
+    const cy = (rect.y0 + rect.y1) / 2;
+    return (cx - center.x) ** 2 + (cy - center.y) ** 2;
+  };
+
+  let targets = enumerateChunks(targetLod, viewRect, "target").sort(
+    (a, b) => distanceToCenter(a) - distanceToCenter(b),
+  );
+
+  // --- Rule 1b: substitution — prefer already-rendered FINER chunks over
+  // fetching a coarser target, while the byte budget permits. A target whose
+  // area is fully tiled by rendered finer-level chunks from the previous plan
+  // is dropped (never fetched); the fine chunks persist as "substitute"s.
+  // Re-derived every replan from prevPlan, so it is a stable fixed point; and
+  // zooming back in is free — the substitutes simply become targets again.
+  const textureBytesForLevel = (levelIndex: number): number => {
+    const level = levels[levelIndex];
+    const bytesPerVoxel = mapDTypeToTextureBytes(level.dtype as DataType);
+    const chunkX = level.chunks[xPos] ?? 1;
+    const chunkY = level.chunks[yPos] ?? 1;
+    const chunkIntensity = intensityPos !== -1 ? Math.min(16, level.chunks[intensityPos] ?? 1) : 1;
+    return chunkX * chunkY * chunkIntensity * bytesPerVoxel;
+  };
+
+  const substitutes: PlannedChunk[] = [];
+  const substituteKeys = new Set<string>();
+  if (targetLod > 0 && prevPlan && prevPlan.sliceSignature === sliceSignature) {
+    // Rendered finer-level candidates, per level (finest first).
+    const candidatePool = new Map<number, PlannedChunk[]>();
+    for (const chunk of prevPlan.chunks) {
+      if (chunk.level < targetLod && renderedChunkKeys.has(chunk.chunkKey)) {
+        const bucket = candidatePool.get(chunk.level);
+        if (bucket) bucket.push(chunk);
+        else candidatePool.set(chunk.level, [chunk]);
+      }
+    }
+
+    if (candidatePool.size > 0) {
+      const poolLevels = [...candidatePool.keys()].sort((a, b) => a - b);
+      let totalBytes = targets.reduce((sum, target) => sum + textureBytesForLevel(target.level), 0);
+      const keptTargets: PlannedChunk[] = [];
+      const EPSILON = 1e-6;
+
+      for (const target of targets) {
+        const rect = chunkRect(target);
+        let substituted = false;
+
+        for (const fineLevel of poolLevels) {
+          const level = levels[fineLevel];
+          const cellWidth = (level.chunks[xPos] ?? 1) * (level.scaleFactors?.[xPos] ?? 1);
+          const cellHeight = (level.chunks[yPos] ?? 1) * (level.scaleFactors?.[yPos] ?? 1);
+          // Grid cells of the finer level the target rect spans; the pool
+          // chunks are exactly such cells, so full tiling ⟺ every cell is
+          // present ⟺ overlap count equals the expected cell count.
+          const expectedCells =
+            Math.max(0, Math.ceil((rect.x1 - EPSILON) / cellWidth) - Math.floor((rect.x0 + EPSILON) / cellWidth)) *
+            Math.max(0, Math.ceil((rect.y1 - EPSILON) / cellHeight) - Math.floor((rect.y0 + EPSILON) / cellHeight));
+          if (expectedCells === 0) continue;
+
+          const tiles = (candidatePool.get(fineLevel) ?? []).filter((candidate) =>
+            overlaps(chunkRect(candidate), rect),
+          );
+          if (tiles.length !== expectedCells) continue;
+
+          const newTiles = tiles.filter((tile) => !substituteKeys.has(tile.chunkKey));
+          const swappedBytes =
+            totalBytes - textureBytesForLevel(target.level) + newTiles.length * textureBytesForLevel(fineLevel);
+          if (swappedBytes > maxPlanBytes) continue;
+
+          totalBytes = swappedBytes;
+          for (const tile of newTiles) {
+            substituteKeys.add(tile.chunkKey);
+            substitutes.push(tile.role === "substitute" ? tile : { ...tile, role: "substitute" as const });
+          }
+          substituted = true;
+          break;
+        }
+
+        if (!substituted) keptTargets.push(target);
+      }
+      targets = keptTargets;
+    }
+  }
 
   // --- Rules 2 + 3: covers over unrendered targets, retire the rest --------
   const unrenderedTargetRects = targets
@@ -238,7 +356,10 @@ export function planLayerChunks({
     const retainable =
       prevPlan && prevPlan.sliceSignature === sliceSignature
         ? prevPlan.chunks.filter(
-            (chunk) => chunk.level !== targetLod && renderedChunkKeys.has(chunk.chunkKey),
+            (chunk) =>
+              chunk.level !== targetLod &&
+              !substituteKeys.has(chunk.chunkKey) &&
+              renderedChunkKeys.has(chunk.chunkKey),
           )
         : [];
     const retained = retainable.filter((chunk) => {
@@ -277,21 +398,8 @@ export function planLayerChunks({
     }
   }
 
-  // --- Rule 5: covers first, then targets center-out ------------------------
-  const center = viewRect
-    ? { x: (viewRect.x[0] + viewRect.x[1]) / 2, y: (viewRect.y[0] + viewRect.y[1]) / 2 }
-    : { x: ((levels[0].shape[xPos] ?? 0)) / 2, y: ((levels[0].shape[yPos] ?? 0)) / 2 };
-
-  const distanceToCenter = (chunk: PlannedChunk): number => {
-    const rect = chunkRect(chunk);
-    const cx = (rect.x0 + rect.x1) / 2;
-    const cy = (rect.y0 + rect.y1) / 2;
-    return (cx - center.x) ** 2 + (cy - center.y) ** 2;
-  };
-
-  const orderedTargets = [...targets].sort((a, b) => distanceToCenter(a) - distanceToCenter(b));
-
-  return { targetLod, sliceSignature, chunks: [...covers, ...orderedTargets] };
+  // --- Rule 5: covers, then substitutes, then remaining targets center-out --
+  return { targetLod, sliceSignature, chunks: [...covers, ...substitutes, ...targets] };
 }
 
 /** Value equality between two plans (skip store writes / preserve identity). */

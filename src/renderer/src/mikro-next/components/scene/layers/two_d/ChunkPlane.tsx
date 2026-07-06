@@ -8,6 +8,7 @@ import { useSceneStore } from '../../store/sceneStore';
 import { buildColormapAtlas } from '../../zarr/colormaps';
 import { Blending } from '@/mikro-next/api/graphql';
 import { buildDimRemapMatrix, computeAxisMemoryOrder } from '../../core/dimRemap';
+import { extractAxisSlab } from '../../core/slab';
 
 // Max channels a single layer's render graph can composite in one shader pass.
 const MAX_CHANNELS = 16;
@@ -107,7 +108,21 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
 
         if (abortController.signal.aborted || !chunkData) return;
 
-        const rawShape = chunkData.shape;
+        // When the zarr chunking spans multiple z slices, the fetched chunk
+        // holds ALL of them — cut out the slice the plan selected, otherwise
+        // the texture always shows the chunk's first slab and the z slider
+        // appears dead.
+        let textureSource = chunkData.data as Uint8Array | Float32Array;
+        const rawShape = [...chunkData.shape];
+        const zSelection = chunk.zSelection;
+        if (zSelection && (rawShape[zSelection.axisPosition] ?? 1) > 1) {
+          const chunkExtent = chunk.chunk_shape[zSelection.axisPosition] ?? 1;
+          const localIndex =
+            zSelection.levelIndex - (chunk.chunkCoords[zSelection.axisPosition] ?? 0) * chunkExtent;
+          textureSource = extractAxisSlab(textureSource, rawShape, zSelection.axisPosition, localIndex);
+          rawShape[zSelection.axisPosition] = 1;
+        }
+
         const actualX = xIdx !== -1 ? rawShape[xIdx] : 1;
         const actualY = yIdx !== -1 ? rawShape[yIdx] : 1;
         const actualZ = zIdx !== -1 ? rawShape[zIdx] : 1;
@@ -118,7 +133,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
         const texDepth = slowestIdx !== -1 ? rawShape[slowestIdx] : 1;
 
         const texturePrepStartedAt = performance.now();
-        const { data, type, dataScale } = getTextureConfig(chunkData.data);
+        const { data, type, dataScale } = getTextureConfig(textureSource);
         const textureConfigMs = performance.now() - texturePrepStartedAt;
 
         const textureCreateStartedAt = performance.now();

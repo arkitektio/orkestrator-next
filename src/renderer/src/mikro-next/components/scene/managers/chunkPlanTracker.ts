@@ -5,6 +5,7 @@ import {
   type LayerChunkPlan,
   type PlanLevel,
 } from "../core/chunkPlanning";
+import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import type { SceneState } from "../store/sceneStore";
 import type { ViewerState } from "../store/viewerStore";
 
@@ -49,10 +50,15 @@ export function startChunkPlanTracking({ viewerStore, sceneStore }: ChunkPlanSto
     const nextPlans: Record<string, LayerChunkPlan> = {};
     let changed = Object.keys(prevPlans).some((layerId) => !layers.find((l) => l.id === layerId));
 
-    for (const layer of layers) {
-      if (layer.visible === false) continue;
+    const plannableLayers = layers.filter(
+      (layer) => layer.visible !== false && (layer.lens.dataset.dataArrays?.length ?? 0) > 0,
+    );
+    // Even per-layer share of the device texture budget — bounds how much the
+    // substitution rule may keep resident per layer.
+    const maxPlanBytes = getInitialVolumeTextureBudgetBytes() / Math.max(1, plannableLayers.length);
+
+    for (const layer of plannableLayers) {
       const dataArrays = layer.lens.dataset.dataArrays;
-      if (!dataArrays || dataArrays.length === 0) continue;
 
       let levels: PlanLevel[];
       try {
@@ -80,6 +86,7 @@ export function startChunkPlanTracking({ viewerStore, sceneStore }: ChunkPlanSto
         currentZ: viewerState.currentZ,
         renderedChunkKeys,
         prevPlan: prev,
+        maxPlanBytes,
       });
 
       if (prev && sameChunkPlan(prev, next)) {

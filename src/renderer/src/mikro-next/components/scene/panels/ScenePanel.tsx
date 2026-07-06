@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSelectionStore } from "../store/layerStore";
+import { useSelectionStore } from "../store/selectionStore";
 import { useViewStore } from "../store/viewStore";
 import { LayerState, useSceneStore } from "../store/sceneStore";
 import { useMemo } from "react";

@@ -1,15 +1,11 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-import { buildAffineMatrix } from '../../panels/layer/affine-utils';
+import { buildAffineMatrix } from '../../core/worldTransform';
+import { hasValidSpatialAxes, resolveAxisIndices } from '../../core/dims';
+import { resolveSpatialSelection } from '../../core/selection';
 import { useSceneStore, type LayerState } from '../../store/sceneStore';
 import { useViewerStore, type ProbedCoordinate } from '../../store/viewerStore';
-
-type AxisSelection = {
-  start: number;
-  step: number;
-  length: number;
-};
 
 export const SceneProbedPoint2D = () => {
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
@@ -114,11 +110,9 @@ function resolveMarkerState(
       return acc;
     }, {});
 
-    const xPos = dims.indexOf(layer.xDim ?? "");
-    const yPos = dims.indexOf(layer.yDim ?? "");
-    const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
+    const { xPos, yPos, zPos } = resolveAxisIndices(dims, layer);
 
-    if (xPos === -1 || yPos === -1 || zPos === -1) {
+    if (!hasValidSpatialAxes({ xPos, yPos, zPos })) {
       return null;
     }
 
@@ -177,14 +171,3 @@ function getResolvedVolumeLod(layer: LayerState): number {
   return highestAvailableLod;
 }
 
-function resolveSpatialSelection(
-  slice: LayerState['lens']['slices'][number] | undefined,
-  axisLength: number,
-): AxisSelection {
-  const step = Math.max(1, slice?.step ?? 1);
-  const start = Math.max(0, Math.min(axisLength, slice?.start ?? 0));
-  const stop = Math.max(start, Math.min(axisLength, slice?.stop ?? axisLength));
-  const length = stop <= start ? 0 : Math.max(1, Math.ceil((stop - start) / step));
-
-  return { start, step, length };
-}

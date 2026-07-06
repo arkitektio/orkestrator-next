@@ -1,14 +1,12 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStore } from "../zarr/zarr_stores/type";
-import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
+import { MikroClient, ZarrStore } from "../zarr/zarr_stores/type";
 import { RefObject } from "react";
-import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import * as THREE from 'three';
-import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
-import { isImageLayer } from "../layers/layerGuards";
-
-type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
+import { SceneFragment } from "@/mikro-next/api/graphql";
+import { createConfiguredSceneStores } from "../data/sceneStores";
+import { openSceneArrays, type OpenedZarrArray } from "../data/arrayRegistry";
+import { fitCameraToObject } from "../core/cameraFit";
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -99,69 +97,6 @@ interface ViewerState {
   fitToLayer: (layerId: string) => void;
 }
 
-
-function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZarrStoreDescriptor> {
-  const descriptors = new Map<string, SceneZarrStoreDescriptor>();
-
-  for (const layer of scene.layers) {
-    if (!isImageLayer(layer)) continue;
-    for (const dataArray of layer.lens.dataset.dataArrays) {
-      descriptors.set(dataArray.store.id, {
-        bucket: dataArray.store.bucket,
-        key: dataArray.store.key,
-        path: dataArray.store.path,
-        storeId: dataArray.store.id,
-      });
-    }
-  }
-
-  return descriptors;
-}
-
-async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
-  const access = await client.mutate({
-    mutation: RequestGeneralZarrAccessDocument,
-    variables: { input: {} },
-  }) as { data?: RequestGeneralZarrAccessMutation };
-
-  const credentials = access.data?.requestGeneralZarrAccess;
-  if (!credentials) {
-    throw new Error("Failed to obtain general Zarr access credentials");
-  }
-
-  return credentials;
-}
-
-async function createConfiguredSceneStores(
-  scene: SceneFragment,
-  client: MikroClient,
-  datalayer: string,
-): Promise<Map<string, ZarrStore>> {
-  const descriptors = collectSceneStoreDescriptors(scene);
-  const credentials = await requestGeneralAccess(client);
-  const expiresAt = Date.now() + credentials.expiresIn * 1000;
-
-  const stores = await Promise.all(
-    Array.from(descriptors.values()).map(async (descriptor) => {
-      const store = new ConfiguredS3Store(
-        {
-          accessKey: credentials.accessKey,
-          baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
-          expiresAt,
-          region: credentials.region,
-          secretKey: credentials.secretKey,
-          sessionToken: credentials.sessionToken,
-          storeId: descriptor.storeId,
-        },
-        { preloadMetadata: true },
-      );
-      await store.ready();
-      return [descriptor.storeId, store] as const;
-    }),
-  );
-
-  return new Map(stores);
-}
 
 function createViewerStoreInternal(
   arraysByStoreId: Map<string, OpenedZarrArray>,
@@ -271,40 +206,7 @@ function createViewerStoreInternal(
       }
       if (!target) throw new Error(`Target for layer ${layerId} not found`);
 
-      // Compute world-space bounding box
-      const box = new THREE.Box3().setFromObject(target);
-      if (box.isEmpty()) throw new Error(`Bounding box for layer ${layerId} is empty`);
-
-      const center = box.getCenter(new THREE.Vector3());
-      const boxSize = box.getSize(new THREE.Vector3());
-      const { camera, controls, size, invalidate } = canvas;
-
-      if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
-        const ortho = camera as THREE.OrthographicCamera;
-        const padding = 1.1;
-        const zoomX = size.width / (boxSize.x * padding);
-        const zoomY = size.height / (boxSize.y * padding);
-        ortho.position.set(center.x, center.y, ortho.position.z);
-        ortho.zoom = Math.min(zoomX, zoomY);
-        ortho.updateProjectionMatrix();
-        if (controls) {
-          controls.target.set(center.x, center.y, 0);
-          controls.update();
-        }
-      } else {
-        const sphere = box.getBoundingSphere(new THREE.Sphere());
-        const fov = (camera as THREE.PerspectiveCamera).fov;
-        const halfFovRad = THREE.MathUtils.degToRad(fov / 2);
-        const distance = (sphere.radius / Math.sin(halfFovRad)) * 1.3;
-        const direction = camera.position.clone().sub(center).normalize();
-        camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
-        camera.lookAt(center);
-        if (controls) {
-          controls.target.copy(center);
-          controls.update();
-        }
-      }
-      invalidate();
+      fitCameraToObject(target, canvas);
     },
     setDebug: (debug) => set({ debug }),
     setShowScaleBar: (show) => set({ showScaleBar: show }),
@@ -319,15 +221,7 @@ export async function createViewerStore(
   datalayer: string,
 ) {
   const storesById = await createConfiguredSceneStores(scene, client, datalayer);
-  const arraysByStoreId = new Map<string, OpenedZarrArray>();
-  const arraysByStore = new WeakMap<object, OpenedZarrArray>();
-
-  for (const [storeId, store] of storesById) {
-    const opened = await (open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>);
-    arraysByStoreId.set(storeId, opened);
-    arraysByStore.set(store as object, opened);
-  }
-
+  const { arraysByStoreId, arraysByStore } = await openSceneArrays(storesById);
   return createViewerStoreInternal(arraysByStoreId, arraysByStore);
 }
 

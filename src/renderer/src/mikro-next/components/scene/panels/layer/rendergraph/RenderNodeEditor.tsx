@@ -48,7 +48,7 @@ import {
   resolveLayerGraph,
   resolveProjectionMode,
   serializeRenderGraph,
-} from "../../../lib/renderGraph";
+} from "../../../core/renderGraph";
 
 const newChannel = (): ChannelRenderNode => ({
   type: "channel",

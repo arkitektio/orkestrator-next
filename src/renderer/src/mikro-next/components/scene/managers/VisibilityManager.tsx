@@ -5,7 +5,8 @@ import * as THREE from 'three'
 import { useViewStore } from '../store/viewStore'
 import { useViewerStore, type LayerViewRange } from '../store/viewerStore'
 import { useSceneStore } from '../store/sceneStore'
-import { affineToMatrix4 } from '../panels/layer/affine-utils'
+import { affineToMatrix4 } from '../core/worldTransform'
+import { resolveAxisIndices } from '../core/dims'
 
 export function VisibilityManager() {
   const trackables = useViewerStore((s) => s.trackables)
@@ -74,14 +75,12 @@ export function VisibilityManager() {
                   }
                 }
 
-                const xIdx = layer.lens.dims.indexOf(layer.xDim ?? "")
-                const yIdx = layer.lens.dims.indexOf(layer.yDim ?? "")
+                const { xPos: xIdx, yPos: yIdx, zPos: zIdx } = resolveAxisIndices(layer.lens.dims, layer)
                 const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0
                 const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0
 
                 let zRange: [number, number] | null = null
                 if (layer.zDim) {
-                  const zIdx = layer.lens.dims.indexOf(layer.zDim)
                   const zMax = zIdx >= 0 ? layer.lens.shape[zIdx] : 0
                   zRange = [
                     Math.max(0, Math.floor(voxelBox.min.z)),

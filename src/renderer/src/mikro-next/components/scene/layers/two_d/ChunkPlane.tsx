@@ -7,6 +7,7 @@ import type { ChunkData } from '../../stores/types';
 import { useSceneStore } from '../../store/sceneStore';
 import { buildColormapAtlas } from '../../zarr/colormaps';
 import { Blending } from '@/mikro-next/api/graphql';
+import { buildDimRemapMatrix, computeAxisMemoryOrder } from '../../core/dimRemap';
 
 // Max channels a single layer's render graph can composite in one shader pass.
 const MAX_CHANNELS = 16;
@@ -76,36 +77,15 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THRE
   const [actualSizes, setActualSizes] = useState([gridX, gridY, gridZ]);
   const [chunkWidth, chunkHeight, chunkZSize] = actualSizes;
 
-  const validSpatialIndices = useMemo(() => [xIdx, yIdx, zIdx].filter(i => i !== -1), [xIdx, yIdx, zIdx]);
-  const sortedIndices = useMemo(() => [...validSpatialIndices].sort((a, b) => a - b), [validSpatialIndices]);
+  const { fastestIdx, middleIdx, slowestIdx } = useMemo(
+    () => computeAxisMemoryOrder([xIdx, yIdx, zIdx]),
+    [xIdx, yIdx, zIdx],
+  );
 
-  const fastestIdx = sortedIndices.length > 0 ? sortedIndices[sortedIndices.length - 1] : -1;
-  const middleIdx = sortedIndices.length > 1 ? sortedIndices[sortedIndices.length - 2] : -1;
-  const slowestIdx = sortedIndices.length > 2 ? sortedIndices[sortedIndices.length - 3] : -1;
-
-  const dimRemapMat = useMemo(() => {
-    const mat = new THREE.Matrix3();
-
-    const uX = fastestIdx === xIdx ? 1 : 0;
-    const uY = fastestIdx === yIdx ? 1 : 0;
-    const uZ = fastestIdx === zIdx ? 1 : 0;
-
-    const vX = middleIdx === xIdx ? 1 : 0;
-    const vY = middleIdx === yIdx ? 1 : 0;
-    const vZ = middleIdx === zIdx ? 1 : 0;
-
-    const wX = slowestIdx === xIdx ? 1 : 0;
-    const wY = slowestIdx === yIdx ? 1 : 0;
-    const wZ = slowestIdx === zIdx ? 1 : 0;
-
-    mat.set(
-      uX, uY, uZ,
-      vX, vY, vZ,
-      wX, wY, wZ
-    );
-
-    return mat;
-  }, [xIdx, yIdx, zIdx, fastestIdx, middleIdx, slowestIdx]);
+  const dimRemapMat = useMemo(
+    () => buildDimRemapMatrix([xIdx, yIdx, zIdx]),
+    [xIdx, yIdx, zIdx],
+  );
 
   const isVisible = useMemo(() => {
     return true;

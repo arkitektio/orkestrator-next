@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { ImageLayerFragment } from "../../layers/layerGuards";
+import { ImageLayerFragment } from "./layerGuards";
 
 /**
  * Convert a raw affine matrix (number[][]) to a THREE.Matrix4.

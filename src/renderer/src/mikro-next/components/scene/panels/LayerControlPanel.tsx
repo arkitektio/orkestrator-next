@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
 import { Layers } from "lucide-react";
 import { useState } from "react";
-import { useSelectionStore } from "../store/layerStore";
+import { useSelectionStore } from "../store/selectionStore";
 import { LayerState, useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 import { isLayerDirty } from "./layer/colormap-utils";

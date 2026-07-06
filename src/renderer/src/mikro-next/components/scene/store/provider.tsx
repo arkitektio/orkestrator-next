@@ -4,7 +4,7 @@ import { SceneFragment } from '@/mikro-next/api/graphql';
 import {
   createSelectionStore,
   SelectionStoreContext,
-} from './layerStore';
+} from './selectionStore';
 import {
   createKubeStateStore,
   KubeStateStoreContext,

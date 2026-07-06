@@ -6,7 +6,7 @@ import {
   ProjectionMode,
   TransferFunctionInput,
 } from "@/mikro-next/api/graphql";
-import { ImageLayerFragment } from "../layers/layerGuards";
+import { ImageLayerFragment } from "./layerGuards";
 
 /**
  * A layer's `renderGraph` (`ImageLayer.renderGraph`) is a composable render

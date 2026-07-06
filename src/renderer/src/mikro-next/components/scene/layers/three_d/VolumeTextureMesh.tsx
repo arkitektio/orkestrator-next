@@ -3,6 +3,8 @@ import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { ProjectionMode } from '@/mikro-next/api/graphql';
+import { buildDimRemapMatrix } from '../../core/dimRemap';
+import { GLSL_HITBOX, GLSL_RAND } from '../../glsl/common';
 import { useSceneStoreApi } from '../../store/sceneStore';
 import { useViewerStore } from '../../store/viewerStore';
 
@@ -24,8 +26,6 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
 
 type VolumeTextureMeshProps = {
   texture: THREE.Data3DTexture;
-  localMinTexture: THREE.Data3DTexture;
-  localMaxTexture: THREE.Data3DTexture;
   colorMapTexture: THREE.Texture | null;
   layerId: string;
   dimensionOrder: [number, number, number];
@@ -39,8 +39,6 @@ type VolumeTextureMeshProps = {
 
 export const VolumeTextureMesh = ({
   texture,
-  localMinTexture,
-  localMaxTexture,
   colorMapTexture,
   layerId,
   dimensionOrder,
@@ -65,53 +63,19 @@ export const VolumeTextureMesh = ({
   const climMaxRef = useRef<number>(initialClimMax);
   const projectionRef = useRef<number>(initialProjection);
 
-  const validSpatialIndices = useMemo(
-    () => [xIdx, yIdx, zIdx].filter((index) => index !== -1),
+  const dimRemapMat = useMemo(
+    () => buildDimRemapMatrix([xIdx, yIdx, zIdx]),
     [xIdx, yIdx, zIdx],
   );
-  const sortedIndices = useMemo(
-    () => [...validSpatialIndices].sort((a, b) => a - b),
-    [validSpatialIndices],
-  );
-
-  const fastestIdx = sortedIndices.length > 0 ? sortedIndices[sortedIndices.length - 1] : -1;
-  const middleIdx = sortedIndices.length > 1 ? sortedIndices[sortedIndices.length - 2] : -1;
-  const slowestIdx = sortedIndices.length > 2 ? sortedIndices[sortedIndices.length - 3] : -1;
-
-  const dimRemapMat = useMemo(() => {
-    const mat = new THREE.Matrix3();
-
-    const uX = fastestIdx === xIdx ? 1 : 0;
-    const uY = fastestIdx === yIdx ? 1 : 0;
-    const uZ = fastestIdx === zIdx ? 1 : 0;
-
-    const vX = middleIdx === xIdx ? 1 : 0;
-    const vY = middleIdx === yIdx ? 1 : 0;
-    const vZ = middleIdx === zIdx ? 1 : 0;
-
-    const wX = slowestIdx === xIdx ? 1 : 0;
-    const wY = slowestIdx === yIdx ? 1 : 0;
-    const wZ = slowestIdx === zIdx ? 1 : 0;
-
-    mat.set(
-      uX, uY, uZ,
-      vX, vY, vZ,
-      wX, wY, wZ,
-    );
-
-    return mat;
-  }, [fastestIdx, middleIdx, slowestIdx, xIdx, yIdx, zIdx]);
 
   useEffect(() => {
     if (!materialRef.current) return;
 
     materialRef.current.uniforms.colorTexture.value = texture;
-    materialRef.current.uniforms.chunkMinTexture.value = localMinTexture;
-    materialRef.current.uniforms.chunkMaxTexture.value = localMaxTexture;
     materialRef.current.uniforms.dataScale.value = dataScale;
     materialRef.current.uniformsNeedUpdate = true;
     invalidate();
-  }, [dataScale, invalidate, localMaxTexture, localMinTexture, texture]);
+  }, [dataScale, invalidate, texture]);
 
   useEffect(() => {
     const unsubscribe = sceneStoreApi.subscribe((state) => {
@@ -162,8 +126,6 @@ export const VolumeTextureMesh = ({
   const initialUniforms = useMemo(
     () => ({
       colorTexture: { value: texture },
-      chunkMinTexture: { value: localMinTexture },
-      chunkMaxTexture: { value: localMaxTexture },
       colormapTexture: { value: colorMapTexture },
       minValue: { value: minValue },
       maxValue: { value: maxValue },
@@ -184,8 +146,6 @@ export const VolumeTextureMesh = ({
       dimRemapMat,
       initialClimMax,
       initialClimMin,
-      localMaxTexture,
-      localMinTexture,
       maxValue,
       minValue,
       texture,
@@ -231,8 +191,6 @@ export const VolumeTextureMesh = ({
             in vec3 vDirection;
 
             uniform sampler3D colorTexture;
-            uniform sampler3D chunkMinTexture;
-            uniform sampler3D chunkMaxTexture;
             uniform sampler2D colormapTexture;
             uniform float minValue;
             uniform float maxValue;
@@ -249,33 +207,9 @@ export const VolumeTextureMesh = ({
 
             out vec4 FragColor;
 
-            float rand(vec2 co) {
-              return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
-            }
+            ${GLSL_RAND}
 
-            vec2 hitBox(vec3 orig, vec3 dir) {
-              vec3 box_min = vec3(-0.5);
-              vec3 box_max = vec3(0.5);
-              vec3 inv_dir = 1.0 / dir;
-              vec3 tmin_tmp = (box_min - orig) * inv_dir;
-              vec3 tmax_tmp = (box_max - orig) * inv_dir;
-              vec3 tmin = min(tmin_tmp, tmax_tmp);
-              vec3 tmax = max(tmin_tmp, tmax_tmp);
-              float t0 = max(tmin.x, max(tmin.y, tmin.z));
-              float t1 = min(tmax.x, min(tmax.y, tmax.z));
-              return vec2(t0, t1);
-            }
-
-            float reconstructRawValue(float encodedValue, vec3 texCoord) {
-              float localMin = texture(chunkMinTexture, texCoord).r;
-              float localMax = texture(chunkMaxTexture, texCoord).r;
-              float encoded = clamp(encodedValue * dataScale, 0.0, 1.0);
-              if (abs(localMax - localMin) < 0.00001) {
-                return localMin;
-              }
-
-              return mix(localMin, localMax, encoded);
-            }
+            ${GLSL_HITBOX}
 
             float computeNormalized(float rawValue) {
               if (useDiscrete > 0.5) {
@@ -328,7 +262,9 @@ export const VolumeTextureMesh = ({
 
                 vec3 texCoord = dimRemap * uvw;
                 float encodedValue = texture(colorTexture, texCoord).r;
-                float rawValue = reconstructRawValue(encodedValue, texCoord);
+                // Volume buffers hold raw values (no bounds-texture reconstruction);
+                // scale hardware-normalized samples back to data space like the plane.
+                float rawValue = encodedValue * dataScale;
 
                 if (uPickingPass) {
                   float sampleNormalized = computeNormalized(rawValue);

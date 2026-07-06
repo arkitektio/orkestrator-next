@@ -1,5 +1,5 @@
 import { ColorMap } from "@/mikro-next/api/graphql";
-import { ImageLayerFragment } from "../../layers/layerGuards";
+import { ImageLayerFragment } from "../../core/layerGuards";
 import {
   colormapGradientCSS as sceneColormapGradientCSS,
   resolveBaseColorRgb,

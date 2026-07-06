@@ -20,7 +20,7 @@ import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeSto
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
 import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
-import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
+import { createSelectionStore, SelectionStoreContext } from "./store/selectionStore";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";

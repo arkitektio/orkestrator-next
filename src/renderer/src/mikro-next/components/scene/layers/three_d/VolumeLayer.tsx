@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { Chunk, DataType, Slice } from 'zarrita';
 
 import { DimSliceFragment } from '@/mikro-next/api/graphql';
 import { getChunkWorker } from '../../../../../lib/zarr/runner';
 import { setter } from '../../../../../lib/zarr/runner/internals/setter';
 import { get_strides } from '../../../../../lib/zarr/runner/internals/util';
 import { workerPool } from '../../../../workers/pool';
-import { buildAffineMatrix } from '../../panels/layer/affine-utils';
-import { useSelectionStore } from '../../store/layerStore';
+import { buildAffineMatrix } from '../../core/worldTransform';
+import { resolveAxisIndices } from '../../core/dims';
+import { useSelectionStore } from '../../store/selectionStore';
 import { useModeStore } from '../../store/modeStore';
 import { LayerState } from '../../store/sceneStore';
 import { useViewerStore, useViewerStoreApi } from '../../store/viewerStore';
@@ -18,20 +18,20 @@ import { mapDTypeToMinMax } from '../../stores/utils';
 import { getColorMapTexture } from '../../zarr/colormaps';
 import { VolumeTextureMesh, type VolumeRenderMesh } from './VolumeTextureMesh';
 
+import { createVolumeTextureBuffer } from '../../core/volumeTexture';
+import { getTextureDimensions } from '../../core/dimRemap';
 import {
-  createVolumeTextureBuffer,
-  createVolumeBoundsTextureBuffer,
-  createBoundsChunk,
-  getTextureDimensions,
   resolveSpatialSelection,
   resolveCollapsedSelection,
+  resolveVoxelIndex,
+  type AxisSelection,
+} from '../../core/selection';
+import {
   prioritizeChunkLoaders,
   runChunkLoaderQueue,
-  resolveVoxelIndex,
   intersectLocalVolumeBox,
   marchVolumeTexture,
-  type AxisSelection,
-} from './volume-math';
+} from '../../core/probeMath';
 
 type VolumeTextureState = {
   texture: THREE.Data3DTexture;
@@ -118,7 +118,8 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       const arr = getArrayForStoreId(dataArray.store.id);
       const sliceMap = layer.lens.slices.reduce((acc, slice) => ({ ...acc, [slice.dim]: slice }), {} as Record<string, DimSliceFragment>);
 
-      const pos = [dims.indexOf(layer.xDim ?? ""), dims.indexOf(layer.yDim ?? ""), layer.zDim ? dims.indexOf(layer.zDim) : -1];
+      const { xPos, yPos, zPos } = resolveAxisIndices(dims, layer);
+      const pos = [xPos, yPos, zPos];
       if (pos.includes(-1)) return setVolumeTexture(null);
 
       const spatialDims = new Set([layer.xDim, layer.yDim, layer.zDim].filter(Boolean));
@@ -159,7 +160,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       texture.needsUpdate = true;
 
       const destination = setter.prepare(texConfig.data as any, outputShape, get_strides(outputShape));
-      const spatialSelections = pos.map((p, i) => resolveSpatialSelection(selection[p], arr.shape[p]));
+      const spatialSelections = pos.map((p) => resolveSpatialSelection(selection[p], arr.shape[p]));
       const scales = pos.map(p => dataArray.scaleFactors?.[p] ?? 1);
       const sizes = spatialSelections.map((sel, i) => sel.length * sel.step * scales[i]);
       const centers = spatialSelections.map((sel, i) => sel.start * scales[i] + sizes[i] / 2 - (arr.shape[pos[i]] * scales[i]) / 2);

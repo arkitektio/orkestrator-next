@@ -669,9 +669,27 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
+    // A channel with no named colormap but an explicit color is a black->color
+    // linear ramp (the standard per-channel microscopy tint, e.g. RGB composites).
+    // Only fall back to a named/Viridis colormap when no color is given.
+    const tintColor =
+      channel?.colormap == null && channel?.color ? channel.color : null;
+
     for (let x = 0; x < width; x++) {
       const t = x / (width - 1);
-      const [r, g, b] = sampleColorMapRgb(channel?.colormap, t, channel?.color);
+      let r: number;
+      let g: number;
+      let b: number;
+      if (tintColor) {
+        // Constant channel color; the shader scales it by the channel's
+        // normalized intensity (so 0 -> black, 1 -> full color). A ramp here
+        // would double-count intensity and crush the image.
+        r = (tintColor[0] ?? 0) / 255;
+        g = (tintColor[1] ?? 0) / 255;
+        b = (tintColor[2] ?? 0) / 255;
+      } else {
+        [r, g, b] = sampleColorMapRgb(channel?.colormap, t, channel?.color);
+      }
       const idx = (row * width + x) * 4;
       data[idx] = Math.round(r * 255);
       data[idx + 1] = Math.round(g * 255);

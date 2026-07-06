@@ -7,7 +7,9 @@ import type { ChunkData } from '../../stores/types';
 import { mapDTypeToMinMax } from '../../stores/utils';
 import { getColorMapTexture } from '../../zarr/colormaps';
 import { calculateChunkGrid } from '../../zarr/utils';
-import { buildAffineMatrix } from '../../panels/layer/affine-utils';
+import { buildAffineMatrix } from '../../core/worldTransform';
+import { hasValidSpatialAxes, resolveAxisIndices } from '../../core/dims';
+import { AxisSelection, resolveSpatialSelection, resolveVoxelIndex } from '../../core/selection';
 
 import { ChunkPlane } from './ChunkPlane';
 import { useModeStore } from '../../store/modeStore';
@@ -28,12 +30,6 @@ interface ZarrCache {
   levels: ZarrLevel[];
   dims: string[];
 }
-
-type AxisSelection = {
-  start: number;
-  step: number;
-  length: number;
-};
 
 type ProbeGeometryContext = {
   xSelection: AxisSelection;
@@ -126,10 +122,7 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       return acc;
     }, {} as Record<string, DimSliceFragment>);
 
-    const xPos = dims.indexOf(layer.xDim ?? "");
-    const yPos = dims.indexOf(layer.yDim ?? "");
-    const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
-    const intensityPos = dims.indexOf(layer.intensityDim ?? "");
+    const { xPos, yPos, zPos, intensityPos } = resolveAxisIndices(dims, layer);
 
     const colormapTexture = getColorMapTexture(layer.colormap, layer.color);
 
@@ -379,10 +372,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
     const { arr, scaleFactors } = level;
     const dims = zarrCache.current.dims;
-    const xPos = dims.indexOf(layer.xDim ?? "");
-    const yPos = dims.indexOf(layer.yDim ?? "");
-    const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
-    if (xPos === -1 || yPos === -1 || zPos === -1) return null;
+    const { xPos, yPos, zPos } = resolveAxisIndices(dims, layer);
+    if (!hasValidSpatialAxes({ xPos, yPos, zPos })) return null;
 
     const sliceMap = layer.lens.slices.reduce((acc, slice) => {
       acc[slice.dim] = slice;
@@ -546,24 +537,3 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
   );
 };
 
-function resolveSpatialSelection(
-  slice: DimSliceFragment | undefined,
-  axisLength: number,
-): AxisSelection {
-  const step = Math.max(1, slice?.step ?? 1);
-  const start = Math.max(0, Math.min(axisLength, slice?.start ?? 0));
-  const stop = Math.max(start, Math.min(axisLength, slice?.stop ?? axisLength));
-  const length = stop <= start ? 0 : Math.max(1, Math.ceil((stop - start) / step));
-
-  return { start, step, length };
-}
-
-function resolveVoxelIndex(normalizedPosition: number, selection: AxisSelection): number {
-  const clampedPosition = THREE.MathUtils.clamp(normalizedPosition, 0, 0.999999);
-  const relativeIndex = Math.min(
-    selection.length - 1,
-    Math.max(0, Math.floor(clampedPosition * selection.length)),
-  );
-
-  return selection.start + relativeIndex * selection.step;
-}

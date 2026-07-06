@@ -8,7 +8,7 @@ import {
   getLayerZSize,
   voxelToPhysicalZ,
   physicalToVoxelZ,
-} from "./layer/affine-utils";
+} from "../core/worldTransform";
 
 export const ZSliderPanel = () => {
   const displayMode = useModeStore((s) => s.displayMode);

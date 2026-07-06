@@ -3,11 +3,11 @@ import { immer } from "zustand/middleware/immer";
 import { SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "./createScopedStore";
 import { isImageLayer } from "../core/layerGuards";
-import { normalizeLayer, type LayerState, type ReportedContrast } from "../core/layerModel";
+import { normalizeLayer, type LayerState } from "../core/layerModel";
 import { planDefaultVolumeLods } from "../core/lodPlanning";
 
 // Re-exported for the store's many consumers (the model lives in core/).
-export type { LayerState, ReportedContrast };
+export type { LayerState };
 
 export interface SceneState {
   spatialUnit: string;
@@ -18,8 +18,6 @@ export interface SceneState {
   originalLayers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
   markLayerClean: (layerId: string) => void;
-  reportContrast: (contrast: ReportedContrast) => void;
-  reportedContrasts: Record<string, ReportedContrast>;
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
@@ -51,11 +49,6 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             state.originalLayers[origIndex] = { ...layer };
           }
         }),
-      reportContrast: (contrast: ReportedContrast) =>
-        set((state) => {
-          state.reportedContrasts[contrast.id] = contrast;
-        }),
-      reportedContrasts: {},
     })),
   );
 };

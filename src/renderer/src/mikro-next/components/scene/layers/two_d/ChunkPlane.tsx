@@ -32,7 +32,7 @@ function getTextureConfig(rawData: any) {
 }
 
 // --- 1. Individual Chunk Renderer with Single Texture Lookup ---
-export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THREE.Texture | null }) => {
+export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);

@@ -28,17 +28,6 @@ export function absoluteToNormalized(value: number, rangeMin: number, rangeMax: 
   return clamp01((value - rangeMin) / span)
 }
 
-export function clampAbsoluteRange(
-  valueMin: number,
-  valueMax: number,
-  rangeMin: number,
-  rangeMax: number,
-): [number, number] {
-  const nextMin = clamp(valueMin, rangeMin, rangeMax)
-  const nextMax = clamp(valueMax, rangeMin, rangeMax)
-  return [Math.min(nextMin, nextMax), Math.max(nextMin, nextMax)]
-}
-
 export function formatContrastValue(value: number): string {
   const absValue = Math.abs(value)
 

@@ -17,12 +17,6 @@ import {
  * transfer/render-graph state). Non-image layers (Shape/Point/Track/Mesh) are
  * rendered through a separate path.
  */
-export type ReportedContrast = {
-  id: string;
-  minValue: number;
-  maxValue: number;
-};
-
 export type LayerState = ImageLayerFragment & {
   fixedLOD?: number | null;
   defaultVolumeLOD?: number | null;

@@ -10,8 +10,6 @@ export const DebugPanel = () => {
   const renderedChunks = useViewerStore((s) => s.renderedChunks);
   const renderBudget = useViewerStore((s) => s.renderBudget);
   const lodBias = useViewerStore((s) => s.lodBias);
-  const cullRadius = useViewerStore((s) => s.cullRadius);
-  const setCullRadius = useViewerStore((s) => s.setCullRadius);
   const setLodBias = useViewerStore((s) => s.setLodBias);
   const layers = useSceneStore((s) => s.layers);
   const [isControlsOpen, setIsControlsOpen] = useState(true);
@@ -55,20 +53,6 @@ export const DebugPanel = () => {
                   step={0.1}
                   value={[lodBias]}
                   onValueChange={([value]) => setLodBias(value)}
-                  className="py-1"
-                />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
-                  <span>Cull Radius</span>
-                  <span className="font-mono bg-accent px-1 rounded">{cullRadius} units</span>
-                </div>
-                <Slider
-                  min={40}
-                  max={900}
-                  step={10}
-                  value={[cullRadius]}
-                  onValueChange={([value]) => setCullRadius(value)}
                   className="py-1"
                 />
               </div>

@@ -43,12 +43,9 @@ export interface RenderBudgetInfo {
 }
 
 
+/** Per-scene viewer state: camera-derived facts, trackables, probes and the
+ * declarative chunk plans the scene managers write. */
 export interface ViewerState {
-  // We store the combined projection + view matrix
-  zStart: number | null;
-  zEnd: number | null;
-  tStart: Date | null;
-  tEnd: Date | null;
   debug: boolean;
   showScaleBar: boolean;
   showScaleGrid: boolean;
@@ -70,8 +67,6 @@ export interface ViewerState {
   probeThreshold: number;
 
   lodBias: number;
-  cullRadius: number;
-  setCullRadius: (radius: number) => void;
   setLodBias: (bias: number) => void;
   renderedChunks: Record<string, { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' }>;
   setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
@@ -94,9 +89,6 @@ export interface ViewerState {
   clearSavedProbes: () => void
   setProbeThreshold: (threshold: number) => void
 
-
-  setZRange: (start: number | null, end: number | null) => void;
-  setTRange: (start: Date | null, end: Date | null) => void;
   setDebug: (debug: boolean) => void;
   setShowScaleBar: (show: boolean) => void;
   setShowScaleGrid: (show: boolean) => void;
@@ -114,9 +106,6 @@ function createViewerStoreInternal(
   arraysByStore: WeakMap<object, OpenedZarrArray>,
 ) {
   return createStore<ViewerState>((set, get) => ({
-    zStart: 0,
-    zEnd: 100,
-    tStart: null,
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
@@ -124,8 +113,6 @@ function createViewerStoreInternal(
     savedProbes: [],
     probeThreshold: 0.01,
     lodBias: 0.2,
-    cullRadius: 4000,
-    setCullRadius: (radius) => set({ cullRadius: radius }),
     setLodBias: (bias) => set({ lodBias: bias }),
     renderedChunks: {},
     setChunkStatus: (chunkId, info) => set((state) => {
@@ -166,7 +153,6 @@ function createViewerStoreInternal(
     clearSavedProbes: () => set({ savedProbes: [] }),
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     currentZ: 0,
-    tEnd: null,
     debug: false,
     showScaleBar: true,
     showScaleGrid: false,
@@ -198,8 +184,6 @@ function createViewerStoreInternal(
       }
       return array;
     },
-    setZRange: (start, end) => set({ zStart: start, zEnd: end }),
-    setTRange: (start, end) => set({ tStart: start, tEnd: end }),
     setCurrentZ: (z) => set({ currentZ: z }),
     setFrustum: (near, far) => set({ frustumNear: near, frustumFar: far }),
     registerCanvas: (ctx) => set({ canvas: ctx }),

@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla";
 import * as THREE from "three";
 import { createScopedStoreHooks } from "./createScopedStore";
 
-interface ViewState {
+export interface ViewState {
   // We store the combined projection + view matrix
   viewProjectionMatrix: THREE.Matrix4 | null;
   viewportSize: { width: number; height: number };

@@ -17,19 +17,16 @@ export interface CanvasContext {
 }
 
 
-interface TrackableObject {
+export interface TrackableObject {
   kind: "layer" | "gizmo" | "other";
   id: string;
   ref: RefObject<THREE.Object3D | undefined>;
 }
 
-export interface LayerViewRange {
-  xRange: [number, number];
-  yRange: [number, number];
-  zRange: [number, number] | null;
-  /** Screen pixels per image pixel (how many viewer pixels one voxel occupies) */
-  scale: number;
-}
+// The range model lives with the visibility math in core/; re-exported here
+// for the store's many consumers.
+export type { LayerViewRange } from "../core/visibility";
+import type { LayerViewRange } from "../core/visibility";
 
 export interface ProbedCoordinate {
   layerId: string;
@@ -37,8 +34,15 @@ export interface ProbedCoordinate {
   voxelIndex: [number, number, number];
 }
 
+/** Why layers were culled from display by the render-cost budget. */
+export interface RenderBudgetInfo {
+  budgetBytes: number;
+  usedBytes: number;
+  culledLayerIds: string[];
+}
 
-interface ViewerState {
+
+export interface ViewerState {
   // We store the combined projection + view matrix
   zStart: number | null;
   zEnd: number | null;
@@ -72,6 +76,9 @@ interface ViewerState {
   setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
   lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
   setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
+  /** Null while every layer fits the render-cost budget. */
+  renderBudget: RenderBudgetInfo | null;
+  setRenderBudget: (info: RenderBudgetInfo | null) => void;
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
@@ -128,6 +135,8 @@ function createViewerStoreInternal(
     }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
+    renderBudget: null,
+    setRenderBudget: (info) => set({ renderBudget: info }),
     register: (ref) => set((state) => ({
       trackables: new Set(state.trackables).add(ref),
     })),

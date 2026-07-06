@@ -21,7 +21,7 @@ const sameColor = (
     left.length === right.length &&
     left.every((value, i) => value === right[i]));
 
-interface SceneState {
+export interface SceneState {
   spatialUnit: string;
   /** Raw polymorphic layers (all __typenames), consumed by the render dispatch. */
   sceneLayers: SceneLayerFragment[];

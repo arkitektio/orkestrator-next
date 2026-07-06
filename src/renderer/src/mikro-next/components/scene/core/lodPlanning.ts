@@ -13,7 +13,7 @@ const MIN_VOLUME_TEXTURE_BUDGET_BYTES = 256 * 1024 * 1024;
 const MAX_VOLUME_TEXTURE_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
 const DEVICE_MEMORY_TEXTURE_FRACTION = 0.18;
 
-function getInitialVolumeTextureBudgetBytes(): number {
+export function getInitialVolumeTextureBudgetBytes(): number {
   const nav = typeof navigator !== "undefined"
     ? (navigator as Navigator & { deviceMemory?: number })
     : undefined;
@@ -42,7 +42,7 @@ function getSliceLength(
   return Math.max(1, Math.ceil((stop - start) / step));
 }
 
-function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: number): number {
+export function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: number): number {
   const dataArray = layer.lens.dataset.dataArrays[lodIndex];
   if (!dataArray) return Number.POSITIVE_INFINITY;
 

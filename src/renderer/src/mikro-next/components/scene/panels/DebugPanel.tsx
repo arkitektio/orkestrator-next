@@ -8,6 +8,7 @@ import { useSceneStore } from "../store/sceneStore";
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
   const renderedChunks = useViewerStore((s) => s.renderedChunks);
+  const renderBudget = useViewerStore((s) => s.renderBudget);
   const lodBias = useViewerStore((s) => s.lodBias);
   const cullRadius = useViewerStore((s) => s.cullRadius);
   const setCullRadius = useViewerStore((s) => s.setCullRadius);
@@ -26,6 +27,13 @@ export const DebugPanel = () => {
   return (
     <div className="absolute top-2 left-2 z-50 w-64 max-h-[80vh] overflow-y-auto bg-background/80 backdrop-blur-md border border-border/50 text-xs p-2 rounded shadow-lg pointer-events-auto">
       <h3 className="font-bold border-b border-border/50 pb-1 mb-2">Debug: Rendered Chunks</h3>
+      {renderBudget && (
+        <div className="mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200">
+          Render budget exceeded: {(renderBudget.usedBytes / (1024 * 1024)).toFixed(0)} /{" "}
+          {(renderBudget.budgetBytes / (1024 * 1024)).toFixed(0)} MB — culled{" "}
+          {renderBudget.culledLayerIds.length} layer(s): {renderBudget.culledLayerIds.join(", ")}
+        </div>
+      )}
       <Collapsible open={isControlsOpen} onOpenChange={setIsControlsOpen}>
         <div className="mb-3 rounded border border-border/50 bg-background/40">
           <CollapsibleTrigger asChild>

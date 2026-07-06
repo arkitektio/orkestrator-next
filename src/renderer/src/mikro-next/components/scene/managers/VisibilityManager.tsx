@@ -1,138 +1,24 @@
+import { useEffect } from 'react'
+import { useSceneStoreApi } from '../store/sceneStore'
+import { useViewerStoreApi } from '../store/viewerStore'
+import { useViewStoreApi } from '../store/viewStore'
+import { startVisibilityTracking } from './visibilityTracker'
 
-
-import { useEffect, useMemo } from 'react'
-import * as THREE from 'three'
-import { useViewStore } from '../store/viewStore'
-import { useViewerStore, type LayerViewRange } from '../store/viewerStore'
-import { useSceneStore } from '../store/sceneStore'
-import { affineToMatrix4 } from '../core/worldTransform'
-import { resolveAxisIndices } from '../core/dims'
-
+/**
+ * Mount point for the store-level visibility tracker. Holds no reactive
+ * state — the store APIs are stable — so this component renders once and
+ * never again; all reactivity lives in `visibilityTracker.ts` subscriptions
+ * and the pure math in `core/visibility.ts`.
+ */
 export function VisibilityManager() {
-  const trackables = useViewerStore((s) => s.trackables)
-  const setVisible = useViewerStore((s) => s.setVisible)
-  const setLayerViewRanges = useViewerStore((s) => s.setLayerViewRanges)
-  const layers = useSceneStore((s) => s.layers)
+  const viewStore = useViewStoreApi()
+  const viewerStore = useViewerStoreApi()
+  const sceneStore = useSceneStoreApi()
 
-  // Subscribe to the matrix from your CameraSync component
-  const projScreenMatrix = useViewStore((s) => s.viewProjectionMatrix)
-  const viewportSize = useViewStore((s) => s.viewportSize)
-
-  // Pre-allocate to prevent GC pressure
-  const frustum = useMemo(() => new THREE.Frustum(), [])
-  const box = useMemo(() => new THREE.Box3(), [])
-
-  // This effect only runs when the camera stops moving (after debounce)
-  useEffect(() => {
-    if (!projScreenMatrix) return
-
-    frustum.setFromProjectionMatrix(projScreenMatrix)
-
-    // Compute frustum AABB in world space
-    const invPV = projScreenMatrix.clone().invert()
-    const frustumBox = new THREE.Box3()
-    const corner = new THREE.Vector3()
-    for (let x = -1; x <= 1; x += 2) {
-      for (let y = -1; y <= 1; y += 2) {
-        for (let z = -1; z <= 1; z += 2) {
-          corner.set(x, y, z).applyMatrix4(invPV)
-          frustumBox.expandByPoint(corner)
-        }
-      }
-    }
-
-    const nextVisible = new Set<string>()
-    const nextRanges: Record<string, LayerViewRange> = {}
-
-    trackables.forEach((ref) => {
-      if (ref.ref.current) {
-        // Compute the bounding box of the Group/Mesh
-        box.setFromObject(ref.ref.current)
-
-        if (frustum.intersectsBox(box)) {
-          nextVisible.add(ref.id)
-
-          // Compute visible voxel ranges for layer trackables
-          if (ref.kind === 'layer') {
-            const layer = layers.find((l) => l.id === ref.id)
-            if (layer) {
-              const visibleBox = box.clone().intersect(frustumBox)
-              if (!visibleBox.isEmpty()) {
-                const invAffine = affineToMatrix4(layer.affineMatrix).invert()
-                const voxelBox = new THREE.Box3()
-                const c = new THREE.Vector3()
-                for (let ix = 0; ix <= 1; ix++) {
-                  for (let iy = 0; iy <= 1; iy++) {
-                    for (let iz = 0; iz <= 1; iz++) {
-                      c.set(
-                        ix === 0 ? visibleBox.min.x : visibleBox.max.x,
-                        iy === 0 ? visibleBox.min.y : visibleBox.max.y,
-                        iz === 0 ? visibleBox.min.z : visibleBox.max.z,
-                      )
-                      c.applyMatrix4(invAffine)
-                      voxelBox.expandByPoint(c)
-                    }
-                  }
-                }
-
-                const { xPos: xIdx, yPos: yIdx, zPos: zIdx } = resolveAxisIndices(layer.lens.dims, layer)
-                const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0
-                const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0
-
-                // The layer-local frame is centered at the origin with +y up
-                // (see ChunkPlane positioning: coord*size + size/2 - total/2,
-                // y negated). Shift by half the extent — and flip y, which
-                // swaps min/max — to get voxel indices.
-                const voxelXMin = voxelBox.min.x + xMax / 2
-                const voxelXMax = voxelBox.max.x + xMax / 2
-                const voxelYMin = yMax / 2 - voxelBox.max.y
-                const voxelYMax = yMax / 2 - voxelBox.min.y
-
-                let zRange: [number, number] | null = null
-                if (layer.zDim) {
-                  const zMax = zIdx >= 0 ? layer.lens.shape[zIdx] : 0
-                  zRange = [
-                    Math.max(0, Math.floor(voxelBox.min.z + zMax / 2)),
-                    Math.min(zMax, Math.ceil(voxelBox.max.z + zMax / 2)),
-                  ]
-                }
-
-                // Compute screen-pixels-per-image-pixel scale
-                // Transform two voxel-space points 1 pixel apart through affine + PV
-                const affine = affineToMatrix4(layer.affineMatrix)
-                const p0 = new THREE.Vector3(0, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix)
-                const p1 = new THREE.Vector3(1, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix)
-                // NDC to screen pixels
-                const hw = viewportSize.width / 2
-                const hh = viewportSize.height / 2
-                const sx0 = (p0.x + 1) * hw
-                const sy0 = (p0.y + 1) * hh
-                const sx1 = (p1.x + 1) * hw
-                const sy1 = (p1.y + 1) * hh
-                const scale = Math.sqrt((sx1 - sx0) ** 2 + (sy1 - sy0) ** 2)
-
-                nextRanges[ref.id] = {
-                  xRange: [
-                    Math.max(0, Math.floor(voxelXMin)),
-                    Math.min(xMax, Math.ceil(voxelXMax)),
-                  ],
-                  yRange: [
-                    Math.max(0, Math.floor(voxelYMin)),
-                    Math.min(yMax, Math.ceil(voxelYMax)),
-                  ],
-                  zRange,
-                  scale,
-                }
-              }
-            }
-          }
-        }
-      }
-    })
-
-    setVisible(nextVisible)
-    setLayerViewRanges(nextRanges)
-  }, [projScreenMatrix, viewportSize, trackables, layers, frustum, box, setVisible, setLayerViewRanges])
+  useEffect(
+    () => startVisibilityTracking({ viewStore, viewerStore, sceneStore }),
+    [viewStore, viewerStore, sceneStore],
+  )
 
   return null
 }
